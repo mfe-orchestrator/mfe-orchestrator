@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { Slider } from '@/components/ui/slider';
+import { Percent } from 'lucide-react';
 
 export interface MicrofrontendProps {
   id: string;
@@ -16,11 +18,13 @@ export interface MicrofrontendProps {
   status: 'active' | 'inactive' | 'error';
   lastUpdated: string;
   parameters?: Record<string, string>;
+  canaryPercentage?: number;
 }
 
 const MicrofrontendCard: React.FC<{ mfe: MicrofrontendProps }> = ({ mfe }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [parameters, setParameters] = useState<Record<string, string>>(mfe.parameters || {});
+  const [canaryPercentage, setCanaryPercentage] = useState<number>(mfe.canaryPercentage || 0);
   const { toast } = useToast();
 
   const statusColor = {
@@ -46,8 +50,8 @@ const MicrofrontendCard: React.FC<{ mfe: MicrofrontendProps }> = ({ mfe }) => {
   const saveParameters = () => {
     // Here you would typically save the parameters to your backend
     toast({
-      title: "Parametri salvati",
-      description: `I parametri per ${mfe.name} sono stati aggiornati.`,
+      title: "Configurazione salvata",
+      description: `I parametri per ${mfe.name} e la percentuale canary (${canaryPercentage}%) sono stati aggiornati.`,
     });
     setIsDialogOpen(false);
   };
@@ -68,6 +72,16 @@ const MicrofrontendCard: React.FC<{ mfe: MicrofrontendProps }> = ({ mfe }) => {
         </CardHeader>
         <CardContent className="flex-grow">
           <p className="text-sm">{mfe.description}</p>
+          {canaryPercentage > 0 && (
+            <div className="mt-3 p-2 bg-orange-100 rounded-md text-sm">
+              <div className="font-semibold flex items-center text-orange-700">
+                <Percent className="mr-1 h-4 w-4" /> Canary Release
+              </div>
+              <div className="text-orange-600">
+                Attiva per il {canaryPercentage}% degli utenti
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex justify-between items-center border-t pt-4">
           <div className="text-xs text-muted-foreground">
@@ -82,22 +96,51 @@ const MicrofrontendCard: React.FC<{ mfe: MicrofrontendProps }> = ({ mfe }) => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Configurazione parametri: {mfe.name}</DialogTitle>
+            <DialogTitle>Configurazione: {mfe.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {Object.keys(parameters).map((key) => (
-              <div key={key} className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor={key} className="text-right col-span-1">
-                  {key}
-                </Label>
-                <Input
-                  id={key}
-                  value={parameters[key]}
-                  onChange={(e) => handleParameterChange(key, e.target.value)}
-                  className="col-span-3"
-                />
+            <div className="border-b pb-4">
+              <Label className="mb-2 block font-medium">
+                Canary Release
+              </Label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Percentuale di utenti:</span>
+                  <Badge variant="outline" className="font-mono">
+                    {canaryPercentage}%
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    value={[canaryPercentage]}
+                    max={100}
+                    step={5}
+                    onValueChange={(value) => setCanaryPercentage(value[0])}
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  La versione {mfe.version} sarà visibile solo a questa percentuale di utenti.
+                </p>
               </div>
-            ))}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-medium">Parametri di configurazione</Label>
+              {Object.keys(parameters).map((key) => (
+                <div key={key} className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor={key} className="text-right col-span-1">
+                    {key}
+                  </Label>
+                  <Input
+                    id={key}
+                    value={parameters[key]}
+                    onChange={(e) => handleParameterChange(key, e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              ))}
+            </div>
             
             <div className="flex justify-between mt-4">
               <Button type="button" variant="outline" size="sm" onClick={addParameter}>

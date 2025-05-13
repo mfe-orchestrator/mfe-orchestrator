@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
 import MicrofrontendCard, { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Search, Percent } from 'lucide-react';
 
 const DashboardPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +28,8 @@ const DashboardPage = () => {
           parameters: {
             apiEndpoint: 'https://api.example.com/users',
             maxUsers: '100'
-          }
+          },
+          canaryPercentage: 25
         },
         {
           id: 'mfe-2',
@@ -41,7 +41,8 @@ const DashboardPage = () => {
           parameters: {
             refreshInterval: '30',
             dataSource: 'analytics-api'
-          }
+          },
+          canaryPercentage: 10
         },
         {
           id: 'mfe-3',
@@ -174,13 +175,14 @@ const DashboardPage = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium">Versione</th>
                       <th className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Stato</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Canary</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={5} className="p-4 text-center">
+                        <td colSpan={6} className="p-4 text-center">
                           <span className="loader mx-auto"></span>
                         </td>
                       </tr>
@@ -205,6 +207,15 @@ const DashboardPage = () => {
                           </Badge>
                         </td>
                         <td className="p-4 align-middle">
+                          {mfe.canaryPercentage ? (
+                            <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
+                              <Percent className="h-3 w-3" /> {mfe.canaryPercentage}%
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 align-middle">
                           <Button variant="outline" size="sm">Configurazione</Button>
                         </td>
                       </tr>
@@ -212,7 +223,7 @@ const DashboardPage = () => {
                     
                     {!loading && filteredMicrofrontends.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="h-24 text-center text-muted-foreground">
+                        <td colSpan={6} className="h-24 text-center text-muted-foreground">
                           Nessun microfrontend trovato
                         </td>
                       </tr>
