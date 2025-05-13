@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
 import MicrofrontendCard, { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Search, Percent } from 'lucide-react';
+import { Search, Percent, Settings } from 'lucide-react';
 import EnvironmentSelector, { Environment } from '../../components/environment/EnvironmentSelector';
 
 const DashboardPage = () => {
@@ -32,12 +31,50 @@ const DashboardPage = () => {
             apiEndpoint: 'https://api.example.com/users',
             maxUsers: '100'
           },
+          environmentVariables: {
+            API_URL: 'https://api.example.com',
+            LOG_LEVEL: 'info'
+          },
           canaryPercentage: 25,
           environments: {
-            DEV: { version: '1.3.0-beta', canaryPercentage: 50, parameters: { apiEndpoint: 'https://dev-api.example.com/users', maxUsers: '200' } },
-            UAT: { version: '1.2.3', canaryPercentage: 30, parameters: { apiEndpoint: 'https://uat-api.example.com/users', maxUsers: '150' } },
-            PREPROD: { version: '1.2.2', canaryPercentage: 15, parameters: { apiEndpoint: 'https://preprod-api.example.com/users', maxUsers: '120' } },
-            PROD: { version: '1.2.1', canaryPercentage: 10, parameters: { apiEndpoint: 'https://api.example.com/users', maxUsers: '100' } }
+            DEV: { 
+              version: '1.3.0-beta', 
+              canaryPercentage: 50, 
+              parameters: { apiEndpoint: 'https://dev-api.example.com/users', maxUsers: '200' },
+              environmentVariables: {
+                API_URL: 'https://dev-api.example.com',
+                LOG_LEVEL: 'debug',
+                FEATURE_FLAGS: 'user_management,new_dashboard'
+              }
+            },
+            UAT: { 
+              version: '1.2.3', 
+              canaryPercentage: 30, 
+              parameters: { apiEndpoint: 'https://uat-api.example.com/users', maxUsers: '150' },
+              environmentVariables: {
+                API_URL: 'https://uat-api.example.com',
+                LOG_LEVEL: 'info',
+                FEATURE_FLAGS: 'user_management'
+              }
+            },
+            PREPROD: { 
+              version: '1.2.2', 
+              canaryPercentage: 15, 
+              parameters: { apiEndpoint: 'https://preprod-api.example.com/users', maxUsers: '120' },
+              environmentVariables: {
+                API_URL: 'https://preprod-api.example.com',
+                LOG_LEVEL: 'warn'
+              }
+            },
+            PROD: { 
+              version: '1.2.1', 
+              canaryPercentage: 10, 
+              parameters: { apiEndpoint: 'https://api.example.com/users', maxUsers: '100' },
+              environmentVariables: {
+                API_URL: 'https://api.example.com',
+                LOG_LEVEL: 'error'
+              }
+            }
           }
         },
         {
@@ -51,12 +88,47 @@ const DashboardPage = () => {
             refreshInterval: '30',
             dataSource: 'analytics-api'
           },
+          environmentVariables: {
+            ANALYTICS_API: 'https://analytics.example.com',
+            CACHE_TTL: '3600'
+          },
           canaryPercentage: 10,
           environments: {
-            DEV: { version: '1.0.0-beta', canaryPercentage: 70, parameters: { refreshInterval: '10', dataSource: 'dev-analytics-api' } },
-            UAT: { version: '0.9.2', canaryPercentage: 25, parameters: { refreshInterval: '20', dataSource: 'uat-analytics-api' } },
-            PREPROD: { version: '0.9.1', canaryPercentage: 15 },
-            PROD: { version: '0.9.0', canaryPercentage: 5 }
+            DEV: { 
+              version: '1.0.0-beta', 
+              canaryPercentage: 70, 
+              parameters: { refreshInterval: '10', dataSource: 'dev-analytics-api' },
+              environmentVariables: {
+                ANALYTICS_API: 'https://dev-analytics.example.com',
+                CACHE_TTL: '300',
+                DEBUG_MODE: 'true'
+              }
+            },
+            UAT: { 
+              version: '0.9.2', 
+              canaryPercentage: 25, 
+              parameters: { refreshInterval: '20', dataSource: 'uat-analytics-api' },
+              environmentVariables: {
+                ANALYTICS_API: 'https://uat-analytics.example.com',
+                CACHE_TTL: '1800'
+              }
+            },
+            PREPROD: { 
+              version: '0.9.1', 
+              canaryPercentage: 15,
+              environmentVariables: {
+                ANALYTICS_API: 'https://preprod-analytics.example.com',
+                CACHE_TTL: '3600'
+              }
+            },
+            PROD: { 
+              version: '0.9.0', 
+              canaryPercentage: 5,
+              environmentVariables: {
+                ANALYTICS_API: 'https://analytics.example.com',
+                CACHE_TTL: '7200'
+              }
+            }
           }
         },
         {
@@ -221,6 +293,7 @@ const DashboardPage = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Stato</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Canary</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Env Vars</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Ambiente</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Azioni</th>
                     </tr>
@@ -228,7 +301,7 @@ const DashboardPage = () => {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="p-4 text-center">
+                        <td colSpan={8} className="p-4 text-center">
                           <span className="loader mx-auto"></span>
                         </td>
                       </tr>
@@ -236,6 +309,8 @@ const DashboardPage = () => {
                       const envData = mfe.environments?.[currentEnvironment];
                       const version = envData?.version || mfe.version;
                       const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
+                      const environmentVariables = envData?.environmentVariables || mfe.environmentVariables || {};
+                      const envVarsCount = Object.keys(environmentVariables).length;
                       
                       return (
                         <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
@@ -267,6 +342,15 @@ const DashboardPage = () => {
                             )}
                           </td>
                           <td className="p-4 align-middle">
+                            {envVarsCount > 0 ? (
+                              <Badge variant="outline" className="bg-blue-100 text-blue-800 flex items-center gap-1 whitespace-nowrap">
+                                <Settings className="h-3 w-3" /> {envVarsCount}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="p-4 align-middle">
                             <Badge>{currentEnvironment}</Badge>
                           </td>
                           <td className="p-4 align-middle">
@@ -278,7 +362,7 @@ const DashboardPage = () => {
                     
                     {!loading && filteredMicrofrontends.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="h-24 text-center text-muted-foreground">
+                        <td colSpan={8} className="h-24 text-center text-muted-foreground">
                           Nessun microfrontend trovato
                         </td>
                       </tr>
