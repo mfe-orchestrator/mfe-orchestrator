@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Slider } from '@/components/ui/slider';
-import { Percent, Settings, Plus, Trash2 } from 'lucide-react';
+import { Percent, Settings } from 'lucide-react';
 import { Environment } from '../environment/EnvironmentSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -21,12 +21,10 @@ export interface MicrofrontendProps {
   lastUpdated: string;
   parameters?: Record<string, string>;
   canaryPercentage?: number;
-  environmentVariables?: Record<string, string>;
   environments?: Partial<Record<Environment, { 
     version: string, 
     canaryPercentage?: number, 
-    parameters?: Record<string, string>,
-    environmentVariables?: Record<string, string>
+    parameters?: Record<string, string>
   }>>;
 }
 
@@ -43,13 +41,9 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
   const version = envData?.version || mfe.version;
   const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
   const parameters = envData?.parameters || mfe.parameters || {};
-  const environmentVariables = envData?.environmentVariables || mfe.environmentVariables || {};
   
   const [editParameters, setEditParameters] = useState<Record<string, string>>(parameters);
   const [editCanaryPercentage, setEditCanaryPercentage] = useState<number>(canaryPercentage);
-  const [editEnvironmentVars, setEditEnvironmentVars] = useState<Record<string, string>>(environmentVariables);
-  const [newEnvKey, setNewEnvKey] = useState<string>('');
-  const [newEnvValue, setNewEnvValue] = useState<string>('');
   const { toast } = useToast();
 
   const statusColor = {
@@ -65,38 +59,11 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
     }));
   };
 
-  const handleEnvVarChange = (key: string, value: string) => {
-    setEditEnvironmentVars(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
   const addParameter = () => {
     setEditParameters(prev => ({
       ...prev,
       [`param${Object.keys(editParameters).length + 1}`]: ''
     }));
-  };
-
-  const addEnvironmentVariable = () => {
-    if (newEnvKey.trim() === '') return;
-    
-    setEditEnvironmentVars(prev => ({
-      ...prev,
-      [newEnvKey]: newEnvValue
-    }));
-    
-    setNewEnvKey('');
-    setNewEnvValue('');
-  };
-
-  const removeEnvironmentVariable = (key: string) => {
-    setEditEnvironmentVars(prev => {
-      const updated = {...prev};
-      delete updated[key];
-      return updated;
-    });
   };
 
   const saveConfiguration = () => {
@@ -139,16 +106,6 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
               </div>
             </div>
           )}
-          {Object.keys(environmentVariables).length > 0 && (
-            <div className="mt-3 p-2 bg-blue-100 rounded-md text-sm">
-              <div className="font-semibold flex items-center text-blue-700">
-                <Settings className="mr-1 h-4 w-4" /> Variabili d'ambiente
-              </div>
-              <div className="text-blue-600">
-                {Object.keys(environmentVariables).length} variabili configurate
-              </div>
-            </div>
-          )}
         </CardContent>
         <CardFooter className="flex justify-between items-center border-t pt-4">
           <div className="text-xs text-muted-foreground">
@@ -171,7 +128,6 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
             <TabsList className="mb-4">
               <TabsTrigger value="general">Generale</TabsTrigger>
               <TabsTrigger value="parameters">Parametri</TabsTrigger>
-              <TabsTrigger value="env-vars">Variabili d'ambiente</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general">
@@ -225,81 +181,6 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
                 <Button type="button" variant="outline" size="sm" onClick={addParameter}>
                   Aggiungi parametro
                 </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="env-vars">
-              <div className="space-y-4 py-2">
-                <div>
-                  <Label className="font-medium">Variabili d'ambiente</Label>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Inserisci le coppie chiave/valore per configurare l'ambiente {currentEnvironment}.
-                  </p>
-                  
-                  {Object.keys(editEnvironmentVars).length > 0 ? (
-                    <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-                      {Object.entries(editEnvironmentVars).map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                          <div className="flex-1">
-                            <div className="font-semibold text-sm">{key}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {value.length > 20 ? value.substring(0, 20) + '...' : value}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removeEnvironmentVariable(key)}
-                              title="Rimuovi variabile"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center p-4 text-muted-foreground border rounded-md mb-4">
-                      Nessuna variabile d'ambiente configurata
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="col-span-1">
-                        <Label htmlFor="env-key">Chiave</Label>
-                        <Input
-                          id="env-key"
-                          placeholder="APP_API_URL"
-                          value={newEnvKey}
-                          onChange={(e) => setNewEnvKey(e.target.value)}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Label htmlFor="env-value">Valore</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="env-value"
-                            placeholder="https://api.example.com"
-                            value={newEnvValue}
-                            onChange={(e) => setNewEnvValue(e.target.value)}
-                            className="flex-1"
-                          />
-                          <Button 
-                            variant="secondary"
-                            size="icon"
-                            onClick={addEnvironmentVariable}
-                            disabled={newEnvKey.trim() === ''}
-                            title="Aggiungi variabile"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </TabsContent>
           </Tabs>

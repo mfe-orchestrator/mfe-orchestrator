@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
 import MicrofrontendCard, { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Search, Percent, Settings } from 'lucide-react';
 import EnvironmentSelector, { Environment } from '../../components/environment/EnvironmentSelector';
+import EnvironmentVariables from '../../components/environment/EnvironmentVariables';
 
 const DashboardPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,13 +251,17 @@ const DashboardPage = () => {
           </div>
         </div>
 
+        <div className="flex justify-between items-center">
+          <EnvironmentVariables environment={currentEnvironment} />
+          <Button variant="outline">Aggiungi Microfrontend</Button>
+        </div>
+
         <Tabs defaultValue="grid" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <TabsList>
               <TabsTrigger value="grid">Griglia</TabsTrigger>
               <TabsTrigger value="list">Lista</TabsTrigger>
             </TabsList>
-            <Button variant="outline">Aggiungi Microfrontend</Button>
           </div>
           
           <TabsContent value="grid" className="space-y-4">
