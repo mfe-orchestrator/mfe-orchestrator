@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import MainLayout from '../../components/layout/MainLayout';
 import MicrofrontendCard, { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
@@ -7,14 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Search, Percent } from 'lucide-react';
+import EnvironmentSelector, { Environment } from '../../components/environment/EnvironmentSelector';
 
 const DashboardPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [microfrontends, setMicrofrontends] = useState<MicrofrontendProps[]>([]);
+  const [currentEnvironment, setCurrentEnvironment] = useState<Environment>('DEV');
 
-  // Mock data loading
+  // Mock data loading with environment-specific data
   useEffect(() => {
     setTimeout(() => {
       setMicrofrontends([
@@ -29,7 +32,13 @@ const DashboardPage = () => {
             apiEndpoint: 'https://api.example.com/users',
             maxUsers: '100'
           },
-          canaryPercentage: 25
+          canaryPercentage: 25,
+          environments: {
+            DEV: { version: '1.3.0-beta', canaryPercentage: 50, parameters: { apiEndpoint: 'https://dev-api.example.com/users', maxUsers: '200' } },
+            UAT: { version: '1.2.3', canaryPercentage: 30, parameters: { apiEndpoint: 'https://uat-api.example.com/users', maxUsers: '150' } },
+            PREPROD: { version: '1.2.2', canaryPercentage: 15, parameters: { apiEndpoint: 'https://preprod-api.example.com/users', maxUsers: '120' } },
+            PROD: { version: '1.2.1', canaryPercentage: 10, parameters: { apiEndpoint: 'https://api.example.com/users', maxUsers: '100' } }
+          }
         },
         {
           id: 'mfe-2',
@@ -42,7 +51,13 @@ const DashboardPage = () => {
             refreshInterval: '30',
             dataSource: 'analytics-api'
           },
-          canaryPercentage: 10
+          canaryPercentage: 10,
+          environments: {
+            DEV: { version: '1.0.0-beta', canaryPercentage: 70, parameters: { refreshInterval: '10', dataSource: 'dev-analytics-api' } },
+            UAT: { version: '0.9.2', canaryPercentage: 25, parameters: { refreshInterval: '20', dataSource: 'uat-analytics-api' } },
+            PREPROD: { version: '0.9.1', canaryPercentage: 15 },
+            PROD: { version: '0.9.0', canaryPercentage: 5 }
+          }
         },
         {
           id: 'mfe-3',
@@ -50,7 +65,13 @@ const DashboardPage = () => {
           version: '2.1.0',
           description: 'Sistema di archiviazione e gestione documentale integrato.',
           status: 'inactive',
-          lastUpdated: '2023-04-25'
+          lastUpdated: '2023-04-25',
+          environments: {
+            DEV: { version: '2.2.0-alpha' },
+            UAT: { version: '2.1.1-beta' },
+            PREPROD: { version: '2.1.0' },
+            PROD: { version: '2.0.0' }
+          }
         },
         {
           id: 'mfe-4',
@@ -58,7 +79,13 @@ const DashboardPage = () => {
           version: '1.0.5',
           description: 'Sistema di notifiche in tempo reale per gli utenti.',
           status: 'error',
-          lastUpdated: '2023-05-12'
+          lastUpdated: '2023-05-12',
+          environments: {
+            DEV: { version: '1.1.0-dev' },
+            UAT: { version: '1.0.6-rc' },
+            PREPROD: { version: '1.0.5' },
+            PROD: { version: '1.0.4' }
+          }
         },
         {
           id: 'mfe-5',
@@ -66,7 +93,13 @@ const DashboardPage = () => {
           version: '3.2.1',
           description: 'Gestione eventi e appuntamenti con vista calendario.',
           status: 'active',
-          lastUpdated: '2023-05-01'
+          lastUpdated: '2023-05-01',
+          environments: {
+            DEV: { version: '3.3.0-dev', canaryPercentage: 80 },
+            UAT: { version: '3.2.2-rc', canaryPercentage: 40 },
+            PREPROD: { version: '3.2.1', canaryPercentage: 20 },
+            PROD: { version: '3.2.0', canaryPercentage: 0 }
+          }
         },
         {
           id: 'mfe-6',
@@ -74,7 +107,13 @@ const DashboardPage = () => {
           version: '1.3.7',
           description: 'Generazione di report e statistiche personalizzabili.',
           status: 'active',
-          lastUpdated: '2023-05-09'
+          lastUpdated: '2023-05-09',
+          environments: {
+            DEV: { version: '1.4.0-alpha', canaryPercentage: 90 },
+            UAT: { version: '1.3.8-beta', canaryPercentage: 45 },
+            PREPROD: { version: '1.3.7', canaryPercentage: 15 },
+            PROD: { version: '1.3.6', canaryPercentage: 5 }
+          }
         }
       ]);
       setLoading(false);
@@ -102,12 +141,18 @@ const DashboardPage = () => {
     <MainLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Microfrontend
-            <Badge variant="outline" className="ml-2">
-              {counts.all}
-            </Badge>
-          </h2>
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Microfrontend
+              <Badge variant="outline" className="ml-2">
+                {counts.all}
+              </Badge>
+            </h2>
+            <EnvironmentSelector 
+              selectedEnvironment={currentEnvironment}
+              onEnvironmentChange={setCurrentEnvironment}
+            />
+          </div>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -149,7 +194,7 @@ const DashboardPage = () => {
             ) : filteredMicrofrontends.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredMicrofrontends.map((mfe) => (
-                  <MicrofrontendCard key={mfe.id} mfe={mfe} />
+                  <MicrofrontendCard key={mfe.id} mfe={mfe} currentEnvironment={currentEnvironment} />
                 ))}
               </div>
             ) : (
@@ -176,54 +221,64 @@ const DashboardPage = () => {
                       <th className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Stato</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Canary</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium">Ambiente</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">Azioni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={6} className="p-4 text-center">
+                        <td colSpan={7} className="p-4 text-center">
                           <span className="loader mx-auto"></span>
                         </td>
                       </tr>
-                    ) : filteredMicrofrontends.map((mfe) => (
-                      <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
-                        <td className="p-4 align-middle font-medium">{mfe.name}</td>
-                        <td className="p-4 align-middle">{mfe.version}</td>
-                        <td className="p-4 align-middle hidden md:table-cell">
-                          <div className="line-clamp-1">{mfe.description}</div>
-                        </td>
-                        <td className="p-4 align-middle">
-                          <Badge 
-                            variant="outline"
-                            className={`
-                              ${mfe.status === 'active' ? 'bg-green-500' : 
-                                mfe.status === 'inactive' ? 'bg-yellow-500' : 'bg-red-500'} 
-                              text-white
-                            `}
-                          >
-                            {mfe.status === 'active' ? 'Attivo' : 
-                             mfe.status === 'inactive' ? 'Inattivo' : 'Errore'}
-                          </Badge>
-                        </td>
-                        <td className="p-4 align-middle">
-                          {mfe.canaryPercentage ? (
-                            <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
-                              <Percent className="h-3 w-3" /> {mfe.canaryPercentage}%
+                    ) : filteredMicrofrontends.map((mfe) => {
+                      const envData = mfe.environments?.[currentEnvironment];
+                      const version = envData?.version || mfe.version;
+                      const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
+                      
+                      return (
+                        <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
+                          <td className="p-4 align-middle font-medium">{mfe.name}</td>
+                          <td className="p-4 align-middle">{version}</td>
+                          <td className="p-4 align-middle hidden md:table-cell">
+                            <div className="line-clamp-1">{mfe.description}</div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Badge 
+                              variant="outline"
+                              className={`
+                                ${mfe.status === 'active' ? 'bg-green-500' : 
+                                  mfe.status === 'inactive' ? 'bg-yellow-500' : 'bg-red-500'} 
+                                text-white
+                              `}
+                            >
+                              {mfe.status === 'active' ? 'Attivo' : 
+                               mfe.status === 'inactive' ? 'Inattivo' : 'Errore'}
                             </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">-</span>
-                          )}
-                        </td>
-                        <td className="p-4 align-middle">
-                          <Button variant="outline" size="sm">Configurazione</Button>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="p-4 align-middle">
+                            {canaryPercentage > 0 ? (
+                              <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
+                                <Percent className="h-3 w-3" /> {canaryPercentage}%
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Badge>{currentEnvironment}</Badge>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <Button variant="outline" size="sm">Configurazione</Button>
+                          </td>
+                        </tr>
+                      )
+                    })}
                     
                     {!loading && filteredMicrofrontends.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="h-24 text-center text-muted-foreground">
+                        <td colSpan={7} className="h-24 text-center text-muted-foreground">
                           Nessun microfrontend trovato
                         </td>
                       </tr>
