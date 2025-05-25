@@ -1,0 +1,38 @@
+name: Backend Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '22'
+        cache: 'pnpm'
+    
+    - name: Install Dependencies
+      run: pnpm install
+      working-directory: backend
+    
+    - name: Build
+      run: pnpm build
+      working-directory: backend
+    
+    - name: Run Tests
+      run: pnpm test
+      working-directory: backend
+    
+    - name: Upload Backend Build
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-build
+        path: backend/dist

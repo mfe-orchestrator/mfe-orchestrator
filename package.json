@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@fastify/env": "^5.0.2",
-    "nodemailer": "^7.0.3"
-  }
-}

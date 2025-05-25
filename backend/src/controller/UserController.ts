@@ -1,260 +1,47 @@
-import { User } from '../models/UserModel';
-import { randomBytes } from 'crypto';
-import { sendResetPasswordEmail } from '../service/emailService';
-import { FastifyInstanceWithConfig, FastifyRequestWithUser } from '../types';
+import userService from '../service/UserService';
 import UserRegistrationDTO from '../types/UserRegistrationDTO';
 import UserLoginDTO from '../types/UserLoginDTO';
+import ResetPasswordRequestDTO from '../types/ResetPasswordRequestDTO';
+import ResetPasswordDataDTO from '../types/ResetPasswordDataDTO';
+import { UserInvitationDTO } from '../types/UserInvitationDTO';
+import { FastifyInstance } from 'fastify';
 
-interface ResetPasswordRequest {
-  email: string;
-}
-
-interface ResetPasswordData {
-  token: string;
-  password: string;
-}
-
-function UserController(fastify: FastifyInstanceWithConfig) {
+export function UserController(fastify: FastifyInstance) {
 
   fastify.post<{
     Body: UserRegistrationDTO
   }>('/users/registration', async (req, res) => {
-    try {
-      const { email, password, name, surname } = req.body;
-      
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).send({ error: 'User already exists' });
-      }
-
-      // Create new user
-      const user = new User({
-        email,
-        password,
-        name,
-        surname
-      });
-
-      await user.save();
-      return res.status(201).send({ message: 'User registered successfully' });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error registering user' });
-    }
+    return res.send(await userService.register(req.body));
   });
 
-  // Login user
   fastify.post<{
     Body: UserLoginDTO
   }>('/users/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(401).send({ error: 'Invalid credentials' });
-      }
-
-      const isValidPassword = await user.comparePassword(password);
-      if (!isValidPassword) {
-        return res.status(401).send({ error: 'Invalid credentials' });
-      }
-
-      // Generate JWT token
-      const token = fastify.jwt.sign({ id: user._id });
-      return res.send({ token, user: { name: user.name, surname: user.surname } });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error logging in' });
-    }
+    return res.send(await userService.login(req.body));
   });
 
-  // Get current user
-  fastify.get('/users/me', { 
-    preHandler: fastify.authenticate 
-  }, async (req: FastifyRequestWithUser, res) => {
-    try {
-      const user = req.user;
-      return res.send({
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        surname: user.surname
-      });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error fetching user' });
-    }
-  });
-
-  // Request password reset
   fastify.post<{
-    Body: ResetPasswordRequest
+    Body: ResetPasswordRequestDTO
   }>('/users/forgot-password', async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).send({ error: 'User not found' });
-      }
-
-      // Generate reset token
-      const resetToken = randomBytes(32).toString('hex');
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
-      await user.save();
-
-      // Send reset password email
-      await sendResetPasswordEmail(fastify, user.email, resetToken);
-
-      return res.send({ message: 'Password reset email sent' });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error sending reset password email' });
-    }
+    await userService.requestPasswordReset(req.body.email);
+    return res.send();
   });
 
-  // Reset password
   fastify.post<{
-    Body: ResetPasswordData
+    Body: ResetPasswordDataDTO
   }>('/users/reset-password', async (req, res) => {
-    try {
-      const { token, password } = req.body;
-      
-      const user = await User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: new Date() }
-      });
-
-      if (!user) {
-        return res.status(400).send({ error: 'Invalid or expired token' });
-      }
-
-      // Update password
-      user.password = password;
-      user.resetPasswordToken = '';
-      user.resetPasswordExpires = null;
-      await user.save();
-
-      return res.send({ message: 'Password reset successfully' });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error resetting password' });
-    }
-  });
-}
-  // Register new user
-  fastify.post('/users/register', async (req, res) => {
-    try {
-      const { email, password, name, surname } = req.body;
-      
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).send({ error: 'User already exists' });
-      }
-
-      // Create new user
-      const user = new User({
-        email,
-        password,
-        name,
-        surname
-      });
-
-      await user.save();
-      return res.status(201).send({ message: 'User registered successfully' });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error registering user' });
-    }
+    await userService.resetPassword(req.body);
+    return res.send();
   });
 
-  // Login user
-  fastify.post('/users/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(401).send({ error: 'Invalid credentials' });
-      }
-
-      const isValidPassword = await user.comparePassword(password);
-      if (!isValidPassword) {
-        return res.status(401).send({ error: 'Invalid credentials' });
-      }
-
-      // Generate JWT token
-      const token = fastify.jwt.sign({ id: user._id });
-      return res.send({ token, user: { name: user.name, surname: user.surname } });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error logging in' });
-    }
+  fastify.get('/users/profile', async (req, res) => {
+    return res.send(await userService.getProfile("TODO DEVO METTERLO"));
   });
 
-  // Get current user
-  fastify.get('/users/me', { 
-    preHandler: fastify.auth([fastify.authenticate]) 
-  }, async (req, res) => {
-    try {
-      const user = req.user as any;
-      return res.send({
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        surname: user.surname
-      });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error fetching user' });
-    }
-  });
-
-  // Request password reset
-  fastify.post('/users/forgot-password', async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).send({ error: 'User not found' });
-      }
-
-      // Generate reset token
-      const resetToken = randomBytes(32).toString('hex');
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-      await user.save();
-
-      // Send reset password email
-      await sendResetPasswordEmail(user.email, resetToken);
-
-      return res.send({ message: 'Password reset email sent' });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error sending reset password email' });
-    }
-  });
-
-  // Reset password
-  fastify.post('/users/reset-password', async (req, res) => {
-    try {
-      const { token, password } = req.body;
-      
-      const user = await User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: Date.now() }
-      });
-
-      if (!user) {
-        return res.status(400).send({ error: 'Invalid or expired token' });
-      }
-
-      // Update password
-      user.password = password;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-      await user.save();
-
-      return res.send({ message: 'Password reset successfully' });
-    } catch (error) {
-      return res.status(500).send({ error: 'Error resetting password' });
-    }
+  fastify.post<{
+    Body: UserInvitationDTO
+  }>('/users/invitation', async (req, res) => {
+    return res.send(await userService.inviteUser(req.body));
   });
 };
 

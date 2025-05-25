@@ -1,73 +1,108 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { Document as MongooseDocument } from 'mongoose';
 
-interface IUser extends mongoose.Document {
+interface IUser {
   email: string;
   password: string;
   name: string;
   surname: string;
+  role: string;
+  isInvited: boolean;
   salt: string;
-  resetPasswordToken: string;
-  resetPasswordExpires: Date;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-const userSchema = new Schema({
+interface IUserDocument extends MongooseDocument {
+  email: string;
+  password: string;
+  name: string;
+  surname: string;
+  role: string;
+  isInvited: boolean;
+  salt: string;
+  comparePassword: (candidatePassword: string) => Promise<boolean>;
+  generateAuthToken: () => string;
+}
+
+interface IUserSchema extends Schema {
+  comparePassword: (candidatePassword: string) => Promise<boolean>;
+  generateAuthToken: () => string;
+}
+
+const userSchema = new Schema<IUserDocument, Model<IUserDocument>>({
   email: {
     type: String,
     required: true,
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    minlength: 8,
   },
   name: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
   },
   surname: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
+  },
+  role: {
+    type: String,
+    required: true,
+    enum: ['user', 'admin'],
+    default: 'user',
+  },
+  isInvited: {
+    type: Boolean,
+    default: false,
   },
   salt: {
     type: String,
-    required: true
+    required: true,
   },
-  resetPasswordToken: {
-    type: String,
-    default: ''
-  },
-  resetPasswordExpires: {
-    type: Date,
-    default: null
-  }
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  const user = this as IUser;
-  if (!user.isModified('password')) return next();
-  
-  try {
+userSchema.pre<IUserDocument>('save', async function(next) {
+  if (this.isModified('password')) {
     const salt = await bcrypt.genSalt(10);
-    user.salt = salt;
-    user.password = await bcrypt.hash(user.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+    this.salt = salt;
+    this.password = await bcrypt.hash(this.password, salt);
   }
+  next();
 });
 
-// Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  const user = this as IUser;
-  return bcrypt.compare(candidatePassword, user.password);
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-export const User = mongoose.model<IUser>('User', userSchema);
+userSchema.methods.generateAuthToken = function(): string {
+  const token = jwt.sign(
+    { _id: this._id },
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: '1h' }
+  );
+  return token;
+};
+
+const UserModel = mongoose.model<IUserDocument>('User', userSchema);
+export { UserModel, IUserDocument };
+
+// Add type declarations for jsonwebtoken
+declare module 'jsonwebtoken' {
+  export interface SignOptions {
+    expiresIn?: string | number;
+    algorithm?: string;
+  }
+}
+
+const UserModel = mongoose.model<IUserDocument>('User', userSchema);
+export { UserModel, IUserDocument, IUser, IUserSchema };

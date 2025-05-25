@@ -1,0 +1,34 @@
+name: Frontend Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '22'
+        cache: 'pnpm'
+    
+    - name: Install Dependencies
+      run: pnpm install
+      working-directory: frontend
+    
+    - name: Build
+      run: pnpm build
+      working-directory: frontend
+    
+    - name: Upload Frontend Build
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-build
+        path: frontend/dist

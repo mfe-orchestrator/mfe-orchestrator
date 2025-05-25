@@ -21,17 +21,6 @@ const pipelineAsync = promisify(pipeline);
 const execAsync = promisify(exec);
 
 export default async function uploadMicrofrontendController(fastify: FastifyInstanceWithConfig) {
-  fastify.register(require('@fastify/multipart'), {
-    attachFieldsToBody: true,
-    limits: {
-      fieldNameSize: 100, // Max field name size
-      fieldSize: 1000000, // Max field value size
-      fields: 10, // Max number of non-file fields
-      fileSize: 10000000, // Max file size
-      files: 1, // Max number of files
-      headerPairs: 2000 // Max number of header key=>value pairs
-    }
-  });
 
   fastify.post<{ Body: MicrofrontendUploadDTO; File: FastifyMultipartFile; }>('microfrontends/upload', {
     schema: {
