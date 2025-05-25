@@ -14,15 +14,18 @@
   "packageManager": "pnpm@10.7.0",
   "dependencies": {
     "@fastify/autoload": "^6.2.0",
+    "@fastify/multipart": "^9.0.3",
     "@redis/client": "^5.1.0",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.3.1",
     "fastify": "^5.3.3",
     "fastify-auth0-verify": "^1.0.0",
+    "fastify-multipart": "^5.4.0",
     "fastify-plugin": "^5.0.1",
     "mongoose": "^8.15.0",
     "prisma": "^6.8.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

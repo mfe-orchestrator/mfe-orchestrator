@@ -1,6 +1,6 @@
 import { User } from '../models/UserModel';
 import { randomBytes } from 'crypto';
-import { sendResetPasswordEmail } from '../services/emailService';
+import { sendResetPasswordEmail } from '../service/emailService';
 import { FastifyInstanceWithConfig, FastifyRequestWithUser } from '../types';
 import UserRegistrationDTO from '../types/UserRegistrationDTO';
 import UserLoginDTO from '../types/UserLoginDTO';

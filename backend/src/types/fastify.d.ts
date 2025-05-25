@@ -3,6 +3,23 @@ import { RedisClientType, RedisFunctions, RedisModules, RedisScripts } from '@re
 import Auth0UserDTO from '../dto/Auth0UserDTO';
 import UserDTO from '../dto/UserDTO';
 
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyMultipartFile } from '@fastify/multipart';
+import { FastifyInstance } from 'fastify';
+import { FastifyInstanceWithConfig } from './index';
+
+export interface FastifyRequestWithConfig extends FastifyRequest {
+  config: FastifyInstanceWithConfig['config'];
+}
+
+export interface FastifyReplyWithConfig extends FastifyReply {
+  config: FastifyInstanceWithConfig['config'];
+}
+
+export interface FastifyMultipartRequest extends FastifyRequest {
+  file: FastifyMultipartFile;
+}
+
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: Authenticate;
