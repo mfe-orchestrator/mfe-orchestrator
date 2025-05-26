@@ -53,6 +53,11 @@ declare module 'fastify' {
       AZURE_ENTRAID_AUTHORITY: string;
       AZURE_ENTRAID_SCOPES: string;
       AZURE_ENTRAID_API_AUDIENCE: string;
+      GOOGLE_CLIENT_ID: string;
+      GOOGLE_REDIRECT_URI: string;
+      GOOGLE_AUTH_SCOPE: string;
+      GOOGLE_AUTH_HOSTED_DOMAIN: string;
+      GOOGLE_API_AUDIENCE: string;
     };
   }
 

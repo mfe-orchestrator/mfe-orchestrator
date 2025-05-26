@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-
 import fastifyPlugin from 'fastify-plugin';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUI from '@fastify/swagger-ui';

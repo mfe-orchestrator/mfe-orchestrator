@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import environmentService from '../service/EnvironmentService';
 import { EnvironmentDTO } from '../types/EnvironmentDTO';
 
-export default async function environmentRoutes(fastify: FastifyInstance) {
+export default async function environmentController(fastify: FastifyInstance) {
   
   fastify.get('/environments', async (request, reply) => {
     return reply.send(await environmentService.getAll());

@@ -1,122 +1,56 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { Microfrontend } from '../models/MicrofrontendModel';
 import { MicrofrontendService } from '../services/MicrofrontendService';
-import { Environment } from '../models/EnvironmentModel';
-import { EnvironmentService } from '../services/EnvironmentService';
+import { EnvironmentService } from '../service/EnvironmentService';
 
-export class MicrofrontendController {
-  constructor(private readonly microfrontendService: MicrofrontendService, private readonly environmentService: EnvironmentService) {}
+export default async function microfrontendController(fastify: FastifyInstance) {
+  const microfrontendService = new MicrofrontendService();
+  const environmentService = new EnvironmentService();
 
-  async create(
-    request: FastifyRequest<{ Body: Microfrontend }>,
-    reply: FastifyReply
-  ) {
+  fastify.post('/microfrontends', async (request: FastifyRequest<{ Body: Microfrontend }>, reply: FastifyReply) => {
     try {
-      const microfrontend = await this.microfrontendService.create(request.body);
-      reply.status(201).send(microfrontend);
+      const microfrontend = await microfrontendService.create(request.body);
+      return reply.status(201).send(microfrontend);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to create microfrontend' });
+      return reply.status(500).send({ error: 'Failed to create microfrontend' });
     }
-  }
+  });
 
-  async getById(
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply
-  ) {
+  fastify.get('/microfrontends/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
-      const microfrontend = await this.microfrontendService.getById(request.params.id);
-      if (!microfrontend) {
-        reply.status(404).send({ error: 'Microfrontend not found' });
-      } else {
-        reply.status(200).send(microfrontend);
-      }
+      const microfrontend = await microfrontendService.getById(request.params.id);
+      return reply.send(microfrontend);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to get microfrontend' });
+      return reply.status(404).send({ error: 'Microfrontend not found' });
     }
-  }
+  });
 
-  async getAll(request: FastifyRequest, reply: FastifyReply) {
+  fastify.get('/microfrontends', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const microfrontends = await this.microfrontendService.getAll();
-      reply.status(200).send(microfrontends);
+      const microfrontends = await microfrontendService.getAll();
+      return reply.send(microfrontends);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to get microfrontends' });
+      return reply.status(500).send({ error: 'Failed to fetch microfrontends' });
     }
-  }
+  });
 
-  async update(
-    request: FastifyRequest<{ Params: { id: string }; Body: Partial<Microfrontend> }>,
-    reply: FastifyReply
-  ) {
+  fastify.put('/microfrontends/:id', async (request: FastifyRequest<{ Params: { id: string }; Body: Partial<Microfrontend> }>, reply: FastifyReply) => {
     try {
-      const updatedMicrofrontend = await this.microfrontendService.update(
+      const updatedMicrofrontend = await microfrontendService.update(
         request.params.id,
         request.body
       );
-      if (!updatedMicrofrontend) {
-        reply.status(404).send({ error: 'Microfrontend not found' });
-      } else {
-        reply.status(200).send(updatedMicrofrontend);
-      }
+      return reply.send(updatedMicrofrontend);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to update microfrontend' });
+      return reply.status(500).send({ error: 'Failed to update microfrontend' });
     }
-  }
+  });
 
-  async delete(
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply
-  ) {
+  fastify.post('/microfrontends/:id/deploy', async (request: FastifyRequest<{ Params: { id: string }; Body: { environmentId: string } }>, reply: FastifyReply) => {
     try {
-      const deleted = await this.microfrontendService.delete(request.params.id);
-      if (!deleted) {
-        reply.status(404).send({ error: 'Microfrontend not found' });
-      } else {
-        reply.status(204).send();
-      }
+      await microfrontendService.deploy(request.params.id, request.body.environmentId);
+      return reply.send({ message: 'Deployment successful' });
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to delete microfrontend' });
+      return reply.status(500).send({ error: 'Failed to deploy microfrontend' });
     }
-  }
-
-  async deploy(
-    request: FastifyRequest<{ Params: { id: string }; Body: { environmentId: string } }>,
-    reply: FastifyReply
-  ) {
-    try {
-      const { environmentId } = request.body;
-      const microfrontendId = request.params.id;
-
-      // Check if microfrontend exists
-      const microfrontend = await this.microfrontendService.getById(microfrontendId);
-      if (!microfrontend) {
-        return reply.status(404).send({ error: 'Microfrontend not found' });
-      }
-
-      // Check if target environment exists
-      const environment = await this.environmentService.getById(environmentId);
-      if (!environment) {
-        return reply.status(404).send({ error: 'Target environment not found' });
-      }
-
-      // Create a new microfrontend with the same properties but different environment
-      const newMicrofrontend = {
-        ...microfrontend,
-        environment: environmentId,
-        slug: `${microfrontend.slug}-${environment.slug}`,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      // Save the new microfrontend
-      const savedMicrofrontend = await this.microfrontendService.create(newMicrofrontend);
-
-      reply.status(201).send({
-        message: 'Microfrontend deployed successfully',
-        deployedMicrofrontend: savedMicrofrontend
-      });
-    } catch (error) {
-      reply.status(500).send({ error: 'Failed to deploy microfrontend' });
-    }
-  }
+  });
 }
