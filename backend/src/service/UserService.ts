@@ -8,7 +8,7 @@ import ResetPasswordRequestDTO from '../types/ResetPasswordRequestDTO';
 import ResetPasswordDataDTO from '../types/ResetPasswordDataDTO';
 import { UserInvitationDTO } from '../types/UserInvitationDTO';
 import { randomBytes } from 'crypto';
-import { sendResetPasswordEmail } from './emailService';
+import { sendResetPasswordEmail } from './EmailService';
 import { Document } from 'mongoose';
 
 export class UserService {

@@ -1,10 +1,5 @@
 import { FastifyInstance } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
-import UserRepository from '../repository/UsersRepository';
-import AuthenticationError from '../errors/AuthenticationError';
-import AuthorizationError from '../errors/AuthorizationError';
-import axios from 'axios';
-import Auth0UserDTO from '../dto/Auth0UserDTO';
 
 // export const userHasGrants = (requiredGrants?: string[], userGrants?: string[]) => {
 //   if (!requiredGrants) return true;
@@ -77,5 +72,5 @@ export default fastifyPlugin(
     //   }
     // });
   },
-  { name: 'authorization', dependencies: ['config', 'auth0'] }
+  { name: 'authorization', dependencies: ['config'] }
 );

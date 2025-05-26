@@ -1,23 +1,52 @@
+import mongoose, { Model, Document } from 'mongoose';
 import { Microfrontend } from '../models/MicrofrontendModel';
+
+export type MicrofrontendDocument = Document & Microfrontend;
+
+type MicrofrontendType = typeof Microfrontend;
 import { Environment } from '../models/EnvironmentModel';
 import { EnvironmentService } from './EnvironmentService';
+import MicrofrontendDTO from '../types/MicrofrontendDTO';
 
 export class MicrofrontendService {
-  constructor(private readonly environmentService: EnvironmentService) {}
+  private microfrontendModel: Model<MicrofrontendDocument>;
 
-  async create(microfrontend: typeof Microfrontend): Promise<typeof Microfrontend> {
-    // Add business logic here
-    return microfrontend;
+  constructor(microfrontendModel: Model<MicrofrontendDocument>) {
+    this.microfrontendModel = microfrontendModel;
   }
 
-  async getById(id: string): Promise<typeof Microfrontend | null> {
-    // Add business logic here
-    return null;
+  async create(microfrontend: MicrofrontendDTO, environment: string): Promise<MicrofrontendDocument> {
+    return await this.microfrontendModel.create(microfrontend);
   }
 
-  async getAll(): Promise<typeof Microfrontend[]> {
-    // Add business logic here
-    return [];
+  async getById(id: string): Promise<MicrofrontendDocument | null> {
+    return await this.microfrontendModel.findById(id);
+  }
+
+  async getAll(): Promise<MicrofrontendDocument[]> {
+    return await this.microfrontendModel.find();
+  }
+
+  async getByEnvironment(environment: string): Promise<MicrofrontendDocument[]> {
+    return await this.microfrontendModel.find({ environment });
+  }
+
+  async update(id: string, updates: Partial<Microfrontend>): Promise<MicrofrontendDocument | null> {
+    const result = await this.microfrontendModel.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true }
+    );
+    return result;
+  }
+
+  async delete(id: string): Promise<MicrofrontendDocument | null> {
+    return await this.microfrontendModel.findByIdAndDelete(id);
+  }
+
+  async bulkDelete(ids: string[]): Promise<number> {
+    const result = await this.microfrontendModel.deleteMany({ _id: { $in: ids } });
+    return result.deletedCount;
   }
 
   async update(id: string, updates: Partial<typeof Microfrontend>): Promise<typeof Microfrontend | null> {
@@ -46,3 +75,5 @@ export class MicrofrontendService {
     // Add deployment logic here
   }
 }
+
+export default new MicrofrontendService()
