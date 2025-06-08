@@ -1,10 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { MicrofrontendService } from '../service/MicrofrontendService';
-import { Microfrontend } from '../models/MicrofrontendModel';
 import MicrofrontendDTO from '../types/MicrofrontendDTO';
 
 export default async function microfrontendController(fastify: FastifyInstance) {
-  const microfrontendService = new MicrofrontendService(Microfrontend);
+  const microfrontendService = new MicrofrontendService();
 
   fastify.get<{ Querystring: {
     environment?: string;

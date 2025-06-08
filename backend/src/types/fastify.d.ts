@@ -23,7 +23,6 @@ export interface FastifyMultipartRequest extends FastifyRequest {
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: Authenticate;
-    redis: RedisClientType<RedisModules, RedisFunctions, RedisScripts>;
     config: {
       PORT: number;
       DATABASE_URL: string;

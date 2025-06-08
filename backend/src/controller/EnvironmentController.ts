@@ -1,8 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import environmentService from '../service/EnvironmentService';
+import EnvironmentService from '../service/EnvironmentService';
 import { EnvironmentDTO } from '../types/EnvironmentDTO';
 
 export default async function environmentController(fastify: FastifyInstance) {
+
+  const environmentService = new EnvironmentService();
   
   fastify.get('/environments', async (request, reply) => {
     return reply.send(await environmentService.getAll());

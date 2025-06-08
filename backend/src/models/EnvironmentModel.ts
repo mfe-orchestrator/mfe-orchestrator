@@ -24,4 +24,5 @@ const environmentSchema = new Schema({
   timestamps: true,
 });
 
-export const Environment = mongoose.model<IEnvironment>('Environment', environmentSchema);
+const Environment = mongoose.model<IEnvironment>('Environment', environmentSchema);
+export default Environment;

@@ -15,10 +15,8 @@ export default fastifyPlugin(
 
       await redisClient.connect();
 
-      fastify.decorate('redis', redisClient);
-
       fastify.addHook('onClose', async () => {
-        await redisClient.disconnect();
+        redisClient.destroy();
       });
     } catch (exception) {
       console.error('Error starting Redis');

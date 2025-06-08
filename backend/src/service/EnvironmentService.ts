@@ -1,8 +1,8 @@
 import { EntityNotFoundError } from '../errors/EntityNotFoundError';
-import { Environment } from '../models/EnvironmentModel';
+import Environment from '../models/EnvironmentModel';
 import { EnvironmentDTO } from '../types/EnvironmentDTO';
 
-export class EnvironmentService {
+class EnvironmentService {
   
   getAll() {
     return Environment.find().sort({ name: 1 });
@@ -60,4 +60,4 @@ export class EnvironmentService {
   }
 }
 
-export default new EnvironmentService();
+export default EnvironmentService;

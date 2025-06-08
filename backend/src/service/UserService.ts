@@ -1,17 +1,22 @@
-import { UserModel, IUserDocument } from '../models/UserModel';
+import User, { IUserDocument } from '../models/UserModel';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { InvalidCredentialsError } from '../errors/InvalidCredentialsError';
 import UserRegistrationDTO from '../types/UserRegistrationDTO';
 import UserLoginDTO from '../types/UserLoginDTO';
-import ResetPasswordRequestDTO from '../types/ResetPasswordRequestDTO';
 import ResetPasswordDataDTO from '../types/ResetPasswordDataDTO';
 import { UserInvitationDTO } from '../types/UserInvitationDTO';
 import { randomBytes } from 'crypto';
-import { sendResetPasswordEmail } from './EmailService';
-import { Document } from 'mongoose';
+import EmailService from './EmailService';
 
 export class UserService {
+
+  private emailService: EmailService;
+
+  constructor(emailService?: EmailService) {
+    this.emailService = emailService || new EmailService();
+  }
+
   async register(userData: UserRegistrationDTO) {
     const { email, password, name, surname } = userData;
     const existingUser = await User.findOne({ email });
@@ -83,7 +88,7 @@ export class UserService {
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
     await user.save();
 
-    await sendResetPasswordEmail(email, resetToken);
+    await this.emailService.sendResetPasswordEmail(email, resetToken);
   }
 
   async resetPassword(data: ResetPasswordDataDTO) {
@@ -104,7 +109,7 @@ export class UserService {
   }
 
   async getProfile(token: string) {
-    const user = await UserModel.findOne({ token });
+    const user = await User.findOne({ token });
     if (!user) {
       throw new Error('Invalid token');
     }

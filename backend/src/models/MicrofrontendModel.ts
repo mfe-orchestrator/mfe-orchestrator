@@ -1,6 +1,6 @@
-import mongoose, { Schema, Types } from 'mongoose';
+import mongoose, { Schema, Types, Document } from 'mongoose';
 
-interface IMicrofrontend extends mongoose.Document {
+export interface IMicrofrontend extends Document {
   slug: string;
   name: string;
   version: string;
@@ -70,4 +70,5 @@ microfrontendSchema.virtual('environmentName', {
   options: { select: 'name' }
 });
 
-export const Microfrontend = mongoose.model<IMicrofrontend>('Microfrontend', microfrontendSchema);
+const Microfrontend = mongoose.model<IMicrofrontend>('Microfrontend', microfrontendSchema);
+export default Microfrontend;

@@ -1,12 +1,12 @@
 import nodemailer from 'nodemailer';
 import { FastifyInstance } from 'fastify';
 
-export class EmailService {
+class EmailService {
   private transporter: nodemailer.Transporter;
   private config: any;
 
-  constructor(fastify: FastifyInstance) {
-    this.config = fastify.config;
+  constructor(fastify?: FastifyInstance) {
+    this.config = fastify?.config;
     this.transporter = nodemailer.createTransport({
       host: this.config.EMAIL_SMTP_HOST,
       port: this.config.EMAIL_SMTP_PORT,
@@ -54,3 +54,5 @@ export class EmailService {
     await this.transporter.sendMail(mailOptions);
   }
 }
+
+export default EmailService

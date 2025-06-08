@@ -1,11 +1,11 @@
 import { model, Schema } from 'mongoose';
 
-export interface IConfig {
+export interface IConfiguration extends Document {
   name: string;
   value: string;
 }
 
-const configSchema = new Schema<IConfig>({
+const configSchema = new Schema<IConfiguration>({
   name: {
     type: String,
     required: true,
@@ -21,4 +21,6 @@ const configSchema = new Schema<IConfig>({
   timestamps: true
 });
 
-export const Config = model<IConfig>('Config', configSchema);
+const Configuration = model<IConfiguration>('Configuration', configSchema);
+export default Configuration;
+

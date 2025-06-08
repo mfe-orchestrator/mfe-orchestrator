@@ -10,9 +10,11 @@ interface IUser {
   role: string;
   isInvited: boolean;
   salt: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
-interface IUserDocument extends MongooseDocument {
+export interface IUserDocument extends MongooseDocument {
   email: string;
   password: string;
   name: string;
@@ -20,16 +22,13 @@ interface IUserDocument extends MongooseDocument {
   role: string;
   isInvited: boolean;
   salt: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
   generateAuthToken: () => string;
 }
 
-interface IUserSchema extends Schema {
-  comparePassword: (candidatePassword: string) => Promise<boolean>;
-  generateAuthToken: () => string;
-}
-
-const userSchema = new Schema<IUserDocument, Model<IUserDocument>>({
+const userSchema = new Schema<IUserDocument, Model<IUser>>({
   email: {
     type: String,
     required: true,
@@ -41,6 +40,15 @@ const userSchema = new Schema<IUserDocument, Model<IUserDocument>>({
     type: String,
     required: true,
     minlength: 8,
+  },
+  resetPasswordToken:{
+    type: String,
+    required: false,
+    minlength: 8,
+  },
+  resetPasswordExpires:{
+    type: Date,
+    required: false,
   },
   name: {
     type: String,
@@ -93,5 +101,5 @@ userSchema.methods.generateAuthToken = function(): string {
   return "TODO LO DEVO GENERARE";
 };
 
-const UserModel = mongoose.model<IUserDocument>('User', userSchema);
-export { UserModel, IUserDocument, IUser, IUserSchema };
+const User = mongoose.model<IUserDocument>('User', userSchema);
+export default User;
