@@ -3,7 +3,7 @@ import ConfigResponseDTO from '../types/ConfigResponseDTO';
 
 export default async function configurationController(fastify: FastifyInstance) {
 
-    fastify.get('/configuration', async (request, reply) => {
+    fastify.get('/configuration', { config: { public: true} }, async (request, reply) => {
         const config = fastify.config;
         const response: ConfigResponseDTO = {
             frontendUrl: config.FRONTEND_URL,

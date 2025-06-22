@@ -12,26 +12,31 @@ import MainLogo from "@/components/MainLogo";
 import LoginWithGoogleButton from "./LoginWithGoogleButton";
 import LoginWithAuth0Button from "./LoginWithAuth0Button";
 import LoginWithMicrosoftButton from "./LoginWithMicrosoftButton";
+import { useAuth } from "../AuthContext";
+import LoginComponentProps from "./LoginComponentProps";
 
 interface FormValues {
   email: string;
   password: string;
 }
 
-const LoginPage = () => {
+const LoginPage : React.FC<LoginComponentProps> = ({onSuccessLogin}) => {
   const { login } = useUserApi();
   const parameters = useGlobalParameters();
   const form = useForm<FormValues>();
+  const auth = useAuth()
 
   const loginMutation = useMutation({
     mutationFn: login
   })
 
   const handleLogin = async (values: FormValues) => {
-    loginMutation.mutateAsync({
+    const loginData = await loginMutation.mutateAsync({
       email: values.email,
       password: values.password
     })
+    auth.setUser(loginData.user)
+    localStorage.setItem('token', loginData.accessToken)
   };
 
   return (
@@ -78,7 +83,7 @@ const LoginPage = () => {
                 {loginMutation.isPending ?  
                   <Spinner /> 
                 : 
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full" id="access">
                     Accedi
                   </Button>
                 }
@@ -99,13 +104,13 @@ const LoginPage = () => {
               
               <div className="flex flex-row gap-4">
                 {parameters.getParameter("providers.google") &&
-                  <LoginWithGoogleButton />
+                  <LoginWithGoogleButton onSuccessLogin={onSuccessLogin} />
                 }
                 {parameters.getParameter("providers.auth0") &&
-                  <LoginWithAuth0Button />
+                  <LoginWithAuth0Button onSuccessLogin={onSuccessLogin} />
                 }
                 {parameters.getParameter("providers.azure") && (
-                    <LoginWithMicrosoftButton />
+                    <LoginWithMicrosoftButton onSuccessLogin={onSuccessLogin} />
                 )}
               </div>
             </>

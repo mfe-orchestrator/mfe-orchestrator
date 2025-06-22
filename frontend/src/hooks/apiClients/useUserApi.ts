@@ -39,7 +39,7 @@ export interface UserInvitationDTO {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   user: User;
 }
 

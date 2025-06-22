@@ -86,16 +86,10 @@ async function doRequest<R, D = unknown>(config?: IClientRequestData<D>): Promis
     const { authenticated = AuthenticationType.REQUIRED, headers, addUTMFields, token, params, doNotLog = false, eventName, ...conf } = config || {}
     try {
         let headersNew: AxiosRequestHeaders | any = {}
-        /*let tokenReal
-        if (authenticated === AuthenticationType.REQUIRED) {
-            tokenReal = token || (await getJWT())
-        } else if (authenticated === AuthenticationType.OPTIONAL) {
-            tokenReal = token || (await getJWTOptional())
-        }
 
-        if (tokenReal) {
-            headersNew["Authorization"] = `Bearer ${tokenReal}`
-        }*/
+        if (config.token) {
+            headersNew["Authorization"] = `Bearer ${config.token}`
+        }
 
         headersNew["Content-Type"] = "application/json"
         headersNew["Accept"] = "application/json"

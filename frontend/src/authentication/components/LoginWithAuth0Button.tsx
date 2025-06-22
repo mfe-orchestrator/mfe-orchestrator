@@ -1,13 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { useAuth0 } from "@auth0/auth0-react";
+import LoginComponentProps from "./LoginComponentProps";
+import { deleteToken } from "../tokenUtils";
 
 
-const LoginWithAuth0Button : React.FC = () => {
+const LoginWithAuth0Button : React.FC<LoginComponentProps> = ({onSuccessLogin}) => {
 
   const auth = useAuth0();
 
-  const handleAuth0Login = () => {
-    auth.loginWithPopup();
+  const handleAuth0Login = async () => {
+    await auth.loginWithPopup();
+    deleteToken();
+    onSuccessLogin?.();
   }  
     
   return <Button 

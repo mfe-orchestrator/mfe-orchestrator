@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
+import AuthenticationError from '../errors/AuthenticationError';
 
 // export const userHasGrants = (requiredGrants?: string[], userGrants?: string[]) => {
 //   if (!requiredGrants) return true;
@@ -36,16 +37,18 @@ import fastifyPlugin from 'fastify-plugin';
 
 export default fastifyPlugin(
   async (fastify: FastifyInstance) => {
-    // fastify.addHook('preHandler', async (request, response) => {
-    //   if (request.routeOptions.config.public || request.routeOptions.url?.startsWith('/api-docs')) {
-    //     return;
-    //   }
-    //   fastify.log.debug('Pre handler login ok');
-    //   const authToken = request?.headers?.['authorization']?.replace('Bearer ', '');
-    //   fastify.log.debug('Auth token', authToken);
-    //   if (!authToken) {
-    //     throw new AuthenticationError('Missing or invalid Authorization header');
-    //   }
+    fastify.addHook('preHandler', async (request, response) => {
+      if (request.routeOptions.config.public || request.routeOptions.url?.startsWith('/api-docs')) {
+        return;
+      }
+      fastify.log.debug('Pre handler login ok');
+      const authToken = request?.headers?.['authorization']?.replace('Bearer ', '');
+      fastify.log.debug('Auth token', authToken);
+      if (!authToken) {
+        throw new AuthenticationError('Missing or invalid Authorization header');
+      }
+
+      
     //   await fastify.authenticate(request, response);
     //   if (!request.user) {
     //     throw new AuthenticationError('User not found');
@@ -70,7 +73,7 @@ export default fastifyPlugin(
     //   if (!userHasGrants(request.routeOptions.config.grants, request.databaseUser.grants)) {
     //     throw new AuthorizationError('User does not have required grants', request.routeOptions.config.grants);
     //   }
-    // });
+    });
   },
   { name: 'authorization', dependencies: ['config'] }
 );

@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { Document as MongooseDocument } from 'mongoose';
+import jwt from 'jsonwebtoken';
+import { AuthTokenDataDTO } from '../dto/AuthTokenData.dto';
 
 interface IUser {
   email: string;
@@ -12,6 +14,8 @@ interface IUser {
   salt: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface IUserDocument extends MongooseDocument {
@@ -24,11 +28,15 @@ export interface IUserDocument extends MongooseDocument {
   salt: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
-  generateAuthToken: () => string;
+  generateAuthToken: () => AuthTokenDataDTO;
+  toFrontendObject: () => IUser;
 }
 
 const userSchema = new Schema<IUserDocument, Model<IUser>>({
+  _id: { type: Schema.Types.ObjectId, auto: true },
   email: {
     type: String,
     required: true,
@@ -41,12 +49,11 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
     required: true,
     minlength: 8,
   },
-  resetPasswordToken:{
+  resetPasswordToken: {
     type: String,
     required: false,
-    minlength: 8,
   },
-  resetPasswordExpires:{
+  resetPasswordExpires: {
     type: Date,
     required: false,
   },
@@ -91,14 +98,32 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.methods.generateAuthToken = function(): string {
-  // const token = jwt.sign(
-  //   { _id: this._id },
-  //   process.env.JWT_SECRET || 'your-secret-key',
-  //   { expiresIn: '1h' }
-  // );
-  //TODO LO DEVO GENERARE
-  return "TODO LO DEVO GENERARE";
+userSchema.methods.toFrontendObject = function(): IUser {
+  const obj = this.toObject();
+  delete obj.password;
+  delete obj.salt;
+  delete obj.__v;
+  return obj;
+};
+
+userSchema.methods.generateAuthToken = function(): AuthTokenDataDTO {
+  const payload = {
+    id: this._id.toString(),
+    email: this.email,
+    role: this.role,
+    iss: "microfronted.orchestrator.hub"
+  };
+
+  const accessToken = jwt.sign(
+    payload,
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: '24h' }
+  );
+  
+  return {
+    accessToken,
+    tokenPayload: payload
+  }
 };
 
 const User = mongoose.model<IUserDocument>('User', userSchema);

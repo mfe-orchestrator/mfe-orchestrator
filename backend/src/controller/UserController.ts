@@ -12,12 +12,7 @@ export function UserController(fastify: FastifyInstance) {
     Body: UserRegistrationDTO
   }>('/users/registration', async (req, res) => {
     const out = await userService.register(req.body)
-    return res.send({
-      ...out.toObject(),
-      password: undefined,
-      salt: undefined,
-      __v: undefined
-    });
+    return res.send(out.toFrontendObject());
   });
 
   fastify.post<{
@@ -42,8 +37,7 @@ export function UserController(fastify: FastifyInstance) {
 
   //TODO da fare
   fastify.get('/users/profile', async (req, res) => {
-    res.send("ok")
-    //return res.send(await userService.getProfile("TODO DEVO METTERLO"));
+    return res.send(await userService.getProfile("sdsd"));
   });
 
   fastify.post<{

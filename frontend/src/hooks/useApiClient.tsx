@@ -1,6 +1,9 @@
 import { AxiosResponse } from "axios"
 import { IClientRequestData } from "../api/apiClient"
 import ApiClient, { AuthenticationType, IClientRequestMetadata } from "../api/apiClient"
+import { useMsal } from "@azure/msal-react"
+import { useAuth0 } from "@auth0/auth0-react"
+import { IToken, getToken as getTokenFromStorage } from "@/authentication/tokenUtils"
 //import useTheme from "./useTheme"
 
 export interface IViolations {
@@ -23,6 +26,8 @@ export interface IApiClientOptions {
 
 export const useApiClient = (options?: IApiClientOptions) => {
     //const theme = useTheme()
+    const msalAuth = useMsal()
+    const auth0Auth = useAuth0()
 
     async function doRequest<R, D = unknown>(config?: IClientRequestDataExtended<D>): Promise<AxiosResponse<R>> {
         const realConfig = {
@@ -33,7 +38,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
         const { silent = false, token, authenticated = AuthenticationType.REQUIRED, ...conf } = realConfig
 
         try {
-            let tokenReal = undefined
+            let tokenReal : IToken | undefined = undefined
 
             try {
                 if (authenticated == AuthenticationType.REQUIRED) {
@@ -49,7 +54,10 @@ export const useApiClient = (options?: IApiClientOptions) => {
 
             //logger.info("[tokenReal]", "[doRequest]", { tokenReal })
             const result = await ApiClient.doRequest<R, D>({
-                token: tokenReal,
+                token: tokenReal?.token,
+                headers: {
+                    issuer: tokenReal?.issuer
+                },
                 authenticated,
                 ...conf,
                 doNotLog: true
@@ -68,40 +76,49 @@ export const useApiClient = (options?: IApiClientOptions) => {
         }
     }
 
-    const getToken = async (token?: string): Promise<string | undefined> => {
-        if (token) return token
-        // //console.log("Getting TOKEN", msalAuth.instance.getActiveAccount(), msalAuth.accounts, stepAuth.isAuthenticated)
-        // if (stepAuth.isAuthenticated) {
-        //     //console.log("Getting TOKEN with Auth0")
-        //     return (await stepAuth.getAccessTokenSilently())?.access_token
-        // } else if (msalAuth && msalAuth.instance && msalAuth.accounts && msalAuth.accounts.length > 0) {
-        //     //console.log("Getting TOKEN with MSAL")
-        //     try {
-        //         const activeAccount = msalAuth.instance.getActiveAccount()
-        //         //console.log("[getToken] Sto prendedo l'access token silent su questo account", activeAccount)
-        //         const response = await msalAuth.instance.acquireTokenSilent({
-        //             scopes: ["openid", "profile", "email", "offline_access"],
-        //             account: activeAccount || undefined
-        //         })
-        //         return response.idToken
-        //     } catch (error) {
-        //         if (error instanceof Error && error.name === "InteractionRequiredAuthError") {
-        //             const response = await msalAuth.instance.handleRedirectPromise()
-        //             if (response) {
-        //                 msalAuth.instance.setActiveAccount(response.account)
-        //             }
-        //             return response?.idToken
-        //         }
-        //     }
-        // } else {
-        //     logger.warn("No authentication method available to get token", "getToken", { token, authenticatedAuth0: stepAuth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
-        // }
+    const getToken = async (token?: string): Promise<IToken | undefined> => {
+        if (token) return {token, issuer: ""}
+        const tokenLocal = getTokenFromStorage()
+        if(tokenLocal) return tokenLocal
+        if (auth0Auth.isAuthenticated) {
+            return {
+                token : await auth0Auth.getAccessTokenSilently(),
+                issuer: "auth0"
+            }
+        } else if (msalAuth && msalAuth.instance && msalAuth.accounts && msalAuth.accounts.length > 0) {
+            try {
+                const activeAccount = msalAuth.instance.getActiveAccount()
+                //console.log("[getToken] Sto prendedo l'access token silent su questo account", activeAccount)
+                const response = await msalAuth.instance.acquireTokenSilent({
+                    scopes: ["openid", "profile", "email", "offline_access"],
+                    account: activeAccount || undefined
+                })
+                return {
+                    token: response.idToken,
+                    issuer: "msal"
+                }
+            } catch (error) {
+                if (error instanceof Error && error.name === "InteractionRequiredAuthError") {
+                    const response = await msalAuth.instance.handleRedirectPromise()
+                    if (response) {
+                        msalAuth.instance.setActiveAccount(response.account)
+                    }
+                    return {
+                        token: response?.idToken,
+                        issuer: "msal"
+                    }
+                }
+            }
+        } else {
+            console.error("No authentication method available to get token", "getToken", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
+        }
     }
 
     const isAuthenticated = (): boolean => {
-        return false;
-        // const activeAccount = msalAuth.instance.getActiveAccount()
-        // return stepAuth.isAuthenticated || Boolean(activeAccount)
+        const token = getTokenFromStorage()
+        if(token) return true;
+        const activeAccount = msalAuth.instance.getActiveAccount()
+        return auth0Auth.isAuthenticated || Boolean(activeAccount)
     }
 
     // const getErrorNotification = (customErrorMessage?: any, e?: any): string | React.ReactNode => {

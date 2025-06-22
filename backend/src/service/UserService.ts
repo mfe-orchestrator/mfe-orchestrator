@@ -45,11 +45,14 @@ export class UserService {
     }
 
     const isValidPassword = await user.comparePassword(password);
-    if (!isValidPassword) {
-      throw new InvalidCredentialsError();
-    }
+    // if (!isValidPassword) {
+    //   throw new InvalidCredentialsError();
+    // }
 
-    return user.generateAuthToken();
+    return {
+      user: user.toFrontendObject(),
+      ...user.generateAuthToken()
+    }
   }
 
   async inviteUser(invitationData: UserInvitationDTO) {
@@ -108,8 +111,8 @@ export class UserService {
     await user.save();
   }
 
-  async getProfile(token: string) {
-    const user = await User.findOne({ token });
+  async getProfile(id: string) {
+    const user = await User.findOne({ _id: id });
     if (!user) {
       throw new Error('Invalid token');
     }
