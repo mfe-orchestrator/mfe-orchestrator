@@ -1,6 +1,7 @@
 name: Backend Build
 
 on:
+  workflow_call:  
   push:
     branches: [ main, develop ]
   pull_request:
