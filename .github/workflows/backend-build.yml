@@ -32,7 +32,7 @@ jobs:
       working-directory: backend
     
     - name: Upload Backend Build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: backend-build
         path: backend/dist
