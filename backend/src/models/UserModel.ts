@@ -72,7 +72,7 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
   },
   salt: {
     type: String,
-    required: true,
+    required: false,
   },
 }, {
   timestamps: true,

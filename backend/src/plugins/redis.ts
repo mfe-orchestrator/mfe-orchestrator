@@ -6,6 +6,11 @@ export let redisClient: RedisClientType;
 
 export default fastifyPlugin(
   async (fastify: FastifyInstance) => {
+    if(!fastify.config.REDIS_URL){
+      fastify.log.warn("Cannot see redis URL, will not connect")
+      return
+    }
+    
     try {
       redisClient = createClient({
         url: fastify.config.REDIS_URL,

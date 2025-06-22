@@ -70,3 +70,5 @@ declare module 'fastify' {
     public?: boolean;
   }
 }
+
+export type AppInstance = FastifyInstance;

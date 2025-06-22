@@ -2,8 +2,9 @@ import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import AutoLoad from '@fastify/autoload';
 import path from 'path';
+import { AppInstance } from './types/fastify';
 
-export const fastify = Fastify({
+export const fastify : AppInstance = Fastify({
   logger: true,
 });
 

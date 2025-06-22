@@ -1,54 +1,43 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import useUserApi from "@/hooks/apiClients/useUserApi";
+import TextField from "@/components/input/TextField.rhf";
+import { FormProvider } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import Spinner from "@/components/Spinner";
+
+interface FormValues {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register } = useUserApi();
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<FormValues>({});
+
+  const registerMutation = useMutation({
+    mutationFn: register
+  })
+
+  const handleRegister = async (values: FormValues) => {
     
-    if (password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Errore",
-        description: "Le password non coincidono.",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    const success = await register(email, password, name);
-    
-    setIsLoading(false);
-    
-    if (success) {
-      toast({
-        title: "Registrazione completata",
-        description: "Account creato con successo.",
-      });
-      navigate("/dashboard");
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Registrazione fallita",
-        description: "Non è stato possibile creare l'account.",
-      });
-    }
+    registerMutation.mutate({
+      name: values.name,
+      surname: values.surname,
+      email: values.email,
+      password: values.password
+    })
   };
 
   return (
@@ -68,61 +57,57 @@ const RegisterPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleRegister}>
+            <FormProvider {...form}>
+            <form onSubmit={form.handleSubmit(handleRegister)}>
               <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Il tuo nome"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
+                <TextField 
+                  name="name"
+                  label="Nome"
+                  placeholder="Inserisci il tuo nome"
+                  rules={{ required: true }}
+                />
+
+                <TextField 
+                  name="surname"
+                  label="Cognome"
+                  placeholder="Inserisci il tuo cognome"
+                  rules={{ required: true }}
+                />
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="nome@esempio.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                <TextField 
+                  name="email"
+                  label="Email"
+                  type="email"
+                  placeholder="nome@esempio.com"
+                  rules={{ required: true }}
+                />
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
+                <TextField 
+                  name="password"
+                  label="Password"
+                  type="password"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                  rules={{ required: true }}
+                />
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword">Conferma Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
+                <TextField 
+                  name="confirmPassword"
+                  label="Conferma Password"
+                  type="password"
                     placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                  rules={{ required: true }}
+                />
                 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Registrazione in corso..." : "Registrati"}
-                </Button>
+                {registerMutation.isPending ? 
+                  <Spinner />  
+                : 
+                  <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                    Registrati
+                  </Button>
+              }
               </div>
             </form>
+            </FormProvider>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">

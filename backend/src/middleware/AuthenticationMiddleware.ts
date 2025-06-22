@@ -1,5 +1,4 @@
-import { FastifyInstance, FastifyReply, FastifyRequest, HookHandlerDoneFunction } from 'fastify';
-import { Authenticate } from 'fastify-auth0-verify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 
 
 function AuthenticationMiddleware(request: FastifyRequest, reply: FastifyReply){

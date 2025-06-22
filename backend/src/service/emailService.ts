@@ -7,15 +7,19 @@ class EmailService {
 
   constructor(fastify?: FastifyInstance) {
     this.config = fastify?.config;
-    this.transporter = nodemailer.createTransport({
-      host: this.config.EMAIL_SMTP_HOST,
-      port: this.config.EMAIL_SMTP_PORT,
-      secure: this.config.EMAIL_SMTP_SECURE,
-      auth: {
-        user: this.config.EMAIL_SMTP_USER,
-        pass: this.config.EMAIL_SMTP_PASSWORD
-      }
-    });
+    if(!this.config){
+      this.transporter = nodemailer.createTransport({})
+    }else{
+      this.transporter = nodemailer.createTransport({
+        host: this.config.EMAIL_SMTP_HOST,
+        port: this.config.EMAIL_SMTP_PORT,
+        secure: this.config.EMAIL_SMTP_SECURE,
+        auth: {
+          user: this.config.EMAIL_SMTP_USER,
+          pass: this.config.EMAIL_SMTP_PASSWORD
+        }
+      });
+    }
   }
 
   async sendResetPasswordEmail(email: string, token: string): Promise<void> {

@@ -1,0 +1,7 @@
+.cache
+dist
+node_modules
+ngnix
+public
+node_modules
+pnpm-lock.yaml
