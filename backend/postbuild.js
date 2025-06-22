@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Funzione per copiare i file
-function copyFiles(src, dest) {
+function copyDirectory(src, dest) {
   // Verifica se la cartella di destinazione esiste, altrimenti creala
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
@@ -21,12 +21,18 @@ function copyFiles(src, dest) {
   });
 }
 
+function copyFile(src, dest) {
+  // Verifica se la cartella di destinazione esiste, altrimenti creala
+  fs.copyFileSync(src, dest);
+    console.log(`Copied: ${src} -> ${dest}`);
+}
+
 function postBuild() {
   console.log('Runing Postbuild script');
-  // copyFiles(
-  //   path.join(__dirname, 'src', 'emailTemplates'),
-  //   path.join(__dirname, 'dist', 'emailTemplates')
-  // );
+  copyFile(
+    path.join(__dirname, 'pnpm-lock.yaml'),
+    path.join(__dirname, 'dist', 'pnpm-lock.yaml')
+  );
   console.log('Postbuild script done');
 }
 

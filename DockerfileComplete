@@ -1,0 +1,59 @@
+# Use Ubuntu as base image
+FROM ubuntu:24.10
+
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    nginx \
+    nodejs \
+    npm \
+    redis-server \
+    tzdata \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MongoDB
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
+    && echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list \
+    && apt-get update \
+    && apt-get install -y mongodb-org \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Create necessary directories
+RUN mkdir -p /data/db /var/run/redis
+RUN mkdir -p /var/www/frontend /var/www/backend
+
+# Copy Nginx configuration
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/dist/ /var/www/frontend/
+COPY backend/dist/ /var/www/backend/
+
+# Install backend dependencies
+WORKDIR /var/www/backend
+RUN pnpm install
+
+WORKDIR /var/www
+
+# Copy and prepare start script
+COPY startComplete.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose ports
+EXPOSE 80 27017 6379
+
+# Environment variables
+ENV NOSQL_DATABASE_URL=mongodb://localhost:27017/admin
+ENV REDIS_URL=redis://localhost:6379
+
+# Set volumes for data persistence
+VOLUME ["/data/db", "/var/lib/redis"]
+
+# Start the application
+CMD ["/start.sh"]
