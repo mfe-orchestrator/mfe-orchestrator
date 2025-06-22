@@ -7,7 +7,7 @@ import UserLoginDTO from '../types/UserLoginDTO';
 import ResetPasswordDataDTO from '../types/ResetPasswordDataDTO';
 import { UserInvitationDTO } from '../types/UserInvitationDTO';
 import { randomBytes } from 'crypto';
-import EmailService from './EmailService';
+import EmailService from './EmailSenderService';
 
 export class UserService {
 

@@ -23,10 +23,10 @@ function copyFiles(src, dest) {
 
 function postBuild() {
   console.log('Runing Postbuild script');
-  copyFiles(
-    path.join(__dirname, 'src', 'emailTemplates'),
-    path.join(__dirname, 'dist', 'emailTemplates')
-  );
+  // copyFiles(
+  //   path.join(__dirname, 'src', 'emailTemplates'),
+  //   path.join(__dirname, 'dist', 'emailTemplates')
+  // );
   console.log('Postbuild script done');
 }
 

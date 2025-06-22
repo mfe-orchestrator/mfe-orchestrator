@@ -11,6 +11,9 @@ importers:
       '@fastify/autoload':
         specifier: ^6.3.1
         version: 6.3.1
+      '@fastify/env':
+        specifier: ^5.0.2
+        version: 5.0.2
       '@fastify/helmet':
         specifier: ^13.0.1
         version: 13.0.1
@@ -289,6 +292,9 @@ packages:
 
   '@fastify/deepmerge@2.0.2':
     resolution: {integrity: sha512-3wuLdX5iiiYeZWP6bQrjqhrcvBIf0NHbQH1Ur1WbHvoiuTYUEItgygea3zs8aHpiitn0lOB8gX20u1qO+FDm7Q==}
+
+  '@fastify/env@5.0.2':
+    resolution: {integrity: sha512-4m/jHS3s/G/DBJVODob9sxGUei/Ij8JFbA2PYqBfoihTm+Qqae2xD9xhez68UFZu1d4SNJPIb6uAOwbNvRYw+A==}
 
   '@fastify/error@3.4.1':
     resolution: {integrity: sha512-wWSvph+29GR783IhmvdwWnN4bUxTD01Vm5Xad4i7i1VuAOItLvbPAb69sb0IQ2N57yprvhNIwAP5B6xfKTmjmQ==}
@@ -988,6 +994,10 @@ packages:
     resolution: {integrity: sha512-R+rgrSRTRdU5mH14PZTCPZtW/zw3HDWNTS/1ZAQpL/5Upe/ye5K9WQkIysu4wBoiMwKynsz0a8qWuGsHgEvSAA==}
     engines: {node: '>= 8.0'}
 
+  dotenv-expand@10.0.0:
+    resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
+    engines: {node: '>=12'}
+
   dotenv@16.5.0:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
     engines: {node: '>=12'}
@@ -1021,6 +1031,9 @@ packages:
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
+
+  env-schema@6.0.1:
+    resolution: {integrity: sha512-WRD40Q25pP4NUbI3g3CNU5PPzcaiX7YYcPwiCZlfR4qGsKmTlckRixgHww0/fOXiXSNKA87pwshzq0ULTK/48A==}
 
   error-ex@1.3.2:
     resolution: {integrity: sha512-7dFHNmqeFSEt2ZBsCriorKnn3Z2pj+fd9kmI6QoWw4//DL+icEBfc0U7qJCisqrTsKTjw4fNFy2pW9OqStD84g==}
@@ -2607,6 +2620,11 @@ snapshots:
 
   '@fastify/deepmerge@2.0.2': {}
 
+  '@fastify/env@5.0.2':
+    dependencies:
+      env-schema: 6.0.1
+      fastify-plugin: 5.0.1
+
   '@fastify/error@3.4.1': {}
 
   '@fastify/error@4.2.0': {}
@@ -3489,6 +3507,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  dotenv-expand@10.0.0: {}
+
   dotenv@16.5.0: {}
 
   dynamic-dedupe@0.3.0:
@@ -3516,6 +3536,12 @@ snapshots:
   end-of-stream@1.4.4:
     dependencies:
       once: 1.4.0
+
+  env-schema@6.0.1:
+    dependencies:
+      ajv: 8.17.1
+      dotenv: 16.5.0
+      dotenv-expand: 10.0.0
 
   error-ex@1.3.2:
     dependencies:
