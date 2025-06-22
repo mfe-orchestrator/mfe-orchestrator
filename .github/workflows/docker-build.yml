@@ -1,17 +1,23 @@
 name: Docker Build
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, develop]
-    tags: [ '*' ]
+    branches: [main, develop]
+    tags: ['*']
 
 jobs:
-  build:
+  backend-build:
+    uses: ./.github/workflows/backend-build.yml
+    secrets: inherit
+
+  frontend-build:
+    uses: ./.github/workflows/frontend-build.yml
+    secrets: inherit
+
+  docker-build:
+    needs: [backend-build, frontend-build]
     runs-on: ubuntu-latest
-    
-    needs:
-      - backend-build
-      - frontend-build
     
     steps:
     - uses: actions/checkout@v4
