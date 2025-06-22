@@ -13,6 +13,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    - run: cd ./backend
     
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
