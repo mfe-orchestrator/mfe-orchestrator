@@ -8,6 +8,7 @@ import ResetPasswordDataDTO from '../types/ResetPasswordDataDTO';
 import { UserInvitationDTO } from '../types/UserInvitationDTO';
 import { randomBytes } from 'crypto';
 import EmailService from './EmailSenderService';
+import AuthenticationError from '../errors/AuthenticationError';
 
 export class UserService {
 
@@ -40,14 +41,18 @@ export class UserService {
     const { email, password } = loginData;
     const user = await User.findOne({ email });
 
+    if(!user?.password){
+      throw new AuthenticationError("This email is associated to an account created with an external provider")
+    }
+
     if (!user) {
       throw new UserNotFoundError(email);
     }
 
     const isValidPassword = await user.comparePassword(password);
-    // if (!isValidPassword) {
-    //   throw new InvalidCredentialsError();
-    // }
+    if (!isValidPassword) {
+      throw new InvalidCredentialsError();
+    }
 
     return {
       user: user.toFrontendObject(),
