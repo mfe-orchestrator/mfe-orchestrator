@@ -112,7 +112,7 @@ const ResetPasswordPage = () => {
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
               Hai già un account?{" "}
-              <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+              <Link to="/" className="text-primary underline-offset-4 hover:underline">
                 Accedi
               </Link>
             </p>
