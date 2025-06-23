@@ -3,12 +3,13 @@ import bcrypt from 'bcryptjs';
 import { Document as MongooseDocument } from 'mongoose';
 import jwt from 'jsonwebtoken';
 import { AuthTokenDataDTO } from '../dto/AuthTokenData.dto';
+export const ISSUER =  "microfronted.orchestrator.hub"
 
 interface IUser {
   email: string;
-  password: string;
+  password?: string;
   name: string;
-  surname: string;
+  surname?: string;
   role: string;
   isInvited: boolean;
   salt: string;
@@ -20,9 +21,9 @@ interface IUser {
 
 export interface IUserDocument extends MongooseDocument {
   email: string;
-  password: string;
+  password?: string;
   name: string;
-  surname: string;
+  surname?: string;
   role: string;
   isInvited: boolean;
   salt: string;
@@ -46,7 +47,7 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
     minlength: 8,
   },
   resetPasswordToken: {
@@ -64,7 +65,7 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
   },
   surname: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   role: {
@@ -86,7 +87,7 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
 });
 
 userSchema.pre<IUserDocument>('save', async function(next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') && this.password) {
     const salt = await bcrypt.genSalt(10);
     this.salt = salt;
     this.password = await bcrypt.hash(this.password, salt);
@@ -111,12 +112,12 @@ userSchema.methods.generateAuthToken = function(): AuthTokenDataDTO {
     id: this._id.toString(),
     email: this.email,
     role: this.role,
-    iss: "microfronted.orchestrator.hub"
+    iss: ISSUER
   };
 
   const accessToken = jwt.sign(
     payload,
-    process.env.JWT_SECRET || 'your-secret-key',
+    getSecret(),
     { expiresIn: '24h' }
   );
   
@@ -125,6 +126,8 @@ userSchema.methods.generateAuthToken = function(): AuthTokenDataDTO {
     tokenPayload: payload
   }
 };
+
+export const getSecret = () => process.env.JWT_SECRET || 'your-secret-key'
 
 const User = mongoose.model<IUserDocument>('User', userSchema);
 export default User;

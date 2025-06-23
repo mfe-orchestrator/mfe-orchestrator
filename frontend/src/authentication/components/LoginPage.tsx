@@ -14,6 +14,7 @@ import LoginWithAuth0Button from "./LoginWithAuth0Button";
 import LoginWithMicrosoftButton from "./LoginWithMicrosoftButton";
 import { useAuth } from "../AuthContext";
 import LoginComponentProps from "./LoginComponentProps";
+import { setToken } from "../tokenUtils";
 
 interface FormValues {
   email: string;
@@ -36,7 +37,7 @@ const LoginPage : React.FC<LoginComponentProps> = ({onSuccessLogin}) => {
       password: values.password
     })
     auth.setUser(loginData.user)
-    localStorage.setItem('token', loginData.accessToken)
+    setToken(loginData.accessToken, "microfronted.orchestrator.hub")
   };
 
   return (

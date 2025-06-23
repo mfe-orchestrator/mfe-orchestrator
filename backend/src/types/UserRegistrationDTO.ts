@@ -1,8 +1,8 @@
 interface UserRegistrationDTO {
   email: string;
-  password: string;
+  password?: string;
   name: string;
-  surname: string;
+  surname?: string;
 }
 
 export default UserRegistrationDTO

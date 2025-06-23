@@ -1,12 +1,10 @@
 import { Authenticate } from 'fastify-auth0-verify';
 import { RedisClientType, RedisFunctions, RedisModules, RedisScripts } from '@redis/client';
-import Auth0UserDTO from '../dto/Auth0UserDTO';
-import UserDTO from '../dto/UserDTO';
-
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { FastifyMultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify';
 import { FastifyInstanceWithConfig } from './index';
+import UserModel from '../models/UserModel';
 
 export interface FastifyRequestWithConfig extends FastifyRequest {
   config: FastifyInstanceWithConfig['config'];
@@ -61,8 +59,7 @@ declare module 'fastify' {
   }
 
   interface FastifyRequest {
-    auth0user: Auth0UserDTO;
-    databaseUser: UserDTO;
+    databaseUser: UserModel;
   }
 
   interface FastifyContextConfig {
