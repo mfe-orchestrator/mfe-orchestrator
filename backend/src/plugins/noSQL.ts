@@ -19,4 +19,4 @@ export default fastifyPlugin(async (fastify: FastifyInstance) => {
     fastify.log.error(err, 'Mongoose connection error')
     throw err
   }
-}, { name: 'nosql', dependencies: ['config'] })
+}, { name: 'noSQL', dependencies: ['config'] })

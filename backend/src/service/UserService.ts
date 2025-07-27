@@ -11,7 +11,6 @@ import EmailService from './EmailSenderService';
 import AuthenticationError from '../errors/AuthenticationError';
 
 export class UserService {
-
   private emailService: EmailService;
 
   constructor(emailService?: EmailService) {
@@ -35,6 +34,11 @@ export class UserService {
 
     await user.save();
     return user;
+  }
+
+  async existsAtLeastOneUser() {
+    const users = await User.find()
+    return users.length > 0;
   }
 
   async login(loginData: UserLoginDTO) {

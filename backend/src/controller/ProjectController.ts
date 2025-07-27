@@ -1,10 +1,23 @@
 import { FastifyInstance } from 'fastify';
-import { ProjectService, ProjectCreateInput } from '../service/ProjectService';
-import { projectService } from '../service/ProjectService';
+import { ProjectCreateInput } from '../service/ProjectService';
+import ProjectService from '../service/ProjectService';
 
 export default async function projectController(fastify: FastifyInstance) {
+
+  const projectService = new ProjectService();
+  
   // Get all projects
   fastify.get('/projects', async (request, reply) => {
+    try {
+      const projects = await projectService.findAll();
+      return reply.send({ success: true, data: projects });
+    } catch (error) {
+      // Error is already a BusinessException from the service
+      throw error;
+    }
+  });
+
+  fastify.get('/projects/mine', async (request, reply) => {
     try {
       const projects = await projectService.findAll();
       return reply.send({ success: true, data: projects });

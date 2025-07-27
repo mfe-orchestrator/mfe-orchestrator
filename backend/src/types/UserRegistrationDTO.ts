@@ -1,7 +1,7 @@
 interface UserRegistrationDTO {
   email: string;
   password?: string;
-  name: string;
+  name?: string;
   surname?: string;
 }
 

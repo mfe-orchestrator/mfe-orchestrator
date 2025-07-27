@@ -7,6 +7,8 @@ import Auth0Wrapper from "./authentication/Auth0AuthWrapper";
 import MicrosoftAuthWrapper from "./authentication/MicrosoftAuthWrapper";
 import GoogleAuthWrapper from "./authentication/GoogleAuthWrapper";
 import Spinner from "./components/Spinner";
+import SelectProjectWrapper from "./theme/SelectProjectWrapper";
+import FirstStartupWrapper from "./theme/FirstStartupWrapper";
 
 // Lazy load all page components
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
@@ -22,9 +24,11 @@ const AuthenticationWrapper : React.FC<React.PropsWithChildren> = ({children}) =
       <GoogleAuthWrapper>
         <MicrosoftAuthWrapper>
           <Auth0Wrapper>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            <FirstStartupWrapper>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </FirstStartupWrapper>
           </Auth0Wrapper>
         </MicrosoftAuthWrapper>
       </GoogleAuthWrapper>
@@ -41,26 +45,28 @@ const RouteWithSuspense = ({ element: Element }: { element: React.ReactNode }) =
 const PrivateRoutes: React.FC = () => {
     return (
         <AuthenticationWrapper>
-            <RRDRoutes>
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <RouteWithSuspense element={<DashboardPage />} />
-                  } 
-                />
-                <Route 
-                  path="/sftp" 
-                  element={
-                    <RouteWithSuspense element={<SftpViewerPage />} />
-                  } 
-                />
-                <Route 
-                  path="*" 
-                  element={
-                    <RouteWithSuspense element={<NotFound />} />
-                  } 
-                />
-            </RRDRoutes>
+            <SelectProjectWrapper>
+              <RRDRoutes>
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <RouteWithSuspense element={<DashboardPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="/sftp" 
+                    element={
+                      <RouteWithSuspense element={<SftpViewerPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="*" 
+                    element={
+                      <RouteWithSuspense element={<NotFound />} />
+                    } 
+                  />
+              </RRDRoutes>
+            </SelectProjectWrapper>
         </AuthenticationWrapper>
     );
 }
