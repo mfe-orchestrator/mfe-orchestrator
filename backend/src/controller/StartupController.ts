@@ -30,14 +30,10 @@ export function StartupController(fastify: FastifyInstance) {
     const project = await projectService.create({
         name: req.body.project,
         description: req.body.project,
-    });
-
-    //TODO continuare
-    //await userProjectService.addUserToProject(registeredUser._id, project._id);
+    }, registeredUser._id);
 
     return res.send();
   })
-
 
 };
 

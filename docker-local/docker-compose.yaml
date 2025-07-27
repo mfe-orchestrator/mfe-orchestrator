@@ -32,5 +32,8 @@ services:
       retries: 5
 
 volumes:
-  mongodb_data:
+  mongo1_data:
+  mongo2_data:
+  mongo1_config:
+  mongo2_config:
   redis_data:

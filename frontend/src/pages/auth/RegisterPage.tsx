@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface FormValues {
 }
 
 const RegisterPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { register } = useUserApi();
   const { toast } = useToast();
@@ -51,9 +53,11 @@ const RegisterPage = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Crea un account</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              {t('auth.create_account')}
+            </CardTitle>
             <CardDescription className="text-center">
-              Inserisci i tuoi dati per registrarti al sistema
+              {t('auth.register_description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -62,60 +66,77 @@ const RegisterPage = () => {
               <div className="grid gap-4">
                 <TextField 
                   name="name"
-                  label="Nome"
-                  placeholder="Inserisci il tuo nome"
-                  rules={{ required: true }}
+                  label={t('auth.name')}
+                  placeholder={t('auth.name_placeholder')}
+                  rules={{ required: t('common.required_field') as string }}
                 />
 
                 <TextField 
                   name="surname"
-                  label="Cognome"
-                  placeholder="Inserisci il tuo cognome"
-                  rules={{ required: true }}
+                  label={t('auth.surname')}
+                  placeholder={t('auth.surname_placeholder')}
+                  rules={{ required: t('common.required_field') as string }}
                 />
                 
                 <TextField 
                   name="email"
-                  label="Email"
+                  label={t('auth.email')}
                   type="email"
-                  placeholder="nome@esempio.com"
-                  rules={{ required: true }}
+                  placeholder={t('auth.email_placeholder')}
+                  rules={{ 
+                    required: t('common.required_field') as string,
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: t('auth.invalid_email') as string
+                    }
+                  }}
                 />
                 
                 <TextField 
                   name="password"
-                  label="Password"
+                  label={t('auth.password')}
                   type="password"
-                    placeholder="••••••••"
-                  rules={{ required: true }}
+                  placeholder="••••••••"
+                  rules={{ 
+                    required: t('common.required_field') as string,
+                    minLength: {
+                      value: 8,
+                      message: t('auth.password_min_length') as string
+                    }
+                  }}
                 />
                 
                 <TextField 
                   name="confirmPassword"
-                  label="Conferma Password"
+                  label={t('auth.confirm_password')}
                   type="password"
-                    placeholder="••••••••"
-                  rules={{ required: true }}
+                  placeholder="••••••••"
+                  rules={{ 
+                    required: t('common.required_field') as string,
+                    validate: (value: string) => 
+                      value === form.getValues('password') || 
+                      (t('auth.passwords_dont_match') as string)
+                  }}
                 />
                 
-                {registerMutation.isPending ? 
-                  <Spinner />  
-                : 
-                  <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                    Registrati
+                {registerMutation.isPending ? (
+                  <Spinner />
+                ) : (
+                  <Button type="submit" className="w-full">
+                    {t('auth.create_account')}
                   </Button>
-              }
+                )}
               </div>
             </form>
             </FormProvider>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <p className="text-sm text-muted-foreground">
-              Hai già un account?{" "}
-              <Link to="/" className="text-primary underline-offset-4 hover:underline">
-                Accedi
-              </Link>
-            </p>
+              <p className="text-sm text-muted-foreground">
+                {t('auth.already_have_account')}{" "}
+                <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+                  {t('auth.login')}
+                </Link>
+              </p>
           </CardFooter>
         </Card>
       </div>

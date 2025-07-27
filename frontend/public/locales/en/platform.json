@@ -1,0 +1,118 @@
+{
+  "app": {
+    "title": "Micro Frontend Orchestrator Hub",
+    "name": "MFE Orchestrator",
+    "loading": "Loading...",
+    "error": {
+      "generic": "An error occurred. Please try again later.",
+      "not_found": "Page not found",
+      "unauthorized": "You are not authorized to view this page"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "login_description": "Enter your credentials to access the system",
+    "register": "Register",
+    "register_description": "Enter your details to create an account",
+    "logout": "Logout",
+    "name": "Name",
+    "name_placeholder": "Enter your name",
+    "surname": "Surname",
+    "surname_placeholder": "Enter your surname",
+    "email": "Email",
+    "email_placeholder": "name@example.com",
+    "invalid_email": "Please enter a valid email address",
+    "password": "Password",
+    "password_min_length": "Password must be at least 8 characters",
+    "passwords_dont_match": "Passwords don't match",
+    "confirm_password": "Confirm Password",
+    "forgot_password": "Forgot Password?",
+    "reset_password": "Reset Password",
+    "send_reset_link": "Send Reset Link",
+    "back_to_login": "Back to Login",
+    "no_account": "Don't have an account?",
+    "already_have_account": "Already have an account?",
+    "create_account": "Create Account",
+    "sign_in_with_google": "Sign in with Google",
+    "sign_in_with_microsoft": "Sign in with Microsoft",
+    "sign_in_with_auth0": "Sign in with Auth0",
+    "or_continue_with": "Or continue with"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search...",
+    "no_data": "No data available",
+    "loading": "Loading...",
+    "success": "Operation completed successfully",
+    "error": "An error occurred",
+    "required_field": "This field is required"
+  },
+  "setup": {
+    "title": "Initial Setup",
+    "description": "Register the first administrator account",
+    "project_name": "Project Name",
+    "project_name_placeholder": "Enter your project name",
+    "project_name_min_length": "Project name must be at least 3 characters"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {{name}}",
+    "overview": "Overview",
+    "recent_activity": "Recent Activity",
+    "quick_actions": "Quick Actions",
+    "no_activity": "No recent activity"
+  },
+  "sftp": {
+    "title": "SFTP Viewer",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "host": "Host",
+    "port": "Port",
+    "username": "Username",
+    "password": "Password",
+    "directory": "Directory",
+    "files": "Files",
+    "upload": "Upload",
+    "download": "Download",
+    "delete": "Delete",
+    "create_folder": "Create Folder",
+    "file_name": "File Name",
+    "file_size": "Size",
+    "last_modified": "Last Modified",
+    "no_files": "No files found",
+    "uploading": "Uploading...",
+    "downloading": "Downloading..."
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "security": "Security",
+    "notifications": "Notifications",
+    "appearance": "Appearance",
+    "language": "Language",
+    "save_changes": "Save Changes",
+    "changes_saved": "Changes saved successfully",
+    "error_saving": "Error saving changes",
+    "select_language": "Select Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "project": {
+    "no_projects_found": "No projects found",
+    "create_new_project": "Create a new project now",
+    "or_ask_admin": "Or ask your administrator to assign you to a project",
+    "select_project": "Select a Project",
+    "select_project_placeholder": "Select a project..."
+  },
+  "validation": {
+    "required": "This field is required"
+  }
+}

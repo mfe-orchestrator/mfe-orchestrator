@@ -1,8 +1,10 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/authentication/AuthContext';
+import type { User as UserType } from '@/hooks/apiClients/useUserApi';
 import { useTheme } from '@/contexts/ThemeContext';
 import { 
   Settings, 
@@ -14,6 +16,7 @@ import {
   FileText,
   LayoutDashboard
 } from 'lucide-react';
+import LanguageSelector from '../LanguageSelector';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,10 +31,23 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { t } = useTranslation();
+  const { user, setUser } = useAuth();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  const handleLogout = async () => {
+    try {
+      // Clear user data from context and local storage
+      setUser(null);
+      localStorage.removeItem('user');
+      // Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -39,15 +55,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const navItems = [
     {
-      name: 'Dashboard',
+      name: t('dashboard.title'),
       path: '/dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />
     },
     {
-      name: 'SFTP Viewer',
+      name: t('sftp.title'),
       path: '/sftp',
       icon: <FileText className="h-5 w-5" />
     },
+    {
+      name: t('settings.title'),
+      path: '/settings',
+      icon: <Settings className="h-5 w-5" />
+    }
   ];
 
   return (
@@ -65,7 +86,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             {isSidebarOpen && (
               <span className="ml-2 text-lg font-semibold text-orchestrator-secondary">
-                MFE Orchestrator
+                {t('app.name')}
               </span>
             )}
           </div>
@@ -109,36 +130,39 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </h1>
           
           <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
-            
+            <div className="flex items-center space-x-2">
+              <LanguageSelector />
+              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                {theme === 'dark' ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="relative flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <span>{user?.name}</span>
+                  <span>{user?.firstName || user?.email}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>Il mio Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('settings.account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profilo</span>
+                  <span>{t('settings.profile')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>Impostazioni</span>
+                  <span>{t('settings.title')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
+                  <span>{t('auth.logout')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -4,8 +4,8 @@ import { EnvironmentDTO } from '../types/EnvironmentDTO';
 
 class EnvironmentService {
   
-  getAll() {
-    return Environment.find().sort({ name: 1 });
+  getAll(projectId: string) {
+    return Environment.find({ projectId }).sort({ name: 1 });
   }
 
   async getBySlug(slug: string) {

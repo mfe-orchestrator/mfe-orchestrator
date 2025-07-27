@@ -50,7 +50,7 @@ export default async function projectController(fastify: FastifyInstance) {
     Body: ProjectCreateInput;
   }>('/projects', async (request, reply) => {
     try {
-      const project = await projectService.create(request.body);
+      const project = await projectService.create(request.body, request.databaseUser.id);
       return reply.status(201).send({ success: true, data: project });
     } catch (error) {
       // Error is already a BusinessException from the service

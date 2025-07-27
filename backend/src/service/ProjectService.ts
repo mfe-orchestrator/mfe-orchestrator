@@ -1,6 +1,9 @@
-import { FilterQuery, Types } from 'mongoose';
+import mongoose, { ClientSession, FilterQuery, ObjectId, Types } from 'mongoose';
 import Project, { IProject } from '../models/ProjectModel';
 import { BusinessException, createBusinessException } from '../errors/BusinessException';
+import UserProjectService from './UserProjectService';
+import { RoleInProject } from '../models/UserProjectModel';
+import { runInTransaction } from '../utils/runInTransaction';
 
 export interface ProjectCreateInput {
   name: string;
@@ -15,6 +18,9 @@ export interface ProjectUpdateInput {
 }
 
 export class ProjectService {
+
+  userProjectService = new UserProjectService();
+
   async findAll(filter: FilterQuery<IProject> = {}): Promise<IProject[]> {
     try {
       return await Project.find(filter).sort({ createdAt: -1 }).lean();
@@ -50,14 +56,25 @@ export class ProjectService {
     }
   }
 
-  async create(projectData: ProjectCreateInput): Promise<IProject> {
+  async create(projectData: ProjectCreateInput, creatorUserId: ObjectId): Promise<IProject> {
+    return runInTransaction(async (session) => 
+      this.createRaw(projectData, creatorUserId, session)
+    )
+  }
+
+  async createRaw(projectData: ProjectCreateInput, creatorUserId: ObjectId, session: ClientSession): Promise<IProject> {
     try {
       const project = new Project({
         name: projectData.name,
         description: projectData.description,
         isActive: projectData.isActive ?? true,
       });
-      return await project.save();
+
+      const savedProject =  await project.save({ session });
+
+      await this.userProjectService.addUserToProject(savedProject._id, creatorUserId, RoleInProject.OWNER, session);
+
+      return savedProject;
     } catch (error: any) {
       if (error.code === 11000) { // Duplicate key error
         throw createBusinessException({

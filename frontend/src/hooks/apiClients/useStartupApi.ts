@@ -10,7 +10,7 @@ const useStartupApi = () => {
 
   async function existsAtLeastOneUser() {
     const response = await doRequest<ExistsOneUserDTO>({
-      url: '/startup/users/exists',
+      url: '/api/startup/users/exists',
       authenticated: AuthenticationType.NONE,
     });
     return response.data.exists;

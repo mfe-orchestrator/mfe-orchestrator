@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model, ObjectId } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { Document as MongooseDocument } from 'mongoose';
 import jwt from 'jsonwebtoken';
@@ -19,7 +19,7 @@ interface IUser {
   updatedAt?: Date;
 }
 
-export interface IUserDocument extends MongooseDocument {
+export interface IUserDocument extends MongooseDocument<ObjectId> {
   email: string;
   password?: string;
   name: string;

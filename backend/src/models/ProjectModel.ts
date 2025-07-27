@@ -1,6 +1,6 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, ObjectId, Schema } from 'mongoose';
 
-export interface IProject extends Document {
+export interface IProject extends Document<ObjectId> {
   name: string;
   description?: string;
   isActive: boolean;

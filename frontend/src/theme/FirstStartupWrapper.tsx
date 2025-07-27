@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
 import { useQuery } from "@tanstack/react-query";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
@@ -6,29 +7,73 @@ import TextField from "@/components/input/TextField.rhf";
 import { Button } from "@/components/ui/button";
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
 
-const RegisterFirstUser : React.FC = () =>{
-    const form = useForm()
-    const onSubmit = async (data: any) => {
-      try {
-        
-      } catch (error) {
-        
-      }
+const RegisterFirstUser: React.FC = () => {
+  const { t } = useTranslation();
+  const form = useForm();
+  
+  const onSubmit = async (data: any) => {
+    try {
+      // Handle form submission
+    } catch (error) {
+      // Handle error
     }
-    return <AuthenticationLayout title="Nuova installazione" description="Registra il tuo primo utente">
+  };
+  
+  return (
+    <AuthenticationLayout 
+      title={t('setup.title')} 
+      description={t('setup.description')}
+    >
       <FormProvider {...form}>
         <Form onSubmit={onSubmit} {...form}>
           <div className="flex flex-col gap-4">
-          <TextField name="email" label="Email" rules={{ required: true }} />
-          <TextField name="password" label="Password" rules={{ required: true }} />
-          <TextField name="project" label="Progetto" rules={{ required: true }} />
-          <div className="flex justify-center">
-            <Button type="submit">Crea</Button>
-          </div>
+            <TextField 
+              name="email" 
+              label={t('auth.email')} 
+              rules={{ 
+                required: t('common.required_field') as string,
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: t('auth.invalid_email') as string
+                }
+              }} 
+              placeholder={t('auth.email_placeholder')}
+            />
+            <TextField 
+              name="password" 
+              label={t('auth.password')} 
+              type="password"
+              rules={{ 
+                required: t('common.required_field') as string,
+                minLength: {
+                  value: 8,
+                  message: t('auth.password_min_length') as string
+                }
+              }} 
+              placeholder="••••••••"
+            />
+            <TextField 
+              name="project" 
+              label={t('setup.project_name')} 
+              rules={{ 
+                required: t('common.required_field') as string,
+                minLength: {
+                  value: 3,
+                  message: t('setup.project_name_min_length') as string
+                }
+              }}
+              placeholder={t('setup.project_name_placeholder')}
+            />
+            <div className="flex justify-center">
+              <Button type="submit">
+                {t('common.create')}
+              </Button>
+            </div>
           </div>
         </Form> 
       </FormProvider>
     </AuthenticationLayout>
+  );
 }
 
 
