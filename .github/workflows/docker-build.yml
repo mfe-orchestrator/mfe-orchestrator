@@ -41,7 +41,7 @@ jobs:
     
     - name: Build and Push Docker Image
       run: |
-        docker build -t microfrontend-orchestrator-hub:latest -f Dockerfile .
-        docker tag microfrontend-orchestrator-hub:latest microfrontend-orchestrator-hub:${{ github.sha }}
-        docker push microfrontend-orchestrator-hub:latest
-        docker push microfrontend-orchestrator-hub:${{ github.sha }}
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:latest -f Dockerfile .
+        docker tag ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:latest ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:${{ github.sha }}
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:latest
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:${{ github.sha }}
