@@ -45,3 +45,5 @@ jobs:
         docker tag ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:latest ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:${{ github.sha }}
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:latest
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/microfrontend-orchestrator-hub:${{ github.sha }}
+
+        
