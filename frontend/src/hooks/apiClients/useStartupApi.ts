@@ -19,7 +19,7 @@ const useStartupApi = () => {
       url: '/api/startup/users/exists',
       authenticated: AuthenticationType.NONE,
     });
-    return response.data.exists;
+    return response?.data?.exists;
   }
 
   async function createFirstUserAndProject(userData: RegisterFirstUserData) {

@@ -39,7 +39,7 @@ NODE_ENV=development  # development/production
 PORT=3000            # Port to listen on
 
 # Database
-DATABASE_URL=mongodb://localhost:27017/microfrontend-orchestrator
+NOSQL_DATABASE_URL=mongodb://localhost:27017/microfrontend-orchestrator
 
 # Redis (optional)
 REDIS_URL=redis://localhost:6379
@@ -82,24 +82,6 @@ FASTIFY_TRUST_PROXY=false
 
 # Security
 JWT_SECRET=your-secret-key-here
-PASSWORD_SALT_ROUNDS=10
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=15000
-RATE_LIMIT_MAX=100
-
-# CORS
-CORS_ORIGINS=*  # Comma-separated list of allowed origins
-CORS_METHODS=GET,PUT,POST,DELETE
-
-# Helmet Security Headers
-HELMET_CSP=true
-HELMET_DNS_PREFETCH_CONTROL=true
-HELMET_REFERRER_POLICY=true
-
-# Microfrontend Configuration
-MF_BASE_URL=/mf  # Base URL for microfrontend routes
-MF_CACHE_TTL=3600  # Cache TTL in seconds
 
 # Auth0 Integration (if using Auth0)
 AUTH0_DOMAIN=your-auth0-domain
