@@ -17,9 +17,19 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
 - [ ] Module Federation
 - [ ] micro-lc
 
+
+
 ## Getting Started
 
 Coming soon 🚧
+
+## Run with docker
+
+Simpy run the `docker-compose.yaml`
+
+```bash
+docker compose docker-compose.yaml up -d
+```
 
 ### Environment variables 🔧
 

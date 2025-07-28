@@ -22,6 +22,8 @@ RUN pnpm i
 
 # Expose port 80
 EXPOSE 80
+EXPOSE 27017
+EXPOSE 8443
 
 WORKDIR /var/www/
 

@@ -13,7 +13,6 @@ export function StartupController(fastify: FastifyInstance) {
 
   const userService = new UserService();
   const projectService = new ProjectService();
-  const userProjectService = new UserProjectService();
 
   fastify.get('/startup/users/exists', { config: { public: true} },async (req, res) => {
     const out = await userService.existsAtLeastOneUser()
@@ -25,14 +24,13 @@ export function StartupController(fastify: FastifyInstance) {
         email: req.body.email,
         password: req.body.password,
     });
-
     
     const project = await projectService.create({
         name: req.body.project,
         description: req.body.project,
     }, registeredUser._id);
 
-    return res.send();
+    return res.send({ user: registeredUser.toFrontendObject(), project });
   })
 
 };

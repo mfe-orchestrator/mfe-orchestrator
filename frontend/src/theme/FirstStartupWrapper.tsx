@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
-import { Form, FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
 import { Button } from "@/components/ui/button";
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
@@ -10,17 +10,25 @@ import SocialLoginRow from '@/authentication/components/SocialLoginRow';
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import useUserStore from '@/store/userStore';
 
+interface RegisterFirstUserData{
+  email: string;
+  password: string;
+  project: string;
+}
+
 const RegisterFirstUser: React.FC = () => {
   const { t } = useTranslation();
-  const form = useForm();
+  const form = useForm<RegisterFirstUserData>();
   const userApi = useUserApi();
+  const startupApi = useStartupApi();
   const userStore = useUserStore()
   
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: RegisterFirstUserData) => {
     try {
-      // Handle form submission
+      await startupApi.createFirstUserAndProject(data)
+      window.location.reload()
     } catch (error) {
-      // Handle error
+      console.log(error)
     }
   };
 

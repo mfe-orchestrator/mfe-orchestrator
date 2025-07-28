@@ -8,7 +8,7 @@ export const ISSUER =  "microfronted.orchestrator.hub"
 interface IUser {
   email: string;
   password?: string;
-  name: string;
+  name?: string;
   surname?: string;
   role: string;
   isInvited: boolean;
@@ -60,7 +60,7 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
   },
   name: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   surname: {
