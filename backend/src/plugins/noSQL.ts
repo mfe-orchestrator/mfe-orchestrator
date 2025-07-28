@@ -3,8 +3,9 @@ import { FastifyInstance } from 'fastify';
 import fastifyPlugin from 'fastify-plugin'
 
 export let noSQLClient: mongoose.Mongoose
+export let isReplicaSet : boolean = false;
 
-export default fastifyPlugin(async (fastify: FastifyInstance) => {
+export default fastifyPlugin((fastify: FastifyInstance, opts, done) => {
   try {
     if (!process.env.NOSQL_DATABASE_URL) {
       fastify.log.warn("Cannot see MongoDB database URL, will not connect")
@@ -21,20 +22,39 @@ export default fastifyPlugin(async (fastify: FastifyInstance) => {
       w: 'majority'
     }
 
-    noSQLClient = await mongoose.connect(process.env.NOSQL_DATABASE_URL, options)
+    mongoose.connect(process.env.NOSQL_DATABASE_URL, options)
     
     // Verify the connection is to a replica set
     const connection = mongoose.connection
-    connection.on('connected', () => {
-      const isReplicaSet = connection.host.includes('replicaSet=rs0')
-      fastify.log.info(`Connected to MongoDB ${isReplicaSet ? 'replica set' : 'standalone'}`)
+    connection.on('connected', async() => {
+      try {
+        noSQLClient = mongoose
+        const admin = noSQLClient.connection.db?.admin();
+        if (!admin) {
+          fastify.log.error('Admin database not found')
+          return
+        }
+        const info = await admin.command({ hello: 1 }) // fallback a { isMaster: 1 } per versioni molto vecchie
+
+        if (info.setName) {
+          fastify.log.info(`Connected to replica set: ${info.setName}`)
+          isReplicaSet = true;
+        } else {
+          fastify.log.warn('Connected to standalone MongoDB (not replica set)')
+          isReplicaSet = false;
+        }
+      } catch (e) {
+        fastify.log.error('Error while checking replica set status:', e)
+      }
+      done()
     })
 
     connection.on('error', (err) => {
       fastify.log.error('MongoDB connection error:', err)
+      done(err)
     })
 
-    fastify.log.info('MongoDB connected successfully')
+    fastify.log.info('MongoDB started connection....')
     
   } catch (err) {
     fastify.log.error('MongoDB connection error:', err)

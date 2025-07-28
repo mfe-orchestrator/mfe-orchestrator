@@ -8,6 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/hooks/apiClients/useProjectApi";
+import SelectField from '@/components/input/SelectField.rhf';
 
 interface CreateFirstProjectFormData{
   name: string
@@ -20,11 +21,14 @@ interface SelectProjectFormData {
 const CreateFirstProjectForm  = () =>{
   const { t } = useTranslation();
   const projectApi = useProjectApi();
+  const projectStore = useProjectStore();
   const form = useForm<CreateFirstProjectFormData>()
 
   const onSubmit = async (data: CreateFirstProjectFormData) => {
     try {
-      await projectApi.createProject(data);
+      const project = await projectApi.createProject(data);
+      projectStore.setProjects([project])
+      projectStore.setProject(project)
     } catch (error) {
       console.error(t('common.error_occurred'), error);
     }
@@ -72,7 +76,7 @@ const SelectProjectForm: React.FC = () => {
   const onSubmit = async (data: SelectProjectFormData) => {
     try {
       // Handle project selection
-      const selectedProject = projectStore.projects?.find(p => p.id === data.projectId);
+      const selectedProject = projectStore.projects?.find(p => p._id === data.projectId);
       if (selectedProject) {
         projectStore.setProject(selectedProject);
       }
@@ -86,19 +90,15 @@ const SelectProjectForm: React.FC = () => {
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex flex-col gap-4">
-            <select 
-              {...form.register('projectId', { 
-                required: t('validation.required') as string 
-              })}
+            <SelectField 
+              name="projectId"
               className="p-2 border rounded-md w-full"
-            >
-              <option value="">{t('project.select_project_placeholder')}</option>
-              {projectStore.projects?.map((project: Project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+              rules={{ required: t('validation.required') }}
+              options={projectStore.projects?.map((project: Project) => ({
+                value: project._id,
+                label: project.name
+              }))}
+            />
             <div className="flex justify-end">
               <Button type="submit">
                 {t('common.select')}

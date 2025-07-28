@@ -3,8 +3,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/authentication/AuthContext';
-import type { User as UserType } from '@/hooks/apiClients/useUserApi';
 import { useTheme } from '@/contexts/ThemeContext';
 import { 
   Settings, 
@@ -25,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import useUserStore from '@/store/userStore';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -32,7 +31,7 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
-  const { user, setUser } = useAuth();
+  const { user, setUser } = useUserStore();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

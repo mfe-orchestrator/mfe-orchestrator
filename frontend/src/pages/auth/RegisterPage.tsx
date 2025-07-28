@@ -11,6 +11,7 @@ import { FormProvider } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import Spinner from "@/components/Spinner";
+import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 
 interface FormValues {
   name: string;
@@ -22,9 +23,8 @@ interface FormValues {
 
 const RegisterPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { register } = useUserApi();
-  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<FormValues>({});
 
@@ -33,114 +33,95 @@ const RegisterPage = () => {
   })
 
   const handleRegister = async (values: FormValues) => {
-    
-    registerMutation.mutate({
+    await registerMutation.mutateAsync({
       name: values.name,
       surname: values.surname,
       email: values.email,
       password: values.password
     })
+    navigate('/')
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <div className="h-12 w-12 rounded-md bg-orchestrator-accent flex items-center justify-center text-white text-xl font-bold">
-            MF
-          </div>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">
-              {t('auth.create_account')}
-            </CardTitle>
-            <CardDescription className="text-center">
-              {t('auth.register_description')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(handleRegister)}>
-              <div className="grid gap-4">
-                <TextField 
-                  name="name"
-                  label={t('auth.name')}
-                  placeholder={t('auth.name_placeholder')}
-                  rules={{ required: t('common.required_field') as string }}
-                />
+    <AuthenticationLayout
+      title={t('auth.create_account')}
+      description={t('auth.register_description')}
+      footer={<p className="text-sm text-muted-foreground">
+        {t('auth.already_have_account')}{" "}
+        <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+          {t('auth.login')}
+        </Link>
+      </p>}
+    >
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(handleRegister)}>
+          <div className="grid gap-4">
+            <TextField
+              name="name"
+              label={t('auth.name')}
+              placeholder={t('auth.name_placeholder')}
+              rules={{ required: t('common.required_field') as string }}
+            />
 
-                <TextField 
-                  name="surname"
-                  label={t('auth.surname')}
-                  placeholder={t('auth.surname_placeholder')}
-                  rules={{ required: t('common.required_field') as string }}
-                />
-                
-                <TextField 
-                  name="email"
-                  label={t('auth.email')}
-                  type="email"
-                  placeholder={t('auth.email_placeholder')}
-                  rules={{ 
-                    required: t('common.required_field') as string,
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: t('auth.invalid_email') as string
-                    }
-                  }}
-                />
-                
-                <TextField 
-                  name="password"
-                  label={t('auth.password')}
-                  type="password"
-                  placeholder="••••••••"
-                  rules={{ 
-                    required: t('common.required_field') as string,
-                    minLength: {
-                      value: 8,
-                      message: t('auth.password_min_length') as string
-                    }
-                  }}
-                />
-                
-                <TextField 
-                  name="confirmPassword"
-                  label={t('auth.confirm_password')}
-                  type="password"
-                  placeholder="••••••••"
-                  rules={{ 
-                    required: t('common.required_field') as string,
-                    validate: (value: string) => 
-                      value === form.getValues('password') || 
-                      (t('auth.passwords_dont_match') as string)
-                  }}
-                />
-                
-                {registerMutation.isPending ? (
-                  <Spinner />
-                ) : (
-                  <Button type="submit" className="w-full">
-                    {t('auth.create_account')}
-                  </Button>
-                )}
-              </div>
-            </form>
-            </FormProvider>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-              <p className="text-sm text-muted-foreground">
-                {t('auth.already_have_account')}{" "}
-                <Link to="/login" className="text-primary underline-offset-4 hover:underline">
-                  {t('auth.login')}
-                </Link>
-              </p>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
+            <TextField
+              name="surname"
+              label={t('auth.surname')}
+              placeholder={t('auth.surname_placeholder')}
+              rules={{ required: t('common.required_field') as string }}
+            />
+
+            <TextField
+              name="email"
+              label={t('auth.email')}
+              type="email"
+              placeholder={t('auth.email_placeholder')}
+              rules={{
+                required: t('common.required_field') as string,
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: t('auth.invalid_email') as string
+                }
+              }}
+            />
+
+            <TextField
+              name="password"
+              label={t('auth.password')}
+              type="password"
+              placeholder="••••••••"
+              rules={{
+                required: t('common.required_field') as string,
+                minLength: {
+                  value: 8,
+                  message: t('auth.password_min_length') as string
+                }
+              }}
+            />
+
+            <TextField
+              name="confirmPassword"
+              label={t('auth.confirm_password')}
+              type="password"
+              placeholder="••••••••"
+              rules={{
+                required: t('common.required_field') as string,
+                validate: (value: string) =>
+                  value === form.getValues('password') ||
+                  (t('auth.passwords_dont_match') as string)
+              }}
+            />
+
+            {registerMutation.isPending ? (
+              <Spinner />
+            ) : (
+              <Button type="submit" className="w-full">
+                {t('auth.create_account')}
+              </Button>
+            )}
+          </div>
+        </form>
+      </FormProvider>
+    </AuthenticationLayout>
   );
 };
 

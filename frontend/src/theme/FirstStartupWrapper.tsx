@@ -1,15 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 import { Form, FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
 import { Button } from "@/components/ui/button";
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
+import SocialLoginRow from '@/authentication/components/SocialLoginRow';
+import useUserApi from "@/hooks/apiClients/useUserApi";
+import useUserStore from '@/store/userStore';
 
 const RegisterFirstUser: React.FC = () => {
   const { t } = useTranslation();
   const form = useForm();
+  const userApi = useUserApi();
+  const userStore = useUserStore()
   
   const onSubmit = async (data: any) => {
     try {
@@ -18,6 +23,23 @@ const RegisterFirstUser: React.FC = () => {
       // Handle error
     }
   };
+
+  const profileQuery = useMutation({
+    mutationFn: async () =>{
+      try{
+        const profile = await userApi.getProfile()
+        userStore.setUser(profile)
+        return profile;
+      }catch(e){
+        console.log(e)
+        return null;
+      }
+    }
+  });
+
+  const onSuccessLogin = () =>{
+    profileQuery.mutate()
+  }
   
   return (
     <AuthenticationLayout 
@@ -25,7 +47,7 @@ const RegisterFirstUser: React.FC = () => {
       description={t('setup.description')}
     >
       <FormProvider {...form}>
-        <Form onSubmit={onSubmit} {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-4">
             <TextField 
               name="email" 
@@ -70,8 +92,9 @@ const RegisterFirstUser: React.FC = () => {
               </Button>
             </div>
           </div>
-        </Form> 
+        </form> 
       </FormProvider>
+      <SocialLoginRow onSuccessLogin={onSuccessLogin} />
     </AuthenticationLayout>
   );
 }

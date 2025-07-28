@@ -1,30 +1,34 @@
 import useApiClient from "../useApiClient";
-import ApiResponseDTO from "@/types/ApiResponseDTO";
 
 export interface Project {
-  id: string;
   name: string;
   description?: string;
   createdAt?: string;
   updatedAt?: string;
-  // Add other project properties as needed
-  [key: string]: any;
+  _id: string
 }
 
 const useProjectApi = () => {
   const apiClient = useApiClient();
 
-  const getProjects = async (): Promise<Project[]> => {
+  const getMineProjects = async (): Promise<Project[]> => {
     try {
-      const response = await apiClient.doRequest<ApiResponseDTO<Project[]>>({
+      const response = await apiClient.doRequest<Project[]>({
         url: "/api/projects/mine",
       });
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error("Error fetching projects:", error);
       throw error;
     }
   };
+
+  const getEnvironmentsByProjectId = async (projectId: string) => {
+    const response = await apiClient.doRequest({
+        url:`/api/projects/${projectId}/environments`,
+    });
+    return response.data;
+}
 
   const getProjectById = async (id: string): Promise<Project> => {
     try {
@@ -39,7 +43,7 @@ const useProjectApi = () => {
     }
   };
 
-  const createProject = async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> => {
+  const createProject = async (project: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>): Promise<Project> => {
     try {
       const response = await apiClient.doRequest<Project>({
         url: "/api/projects",
@@ -80,11 +84,12 @@ const useProjectApi = () => {
   };
 
   return {
-    getMineProjects: getProjects,
+    getMineProjects: getMineProjects,
     getProjectById,
     createProject,
     updateProject,
-    deleteProject
+    deleteProject,
+    getEnvironmentsByProjectId
   };
 };
 

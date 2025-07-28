@@ -1,14 +1,13 @@
 import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes as RRDRoutes } from "react-router-dom";
-import { AuthProvider } from "./authentication/AuthContext";
-
 import Auth0Wrapper from "./authentication/Auth0AuthWrapper";
-
 import MicrosoftAuthWrapper from "./authentication/MicrosoftAuthWrapper";
 import GoogleAuthWrapper from "./authentication/GoogleAuthWrapper";
 import Spinner from "./components/Spinner";
 import SelectProjectWrapper from "./theme/SelectProjectWrapper";
 import FirstStartupWrapper from "./theme/FirstStartupWrapper";
+import AuthWrapper from "./theme/AuthWrapper";
+import MainLayout from "./components/layout/MainLayout";
 
 // Lazy load all page components
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
@@ -25,9 +24,11 @@ const AuthenticationWrapper : React.FC<React.PropsWithChildren> = ({children}) =
         <MicrosoftAuthWrapper>
           <Auth0Wrapper>
             <FirstStartupWrapper>
-              <AuthProvider>
-                {children}
-              </AuthProvider>
+              <AuthWrapper>
+                <SelectProjectWrapper>
+                  {children}
+                </SelectProjectWrapper>
+              </AuthWrapper>
             </FirstStartupWrapper>
           </Auth0Wrapper>
         </MicrosoftAuthWrapper>
@@ -45,7 +46,7 @@ const RouteWithSuspense = ({ element: Element }: { element: React.ReactNode }) =
 const PrivateRoutes: React.FC = () => {
     return (
         <AuthenticationWrapper>
-            <SelectProjectWrapper>
+          <MainLayout>
               <RRDRoutes>
                   <Route 
                     path="/dashboard" 
@@ -66,7 +67,7 @@ const PrivateRoutes: React.FC = () => {
                     } 
                   />
               </RRDRoutes>
-            </SelectProjectWrapper>
+              </MainLayout>
         </AuthenticationWrapper>
     );
 }

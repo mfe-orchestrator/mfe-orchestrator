@@ -1,16 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { ProjectCreateInput } from '../service/ProjectService';
 import ProjectService from '../service/ProjectService';
+import EnvironmentService from '../service/EnvironmentService';
 
 export default async function projectController(fastify: FastifyInstance) {
 
   const projectService = new ProjectService();
+  const environmentsService = new EnvironmentService();
   
   // Get all projects
   fastify.get('/projects', async (request, reply) => {
     try {
       const projects = await projectService.findAll();
-      return reply.send({ success: true, data: projects });
+      return reply.send(projects);
     } catch (error) {
       // Error is already a BusinessException from the service
       throw error;
@@ -19,8 +21,8 @@ export default async function projectController(fastify: FastifyInstance) {
 
   fastify.get('/projects/mine', async (request, reply) => {
     try {
-      const projects = await projectService.findAll();
-      return reply.send({ success: true, data: projects });
+      const projects = await projectService.findMine(request.databaseUser._id);
+      return reply.send(projects);
     } catch (error) {
       // Error is already a BusinessException from the service
       throw error;
@@ -38,11 +40,21 @@ export default async function projectController(fastify: FastifyInstance) {
       if (!project) {
         throw new Error('Project not found'); // This will be caught and converted to 500, but should be handled by service
       }
-      return reply.send({ success: true, data: project });
+      return reply.send(project);
     } catch (error) {
       // Error is already a BusinessException from the service
       throw error;
     }
+  });
+
+  // Get project by ID
+  fastify.get<{
+    Params: {
+      projectId: string;
+    }
+  }>('/projects/:projectId/environments', async (request, reply) => {
+    const environments = await environmentsService.getByProjectId(request.params.projectId);
+    return reply.send(environments);
   });
 
   // Create new project
@@ -50,8 +62,8 @@ export default async function projectController(fastify: FastifyInstance) {
     Body: ProjectCreateInput;
   }>('/projects', async (request, reply) => {
     try {
-      const project = await projectService.create(request.body, request.databaseUser.id);
-      return reply.status(201).send({ success: true, data: project });
+      const project = await projectService.create(request.body, request.databaseUser._id);
+      return reply.status(201).send(project);
     } catch (error) {
       // Error is already a BusinessException from the service
       throw error;

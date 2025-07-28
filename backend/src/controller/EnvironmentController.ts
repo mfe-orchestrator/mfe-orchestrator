@@ -6,13 +6,6 @@ export default async function environmentController(fastify: FastifyInstance) {
 
   const environmentService = new EnvironmentService();
   
-  fastify.get<{
-    Querystring: {
-      projectId: string;
-    }
-  }>('/environments', async (request, reply) => {
-    return reply.send(await environmentService.getAll(request.query.projectId));
-  });
   
   fastify.get<{
     Params: {

@@ -1,12 +1,6 @@
+import { Project } from '@/hooks/apiClients/useProjectApi';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-
-export interface Project {
-  id: string;
-  name: string;
-  // Add other project properties as needed
-  [key: string]: any;
-}
 
 interface ProjectState {
   project?: Project;
@@ -19,6 +13,7 @@ const useProjectStore = create<ProjectState>()(
   devtools(
     (set, get) => ({
       setProject: (project: Project) => {
+        
         set({ project });
       },      
       setProjects: (projects: Project[]) => {

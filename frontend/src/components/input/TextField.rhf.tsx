@@ -14,6 +14,7 @@ const TextField = <T extends FieldValues>({
   label,
   rules,
   className,
+  id,
   ...props
 }: TextFieldProps<T>) => {
   const {
@@ -22,7 +23,7 @@ const TextField = <T extends FieldValues>({
   } = useFormContext<T>();
   
   const error = errors[name] as FieldError | undefined;
-  const inputId = `${name}-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = name || id;
 
   return (
     <Controller

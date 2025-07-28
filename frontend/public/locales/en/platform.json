@@ -50,7 +50,9 @@
     "loading": "Loading...",
     "success": "Operation completed successfully",
     "error": "An error occurred",
-    "required_field": "This field is required"
+    "required_field": "This field is required",
+    "name": "Name",
+    "select": "Select"
   },
   "setup": {
     "title": "Initial Setup",

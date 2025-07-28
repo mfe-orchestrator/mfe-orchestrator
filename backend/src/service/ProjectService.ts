@@ -2,7 +2,7 @@ import mongoose, { ClientSession, FilterQuery, ObjectId, Types } from 'mongoose'
 import Project, { IProject } from '../models/ProjectModel';
 import { BusinessException, createBusinessException } from '../errors/BusinessException';
 import UserProjectService from './UserProjectService';
-import { RoleInProject } from '../models/UserProjectModel';
+import UserProject, { RoleInProject } from '../models/UserProjectModel';
 import { runInTransaction } from '../utils/runInTransaction';
 
 export interface ProjectCreateInput {
@@ -20,6 +20,33 @@ export interface ProjectUpdateInput {
 export class ProjectService {
 
   userProjectService = new UserProjectService();
+
+  async findMine(userId: ObjectId): Promise<IProject[]> {
+    try {
+      const projects : IProject[] = await UserProject.aggregate([
+        { $match: { userId } },
+        {
+          $lookup: {
+            from: 'projects', // ⚠️ nome della collezione Mongo (di default è minuscolo e plurale)
+            localField: 'projectId',
+            foreignField: '_id',
+            as: 'project',
+          },
+        },
+        { $unwind: '$project' },
+        { $replaceRoot: { newRoot: '$project' } },
+        { $sort: { name: 1 } }
+      ]); 
+      return projects;
+    } catch (error) {
+      throw createBusinessException({
+        code: 'PROJECT_FETCH_ERROR',
+        message: 'Failed to fetch projects',
+        details: { error: error instanceof Error ? error.message : 'Unknown error' },
+        statusCode: 500,
+      });
+    }
+  }
 
   async findAll(filter: FilterQuery<IProject> = {}): Promise<IProject[]> {
     try {
@@ -62,7 +89,7 @@ export class ProjectService {
     )
   }
 
-  async createRaw(projectData: ProjectCreateInput, creatorUserId: ObjectId, session: ClientSession): Promise<IProject> {
+  async createRaw(projectData: ProjectCreateInput, creatorUserId: ObjectId, session?: ClientSession): Promise<IProject> {
     try {
       const project = new Project({
         name: projectData.name,
@@ -72,7 +99,7 @@ export class ProjectService {
 
       const savedProject =  await project.save({ session });
 
-      await this.userProjectService.addUserToProject(savedProject._id, creatorUserId, RoleInProject.OWNER, session);
+      await this.userProjectService.addUserToProject(creatorUserId, savedProject._id, RoleInProject.OWNER, session);
 
       return savedProject;
     } catch (error: any) {

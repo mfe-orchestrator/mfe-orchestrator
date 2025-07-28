@@ -50,7 +50,9 @@
     "loading": "Caricamento...",
     "success": "Operazione completata con successo",
     "error": "Si è verificato un errore",
-    "required_field": "Questo campo è obbligatorio"
+    "required_field": "Questo campo è obbligatorio",
+    "name": "Nome",
+    "select": "Seleziona"
   },
   "setup": {
     "title": "Configurazione Iniziale",
