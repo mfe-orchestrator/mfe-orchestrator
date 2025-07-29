@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { FastifyInstance } from 'fastify';
 
-class EmailService {
+class EmailSenderService {
   private transporter: nodemailer.Transporter;
   private config: any;
 
@@ -10,6 +10,7 @@ class EmailService {
     if(!this.config){
       this.transporter = nodemailer.createTransport({})
     }else{
+      console.log(this.config)
       this.transporter = nodemailer.createTransport({
         host: this.config.EMAIL_SMTP_HOST,
         port: this.config.EMAIL_SMTP_PORT,
@@ -59,4 +60,4 @@ class EmailService {
   }
 }
 
-export default EmailService
+export default EmailSenderService
