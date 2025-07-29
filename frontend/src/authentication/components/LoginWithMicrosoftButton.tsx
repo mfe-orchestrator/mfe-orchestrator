@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useMsal } from "@azure/msal-react";
-import LoginComponentProps from "./LoginComponentProps";
+import { LoginComponentProps } from "./LoginPage";
 import { deleteToken } from "../tokenUtils";
 
 

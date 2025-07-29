@@ -14,14 +14,6 @@ export interface RegisterFirstUserData{
 const useStartupApi = () => {
   const { doRequest } = useApiClient();
 
-  async function existsAtLeastOneUser() {
-    const response = await doRequest<ExistsOneUserDTO>({
-      url: '/api/startup/users/exists',
-      authenticated: AuthenticationType.NONE,
-    });
-    return response?.data?.exists;
-  }
-
   async function createFirstUserAndProject(userData: RegisterFirstUserData) {
     const response = await doRequest<ExistsOneUserDTO>({
       url: '/api/startup/registration',
@@ -30,6 +22,14 @@ const useStartupApi = () => {
       data: userData
     });
     return response.data.exists;
+  }
+
+  async function existsAtLeastOneUser() {
+    const response = await doRequest<ExistsOneUserDTO>({
+      url: '/api/startup/users/exists',
+      authenticated: AuthenticationType.NONE,
+    });
+    return response?.data?.exists;
   }
 
   return {

@@ -6,21 +6,26 @@ import useUserApi from "@/hooks/apiClients/useUserApi";
 import TextField from "@/components/input/TextField.rhf";
 import Spinner from "@/components/Spinner";
 import { useMutation } from "@tanstack/react-query";
-import LoginComponentProps from "./LoginComponentProps";
 import { setToken } from "../tokenUtils";
 import AuthenticationLayout from "./AuthenticationLayout";
 import { FormProvider, useForm } from "react-hook-form";
 import SocialLoginRow from "./SocialLoginRow";
 import useUserStore from "@/store/userStore";
+import { useGlobalParameters } from "@/contexts/GlobalParameterProvider";
 
 interface FormValues {
   email: string;
   password: string;
 }
 
+export interface LoginComponentProps{
+  onSuccessLogin?: () => void;
+}
+
 const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
   const { login } = useUserApi();
   const { t } = useTranslation();
+  const parameters = useGlobalParameters();
   
   const form = useForm<FormValues>();
   const userStore = useUserStore()
@@ -43,42 +48,53 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
     <Link to="/register" className="text-primary underline-offset-4 hover:underline">
       {t('auth.register')}
     </Link>
+    
   </p>
 
   return <AuthenticationLayout 
     title={t('auth.login')} 
-    description={t('auth.login_description')} 
-    footer={footer}
+    description={parameters.getParameter("allowEmbeddedLogin") ? t('auth.login_description') : undefined} 
+    footer={parameters.getParameter("canRegister") ? footer : undefined}
   >
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleLogin)}>
-        <div className="grid gap-4">
-          <TextField
-            name="email"
-            label={t('auth.email')}
-            type="email"
-            autoComplete="email"
-            placeholder={t('auth.email_placeholder')}
-            rules={{ required: t('common.required_field') as string }}
-          />
-          <TextField
-            name="password"
-            label={t('auth.password')}
-            autoComplete="current-password"
-            type="password"
-            placeholder="••••••••"
-            rules={{ required: t('common.required_field') as string }}
-          />
-          {loginMutation.isPending ?
-            <Spinner />
-            :
-            <Button type="submit" className="w-full" id="access">
-              {t('auth.login')}
-            </Button>
-          }
-        </div>
-      </form>
-    </FormProvider>
+    {parameters.getParameter("allowEmbeddedLogin") &&
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(handleLogin)}>
+          <div className="grid gap-4">
+            <TextField
+              name="email"
+              label={t('auth.email')}
+              type="email"
+              autoComplete="email"
+              placeholder={t('auth.email_placeholder')}
+              rules={{ required: t('common.required_field') as string }}
+            />
+            <TextField
+              name="password"
+              label={t('auth.password')}
+              autoComplete="current-password"
+              type="password"
+              placeholder="••••••••"
+              rules={{ required: t('common.required_field') as string }}
+            />
+            {parameters.getParameter("canSendEmail") &&
+              <p className="text-sm text-muted-foreground text-right">
+                {t('auth.forgot_password')}{" "}
+                <Link to="/reset-password-request" className="text-primary underline-offset-4 hover:underline">
+                  {t('auth.recover')}
+                </Link>
+              </p>
+            }
+            {loginMutation.isPending ?
+              <Spinner />
+              :
+              <Button type="submit" className="w-full" id="access">
+                {t('auth.login')}
+              </Button>
+            }
+          </div>
+        </form>
+      </FormProvider>
+}
 
     <SocialLoginRow onSuccessLogin={onSuccessLogin}/>
   </AuthenticationLayout>

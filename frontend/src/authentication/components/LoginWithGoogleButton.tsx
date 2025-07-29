@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { TokenResponse, useGoogleLogin } from "@react-oauth/google";
-import LoginComponentProps from "./LoginComponentProps";
+import { LoginComponentProps } from "./LoginPage";  
 import { setToken } from "../tokenUtils";
+
 
 const LoginWithGoogleButton : React.FC<LoginComponentProps> = ({onSuccessLogin}) => {
 

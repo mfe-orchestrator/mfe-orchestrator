@@ -6,10 +6,13 @@ export default async function configurationController(fastify: FastifyInstance) 
     fastify.get('/configuration', { config: { public: true} }, async (request, reply) => {
         const config = fastify.config;
         const response: ConfigResponseDTO = {
+            canSendEmail: Boolean(config.EMAIL_SMTP_HOST),
+            canRegister: Boolean(config.REGISTRATION_ALLOWED) && Boolean(config.ALLOW_EMBEDDED_LOGIN),
+            allowEmbeddedLogin: Boolean(config.ALLOW_EMBEDDED_LOGIN),
             frontendUrl: config.FRONTEND_URL,
             providers: {}
-        };
-
+        }
+        
         // Aggiungi provider solo se attivo
         if (config.AUTH0_DOMAIN) {
             response.providers.auth0 = {
@@ -39,7 +42,6 @@ export default async function configurationController(fastify: FastifyInstance) 
                 apiAudience: config.GOOGLE_API_AUDIENCE
             };
         }
-
         return reply.send(response);
     });
 }

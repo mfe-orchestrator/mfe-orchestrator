@@ -45,6 +45,10 @@ NOSQL_DATABASE_URL=mongodb://localhost:27017/microfrontend-orchestrator
 REDIS_URL=redis://localhost:6379
 REDIS_PASSWORD=
 
+#Registration control
+REGISTRATION_ALLOWED=true
+ALLOW_EMBEDDED_LOGIN=true
+
 # Email Configuration (optional)
 EMAIL_SMTP_HOST=smtp.example.com
 EMAIL_SMTP_PORT=587
@@ -52,6 +56,8 @@ EMAIL_SMTP_SECURE=false
 EMAIL_SMTP_USER=
 EMAIL_SMTP_PASSWORD=
 EMAIL_SMTP_FROM=no-reply@example.com
+
+## Frontend url to send email
 FRONTEND_URL=http://localhost:3000
 
 # Auth0 Configuration (optional)
@@ -92,14 +98,31 @@ AUTH0_CLIENT_ID=your-client-id
 ### Installation 🛠️
 
 1. Clone the repository 📝
-2. Install dependencies: 📦
-   ```bash
+1. Make sure you have `pnpm` and `docker` installed
+1. Run docker compose
+```bash
+   cd ./docker-local
+   docker compose docker-compose-development.yaml up -d
+```
+1. Go to frontend folder and install dependencies: 📦
+```bash
+   cd ./frontend
+   pnpm install
+   ```   
+1. Run frontend
+```bash
+   pnpm run dev
+   ```
+1. In a new terminal go to backend and install dependencies: 📦
+```bash
+   cd ../backend
    pnpm install
    ```
-3. Configure environment variables in the .env file 🔧
-4. Start the development server: 🚀
-   ```bash
-   pnpm dev
+1. Create `.env` file
+1. Configure environment variables in the .env file using the one in this readme 🔧
+1. Run backend
+```bash
+   pnpm run dev
    ```
 
 ## Contributing 🤝

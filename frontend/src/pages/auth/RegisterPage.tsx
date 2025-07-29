@@ -14,8 +14,6 @@ import Spinner from "@/components/Spinner";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 
 interface FormValues {
-  name: string;
-  surname: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -34,8 +32,6 @@ const RegisterPage = () => {
 
   const handleRegister = async (values: FormValues) => {
     await registerMutation.mutateAsync({
-      name: values.name,
-      surname: values.surname,
       email: values.email,
       password: values.password
     })
@@ -56,20 +52,6 @@ const RegisterPage = () => {
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(handleRegister)}>
           <div className="grid gap-4">
-            <TextField
-              name="name"
-              label={t('auth.name')}
-              placeholder={t('auth.name_placeholder')}
-              rules={{ required: t('common.required_field') as string }}
-            />
-
-            <TextField
-              name="surname"
-              label={t('auth.surname')}
-              placeholder={t('auth.surname_placeholder')}
-              rules={{ required: t('common.required_field') as string }}
-            />
-
             <TextField
               name="email"
               label={t('auth.email')}

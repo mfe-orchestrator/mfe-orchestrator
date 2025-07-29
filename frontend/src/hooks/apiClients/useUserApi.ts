@@ -65,20 +65,20 @@ const useUserApi = () => {
     return response.data;
   }
 
-  async function forgotPassword(email: string) {
+  async function resetPasswordRequest(data: ResetPasswordRequestDTO) {
     await doRequest({
       url: '/api/users/forgot-password',
       method: 'POST',
-      data: { email },
+      data: data,
     });
     return true;
   }
 
-  async function resetPassword(token: string, newPassword: string) {
+  async function resetPassword(data: ResetPasswordDataDTO) {
     await doRequest({
       url: '/api/users/reset-password',
       method: 'POST',
-      data: { token, password: newPassword },
+      data,
     });
     return true;
   }
@@ -105,7 +105,7 @@ const useUserApi = () => {
   return {
     register,
     login,
-    forgotPassword,
+    resetPasswordRequest,
     resetPassword,
     getProfile,
     inviteUser

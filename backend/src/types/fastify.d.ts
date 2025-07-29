@@ -29,6 +29,8 @@ declare module 'fastify' {
       AUTH0_SECRET: string;
       AUTH0_API_AUDIENCE: string;
       ALLOWED_ORIGINS: string[];
+      REGISTRATION_ALLOWED: boolean;
+      ALLOW_EMBEDDED_LOGIN: boolean;
       REDIS_URL: string;
       REDIS_PASSWORD: string;
       EMAIL_SMTP_HOST: string;

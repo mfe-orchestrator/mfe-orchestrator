@@ -14,6 +14,14 @@ export default fastifyPlugin(
       type: 'object',
       required: [],
       properties: {
+        REGISTRATION_ALLOWED: {
+          type: 'boolean',
+          default: true
+        },
+        ALLOW_EMBEDDED_LOGIN: {
+          type: 'boolean',
+          default: true
+        },
         REDIS_URL: {
           type: 'string',
         },

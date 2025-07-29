@@ -28,6 +28,12 @@
     "confirm_password": "Confirm Password",
     "forgot_password": "Forgot Password?",
     "reset_password": "Reset Password",
+    "reset_password_description": "Enter your new password",
+    "reset_password_success": "Password has been reset successfully",
+    "recover_password": "Recover Password",
+    "recover_password_description": "Enter your email to recover your password",
+    "recover_password_success": "If an account exists with this email, you will receive a password reset link",
+    "recover_password_button": "Recover Password",
     "send_reset_link": "Send Reset Link",
     "back_to_login": "Back to Login",
     "no_account": "Don't have an account?",
@@ -36,7 +42,8 @@
     "sign_in_with_google": "Sign in with Google",
     "sign_in_with_microsoft": "Sign in with Microsoft",
     "sign_in_with_auth0": "Sign in with Auth0",
-    "or_continue_with": "Or continue with"
+    "or_continue_with": "Or continue with",
+    "recover": "recover it"
   },
   "common": {
     "save": "Save",

@@ -1,5 +1,8 @@
 export default interface ConfigResponseDTO {
     frontendUrl: string;
+    canSendEmail: boolean;
+    canRegister: boolean;
+    allowEmbeddedLogin: boolean;
     providers: {
         auth0?: {
             domain: string;

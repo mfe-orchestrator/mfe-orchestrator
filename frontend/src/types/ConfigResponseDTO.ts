@@ -29,5 +29,7 @@ export interface AuthProvidersConfig {
 
 export default interface GlobalConfigDTO {
     frontendUrl: string;
+    registrationAllowed: boolean;
+    canSendEmail: boolean;
     providers: AuthProvidersConfig;
 }
