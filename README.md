@@ -12,23 +12,21 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
 - 📋 Environment-specific configurations
 - 🔌 Integration with various microfrontend technologies (coming soon)
 
-## Planned Integrations 🔍
-
-- [ ] Module Federation
-- [ ] micro-lc
-
-
-
-## Getting Started
-
-Coming soon 🚧
-
-## Run with docker
+## Run with docker
 
 Simpy run the `docker-compose.yaml`
 
 ```bash
 docker compose docker-compose.yaml up -d
+```
+
+## Run with terraform (open tofu)
+You have a terraform template in the `terraform` folder. You can run it with:
+
+```bash
+cd terraform
+terraform init
+terraform apply
 ```
 
 ### Environment variables 🔧
@@ -95,7 +93,7 @@ AUTH0_AUDIENCE=your-auth0-audience
 AUTH0_CLIENT_ID=your-client-id
 ```
 
-### Installation 🛠️
+### Local Installation for development 🛠️
 
 1. Clone the repository 📝
 1. Make sure you have `pnpm` and `docker` installed
@@ -137,8 +135,7 @@ AUTH0_CLIENT_ID=your-client-id
 
 ISC
 
-## Acknowledgments
+## Planned Integrations 🔍
 
-- Inspired by modern microfrontend architectures and orchestration patterns
-- Built with Fastify and TypeScript for robust and scalable backend services
-- Integrating with multiple microfrontend technologies for maximum flexibility
+- [ ] Module Federation
+- [ ] micro-lc
