@@ -5,30 +5,24 @@ import jwt from 'jsonwebtoken';
 import { AuthTokenDataDTO } from '../dto/AuthTokenData.dto';
 export const ISSUER =  "microfronted.orchestrator.hub"
 
-interface IUser {
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  DISABLED = 'DISABLED'
+}
+
+export interface IUser extends MongooseDocument<ObjectId> {
   email: string;
   password?: string;
   name?: string;
   surname?: string;
   role: string;
-  isInvited: boolean;
+  status: UserStatus;
+  isInvited?: boolean;
   salt: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export interface IUserDocument extends MongooseDocument<ObjectId> {
-  email: string;
-  password?: string;
-  name: string;
-  surname?: string;
-  role: string;
-  isInvited: boolean;
-  salt: string;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
+  activateEmailToken?: string;
+  activateEmailExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
@@ -36,7 +30,7 @@ export interface IUserDocument extends MongooseDocument<ObjectId> {
   toFrontendObject: () => IUser;
 }
 
-const userSchema = new Schema<IUserDocument, Model<IUser>>({
+const userSchema = new Schema<IUser>({
   _id: { type: Schema.Types.ObjectId, auto: true },
   email: {
     type: String,
@@ -58,6 +52,14 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
     type: Date,
     required: false,
   },
+  activateEmailToken: {
+    type: String,
+    required: false,
+  },
+  activateEmailExpires: {
+    type: Date,
+    required: false,
+  },
   name: {
     type: String,
     required: false,
@@ -74,6 +76,12 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
     enum: ['user', 'admin'],
     default: 'user',
   },
+  status: {
+    type: String,
+    enum: Object.values(UserStatus),
+    default: UserStatus.ACTIVE,
+    required: true,
+  },
   isInvited: {
     type: Boolean,
     default: false,
@@ -86,7 +94,7 @@ const userSchema = new Schema<IUserDocument, Model<IUser>>({
   timestamps: true,
 });
 
-userSchema.pre<IUserDocument>('save', async function(next) {
+userSchema.pre<IUser>('save', async function(next) {
   if (this.isModified('password') && this.password) {
     const salt = await bcrypt.genSalt(10);
     this.salt = salt;
@@ -129,5 +137,5 @@ userSchema.methods.generateAuthToken = function(): AuthTokenDataDTO {
 
 export const getSecret = () => process.env.JWT_SECRET || 'your-secret-key'
 
-const User = mongoose.model<IUserDocument>('User', userSchema);
+const User = mongoose.model<IUser>('User', userSchema);
 export default User;

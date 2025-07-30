@@ -164,14 +164,20 @@ export default fastifyPlugin(
 
       let user = await UserModel.findOne({ email: userData.email });
       const isFederatedAuth = issuer != ISSUER
+      if(user?.activateEmailToken){
+        if(user?.activateEmailExpires && user.activateEmailExpires < new Date()){
+          throw new AuthenticationError('User not verified and the invitation is expired, please reset your password');
+        }
+        throw new AuthenticationError('User not verified, please verify your email');
+      }
       if (!user) {
         if(isFederatedAuth){
           //Now i will auto provision the user in the system 
           user = await new UserService().register({
             email: userData.email,
-            name: userData.name || "",
+            name: userData.name,
             surname: userData.surname
-          })
+          }, false)
         }else{
           throw new AuthenticationError(
             'User found in authentication provider but not in database with email ' + userData.email

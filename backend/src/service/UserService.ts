@@ -1,4 +1,4 @@
-import User, { IUserDocument } from '../models/UserModel';
+import User, { IUser, UserStatus } from '../models/UserModel';
 import { UserAlreadyExistsError } from '../errors/UserAlreadyExistsError';
 import { UserNotFoundError } from '../errors/UserNotFoundError';
 import { InvalidCredentialsError } from '../errors/InvalidCredentialsError';
@@ -17,22 +17,36 @@ export class UserService {
     this.emailService = emailService || new EmailService();
   }
 
-  async register(userData: UserRegistrationDTO) {
+  async register(userData: UserRegistrationDTO, verifyEmail: boolean = true) {
     const { email, password, name, surname } = userData;
     const existingUser = await User.findOne({ email });
+
+    const canVerifyEmail = verifyEmail && this.emailService.canSendEmails();
     
     if (existingUser) {
       throw new UserAlreadyExistsError(email);
     }
 
-    const user = new User({
+    const userToSave : Partial<IUser> = {
       email,
       password,
       name,
-      surname
-    });
+      surname,
+      status: UserStatus.ACTIVE,
+    } 
 
+    if(canVerifyEmail){
+      userToSave.activateEmailToken = randomBytes(32).toString('hex');
+      userToSave.activateEmailExpires = new Date(Date.now() + 60 * 60 * 1000 * 24); // 24 hours      
+    }
+
+    const user = new User(userToSave);    
     await user.save();
+
+    if(canVerifyEmail && userToSave.activateEmailToken){
+      await this.emailService.sendVerificationEmail(email, userToSave.activateEmailToken);
+    }
+    
     return user;
   }
 
@@ -64,7 +78,7 @@ export class UserService {
     }
   }
 
-  async inviteUser(invitationData: UserInvitationDTO) {
+  async inviteUser(invitationData: UserInvitationDTO) : Promise<IUser> {
     const { email, name, surname, role } = invitationData;
     const existingUser = await User.findOne({ email });
     
@@ -83,13 +97,13 @@ export class UserService {
       role,
       isInvited: true,
       salt: tempPassword // We need to set the salt for password hashing
-    }) as IUserDocument;
+    })
 
     await user.save();
     return user;
   }
 
-  async requestPasswordReset(email: string) {
+  async requestPasswordReset(email: string) : Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {
       throw new UserNotFoundError(email);
@@ -103,7 +117,7 @@ export class UserService {
     await this.emailService.sendResetPasswordEmail(email, resetToken);
   }
 
-  async resetPassword(data: ResetPasswordDataDTO) {
+  async resetPassword(data: ResetPasswordDataDTO) : Promise<void> {
     const { token, password } = data;
     const user = await User.findOne({
       resetPasswordToken: token,

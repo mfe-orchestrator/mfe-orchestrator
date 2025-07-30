@@ -13,7 +13,7 @@ export function UserController(fastify: FastifyInstance) {
   fastify.post<{
     Body: UserRegistrationDTO
   }>('/users/registration', { config: { public: true } },async (req, res) => {
-    const out = await userService.register(req.body)
+    const out = await userService.register(req.body, true)
     return res.send(out.toFrontendObject());
   });
 
