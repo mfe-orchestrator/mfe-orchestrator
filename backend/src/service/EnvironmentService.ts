@@ -1,56 +1,47 @@
 import { EntityNotFoundError } from '../errors/EntityNotFoundError';
 import Environment from '../models/EnvironmentModel';
 import { EnvironmentDTO } from '../types/EnvironmentDTO';
+import BaseAuthorizedService from './BaseAuthorizedService';
 
-class EnvironmentService {
+class EnvironmentService extends BaseAuthorizedService{
   
-  getByProjectId(projectId: string) {
+  async getByProjectId(projectId: string) {
+    await this.ensureAccessToProject(projectId);
     return Environment.find({ projectId }).sort({ name: 1 });
   }
-
-  getAll() {
-    return Environment.find().sort({ name: 1 });
-  }
-
-  async getBySlug(slug: string) {
-    const environment = await Environment.findOne({ slug });
-    if (!environment) {
-      throw new EntityNotFoundError(slug);
-    }
-    return environment;
-  }
-
+  
   async getById(id: string) {
-    const environment = await Environment.findOne({ id });
-    if (!environment) {
-      throw new EntityNotFoundError(id);
-    }
-    return environment;
+    await this.ensureAccessToEnvironment(id);
+    return await Environment.findOne({ _id: id });
   }
 
-  async create(environmentData: EnvironmentDTO) {
+  async create(environmentData: EnvironmentDTO, projectId: string) {
+    await this.ensureAccessToProject(projectId);
     const environment = new Environment(environmentData);
+    environment.projectId = projectId;
     return await environment.save();
   }
 
-  async update(id: string, updateData: EnvironmentDTO) {
+  async update(environmentId: string, updateData: EnvironmentDTO) {
+    await this.ensureAccessToEnvironment(environmentId);
     const updatedEnvironment = await Environment.findOneAndUpdate(
-        { id },
+        { _id: environmentId },
         updateData,
         { new: true }
       );
 
       if (!updatedEnvironment) {
-        throw new EntityNotFoundError(id);
+        throw new EntityNotFoundError(environmentId);
       }
 
       return updatedEnvironment;
   }
 
-  async deleteSingle(id: string) {
-    const deletedEnvironment = await Environment.findOneAndDelete({ id });
+  async deleteSingle(environmentId: string) {
+    await this.ensureAccessToEnvironment(environmentId);
+    const deletedEnvironment = await Environment.findOneAndDelete({ _id: environmentId });
     if (!deletedEnvironment) {
-        throw new EntityNotFoundError(id);
+        throw new EntityNotFoundError(environmentId);
     }
   }
 
@@ -59,8 +50,11 @@ class EnvironmentService {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
         throw new Error('Ids array is required');
     }
+    for(const environmentId of ids){
+      await this.ensureAccessToEnvironment(environmentId);
+    }
 
-    return await Environment.deleteMany({ id: { $in: ids } });
+    return await Environment.deleteMany({ _id: { $in: ids } });
   }
 }
 

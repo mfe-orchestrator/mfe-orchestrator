@@ -7,10 +7,12 @@ export const ISSUER =  "microfronted.orchestrator.hub"
 
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
-  DISABLED = 'DISABLED'
+  DISABLED = 'DISABLED',
+  INVITED = 'INVITED'
 }
 
-export interface IUser extends MongooseDocument<ObjectId> {
+export interface IUser {
+  _id: ObjectId;
   email: string;
   password?: string;
   name?: string;
@@ -25,12 +27,15 @@ export interface IUser extends MongooseDocument<ObjectId> {
   activateEmailExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type IUserDocument = IUser & MongooseDocument<ObjectId> & {
   comparePassword: (candidatePassword: string) => Promise<boolean>;
   generateAuthToken: () => AuthTokenDataDTO;
   toFrontendObject: () => IUser;
 }
 
-const userSchema = new Schema<IUser>({
+const userSchema = new Schema<IUserDocument>({
   _id: { type: Schema.Types.ObjectId, auto: true },
   email: {
     type: String,
@@ -94,7 +99,7 @@ const userSchema = new Schema<IUser>({
   timestamps: true,
 });
 
-userSchema.pre<IUser>('save', async function(next) {
+userSchema.pre<IUserDocument>('save', async function(next) {
   if (this.isModified('password') && this.password) {
     const salt = await bcrypt.genSalt(10);
     this.salt = salt;
@@ -137,5 +142,5 @@ userSchema.methods.generateAuthToken = function(): AuthTokenDataDTO {
 
 export const getSecret = () => process.env.JWT_SECRET || 'your-secret-key'
 
-const User = mongoose.model<IUser>('User', userSchema);
+const User = mongoose.model<IUserDocument>('User', userSchema);
 export default User;

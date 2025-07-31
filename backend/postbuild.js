@@ -33,6 +33,10 @@ function postBuild() {
     path.join(__dirname, 'pnpm-lock.yaml'),
     path.join(__dirname, 'dist', 'pnpm-lock.yaml')
   );
+  copyDirectory(
+    path.join(__dirname, 'src', 'templates/emails'),
+    path.join(__dirname, 'dist', 'src/templates/emails')
+  );
   console.log('Postbuild script done');
 }
 

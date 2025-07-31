@@ -1,0 +1,19 @@
+extends base-email
+
+block content
+  p Hello #{user.name || 'there'},
+  p 
+    | You've been invited to join 
+    strong #{project.name}
+    |  as a 
+    strong(style="color: #3b82f6;") #{role}
+    | .
+  p Click the button below to accept this invitation and get started:
+  div(style="text-align: center;")
+    a.button(href=acceptUrl) Accept Invitation
+  p(style="color: #64748b; font-size: 0.875rem;")
+    | Or copy and paste this link into your browser:
+    br
+    a(href=acceptUrl, style="color: #3b82f6; word-break: break-all; font-size: 0.875rem;")
+      | #{acceptUrl}
+  p If you didn't request this invitation, you can safely ignore this email.

@@ -38,8 +38,11 @@ export class UserService {
     await user.save();
   }
 
-  async register(userData: UserRegistrationDTO, verifyEmail: boolean = true) {
-    const { email, password, name, surname } = userData;
+  async register(userData: Partial<IUser>, verifyEmail: boolean = true) {
+    const { email, ...otherUserData } = userData;
+    if(!email){
+      throw new Error('Email is required');
+    }
     const existingUser = await User.findOne({ email });
 
     const canVerifyEmail = verifyEmail && this.emailService.canSendEmails();
@@ -50,10 +53,7 @@ export class UserService {
 
     const userToSave : Partial<IUser> = {
       email,
-      password,
-      name,
-      surname,
-      status: UserStatus.ACTIVE,
+      ...otherUserData
     } 
 
     if(canVerifyEmail){

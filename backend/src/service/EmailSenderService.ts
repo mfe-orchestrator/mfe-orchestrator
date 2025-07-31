@@ -1,10 +1,16 @@
 import nodemailer from 'nodemailer';
 import { fastify } from '..';
+import { IUser } from '../models/UserModel';
+import { IProject } from '../models/ProjectModel';
+import { RoleInProject } from '../models/UserProjectModel';
+import pug from 'pug';
+import path from 'path';
 
 class EmailSenderService {
   private transporter: nodemailer.Transporter;
   private config: any;
   private canSendEmail = false;
+  
 
   constructor() {
     this.config = fastify.config;
@@ -29,56 +35,80 @@ class EmailSenderService {
       return this.canSendEmail;
   }
 
+  async sendUserInvitationEmail(user: IUser, project: IProject, role: RoleInProject, token: string) {
+    const acceptUrl = `${this.config.FRONTEND_URL}/project-invitation/${token}`;
+    
+    // Compile the Pug template
+    const emailHtml = pug.renderFile(
+      path.join(__dirname, '../templates/emails/project-invitation.pug'),
+      {
+        user,
+        project,
+        role: this.formatRoleName(role),
+        acceptUrl,
+        header: 'You\'re Invited!',
+        headerIcon: '👋',
+        footerText: 'This invitation link will expire in 7 days.'
+      }
+    );
+
+    const mailOptions = {
+      from: this.config.EMAIL_SMTP_FROM,
+      to: user.email,
+      subject: `🎉 You're invited to join ${project.name}`,
+      html: emailHtml
+    };
+
+    await this.transporter.sendMail(mailOptions);
+  }
+
+  private formatRoleName(role: RoleInProject): string {
+    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+  }
+
   async sendResetPasswordEmail(email: string, token: string): Promise<void> {
     const resetUrl = `${this.config.FRONTEND_URL}/reset-password/${token}`;
+    
+    // Compile the Pug template
+    const emailHtml = pug.renderFile(
+      path.join(__dirname, '../templates/emails/password-reset.pug'),
+      {
+        resetUrl,
+        header: 'Reset Your Password',
+        headerIcon: '🔑',
+        footerText: 'This password reset link will expire in 1 hour.'
+      }
+    );
 
     const mailOptions = {
       from: this.config.EMAIL_SMTP_FROM,
       to: email,
-      subject: 'Password Reset Request',
-      html: `
-        <h2>Password Reset</h2>
-        <p>You are receiving this email because you have requested a password reset.</p>
-        <p>Please click on the following link to reset your password:</p>
-        <p><a href="${resetUrl}">${resetUrl}</a></p>
-        <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-      `
+      subject: '🔑 Reset Your Password',
+      html: emailHtml
     };
 
     await this.transporter.sendMail(mailOptions);
   }
 
-  async sendVerificationEmail(email : string, token : string) : Promise<void>{
-    const resetUrl = `${this.config.FRONTEND_URL}/account-activation/${token}`;
+  async sendVerificationEmail(email: string, token: string): Promise<void> {
+    const activationUrl = `${this.config.FRONTEND_URL}/account-activation/${token}`;
+    
+    // Compile the Pug template
+    const emailHtml = pug.renderFile(
+      path.join(__dirname, '../templates/emails/account-activation.pug'),
+      {
+        activationUrl,
+        header: 'Welcome Aboard!',
+        headerIcon: '🎉',
+        footerText: 'This activation link will expire in 24 hours.'
+      }
+    );
 
     const mailOptions = {
       from: this.config.EMAIL_SMTP_FROM,
       to: email,
-      subject: 'Account Activation',
-      html: `
-        <h2>Account Activation</h2>
-        <p>You are receiving this email because you have requested an account activation.</p>
-        <p>Please click on the following link to activate your account:</p>
-        <p><a href="${resetUrl}">${resetUrl}</a></p>
-        <p>If you did not request this, please ignore this email and your account will not be activated.</p>
-      `
-    };
-
-    await this.transporter.sendMail(mailOptions);
-  }
-
-  async sendInvitationEmail(email: string, invitationLink: string, projectName: string): Promise<void> {
-    const mailOptions = {
-      from: this.config.EMAIL_SMTP_FROM,
-      to: email,
-      subject: `Invitation to join ${projectName}`,
-      html: `
-        <h2>Invitation to Join ${projectName}</h2>
-        <p>You have been invited to join ${projectName}.</p>
-        <p>Please click on the following link to accept the invitation:</p>
-        <p><a href="${invitationLink}">${invitationLink}</a></p>
-        <p>If you did not request this invitation, please ignore this email.</p>
-      `
+      subject: '🎉 Activate Your Account',
+      html: emailHtml
     };
 
     await this.transporter.sendMail(mailOptions);

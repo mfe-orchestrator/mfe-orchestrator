@@ -5,7 +5,7 @@ import { useMsal } from "@azure/msal-react"
 import { useAuth0 } from "@auth0/auth0-react"
 import { IToken, getToken as getTokenFromStorage } from "@/authentication/tokenUtils"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-//import useTheme from "./useTheme"
+import useProjectStore from "@/store/useProjectStore"
 
 export interface IViolations {
     field: string
@@ -30,6 +30,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
     const msalAuth = useMsal()
     const auth0Auth = useAuth0()
     const notifications = useToastNotificationStore()
+    const projectStore = useProjectStore()
 
     async function doRequest<R, D = unknown>(config?: IClientRequestDataExtended<D>): Promise<AxiosResponse<R>> {
         const realConfig = {
@@ -54,11 +55,11 @@ export const useApiClient = (options?: IApiClientOptions) => {
                 console.error(e, "doRequest - authenticated branch", config)
             }
 
-            //logger.info("[tokenReal]", "[doRequest]", { tokenReal })
             const result = await ApiClient.doRequest<R, D>({
                 token: tokenReal?.token,
                 headers: {
-                    issuer: tokenReal?.issuer
+                    issuer: tokenReal?.issuer,
+                    projectId: projectStore.project?._id
                 },
                 authenticated,
                 ...conf,

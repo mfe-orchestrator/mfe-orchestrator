@@ -9,7 +9,10 @@ export enum RoleInProject{
 export interface IUserProject extends Document {
   userId: ObjectId;
   projectId: ObjectId;
-  role?: RoleInProject;
+  role: RoleInProject;
+  invitationToken: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const userProjectSchema = new Schema<IUserProject>(
@@ -30,7 +33,12 @@ const userProjectSchema = new Schema<IUserProject>(
       type: String,
       enum: [RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER],
       default: RoleInProject.MEMBER,
+      required: true
     },
+    invitationToken: {
+      type: String,
+      required: false
+    }
   },
   {
     timestamps: true,

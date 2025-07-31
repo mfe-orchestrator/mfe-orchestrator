@@ -4,6 +4,7 @@ import { BusinessException, createBusinessException } from '../errors/BusinessEx
 import UserProjectService from './UserProjectService';
 import UserProject, { RoleInProject } from '../models/UserProjectModel';
 import { runInTransaction } from '../utils/runInTransaction';
+import BaseAuthorizedService from './BaseAuthorizedService';
 
 export interface ProjectCreateInput {
   name: string;
@@ -17,7 +18,7 @@ export interface ProjectUpdateInput {
   isActive?: boolean;
 }
 
-export class ProjectService {
+export class ProjectService extends BaseAuthorizedService {
 
   userProjectService = new UserProjectService();
 
@@ -48,20 +49,8 @@ export class ProjectService {
     }
   }
 
-  async findAll(filter: FilterQuery<IProject> = {}): Promise<IProject[]> {
-    try {
-      return await Project.find(filter).sort({ createdAt: -1 }).lean();
-    } catch (error) {
-      throw createBusinessException({
-        code: 'PROJECT_FETCH_ERROR',
-        message: 'Failed to fetch projects',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' },
-        statusCode: 500,
-      });
-    }
-  }
-
   async findById(id: string): Promise<IProject | null> {
+    await this.ensureAccessToProject(id);
     try {
       if (!Types.ObjectId.isValid(id)) {
         throw createBusinessException({
@@ -120,9 +109,10 @@ export class ProjectService {
     }
   }
 
-  async update(id: string, projectData: ProjectUpdateInput): Promise<IProject | null> {
+  async update(projectId: string, projectData: ProjectUpdateInput): Promise<IProject | null> {
+    await this.ensureAccessToProject(projectId);
     try {
-      if (!Types.ObjectId.isValid(id)) {
+      if (!Types.ObjectId.isValid(projectId)) {
         throw createBusinessException({
           code: 'INVALID_ID',
           message: 'Invalid project ID format',
@@ -137,7 +127,7 @@ export class ProjectService {
       }
 
       const updated = await Project.findByIdAndUpdate(
-        id,
+        projectId,
         updateData,
         { new: true, runValidators: true }
       ).lean();
@@ -163,9 +153,10 @@ export class ProjectService {
     }
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(projectId: string): Promise<boolean> {
+    await this.ensureAccessToProject(projectId);
     try {
-      if (!Types.ObjectId.isValid(id)) {
+      if (!Types.ObjectId.isValid(projectId)) {
         throw createBusinessException({
           code: 'INVALID_ID',
           message: 'Invalid project ID format',
@@ -173,7 +164,7 @@ export class ProjectService {
         });
       }
       
-      const result = await Project.deleteOne({ _id: id });
+      const result = await Project.deleteOne({ _id: projectId });
       
       if (result.deletedCount === 0) {
         throw createBusinessException({

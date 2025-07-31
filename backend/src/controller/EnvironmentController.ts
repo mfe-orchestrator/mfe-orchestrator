@@ -1,55 +1,64 @@
 import { FastifyInstance } from 'fastify';
 import EnvironmentService from '../service/EnvironmentService';
 import { EnvironmentDTO } from '../types/EnvironmentDTO';
+import { getProjectIdFromRequest } from '../utils/requestUtils';
+import ProjectHeaderNotFoundError from '../errors/ProjectHeaderNotFoundError';
 
 export default async function environmentController(fastify: FastifyInstance) {
 
-  const environmentService = new EnvironmentService();
-  
-  
-  fastify.get<{
-    Params: {
-      slug: string;
+  // GET /environments - Get all environments for a project
+  fastify.get('/environments', async (request, reply) => {
+    const projectId = getProjectIdFromRequest(request);
+    if (!projectId) {
+      throw new ProjectHeaderNotFoundError();
     }
-  }>('/environments/by-slug/:slug', async (request, reply) => {
-    return reply.send(await environmentService.getBySlug(request.params.slug));
-  });
 
-  fastify.get<{
-    Params: {
-      id: string;
+    try {
+      const environments = await new EnvironmentService(request.databaseUser).getByProjectId(projectId);
+      return reply.send(environments);
+    } catch (error) {
+      request.log.error(error, 'Error fetching environments');
+      throw error;
     }
-  }>('/environments/:id', async (request, reply) => {
-    return reply.send(await environmentService.getById(request.params.id));
   });
 
-  fastify.post<{
-    Body: EnvironmentDTO
-  }>('/environments', async (request, reply) => {
-    return reply.send(await environmentService.create(request.body));
-  });
+  fastify.post<{ Body: EnvironmentDTO }>(
+    '/environments',
+    async (request, reply) => {
+      const projectId = getProjectIdFromRequest(request);
+      if (!projectId) {
+        throw new ProjectHeaderNotFoundError();
+      }
 
-  fastify.put<{
-    Body: EnvironmentDTO
-    Params: {
-      id: string;
+      const environment = await new EnvironmentService(request.databaseUser).create(request.body, projectId);
+      return reply.send(environment);
     }
-  }>('/environments/:id', async (request, reply) => {
-    return reply.send(await environmentService.update(request.params.id, request.body));
-  });
+  );
 
-
-  fastify.delete<{
-    Params: {
-      id: string;
+  fastify.put<{ Body: EnvironmentDTO; Params: { id: string } }>(
+    '/environments/:id',
+    async (request, reply) => {
+      const environment = await new EnvironmentService(request.databaseUser).update(
+        request.params.id,
+        request.body
+      );
+      return reply.send(environment);
     }
-  }>('/environments/:id', async (request, reply) => {
-    reply.send(await environmentService.deleteSingle(request.params.id));
-  });
+  );
 
-  fastify.delete<{
-    Body: string[]
-  }>('/environments', async (request, reply) => {
-    return reply.send(await environmentService.deleteMultiple(request.body));
-  });
+  fastify.delete<{ Params: { id: string } }>(
+    '/environments/:id',
+    async (request, reply) => {
+      await new EnvironmentService(request.databaseUser).deleteSingle(request.params.id);
+      return reply.send();
+    }
+  );
+
+  fastify.delete<{ Body: string[] }>(
+    '/environments',
+    async (request, reply) => {
+      const result = await new EnvironmentService(request.databaseUser).deleteMultiple(request.body);
+      return reply.send(result);
+    }
+  );
 }

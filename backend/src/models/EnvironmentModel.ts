@@ -1,9 +1,10 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, ObjectId } from 'mongoose';
 
 export interface IEnvironment extends Document {
   name: string;
   description: string;
   slug: string;
+  projectId: string;
 }
 
 const environmentSchema = new Schema({
@@ -19,6 +20,12 @@ const environmentSchema = new Schema({
     type: String,
     required: true,
     unique: true,
+  },
+  projectId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Project',
+    required: true,
+    index: true,
   },
 }, {
   timestamps: true,
