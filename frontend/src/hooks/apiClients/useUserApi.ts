@@ -50,15 +50,27 @@ const useUserApi = () => {
   async function register(userData: UserRegistrationDTO) {
     const response = await doRequest<AuthResponse>({
       url: '/api/users/registration',
+      authenticated: AuthenticationType.NONE,
       method: 'POST',
       data: userData,
     });
     return response.data;
   }
 
+  async function activateAccount(token: string) {
+    await doRequest({
+      url: '/api/users/account-activation',
+      authenticated: AuthenticationType.NONE,
+      method: 'POST',
+      data: { token },
+    });
+    return true;
+  }
+
   async function login(credentials: UserLoginDTO) {
     const response = await doRequest<AuthResponse>({
       url: '/api/users/login',
+      authenticated: AuthenticationType.NONE,
       method: 'POST',
       data: credentials,
     });
@@ -66,18 +78,19 @@ const useUserApi = () => {
   }
 
   async function resetPasswordRequest(data: ResetPasswordRequestDTO) {
-    await doRequest({
+    return doRequest({
       url: '/api/users/forgot-password',
+      authenticated: AuthenticationType.NONE,
       method: 'POST',
-      data: data,
+      data,
     });
-    return true;
   }
 
   async function resetPassword(data: ResetPasswordDataDTO) {
     await doRequest({
       url: '/api/users/reset-password',
       method: 'POST',
+      authenticated: AuthenticationType.NONE,
       data,
     });
     return true;
@@ -88,6 +101,7 @@ const useUserApi = () => {
       url: '/api/users/profile',
       method: 'GET',
       authenticated: AuthenticationType.REQUIRED,
+      silent: true
     });
     return response.data;
   }
@@ -108,6 +122,7 @@ const useUserApi = () => {
     resetPasswordRequest,
     resetPassword,
     getProfile,
+    activateAccount,
     inviteUser
   };
 };

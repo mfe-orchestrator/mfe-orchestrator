@@ -10,7 +10,7 @@ import { setToken } from "../tokenUtils";
 import AuthenticationLayout from "./AuthenticationLayout";
 import { FormProvider, useForm } from "react-hook-form";
 import SocialLoginRow from "./SocialLoginRow";
-import useUserStore from "@/store/userStore";
+import useUserStore from "@/store/useUserStore";
 import { useGlobalParameters } from "@/contexts/GlobalParameterProvider";
 
 interface FormValues {

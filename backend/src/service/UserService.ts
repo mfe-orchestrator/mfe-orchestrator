@@ -9,12 +9,33 @@ import { UserInvitationDTO } from '../types/UserInvitationDTO';
 import { randomBytes } from 'crypto';
 import EmailService from './EmailSenderService';
 import AuthenticationError from '../errors/AuthenticationError';
+import UserAccoutActivationDTO from '../types/UserAccoutActivationDTO';
 
 export class UserService {
   private emailService: EmailService;
 
   constructor(emailService?: EmailService) {
     this.emailService = emailService || new EmailService();
+  }
+
+  async activate(data: UserAccoutActivationDTO) {
+    const user = await User.findOne({ activateEmailToken: data.token });
+    if (!user) {
+      throw new UserNotFoundError(data.token);
+    }
+
+    if(!user.activateEmailToken){
+      return
+    }
+
+    if (user.activateEmailExpires && user.activateEmailExpires < new Date()) {
+      throw new Error('Activation token expired');
+    }
+    
+    user.status = UserStatus.ACTIVE;
+    user.activateEmailToken = undefined;
+    user.activateEmailExpires = undefined;
+    await user.save();
   }
 
   async register(userData: UserRegistrationDTO, verifyEmail: boolean = true) {
@@ -125,7 +146,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new Error('Invalid or expired token');
+      throw new Error('Invalid or expired reset password token');
     }
 
     user.password = password;

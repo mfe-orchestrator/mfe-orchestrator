@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
 import SocialLoginRow from '@/authentication/components/SocialLoginRow';
 import useUserApi from "@/hooks/apiClients/useUserApi";
-import useUserStore from '@/store/userStore';
+import useUserStore from '@/store/useUserStore';
 
 interface RegisterFirstUserData{
   email: string;

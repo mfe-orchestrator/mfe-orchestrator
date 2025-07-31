@@ -10,6 +10,13 @@
     }
   },
   "auth": {
+    "registration_success": "Registration completed successfully, log in to access your account",
+    "registration_success_email": "Registration completed successfully, we have sent you an email to activate your account",
+    "account_activation": {
+      "title": "Account Activation",
+      "description": "Account activation in progress...",
+      "success": "Account activated, redirecting you to login"
+    },
     "login": "Login",
     "login_description": "Enter your credentials to access the system",
     "register": "Register",

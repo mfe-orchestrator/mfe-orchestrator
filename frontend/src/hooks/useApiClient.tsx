@@ -4,6 +4,7 @@ import ApiClient, { AuthenticationType, IClientRequestMetadata } from "../api/ap
 import { useMsal } from "@azure/msal-react"
 import { useAuth0 } from "@auth0/auth0-react"
 import { IToken, getToken as getTokenFromStorage } from "@/authentication/tokenUtils"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 //import useTheme from "./useTheme"
 
 export interface IViolations {
@@ -25,9 +26,10 @@ export interface IApiClientOptions {
 }
 
 export const useApiClient = (options?: IApiClientOptions) => {
-    //const theme = useTheme()
+    
     const msalAuth = useMsal()
     const auth0Auth = useAuth0()
+    const notifications = useToastNotificationStore()
 
     async function doRequest<R, D = unknown>(config?: IClientRequestDataExtended<D>): Promise<AxiosResponse<R>> {
         const realConfig = {
@@ -66,12 +68,12 @@ export const useApiClient = (options?: IApiClientOptions) => {
             return result
         } catch (e: any) {
             console.error(e)
-            /*if (!silent) {
-                theme.showErrorNotification({
+            if (!silent) {
+                notifications.showErrorNotification({
                     message: getErrorNotification(realConfig.customErrorMessage, e),
-                    errorCode: e?.response?.data?.errorCode
+                    //errorCode: e?.response?.data?.errorCode
                 })
-            }*/
+            }
             throw e
         }
     }
@@ -121,33 +123,33 @@ export const useApiClient = (options?: IApiClientOptions) => {
         return auth0Auth.isAuthenticated || Boolean(activeAccount)
     }
 
-    // const getErrorNotification = (customErrorMessage?: any, e?: any): string | React.ReactNode => {
-    //     if (typeof customErrorMessage === "function") return customErrorMessage(e)
-    //     if (customErrorMessage) return customErrorMessage
-    //     if (!e) return "Error"
-    //     const responseData = e?.response?.data
-    //     if (responseData) {
-    //         if (responseData.message) return responseData.message
-    //         if (responseData.violations) {
-    //             const violations: IViolations[] = responseData.violations
-    //             const messageData = (
-    //                 <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }} className="error-message-toast-notification-payload">
-    //                     {responseData.title && <p>{responseData.title}</p>}
-    //                     {violations.map(single => {
-    //                         return (
-    //                             <div key={single.field}>
-    //                                 {single.field} - {single.message}
-    //                             </div>
-    //                         )
-    //                     })}
-    //                 </div>
-    //             )
-    //             return messageData
-    //         }
-    //         if (responseData.title) return responseData.title
-    //     }
-    //     return e.message
-    // }
+    const getErrorNotification = (customErrorMessage?: any, e?: any): string | React.ReactNode => {
+        if (typeof customErrorMessage === "function") return customErrorMessage(e)
+        if (customErrorMessage) return customErrorMessage
+        if (!e) return "Error"
+        const responseData = e?.response?.data
+        if (responseData) {
+            if (responseData.message) return responseData.message
+            if (responseData.violations) {
+                const violations: IViolations[] = responseData.violations
+                const messageData = (
+                    <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }} className="error-message-toast-notification-payload">
+                        {responseData.title && <p>{responseData.title}</p>}
+                        {violations.map(single => {
+                            return (
+                                <div key={single.field}>
+                                    {single.field} - {single.message}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )
+                return messageData
+            }
+            if (responseData.title) return responseData.title
+        }
+        return e.message
+    }
 
     return {
         doRequest

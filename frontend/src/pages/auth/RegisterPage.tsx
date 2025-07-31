@@ -1,10 +1,7 @@
 
-import { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import TextField from "@/components/input/TextField.rhf";
 import { FormProvider } from "react-hook-form";
@@ -12,6 +9,9 @@ import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import Spinner from "@/components/Spinner";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
+import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
+import { useState } from "react";
+import useToastNotificationStore from '@/store/useToastNotificationStore';
 
 interface FormValues {
   email: string;
@@ -23,6 +23,9 @@ const RegisterPage = () => {
   const { t } = useTranslation();
   const { register } = useUserApi();
   const navigate = useNavigate();
+  const globalParameters = useGlobalParameters()
+  const notifications = useToastNotificationStore()
+  const [ showGreeting, setShowGreeting] = useState<boolean>(false)
 
   const form = useForm<FormValues>({});
 
@@ -35,7 +38,15 @@ const RegisterPage = () => {
       email: values.email,
       password: values.password
     })
-    navigate('/')
+    if(globalParameters.getParameter("canSendEmail")){
+      setShowGreeting(true)
+    }else{
+      notifications.showSuccessNotification({
+        message: t('auth.registration_success')
+      })
+      navigate('/')
+    }
+    
   };
 
   return (
@@ -49,6 +60,11 @@ const RegisterPage = () => {
         </Link>
       </p>}
     >
+      {showGreeting ? (
+        <p className='text-center'>
+          {t('auth.registration_success_email')}
+        </p>
+      ) : (
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(handleRegister)}>
           <div className="grid gap-4">
@@ -103,6 +119,7 @@ const RegisterPage = () => {
           </div>
         </form>
       </FormProvider>
+      )}
     </AuthenticationLayout>
   );
 };

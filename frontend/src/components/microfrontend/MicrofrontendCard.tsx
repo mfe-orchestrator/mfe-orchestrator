@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
 import { Slider } from '@/components/ui/slider';
 import { Percent, Settings } from 'lucide-react';
 import { Environment } from '../environment/EnvironmentSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import useToastNotificationStore from '@/store/useToastNotificationStore';
 
 export interface MicrofrontendProps {
   id: string;
@@ -44,7 +44,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
   
   const [editParameters, setEditParameters] = useState<Record<string, string>>(parameters);
   const [editCanaryPercentage, setEditCanaryPercentage] = useState<number>(canaryPercentage);
-  const { toast } = useToast();
+  const notifications = useToastNotificationStore()
 
   const statusColor = {
     active: 'bg-green-500',
@@ -68,10 +68,9 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
 
   const saveConfiguration = () => {
     // Here you would typically save the parameters to your backend
-    toast({
-      title: "Configurazione salvata",
-      description: `I parametri per ${mfe.name} (${currentEnvironment}) sono stati aggiornati.`,
-    });
+    notifications.showSuccessNotification({
+      message: `I parametri per ${mfe.name} (${currentEnvironment}) sono stati aggiornati.`
+    })
     setIsDialogOpen(false);
   };
 

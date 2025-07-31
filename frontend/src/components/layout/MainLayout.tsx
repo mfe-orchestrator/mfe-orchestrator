@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import useUserStore from '@/store/userStore';
+import useUserStore from '@/store/useUserStore';
 
 interface MainLayoutProps {
   children: React.ReactNode;

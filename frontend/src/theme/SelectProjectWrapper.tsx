@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import useProjectStore from "@/store/projectStore";
+import useProjectStore from "@/store/useProjectStore";
 import { useQuery } from "@tanstack/react-query";
 import useProjectApi from "@/hooks/apiClients/useProjectApi";
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";

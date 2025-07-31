@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import { Plus, Trash2, Variable } from 'lucide-react';
 import { Environment } from './EnvironmentSelector';
+import useToastNotificationStore from '@/store/useToastNotificationStore';
 
 export interface EnvironmentVariablesProps {
   environment: Environment;
@@ -46,7 +46,7 @@ const EnvironmentVariables: React.FC<EnvironmentVariablesProps> = ({ environment
   );
   const [newEnvKey, setNewEnvKey] = useState<string>('');
   const [newEnvValue, setNewEnvValue] = useState<string>('');
-  const { toast } = useToast();
+  const notifications = useToastNotificationStore()
 
   const handleEnvVarChange = (key: string, value: string) => {
     setEnvironmentVars(prev => ({
@@ -77,9 +77,8 @@ const EnvironmentVariables: React.FC<EnvironmentVariablesProps> = ({ environment
 
   const saveConfiguration = () => {
     // Here you would typically save the environment variables to your backend
-    toast({
-      title: "Configurazione salvata",
-      description: `Le variabili d'ambiente globali per ${environment} sono state aggiornate.`,
+    notifications.showSuccessNotification({
+      message: `Le variabili d'ambiente globali per ${environment} sono state aggiornate.`,
     });
     setIsDialogOpen(false);
     

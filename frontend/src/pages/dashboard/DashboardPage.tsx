@@ -11,7 +11,7 @@ import { Search, Percent, Settings } from 'lucide-react';
 import EnvironmentSelector, { Environment } from '../../components/environment/EnvironmentSelector';
 import EnvironmentVariables from '../../components/environment/EnvironmentVariables';
 import { useQuery } from '@tanstack/react-query';
-import useProjectStore from '@/store/projectStore';
+import useProjectStore from '@/store/useProjectStore';
 import useEnvironmentsApi from '@/hooks/apiClients/useEnvironmentsApi';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useProjectApi from '@/hooks/apiClients/useProjectApi';

@@ -1,12 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import MainLayout from '../../components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { useToast } from '@/components/ui/use-toast';
 import { FileText, Folder, ChevronUp, Download, Eye, RefreshCw } from 'lucide-react';
 
 interface FileItem {
@@ -23,7 +21,6 @@ const SftpViewerPage = () => {
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const { toast } = useToast();
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -111,24 +108,15 @@ const SftpViewerPage = () => {
   const handleRefresh = () => {
     setLoading(true);
     loadFilesForPath(path);
-    toast({
-      title: "Aggiornato",
-      description: `Cartella ${path.join('/')} aggiornata.`,
-    });
+    
   };
 
   const handlePreviewFile = (file: FileItem) => {
-    toast({
-      title: "Anteprima file",
-      description: `Apertura anteprima del file: ${file.name}`,
-    });
+    
   };
 
   const handleDownloadFile = (file: FileItem) => {
-    toast({
-      title: "Download avviato",
-      description: `Download del file: ${file.name}`,
-    });
+    
   };
 
   // Filter items based on search term

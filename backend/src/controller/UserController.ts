@@ -5,6 +5,7 @@ import ResetPasswordDataDTO from '../types/ResetPasswordDataDTO';
 import { UserInvitationDTO } from '../types/UserInvitationDTO';
 import { FastifyInstance } from 'fastify';
 import UserService from '../service/UserService';
+import UserAccoutActivationDTO from '../types/UserAccoutActivationDTO';
 
 export function UserController(fastify: FastifyInstance) {
 
@@ -15,6 +16,13 @@ export function UserController(fastify: FastifyInstance) {
   }>('/users/registration', { config: { public: true } },async (req, res) => {
     const out = await userService.register(req.body, true)
     return res.send(out.toFrontendObject());
+  });
+
+  fastify.post<{
+    Body: UserAccoutActivationDTO
+  }>('/users/account-activation', { config: { public: true } },async (req, res) => {
+    await userService.activate(req.body)
+    return res.send();
   });
 
   fastify.post<{

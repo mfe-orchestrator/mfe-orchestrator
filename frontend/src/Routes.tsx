@@ -10,6 +10,7 @@ import AuthWrapper from "./theme/AuthWrapper";
 import MainLayout from "./components/layout/MainLayout";
 
 // Lazy load all page components
+const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
 const SftpViewerPage = lazy(() => import("./pages/sftp/SftpViewerPage"));
@@ -91,6 +92,12 @@ const Routes: React.FC = () => {
               path="/reset-password/:token" 
               element={
                 <RouteWithSuspense element={<ResetPasswordPage />} />
+              } 
+            />
+            <Route 
+              path="/account-activation/:token" 
+              element={
+                <RouteWithSuspense element={<AccountActivation />} />
               } 
             />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

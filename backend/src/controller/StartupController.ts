@@ -23,7 +23,7 @@ export function StartupController(fastify: FastifyInstance) {
     const registeredUser = await userService.register({
         email: req.body.email,
         password: req.body.password,
-    });
+    }, true);
     
     const project = await projectService.create({
         name: req.body.project,

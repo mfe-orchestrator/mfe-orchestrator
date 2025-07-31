@@ -10,6 +10,13 @@
     }
   },
   "auth": {
+    "registration_success": "Registrazione completata con successo, accedi per accedere al tuo account",
+    "registration_success_email": "Registrazione completata con successo, ti abbiamo inviato una mail per attivare il tuo account",
+    "account_activation": {
+      "title": "Attivazione Account",
+      "description": "Attivazione account in corso...",
+      "success": "Account attivo, ti stiamo riportando alla pagina di accesso"
+    },
     "login": "Accedi",
     "login_description": "Inserisci le tue credenziali per accedere al sistema",
     "register": "Registrati",

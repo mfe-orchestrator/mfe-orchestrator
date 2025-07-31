@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import Spinner from "@/components/Spinner";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 import { useTranslation } from "react-i18next";
+import useToastNotificationStore from "@/store/useToastNotificationStore";
 
 interface FormValues {
   password: string;
@@ -20,6 +21,7 @@ const ResetPasswordPage = () => {
   const { resetPassword } = useUserApi();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const notifications = useToastNotificationStore()
 
   const form = useForm<FormValues>({});
 
@@ -31,6 +33,9 @@ const ResetPasswordPage = () => {
     await registerMutation.mutateAsync({
       password: values.password,
       token
+    })
+    notifications.showSuccessNotification({
+      message: t('auth.reset_password_success')
     })
     navigate('/')
   };

@@ -1,7 +1,5 @@
 
 import { Suspense } from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
@@ -12,6 +10,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 import Spinner from './components/Spinner';
+import Notification from './theme/Notification';
 
 const queryClient = new QueryClient();
 
@@ -24,8 +23,7 @@ const App: React.FC = () => (
             <GlobalParameterProvider>
               <ThemeProvider defaultTheme="light">
                 <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
+                  <Notification />
                   <Routes />
                 </TooltipProvider>
               </ThemeProvider>

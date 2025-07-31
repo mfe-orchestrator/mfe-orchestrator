@@ -3,7 +3,7 @@ import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
 import useUserApi, { User } from "@/hooks/apiClients/useUserApi";
 import { useQuery } from "@tanstack/react-query";
 import LoginPage from "../authentication/components/LoginPage";
-import useUserStore from "@/store/userStore";
+import useUserStore from "@/store/useUserStore";
 
 const AuthWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
