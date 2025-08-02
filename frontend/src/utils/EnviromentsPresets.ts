@@ -12,13 +12,13 @@ export interface EnvironmentPresetGroup{
 
 export const DEFAULT_COLORS = [
   // Blues
-  '#3B82F6', // blue-500
-  '#2563EB', // blue-600
+  '#93C5FD', // blue-300 (softer blue)
+  '#60A5FA', // blue-400
   '#1D4ED8', // blue-700
   
   // Greens
-  '#10B981', // emerald-500
-  '#059669', // emerald-600
+  '#6EE7B7', // green-300 (softer green)
+  '#34D399', // green-400
   '#047857', // emerald-700
   
   // Reds
@@ -27,8 +27,8 @@ export const DEFAULT_COLORS = [
   '#B91C1C', // red-700
   
   // Yellows/Oranges
-  '#F59E0B', // amber-500
-  '#D97706', // amber-600
+  '#FCD34D', // yellow-300 (softer yellow)
+  '#FBBF24', // yellow-400
   '#F97316', // orange-500
   '#EA580C', // orange-600
   
@@ -61,33 +61,33 @@ export const DEFAULT_COLORS = [
   '#4682B4', // steel blue
   '#6A5ACD', // slate blue
   '#DDA0DD', // plum
-  '#FFA500', // orange
-  '#9ACD32', // yellow-green
+  '#FCD34D', // yellow-300 (softer orange)
+  '#BEF264', // lime-300 (softer yellow-green)
 ];
 
 const presetEnvironmentGroups: EnvironmentPresetGroup[] = [
     {
       name: 'Ambienti Base',
       environments: [
-        { slug: 'DEV', name: 'Development', isProduction: false, color: '#3B82F6' },
-        { slug: 'PROD', name: 'Production', isProduction: true, color: '#10B981' },
+        { slug: 'DEV', name: 'Development', isProduction: false, color: '#93C5FD' },
+        { slug: 'PROD', name: 'Production', isProduction: true, color: '#6EE7B7' },
       ]
     },
     {
       name: 'Ambienti Standard',
       environments: [
-        { slug: 'DEV', name: 'Development', isProduction: false, color: '#3B82F6' },
-        { slug: 'UAT', name: 'UAT', isProduction: false, color: '#F59E0B' },
-        { slug: 'PROD', name: 'Production', isProduction: true, color: '#10B981' },
+        { slug: 'DEV', name: 'Development', isProduction: false, color: '#93C5FD' },
+        { slug: 'UAT', name: 'UAT', isProduction: false, color: '#FCD34D' },
+        { slug: 'PROD', name: 'Production', isProduction: true, color: '#6EE7B7' },
       ]
     },
     {
       name: 'Ambienti Completi',
       environments: [
-        { slug: 'DEV', name: 'Development', isProduction: false, color: '#3B82F6' },
-        { slug: 'UAT', name: 'UAT', isProduction: false, color: '#F59E0B' },
-        { slug: 'TEST', name: 'Test', isProduction: false, color: '#8B5CF6' },
-        { slug: 'PROD', name: 'Production', isProduction: true, color: '#10B981' },
+        { slug: 'DEV', name: 'Development', isProduction: false, color: '#93C5FD' },
+        { slug: 'UAT', name: 'UAT', isProduction: false, color: '#FCD34D' },
+        { slug: 'TEST', name: 'Test', isProduction: false, color: '#BEF264' },
+        { slug: 'PROD', name: 'Production', isProduction: true, color: '#6EE7B7' },
       ]
     }
   ];

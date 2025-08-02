@@ -122,16 +122,6 @@
     "dark": "Dark",
     "system": "System"
   },
-  "environment": {
-    "production": "Production",
-    "edit_title": "Edit environment",
-    "delete_title": "Delete environment",
-    "color_tooltip": "Environment color: {{name}}",
-    "name": "Name",
-    "slug": "Slug",
-    "description": "Description",
-    "is_production": "Production environment"
-  },
   "project": {
     "no_projects_found": "No projects found",
     "create_new_project": "Create a new project now",
@@ -144,5 +134,32 @@
   },
   "color_picker": {
     "select_color": "Select a color"
+  },
+  "environment": {
+    "production": "Production",
+    "edit_title": "Edit environment",
+    "delete_title": "Delete environment",
+    "color_tooltip": "Environment color: {{name}}",
+    "name": "Name",
+    "slug": "Slug",
+    "description": "Description",
+    "is_production": "Production environment",
+    "configure": "Configure Environments",
+    "preset_environments": "Default Environments",
+    "custom_environments": "Your Custom Environments",
+    "your_environments": "Your Environments",
+    "add_environment": "Add Environment",
+    "form": {
+      "name": "Name",
+      "name_placeholder": "Environment name",
+      "name_required": "Name is required",
+      "slug": "Slug",
+      "slug_placeholder": "environment-slug",
+      "slug_required": "Slug is required",
+      "description": "Description",
+      "description_placeholder": "Short description of the environment",
+      "is_production": "Production",
+      "color": "Color"
+    }
   }
 }

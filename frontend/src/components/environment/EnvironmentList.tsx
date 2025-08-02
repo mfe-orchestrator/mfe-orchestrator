@@ -1,12 +1,13 @@
 import { FormProvider, useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi";
-import TextField from "./input/TextField.rhf";
-import Switch from "./input/Switch.rhf";
-import ColorPicker from "./input/ColorPicker.rhf";
+import TextField from "../input/TextField.rhf";
+import Switch from "../input/Switch.rhf";
+import ColorPicker from "../input/ColorPicker.rhf";
 import { Loader2, PencilIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { getRandomColor } from "@/utils/StringUtils";
 
 
 interface EnvironmentListProps {
@@ -93,6 +94,7 @@ const SingleEnviromentSee: React.FC<SingleEnviromentSeeProps> = ({ environment, 
   )
 }
 const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment, onSubmit, onCancelEdit }) => {
+  const { t } = useTranslation();
   const form = useForm<EnvironmentDTO>({
     defaultValues: environment
   })
@@ -106,37 +108,37 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TextField
                 name="name"
-                label="Nome"
-                placeholder="Nome ambiente"
-                rules={{ required: 'Il nome è obbligatorio' }}
+                label={t('environment.form.name')}
+                placeholder={t('environment.form.name_placeholder')}
+                rules={{ required: t('environment.form.name_required') }}
                 required
                 containerClassName="md:col-span-2"
               />
               <TextField
                 name="slug"
-                label="Slug"
-                placeholder="slug-ambiente"
+                label={t('environment.form.slug')}
+                placeholder={t('environment.form.slug_placeholder')}
                 textTransform={e => e?.toUpperCase()}
-                rules={{ required: 'Lo slug è obbligatorio' }}
+                rules={{ required: t('environment.form.slug_required') }}
                 required
                 containerClassName="md:col-span-2"
               />
               <TextField
                 name="description"
-                label="Descrizione"
-                placeholder="Breve descrizione dell'ambiente"
+                label={t('environment.form.description')}
+                placeholder={t('environment.form.description_placeholder')}
                 containerClassName="md:col-span-2"
               />
               <div className="flex items-center space-x-4">
                 <Switch
                   name="isProduction"
-                  label="Produzione"
+                  label={t('environment.form.is_production')}
                   className="flex-1"
                 />
                 <div className="flex-1">
                   <ColorPicker
                     name="color"
-                    label="Colore"
+                    label={t('environment.form.color')}
                   />
                 </div>
               </div>
@@ -152,7 +154,7 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-                Annulla
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -161,7 +163,7 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Salva modifiche
+                {t('common.save_changes')}
               </Button>
             </div>
           </div>
@@ -173,6 +175,7 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
 
 
 const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveEnvironments }) => {
+  const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | number>()
   const [loading, setLoading] = useState(false)
   const [environmentList, setEnvironmentList] = useState(environments)
@@ -181,18 +184,10 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
     setEnvironmentList(environments)
   }, [environments])
 
-
   const onAddEnvironment = () => {
     const newEnvironment = {
-      name: undefined,
-      description: undefined,
-      slug: undefined,
-      color: '#000000',
-      isProduction: false,
-      _id: undefined,
-      createdAt: undefined,
-      updatedAt: undefined
-    }
+      color: getRandomColor(),
+    } as EnvironmentDTO
 
     if (!environmentList) {
       setEnvironmentList([newEnvironment])
@@ -244,7 +239,7 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
         :
         <>
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-medium text-gray-900">I tuoi ambienti</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('environment.your_environments')}</h4>
             {environmentList && environmentList.length !== 0 &&
               <Button
                 onClick={onSaveEnvironmentWrapper}
@@ -254,7 +249,7 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Salva tutto
+                {t('common.save')}
               </Button>
             }
           </div>
@@ -291,7 +286,7 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
-              Aggiungi ambiente
+              {t('environment.add_environment')}
             </Button>
           </div>
         </>

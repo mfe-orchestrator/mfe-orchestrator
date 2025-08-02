@@ -1,9 +1,10 @@
 
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import presetEnvironmentGroups, { EnvironmentPreset } from '@/utils/EnviromentsPresets';
-import EnvironmentSet from '@/components/EnvironmentSet';
-import EnvironmentList from '@/components/EnvironmentList';
+import EnvironmentSet from '@/components/environment/EnvironmentSet';
+import EnvironmentList from '@/components/environment/EnvironmentList';
 import useEnvironmentsApi, { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
 import { useMutation } from '@tanstack/react-query';
 
@@ -28,16 +29,18 @@ const NoEnvironmentPlaceholder : React.FC<NoEnvironmentPlaceholderProps> = ({onS
     }
   })
 
+  const { t } = useTranslation();
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
-          Configura gli ambienti
+          {t('environment.configure')}
         </h2>
       </div>
 
       <div className="mt-8">
-        <h4 className="text-sm font-medium text-gray-500 mb-4">Ambienti predefiniti</h4>
+        <h4 className="text-sm font-medium text-gray-500 mb-4">{t('environment.preset_environments')}</h4>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {presetEnvironmentGroups.map((preset, index) => (
             <EnvironmentSet

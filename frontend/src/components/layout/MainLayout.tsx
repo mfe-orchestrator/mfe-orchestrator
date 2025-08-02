@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { NavLink } from './NavLink';
 import { useTheme } from '@/contexts/ThemeContext';
 import { 
   Settings, 
@@ -61,6 +62,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     {
       name: t('sftp.title'),
       path: '/sftp',
+      disabled: true,
       icon: <FileText className="h-5 w-5" />
     },
     {
@@ -101,20 +103,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         <div className="mt-8">
           {navItems.map((item) => (
-            <Link
+            <NavLink
               key={item.path}
               to={item.path}
-              className={`flex items-center px-4 py-3 mb-1 ${
-                location.pathname === item.path
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-              } transition-colors ${isSidebarOpen ? 'justify-start' : 'justify-center'}`}
-            >
-              <div className="flex items-center">
-                {item.icon}
-                {isSidebarOpen && <span className="ml-3">{item.name}</span>}
-              </div>
-            </Link>
+              icon={item.icon}
+              name={item.name}
+              isSidebarOpen={isSidebarOpen}
+              disabled={item.disabled}
+            />
           ))}
         </div>
       </div>

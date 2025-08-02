@@ -55,6 +55,8 @@
   "common": {
     "save": "Salva",
     "cancel": "Annulla",
+    "save_changes": "Salva modifiche",
+    "save_all": "Salva tutto",
     "delete": "Elimina",
     "edit": "Modifica",
     "create": "Crea",
@@ -126,11 +128,24 @@
     "production": "Produzione",
     "edit_title": "Modifica ambiente",
     "delete_title": "Elimina ambiente",
-    "color_tooltip": "Colore ambiente: {{name}}",
-    "name": "Nome",
-    "slug": "Slug",
-    "description": "Descrizione",
-    "is_production": "Ambiente di produzione"
+    "color_tooltip": "Colore per l'ambiente {{name}}",
+    "configure": "Configura Ambienti",
+    "preset_environments": "Ambienti Predefiniti",
+    "custom_environments": "I Tuoi Ambienti Personalizzati",
+    "your_environments": "I tuoi ambienti",
+    "add_environment": "Aggiungi ambiente",
+    "form": {
+      "name": "Nome",
+      "name_placeholder": "Nome ambiente",
+      "name_required": "Il nome è obbligatorio",
+      "slug": "Slug",
+      "slug_placeholder": "slug-ambiente",
+      "slug_required": "Lo slug è obbligatorio",
+      "description": "Descrizione",
+      "description_placeholder": "Breve descrizione dell'ambiente",
+      "is_production": "Produzione",
+      "color": "Colore"
+    }
   },
   "project": {
     "no_projects_found": "Nessun progetto trovato",

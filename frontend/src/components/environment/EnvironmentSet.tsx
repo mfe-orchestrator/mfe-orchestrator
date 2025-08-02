@@ -24,7 +24,7 @@ const EnvironmentSet : React.FC<EnvironmentSetProps> = ({ name, environments, on
                   {environments.map((env, i) => (
                     <span 
                       key={i}
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-black"
                       style={{ backgroundColor: env.color }}
                     >
                       {env.slug}
