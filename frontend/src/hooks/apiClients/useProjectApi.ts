@@ -23,7 +23,7 @@ const useProjectApi = () => {
     }
   };
 
-  const getEnvironmentsByProjectId = async (projectId: string) => {
+  const getEnvironmentsByProjectId = async (projectId: string) : Promise<EnvironmentDTO[]> => {
     const response = await apiClient.doRequest({
         url:`/api/projects/${projectId}/environments`,
     });

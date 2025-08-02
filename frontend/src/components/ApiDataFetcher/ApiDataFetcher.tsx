@@ -23,7 +23,7 @@ export function ApiDataFetcher<TData = unknown, TError = unknown>({
     </div>
   ),
 }: ApiDataFetcherProps<TData, TError>) {
-  const isLoading = queries.some((query) => query.isLoading);
+  const isLoading = queries.some((query) => query.isLoading || query.isFetching);
   const error = queries.find((query) => query.isError)?.error;
 
   if (isLoading) {

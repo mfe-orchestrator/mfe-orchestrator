@@ -108,7 +108,7 @@ async function doRequest<R, D = unknown>(config?: IClientRequestData<D>): Promis
                 ...utm
             }
         }
-
+        
         const response = await axios.request<R, AxiosResponse<R>, D>({
             ...conf,
             headers: headersNew,

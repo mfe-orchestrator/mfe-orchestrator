@@ -1,17 +1,17 @@
 import { FastifyInstance } from 'fastify';
 import MicrofrontendDTO from '../types/MicrofrontendDTO';
 import MicrofrontendService from '../service/MicrofrontendService';
+import { getEnvironmentIdFromRequest } from '../utils/requestUtils';
+import EnvironmentHeaderNotFoundError from '../errors/EnvironmentHeaderNotFoundError';
 
 export default async function microfrontendController(fastify: FastifyInstance) {
 
-  fastify.get<{ Querystring: {
-    environment?: string;
-  } }>('/microfrontends', async (request, reply) => {
-    const { environment } = request.query;
-    const microfrontends = environment 
-      ? await new MicrofrontendService(request.databaseUser).getByEnvironment(environment)
-      : await new MicrofrontendService(request.databaseUser).getAll();
-    return reply.send(microfrontends);
+  fastify.get('/microfrontends', async (request, reply) => {
+    const environmentId = getEnvironmentIdFromRequest(request);
+    if(!environmentId){
+      throw new EnvironmentHeaderNotFoundError();
+    }
+    return reply.send(await new MicrofrontendService(request.databaseUser).getByEnvironment(environmentId));
   });
 
   fastify.get<{ Params: {

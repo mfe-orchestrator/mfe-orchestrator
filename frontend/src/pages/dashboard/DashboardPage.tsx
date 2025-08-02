@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import MainLayout from '../../components/layout/MainLayout';
 import MicrofrontendCard, { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,27 +7,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Search, Percent, Settings } from 'lucide-react';
-import EnvironmentSelector, { Environment } from '../../components/environment/EnvironmentSelector';
+import EnvironmentSelector from '../../components/environment/EnvironmentSelector';
 import EnvironmentVariables from '../../components/environment/EnvironmentVariables';
 import { useQuery } from '@tanstack/react-query';
 import useProjectStore from '@/store/useProjectStore';
-import useEnvironmentsApi from '@/hooks/apiClients/useEnvironmentsApi';
+import useEnvironmentsApi, { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useProjectApi from '@/hooks/apiClients/useProjectApi';
+import NoEnvironmentPlaceholder from './NoEnvironmentPlaceholder';
 
 const DashboardPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [microfrontends, setMicrofrontends] = useState<MicrofrontendProps[]>([]);
-  const [currentEnvironment, setCurrentEnvironment] = useState<Environment>('DEV');
-  const environmentsApi = useEnvironmentsApi();
   const projectsApi = useProjectApi()
   const projectStore = useProjectStore();
 
+  const onSaveEnvironmentsSucess = (environments: EnvironmentDTO[]) =>{
+    projectStore.setEnvironments(environments)
+    projectStore.setEnvironment(environments[0])
+  }
+
   const environmentsQuery = useQuery({
-    queryKey: ['environments', projectStore.project._id],
-    queryFn: () => projectsApi.getEnvironmentsByProjectId(projectStore.project._id),
+    queryKey: ['environments', projectStore?.project?._id],
+    queryFn: async () => {
+      const environments = await projectsApi.getEnvironmentsByProjectId(projectStore.project?._id)
+      onSaveEnvironmentsSucess(environments)
+      return environments;
+    },
+    enabled: !!projectStore.project?._id
   });
 
   // Mock data loading with environment-specific data
@@ -52,9 +60,9 @@ const DashboardPage = () => {
           },
           canaryPercentage: 25,
           environments: {
-            DEV: { 
-              version: '1.3.0-beta', 
-              canaryPercentage: 50, 
+            DEV: {
+              version: '1.3.0-beta',
+              canaryPercentage: 50,
               parameters: { apiEndpoint: 'https://dev-api.example.com/users', maxUsers: '200' },
               environmentVariables: {
                 API_URL: 'https://dev-api.example.com',
@@ -62,9 +70,9 @@ const DashboardPage = () => {
                 FEATURE_FLAGS: 'user_management,new_dashboard'
               }
             },
-            UAT: { 
-              version: '1.2.3', 
-              canaryPercentage: 30, 
+            UAT: {
+              version: '1.2.3',
+              canaryPercentage: 30,
               parameters: { apiEndpoint: 'https://uat-api.example.com/users', maxUsers: '150' },
               environmentVariables: {
                 API_URL: 'https://uat-api.example.com',
@@ -72,18 +80,18 @@ const DashboardPage = () => {
                 FEATURE_FLAGS: 'user_management'
               }
             },
-            PREPROD: { 
-              version: '1.2.2', 
-              canaryPercentage: 15, 
+            PREPROD: {
+              version: '1.2.2',
+              canaryPercentage: 15,
               parameters: { apiEndpoint: 'https://preprod-api.example.com/users', maxUsers: '120' },
               environmentVariables: {
                 API_URL: 'https://preprod-api.example.com',
                 LOG_LEVEL: 'warn'
               }
             },
-            PROD: { 
-              version: '1.2.1', 
-              canaryPercentage: 10, 
+            PROD: {
+              version: '1.2.1',
+              canaryPercentage: 10,
               parameters: { apiEndpoint: 'https://api.example.com/users', maxUsers: '100' },
               environmentVariables: {
                 API_URL: 'https://api.example.com',
@@ -109,9 +117,9 @@ const DashboardPage = () => {
           },
           canaryPercentage: 10,
           environments: {
-            DEV: { 
-              version: '1.0.0-beta', 
-              canaryPercentage: 70, 
+            DEV: {
+              version: '1.0.0-beta',
+              canaryPercentage: 70,
               parameters: { refreshInterval: '10', dataSource: 'dev-analytics-api' },
               environmentVariables: {
                 ANALYTICS_API: 'https://dev-analytics.example.com',
@@ -119,25 +127,25 @@ const DashboardPage = () => {
                 DEBUG_MODE: 'true'
               }
             },
-            UAT: { 
-              version: '0.9.2', 
-              canaryPercentage: 25, 
+            UAT: {
+              version: '0.9.2',
+              canaryPercentage: 25,
               parameters: { refreshInterval: '20', dataSource: 'uat-analytics-api' },
               environmentVariables: {
                 ANALYTICS_API: 'https://uat-analytics.example.com',
                 CACHE_TTL: '1800'
               }
             },
-            PREPROD: { 
-              version: '0.9.1', 
+            PREPROD: {
+              version: '0.9.1',
               canaryPercentage: 15,
               environmentVariables: {
                 ANALYTICS_API: 'https://preprod-analytics.example.com',
                 CACHE_TTL: '3600'
               }
             },
-            PROD: { 
-              version: '0.9.0', 
+            PROD: {
+              version: '0.9.0',
               canaryPercentage: 5,
               environmentVariables: {
                 ANALYTICS_API: 'https://analytics.example.com',
@@ -210,9 +218,9 @@ const DashboardPage = () => {
   // Filter microfrontends based on search term and status
   const filteredMicrofrontends = microfrontends.filter(mfe => {
     const matchesSearch = mfe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          mfe.description.toLowerCase().includes(searchTerm.toLowerCase());
+      mfe.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || mfe.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -224,22 +232,30 @@ const DashboardPage = () => {
     error: microfrontends.filter(mfe => mfe.status === 'error').length
   };
 
+  const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0;
+
   return (
-      <ApiDataFetcher queries={[environmentsQuery]}>
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <h2 className="text-3xl font-bold tracking-tight">
-                Microfrontend
+    <ApiDataFetcher queries={[environmentsQuery]}>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <h2 className="text-3xl font-bold tracking-tight">
+              {projectStore.project?.name}
+            </h2>
+            {isThereAtLeastOneEnvironment &&
+              <>
+                <EnvironmentSelector
+                  selectedEnvironment={projectStore.environment}
+                  environments={projectStore.environments}
+                  onEnvironmentChange={projectStore.setEnvironment}
+                />
                 <Badge variant="outline" className="ml-2">
                   {counts.all}
                 </Badge>
-              </h2>
-              <EnvironmentSelector 
-                selectedEnvironment={currentEnvironment}
-                onEnvironmentChange={setCurrentEnvironment}
-              />
-            </div>
+              </>
+            }
+          </div>
+          {isThereAtLeastOneEnvironment &&
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -262,138 +278,140 @@ const DashboardPage = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <EnvironmentVariables environment={currentEnvironment} />
-            <Button variant="outline">Aggiungi Microfrontend</Button>
-          </div>
-
-          <Tabs defaultValue="grid" className="space-y-4">
-            <div className="flex items-center">
-              <TabsList>
-                <TabsTrigger value="grid">Griglia</TabsTrigger>
-                <TabsTrigger value="list">Lista</TabsTrigger>
-              </TabsList>
+          }
+        </div>
+        {isThereAtLeastOneEnvironment ?
+          <>
+            <div className="flex justify-between items-center">
+              <EnvironmentVariables environment={projectStore.environment} />
+              <Button variant="outline">Aggiungi Microfrontend</Button>
             </div>
-            
-            <TabsContent value="grid" className="space-y-4">
-              {loading ? (
-                <div className="flex justify-center items-center py-12">
-                  <span className="loader"></span>
-                </div>
-              ) : filteredMicrofrontends.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredMicrofrontends.map((mfe) => (
-                    <MicrofrontendCard key={mfe.id} mfe={mfe} currentEnvironment={currentEnvironment} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <p className="text-muted-foreground mb-4">Nessun microfrontend trovato</p>
-                  <Button variant="outline" onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                  }}>
-                    Reimposta filtri
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="list">
-              <div className="rounded-md border">
-                <div className="relative w-full overflow-auto">
-                  <table className="w-full caption-bottom text-sm">
-                    <thead>
-                      <tr className="border-b transition-colors hover:bg-muted/50">
-                        <th className="h-12 px-4 text-left align-middle font-medium">Nome</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Versione</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Stato</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Canary</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Env Vars</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Ambiente</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Azioni</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        <tr>
-                          <td colSpan={8} className="p-4 text-center">
-                            <span className="loader mx-auto"></span>
-                          </td>
+            <Tabs defaultValue="grid" className="space-y-4">
+              <div className="flex items-center">
+                <TabsList>
+                  <TabsTrigger value="grid">Griglia</TabsTrigger>
+                  <TabsTrigger value="list">Lista</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="grid" className="space-y-4">
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <span className="loader"></span>
+                  </div>
+                ) : filteredMicrofrontends.length > 0 ? (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredMicrofrontends.map((mfe) => (
+                      <MicrofrontendCard key={mfe.id} mfe={mfe} currentEnvironment={null} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-muted-foreground mb-4">Nessun microfrontend trovato</p>
+                    <Button variant="outline" onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('all');
+                    }}>
+                      Reimposta filtri
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="list">
+                <div className="rounded-md border">
+                  <div className="relative w-full overflow-auto">
+                    <table className="w-full caption-bottom text-sm">
+                      <thead>
+                        <tr className="border-b transition-colors hover:bg-muted/50">
+                          <th className="h-12 px-4 text-left align-middle font-medium">Nome</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Versione</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Stato</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Canary</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Env Vars</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Ambiente</th>
+                          <th className="h-12 px-4 text-left align-middle font-medium">Azioni</th>
                         </tr>
-                      ) : filteredMicrofrontends.map((mfe) => {
-                        const envData = mfe.environments?.[currentEnvironment];
-                        const version = envData?.version || mfe.version;
-                        const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
-                        const environmentVariables = envData?.environmentVariables || mfe.environmentVariables || {};
-                        const envVarsCount = Object.keys(environmentVariables).length;
-                        
-                        return (
-                          <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
-                            <td className="p-4 align-middle font-medium">{mfe.name}</td>
-                            <td className="p-4 align-middle">{version}</td>
-                            <td className="p-4 align-middle hidden md:table-cell">
-                              <div className="line-clamp-1">{mfe.description}</div>
-                            </td>
-                            <td className="p-4 align-middle">
-                              <Badge 
-                                variant="outline"
-                                className={`
-                                  ${mfe.status === 'active' ? 'bg-green-500' : 
-                                    mfe.status === 'inactive' ? 'bg-yellow-500' : 'bg-red-500'} 
-                                  text-white
-                                `}
-                              >
-                                {mfe.status === 'active' ? 'Attivo' : 
-                                mfe.status === 'inactive' ? 'Inattivo' : 'Errore'}
-                              </Badge>
-                            </td>
-                            <td className="p-4 align-middle">
-                              {canaryPercentage > 0 ? (
-                                <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
-                                  <Percent className="h-3 w-3" /> {canaryPercentage}%
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">-</span>
-                              )}
-                            </td>
-                            <td className="p-4 align-middle">
-                              {envVarsCount > 0 ? (
-                                <Badge variant="outline" className="bg-blue-100 text-blue-800 flex items-center gap-1 whitespace-nowrap">
-                                  <Settings className="h-3 w-3" /> {envVarsCount}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">-</span>
-                              )}
-                            </td>
-                            <td className="p-4 align-middle">
-                              <Badge>{currentEnvironment}</Badge>
-                            </td>
-                            <td className="p-4 align-middle">
-                              <Button variant="outline" size="sm">Configurazione</Button>
+                      </thead>
+                      <tbody>
+                        {loading ? (
+                          <tr>
+                            <td colSpan={8} className="p-4 text-center">
+                              <span className="loader mx-auto"></span>
                             </td>
                           </tr>
-                        )
-                      })}
-                      
-                      {!loading && filteredMicrofrontends.length === 0 && (
-                        <tr>
-                          <td colSpan={8} className="h-24 text-center text-muted-foreground">
-                            Nessun microfrontend trovato
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        ) : filteredMicrofrontends.map((mfe) => {
+                          const envData = mfe.environments;
+                          const version = envData?.version || mfe.version;
+                          const canaryPercentage: number = (envData?.canaryPercentage || mfe.canaryPercentage || 0) as number;
+                          const environmentVariables = envData?.environmentVariables;
+                          const envVarsCount = environmentVariables && Object.keys(environmentVariables).length;
+
+                          return (
+                            <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
+                              <td className="p-4 align-middle font-medium">{mfe.name}</td>
+                              <td className="p-4 align-middle">1.0.0</td>
+                              <td className="p-4 align-middle hidden md:table-cell">
+                                <div className="line-clamp-1">{mfe.description}</div>
+                              </td>
+                              <td className="p-4 align-middle">
+                                <Badge
+                                  variant="outline"
+                                  className={`
+                                  ${mfe.status === 'active' ? 'bg-green-500' :
+                                      mfe.status === 'inactive' ? 'bg-yellow-500' : 'bg-red-500'} 
+                                  text-white
+                                `}
+                                >
+                                  {mfe.status === 'active' ? 'Attivo' :
+                                    mfe.status === 'inactive' ? 'Inattivo' : 'Errore'}
+                                </Badge>
+                              </td>
+                              <td className="p-4 align-middle">
+                                {canaryPercentage > 0 ? (
+                                  <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
+                                    <Percent className="h-3 w-3" /> {canaryPercentage}%
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </td>
+                              <td className="p-4 align-middle">
+                                {envVarsCount > 0 ? (
+                                  <Badge variant="outline" className="bg-blue-100 text-blue-800 flex items-center gap-1 whitespace-nowrap">
+                                    <Settings className="h-3 w-3" /> {envVarsCount}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </td>
+                              <td className="p-4 align-middle">
+                                <Badge>DEV</Badge>
+                              </td>
+                              <td className="p-4 align-middle">
+                                <Button variant="outline" size="sm">Configurazione</Button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+
+                        {!loading && filteredMicrofrontends.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="h-24 text-center text-muted-foreground">
+                              Nessun microfrontend trovato
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </ApiDataFetcher>
+              </TabsContent>
+            </Tabs>
+          </> : <NoEnvironmentPlaceholder onSaveSuccess={onSaveEnvironmentsSucess} />}
+      </div>
+    </ApiDataFetcher>
   );
 };
 

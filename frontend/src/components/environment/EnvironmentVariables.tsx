@@ -5,15 +5,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Variable } from 'lucide-react';
-import { Environment } from './EnvironmentSelector';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
+import { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
 
 export interface EnvironmentVariablesProps {
-  environment: Environment;
+  environment: EnvironmentDTO;
 }
 
 // This would typically come from an API in a real application
-const mockEnvironmentVariables: Record<Environment, Record<string, string>> = {
+const mockEnvironmentVariables: Record<string, Record<string, string>> = {
   DEV: {
     API_URL: 'https://dev-api.example.com',
     LOG_LEVEL: 'debug',

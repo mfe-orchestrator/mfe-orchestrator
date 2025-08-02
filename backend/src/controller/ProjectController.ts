@@ -26,8 +26,7 @@ export default async function projectController(fastify: FastifyInstance) {
       projectId: string;
     }
   }>('/projects/:projectId/environments', async (request, reply) => {
-    const environments = await new EnvironmentService(request.databaseUser).getByProjectId(request.params.projectId);
-    return reply.send(environments);
+    return reply.send(await new EnvironmentService(request.databaseUser).getByProjectId(request.params.projectId));
   });
 
   // Create new project

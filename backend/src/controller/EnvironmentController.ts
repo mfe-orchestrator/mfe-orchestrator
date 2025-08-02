@@ -6,20 +6,14 @@ import ProjectHeaderNotFoundError from '../errors/ProjectHeaderNotFoundError';
 
 export default async function environmentController(fastify: FastifyInstance) {
 
-  // GET /environments - Get all environments for a project
   fastify.get('/environments', async (request, reply) => {
     const projectId = getProjectIdFromRequest(request);
     if (!projectId) {
       throw new ProjectHeaderNotFoundError();
     }
 
-    try {
-      const environments = await new EnvironmentService(request.databaseUser).getByProjectId(projectId);
-      return reply.send(environments);
-    } catch (error) {
-      request.log.error(error, 'Error fetching environments');
-      throw error;
-    }
+    const environments = await new EnvironmentService(request.databaseUser).getByProjectId(projectId);
+    return reply.send(environments);
   });
 
   fastify.post<{ Body: EnvironmentDTO }>(
@@ -32,6 +26,17 @@ export default async function environmentController(fastify: FastifyInstance) {
 
       const environment = await new EnvironmentService(request.databaseUser).create(request.body, projectId);
       return reply.send(environment);
+    }
+  );
+
+  fastify.post<{ Body: EnvironmentDTO[] }>(
+    '/environments/bulk',
+    async (request, reply) => {
+      const projectId = getProjectIdFromRequest(request);
+      if (!projectId) {
+        throw new ProjectHeaderNotFoundError();
+      }
+      return reply.send(await new EnvironmentService(request.databaseUser).createBulk(request.body, projectId));
     }
   );
 

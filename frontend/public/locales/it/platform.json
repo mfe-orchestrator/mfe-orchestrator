@@ -66,7 +66,8 @@
     "error": "Si è verificato un errore",
     "required_field": "Questo campo è obbligatorio",
     "name": "Nome",
-    "select": "Seleziona"
+    "select": "Seleziona",
+    "ok": "OK"
   },
   "setup": {
     "title": "Configurazione Iniziale",
@@ -121,6 +122,16 @@
     "dark": "Scuro",
     "system": "Sistema"
   },
+  "environment": {
+    "production": "Produzione",
+    "edit_title": "Modifica ambiente",
+    "delete_title": "Elimina ambiente",
+    "color_tooltip": "Colore ambiente: {{name}}",
+    "name": "Nome",
+    "slug": "Slug",
+    "description": "Descrizione",
+    "is_production": "Ambiente di produzione"
+  },
   "project": {
     "no_projects_found": "Nessun progetto trovato",
     "create_new_project": "Crea un nuovo progetto ora",
@@ -130,5 +141,8 @@
   },
   "validation": {
     "required": "Questo campo è obbligatorio"
+  },
+  "color_picker": {
+    "select_color": "Seleziona un colore"
   }
 }

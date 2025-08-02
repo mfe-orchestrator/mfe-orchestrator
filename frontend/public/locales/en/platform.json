@@ -66,7 +66,8 @@
     "error": "An error occurred",
     "required_field": "This field is required",
     "name": "Name",
-    "select": "Select"
+    "select": "Select",
+    "ok": "OK"
   },
   "setup": {
     "title": "Initial Setup",
@@ -121,14 +122,27 @@
     "dark": "Dark",
     "system": "System"
   },
+  "environment": {
+    "production": "Production",
+    "edit_title": "Edit environment",
+    "delete_title": "Delete environment",
+    "color_tooltip": "Environment color: {{name}}",
+    "name": "Name",
+    "slug": "Slug",
+    "description": "Description",
+    "is_production": "Production environment"
+  },
   "project": {
     "no_projects_found": "No projects found",
     "create_new_project": "Create a new project now",
-    "or_ask_admin": "Or ask your administrator to assign you to a project",
+    "or_ask_admin": "Or ask an admin to assign you to a project",
     "select_project": "Select a Project",
     "select_project_placeholder": "Select a project..."
   },
   "validation": {
     "required": "This field is required"
+  },
+  "color_picker": {
+    "select_color": "Select a color"
   }
 }

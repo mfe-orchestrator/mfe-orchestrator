@@ -1,4 +1,4 @@
-import mongoose, { Schema, Types, Document } from 'mongoose';
+import mongoose, { Schema, Document, ObjectId } from 'mongoose';
 
 export interface IMicrofrontend extends Document {
   slug: string;
@@ -8,7 +8,7 @@ export interface IMicrofrontend extends Document {
   url: string;
   canaryPercentage: number;
   canary: boolean;
-  environment: Types.ObjectId;
+  environmentId: ObjectId;
   description: string;
   createdAt: Date;
   updatedAt: Date;
@@ -48,7 +48,7 @@ const microfrontendSchema = new Schema({
     type: Boolean,
     default: false
   },
-  environment: {
+  environmentId: {
     type: Schema.Types.ObjectId,
     ref: 'Environment',
     required: true
@@ -64,7 +64,7 @@ const microfrontendSchema = new Schema({
 // Add virtual for environment name
 microfrontendSchema.virtual('environmentName', {
   ref: 'Environment',
-  localField: 'environment',
+  localField: 'environmentId',
   foreignField: '_id',
   justOne: true,
   options: { select: 'name' }

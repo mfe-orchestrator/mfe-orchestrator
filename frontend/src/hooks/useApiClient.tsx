@@ -57,13 +57,15 @@ export const useApiClient = (options?: IApiClientOptions) => {
 
             const result = await ApiClient.doRequest<R, D>({
                 token: tokenReal?.token,
+                doNotLog: true,
+                ...conf,
                 headers: {
+                    ...(conf?.headers || {}),
                     issuer: tokenReal?.issuer,
-                    projectId: projectStore.project?._id
+                    "Project-Id": projectStore.project?._id,
+                    "Environment-Id": projectStore.environment?._id
                 },
                 authenticated,
-                ...conf,
-                doNotLog: true
             })
 
             return result

@@ -1,10 +1,12 @@
-import mongoose, { Schema, Document, ObjectId } from 'mongoose';
+import mongoose, { Schema, Document, ObjectId, Types } from 'mongoose';
 
 export interface IEnvironment extends Document {
   name: string;
   description: string;
   slug: string;
-  projectId: string;
+  projectId: Types.ObjectId;
+  color: string;
+  isProduction: boolean;
 }
 
 const environmentSchema = new Schema({
@@ -14,12 +16,18 @@ const environmentSchema = new Schema({
   },
   description: {
     type: String,
-    required: true,
   },
   slug: {
     type: String,
     required: true,
-    unique: true,
+  },
+  color: {
+    type: String,
+    required: true,
+  },
+  isProduction: {
+    type: Boolean,
+    default: false
   },
   projectId: {
     type: Schema.Types.ObjectId,
@@ -30,6 +38,9 @@ const environmentSchema = new Schema({
 }, {
   timestamps: true,
 });
+
+// Create a compound index to ensure the combination of slug and projectId is unique
+environmentSchema.index({ slug: 1, projectId: 1 }, { unique: true });
 
 const Environment = mongoose.model<IEnvironment>('Environment', environmentSchema);
 export default Environment;

@@ -8,12 +8,13 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-
-export type Environment = 'DEV' | 'UAT' | 'PREPROD' | 'PROD';
+import { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
+import { useTranslation } from 'react-i18next';
 
 interface EnvironmentSelectorProps {
-  selectedEnvironment: Environment;
-  onEnvironmentChange: (value: Environment) => void;
+  selectedEnvironment: EnvironmentDTO;
+  environments: EnvironmentDTO[];
+  onEnvironmentChange: (value: EnvironmentDTO) => void;
 }
 
 const environmentColors = {
@@ -25,36 +26,40 @@ const environmentColors = {
 
 const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ 
   selectedEnvironment, 
+  environments,
   onEnvironmentChange 
 }) => {
+
+  const { t } = useTranslation()
   return (
     <div className="flex items-center">
       <span className="text-sm font-medium mr-2">Ambiente:</span>
       <Select 
-        value={selectedEnvironment} 
-        onValueChange={(value) => onEnvironmentChange(value as Environment)}
+        value={selectedEnvironment?._id} 
+        onValueChange={(value) => {
+          onEnvironmentChange(environments.find(env => env._id === value))
+        }}
       >
-        <SelectTrigger className="w-[130px] h-9">
-          <SelectValue>
-            <Badge variant="outline" className={`${environmentColors[selectedEnvironment as Environment]}`}>
-              {selectedEnvironment}
-            </Badge>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="DEV">
-            <Badge variant="outline" className={environmentColors.DEV}>DEV</Badge>
-          </SelectItem>
-          <SelectItem value="UAT">
-            <Badge variant="outline" className={environmentColors.UAT}>UAT</Badge>
-          </SelectItem>
-          <SelectItem value="PREPROD">
-            <Badge variant="outline" className={environmentColors.PREPROD}>PREPROD</Badge>
-          </SelectItem>
-          <SelectItem value="PROD">
-            <Badge variant="outline" className={environmentColors.PROD}>PROD</Badge>
-          </SelectItem>
-        </SelectContent>
+        {selectedEnvironment &&
+          <SelectTrigger className="w-[130px] h-9">
+            <SelectValue>
+              <Badge variant="outline"  style={{ backgroundColor: selectedEnvironment.color }}>
+                {selectedEnvironment.slug}
+              </Badge>
+            </SelectValue>
+          </SelectTrigger>
+        }
+        {environments &&
+          <SelectContent>
+            {environments.map((environment) => (
+              <SelectItem key={environment._id} value={environment._id}>
+                <Badge variant="outline" style={{ backgroundColor: environment.color }}>
+                  {environment.slug}
+                </Badge>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        }
       </Select>
     </div>
   );

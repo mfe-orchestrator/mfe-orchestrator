@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes } from 'react';
 import { Controller, FieldError, FieldValues, Path, useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ type TextFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElemen
   name: Path<T>;
   label: string;
   rules?: any;
+  textTransform?: (value: string) => string;
+  containerClassName?: string;
 };
 
 const TextField = <T extends FieldValues>({
@@ -15,6 +17,8 @@ const TextField = <T extends FieldValues>({
   rules,
   className,
   id,
+  containerClassName,
+  textTransform,
   ...props
 }: TextFieldProps<T>) => {
   const {
@@ -31,7 +35,7 @@ const TextField = <T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field,formState }) => (
-        <div className="grid gap-2">
+        <div className={`grid gap-2 ${containerClassName || ''}`}>
           <Label htmlFor={inputId} className={error ? 'text-destructive' : ''}>
             {label}
             {props.required && <span className="text-destructive ml-1">*</span>}
@@ -42,6 +46,9 @@ const TextField = <T extends FieldValues>({
             className={`${className || ''} ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
             {...field}
             {...props}
+            onChange={e=>{
+              field.onChange(textTransform ? textTransform(e.target.value) : e.target.value)
+            }}
             value={field.value || ''}
           />
           {error && (
