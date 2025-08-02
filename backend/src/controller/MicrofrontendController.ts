@@ -11,7 +11,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     if(!environmentId){
       throw new EnvironmentHeaderNotFoundError();
     }
-    return reply.send(await new MicrofrontendService(request.databaseUser).getByEnvironment(environmentId));
+    return reply.send(await new MicrofrontendService(request.databaseUser).getByEnvironmentId(environmentId));
   });
 
   fastify.get<{ Params: {
@@ -24,7 +24,11 @@ export default async function microfrontendController(fastify: FastifyInstance) 
   fastify.post<{ Body: MicrofrontendDTO, Querystring: {
     environment: string;
   } }>('/microfrontends', async (request, reply) => {
-    return reply.send(await new MicrofrontendService(request.databaseUser).create(request.body, request.query.environment));
+    const environmentId = getEnvironmentIdFromRequest(request);
+    if(!environmentId){
+      throw new EnvironmentHeaderNotFoundError();
+    }
+    return reply.send(await new MicrofrontendService(request.databaseUser).create(request.body, environmentId));
   });
 
   fastify.put<{ Params: { id: string }; Body: MicrofrontendDTO }>('/microfrontends/:id', async (request, reply) => {

@@ -7,43 +7,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Percent, Settings } from 'lucide-react';
-import { Environment } from '../environment/EnvironmentSelector';
+import { Percent } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
+import { Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
 
-export interface MicrofrontendProps {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  status: 'active' | 'inactive' | 'error';
-  lastUpdated: string;
-  parameters?: Record<string, string>;
-  canaryPercentage?: number;
-  environments?: Partial<Record<Environment, { 
-    version: string, 
-    canaryPercentage?: number, 
-    parameters?: Record<string, string>
-  }>>;
-}
 
 interface MicrofrontendCardProps {
-  mfe: MicrofrontendProps;
-  currentEnvironment: Environment;
+  mfe: Microfrontend;
 }
 
-const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvironment }) => {
+const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Get environment-specific data or fall back to default
-  const envData = mfe.environments?.[currentEnvironment];
+  const envData = mfe.environmentVariables;
   const version = envData?.version || mfe.version;
-  const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
+  //const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
   const parameters = envData?.parameters || mfe.parameters || {};
   
-  const [editParameters, setEditParameters] = useState<Record<string, string>>(parameters);
-  const [editCanaryPercentage, setEditCanaryPercentage] = useState<number>(canaryPercentage);
+  const [editParameters, setEditParameters] = useState<Record<string, string>>(null);
+  const [editCanaryPercentage, setEditCanaryPercentage] = useState<number>(null);
   const notifications = useToastNotificationStore()
 
   const statusColor = {
@@ -69,10 +53,12 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
   const saveConfiguration = () => {
     // Here you would typically save the parameters to your backend
     notifications.showSuccessNotification({
-      message: `I parametri per ${mfe.name} (${currentEnvironment}) sono stati aggiornati.`
+      message: `I parametri per ${mfe.name} sono stati aggiornati.`
     })
     setIsDialogOpen(false);
   };
+
+  const canaryPercentage = 38
 
   return (
     <>
@@ -89,7 +75,6 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
           <div className="text-sm text-muted-foreground">
             <div className="flex items-center justify-between">
               <span>Versione {version}</span>
-              <Badge variant="outline" className="ml-2">{currentEnvironment}</Badge>
             </div>
           </div>
         </CardHeader>
@@ -120,7 +105,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              Configurazione: {mfe.name} ({currentEnvironment})
+              Configurazione: {mfe.name}
             </DialogTitle>
           </DialogHeader>
           <Tabs defaultValue="general" className="w-full">
@@ -152,7 +137,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      La versione {version} sarà visibile solo a questa percentuale di utenti in ambiente {currentEnvironment}.
+                      La versione {version} sarà visibile solo a questa percentuale di utenti in ambiente.
                     </p>
                   </div>
                 </div>
@@ -163,7 +148,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe, currentEnvir
               <div className="space-y-4 py-2">
                 <div className="space-y-2">
                   <Label className="font-medium">Parametri di configurazione</Label>
-                  {Object.keys(editParameters).map((key) => (
+                  {Object.keys(editParameters || {}).map((key) => (
                     <div key={key} className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor={key} className="text-right col-span-1">
                         {key}

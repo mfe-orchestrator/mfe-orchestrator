@@ -50,7 +50,6 @@ export default abstract class BaseAuthorizedService {
     if (!environment) {
       return false;
     }
-
     // Check if user has access to the project that owns this environment
     return this.hasAccessToProject(environment.projectId, session);
   }

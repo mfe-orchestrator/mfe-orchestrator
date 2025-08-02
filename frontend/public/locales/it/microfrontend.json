@@ -1,0 +1,26 @@
+{
+  "form": {
+    "title": "Aggiungi il Tuo Primo Microfrontend",
+    "description": "Inizia aggiungendo il tuo primo microfrontend al sistema. Potrai aggiungere ulteriori dettagli in seguito.",
+    "fields": {
+      "name": "Nome",
+      "name_placeholder": "Inserisci il nome del microfrontend",
+      "description": "Descrizione",
+      "description_placeholder": "Inserisci una breve descrizione",
+      "version": "Versione",
+      "version_placeholder": "es. 1.0.0",
+      "continuousDeployment": "Deployment Continuo",
+      "status": "Stato",
+      "status_active": "Attivo",
+      "status_inactive": "Disattivo"
+    },
+    "submit": "Aggiungi Microfrontend",
+    "success": "Microfrontend aggiunto con successo!",
+    "error": "Errore durante l'aggiunta del microfrontend"
+  },
+  "empty_state": {
+    "title": "Nessun Microfrontend Trovato",
+    "description": "Non hai ancora aggiunto nessun microfrontend. Aggiungi il tuo primo microfrontend per iniziare!",
+    "cta": "Aggiungi il Tuo Primo Microfrontend"
+  }
+}

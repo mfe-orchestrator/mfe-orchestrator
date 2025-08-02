@@ -69,7 +69,10 @@
     "required_field": "Questo campo è obbligatorio",
     "name": "Nome",
     "select": "Seleziona",
-    "ok": "OK"
+    "ok": "OK",
+    "active": "Attivo",
+    "inactive": "Disattivo",
+    "creating": "Creazione in corso"
   },
   "setup": {
     "title": "Configurazione Iniziale",
@@ -159,5 +162,25 @@
   },
   "color_picker": {
     "select_color": "Seleziona un colore"
+  },
+  "microfrontend": {
+    "no_microfrontends_found": "Nessun Microfrontend Trovato",
+    "add_your_first_microfrontend": "Aggiungi il tuo primo microfrontend per iniziare!",
+    "add_new": "Aggiungi Nuovo Microfrontend",
+    "click_to_create": "Clicca per creare un nuovo microfrontend",
+    "name": "Nome",
+    "name_placeholder": "Inserisci il nome del microfrontend",
+    "slug": "Slug",
+    "slug_placeholder": "Inserisci uno slug",
+    "description": "Descrizione",
+    "description_placeholder": "Inserisci una breve descrizione",
+    "version": "Versione",
+    "version_placeholder": "es. 1.0.0",
+    "continuous_deployment": "Deployment Continuo",
+    "continuous_deployment_description": "Abilita il deployment automatico delle nuove versioni",
+    "status": "Stato",
+    "dont_worry": "Non preoccuparti, potrai modificare queste impostazioni in seguito.",
+    "create_microfrontend": "Crea Microfrontend",
+    "your_microfrontend_has_been_created": "Il tuo microfrontend è stato creato con successo!"
   }
 }

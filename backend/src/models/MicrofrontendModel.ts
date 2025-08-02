@@ -32,11 +32,10 @@ const microfrontendSchema = new Schema({
   },
   canaryVersion: {
     type: String,
-    default: ''
   },
   url: {
     type: String,
-    required: true
+    required: false
   },
   canaryPercentage: {
     type: Number,
@@ -55,7 +54,6 @@ const microfrontendSchema = new Schema({
   },
   description: {
     type: String,
-    default: ''
   }
 }, {
   timestamps: true

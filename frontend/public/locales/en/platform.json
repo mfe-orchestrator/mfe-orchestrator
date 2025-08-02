@@ -67,7 +67,10 @@
     "required_field": "This field is required",
     "name": "Name",
     "select": "Select",
-    "ok": "OK"
+    "ok": "OK",
+    "active": "Active",
+    "inactive": "Inactive",
+    "creating": "Creating"
   },
   "setup": {
     "title": "Initial Setup",
@@ -134,6 +137,26 @@
   },
   "color_picker": {
     "select_color": "Select a color"
+  },
+  "microfrontend": {
+    "no_microfrontends_found": "No Microfrontends Found",
+    "add_your_first_microfrontend": "Add your first microfrontend to get started!",
+    "add_new": "Add New Microfrontend",
+    "click_to_create": "Click to create a new microfrontend",
+    "name": "Name",
+    "name_placeholder": "Enter microfrontend name",
+    "slug": "Slug",
+    "slug_placeholder": "Enter a slug",
+    "description": "Description",
+    "description_placeholder": "Enter a brief description",
+    "version": "Version",
+    "version_placeholder": "e.g., 1.0.0",
+    "continuous_deployment": "Continuous Deployment",
+    "continuous_deployment_description": "Enable automatic deployment of new versions",
+    "status": "Status",
+    "dont_worry": "Don't worry, you can change these settings later.",
+    "create_microfrontend": "Create Microfrontend",
+    "your_microfrontend_has_been_created": "Your microfrontend has been created successfully!"
   },
   "environment": {
     "production": "Production",

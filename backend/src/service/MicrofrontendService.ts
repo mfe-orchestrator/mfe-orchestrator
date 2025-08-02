@@ -18,7 +18,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     return microfrontend;
   }
 
-  async getByEnvironment(environmentId: string | ObjectId): Promise<IMicrofrontend[]> {
+  async getByEnvironmentId(environmentId: string | ObjectId): Promise<IMicrofrontend[]> {
     await this.ensureAccessToEnvironment(environmentId);
     const environmentIdObj = typeof environmentId === 'string' ? new Types.ObjectId(environmentId) : environmentId;
     return await Microfrontend.find({ environmentId: environmentIdObj });
