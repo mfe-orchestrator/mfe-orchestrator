@@ -8,7 +8,6 @@ import Switch from '@/components/input/Switch.rhf';
 import SelectField from '@/components/input/SelectField.rhf';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import useMicrofrontendsApi, { Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
-import useProjectStore from '@/store/useProjectStore';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
 import React from 'react';
 

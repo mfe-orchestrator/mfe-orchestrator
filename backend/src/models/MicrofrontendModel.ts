@@ -4,58 +4,117 @@ export interface IMicrofrontend extends Document {
   slug: string;
   name: string;
   version: string;
-  canaryVersion: string;
+  canaryVersion?: string;
   url: string;
-  canaryPercentage: number;
-  canary: boolean;
   environmentId: ObjectId;
-  description: string;
+  canary?: {
+    enabled: boolean;
+    percentage: number;
+    type: CanaryType;
+    deploymentType: CanaryDeploymentType;
+    canaryUrl?: string;
+  };
+  host: {
+    type: HostedOn;
+    url?: string;
+  }
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const microfrontendSchema = new Schema({
-  slug: {
+enum HostedOn {
+  MFE_ORCHESTRATOR_HUB = 'MFE_ORCHESTRATOR_HUB',
+  CUSTOM_URL = 'CUSTOM_URL'
+}
+
+enum CanaryType{
+  ON_SESSIONS = 'ON_SESSIONS',
+  ON_USER = 'ON_USER',
+  COOKIE_BASED = 'COOKIE_BASED'
+}
+
+enum CanaryDeploymentType{
+  BASED_ON_VERSION = 'BASED_ON_VERSION',
+  BASED_ON_URL = 'BASED_ON_URL'
+}
+
+const microfrontendHostTypeSchema = new Schema({
+  type: {
     type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
-  name: {
-    type: String,
+    enum: [HostedOn.CUSTOM_URL, HostedOn.MFE_ORCHESTRATOR_HUB],
+    default: HostedOn.CUSTOM_URL,
     required: true
-  },
-  version: {
-    type: String,
-    required: true
-  },
-  canaryVersion: {
-    type: String,
   },
   url: {
     type: String,
     required: false
+  }
+})
+const microfrontendCanaryTypeSchema = new Schema({
+  enabled:{
+    type: Boolean,
+    default: false
   },
-  canaryPercentage: {
+  percentage:{
     type: Number,
     min: 0,
     max: 100,
     default: 0
   },
-  canary: {
-    type: Boolean,
-    default: false
-  },
-  environmentId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Environment',
+  type:{
+    type: String,
+    enum: [CanaryType.ON_SESSIONS, CanaryType.ON_USER, CanaryType.COOKIE_BASED],
+    default: CanaryType.ON_SESSIONS,
     required: true
   },
-  description: {
+  deploymentType:{
     type: String,
+    enum: [CanaryDeploymentType.BASED_ON_VERSION, CanaryDeploymentType.BASED_ON_URL],
+    default: CanaryDeploymentType.BASED_ON_VERSION,
+    required: true
+  },
+  canaryUrl:{
+    type: String,
+    required: false
   }
-}, {
+});
+
+const microfrontendSchema: Schema = new Schema<IMicrofrontend>({
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    version: {
+      type: String,
+      required: true
+    },
+    canary: {
+      type: microfrontendCanaryTypeSchema,
+      required: false
+    },  
+    environmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Environment',
+      required: true
+    },
+    host:{
+      type: microfrontendHostTypeSchema,
+      required: true
+    },
+  }, {
   timestamps: true
 });
 

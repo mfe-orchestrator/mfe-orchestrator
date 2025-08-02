@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import MicrofrontendCard, { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
+import MicrofrontendCard from '../../components/microfrontend/MicrofrontendCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,8 @@ import useProjectStore from '@/store/useProjectStore';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useMicrofrontendsApi, { Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
 import NoMicrofrontendPlaceholder from './NoMicrofrontendPlaceholder';
-import AddNewMicrofrontendCard from '../../components/microfrontend/AddNewMicrofrontendCard';
+import { useNavigate } from 'react-router-dom';
+import AddNewMicrofrontendCard from './AddNewMicrofrontendCard';
 
 interface MicrofrontendListProps {
     searchTerm?: string;
@@ -20,7 +21,7 @@ interface MicrofrontendListProps {
     onResetFilters: () => void;
 }
 
-interface MicrofrontendListRealProps{
+interface MicrofrontendListRealProps {
     microfrontends: Microfrontend[];
     onResetFilters: () => void;
 }
@@ -28,7 +29,11 @@ interface MicrofrontendListRealProps{
 const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters }) => {
 
     const projectStore = useProjectStore();
-    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const onAddNewMicrofrontend = () => {
+        navigate(`/microfronted/new`);
+    }
 
     return <><div className="flex justify-between items-center">
         <EnvironmentVariables environment={projectStore.environment} />
@@ -48,7 +53,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                         {microfrontends.map((mfe) => (
                             <MicrofrontendCard key={mfe.id} mfe={mfe} />
                         ))}
-                        <AddNewMicrofrontendCard onAddNewMicrofrontend={() => {}} />
+                        <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -77,14 +82,8 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                 </tr>
                             </thead>
                             <tbody>
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={8} className="p-4 text-center">
-                                            <span className="loader mx-auto"></span>
-                                        </td>
-                                    </tr>
-                                ) : microfrontends.map((mfe) => {
-                                    
+                                {microfrontends.map((mfe) => {
+
                                     const version = mfe.version;
                                     const canaryPercentage: number = 234
                                     const environmentVariables = {};
@@ -93,7 +92,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                     return (
                                         <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
                                             <td className="p-4 align-middle font-medium">{mfe.name}</td>
-                                            <td className="p-4 align-middle">1.0.0</td>
+                                            <td className="p-4 align-middle">{mfe.version}</td>
                                             <td className="p-4 align-middle hidden md:table-cell">
                                                 <div className="line-clamp-1">{mfe.description}</div>
                                             </td>
@@ -135,7 +134,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                     )
                                 })}
 
-                                {!loading && microfrontends.length === 0 && (
+                                {microfrontends.length === 0 && (
                                     <tr>
                                         <td colSpan={8} className="h-24 text-center text-muted-foreground">
                                             Nessun microfrontend trovato
@@ -153,7 +152,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
 
 const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statusFilter, environmentId, onResetFilters }) => {
 
-    
+
     const microfrontendsApi = useMicrofrontendsApi();
 
     const microfrontendListQuery = useQuery({
@@ -162,20 +161,20 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statu
         enabled: !!environmentId
     })
 
-    const microfrontendListReal = useMemo(()=>{
+    const microfrontendListReal = useMemo(() => {
         const data = microfrontendListQuery?.data;
-        if(!data){
+        if (!data) {
             return null;
         }
-        
-        if(!searchTerm && !statusFilter) return data;
-        
+
+        if (!searchTerm && !statusFilter) return data;
+
         const filteredData = data.filter((mfe) => {
             const nameMatch = searchTerm ? mfe.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
             const statusMatch = statusFilter && statusFilter !== 'all' ? mfe.status === statusFilter : true;
             return nameMatch && statusMatch;
         });
-        
+
         return filteredData;
 
     }, [microfrontendListQuery?.data, searchTerm, statusFilter])
@@ -184,7 +183,7 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statu
         {microfrontendListQuery?.data?.length === 0 ?
             <NoMicrofrontendPlaceholder environmentId={environmentId} />
             :
-            <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters}/>
+            <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} />
         }
 
     </ApiDataFetcher>

@@ -10,6 +10,7 @@ import AuthWrapper from "./theme/AuthWrapper";
 import MainLayout from "./components/layout/MainLayout";
 
 // Lazy load all page components
+const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
@@ -53,6 +54,18 @@ const PrivateRoutes: React.FC = () => {
                     path="/dashboard" 
                     element={
                       <RouteWithSuspense element={<DashboardPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="/microfronted/new" 
+                    element={
+                      <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="/microfronted/:id" 
+                    element={
+                      <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
                     } 
                   />
                   <Route 

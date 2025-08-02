@@ -5,7 +5,7 @@ import { Switch as UISwitch } from "../ui/switch";
 
 type SwitchCustomProps<T extends FieldValues> = SwitchProps & {
   name: Path<T>;
-  label: string;
+  label?: string;
   rules?: any;
 };
 

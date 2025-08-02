@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { MicrofrontendProps } from '../../components/microfrontend/MicrofrontendCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -11,14 +10,12 @@ import useProjectStore from '@/store/useProjectStore';
 import { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useProjectApi from '@/hooks/apiClients/useProjectApi';
-import NoEnvironmentPlaceholder from './NoEnvironmentPlaceholder';
-import MicrofrontendList from './MicrofrontendList';
+import NoEnvironmentPlaceholder from '../../components/environment/NoEnvironmentPlaceholder';
+import MicrofrontendList from '@/components/microfrontend/MicrofrontendList';
 
 const DashboardPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
-  const [microfrontends, setMicrofrontends] = useState<MicrofrontendProps[]>([]);
   const projectsApi = useProjectApi()
   const projectStore = useProjectStore();
 
@@ -37,23 +34,10 @@ const DashboardPage = () => {
     enabled: !!projectStore.project?._id
   });
 
-
-  // Filter microfrontends based on search term and status
-  const filteredMicrofrontends = microfrontends.filter(mfe => {
-    const matchesSearch = mfe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      mfe.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || mfe.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Count microfrontends by status
-  const counts = {
-    all: microfrontends.length,
-    active: microfrontends.filter(mfe => mfe.status === 'active').length,
-    inactive: microfrontends.filter(mfe => mfe.status === 'inactive').length,
-    error: microfrontends.filter(mfe => mfe.status === 'error').length
-  };
+  const onResetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+  }
 
   const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0;
 
@@ -66,16 +50,11 @@ const DashboardPage = () => {
               {projectStore.project?.name}
             </h2>
             {isThereAtLeastOneEnvironment &&
-              <>
                 <EnvironmentSelector
                   selectedEnvironment={projectStore.environment}
                   environments={projectStore.environments}
                   onEnvironmentChange={projectStore.setEnvironment}
                 />
-                <Badge variant="outline" className="ml-2">
-                  {counts.all}
-                </Badge>
-              </>
             }
           </div>
           {isThereAtLeastOneEnvironment &&
@@ -94,17 +73,16 @@ const DashboardPage = () => {
                   <SelectValue placeholder="Filtra per stato" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tutti ({counts.all})</SelectItem>
-                  <SelectItem value="active">Attivi ({counts.active})</SelectItem>
-                  <SelectItem value="inactive">Inattivi ({counts.inactive})</SelectItem>
-                  <SelectItem value="error">Errore ({counts.error})</SelectItem>
+                  <SelectItem value="all">Tutti</SelectItem>
+                  <SelectItem value="ACTIVE">Attivi</SelectItem>
+                  <SelectItem value="DISABLED">Disabilitati</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           }
         </div>
         {isThereAtLeastOneEnvironment ?
-          <MicrofrontendList searchTerm={searchTerm} statusFilter={statusFilter} environmentId={projectStore.environment?._id}/> 
+          <MicrofrontendList searchTerm={searchTerm} statusFilter={statusFilter} environmentId={projectStore.environment?._id} onResetFilters={onResetFilters} /> 
           : 
           <NoEnvironmentPlaceholder onSaveSuccess={onSaveEnvironmentsSucess} />}
       </div>
