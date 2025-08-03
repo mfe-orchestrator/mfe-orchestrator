@@ -5,8 +5,7 @@ import fastifyPlugin from 'fastify-plugin';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const NODE_ENVS = Object.freeze<string[]>(['prod', 'test', 'local']);
-type NODE_ENV = (typeof NODE_ENVS)[number];
+const NODE_ENVS = Object.freeze<string[]>(['development', 'prod', 'test', 'local']);
 
 export default fastifyPlugin(
   (fastify: FastifyInstance, _options: FastifyPluginOptions, done: (err?: Error | undefined) => void) => {
