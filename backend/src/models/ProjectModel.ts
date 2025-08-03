@@ -1,4 +1,4 @@
-import mongoose, { Document, ObjectId, Schema } from 'mongoose';
+import mongoose, { Document, Schema, ObjectId } from 'mongoose';
 
 export interface IProject extends Document<ObjectId> {
   name: string;

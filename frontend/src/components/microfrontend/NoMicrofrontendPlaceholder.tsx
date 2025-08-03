@@ -7,9 +7,10 @@ import TextField from '@/components/input/TextField.rhf';
 import Switch from '@/components/input/Switch.rhf';
 import SelectField from '@/components/input/SelectField.rhf';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import useMicrofrontendsApi, { Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
+import useMicrofrontendsApi, { HostedOn, Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
 import React from 'react';
+import TextareaField from '../input/TextareaField.rhf';
 
 interface NoMicrofrontendPlaceholderProps {
     environmentId: string;
@@ -59,6 +60,9 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
         const out = {
             ...data,
             environmentId: environmentId,
+            host:{
+                type: HostedOn.MFE_ORCHESTRATOR_HUB,                
+            }
         } as unknown as Microfrontend;
 
         await createMicrofrontendMutation.mutateAsync(out);
@@ -118,7 +122,7 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                                 />
                             </div>
 
-                            <TextField
+                            <TextareaField
                                 name="description"
                                 label={t('microfrontend.description')}
                                 placeholder={t('microfrontend.description_placeholder')}

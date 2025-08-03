@@ -4,6 +4,8 @@ import { EnvironmentDTO } from '../types/EnvironmentDTO';
 import { getProjectIdFromRequest } from '../utils/requestUtils';
 import ProjectHeaderNotFoundError from '../errors/ProjectHeaderNotFoundError';
 import MicrofrontendService from '../service/MicrofrontendService';
+import DeploymentService from '../service/DeploymentService';
+
 
 export default async function environmentController(fastify: FastifyInstance) {
 
@@ -21,6 +23,13 @@ export default async function environmentController(fastify: FastifyInstance) {
     '/environments/:id/microfrontends',
     async (request, reply) => {
       return reply.send(await new MicrofrontendService(request.databaseUser).getByEnvironmentId(request.params.id));
+    }
+  );
+
+  fastify.get<{ Params: { id: string } }>(
+    '/environments/:id/deployments',
+    async (request, reply) => {
+      return reply.send(await new DeploymentService(request.databaseUser).getByEnvironmentId(request.params.id));
     }
   );
 

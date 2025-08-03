@@ -1,9 +1,9 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, ObjectId } from 'mongoose';
 
-export interface IGlobalVariable extends Document {
+export interface IGlobalVariable extends Document<ObjectId> {
   key: string;
   value: string;
-  environmentId: string;
+  environmentId: ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }

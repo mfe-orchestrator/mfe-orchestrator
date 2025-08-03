@@ -1,10 +1,11 @@
 import mongoose, { Schema, Document, ObjectId } from 'mongoose';
 
-export interface IMicrofrontend extends Document {
+export interface IMicrofrontend extends Document<ObjectId> {
   slug: string;
   name: string;
   version: string;
   canaryVersion?: string;
+  continuousDeployment?: boolean;
   url: string;
   environmentId: ObjectId;
   canary?: {
@@ -12,7 +13,8 @@ export interface IMicrofrontend extends Document {
     percentage: number;
     type: CanaryType;
     deploymentType: CanaryDeploymentType;
-    canaryUrl?: string;
+    url?: string;
+    version?: string;
   };
   host: {
     type: HostedOn;
@@ -23,18 +25,18 @@ export interface IMicrofrontend extends Document {
   updatedAt: Date;
 }
 
-enum HostedOn {
+export enum HostedOn {
   MFE_ORCHESTRATOR_HUB = 'MFE_ORCHESTRATOR_HUB',
   CUSTOM_URL = 'CUSTOM_URL'
 }
 
-enum CanaryType{
+export enum CanaryType{
   ON_SESSIONS = 'ON_SESSIONS',
   ON_USER = 'ON_USER',
   COOKIE_BASED = 'COOKIE_BASED'
 }
 
-enum CanaryDeploymentType{
+export enum CanaryDeploymentType{
   BASED_ON_VERSION = 'BASED_ON_VERSION',
   BASED_ON_URL = 'BASED_ON_URL'
 }

@@ -9,6 +9,9 @@
       "unauthorized": "Non sei autorizzato a visualizzare questa pagina"
     }
   },
+  "integration":{
+    "title": "Integrazione"    
+  },
   "auth": {
     "registration_success": "Registrazione completata con successo, accedi per accedere al tuo account",
     "registration_success_email": "Registrazione completata con successo, ti abbiamo inviato una mail per attivare il tuo account",

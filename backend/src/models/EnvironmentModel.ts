@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, ObjectId, Types } from 'mongoose';
 
-export interface IEnvironment extends Document {
+export interface IEnvironment extends Document<ObjectId> {
   name: string;
   description: string;
   slug: string;
@@ -9,7 +9,7 @@ export interface IEnvironment extends Document {
   isProduction: boolean;
 }
 
-const environmentSchema = new Schema({
+const environmentSchema = new Schema<IEnvironment>({
   name: {
     type: String,
     required: true,

@@ -9,8 +9,9 @@ import FirstStartupWrapper from "./theme/FirstStartupWrapper";
 import AuthWrapper from "./theme/AuthWrapper";
 import MainLayout from "./components/layout/MainLayout";
 
+
 // Lazy load all page components
-const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
+const IntegrationPage = lazy(() => import("./pages/IntegrationPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
@@ -18,6 +19,7 @@ const SftpViewerPage = lazy(() => import("./pages/sftp/SftpViewerPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRequestPage"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
+const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
 
 const AuthenticationWrapper : React.FC<React.PropsWithChildren> = ({children}) =>{
 
@@ -72,6 +74,12 @@ const PrivateRoutes: React.FC = () => {
                     path="/sftp" 
                     element={
                       <RouteWithSuspense element={<SftpViewerPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="/integration" 
+                    element={
+                      <RouteWithSuspense element={<IntegrationPage />} />
                     } 
                   />
                   <Route 

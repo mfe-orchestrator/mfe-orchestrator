@@ -13,7 +13,8 @@ import {
   Sun,
   Moon,
   FileText,
-  LayoutDashboard
+  LayoutDashboard,
+  Link as LinkIcon
 } from 'lucide-react';
 import LanguageSelector from '../LanguageSelector';
 import {
@@ -64,6 +65,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       path: '/sftp',
       disabled: true,
       icon: <FileText className="h-5 w-5" />
+    },
+    {
+      name: t('integration.title'),
+      path: '/integration',
+      icon: <LinkIcon className="h-5 w-5" />
     },
     {
       name: t('settings.title'),

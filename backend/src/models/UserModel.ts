@@ -1,6 +1,5 @@
-import mongoose, { Schema, Document, Model, ObjectId } from 'mongoose';
+import mongoose, { Schema, Document, ObjectId } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { Document as MongooseDocument } from 'mongoose';
 import jwt from 'jsonwebtoken';
 import { AuthTokenDataDTO } from '../dto/AuthTokenData.dto';
 export const ISSUER =  "microfronted.orchestrator.hub"
@@ -27,9 +26,11 @@ export interface IUser {
   activateEmailExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
+  language?: string;
+  theme?: string;
 }
 
-export type IUserDocument = IUser & MongooseDocument<ObjectId> & {
+export type IUserDocument = IUser & Document<ObjectId> & {
   comparePassword: (candidatePassword: string) => Promise<boolean>;
   generateAuthToken: () => AuthTokenDataDTO;
   toFrontendObject: () => IUser;
@@ -95,6 +96,16 @@ const userSchema = new Schema<IUserDocument>({
     type: String,
     required: false,
   },
+  language:{
+    type: String,
+    enum: ['it', 'en'],
+    default: 'it',
+  },
+  theme:{
+    type: String,
+    enum: ['light', 'dark', 'system'],
+    default: 'light',
+  }
 }, {
   timestamps: true,
 });

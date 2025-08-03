@@ -9,6 +9,9 @@
       "unauthorized": "You are not authorized to view this page"
     }
   },
+  "integration":{
+    "title": "Integration"    
+  },
   "auth": {
     "registration_success": "Registration completed successfully, log in to access your account",
     "registration_success_email": "Registration completed successfully, we have sent you an email to activate your account",

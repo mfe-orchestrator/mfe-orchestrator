@@ -1,16 +1,45 @@
 import useApiClient from "../useApiClient"
 
+export enum HostedOn {
+    MFE_ORCHESTRATOR_HUB = 'MFE_ORCHESTRATOR_HUB',
+    CUSTOM_URL = 'CUSTOM_URL'
+  }
+  
+  export enum CanaryType{
+    ON_SESSIONS = 'ON_SESSIONS',
+    ON_USER = 'ON_USER',
+    COOKIE_BASED = 'COOKIE_BASED'
+  }
+  
+  export enum CanaryDeploymentType{
+    BASED_ON_VERSION = 'BASED_ON_VERSION',
+    BASED_ON_URL = 'BASED_ON_URL'
+  }
+  
 export interface Microfrontend {
-    id: string;
+    _id?: string
+    slug: string;
     name: string;
     version: string;
-    description: string;
-    status: string;
-    lastUpdated: string;
-    parameters: Record<string, string>;
-    environmentVariables: Record<string, string>;
-    canaryPercentage: number;
+    canaryVersion?: string;
+    continuousDeployment?: boolean;
+    url: string;
     environmentId: string;
+    canary?: {
+        enabled: boolean;
+        percentage: number;
+        type: CanaryType;
+        deploymentType: CanaryDeploymentType;
+        url?: string;
+        version?: string;
+    };
+    host: {
+        type: HostedOn;
+        url?: string;
+    }
+    description?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const useMicrofrontendsApi = () => {

@@ -6,7 +6,7 @@ export enum RoleInProject{
     VIEWER = 'VIEWER'
 }
 
-export interface IUserProject extends Document {
+export interface IUserProject extends Document<ObjectId> {
   userId: ObjectId;
   projectId: ObjectId;
   role: RoleInProject;
