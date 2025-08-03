@@ -19,7 +19,7 @@ const getViteConfig = (microfrontends: IServeMicrofronted[]) => {
 
   // Generate remotes string with proper indentation
   const remotesString = Object.entries(remotes)
-    .map(([key, value]) => `${key}: '${value}'`)
+    .map(([key, value]) => `        ${key}: '${value}'`)
     .join(',\n');
 
   const viteConfig = `// vite.config.js
@@ -32,7 +32,7 @@ export default defineConfig({
       name: 'host-app',
       filename: 'remoteEntry.js',
       remotes: {
-        ${remotesString}
+${remotesString}
       },
       shared: ['react', 'react-dom', 'react-router-dom']
     })
@@ -110,7 +110,7 @@ const IntegrationPage: React.FC = () => {
   });
 
   const curlExample = `# Example CURL request to fetch a remote module
-  curl -X GET http://${window.location.host}/api/serve/all/${projectStore.environment?._id}`;
+  curl -X GET https://${window.location.host}/api/serve/all/${projectStore.environment?._id}`;
 
   return (
     <ApiDataFetcher 
@@ -167,7 +167,7 @@ const IntegrationPage: React.FC = () => {
               <code>{curlExample}</code>
             </pre>
             <p>Here is the preview</p>
-              <iframe src={`http://${window.location.host}/api/serve/all/${projectStore.environment?._id}`} width="100%" height="500px" /> 
+              <iframe src={`https://${window.location.host}/api/serve/all/${projectStore.environment?._id}`} width="100%" height="500px" /> 
           </TabsContent>
         </Tabs>
       </Card>
