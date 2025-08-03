@@ -141,6 +141,32 @@
   "color_picker": {
     "select_color": "Select a color"
   },
+  "project_users": {
+    "title": "Project Members",
+    "subtitle": "{{count}} team members",
+    "no_users": "No members found for this project",
+    "user": "User",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "no_name": "No name",
+    "user_removed": "User removed successfully",
+    "confirm_remove": "Are you sure you want to remove {{name}} from this project?",
+    "table_view": "Table view",
+    "grid_view": "Grid view",
+    "count": "{{count}} users",
+    "invite_user": "Invite user",
+    "invite_user_modal_title": "Invite user to project",
+    "invite_user_modal_description": "Invite a new user to collaborate on this project by entering their email address and selecting a role.",
+    "select_role": "Select a role",
+    "send_invitation": "Send invitation",
+    "invite_success": "Invitation sent successfully",
+    "roles": {
+      "admin": "Admin",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    }
+  },
   "microfrontend": {
     "no_microfrontends_found": "No Microfrontends Found",
     "add_your_first_microfrontend": "Add your first microfrontend to get started!",

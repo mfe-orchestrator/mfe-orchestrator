@@ -12,6 +12,7 @@ import MainLayout from "./components/layout/MainLayout";
 
 // Lazy load all page components
 const IntegrationPage = lazy(() => import("./pages/IntegrationPage"));
+const ProjectUsersListPage = lazy(() => import("./pages/project-users/ProjectUsersListPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
@@ -80,6 +81,12 @@ const PrivateRoutes: React.FC = () => {
                     path="/integration" 
                     element={
                       <RouteWithSuspense element={<IntegrationPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="/project-users" 
+                    element={
+                      <RouteWithSuspense element={<ProjectUsersListPage />} />
                     } 
                   />
                   <Route 

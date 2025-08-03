@@ -130,6 +130,32 @@
     "dark": "Scuro",
     "system": "Sistema"
   },
+  "project_users": {
+    "title": "Membri del Progetto",
+    "subtitle": "{{count}} membri del team",
+    "no_users": "Nessun membro trovato per questo progetto",
+    "user": "Utente",
+    "name": "Nome",
+    "email": "Email",
+    "role": "Ruolo",
+    "no_name": "Nessun nome",
+    "user_removed": "Utente rimosso con successo",
+    "confirm_remove": "Sei sicuro di voler rimuovere {{name}} da questo progetto?",
+    "table_view": "Vista tabella",
+    "grid_view": "Vista griglia",
+    "count": "{{count}} utenti",
+    "invite_user": "Invita utente",
+    "invite_user_modal_title": "Invita un utente al progetto",
+    "invite_user_modal_description": "Invita un nuovo utente a collaborare a questo progetto inserendo il suo indirizzo email e selezionando un ruolo.",
+    "select_role": "Seleziona un ruolo",
+    "send_invitation": "Invia invito",
+    "invite_success": "Invito inviato con successo",
+    "roles": {
+      "admin": "Amministratore",
+      "editor": "Editore",
+      "viewer": "Visualizzatore"
+    }
+  },
   "environment": {
     "production": "Produzione",
     "edit_title": "Modifica ambiente",

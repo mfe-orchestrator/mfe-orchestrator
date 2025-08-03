@@ -14,7 +14,8 @@ import {
   Moon,
   FileText,
   LayoutDashboard,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Github
 } from 'lucide-react';
 import LanguageSelector from '../LanguageSelector';
 import {
@@ -72,8 +73,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <LinkIcon className="h-5 w-5" />
     },
     {
+      name: t('project_users.title'),
+      path: '/project-users',
+      icon: <User className="h-5 w-5" />
+    },
+    {
       name: t('settings.title'),
       path: '/settings',
+      disabled: true,
       icon: <Settings className="h-5 w-5" />
     }
   ];
@@ -132,6 +139,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
+              <a
+                href="https://github.com/Lory1990/micro-frontend-orchestrator-hub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                aria-label="GitHub repository"
+              >
+                <Github className="h-5 w-5" />
+              </a>
               <LanguageSelector />
               <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                 {theme === 'dark' ? (
