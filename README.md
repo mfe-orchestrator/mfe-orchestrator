@@ -116,7 +116,14 @@ AUTH0_CLIENT_ID=your-client-id
    cd ../backend
    pnpm install
    ```
-1. Create `.env` file
+1. Create `.env` file in `./backend` with the following data
+```bash
+NOSQL_DATABASE_URL=mongodb://root:example@localhost:27017/admin
+REDIS_URL=redis://localhost:6379
+
+REGISTRATION_ALLOWED=true
+ALLOW_EMBEDDED_LOGIN=true
+```
 1. Configure environment variables in the .env file using the one in this readme 🔧
 1. Run backend
 ```bash
