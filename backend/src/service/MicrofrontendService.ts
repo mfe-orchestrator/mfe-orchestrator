@@ -18,16 +18,16 @@ export class MicrofrontendService extends BaseAuthorizedService {
     return microfrontend;
   }
 
-  async getByEnvironmentId(environmentId: string | ObjectId): Promise<IMicrofrontend[]> {
-    await this.ensureAccessToEnvironment(environmentId);
-    const environmentIdObj = typeof environmentId === 'string' ? new Types.ObjectId(environmentId) : environmentId;
-    return await Microfrontend.find({ environmentId: environmentIdObj });
+  async getByProjectId(projectId: string | ObjectId): Promise<IMicrofrontend[]> {
+    const projectIdObj = typeof projectId === 'string' ? new Types.ObjectId(projectId) : projectId;
+    await this.ensureAccessToProject(projectIdObj);
+    return await Microfrontend.find({ projectId: projectIdObj });
   }
 
-  async create(microfrontend: MicrofrontendDTO, environmentId: string | ObjectId): Promise<IMicrofrontend> {
-    await this.ensureAccessToEnvironment(environmentId);
-    const environmentIdObj = typeof environmentId === 'string' ? new Types.ObjectId(environmentId) : environmentId;
-    return await Microfrontend.create({ ...microfrontend, environmentId: environmentIdObj });
+  async create(microfrontend: MicrofrontendDTO, projectId: string | ObjectId): Promise<IMicrofrontend> {
+    const projectIdObj = typeof projectId === 'string' ? new Types.ObjectId(projectId) : projectId;
+    await this.ensureAccessToProject(projectIdObj);
+    return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj });
   }
 
   async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {
@@ -100,7 +100,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
   }
 
   ensureAccessToMicrofrontend(microfrontend : IMicrofrontend){
-    return this.ensureAccessToEnvironment(microfrontend.environmentId);
+    return this.ensureAccessToProject(microfrontend.projectId);
   }
 }
 

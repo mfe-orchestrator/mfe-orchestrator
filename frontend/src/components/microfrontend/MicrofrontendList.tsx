@@ -17,7 +17,7 @@ import AddNewMicrofrontendCard from './AddNewMicrofrontendCard';
 interface MicrofrontendListProps {
     searchTerm?: string;
     statusFilter?: string;
-    environmentId?: string;
+    projectId?: string;
     onResetFilters: () => void;
 }
 
@@ -51,7 +51,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                 {microfrontends.length > 0 ? (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {microfrontends.map((mfe) => (
-                            <MicrofrontendCard key={mfe.id} mfe={mfe} />
+                            <MicrofrontendCard key={mfe._id} mfe={mfe} />
                         ))}
                         <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
                     </div>
@@ -150,15 +150,15 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
 
 }
 
-const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statusFilter, environmentId, onResetFilters }) => {
+const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statusFilter, projectId, onResetFilters }) => {
 
 
     const microfrontendsApi = useMicrofrontendsApi();
 
     const microfrontendListQuery = useQuery({
-        queryKey: ['microfrontends', environmentId],
-        queryFn: () => microfrontendsApi.getByEnvironmentId(environmentId),
-        enabled: !!environmentId
+        queryKey: ['microfrontends-by-project-id', projectId],
+        queryFn: () => microfrontendsApi.getByProjectId(projectId),
+        enabled: !!projectId
     })
 
     const microfrontendListReal = useMemo(() => {
@@ -179,11 +179,12 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statu
 
     }, [microfrontendListQuery?.data, searchTerm, statusFilter])
 
+
     return <ApiDataFetcher queries={[microfrontendListQuery]}>
-        {microfrontendListQuery?.data?.length === 0 ?
-            <NoMicrofrontendPlaceholder environmentId={environmentId} />
-            :
+        {microfrontendListQuery?.data?.length !== 0 ?
             <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} />
+            :
+            <NoMicrofrontendPlaceholder projectId={projectId} />
         }
 
     </ApiDataFetcher>

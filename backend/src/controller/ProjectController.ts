@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { ProjectCreateInput } from '../service/ProjectService';
 import ProjectService from '../service/ProjectService';
 import EnvironmentService from '../service/EnvironmentService';
+import MicrofrontendService from '../service/MicrofrontendService';
 
 export default async function projectController(fastify: FastifyInstance) {
  
@@ -28,6 +29,13 @@ export default async function projectController(fastify: FastifyInstance) {
   }>('/projects/:projectId/environments', async (request, reply) => {
     return reply.send(await new EnvironmentService(request.databaseUser).getByProjectId(request.params.projectId));
   });
+
+  fastify.get<{ Params: { id: string } }>(
+    '/projects/:id/microfrontends',
+    async (request, reply) => {
+      return reply.send(await new MicrofrontendService(request.databaseUser).getByProjectId(request.params.id));
+    }
+  );
 
   // Create new project
   fastify.post<{

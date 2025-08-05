@@ -15,12 +15,13 @@ const IntegrationPage = lazy(() => import("./pages/IntegrationPage"));
 const ProjectUsersListPage = lazy(() => import("./pages/project-users/ProjectUsersListPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
-const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
+const DashboardPage = lazy(() => import("./pages/microfrontend/MicrofrontendDashboard"));
 const SftpViewerPage = lazy(() => import("./pages/sftp/SftpViewerPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRequestPage"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
+const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
 
 const AuthenticationWrapper : React.FC<React.PropsWithChildren> = ({children}) =>{
 
@@ -54,7 +55,7 @@ const PrivateRoutes: React.FC = () => {
           <MainLayout>
               <RRDRoutes>
                   <Route 
-                    path="/dashboard" 
+                    path="/microfrontends" 
                     element={
                       <RouteWithSuspense element={<DashboardPage />} />
                     } 
@@ -75,6 +76,12 @@ const PrivateRoutes: React.FC = () => {
                     path="/sftp" 
                     element={
                       <RouteWithSuspense element={<SftpViewerPage />} />
+                    } 
+                  />
+                  <Route 
+                    path="/deployments" 
+                    element={
+                      <RouteWithSuspense element={<DeploymentsPage />} />
                     } 
                   />
                   <Route 
@@ -128,7 +135,7 @@ const Routes: React.FC = () => {
                 <RouteWithSuspense element={<AccountActivation />} />
               } 
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/microfrontends" replace />} />
             <Route path="*" element={<PrivateRoutes />} />
         </RRDRoutes>
     );

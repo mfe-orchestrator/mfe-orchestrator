@@ -130,6 +130,31 @@
     "dark": "Scuro",
     "system": "Sistema"
   },
+  "theme": {
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "system": "Sistema",
+    "toggle_theme": "Cambia tema"
+  },
+  "deployments": {
+    "title": "Distribuzioni",
+    "status": {
+      "completed": "Completato",
+      "failed": "Fallito",
+      "in-progress": "In Corso",
+      "pending": "In Attesa"
+    },
+    "columns": {
+      "microfrontend": "Microfrontend",
+      "version": "Versione",
+      "status": "Stato",
+      "created": "Creato il",
+      "last_updated": "Ultimo Aggiornamento"
+    },
+    "no_deployments": "Nessuna distribuzione trovata",
+    "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
+    "refresh": "Aggiorna distribuzioni"
+  },
   "project_users": {
     "title": "Membri del Progetto",
     "subtitle": "{{count}} membri del team",

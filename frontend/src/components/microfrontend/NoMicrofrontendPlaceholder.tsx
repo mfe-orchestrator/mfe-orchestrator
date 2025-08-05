@@ -13,7 +13,7 @@ import React from 'react';
 import TextareaField from '../input/TextareaField.rhf';
 
 interface NoMicrofrontendPlaceholderProps {
-    environmentId: string;
+    projectId: string;
 }
 
 interface FormValues {
@@ -25,7 +25,7 @@ interface FormValues {
     status: 'ACTIVE' | 'INACTIVE';
 };
 
-const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({ environmentId }) => {
+const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({ projectId }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const microfrontendsApi = useMicrofrontendsApi()
@@ -44,7 +44,7 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
     const createMicrofrontendMutation = useMutation({
         mutationFn: microfrontendsApi.create,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['microfrontends', environmentId] });
+            queryClient.invalidateQueries({ queryKey: ['microfrontends-by-project-id', projectId] });
             showSuccessNotification({
                 message: t('microfrontend.your_microfrontend_has_been_created'),
             });
@@ -53,13 +53,13 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
     });
 
     const onSubmit = async (data: FormValues) => {
-        if (!environmentId) {
-            throw new Error('Environment ID is required');
+        if (!projectId) {
+            throw new Error('Project ID is required');
         }
 
         const out = {
             ...data,
-            environmentId: environmentId,
+            projectId: projectId,
             host:{
                 type: HostedOn.MFE_ORCHESTRATOR_HUB,                
             }
@@ -89,6 +89,7 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                                     label={t('microfrontend.name')}
                                     placeholder={t('microfrontend.name_placeholder')}
                                     rules={{ required: t('common.required_field') }}
+                                    required
                                     className="w-full"
                                 />
 
@@ -98,6 +99,7 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                                     label={t('microfrontend.slug')}
                                     placeholder={t('microfrontend.slug_placeholder')}
                                     rules={{ required: t('common.required_field') }}
+                                    required
                                     className="w-full"
                                 />
 
@@ -106,6 +108,7 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                                     label={t('microfrontend.version')}
                                     placeholder={t('microfrontend.version_placeholder')}
                                     rules={{ required: t('common.required_field') }}
+                                    required
                                     className="w-full"
                                     defaultValue="1.0.0"
                                 />
@@ -113,6 +116,7 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                                 <SelectField
                                     name="status"
                                     label={t('microfrontend.status')}
+                                    required
                                     rules={{ required: t('common.required_field') }}
                                     options={[
                                         { value: 'ACTIVE', label: t('common.active') },
@@ -126,7 +130,6 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                                 name="description"
                                 label={t('microfrontend.description')}
                                 placeholder={t('microfrontend.description_placeholder')}
-                                rules={{ required: t('common.required_field') }}
                             />
 
                             <div className="flex items-center justify-between pt-2">

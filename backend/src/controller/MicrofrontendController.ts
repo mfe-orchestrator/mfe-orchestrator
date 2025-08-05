@@ -1,17 +1,17 @@
 import { FastifyInstance } from 'fastify';
 import MicrofrontendDTO from '../types/MicrofrontendDTO';
 import MicrofrontendService from '../service/MicrofrontendService';
-import { getEnvironmentIdFromRequest } from '../utils/requestUtils';
-import EnvironmentHeaderNotFoundError from '../errors/EnvironmentHeaderNotFoundError';
+import { getProjectIdFromRequest } from '../utils/requestUtils';
+import ProjectHeaderNotFoundError from '../errors/ProjectHeaderNotFoundError';
 
 export default async function microfrontendController(fastify: FastifyInstance) {
 
   fastify.get('/microfrontends', async (request, reply) => {
-    const environmentId = getEnvironmentIdFromRequest(request);
-    if(!environmentId){
-      throw new EnvironmentHeaderNotFoundError();
+    const projectId = getProjectIdFromRequest(request);
+    if(!projectId){
+      throw new ProjectHeaderNotFoundError();
     }
-    return reply.send(await new MicrofrontendService(request.databaseUser).getByEnvironmentId(environmentId));
+    return reply.send(await new MicrofrontendService(request.databaseUser).getByProjectId(projectId));
   });
 
   fastify.get<{ Params: {
@@ -24,11 +24,11 @@ export default async function microfrontendController(fastify: FastifyInstance) 
   fastify.post<{ Body: MicrofrontendDTO, Querystring: {
     environment: string;
   } }>('/microfrontends', async (request, reply) => {
-    const environmentId = getEnvironmentIdFromRequest(request);
-    if(!environmentId){
-      throw new EnvironmentHeaderNotFoundError();
+    const projectId = getProjectIdFromRequest(request);
+    if(!projectId){
+      throw new ProjectHeaderNotFoundError();
     }
-    return reply.send(await new MicrofrontendService(request.databaseUser).create(request.body, environmentId));
+    return reply.send(await new MicrofrontendService(request.databaseUser).create(request.body, projectId));
   });
 
   fastify.put<{ Params: { id: string }; Body: MicrofrontendDTO }>('/microfrontends/:id', async (request, reply) => {

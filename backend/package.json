@@ -37,7 +37,6 @@
     "mongoose": "^8.15.1",
     "nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
-    "prisma": "^6.9.0",
     "pug": "^3.0.3",
     "typescript": "^5.8.3",
     "uuid": "^11.1.0",

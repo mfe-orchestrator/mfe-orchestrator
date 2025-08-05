@@ -103,8 +103,8 @@ const userSchema = new Schema<IUserDocument>({
   },
   theme:{
     type: String,
-    enum: ['light', 'dark', 'system'],
-    default: 'light',
+    enum: ['LIGHT', 'DARK', 'SYSTEM'],
+    default: 'LIGHT',
   }
 }, {
   timestamps: true,

@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { ToastContainer, toast, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import useToastNotificationStore from "@/store/useToastNotificationStore";
+import useThemeStore, { ThemeEnum } from "@/store/useThemeStore";
 
 export default function Notification() {
   const { notification } = useToastNotificationStore();
+  const { theme } = useThemeStore();
 
   useEffect(() => {
     if (notification?.message) {
@@ -18,7 +20,7 @@ export default function Notification() {
         pauseOnHover: true,
         draggable: true,
         progress: undefined,
-        theme: "light",
+        theme: theme === ThemeEnum.DARK ? "dark" : "light", //TODO non prende system
         transition: Slide,
       };
 

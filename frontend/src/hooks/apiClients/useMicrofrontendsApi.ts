@@ -37,6 +37,7 @@ export interface Microfrontend {
         type: HostedOn;
         url?: string;
     }
+    status?: string;
     description?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -46,9 +47,9 @@ const useMicrofrontendsApi = () => {
 
     const apiClient = useApiClient()
 
-    const getByEnvironmentId = async (environmentId: string) : Promise<Microfrontend[] | undefined> => {
+    const getByProjectId = async (projectId: string) : Promise<Microfrontend[] | undefined> => {
         const response = await apiClient.doRequest<Microfrontend[]>({
-            url: `/api/environments/${environmentId}/microfrontends`,
+            url: `/api/projects/${projectId}/microfrontends`,
         });
         return response.data;
     };
@@ -62,9 +63,9 @@ const useMicrofrontendsApi = () => {
         return response.data;
     };
 
-    const update = async (microfrontend: Microfrontend) => {
+    const update = async (id: string, microfrontend: Microfrontend) => {
         const response = await apiClient.doRequest({
-            url: `/api/microfrontends/${microfrontend.id}`,
+            url: `/api/microfrontends/${microfrontend}`,
             method: "PUT",
             data: microfrontend
         });
@@ -81,7 +82,7 @@ const useMicrofrontendsApi = () => {
     
 
     return {
-        getByEnvironmentId,
+        getByProjectId,
         create,
         update,
         deleteSingle

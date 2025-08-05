@@ -27,14 +27,6 @@ const projectSchema = new Schema<IProject>(
   },
   {
     timestamps: true,
-    toJSON: {
-      transform: (_, ret) => {
-        ret.id = ret._id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
-    },
   }
 );
 

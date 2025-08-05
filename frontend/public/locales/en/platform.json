@@ -141,6 +141,31 @@
   "color_picker": {
     "select_color": "Select a color"
   },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "toggle_theme": "Toggle theme"
+  },
+  "deployments": {
+    "title": "Deployments",
+    "status": {
+      "completed": "Completed",
+      "failed": "Failed",
+      "in-progress": "In Progress",
+      "pending": "Pending"
+    },
+    "columns": {
+      "microfrontend": "Microfrontend",
+      "version": "Version",
+      "status": "Status",
+      "created": "Created",
+      "last_updated": "Last Updated"
+    },
+    "no_deployments": "No deployments found",
+    "no_deployments_description": "Deployments will appear here once created",
+    "refresh": "Refresh deployments"
+  },
   "project_users": {
     "title": "Project Members",
     "subtitle": "{{count}} team members",

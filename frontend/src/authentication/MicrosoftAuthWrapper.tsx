@@ -72,7 +72,7 @@ const MicrosoftAuthWrapper = ({ children }: MicrosoftAuthWrapperProps) => {
   //           }
   //         );
           
-  //         navigate('/dashboard');
+  //         navigate('/microfrontends');
   //       } catch (error) {
   //         console.error('Error acquiring token:', error);
   //         toast({

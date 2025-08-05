@@ -7,7 +7,7 @@ export interface IMicrofrontend extends Document<ObjectId> {
   canaryVersion?: string;
   continuousDeployment?: boolean;
   url: string;
-  environmentId: ObjectId;
+  projectId: ObjectId;
   canary?: {
     enabled: boolean;
     percentage: number;
@@ -107,9 +107,9 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>({
       type: microfrontendCanaryTypeSchema,
       required: false
     },  
-    environmentId: {
+    projectId: {
       type: Schema.Types.ObjectId,
-      ref: 'Environment',
+      ref: 'Project',
       required: true
     },
     host:{
@@ -118,15 +118,6 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>({
     },
   }, {
   timestamps: true
-});
-
-// Add virtual for environment name
-microfrontendSchema.virtual('environmentName', {
-  ref: 'Environment',
-  localField: 'environmentId',
-  foreignField: '_id',
-  justOne: true,
-  options: { select: 'name' }
 });
 
 const Microfrontend = mongoose.model<IMicrofrontend>('Microfrontend', microfrontendSchema);

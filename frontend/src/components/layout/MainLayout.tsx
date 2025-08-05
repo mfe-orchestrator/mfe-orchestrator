@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { NavLink } from './NavLink';
-import { useTheme } from '@/contexts/ThemeContext';
+import { NavLink } from './NavLink';  
 import { 
   Settings, 
   LogOut, 
@@ -15,6 +14,7 @@ import {
   FileText,
   LayoutDashboard,
   Link as LinkIcon,
+  Rocket as RocketIcon,
   Github
 } from 'lucide-react';
 import LanguageSelector from '../LanguageSelector';
@@ -27,6 +27,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useUserStore from '@/store/useUserStore';
+import useThemeStore from '@/store/useThemeStore';
+import ThemeToggle from '../ThemeToggle';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -35,7 +37,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   const { user, setUser } = useUserStore();
-  const { theme, setTheme } = useTheme();
+  const { title, icon, theme } = useThemeStore();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
@@ -57,20 +59,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const navItems = [
     {
-      name: t('dashboard.title'),
-      path: '/dashboard',
+      name: "Microfrontends",
+      path: '/microfrontends',
       icon: <LayoutDashboard className="h-5 w-5" />
+    },
+    {
+      name: t('deployments.title'),
+      path: '/deployments',
+      icon: <RocketIcon className="h-5 w-5" />
+    },
+    {
+      name: t('integration.title'),
+      path: '/integration',
+      icon: <LinkIcon className="h-5 w-5" />
     },
     {
       name: t('sftp.title'),
       path: '/sftp',
       disabled: true,
       icon: <FileText className="h-5 w-5" />
-    },
-    {
-      name: t('integration.title'),
-      path: '/integration',
-      icon: <LinkIcon className="h-5 w-5" />
     },
     {
       name: t('project_users.title'),
@@ -133,8 +140,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {/* Header */}
         <header className="bg-background border-b border-border h-16 flex items-center justify-between px-6">
           <h1 className="text-xl font-semibold">
-            {location.pathname === '/dashboard' && 'Dashboard'}
-            {location.pathname === '/sftp' && 'SFTP Viewer'}
+            {icon} {title}
           </h1>
           
           <div className="flex items-center space-x-4">
@@ -149,14 +155,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <Github className="h-5 w-5" />
               </a>
               <LanguageSelector />
-              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                {theme === 'dark' ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-                <span className="sr-only">Toggle theme</span>
-              </Button>
+              <ThemeToggle />
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

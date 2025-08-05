@@ -104,7 +104,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
       message: t('microfrontend.created_success_message')
     });
     
-    navigate(`/dashboard`);
+    navigate(`/microfrontends`);
   };
 
   return (
