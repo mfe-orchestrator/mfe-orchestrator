@@ -100,7 +100,7 @@ AUTH0_CLIENT_ID=your-client-id
 1. Run docker compose
 ```bash
    cd ./docker-local
-   docker compose docker-compose-development.yaml up -d
+   docker compose -f docker-compose-development.yaml up -d
 ```
 1. Go to frontend folder and install dependencies: 📦
 ```bash
