@@ -17,7 +17,7 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
 Simpy run the `docker-compose.yaml`
 
 ```bash
-docker compose docker-compose.yaml up -d
+docker compose up -d
 ```
 
 ## Run with terraform (open tofu)
