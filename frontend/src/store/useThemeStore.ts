@@ -15,6 +15,9 @@ interface ThemeState {
 
     theme: ThemeEnum;
     setTheme: (theme: ThemeEnum) => void;
+
+    language: string;
+    setLanguage: (language: string) => void;
 }
 
 const useThemeStore = create<ThemeState>()(
@@ -25,6 +28,9 @@ const useThemeStore = create<ThemeState>()(
       },
       setTheme: (theme: ThemeEnum) => {
         set({ theme });
+      },
+      setLanguage: (language: string) => {
+        set({ language });
       },
     }),
     {

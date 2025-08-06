@@ -1,3 +1,4 @@
+import { ThemeEnum } from '@/store/useThemeStore';
 import { AuthenticationType } from '../../api/apiClient';
 import useApiClient from '../useApiClient';
 
@@ -10,6 +11,8 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  language?:string
+  theme?: ThemeEnum
 }
 
 export interface UserRegistrationDTO {
@@ -55,6 +58,24 @@ const useUserApi = () => {
       data: userData,
     });
     return response.data;
+  }
+
+  const saveTheme  = (theme: ThemeEnum) => {
+    doRequest({
+      url: '/api/users/theme',
+      method: 'POST',
+      silent: true,
+      data: { theme },
+    });
+  }
+
+  const saveLanguage  = (language: string) => {
+    doRequest({
+      url: '/api/users/language',
+      method: 'POST',
+      silent: true,
+      data: { language },
+    });
   }
 
   async function activateAccount(token: string) {
@@ -123,7 +144,9 @@ const useUserApi = () => {
     resetPassword,
     getProfile,
     activateAccount,
-    inviteUser
+    inviteUser,
+    saveTheme,
+    saveLanguage
   };
 };
 

@@ -54,6 +54,15 @@ export function UserController(fastify: FastifyInstance) {
   }>('/users/invitation', async (req, res) => {
     return res.send(await userService.inviteUser(req.body));
   });
+
+  fastify.post<{ Body: { theme: string } }>('/users/theme', async (req, res) => {
+    return res.send(await userService.saveTheme(req.body.theme, req.databaseUser._id));
+  });
+
+  fastify.post<{ Body: { language: string } }>('/users/language', async (req, res) => {
+    return res.send(await userService.saveLanguage(req.body.language, req.databaseUser._id));
+  });
+
 };
 
 export default UserController;

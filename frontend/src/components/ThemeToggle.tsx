@@ -8,10 +8,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import useUserStore from '@/store/useUserStore';
+import useUserApi from '@/hooks/apiClients/useUserApi';
+import { setThemeInLocalStorage } from '@/utils/localStorageUtils';
 
 const ThemeToggle: React.FC = () => {
   const { t } = useTranslation();
   const { theme, setTheme } = useThemeStore();
+  const user = useUserStore()
+  const userApi = useUserApi();
+
+  const onSetTheme = (theme: ThemeEnum) => {
+    setTheme(theme);
+    setThemeInLocalStorage(theme);
+    if(user){
+      userApi.saveTheme(theme)
+    }
+
+  }
   
 
   const getThemeIcon = () => {
@@ -35,15 +49,15 @@ const ThemeToggle: React.FC = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme(ThemeEnum.LIGHT)}>
+        <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.LIGHT)}>
           <Sun className="mr-2 h-4 w-4" />
           <span>{t('theme.light')}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme(ThemeEnum.DARK)}>
+        <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.DARK)}>
           <Moon className="mr-2 h-4 w-4" />
           <span>{t('theme.dark')}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme(ThemeEnum.SYSTEM)}>
+        <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.SYSTEM)}>
           <Monitor className="mr-2 h-4 w-4" />
           <span>{t('theme.system')}</span>
         </DropdownMenuItem>

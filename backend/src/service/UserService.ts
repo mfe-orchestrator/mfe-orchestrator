@@ -158,7 +158,7 @@ export class UserService {
   async getProfile(id: string) {
     const user = await User.findOne({ _id: id });
     if (!user) {
-      throw new Error('Invalid token');
+      throw new UserNotFoundError(id);
     }
 
     return {
@@ -166,6 +166,14 @@ export class UserService {
       name: user.name,
       surname: user.surname
     };
+  }
+
+  async saveLanguage(language: string, _id: any): Promise<void> {
+    await User.updateOne({ _id }, { language });
+  }
+
+  async saveTheme(theme: string, _id: any): Promise<void> {
+    await User.updateOne({ _id }, { theme });
   }
 }
 

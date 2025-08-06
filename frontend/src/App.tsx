@@ -11,26 +11,30 @@ import i18n from './i18n';
 import Spinner from './components/Spinner';
 import Notification from './theme/Notification';
 import ThemeHandler from './theme/ThemeHandler';
+import InitialThemeWrapper from './theme/InitialThemeWrapper';
 
 const queryClient = new QueryClient();
 
 const App: React.FC = () => (
   <Suspense fallback={<Spinner />}>
     <I18nextProvider i18n={i18n}>
-      <HelmetProvider>
-        <ThemeHandler />
+      <InitialThemeWrapper>
+        <HelmetProvider>
+          <ThemeHandler />
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <GlobalParameterProvider>
-                  <TooltipProvider>
-                    <Notification />
-                    <Routes />
-                  </TooltipProvider>
+                <TooltipProvider>
+                  <Notification />
+                  <Routes />
+                </TooltipProvider>
               </GlobalParameterProvider>
             </BrowserRouter>
           </QueryClientProvider>
-      </HelmetProvider>
+        </HelmetProvider>
+      </InitialThemeWrapper>
     </I18nextProvider>
+
   </Suspense>
 );
 

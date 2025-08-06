@@ -23,24 +23,22 @@ const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
 const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
 
-const AuthenticationWrapper : React.FC<React.PropsWithChildren> = ({children}) =>{
+const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
-    return (
-      <GoogleAuthWrapper>
-        <MicrosoftAuthWrapper>
-          <Auth0Wrapper>
-            <FirstStartupWrapper>
-              <AuthWrapper>
-                <SelectProjectWrapper>
-                  {children}
-                </SelectProjectWrapper>
-              </AuthWrapper>
-            </FirstStartupWrapper>
-          </Auth0Wrapper>
-        </MicrosoftAuthWrapper>
-      </GoogleAuthWrapper>
-    );
-  }
+  return (
+    <GoogleAuthWrapper>
+      <MicrosoftAuthWrapper>
+        <Auth0Wrapper>
+          <AuthWrapper>
+            <SelectProjectWrapper>
+              {children}
+            </SelectProjectWrapper>
+          </AuthWrapper>
+        </Auth0Wrapper>
+      </MicrosoftAuthWrapper>
+    </GoogleAuthWrapper>
+  );
+}
 
 
 const RouteWithSuspense = ({ element: Element }: { element: React.ReactNode }) => (
@@ -50,95 +48,97 @@ const RouteWithSuspense = ({ element: Element }: { element: React.ReactNode }) =
 );
 
 const PrivateRoutes: React.FC = () => {
-    return (
-        <AuthenticationWrapper>
-          <MainLayout>
-              <RRDRoutes>
-                  <Route 
-                    path="/microfrontends" 
-                    element={
-                      <RouteWithSuspense element={<DashboardPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="/microfronted/new" 
-                    element={
-                      <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="/microfronted/:id" 
-                    element={
-                      <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="/sftp" 
-                    element={
-                      <RouteWithSuspense element={<SftpViewerPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="/deployments" 
-                    element={
-                      <RouteWithSuspense element={<DeploymentsPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="/integration" 
-                    element={
-                      <RouteWithSuspense element={<IntegrationPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="/project-users" 
-                    element={
-                      <RouteWithSuspense element={<ProjectUsersListPage />} />
-                    } 
-                  />
-                  <Route 
-                    path="*" 
-                    element={
-                      <RouteWithSuspense element={<NotFound />} />
-                    } 
-                  />
-              </RRDRoutes>
-              </MainLayout>
-        </AuthenticationWrapper>
-    );
+  return (
+    <AuthenticationWrapper>
+      <MainLayout>
+        <RRDRoutes>
+          <Route
+            path="/microfrontends"
+            element={
+              <RouteWithSuspense element={<DashboardPage />} />
+            }
+          />
+          <Route
+            path="/microfronted/new"
+            element={
+              <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
+            }
+          />
+          <Route
+            path="/microfronted/:id"
+            element={
+              <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
+            }
+          />
+          <Route
+            path="/sftp"
+            element={
+              <RouteWithSuspense element={<SftpViewerPage />} />
+            }
+          />
+          <Route
+            path="/deployments"
+            element={
+              <RouteWithSuspense element={<DeploymentsPage />} />
+            }
+          />
+          <Route
+            path="/integration"
+            element={
+              <RouteWithSuspense element={<IntegrationPage />} />
+            }
+          />
+          <Route
+            path="/project-users"
+            element={
+              <RouteWithSuspense element={<ProjectUsersListPage />} />
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <RouteWithSuspense element={<NotFound />} />
+            }
+          />
+        </RRDRoutes>
+      </MainLayout>
+    </AuthenticationWrapper>
+  );
 }
 
 const Routes: React.FC = () => {
-    return (
-        <RRDRoutes>
-            <Route 
-              path="/register" 
-              element={
-                <RouteWithSuspense element={<RegisterPage />} />
-              } 
-            />
-            <Route 
-              path="/reset-password-request" 
-              element={
-                <RouteWithSuspense element={<ResetPasswordRequestPage />} />
-              } 
-            />
-            <Route 
-              path="/reset-password/:token" 
-              element={
-                <RouteWithSuspense element={<ResetPasswordPage />} />
-              } 
-            />
-            <Route 
-              path="/account-activation/:token" 
-              element={
-                <RouteWithSuspense element={<AccountActivation />} />
-              } 
-            />
-            <Route path="/" element={<Navigate to="/microfrontends" replace />} />
-            <Route path="*" element={<PrivateRoutes />} />
-        </RRDRoutes>
-    );
+  return (
+    <FirstStartupWrapper>
+      <RRDRoutes>
+        <Route
+          path="/register"
+          element={
+            <RouteWithSuspense element={<RegisterPage />} />
+          }
+        />
+        <Route
+          path="/reset-password-request"
+          element={
+            <RouteWithSuspense element={<ResetPasswordRequestPage />} />
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <RouteWithSuspense element={<ResetPasswordPage />} />
+          }
+        />
+        <Route
+          path="/account-activation/:token"
+          element={
+            <RouteWithSuspense element={<AccountActivation />} />
+          }
+        />
+        <Route path="/" element={<Navigate to="/microfrontends" replace />} />
+        <Route path="*" element={<PrivateRoutes />} />
+      </RRDRoutes>
+    </FirstStartupWrapper>
+  );
 }
 
 export default Routes;

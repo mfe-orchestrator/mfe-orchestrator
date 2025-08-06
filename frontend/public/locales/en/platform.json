@@ -1,4 +1,9 @@
 {
+  "language": {
+    "change": "Change language",
+    "english": "English",
+    "italian": "Italiano"
+  },
   "app": {
     "title": "Micro Frontend Orchestrator Hub",
     "name": "MFE Orchestrator",

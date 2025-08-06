@@ -7,13 +7,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
+import { setLanguageInLocalStorage } from '@/utils/localStorageUtils';
+import useUserApi from '@/hooks/apiClients/useUserApi';
+import useUserStore from "@/store/useUserStore";
 
 const LanguageSelector = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const userApi = useUserApi();
+  const userStore = useUserStore();
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
-    localStorage.setItem('i18nextLng', lng);
+    setLanguageInLocalStorage(lng);
+    if(userStore.user){
+      userApi.saveLanguage(lng);
+    }
   };
 
   return (
@@ -21,15 +29,15 @@ const LanguageSelector = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
           <Globe className="h-5 w-5" />
-          <span className="sr-only">Change language</span>
+          <span className="sr-only">{t('language.change')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => changeLanguage('en')}>
-          English
+          {t('language.english')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeLanguage('it')}>
-          Italiano
+          {t('language.italian')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
