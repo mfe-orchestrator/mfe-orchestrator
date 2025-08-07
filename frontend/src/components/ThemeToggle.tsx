@@ -15,7 +15,7 @@ import { setThemeInLocalStorage } from '@/utils/localStorageUtils';
 const ThemeToggle: React.FC = () => {
   const { t } = useTranslation();
   const { theme, setTheme } = useThemeStore();
-  const user = useUserStore()
+  const { user } = useUserStore()
   const userApi = useUserApi();
 
   const onSetTheme = (theme: ThemeEnum) => {
