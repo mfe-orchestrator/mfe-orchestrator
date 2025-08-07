@@ -38,6 +38,8 @@ export const useApiClient = (options?: IApiClientOptions) => {
             ...(config || {})
         }
 
+        console.log("[doRequest] Inizio a fare la richiesta", realConfig.url)
+
         const { silent = false, token, authenticated = AuthenticationType.REQUIRED, ...conf } = realConfig
 
         try {
@@ -68,8 +70,10 @@ export const useApiClient = (options?: IApiClientOptions) => {
                 authenticated,
             })
 
+            console.log("[doRequest] Ho fatto la richiesta", realConfig.url, result.data)
             return result
         } catch (e: any) {
+            console.error("[doRequest]Errore nella richbiesta", realConfig.url, e)
             console.error(e)
             if (!silent) {
                 notifications.showErrorNotification({
@@ -92,12 +96,14 @@ export const useApiClient = (options?: IApiClientOptions) => {
             }
         } else if (msalAuth && msalAuth.instance && msalAuth.accounts && msalAuth.accounts.length > 0) {
             try {
+                console.log("[getToken] Inizio a prendere il token con MSFT")
                 const activeAccount = msalAuth.instance.getActiveAccount()
-                //console.log("[getToken] Sto prendedo l'access token silent su questo account", activeAccount)
+                console.log("[getToken] Sto prendedo l'access token silent su questo account", activeAccount)
                 const response = await msalAuth.instance.acquireTokenSilent({
                     scopes: ["openid", "profile", "email", "offline_access"],
                     account: activeAccount || undefined
                 })
+                console.log("[getToken] Ho ottenuto il token", response)
                 return {
                     token: response.idToken,
                     issuer: "msal"
@@ -112,10 +118,12 @@ export const useApiClient = (options?: IApiClientOptions) => {
                         token: response?.idToken,
                         issuer: "msal"
                     }
+                }else{
+                    console.error("[getToken] No authentication method available to get token", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
                 }
             }
         } else {
-            console.error("No authentication method available to get token", "getToken", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
+            console.error("No authentication method available to get token", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
         }
     }
 

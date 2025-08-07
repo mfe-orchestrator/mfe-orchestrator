@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { PlusCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/styleUtils';
 
 interface AddNewMicrofrontendCardProps {
   onAddNewMicrofrontend: () => void;

@@ -1,5 +1,5 @@
 import { MsalProvider } from '@azure/msal-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EventType, PublicClientApplication } from '@azure/msal-browser';
 import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
 import { AzureProviderConfig } from '@/types/ConfigResponseDTO';
@@ -12,13 +12,14 @@ const MicrosoftAuthWrapper = ({ children }: MicrosoftAuthWrapperProps) => {
   const parameters = useGlobalParameters();
   const azureParameters = parameters.getParameter('providers.azure') as any as AzureProviderConfig
   const [isMsalInitialized, setIsMsalInitialized] = useState(false)
+  const [isMsalInitializedReal, setIsMsalInitializedReal] = useState(false)
 
   const msalInstance = useMemo(() => {
     if(!azureParameters || !azureParameters?.clientId){
       return null;
     }
     
-    const instance =   new PublicClientApplication({
+    const instance = new PublicClientApplication({
       auth: {
         clientId: azureParameters.clientId,
         authority: `https://login.microsoftonline.com/${azureParameters.tenantId}`,
@@ -32,12 +33,15 @@ const MicrosoftAuthWrapper = ({ children }: MicrosoftAuthWrapperProps) => {
     })
 
     instance.addEventCallback(event => {
-      //logger.log("msalEvent: " + event.eventType, "initializeMSAL", event)
-      if (event.eventType === EventType.INITIALIZE_END) {
-          //logger.log("INITIALIZE_END ", "initializeMSAL", instance.getAllAccounts())
+      console.log("[MSAL] msalEvent: " + event.eventType, event)
+      if (event.eventType === EventType.INITIALIZE_START) {
+        console.log("[MSAL] INITIALIZE_START")
+      }else if (event.eventType === EventType.INITIALIZE_END) {
+          console.log("[MSAL] INITIALIZE_END ", instance.getAllAccounts())
           if (instance.getAllAccounts().length > 0) {
             instance.setActiveAccount(instance.getAllAccounts()[0])
           }
+          setIsMsalInitializedReal(true)
       } else if (event.eventType === EventType.LOGIN_SUCCESS) {
           const account = (event as any).payload.account
           //logger.log("LOGIN SUCCES", "initializeMASL", { accounts: instance.getAllAccounts(), event })
@@ -45,15 +49,51 @@ const MicrosoftAuthWrapper = ({ children }: MicrosoftAuthWrapperProps) => {
             instance.setActiveAccount(account)
           }
       }
-      setIsMsalInitialized(true)
+      
     })
 
-    instance.initialize()
+    instance.initialize().then(() => {
+      console.log("MSAL initialized");
+      setIsMsalInitialized(true)
+    }).catch(error => {
+      console.error("MSAL initialization error:", error);
+    });
+
 
     return instance;
   }, [parameters])
+  
 
-  // useEffect(() => {
+  useEffect(() =>{
+    if(!msalInstance){
+      return;
+    }
+    msalInstance.initialize().then(() => {
+      console.log("MSAL initialized");
+      setIsMsalInitialized(true)
+    }).catch(error => {
+      console.error("MSAL initialization error:", error);
+    });
+  }, [msalInstance])
+
+  if(!azureParameters || !azureParameters?.clientId){
+    return <>{children}</>;
+  }
+
+  if (!isMsalInitialized || !msalInstance) return <></>
+
+  return (
+    <MsalProvider instance={msalInstance}>
+      {isMsalInitializedReal && <>{children}</>}
+    </MsalProvider>
+  );
+
+};
+
+export default MicrosoftAuthWrapper;
+
+
+// useEffect(() => {
   //   const handleAuth = async () => {
   //     if (accounts.length > 0 && msalConfig.auth.clientId) {
   //       // User is already logged in with Microsoft
@@ -109,21 +149,3 @@ const MicrosoftAuthWrapper = ({ children }: MicrosoftAuthWrapperProps) => {
   //     });
   //   }
   // };
-
-  if(!azureParameters || !azureParameters?.clientId){
-    return <>{children}</>;
-  }
-
-  if (!isMsalInitialized) return <></>
-
-  if (!msalInstance) return <>{children}</>
-
-  return (
-    <MsalProvider instance={msalInstance}>
-      {children}
-    </MsalProvider>
-  );
-
-};
-
-export default MicrosoftAuthWrapper;
