@@ -7,7 +7,7 @@ import Spinner from "./components/Spinner";
 import SelectProjectWrapper from "./theme/SelectProjectWrapper";
 import FirstStartupWrapper from "./theme/FirstStartupWrapper";
 import AuthWrapper from "./theme/AuthWrapper";
-import MainLayout from "./components/layout/MainLayout";
+import MainLayout from "./theme/layout/MainLayout";
 
 
 // Lazy load all page components

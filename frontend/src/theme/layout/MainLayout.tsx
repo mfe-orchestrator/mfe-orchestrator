@@ -17,7 +17,7 @@ import {
   Rocket as RocketIcon,
   Github
 } from 'lucide-react';
-import LanguageSelector from '../LanguageSelector';
+import LanguageSelector from '../../components/LanguageSelector';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import useUserStore from '@/store/useUserStore';
 import useThemeStore from '@/store/useThemeStore';
-import ThemeToggle from '../ThemeToggle';
+import ThemeToggle from '../../components/ThemeToggle';
 import Header from './Header';
 
 interface MainLayoutProps {
