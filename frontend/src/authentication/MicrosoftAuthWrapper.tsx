@@ -1,6 +1,6 @@
 import { MsalProvider } from '@azure/msal-react';
-import { useEffect, useMemo, useState } from 'react';
-import { EventType, PublicClientApplication } from '@azure/msal-browser';
+import React, { useEffect, useMemo, useState } from 'react';
+import { EventMessage, EventType, PublicClientApplication } from '@azure/msal-browser';
 import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
 import { AzureProviderConfig } from '@/types/ConfigResponseDTO';
 
@@ -8,144 +8,70 @@ interface MicrosoftAuthWrapperProps {
   children: React.ReactNode;
 }
 
-const MicrosoftAuthWrapper = ({ children }: MicrosoftAuthWrapperProps) => {
+const MicrosoftAuthWrapper : React.FC<MicrosoftAuthWrapperProps> =  ({ children }) => {
   const parameters = useGlobalParameters();
-  const azureParameters = parameters.getParameter('providers.azure') as any as AzureProviderConfig
-  const [isMsalInitialized, setIsMsalInitialized] = useState(false)
-  const [isMsalInitializedReal, setIsMsalInitializedReal] = useState(false)
+  const azureParameters = parameters.getParameter('providers.azure') as unknown as AzureProviderConfig;
+  const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const msalInstance = useMemo(() => {
-    if(!azureParameters || !azureParameters?.clientId){
-      return null;
+  useEffect(() => {
+    if (!azureParameters?.clientId || !azureParameters?.tenantId) {
+      return;
     }
-    
+  
     const instance = new PublicClientApplication({
       auth: {
         clientId: azureParameters.clientId,
         authority: `https://login.microsoftonline.com/${azureParameters.tenantId}`,
         redirectUri: window.location.origin,
-        postLogoutRedirectUri: window.location.origin,
       },
       cache: {
         cacheLocation: 'localStorage',
         storeAuthStateInCookie: false,
-      },
-    })
-
-    instance.addEventCallback(event => {
-      console.log("[MSAL] msalEvent: " + event.eventType, event)
-      if (event.eventType === EventType.INITIALIZE_START) {
-        console.log("[MSAL] INITIALIZE_START")
-      }else if (event.eventType === EventType.INITIALIZE_END) {
-          console.log("[MSAL] INITIALIZE_END ", instance.getAllAccounts())
-          if (instance.getAllAccounts().length > 0) {
-            instance.setActiveAccount(instance.getAllAccounts()[0])
-          }
-          setIsMsalInitializedReal(true)
-      } else if (event.eventType === EventType.LOGIN_SUCCESS) {
-          const account = (event as any).payload.account
-          //logger.log("LOGIN SUCCES", "initializeMASL", { accounts: instance.getAllAccounts(), event })
-          if (account) {
-            instance.setActiveAccount(account)
-          }
       }
+    });
+
+    const eventCallback = (event: EventMessage) => {
+      console.log('MSAL Event:', event.eventType);
       
-    })
+      if (event.eventType === EventType.INITIALIZE_END) {
+        console.log("MSAL initialization complete");
+        setIsInitialized(true);
+      }
+    };
 
-    instance.initialize().then(() => {
-      console.log("MSAL initialized");
-      setIsMsalInitialized(true)
-    }).catch(error => {
-      console.error("MSAL initialization error:", error);
-    });
+    const callbackId = instance.addEventCallback(eventCallback);
 
+    // Inizializza MSAL
+    instance.initialize()
+      .then(() => {
+        console.log("MSAL initialize completed");
+        
+      })
+      .catch(error => {
+        console.error("MSAL initialize failed:", error);
+      });
 
-    return instance;
-  }, [parameters])
-  
+    setMsalInstance(instance);
 
-  useEffect(() =>{
-    if(!msalInstance){
-      return;
-    }
-    msalInstance.initialize().then(() => {
-      console.log("MSAL initialized");
-      setIsMsalInitialized(true)
-    }).catch(error => {
-      console.error("MSAL initialization error:", error);
-    });
-  }, [msalInstance])
+    // Cleanup
+    return () => {
+      if (callbackId) {
+        instance.removeEventCallback(callbackId);
+      }
+    };
+  }, [azureParameters?.clientId, azureParameters?.tenantId]);
 
-  if(!azureParameters || !azureParameters?.clientId){
+  if (!azureParameters?.clientId || !azureParameters?.tenantId) {
     return <>{children}</>;
   }
 
-  if (!isMsalInitialized || !msalInstance) return <></>
+  if (!msalInstance || !isInitialized) {
+    return <></>;
+  }
 
-  return (
-    <MsalProvider instance={msalInstance}>
-      {isMsalInitializedReal && <>{children}</>}
-    </MsalProvider>
-  );
 
+  return <MsalProvider instance={msalInstance}>{children}</MsalProvider>;
 };
 
 export default MicrosoftAuthWrapper;
-
-
-// useEffect(() => {
-  //   const handleAuth = async () => {
-  //     if (accounts.length > 0 && msalConfig.auth.clientId) {
-  //       // User is already logged in with Microsoft
-  //       const account = accounts[0];
-  //       try {
-  //         const response = await instance.acquireTokenSilent({
-  //           ...loginRequest,
-  //           account: account
-  //         });
-          
-  //         loginWithMicrosoft(
-  //           response.accessToken,
-  //           {
-  //             email: account.username,
-  //             name: account.name || account.username
-  //           }
-  //         );
-          
-  //         navigate('/microfrontends');
-  //       } catch (error) {
-  //         console.error('Error acquiring token:', error);
-  //         toast({
-  //           variant: 'destructive',
-  //           title: 'Errore di autenticazione',
-  //           description: 'Si è verificato un errore durante il login con Microsoft.',
-  //         });
-  //       }
-  //     }
-  //   };
-    
-  //   handleAuth();
-  // }, [accounts, instance, loginWithMicrosoft, navigate, toast]);
-
-  // const handleMicrosoftLogin = async (e: React.MouseEvent) => {
-  //   e.preventDefault();
-  //   if (!msalConfig.auth.clientId) {
-  //     toast({
-  //       variant: 'destructive',
-  //       title: 'Errore di configurazione',
-  //       description: 'Configurazione Microsoft non trovata. Contatta l\'amministratore.',
-  //     });
-  //     return;
-  //   }
-    
-  //   try {
-  //     await instance.loginRedirect(loginRequest);
-  //   } catch (error) {
-  //     console.error('Error during Microsoft login:', error);
-  //     toast({
-  //       variant: 'destructive',
-  //       title: 'Errore di accesso',
-  //       description: 'Impossibile effettuare il login con Microsoft. Riprova più tardi.',
-  //     });
-  //   }
-  // };

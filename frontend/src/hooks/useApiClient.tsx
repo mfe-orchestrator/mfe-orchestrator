@@ -6,6 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import { IToken, getToken as getTokenFromStorage } from "@/authentication/tokenUtils"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useProjectStore from "@/store/useProjectStore"
+import { AccountEntity, AccountInfo } from "@azure/msal-browser"
 
 export interface IViolations {
     field: string
@@ -38,7 +39,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
             ...(config || {})
         }
 
-        console.log("[doRequest] Inizio a fare la richiesta", realConfig.url)
+        //console.log("[doRequest] Inizio a fare la richiesta", realConfig.url)
 
         const { silent = false, token, authenticated = AuthenticationType.REQUIRED, ...conf } = realConfig
 
@@ -70,7 +71,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
                 authenticated,
             })
 
-            console.log("[doRequest] Ho fatto la richiesta", realConfig.url, result.data)
+            //console.log("[doRequest] Ho fatto la richiesta", realConfig.url, result.data)
             return result
         } catch (e: any) {
             console.error("[doRequest]Errore nella richbiesta", realConfig.url, e)
@@ -85,6 +86,15 @@ export const useApiClient = (options?: IApiClientOptions) => {
         }
     }
 
+    const getActiveMsalAccount = async () : Promise<AccountInfo | undefined> => {
+        if(!msalAuth || !msalAuth.instance) return undefined;
+        const active = await msalAuth.instance.getActiveAccount()
+        if(active) return active;
+        const all = await msalAuth.instance.getAllAccounts()
+        if(all.length > 0) return all[0];
+        return undefined;
+    }
+
     const getToken = async (token?: string): Promise<IToken | undefined> => {
         if (token) return {token, issuer: ""}
         const tokenLocal = getTokenFromStorage()
@@ -94,16 +104,17 @@ export const useApiClient = (options?: IApiClientOptions) => {
                 token : await auth0Auth.getAccessTokenSilently(),
                 issuer: "auth0"
             }
-        } else if (msalAuth && msalAuth.instance && msalAuth.accounts && msalAuth.accounts.length > 0) {
+        } 
+        const activeMsalAccount = await getActiveMsalAccount();
+        if (activeMsalAccount) {
             try {
-                console.log("[getToken] Inizio a prendere il token con MSFT")
-                const activeAccount = msalAuth.instance.getActiveAccount()
-                console.log("[getToken] Sto prendedo l'access token silent su questo account", activeAccount)
+                //console.log("[getToken] Inizio a prendere il token con MSFT")
+                //console.log("[getToken] Sto prendedo l'access token silent su questo account", activeMsalAccount)
                 const response = await msalAuth.instance.acquireTokenSilent({
                     scopes: ["openid", "profile", "email", "offline_access"],
-                    account: activeAccount || undefined
+                    account: activeMsalAccount || undefined
                 })
-                console.log("[getToken] Ho ottenuto il token", response)
+                //console.log("[getToken] Ho ottenuto il token", response)
                 return {
                     token: response.idToken,
                     issuer: "msal"
@@ -123,7 +134,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
                 }
             }
         } else {
-            console.error("No authentication method available to get token", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
+            console.error("No authentication method available to get token", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts, msalInstance: msalAuth.instance, maslAccountsFromRequest: msalAuth.instance.getAllAccounts() })
         }
     }
 

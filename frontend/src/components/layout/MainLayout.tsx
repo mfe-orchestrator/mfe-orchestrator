@@ -29,6 +29,7 @@ import {
 import useUserStore from '@/store/useUserStore';
 import useThemeStore from '@/store/useThemeStore';
 import ThemeToggle from '../ThemeToggle';
+import Header from './Header';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -36,24 +37,9 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
-  const { user, setUser } = useUserStore();
-  const { title, icon, theme } = useThemeStore();
-  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  const handleLogout = async () => {
-    try {
-      // Clear user data from context and local storage
-      setUser(null);
-      localStorage.removeItem('user');
-      // Redirect to login page
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
-
-  const toggleSidebar = () => {
+    const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
@@ -138,53 +124,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Main content */}
       <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
         {/* Header */}
-        <header className="bg-background border-b border-border h-16 flex items-center justify-between px-6">
-          <h1 className="text-xl font-semibold">
-            {icon} {title}
-          </h1>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <a
-                href="https://github.com/Lory1990/micro-frontend-orchestrator-hub"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                aria-label="GitHub repository"
-              >
-                <Github className="h-5 w-5" />
-              </a>
-              <LanguageSelector />
-              <ThemeToggle />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="relative flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span>{user?.firstName || user?.email}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>{t('settings.account')}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>{t('settings.profile')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>{t('settings.title')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t('auth.logout')}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-        
+        <Header />
         {/* Page Content */}
         <main className="p-6">
           {children}
