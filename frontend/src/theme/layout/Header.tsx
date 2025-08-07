@@ -193,15 +193,6 @@ const Header: React.FC = () => {
         <DropdownMenuContent className="w-56" align="end">
           <DropdownMenuLabel>{t('settings.account')}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>{t('settings.profile')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>{t('settings.title')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             <span>{t('auth.logout')}</span>
