@@ -133,7 +133,11 @@ export default fastifyPlugin(
         NODE_ENV: {
           type: 'string',
           default: 'prod',
-        }
+        },
+        MICROFRONTEND_HOST_FOLDER: {
+          type: 'string',
+          default: '/upload-microfrontends',
+        },
       },
     };
 

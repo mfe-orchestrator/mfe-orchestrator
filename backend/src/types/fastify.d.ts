@@ -57,6 +57,7 @@ declare module 'fastify' {
       GOOGLE_AUTH_SCOPE: string;
       GOOGLE_AUTH_HOSTED_DOMAIN: string;
       GOOGLE_API_AUDIENCE: string;
+      MICROFRONTEND_HOST_FOLDER: string;
     };
   }
 

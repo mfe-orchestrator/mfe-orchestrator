@@ -9,6 +9,8 @@ import { MultipartFile } from '@fastify/multipart';
 import path from 'path';
 import fs from 'fs';
 import unzipper from 'unzipper';
+import { fastify } from '..';
+import Project from '../models/ProjectModel';
 
 
 export class MicrofrontendService extends BaseAuthorizedService {
@@ -105,7 +107,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
   }
 
   async uploadWithPermissionCheck(microfrontendSlug: string, version: string, apiKeyId: string, file: MultipartFile): Promise<void> {
-    const projectId = "xxxx"
+    //TODO get project from apiKey
+    const projectId = "688c54409c1903a8cff1573e"
+    //////////////////////////////////////////////////
+    const project = await Project.findById(projectId);
+    if (!project) {
+      throw new EntityNotFoundError(projectId)
+    }
     const microfrontend = await Microfrontend.findOne({ slug: microfrontendSlug, projectId });
     if (!microfrontend) {
       throw new EntityNotFoundError(microfrontendSlug)
@@ -113,15 +121,16 @@ export class MicrofrontendService extends BaseAuthorizedService {
     
 
     if(microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB){
-      const basePath = path.join('/tmp', microfrontendSlug, version);
+      const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug +"-"+project._id.toString(), microfrontendSlug, version);
       if (!fs.existsSync(basePath)) {
-        fs.mkdirSync(basePath);
+        fastify.log.info("Creating directory " + basePath);
+        fs.mkdirSync(basePath, { recursive: true });
       }
+
   
       //TODO ensure it is ZIP!!!!!
-  
-      const uploadPath = path.join(basePath, "zipped.zip"); // o una cartella a tua scelta
-      await this.pumpStreamToFile(file, uploadPath);  
+      await this.pumpStreamToFile(file, basePath);  
+
     }else if(microfrontend.host.type === HostedOn.CUSTOM_URL){
       throw new Error("Microfrontend host type is not supported");
     }else if(microfrontend.host.type === HostedOn.CUSTOM_SOURCE){
