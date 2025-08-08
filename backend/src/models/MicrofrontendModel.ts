@@ -27,7 +27,8 @@ export interface IMicrofrontend extends Document<ObjectId> {
 
 export enum HostedOn {
   MFE_ORCHESTRATOR_HUB = 'MFE_ORCHESTRATOR_HUB',
-  CUSTOM_URL = 'CUSTOM_URL'
+  CUSTOM_URL = 'CUSTOM_URL',
+  CUSTOM_SOURCE = 'CUSTOM_SOURCE'
 }
 
 export enum CanaryType{

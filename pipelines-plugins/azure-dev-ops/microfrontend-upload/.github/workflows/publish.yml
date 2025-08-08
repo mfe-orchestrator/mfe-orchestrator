@@ -1,0 +1,50 @@
+name: Publish to Azure DevOps Marketplace
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish-extension:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16.x'
+        
+    - name: Install dependencies
+      run: |
+        npm install -g tfx-cli
+        npm install
+        
+    - name: Build extension
+      run: |
+        npm run build
+        
+    - name: Create extension package
+      run: |
+        tfx extension create --manifest-globs vss-extension.json --output-path dist
+        
+    - name: Publish to Marketplace
+      env:
+        AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+      run: |
+        # Get the version from package.json
+        VERSION=$(node -p "require('./package.json').version")
+        # Get the extension file
+        EXTENSION_FILE=$(ls -1 dist/*.vsix | head -1)
+        
+        # Publish the extension
+        tfx extension publish --vsix $EXTENSION_FILE --token $AZURE_DEVOPS_EXT_PAT --share-with your-organization
+        
+        # Optional: Update the extension if it already exists
+        # tfx extension update --vsix $EXTENSION_FILE --token $AZURE_DEVOPS_EXT_PAT
+        
+    - name: Upload extension package
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-package
+        path: dist/*.vsix

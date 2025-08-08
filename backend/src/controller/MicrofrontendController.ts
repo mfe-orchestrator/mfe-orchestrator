@@ -18,8 +18,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     id: string;
   } }>('/microfrontends/:id', async (request, reply) => {
     return reply.send(await new MicrofrontendService(request.databaseUser).getById(request.params.id));
-  });
-  
+  });  
 
   fastify.post<{ Body: MicrofrontendDTO, Querystring: {
     environment: string;
@@ -47,5 +46,18 @@ export default async function microfrontendController(fastify: FastifyInstance) 
       message: 'Microfrontends deleted successfully',
       deletedCount: await new MicrofrontendService(request.databaseUser).bulkDelete(request.body)
     });
+  });
+
+  //TODO cambiare modalità di autenticazione pasando a API key
+  fastify.post<{ 
+    Params: { microfrontendSlug: string, version: string },
+    Body: { file: string } 
+  }>('/microfrontends/by-slug/:microfrontendSlug/upload/:version', { config: { public: true } }, async (request, reply) => {
+    const apiKeyId = "xxx"
+    const data = await request.file();
+    if(!data){
+      throw new Error("File not found");
+    }
+    return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, apiKeyId, data));
   });
 }

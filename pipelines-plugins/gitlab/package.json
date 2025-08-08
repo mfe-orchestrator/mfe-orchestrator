@@ -1,0 +1,14 @@
+{
+    "name": "upload-microfrontend",
+    "version": "1.0.0",
+    "bin": {
+      "upload-microfrontend": "./upload-microfrontend.js"
+    },
+    "type": "module",
+    "dependencies": {
+      "archiver": "^5.3.1",
+      "node-fetch": "^3.3.1",
+      "yargs": "^17.7.2"
+    }
+  }
+  

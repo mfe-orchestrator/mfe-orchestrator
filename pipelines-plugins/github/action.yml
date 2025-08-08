@@ -1,0 +1,22 @@
+name: 'Microfrontend Orchestrator Uploader'
+description: 'Zip a folder and upload it to microfrontend orchestrator service'
+author: 'Lorenzo De Francesco'
+inputs:
+  apikey:
+    description: 'API key for authentication into microfrontend orchestrator service'
+    required: true
+  microfrontend-slug:
+    description: 'Slug of the microfrontend'
+    required: true
+  domain:
+    description: 'Base domain of the microfrontend orchestrator service (e.g. https://microfrontend-orchestrator-hub.com)'
+    required: true
+  file-path:
+    description: 'Path to the folder to zip'
+    required: true
+  version:
+    description: 'Version to upload'
+    required: true
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

@@ -1,0 +1,12 @@
+upload_microfrontend:
+  stage: deploy
+  image: node:18
+  variables:
+    APIKEY: ""
+    MICROFRONTEND_SLUG: ""
+    DOMAIN: ""
+    FILE_PATH: ""
+    VERSION: ""
+  script:
+    - npm install -g git+https://gitlab.com/<tuo-user>/<tuo-repo>.git
+    - upload-microfrontend --apikey "$APIKEY" --slug "$MICROFRONTEND_SLUG" --domain "$DOMAIN" --path "$FILE_PATH" --version "$VERSION"

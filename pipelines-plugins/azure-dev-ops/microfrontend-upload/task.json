@@ -1,0 +1,62 @@
+{
+  "id": "a1e9a3f2-1234-5678-9abc-def123456789",
+  "name": "microfrontend-upload",
+  "friendlyName": "Microfrontend Upload",
+  "description": "Upload a microfrontend bundle to the specified domain",
+  "helpMarkDown": "",
+  "category": "Utility",
+  "author": "Your Name",
+  "version": {
+    "Major": 1,
+    "Minor": 0,
+    "Patch": 0
+  },
+  "instanceNameFormat": "Upload Microfrontend $(microfrontendSlug) v$(version)",
+  "inputs": [
+    {
+      "name": "apiKey",
+      "type": "string",
+      "label": "API Key",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The API key for authentication"
+    },
+    {
+      "name": "microfrontendSlug",
+      "type": "string",
+      "label": "Microfrontend Slug",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The slug identifier for the microfrontend"
+    },
+    {
+      "name": "domain",
+      "type": "string",
+      "label": "Domain",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The base domain where the microfrontend will be uploaded"
+    },
+    {
+      "name": "filePath",
+      "type": "filePath",
+      "label": "File or Directory Path",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The path to the file or directory to be zipped and uploaded"
+    },
+    {
+      "name": "version",
+      "type": "string",
+      "label": "Version",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The version of the microfrontend (e.g., 1.0.0)"
+    }
+  ],
+  "execution": {
+    "Node10": {
+      "target": "index.js"
+    }
+  }
+}

@@ -1,10 +1,15 @@
 import { ClientSession, ObjectId, Types } from 'mongoose';
-import Microfrontend, { IMicrofrontend } from '../models/MicrofrontendModel';
+import Microfrontend, { HostedOn, IMicrofrontend } from '../models/MicrofrontendModel';
 
 import MicrofrontendDTO from '../types/MicrofrontendDTO';
 import BaseAuthorizedService from './BaseAuthorizedService';
 import { EntityNotFoundError } from '../errors/EntityNotFoundError';
 import { runInTransaction } from '../utils/runInTransaction';
+import { MultipartFile } from '@fastify/multipart';
+import path from 'path';
+import fs from 'fs';
+import unzipper from 'unzipper';
+
 
 export class MicrofrontendService extends BaseAuthorizedService {
 
@@ -99,8 +104,44 @@ export class MicrofrontendService extends BaseAuthorizedService {
     
   }
 
+  async uploadWithPermissionCheck(microfrontendSlug: string, version: string, apiKeyId: string, file: MultipartFile): Promise<void> {
+    const projectId = "xxxx"
+    const microfrontend = await Microfrontend.findOne({ slug: microfrontendSlug, projectId });
+    if (!microfrontend) {
+      throw new EntityNotFoundError(microfrontendSlug)
+    }
+    
+
+    if(microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB){
+      const basePath = path.join('/tmp', microfrontendSlug, version);
+      if (!fs.existsSync(basePath)) {
+        fs.mkdirSync(basePath);
+      }
+  
+      //TODO ensure it is ZIP!!!!!
+  
+      const uploadPath = path.join(basePath, "zipped.zip"); // o una cartella a tua scelta
+      await this.pumpStreamToFile(file, uploadPath);  
+    }else if(microfrontend.host.type === HostedOn.CUSTOM_URL){
+      throw new Error("Microfrontend host type is not supported");
+    }else if(microfrontend.host.type === HostedOn.CUSTOM_SOURCE){
+      // MFE -> SOURCE -> Upload
+      throw new Error("Microfrontend host type is not supported NOW");
+    }
+  }  
+
   ensureAccessToMicrofrontend(microfrontend : IMicrofrontend){
     return this.ensureAccessToProject(microfrontend.projectId);
+  }
+
+  async pumpStreamToFile(stream: MultipartFile, destPath: string) {
+    // Stream dal client → unzipper → cartella
+    await new Promise((resolve, reject) => {
+      stream.file
+        .pipe(unzipper.Extract({ path: destPath }))
+        .on('close', resolve)
+        .on('error', reject);
+    });
   }
 }
 
