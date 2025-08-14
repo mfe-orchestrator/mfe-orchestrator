@@ -31,67 +31,40 @@ terraform apply
 
 ### Environment variables 🔧
 
-```bash
-# Environment
-NODE_ENV=development  # development/production
-PORT=3000            # Port to listen on
-
-# Database
-NOSQL_DATABASE_URL=mongodb://localhost:27017/microfrontend-orchestrator
-
-# Redis (optional)
-REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=
-
-#Registration control
-REGISTRATION_ALLOWED=true
-ALLOW_EMBEDDED_LOGIN=true
-
-# Email Configuration (optional)
-EMAIL_SMTP_HOST=smtp.example.com
-EMAIL_SMTP_PORT=587
-EMAIL_SMTP_SECURE=false
-EMAIL_SMTP_USER=
-EMAIL_SMTP_PASSWORD=
-EMAIL_SMTP_FROM=no-reply@example.com
-
-## Frontend url to send email
-FRONTEND_URL=http://localhost:3000
-
-# Auth0 Configuration (optional)
-AUTH0_DOMAIN=
-AUTH0_CLIENT_ID=
-AUTH0_CLIENT_SECRET=
-AUTH0_API_AUDIENCE=
-AUTH0_SECRET=
-
-# Azure Entra ID Configuration (optional)
-AZURE_ENTRAID_TENANT_ID=
-AZURE_ENTRAID_CLIENT_ID=
-AZURE_ENTRAID_CLIENT_SECRET=
-AZURE_ENTRAID_REDIRECT_URI=
-AZURE_ENTRAID_AUTHORITY=https://login.microsoftonline.com
-AZURE_ENTRAID_SCOPES=openid profile email
-AZURE_ENTRAID_API_AUDIENCE=
-
-# Google Authentication (optional)
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GOOGLE_REDIRECT_URI=
-GOOGLE_AUTH_SCOPE=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile
-
-# Fastify Configuration
-FASTIFY_LOG_LEVEL=info  # debug/info/warn/error
-FASTIFY_TRUST_PROXY=false
-
-# Security
-JWT_SECRET=your-secret-key-here
-
-# Auth0 Integration (if using Auth0)
-AUTH0_DOMAIN=your-auth0-domain
-AUTH0_AUDIENCE=your-auth0-audience
-AUTH0_CLIENT_ID=your-client-id
-```
+| Variable | Default Value | Description |
+|-----------|---------------|-------------|
+| `FRONTEND_URL` | `http://localhost:3000` | URL of the frontend application. |
+| `REGISTRATION_ALLOWED` | `false` | If `true`, allows new user registration. |
+| `ALLOW_EMBEDDED_LOGIN` | `true` | If `true`, enables the login system within the application. |
+| `MICROFRONTEND_HOST_FOLDER`| `/var/microfrontends` | Folder containing the host microfrontends. |
+| `NOSQL_DATABASE_URL` | `mongodb://localhost:27017/microfrontend-orchestrator` | MongoDB database connection URL. |
+| `REDIS_URL` | `redis://localhost:6379` | Redis server connection URL. |
+| `REDIS_PASSWORD` | *(empty)* | Password for Redis access (if set). |
+| `EMAIL_SMTP_HOST` | `smtp.example.com` | SMTP server host for sending emails. |
+| `EMAIL_SMTP_PORT` | `587` | SMTP server port (e.g., 587 for TLS). |
+| `EMAIL_SMTP_SECURE` | `false` | If `true`, uses secure connection (SSL/TLS). |
+| `EMAIL_SMTP_USER` | *(empty)* | Username for SMTP authentication. |
+| `EMAIL_SMTP_PASSWORD` | *(empty)* | Password for SMTP authentication. |
+| `EMAIL_SMTP_FROM` | `no-reply@example.com` | Sender email address. |
+| `JWT_SECRET` | `your-secret-key-here` | Secret key for JWT generation and validation. |
+| `AUTH0_DOMAIN` | *(empty)* | Auth0 tenant domain. |
+| `AUTH0_CLIENT_ID` | *(empty)* | Client ID of the Auth0 application. |
+| `AUTH0_CLIENT_SECRET` | *(empty)* | Client secret of the Auth0 application. |
+| `AUTH0_AUDIENCE` | *(empty)* | API Audience configured in Auth0. |
+| `AUTH0_SECRET` | *(empty)* | Secret for Auth0 token validation. |
+| `AZURE_ENTRAID_TENANT_ID` | *(empty)* | Azure Entra ID tenant ID. |
+| `AZURE_ENTRAID_CLIENT_ID` | *(empty)* | Client ID of the registered Azure application. |
+| `AZURE_ENTRAID_CLIENT_SECRET` | *(empty)* | Client secret of the registered Azure application. |
+| `AZURE_ENTRAID_REDIRECT_URI` | *(empty)* | Redirect URI for Azure authentication. |
+| `AZURE_ENTRAID_AUTHORITY` | `https://login.microsoftonline.com` | Authentication authority URL. |
+| `AZURE_ENTRAID_SCOPES` | `openid profile email` | Required scopes during login. |
+| `AZURE_ENTRAID_API_AUDIENCE` | *(empty)* | Protected API identifier in Azure. |
+| `GOOGLE_CLIENT_ID` | *(empty)* | Client ID for Google OAuth authentication. |
+| `GOOGLE_CLIENT_SECRET` | *(empty)* | Client secret for Google OAuth authentication. |
+| `GOOGLE_REDIRECT_URI` | *(empty)* | Redirect URI for Google OAuth. |
+| `GOOGLE_AUTH_SCOPE` | `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile` | Required scopes to get Google email and profile. |
+| `ALLOWED_ORIGINS` | *(empty)* | List of allowed URLs for cross-origin requests. |
+| `LOG_LEVEL` | `info` *(debug/info/warn/error)* | Logging level. |
 
 ### Local Installation for development 🛠️
 

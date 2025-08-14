@@ -62,7 +62,7 @@ export default fastifyPlugin(
         AUTH0_CLIENT_SECRET: {
           type: 'string',
         },
-        AUTH0_API_AUDIENCE: {
+        AUTH0_AUDIENCE: {
           type: 'string',
         },
         AUTH0_SECRET: {
