@@ -8,6 +8,7 @@ export default interface ConfigResponseDTO {
             domain: string;
             clientId: string;
             apiAudience: string;
+            scope: string;
         };
         azure?: {
             tenantId: string;

@@ -59,13 +59,11 @@ export default fastifyPlugin(
         AUTH0_CLIENT_ID: {
           type: 'string',
         },
-        AUTH0_CLIENT_SECRET: {
+        AUTH0_SCOPE: {
           type: 'string',
+          default: 'openid profile email'
         },
         AUTH0_AUDIENCE: {
-          type: 'string',
-        },
-        AUTH0_SECRET: {
           type: 'string',
         },
         ALLOWED_ORIGINS: {

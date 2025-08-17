@@ -49,9 +49,8 @@ terraform apply
 | `JWT_SECRET` | `your-secret-key-here` | Secret key for JWT generation and validation. |
 | `AUTH0_DOMAIN` | *(empty)* | Auth0 tenant domain. |
 | `AUTH0_CLIENT_ID` | *(empty)* | Client ID of the Auth0 application. |
-| `AUTH0_CLIENT_SECRET` | *(empty)* | Client secret of the Auth0 application. |
 | `AUTH0_AUDIENCE` | *(empty)* | API Audience configured in Auth0. |
-| `AUTH0_SECRET` | *(empty)* | Secret for Auth0 token validation. |
+| `AUTH0_SCOPE` | `openid profile email` | OAuth scopes (space-separated) |
 | `AZURE_ENTRAID_TENANT_ID` | *(empty)* | Azure Entra ID tenant ID. |
 | `AZURE_ENTRAID_CLIENT_ID` | *(empty)* | Client ID of the registered Azure application. |
 | `AZURE_ENTRAID_CLIENT_SECRET` | *(empty)* | Client secret of the registered Azure application. |

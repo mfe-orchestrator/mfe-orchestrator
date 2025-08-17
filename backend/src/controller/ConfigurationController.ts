@@ -18,7 +18,8 @@ export default async function configurationController(fastify: FastifyInstance) 
             response.providers.auth0 = {
                 domain: config.AUTH0_DOMAIN,
                 clientId: config.AUTH0_CLIENT_ID,
-                apiAudience: config.AUTH0_AUDIENCE
+                apiAudience: config.AUTH0_AUDIENCE,
+                scope: config.AUTH0_SCOPE
             };
         }
 

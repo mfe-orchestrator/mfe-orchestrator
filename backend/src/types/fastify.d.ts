@@ -26,8 +26,8 @@ declare module 'fastify' {
       DATABASE_URL: string;
       AUTH0_DOMAIN: string;
       AUTH0_CLIENT_ID: string;
-      AUTH0_SECRET: string;
       AUTH0_AUDIENCE: string;
+      AUTH0_SCOPE: string;
       ALLOWED_ORIGINS: string;
       REGISTRATION_ALLOWED: boolean;
       ALLOW_EMBEDDED_LOGIN: boolean;
