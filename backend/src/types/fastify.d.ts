@@ -47,7 +47,6 @@ declare module 'fastify' {
       NODE_ENV: string;
       AZURE_ENTRAID_TENANT_ID: string;
       AZURE_ENTRAID_CLIENT_ID: string;
-      AZURE_ENTRAID_CLIENT_SECRET: string;
       AZURE_ENTRAID_REDIRECT_URI: string;
       AZURE_ENTRAID_AUTHORITY: string;
       AZURE_ENTRAID_SCOPES: string;

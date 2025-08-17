@@ -75,9 +75,6 @@ export default fastifyPlugin(
         AZURE_ENTRAID_CLIENT_ID: {
           type: 'string',
         },
-        AZURE_ENTRAID_CLIENT_SECRET: {
-          type: 'string',
-        },
         AZURE_ENTRAID_REDIRECT_URI: {
           type: 'string',
         },
