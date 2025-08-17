@@ -42,7 +42,7 @@ services:
       REDIS_URL: redis://redis:6379
       MICROFRONTEND_HOST_FOLDER: /upload-microfrontends
     volumes:
-      - upload-microfrontends:/upload-microfrontends
+      - upload_microfrontends:/upload-microfrontends
     depends_on:
       - mongodb
       - redis
@@ -50,4 +50,4 @@ services:
 volumes:
   mongodb_data:
   redis_data:
-  upload-microfrontends:
+  upload_microfrontends:

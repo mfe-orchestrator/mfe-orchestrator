@@ -138,6 +138,15 @@ export default fastifyPlugin(
           type: 'string',
           default: '/upload-microfrontends',
         },
+        RECAPTCHA_SECRET_KEY: {
+          type: 'string',
+        },
+        BREVO_API_KEY: {
+          type: 'string',
+        },
+        BREVO_LIST_ID: {
+          type: 'string',
+        }
       },
     };
 

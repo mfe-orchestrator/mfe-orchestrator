@@ -5,8 +5,9 @@ import helmet from '@fastify/helmet';
 export default fastifyPlugin(
   async (fastify: FastifyInstance) => {
     fastify.register(helmet, {
-      crossOriginResourcePolicy: false,
+      contentSecurityPolicy: false,
+      global: true,
     });
   },
-  {}
+  { name: 'helmet' }
 );
