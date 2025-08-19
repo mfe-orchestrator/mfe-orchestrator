@@ -7,7 +7,7 @@ export let isReplicaSet : boolean = false;
 
 export default fastifyPlugin((fastify: FastifyInstance, opts, done) => {
   try {
-    if (!process.env.NOSQL_DATABASE_URL) {
+    if (!fastify.config.NOSQL_DATABASE_URL) {
       fastify.log.warn("Cannot see MongoDB database URL, will not connect")
       return
     }
@@ -16,13 +16,14 @@ export default fastifyPlugin((fastify: FastifyInstance, opts, done) => {
 
     // Configure Mongoose for replica set
     const options: mongoose.ConnectOptions = {
-      user: process.env.NOSQL_USERNAME,
-      pass: process.env.NOSQL_PASSWORD,
+      user: fastify.config.NOSQL_USERNAME,
+      pass: fastify.config.NOSQL_PASSWORD,
+      dbName: fastify.config.NOSQL_DATABASE_NAME,
       retryWrites: true,
       w: 'majority'
     }
 
-    mongoose.connect(process.env.NOSQL_DATABASE_URL, options)
+    mongoose.connect(fastify.config.NOSQL_DATABASE_URL, options)
     
     // Verify the connection is to a replica set
     const connection = mongoose.connection

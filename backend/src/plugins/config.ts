@@ -13,6 +13,18 @@ export default fastifyPlugin(
       type: 'object',
       required: [],
       properties: {
+        NOSQL_DATABASE_URL: {
+          type: 'string'
+        },
+        NOSQL_USERNAME: {
+          type: 'string'
+        },
+        NOSQL_PASSWORD: {
+          type: 'string'
+        },
+        NOSQL_DATABASE_NAME: {
+          type: 'string',
+        },
         REGISTRATION_ALLOWED: {
           type: 'boolean',
           default: true
@@ -49,9 +61,6 @@ export default fastifyPlugin(
         },
         FRONTEND_URL: {
           type: 'string'
-        },
-        DATABASE_URL: {
-          type: 'string',
         },
         AUTH0_DOMAIN: {
           type: 'string',

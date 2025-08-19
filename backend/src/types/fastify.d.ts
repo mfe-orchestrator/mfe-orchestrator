@@ -23,7 +23,10 @@ declare module 'fastify' {
     authenticate: Authenticate;
     config: {
       PORT: number;
-      DATABASE_URL: string;
+      NOSQL_DATABASE_URL: string;
+      NOSQL_USERNAME: string;
+      NOSQL_PASSWORD: string;
+      NOSQL_DATABASE_NAME: string;
       AUTH0_DOMAIN: string;
       AUTH0_CLIENT_ID: string;
       AUTH0_AUDIENCE: string;
