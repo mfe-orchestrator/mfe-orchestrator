@@ -2,7 +2,7 @@ import { ContactsApi } from '@getbrevo/brevo';
 import WaitingListDTO from '../types/WaitingListDTO';
 
 export class BrevoService {
-  private apiInstance: ContactsApi;
+  private apiInstance: ContactsApi | undefined;
   private listId: number;
 
   constructor() {
