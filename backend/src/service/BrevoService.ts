@@ -10,7 +10,8 @@ export class BrevoService {
     this.listId = parseInt(process.env.BREVO_LIST_ID || '0', 10);
     
     if (!apiKey) {
-      throw new Error('BREVO_API_KEY environment variable is not set');
+      console.error('BREVO_API_KEY environment variable is not set');
+      return
     }
     
     this.apiInstance = new ContactsApi();
@@ -18,6 +19,10 @@ export class BrevoService {
   }
 
   async addToWaitingList(data: WaitingListDTO): Promise<void> {
+    if(!this.apiInstance){
+      console.error('BrevoService not initialized');
+      return;
+    }
     await this.apiInstance.createContact({
         email: data.email,
         attributes: {
