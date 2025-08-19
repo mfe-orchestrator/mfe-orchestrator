@@ -24,8 +24,8 @@ declare module 'fastify' {
     config: {
       PORT: number;
       NOSQL_DATABASE_URL: string;
-      NOSQL_USERNAME: string;
-      NOSQL_PASSWORD: string;
+      NOSQL_DATABASE_USERNAME: string;
+      NOSQL_DATABASE_PASSWORD: string;
       NOSQL_DATABASE_NAME: string;
       AUTH0_DOMAIN: string;
       AUTH0_CLIENT_ID: string;

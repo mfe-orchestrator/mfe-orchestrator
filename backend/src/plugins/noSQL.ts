@@ -16,8 +16,8 @@ export default fastifyPlugin((fastify: FastifyInstance, opts, done) => {
 
     // Configure Mongoose for replica set
     const options: mongoose.ConnectOptions = {
-      user: fastify.config.NOSQL_USERNAME,
-      pass: fastify.config.NOSQL_PASSWORD,
+      user: fastify.config.NOSQL_DATABASE_USERNAME,
+      pass: fastify.config.NOSQL_DATABASE_PASSWORD,
       dbName: fastify.config.NOSQL_DATABASE_NAME,
       retryWrites: true,
       w: 'majority'

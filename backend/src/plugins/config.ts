@@ -16,10 +16,10 @@ export default fastifyPlugin(
         NOSQL_DATABASE_URL: {
           type: 'string'
         },
-        NOSQL_USERNAME: {
+        NOSQL_DATABASEUSERNAME: {
           type: 'string'
         },
-        NOSQL_PASSWORD: {
+        NOSQL_DATABASEPASSWORD: {
           type: 'string'
         },
         NOSQL_DATABASE_NAME: {

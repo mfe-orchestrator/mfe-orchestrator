@@ -38,6 +38,9 @@ terraform apply
 | `ALLOW_EMBEDDED_LOGIN` | `true` | If `true`, enables the login system within the application. |
 | `MICROFRONTEND_HOST_FOLDER`| `/var/microfrontends` | Folder containing the host microfrontends. |
 | `NOSQL_DATABASE_URL` | `mongodb://localhost:27017/microfrontend-orchestrator` | MongoDB database connection URL. |
+| `NOSQL_DATABASE_NAME` | `microfrontend-orchestrator` | MongoDB database name. |
+| `NOSQL_DATABASE_USERNAME` | `root` | MongoDB username. |
+| `NOSQL_DATABASE_PASSWORD` | `example` | MongoDB password. |
 | `REDIS_URL` | `redis://localhost:6379` | Redis server connection URL. |
 | `REDIS_PASSWORD` | *(empty)* | Password for Redis access (if set). |
 | `EMAIL_SMTP_HOST` | `smtp.example.com` | SMTP server host for sending emails. |
