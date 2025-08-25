@@ -11,7 +11,8 @@ export enum ApiKeyStatus {
     INACTIVE = "INACTIVE"
 }
 
-export interface IApiKey extends Document<ObjectId> {
+export interface IApiKey {
+    name: string
     projectId: Types.ObjectId
     apiKey: string
     salt: string
@@ -20,8 +21,18 @@ export interface IApiKey extends Document<ObjectId> {
     status: ApiKeyStatus
 }
 
-const apiKeySchema = new Schema<IApiKey>(
+export type IApiKeyDocument = IApiKey &
+    Document<ObjectId> & {
+        compareApiKey: (candidateApiKey: string) => Promise<boolean>
+        toFrontendObject: () => IApiKey
+    }
+
+const apiKeySchema = new Schema<IApiKeyDocument>(
     {
+        name: {
+            type: String,
+            required: true
+        },
         projectId: {
             type: Schema.Types.ObjectId,
             ref: "Project",
@@ -58,7 +69,7 @@ const apiKeySchema = new Schema<IApiKey>(
     }
 )
 
-apiKeySchema.pre<IApiKey>("save", async function (next) {
+apiKeySchema.pre<IApiKeyDocument>("save", async function (next) {
     if (this.isModified("apiKey")) {
         const salt = await bcrypt.genSalt(10)
         this.salt = salt
@@ -67,5 +78,17 @@ apiKeySchema.pre<IApiKey>("save", async function (next) {
     next()
 })
 
-const ApiKey = mongoose.model<IApiKey>("ApiKey", apiKeySchema)
+apiKeySchema.methods.compareApiKey = async function (candidateApiKey: string): Promise<boolean> {
+    return bcrypt.compare(candidateApiKey, this.apiKey)
+}
+
+apiKeySchema.methods.toFrontendObject = function (): IApiKey {
+    const obj = this.toObject()
+    delete obj.apiKey
+    delete obj.salt
+    delete obj.__v
+    return obj
+}
+
+const ApiKey = mongoose.model<IApiKeyDocument>("ApiKey", apiKeySchema)
 export default ApiKey
