@@ -6,21 +6,22 @@ export enum ApiKeyRole {
     MANAGER = "MANAGER"
 }
 
+export enum ApiKeyStatus {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE"
+}
+
 export interface IApiKey extends Document<ObjectId> {
-    _id: ObjectId
     projectId: Types.ObjectId
     apiKey: string
     salt: string
     role: ApiKeyRole
     expirationDate: Date
+    status: ApiKeyStatus
 }
 
 const apiKeySchema = new Schema<IApiKey>(
     {
-        _id: {
-            type: Schema.Types.ObjectId,
-            auto: true
-        },
         projectId: {
             type: Schema.Types.ObjectId,
             ref: "Project",
@@ -44,6 +45,12 @@ const apiKeySchema = new Schema<IApiKey>(
         expirationDate: {
             type: Date,
             required: false
+        },
+        status: {
+            type: String,
+            enum: Object.values(ApiKeyStatus),
+            default: ApiKeyStatus.ACTIVE,
+            required: true
         }
     },
     {

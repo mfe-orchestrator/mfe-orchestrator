@@ -1,5 +1,7 @@
 import { FastifyInstance } from "fastify"
 import { StorageService } from "../service/StorageService"
+import { StorageDTO } from "../types/StorageDTO"
+import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function storageController(fastify: FastifyInstance) {
     // Get storages by project ID
@@ -9,13 +11,31 @@ export default async function storageController(fastify: FastifyInstance) {
     })
 
     // Add storage to project
-    fastify.post("/projects/:projectId/storages", async (request, reply) => {})
+    fastify.post<{ Body: StorageDTO }>("/storages", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+
+        if (!projectId) {
+            return reply.status(400).send({ error: "Project ID is required" })
+        }
+
+        const storage = await new StorageService(request.databaseUser).create(projectId, request.body)
+        return reply.send(storage)
+    })
 
     // Update storage
-    fastify.put("/projects/:projectId/storages/:storageId", async (request, reply) => {})
+    fastify.put<{ Body: StorageDTO; Params: { storageId: string } }>("/storages/:storageId", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+
+        if (!projectId) {
+            return reply.status(400).send({ error: "Project ID is required" })
+        }
+
+        const storage = await new StorageService(request.databaseUser).update(projectId, request.params.storageId, request.body)
+        return reply.send(storage)
+    })
 
     // Delete storage
-    fastify.delete<{ Params: { projectId: string; storageId: string } }>("/projects/:projectId/storages/:storageId", async (request, reply) => {
+    fastify.delete<{ Params: { storageId: string } }>("/storages/:storageId", async (request, reply) => {
         await new StorageService(request.databaseUser).delete(request.params.storageId)
         return reply.status(204).send()
     })

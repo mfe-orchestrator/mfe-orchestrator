@@ -7,21 +7,17 @@ export enum StorageType {
 }
 
 export interface IStorage extends Document<ObjectId> {
-    _id: ObjectId
     type: StorageType
     projectId: ObjectId
     apiKey: string
     clientId: string
     clientSecret: string
     tenantId: string
+    url: string
 }
 
 const storageSchema = new Schema<IStorage>(
     {
-        _id: {
-            type: Schema.Types.ObjectId,
-            auto: true
-        },
         type: {
             type: String,
             enum: Object.values(StorageType),
@@ -46,6 +42,10 @@ const storageSchema = new Schema<IStorage>(
             required: true
         },
         tenantId: {
+            type: String,
+            required: true
+        },
+        url: {
             type: String,
             required: true
         }

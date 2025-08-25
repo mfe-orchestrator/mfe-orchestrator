@@ -1,8 +1,9 @@
-import { ObjectId, Types } from "mongoose"
+import { ClientSession, DeleteResult, ObjectId } from "mongoose"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Storage, { IStorage } from "../models/StorageModel"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import { BusinessException, createBusinessException } from "../errors/BusinessException"
+import { runInTransaction } from "../utils/runInTransaction"
+import { StorageDTO } from "../types/StorageDTO"
 
 export class StorageService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | ObjectId): Promise<IStorage[]> {
@@ -10,7 +11,40 @@ export class StorageService extends BaseAuthorizedService {
         return Storage.find({ projectId })
     }
 
-    async delete(storageId: string): Promise<boolean> {
+    async createRaw(projectId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
+        await this.ensureAccessToProject(projectId, session)
+
+        const storage = new Storage({
+            ...storageData,
+            projectId
+        })
+
+        return await storage.save({ session })
+    }
+
+    async create(projectId: string, storageData: StorageDTO): Promise<IStorage> {
+        return runInTransaction(async session => this.createRaw(projectId, storageData, session))
+    }
+
+    async updateRaw(projectId: string, storageId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
+        await this.ensureAccessToProject(projectId, session)
+
+        const updated = await Storage.findByIdAndUpdate(storageId, storageData, { new: true, runValidators: true })
+            .session(session || null)
+            .lean()
+
+        if (!updated) {
+            throw new EntityNotFoundError(storageId)
+        }
+
+        return updated
+    }
+
+    async update(projectId: string, storageId: string, storageData: StorageDTO): Promise<IStorage> {
+        return runInTransaction(async session => this.updateRaw(projectId, storageId, storageData, session))
+    }
+
+    async delete(storageId: string): Promise<DeleteResult> {
         const storage = await Storage.findById(storageId)
 
         if (!storage) {
@@ -19,35 +53,6 @@ export class StorageService extends BaseAuthorizedService {
 
         await this.ensureAccessToProject(storage.projectId)
 
-        try {
-            if (!Types.ObjectId.isValid(storageId)) {
-                throw createBusinessException({
-                    code: "INVALID_ID",
-                    message: "Invalid storage ID format",
-                    statusCode: 400
-                })
-            }
-
-            const result = await Storage.deleteOne({ _id: storageId })
-
-            if (result.deletedCount === 0) {
-                throw createBusinessException({
-                    code: "STORAGE_NOT_FOUND",
-                    message: "Storage not found",
-                    statusCode: 404
-                })
-            }
-
-            return true
-        } catch (error) {
-            if (error instanceof BusinessException) throw error
-
-            throw createBusinessException({
-                code: "STORAGE_DELETION_ERROR",
-                message: "Failed to delete storage",
-                details: { error: error instanceof Error ? error.message : "Unknown error" },
-                statusCode: 500
-            })
-        }
+        return await Storage.deleteOne({ _id: storageId })
     }
 }
