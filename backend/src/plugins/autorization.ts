@@ -1,4 +1,4 @@
-import { AuthenticationMethod, FastifyInstance, FastifyRequest } from "fastify"
+import { FastifyInstance, FastifyRequest } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 import AuthenticationError from "../errors/AuthenticationError"
 import UserModel, { getSecret, ISSUER } from "../models/UserModel"
@@ -7,6 +7,7 @@ import { redisClient } from "./redis"
 import axios from "axios"
 import UserService from "../service/UserService"
 import ApiKey from "../models/ApiKeyModel"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 
 interface AuthUserDTO {
     name?: string

@@ -3,9 +3,10 @@ import UserLoginDTO from "../types/UserLoginDTO"
 import ResetPasswordRequestDTO from "../types/ResetPasswordRequestDTO"
 import ResetPasswordDataDTO from "../types/ResetPasswordDataDTO"
 import { UserInvitationDTO } from "../types/UserInvitationDTO"
-import { AuthenticationMethod, FastifyInstance } from "fastify"
+import { FastifyInstance } from "fastify"
 import UserService from "../service/UserService"
 import UserAccoutActivationDTO from "../types/UserAccoutActivationDTO"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export function UserController(fastify: FastifyInstance) {
     const userService = new UserService()

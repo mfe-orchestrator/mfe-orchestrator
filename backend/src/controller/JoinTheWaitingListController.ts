@@ -1,7 +1,8 @@
-import { AuthenticationMethod, FastifyInstance } from "fastify"
+import { FastifyInstance } from "fastify"
 import BrevoService from "../service/BrevoService"
 import WaitingListDTO from "../types/WaitingListDTO"
 import { verifyRecaptcha } from "../utils/recaptcha"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export function JoinTheWaitingListController(fastify: FastifyInstance) {
     const brevoService = new BrevoService()

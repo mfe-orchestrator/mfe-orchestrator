@@ -1,5 +1,6 @@
-import { AuthenticationMethod, FastifyInstance } from "fastify"
+import {  FastifyInstance } from "fastify"
 import ServeService from "../service/ServeService"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export default async function serveController(fastify: FastifyInstance) {
     const serveService = new ServeService()

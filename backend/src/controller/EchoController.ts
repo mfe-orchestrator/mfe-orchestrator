@@ -1,5 +1,6 @@
-import { AuthenticationMethod, FastifyInstance } from "fastify"
+import { FastifyInstance } from "fastify"
 import { name, version } from "../../package.json"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export default async function echoController(fastify: FastifyInstance) {
     fastify.get("/echo", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {

@@ -1,8 +1,9 @@
-import { AuthenticationMethod, FastifyInstance } from "fastify"
+import { FastifyInstance } from "fastify"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import MicrofrontendService from "../service/MicrofrontendService"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export default async function microfrontendController(fastify: FastifyInstance) {
     fastify.get("/microfrontends", async (request, reply) => {

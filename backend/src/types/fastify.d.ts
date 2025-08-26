@@ -66,12 +66,6 @@ declare module "fastify" {
         databaseUser: UserModel
     }
 
-    export enum AuthenticationMethod {
-        PUBLIC = "PUBLIC",
-        API_KEY = "API_KEY",
-        JWT = "JWT"
-    }
-
     interface FastifyContextConfig {
         grants?: string[]
         authMethod: AuthenticationMethod

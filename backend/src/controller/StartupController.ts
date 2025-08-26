@@ -1,6 +1,8 @@
-import { AuthenticationMethod, FastifyInstance } from "fastify"
+import { FastifyInstance } from "fastify"
 import UserService from "../service/UserService"
 import ProjectService from "../service/ProjectService"
+import AuthenticationMethod from "../types/AuthenticationMethod"
+
 
 export interface StartupUserRegistrationDTO {
     email: string
