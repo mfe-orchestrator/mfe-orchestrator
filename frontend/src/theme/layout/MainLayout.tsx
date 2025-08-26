@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Link as LinkIcon,
   Rocket as RocketIcon,
+  HardDrive,
   Github
 } from 'lucide-react';
 import LanguageSelector from '../../components/LanguageSelector';
@@ -48,6 +49,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       name: "Microfrontends",
       path: '/microfrontends',
       icon: <LayoutDashboard className="h-5 w-5" />
+    },
+    {
+      name: "Storages",
+      path: '/storages',
+      icon: <HardDrive className="h-5 w-5" />
     },
     {
       name: t('deployments.title'),

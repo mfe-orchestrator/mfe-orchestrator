@@ -13,6 +13,7 @@ import MainLayout from "./theme/layout/MainLayout";
 // Lazy load all page components
 const IntegrationPage = lazy(() => import("./pages/IntegrationPage"));
 const ProjectUsersListPage = lazy(() => import("./pages/project-users/ProjectUsersListPage"));
+const StoragesPage = lazy(() => import("./pages/storages/StoragesPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/microfrontend/MicrofrontendDashboard"));
@@ -92,6 +93,12 @@ const PrivateRoutes: React.FC = () => {
             path="/project-users"
             element={
               <RouteWithSuspense element={<ProjectUsersListPage />} />
+            }
+          />
+          <Route
+            path="/storages"
+            element={
+              <RouteWithSuspense element={<StoragesPage />} />
             }
           />
           <Route
