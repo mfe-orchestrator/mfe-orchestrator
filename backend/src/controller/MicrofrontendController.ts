@@ -49,7 +49,6 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         })
     })
 
-    //TODO cambiare modalità di autenticazione pasando a API key
     fastify.post<{
         Params: { microfrontendSlug: string; version: string }
         Body: { file: string }

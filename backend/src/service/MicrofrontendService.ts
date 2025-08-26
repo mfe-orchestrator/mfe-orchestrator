@@ -11,6 +11,10 @@ import fs from "fs"
 import unzipper from "unzipper"
 import { fastify } from ".."
 import Project from "../models/ProjectModel"
+import Storage, { StorageType } from "../models/StorageModel"
+import GoogleStorageClient from "../client/GoogleStorageAccount"
+import S3BucketClient from "../client/S3Buckets"
+import AzureStorageClient from "../client/AzureStorageAccount"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -122,6 +126,29 @@ export class MicrofrontendService extends BaseAuthorizedService {
         } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
             throw new Error("Microfrontend host type is not supported")
         } else if (microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
+            if (!microfrontend.storageId) {
+                throw new EntityNotFoundError("Microfrontend storage id is not set")
+            }
+
+            const storage = await Storage.findById(microfrontend.storageId)
+
+            if (!storage) {
+                throw new EntityNotFoundError("Storage not found for id " + microfrontend.storageId.toString())
+            }
+
+            const path = project.slug + "-" + project._id.toString() + "/" + microfrontendSlug + "/" + version
+
+            if (storage.type === StorageType.GOOGLE) {
+                const googleStorageClient = new GoogleStorageClient(storage.authConfig)
+                await googleStorageClient.uploadFile(path, await file.toBuffer())
+            } else if (storage.type === StorageType.AWS) {
+                const s3Client = new S3BucketClient(storage.authConfig)
+                await s3Client.uploadFile(path, await file.toBuffer())
+            } else if (storage.type === StorageType.AZURE) {
+                const azureStorageClient = new AzureStorageClient(storage.authConfig)
+                await azureStorageClient.uploadFile(path, await file.toBuffer())
+            }
+
             // MFE -> SOURCE -> Upload
             throw new Error("Microfrontend host type is not supported NOW")
         }
