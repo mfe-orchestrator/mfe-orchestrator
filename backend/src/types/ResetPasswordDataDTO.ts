@@ -1,6 +1,6 @@
 interface ResetPasswordDataDTO {
-  token: string;
-  password: string;
+    token: string
+    password: string
 }
 
-export default ResetPasswordDataDTO;
+export default ResetPasswordDataDTO

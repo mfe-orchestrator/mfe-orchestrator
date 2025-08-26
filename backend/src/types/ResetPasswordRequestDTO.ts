@@ -1,5 +1,5 @@
 interface ResetPasswordRequestDTO {
-  email: string;
+    email: string
 }
 
-export default ResetPasswordRequestDTO;
+export default ResetPasswordRequestDTO

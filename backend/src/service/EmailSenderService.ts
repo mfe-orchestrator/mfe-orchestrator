@@ -1,118 +1,108 @@
-import nodemailer from 'nodemailer';
-import { fastify } from '..';
-import { IUser } from '../models/UserModel';
-import { IProject } from '../models/ProjectModel';
-import { RoleInProject } from '../models/UserProjectModel';
-import pug from 'pug';
-import path from 'path';
+import nodemailer from "nodemailer"
+import { fastify } from ".."
+import { IUser } from "../models/UserModel"
+import { IProject } from "../models/ProjectModel"
+import { RoleInProject } from "../models/UserProjectModel"
+import pug from "pug"
+import path from "path"
 
 class EmailSenderService {
-  private transporter: nodemailer.Transporter;
-  private config: any;
-  private canSendEmail = false;
-  
+    private transporter: nodemailer.Transporter
+    private config: any
+    private canSendEmail = false
 
-  constructor() {
-    this.config = fastify.config;
-    if(!this.config || !this.config?.EMAIL_SMTP_HOST){
-      this.canSendEmail = false;
-      this.transporter = nodemailer.createTransport({})
-    }else{
-      this.canSendEmail = true;
-      this.transporter = nodemailer.createTransport({
-        host: this.config.EMAIL_SMTP_HOST,
-        port: this.config.EMAIL_SMTP_PORT,
-        secure: this.config.EMAIL_SMTP_SECURE,
-        auth: {
-          user: this.config.EMAIL_SMTP_USER,
-          pass: this.config.EMAIL_SMTP_PASSWORD
+    constructor() {
+        this.config = fastify.config
+        if (!this.config || !this.config?.EMAIL_SMTP_HOST) {
+            this.canSendEmail = false
+            this.transporter = nodemailer.createTransport({})
+        } else {
+            this.canSendEmail = true
+            this.transporter = nodemailer.createTransport({
+                host: this.config.EMAIL_SMTP_HOST,
+                port: this.config.EMAIL_SMTP_PORT,
+                secure: this.config.EMAIL_SMTP_SECURE,
+                auth: {
+                    user: this.config.EMAIL_SMTP_USER,
+                    pass: this.config.EMAIL_SMTP_PASSWORD
+                }
+            })
         }
-      });
     }
-  }
 
-  canSendEmails() : boolean{
-      return this.canSendEmail;
-  }
+    canSendEmails(): boolean {
+        return this.canSendEmail
+    }
 
-  async sendUserInvitationEmail(user: IUser, project: IProject, role: RoleInProject, token: string) {
-    const acceptUrl = `${this.config.FRONTEND_URL}/project-invitation/${token}`;
-    
-    // Compile the Pug template
-    const emailHtml = pug.renderFile(
-      path.join(__dirname, '../templates/emails/project-invitation.pug'),
-      {
-        user,
-        project,
-        role: this.formatRoleName(role),
-        acceptUrl,
-        header: 'You\'re Invited!',
-        headerIcon: '👋',
-        footerText: 'This invitation link will expire in 7 days.'
-      }
-    );
+    async sendUserInvitationEmail(user: IUser, project: IProject, role: RoleInProject, token: string) {
+        const acceptUrl = `${this.config.FRONTEND_URL}/project-invitation/${token}`
 
-    const mailOptions = {
-      from: this.config.EMAIL_SMTP_FROM,
-      to: user.email,
-      subject: `🎉 You're invited to join ${project.name}`,
-      html: emailHtml
-    };
+        // Compile the Pug template
+        const emailHtml = pug.renderFile(path.join(__dirname, "../templates/emails/project-invitation.pug"), {
+            user,
+            project,
+            role: this.formatRoleName(role),
+            acceptUrl,
+            header: "You're Invited!",
+            headerIcon: "👋",
+            footerText: "This invitation link will expire in 7 days."
+        })
 
-    await this.transporter.sendMail(mailOptions);
-  }
+        const mailOptions = {
+            from: this.config.EMAIL_SMTP_FROM,
+            to: user.email,
+            subject: `🎉 You're invited to join ${project.name}`,
+            html: emailHtml
+        }
 
-  private formatRoleName(role: RoleInProject): string {
-    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
-  }
+        await this.transporter.sendMail(mailOptions)
+    }
 
-  async sendResetPasswordEmail(email: string, token: string): Promise<void> {
-    const resetUrl = `${this.config.FRONTEND_URL}/reset-password/${token}`;
-    
-    // Compile the Pug template
-    const emailHtml = pug.renderFile(
-      path.join(__dirname, '../templates/emails/password-reset.pug'),
-      {
-        resetUrl,
-        header: 'Reset Your Password',
-        headerIcon: '🔑',
-        footerText: 'This password reset link will expire in 1 hour.'
-      }
-    );
+    private formatRoleName(role: RoleInProject): string {
+        return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
+    }
 
-    const mailOptions = {
-      from: this.config.EMAIL_SMTP_FROM,
-      to: email,
-      subject: '🔑 Reset Your Password',
-      html: emailHtml
-    };
+    async sendResetPasswordEmail(email: string, token: string): Promise<void> {
+        const resetUrl = `${this.config.FRONTEND_URL}/reset-password/${token}`
 
-    await this.transporter.sendMail(mailOptions);
-  }
+        // Compile the Pug template
+        const emailHtml = pug.renderFile(path.join(__dirname, "../templates/emails/password-reset.pug"), {
+            resetUrl,
+            header: "Reset Your Password",
+            headerIcon: "🔑",
+            footerText: "This password reset link will expire in 1 hour."
+        })
 
-  async sendVerificationEmail(email: string, token: string): Promise<void> {
-    const activationUrl = `${this.config.FRONTEND_URL}/account-activation/${token}`;
-    
-    // Compile the Pug template
-    const emailHtml = pug.renderFile(
-      path.join(__dirname, '../templates/emails/account-activation.pug'),
-      {
-        activationUrl,
-        header: 'Welcome Aboard!',
-        headerIcon: '🎉',
-        footerText: 'This activation link will expire in 24 hours.'
-      }
-    );
+        const mailOptions = {
+            from: this.config.EMAIL_SMTP_FROM,
+            to: email,
+            subject: "🔑 Reset Your Password",
+            html: emailHtml
+        }
 
-    const mailOptions = {
-      from: this.config.EMAIL_SMTP_FROM,
-      to: email,
-      subject: '🎉 Activate Your Account',
-      html: emailHtml
-    };
+        await this.transporter.sendMail(mailOptions)
+    }
 
-    await this.transporter.sendMail(mailOptions);
-  }
+    async sendVerificationEmail(email: string, token: string): Promise<void> {
+        const activationUrl = `${this.config.FRONTEND_URL}/account-activation/${token}`
+
+        // Compile the Pug template
+        const emailHtml = pug.renderFile(path.join(__dirname, "../templates/emails/account-activation.pug"), {
+            activationUrl,
+            header: "Welcome Aboard!",
+            headerIcon: "🎉",
+            footerText: "This activation link will expire in 24 hours."
+        })
+
+        const mailOptions = {
+            from: this.config.EMAIL_SMTP_FROM,
+            to: email,
+            subject: "🎉 Activate Your Account",
+            html: emailHtml
+        }
+
+        await this.transporter.sendMail(mailOptions)
+    }
 }
 
 export default EmailSenderService

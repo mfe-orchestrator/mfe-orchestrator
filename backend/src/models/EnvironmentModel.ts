@@ -1,46 +1,49 @@
-import mongoose, { Schema, Document, ObjectId, Types } from 'mongoose';
+import mongoose, { Schema, Document, ObjectId, Types } from "mongoose"
 
 export interface IEnvironment extends Document<ObjectId> {
-  name: string;
-  description: string;
-  slug: string;
-  projectId: Types.ObjectId;
-  color: string;
-  isProduction: boolean;
+    name: string
+    description: string
+    slug: string
+    projectId: Types.ObjectId
+    color: string
+    isProduction: boolean
 }
 
-const environmentSchema = new Schema<IEnvironment>({
-  name: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-  },
-  slug: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String,
-    required: true,
-  },
-  isProduction: {
-    type: Boolean,
-    default: false
-  },
-  projectId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Project',
-    required: true,
-    index: true,
-  },
-}, {
-  timestamps: true,
-});
+const environmentSchema = new Schema<IEnvironment>(
+    {
+        name: {
+            type: String,
+            required: true
+        },
+        description: {
+            type: String
+        },
+        slug: {
+            type: String,
+            required: true
+        },
+        color: {
+            type: String,
+            required: true
+        },
+        isProduction: {
+            type: Boolean,
+            default: false
+        },
+        projectId: {
+            type: Schema.Types.ObjectId,
+            ref: "Project",
+            required: true,
+            index: true
+        }
+    },
+    {
+        timestamps: true
+    }
+)
 
 // Create a compound index to ensure the combination of slug and projectId is unique
-environmentSchema.index({ slug: 1, projectId: 1 }, { unique: true });
+environmentSchema.index({ slug: 1, projectId: 1 }, { unique: true })
 
-const Environment = mongoose.model<IEnvironment>('Environment', environmentSchema);
-export default Environment;
+const Environment = mongoose.model<IEnvironment>("Environment", environmentSchema)
+export default Environment

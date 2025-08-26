@@ -1,5 +1,5 @@
 interface UserAccoutActivationDTO {
-  token: string
+    token: string
 }
 
 export default UserAccoutActivationDTO

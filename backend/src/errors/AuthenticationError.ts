@@ -1,13 +1,11 @@
-
-class AuthenticationError extends Error{
-
+class AuthenticationError extends Error {
     type = "AuthenticationError"
 
-    constructor(message : string) {
-        super(message);
+    constructor(message: string) {
+        super(message)
 
-        Error.captureStackTrace(this, this.constructor);
-      }
+        Error.captureStackTrace(this, this.constructor)
+    }
 }
 
 export default AuthenticationError

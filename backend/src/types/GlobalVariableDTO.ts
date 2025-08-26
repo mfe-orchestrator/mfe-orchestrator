@@ -1,6 +1,6 @@
-interface GlobalVariableDTO{
-    key: string,
-    value: string,
+interface GlobalVariableDTO {
+    key: string
+    value: string
 }
 
 export default GlobalVariableDTO

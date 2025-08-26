@@ -78,7 +78,7 @@ apiKeySchema.pre<IApiKeyDocument>("save", async function (next) {
     next()
 })
 
-apiKeySchema.methods.compareApiKey = function (candidateApiKey: string): boolean {
+apiKeySchema.methods.compareApiKey = async function (candidateApiKey: string): Promise<boolean> {
     return bcrypt.compare(candidateApiKey, this.apiKey)
 }
 

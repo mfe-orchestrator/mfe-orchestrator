@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from "fastify"
+import { AuthenticationMethod, FastifyInstance, FastifyRequest } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 import AuthenticationError from "../errors/AuthenticationError"
 import UserModel, { getSecret, ISSUER } from "../models/UserModel"
@@ -144,7 +144,7 @@ const getUserDataFromToken = async (fastify: FastifyInstance, authToken: string,
     }
 }
 
-const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest) => {
+const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest): Promise<string> => {
     const apiKey = request.headers["api-key"] || (request.query as any)["apiKey"]
     if (!apiKey) {
         throw new AuthenticationError("API key not found")
@@ -157,20 +157,28 @@ const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest) =>
     if (!apiKeyFromDb) {
         throw new AuthenticationError("API key not found")
     }
+
+    return apiKeyFromDb.projectId.toString()
 }
 
 export default fastifyPlugin(
     async (fastify: FastifyInstance) => {
         fastify.addHook("preHandler", async (request, response) => {
-            if (request.routeOptions.config.public || request.routeOptions.url?.startsWith("/api-docs")) {
+            fastify.log.debug("Pre handler login START")
+            const authMethod = request.routeOptions.config.authMethod || AuthenticationMethod.JWT
+            if (authMethod === AuthenticationMethod.PUBLIC || request.routeOptions.url?.startsWith("/api-docs")) {
+                fastify.log.debug("Authorization is public")
                 return
             }
 
-            if (1 === 1) {
-                checkApiKey(fastify, request)
+            if (authMethod === AuthenticationMethod.API_KEY) {
+                fastify.log.debug("Authorization is API Key")
+                const projectId = await checkApiKey(fastify, request)
+                request.headers["project-id"] = projectId
+                return
             }
 
-            fastify.log.debug("Pre handler login ok")
+            fastify.log.debug("Authorization is JWT")
             const authToken = request?.headers?.["authorization"]?.replace("Bearer ", "")
             fastify.log.debug("Auth token", authToken)
             if (!authToken) {

@@ -1,4 +1,4 @@
-import mongoose, { ClientSession, DeleteResult, FilterQuery, ObjectId, Types } from "mongoose"
+import { ClientSession, DeleteResult, ObjectId, Types } from "mongoose"
 import Project, { IProject } from "../models/ProjectModel"
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import UserProjectService from "./UserProjectService"
