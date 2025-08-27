@@ -48,7 +48,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
             </div>
 
             <TabsContent value="grid" className="space-y-4">
-                {microfrontends.length > 0 ? (
+                {microfrontends && microfrontends.length > 0 ? (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {microfrontends.map((mfe) => (
                             <MicrofrontendCard key={mfe._id} mfe={mfe} />
@@ -82,7 +82,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                 </tr>
                             </thead>
                             <tbody>
-                                {microfrontends.map((mfe) => {
+                                {microfrontends?.map((mfe) => {
 
                                     const version = mfe.version;
                                     const canaryPercentage: number = 234
@@ -134,7 +134,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                     )
                                 })}
 
-                                {microfrontends.length === 0 && (
+                                {!microfrontends || microfrontends.length === 0 && (
                                     <tr>
                                         <td colSpan={8} className="h-24 text-center text-muted-foreground">
                                             Nessun microfrontend trovato

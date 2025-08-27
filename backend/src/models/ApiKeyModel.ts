@@ -15,9 +15,9 @@ export interface IApiKey {
     name: string
     projectId: Types.ObjectId
     apiKey: string
-    salt: string
+    salt?: string
     role: ApiKeyRole
-    expirationDate: Date
+    expiresAt: Date
     status: ApiKeyStatus
 }
 
@@ -45,7 +45,7 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
         },
         salt: {
             type: String,
-            required: true
+            required: false
         },
         role: {
             type: String,
@@ -53,9 +53,9 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
             default: ApiKeyRole.VIEWER,
             required: true
         },
-        expirationDate: {
+        expiresAt: {
             type: Date,
-            required: false
+            required: true
         },
         status: {
             type: String,
@@ -70,6 +70,7 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
 )
 
 apiKeySchema.pre<IApiKeyDocument>("save", async function (next) {
+    console.log("DEBUGGGER HERE")
     if (this.isModified("apiKey")) {
         const salt = await bcrypt.genSalt(10)
         this.salt = salt

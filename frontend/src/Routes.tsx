@@ -23,6 +23,7 @@ const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRe
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
 const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
+const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -31,7 +32,7 @@ const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) 
       <MicrosoftAuthWrapper>
         <Auth0Wrapper>
           <AuthWrapper>
-            <SelectProjectWrapper>
+            <SelectProjectWrapper> 
               {children}
             </SelectProjectWrapper>
           </AuthWrapper>
@@ -99,6 +100,12 @@ const PrivateRoutes: React.FC = () => {
             path="/storages"
             element={
               <RouteWithSuspense element={<StoragesPage />} />
+            }
+          />
+          <Route
+            path="/api-keys"
+            element={
+              <RouteWithSuspense element={<ApiKeysPage />} />
             }
           />
           <Route

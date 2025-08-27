@@ -6,7 +6,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
 import { Button } from "@/components/ui/button";
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
-import SocialLoginRow from '@/authentication/components/SocialLoginRow';
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import useUserStore from '@/store/useUserStore';
 
@@ -32,22 +31,22 @@ const RegisterFirstUser: React.FC = () => {
     }
   };
 
-  const profileQuery = useMutation({
-    mutationFn: async () =>{
-      try{
-        const profile = await userApi.getProfile()
-        userStore.setUser(profile)
-        return profile;
-      }catch(e){
-        console.log(e)
-        return null;
-      }
-    }
-  });
+  // const profileQuery = useMutation({
+  //   mutationFn: async () =>{
+  //     try{
+  //       const profile = await userApi.getProfile()
+  //       userStore.setUser(profile)
+  //       return profile;
+  //     }catch(e){
+  //       console.log(e)
+  //       return null;
+  //     }
+  //   }
+  // });
 
-  const onSuccessLogin = () =>{
-    profileQuery.mutate()
-  }
+  // const onSuccessLogin = () =>{
+  //   profileQuery.mutate()
+  // }
   
   return (
     <AuthenticationLayout 
@@ -102,7 +101,13 @@ const RegisterFirstUser: React.FC = () => {
           </div>
         </form> 
       </FormProvider>
-      <SocialLoginRow onSuccessLogin={onSuccessLogin} />
+      {/* <GoogleAuthWrapper>
+        <Auth0AuthWrapper>
+          <MicrosoftAuthWrapper>
+            <SocialLoginRow onSuccessLogin={onSuccessLogin} />
+          </MicrosoftAuthWrapper>
+        </Auth0AuthWrapper>
+      </GoogleAuthWrapper> */}
     </AuthenticationLayout>
   );
 }
