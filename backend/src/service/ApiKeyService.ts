@@ -1,6 +1,6 @@
-import { ClientSession, DeleteResult } from "mongoose"
+import { ClientSession, DeleteResult, Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import ApiKey, { ApiKeyStatus, IApiKey, IApiKeyDocument } from "../models/ApiKeyModel"
+import ApiKey, { ApiKeyRole, ApiKeyStatus, IApiKey, IApiKeyDocument } from "../models/ApiKeyModel"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { ApiKeyDTO } from "../types/ApiKeyDTO"
@@ -14,15 +14,18 @@ export class ApiKeyService extends BaseAuthorizedService {
 
     async createRaw(projectId: string, apiKeyData: ApiKeyDTO, session?: ClientSession): Promise<IApiKey> {
         await this.ensureAccessToProject(projectId, session)
+        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
 
-        const apiKey = new ApiKey({
+        const apiKeyRawData : IApiKey = {
             ...apiKeyData,
+            status: ApiKeyStatus.ACTIVE,
+            role: apiKeyData.role || ApiKeyRole.MANAGER,
             apiKey: uuidv4(),
-            projectId
-        })
-
-        await apiKey.save({ session })
-        return apiKey
+            projectId:  projectIdObj
+        }
+        
+        await new ApiKey(apiKeyRawData).save({ session })
+        return apiKeyRawData
     }
 
     async create(projectId: string, apiKeyData: ApiKeyDTO): Promise<IApiKey> {

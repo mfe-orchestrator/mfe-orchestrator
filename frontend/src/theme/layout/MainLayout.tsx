@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
@@ -16,7 +15,8 @@ import {
   Link as LinkIcon,
   Rocket as RocketIcon,
   HardDrive,
-  Github
+  Github,
+  Key as KeyIcon
 } from 'lucide-react';
 import LanguageSelector from '../../components/LanguageSelector';
 import {
@@ -81,6 +81,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       path: '/settings',
       disabled: true,
       icon: <Settings className="h-5 w-5" />
+    },
+    {
+      name: t('apiKeys.api_keys'),
+      path: '/api-keys',
+      icon: <KeyIcon className="h-5 w-5" />
     }
   ];
 

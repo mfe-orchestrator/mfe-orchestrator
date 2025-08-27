@@ -1,4 +1,5 @@
 import useApiClient from "../useApiClient";
+import { EnvironmentDTO } from "./useEnvironmentsApi";
 
 export interface Project {
   name: string;
@@ -24,7 +25,7 @@ const useProjectApi = () => {
   };
 
   const getEnvironmentsByProjectId = async (projectId: string) : Promise<EnvironmentDTO[]> => {
-    const response = await apiClient.doRequest({
+    const response = await apiClient.doRequest<EnvironmentDTO[]>({
         url:`/api/projects/${projectId}/environments`,
     });
     return response.data;
