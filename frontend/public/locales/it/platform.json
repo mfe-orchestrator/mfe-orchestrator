@@ -61,6 +61,7 @@
     "recover": "recuperala"
   },
   "common": {
+    "actions": "Azioni",
     "save": "Salva",
     "cancel": "Annulla",
     "save_changes": "Salva modifiche",
