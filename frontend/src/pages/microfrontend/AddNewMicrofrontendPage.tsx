@@ -3,10 +3,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
 import useMicrofrontendsApi from '@/hooks/apiClients/useMicrofrontendsApi';
@@ -14,6 +11,9 @@ import TextField from '@/components/input/TextField.rhf';
 import TextareaField from '@/components/input/TextareaField.rhf';
 import SelectField from '@/components/input/SelectField.rhf';
 import Switch from '@/components/input/Switch.rhf';
+import { useQuery } from '@tanstack/react-query';
+import useProjectStore from '@/store/useProjectStore';
+import useStorageApi from '@/hooks/apiClients/useStorageApi';
 
 // Define form schema with validation
 const formSchema = z.object({
@@ -25,7 +25,7 @@ const formSchema = z.object({
   
   // Hosting Information
   host: z.object({
-    type: z.enum(['MFE_ORCHESTRATOR_HUB', 'CUSTOM_URL']),
+    type: z.enum(['MFE_ORCHESTRATOR_HUB', 'CUSTOM_URL', 'CUSTOM_SOURCE']),
     url: z.string().optional()
   }).refine(
     (data) => data.type !== 'CUSTOM_URL' || (data.url && data.url.length > 0),
@@ -62,9 +62,22 @@ interface AddNewMicrofrontendPageProps {
 
 const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
   const { t } = useTranslation();
-  const { environmentId } = useParams<{ environmentId: string }>();
+  const { id } = useParams<{ id: string }>();
+  const isEdit = Boolean(id)
   const microfrontendsApi = useMicrofrontendsApi();
   const navigate = useNavigate();
+  const storageApi = useStorageApi();
+  const { project } = useProjectStore();
+
+  const editMfeQuery = useQuery({
+    queryKey: ['mfe', id],
+    queryFn: () => microfrontendsApi.g(id)
+  })
+
+  const storagesQuery = useQuery({
+    queryKey: ['storages', project?._id],
+    queryFn: () => storageApi.getMultiple(project?._id)
+  })
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,7 +108,6 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
   const onSubmit = async (data: FormValues) => {
     await microfrontendsApi.create({
       ...data,
-      environmentId: environmentId!,
       // Clean up the canary object if not enabled
       canary: data.canary?.enabled ? data.canary : undefined
     });
@@ -166,7 +178,8 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                 label={t('microfrontend.hosting_type')}
                 options={[
                   { value: 'MFE_ORCHESTRATOR_HUB', label: t('microfrontend.mfe_orchestrator_hub') },
-                  { value: 'CUSTOM_URL', label: t('microfrontend.custom_url') }
+                  { value: 'CUSTOM_URL', label: t('microfrontend.custom_url') },
+                  { value: 'CUSTOM_SOURCE', label: t('microfrontend.custom_source') }
                 ]}
                 required
               />
@@ -177,6 +190,18 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                   label={t('microfrontend.custom_url')}
                   placeholder="https://example.com"
                   required
+                />
+              )}
+
+              {hostType === 'CUSTOM_SOURCE' && (
+                <SelectField
+                  name="host.storageId"
+                  label={t('microfrontend.source')}
+                  required
+                  options={storagesQuery.data?.map((storage) => ({
+                    value: storage._id,
+                    label: storage.name
+                  }))}
                 />
               )}
             </CardContent>

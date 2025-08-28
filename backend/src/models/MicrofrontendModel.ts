@@ -18,12 +18,12 @@ export interface IMicrofrontend extends Document<ObjectId> {
     }
     host: {
         type: HostedOn
-        url?: string
+        url?: string,
+        storageId?: ObjectId
     }
     description?: string
     createdAt: Date
     updatedAt: Date
-    storageId?: ObjectId
 }
 
 export enum HostedOn {
@@ -52,6 +52,11 @@ const microfrontendHostTypeSchema = new Schema({
     },
     url: {
         type: String,
+        required: false
+    },
+    storageId: {
+        type: Schema.Types.ObjectId,
+        ref: "Storage",
         required: false
     }
 })
@@ -119,11 +124,6 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             type: microfrontendHostTypeSchema,
             required: true
         },
-        storageId: {
-            type: Schema.Types.ObjectId,
-            ref: "Storage",
-            required: false
-        }
     },
     {
         timestamps: true

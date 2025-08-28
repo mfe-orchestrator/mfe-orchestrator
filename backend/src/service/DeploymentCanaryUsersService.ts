@@ -1,6 +1,6 @@
 import { ClientSession, ObjectId } from "mongoose"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsers"
+import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import { runInTransaction } from "../utils/runInTransaction"
 
 class DeploymentCanaryUsersService extends BaseAuthorizedService {

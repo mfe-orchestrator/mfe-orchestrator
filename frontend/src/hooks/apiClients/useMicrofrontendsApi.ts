@@ -54,6 +54,13 @@ const useMicrofrontendsApi = () => {
         return response.data;
     };
 
+    const getSingle = async(id : string) : Promise<Microfrontend> =>{
+        const response = await apiClient.doRequest<Microfrontend>({
+            url: `/api/microfrontends/${id}`,
+        });
+        return response.data;
+    }
+
     const create = async (microfrontend: Microfrontend) => {
         const response = await apiClient.doRequest({
             url: `/api/microfrontends`,

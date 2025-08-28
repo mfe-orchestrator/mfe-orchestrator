@@ -1,7 +1,7 @@
 import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
 import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
-import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsers"
-import { IDeployment } from "../models/Deployments"
+import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
+import { IDeployment } from "../models/DeploymentModel"
 
 export interface MicrofrontendAdaptedToServe {
     url: string

@@ -1,5 +1,5 @@
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import Deployment, { IDeployment } from "../models/Deployments"
+import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend from "../models/MicrofrontendModel"

@@ -4,7 +4,7 @@ import UserCannotAccessThisProjectError from "../errors/UserCannotAccessThisProj
 import { IUser } from "../models/UserModel"
 import UserProject from "../models/UserProjectModel"
 import Environment from "../models/EnvironmentModel"
-import Deployment from "../models/Deployments"
+import Deployment from "../models/DeploymentModel"
 import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
 
 export default abstract class BaseAuthorizedService {
