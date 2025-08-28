@@ -30,6 +30,11 @@ const StoragesPage: React.FC = () => {
     navigate('/storages/new');
   };
 
+  const handleDelete = async (id: string) => {
+    await storagesApi.deleteSingle(id);
+    storagesQuery.refetch();
+  };
+
   return (
     <ApiDataFetcher queries={[storagesQuery]}>
       <SinglePageHeader
@@ -44,11 +49,11 @@ const StoragesPage: React.FC = () => {
       />
 
       <Card className="mt-6">
-        <CardContent>
+        <CardContent className="p-4">
             <div className="space-y-4">
               {storagesQuery.data && storagesQuery.data?.length > 0 ? (
                 storagesQuery.data?.map((storage) => (
-                  <div key={storage.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={storage._id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h3 className="font-medium">{storage.name}</h3>
                       <Badge variant="outline" className="mt-1">
@@ -59,7 +64,7 @@ const StoragesPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleEdit(storage.id)}
+                        onClick={() => handleEdit(storage._id)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -67,6 +72,7 @@ const StoragesPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(storage._id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

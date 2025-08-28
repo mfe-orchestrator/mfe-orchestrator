@@ -4,11 +4,27 @@ import Storage, { IStorage } from "../models/StorageModel"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { runInTransaction } from "../utils/runInTransaction"
 import { StorageDTO } from "../types/StorageDTO"
+import { Types } from "mongoose"
 
 export class StorageService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | ObjectId): Promise<IStorage[]> {
         await this.ensureAccessToProject(projectId)
         return Storage.find({ projectId })
+    }
+
+    async getById(storageId : string | ObjectId): Promise<IStorage> {
+        return runInTransaction(async session => this.getByIdRaw(storageId, session))
+    }
+
+    async getByIdRaw(storageId : string | ObjectId, session?: ClientSession) : Promise<IStorage> {
+        const storagetIdObj = typeof storageId === "string" ? new Types.ObjectId(storageId) : storageId
+        const storage = await Storage.findById(storagetIdObj, { }, { session })
+        if(!storage){
+            throw new EntityNotFoundError(storagetIdObj + "")
+        }
+        await this.ensureAccessToProject(storage.projectId, session)
+
+        return storage;
     }
 
     async createRaw(projectId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
@@ -26,10 +42,10 @@ export class StorageService extends BaseAuthorizedService {
         return runInTransaction(async session => this.createRaw(projectId, storageData, session))
     }
 
-    async updateRaw(projectId: string, storageId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
-        await this.ensureAccessToProject(projectId, session)
+    async updateRaw(storageId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
+        const storage = await this.getByIdRaw(storageId, session)
 
-        const updated = await Storage.findByIdAndUpdate(storageId, storageData, { new: true, runValidators: true })
+        const updated = await Storage.findByIdAndUpdate(storage._id, storageData, { new: true, runValidators: true })
             .session(session || null)
             .lean()
 
@@ -40,8 +56,8 @@ export class StorageService extends BaseAuthorizedService {
         return updated
     }
 
-    async update(projectId: string, storageId: string, storageData: StorageDTO): Promise<IStorage> {
-        return runInTransaction(async session => this.updateRaw(projectId, storageId, storageData, session))
+    async update(storageId: string, storageData: StorageDTO): Promise<IStorage> {
+        return runInTransaction(async session => this.updateRaw(storageId, storageData, session))
     }
 
     async delete(storageId: string): Promise<DeleteResult> {

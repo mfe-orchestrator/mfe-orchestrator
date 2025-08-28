@@ -60,6 +60,20 @@
     "or_continue_with": "Oppure continua con",
     "recover": "recuperala"
   },
+  "project": {
+    "name": "Nome",
+    "name_placeholder": "Inserisci il nome del progetto",
+    "description": "Descrizione",
+    "description_placeholder": "Inserisci la descrizione del progetto",
+    "create": "Crea Progetto",
+    "switch": "Cambia Progetto",
+    "create_new": "Crea Nuovo Progetto",
+    "no_projects_found": "Nessun progetto trovato",
+    "create_new_project": "Crea un nuovo progetto ora",
+    "or_ask_admin": "Oppure chiedi all'amministratore di assegnarti un progetto",
+    "select_project": "Seleziona un Progetto",
+    "select_project_placeholder": "Seleziona un progetto..."
+  },
   "common": {
     "close": "Chiudi",
     "actions": "Azioni",
@@ -249,13 +263,6 @@
     "expiration_date_required": "Seleziona una data di scadenza",
     "key_copied": "Chiave copiata",
     "key_copied_to_clipboard": "La chiave API è stata copiata negli appunti"
-  },
-  "project": {
-    "no_projects_found": "Nessun progetto trovato",
-    "create_new_project": "Crea un nuovo progetto ora",
-    "or_ask_admin": "Oppure chiedi all'amministratore di assegnarti un progetto",
-    "select_project": "Seleziona un Progetto",
-    "select_project_placeholder": "Seleziona un progetto..."
   },
   "validation": {
     "required": "Questo campo è obbligatorio"

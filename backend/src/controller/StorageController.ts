@@ -11,6 +11,12 @@ export default async function storageController(fastify: FastifyInstance) {
     })
 
     // Add storage to project
+    fastify.get<{ Params: { storageId: string } }>("/storages/:storageId", async (request, reply) => {
+        const storage = await new StorageService(request.databaseUser).getById(request.params.storageId)
+        return reply.send(storage)
+    })
+
+    // Add storage to project
     fastify.post<{ Body: StorageDTO }>("/storages", async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
 
@@ -24,13 +30,7 @@ export default async function storageController(fastify: FastifyInstance) {
 
     // Update storage
     fastify.put<{ Body: StorageDTO; Params: { storageId: string } }>("/storages/:storageId", async (request, reply) => {
-        const projectId = getProjectIdFromRequest(request)
-
-        if (!projectId) {
-            return reply.status(400).send({ error: "Project ID is required" })
-        }
-
-        const storage = await new StorageService(request.databaseUser).update(projectId, request.params.storageId, request.body)
+        const storage = await new StorageService(request.databaseUser).update(request.params.storageId, request.body)
         return reply.send(storage)
     })
 

@@ -60,6 +60,20 @@
     "or_continue_with": "Or continue with",
     "recover": "recover it"
   },
+  "project": {
+    "name": "Name",
+    "name_placeholder": "Enter project name",
+    "description": "Description",
+    "description_placeholder": "Enter project description",
+    "create": "Create Project",
+    "switch": "Switch Project",
+    "create_new": "Create New Project",
+    "no_projects_found": "No projects found",
+    "create_new_project": "Create a new project now",
+    "or_ask_admin": "Or ask an admin to assign you to a project",
+    "select_project": "Select a Project",
+    "select_project_placeholder": "Select a project..."
+  },
   "common": {
     "close": "Close",
     "actions": "Actions",
@@ -173,13 +187,6 @@
     "expiration_date_required": "Please select an expiration date",
     "key_copied": "Key Copied",
     "key_copied_to_clipboard": "The API key has been copied to your clipboard"
-  },
-  "project": {
-    "no_projects_found": "No projects found",
-    "create_new_project": "Create a new project now",
-    "or_ask_admin": "Or ask an admin to assign you to a project",
-    "select_project": "Select a Project",
-    "select_project_placeholder": "Select a project..."
   },
   "validation": {
     "required": "This field is required"

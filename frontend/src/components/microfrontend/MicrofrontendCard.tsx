@@ -11,6 +11,7 @@ import { Percent } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
 import { Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
+import { useNavigate } from 'react-router-dom';
 
 
 interface MicrofrontendCardProps {
@@ -19,6 +20,7 @@ interface MicrofrontendCardProps {
 
 const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate()
   
   // Get environment-specific data or fall back to default
   const envData = mfe.environmentVariables;
@@ -92,10 +94,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
           )}
         </CardContent>
         <CardFooter className="flex justify-between items-center border-t pt-4">
-          <div className="text-xs text-muted-foreground">
-            Ultimo aggiornamento: {mfe.lastUpdated}
-          </div>
-          <Button size="sm" variant="outline" onClick={() => setIsDialogOpen(true)}>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/microfronted/${mfe._id}`)}>
             Configurazione
           </Button>
         </CardFooter>
