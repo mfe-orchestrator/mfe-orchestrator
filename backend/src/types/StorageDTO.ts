@@ -1,10 +1,6 @@
-import { StorageType } from "../models/StorageModel"
+import { IStorageAuth } from "../models/StorageModel"
 
-export interface StorageDTO {
-    type?: StorageType
-    apiKey?: string
-    clientId?: string
-    clientSecret?: string
-    tenantId?: string
-    url?: string
+export type StorageDTO = IStorageAuth & {
+    name: string
+    
 }

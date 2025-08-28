@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useProjectStore from '@/store/useProjectStore';
 import CreateApiKeyDialog from '@/components/ApiKeys/CreateApiKeyDialog';
+import SinglePageHeader from '@/components/SinglePageHeader';
 
 const ApiKeysPage = () => {
   const { t } = useTranslation();
@@ -41,18 +42,16 @@ const ApiKeysPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('apiKeys.api_keys')}</h1>
-          <p className="text-muted-foreground">
-            {t('apiKeys.manage_api_keys')}
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('apiKeys.create_api_key')}
-        </Button>
-      </div>
+      <SinglePageHeader
+        title={t('apiKeys.api_keys')}
+        description={t('apiKeys.manage_api_keys')}
+        buttons={
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('apiKeys.create_api_key')}
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent>

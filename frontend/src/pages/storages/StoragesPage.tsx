@@ -4,26 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
-import useStorageStore from '@/store/useStorageStore';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import useProjectStore from '@/store/useProjectStore';
+import useStorageApi from '@/hooks/apiClients/useStorageApi';
+import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
+import SinglePageHeader from '@/components/SinglePageHeader';
 
 const StoragesPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const {
-    storages = [],
-    isLoading,
-    error,
-    fetchStorages,
-    clearError,
-  } = useStorageStore();
-
-  useEffect(() => {
-    fetchStorages();
-  }, [fetchStorages]);
-
+  const projectStore = useProjectStore();
+  const storagesApi = useStorageApi();
+  
+  const storagesQuery = useQuery({
+    queryKey: ['storages', projectStore.project?._id],
+    queryFn: () => storagesApi.getMultiple(projectStore.project?._id),
+  })
+  
   const handleEdit = (id: string) => {
     navigate(`/storages/${id}`);
   };
@@ -32,45 +30,27 @@ const StoragesPage: React.FC = () => {
     navigate('/storages/new');
   };
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-          <Button variant="outline" size="sm" onClick={clearError} className="ml-auto">
-            {t('common.retry')}
-          </Button>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Storages</h1>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Storage
-        </Button>
-      </div>
+    <ApiDataFetcher queries={[storagesQuery]}>
+      <SinglePageHeader
+        title={t('storages.storages')}
+        description={t('storages.storagesDescription')}
+        buttons={
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('storages.newStorage')}
+          </Button>
+        }
+      />
 
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Storage List</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {storages.length > 0 ? (
-                storages.map((storage) => (
+              {storagesQuery.data && storagesQuery.data?.length > 0 ? (
+                storagesQuery.data?.map((storage) => (
                   <div key={storage.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <h3 className="font-medium">{storage.name}</h3>
@@ -102,10 +82,9 @@ const StoragesPage: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
         </CardContent>
       </Card>
-    </div>
+    </ApiDataFetcher>
   );
 };
 

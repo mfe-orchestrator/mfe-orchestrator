@@ -308,5 +308,25 @@
       "is_production": "Production",
       "color": "Color"
     }
+  },
+  "storage": {
+    "newStorage": "New Storage",
+    "editStorage": "Edit Storage",
+    "name": "Name",
+    "type": "Type",
+    "s3": {
+      "accessKeyId": "Access Key ID",
+      "secretAccessKey": "Secret Access Key",
+      "region": "Region",
+      "bucket": "Bucket"
+    },
+    "gcs": {
+      "keyFilename": "Key Filename",
+      "bucket": "Bucket"
+    },
+    "createSuccess": "Storage created",
+    "createSuccessDescription": "The storage has been successfully created.",
+    "updateSuccess": "Storage updated",
+    "updateSuccessDescription": "The storage has been successfully updated."
   }
 }

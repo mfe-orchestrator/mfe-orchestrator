@@ -14,6 +14,7 @@ type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElem
   label?: string;
   rules?: any;
   options: { value: string; label: string }[];
+  containerClassName?: string;
 };
 
 const SelectField = <T extends FieldValues>({
@@ -21,6 +22,7 @@ const SelectField = <T extends FieldValues>({
   label,
   rules,
   className,
+  containerClassName,
   id,
   options,
   placeholder,
@@ -40,7 +42,7 @@ const SelectField = <T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field,formState }) => (
-        <div className="grid gap-2">
+        <div className={`grid gap-2 ${containerClassName || ''}`}>
           {label &&
             <Label htmlFor={inputId} className={error ? 'text-destructive' : ''}>
               {label}

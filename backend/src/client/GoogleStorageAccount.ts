@@ -1,7 +1,7 @@
 import { Storage, Bucket } from "@google-cloud/storage"
 import { Readable } from "stream"
 
-type AuthConfig =
+export type AuthConfig =
     | {
           authType: "serviceAccount"
           projectId: string

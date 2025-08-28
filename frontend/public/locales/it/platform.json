@@ -291,5 +291,25 @@
     "created_success": "Microfrontend creato",
     "created_success_message": "Il tuo microfrontend è stato creato con successo",
     "create_error": "Impossibile creare il microfrontend"
-  }
+  },
+  "storage": {
+  "newStorage": "Nuovo Storage",
+  "editStorage": "Modifica Storage",
+  "name": "Nome",
+  "type": "Tipo",
+  "s3": {
+    "accessKeyId": "Access Key ID",
+    "secretAccessKey": "Chiave Segreta",
+    "region": "Regione",
+    "bucket": "Bucket"
+  },
+  "gcs": {
+    "keyFilename": "Percorso File Chiave",
+    "bucket": "Bucket"
+  },
+  "createSuccess": "Storage creato",
+  "createSuccessDescription": "Lo storage è stato creato con successo.",
+  "updateSuccess": "Storage aggiornato",
+  "updateSuccessDescription": "Lo storage è stato aggiornato con successo."
+}
 }

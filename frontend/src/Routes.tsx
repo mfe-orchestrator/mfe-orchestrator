@@ -24,6 +24,7 @@ const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
 const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
 const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
+const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStoragePage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -100,6 +101,18 @@ const PrivateRoutes: React.FC = () => {
             path="/storages"
             element={
               <RouteWithSuspense element={<StoragesPage />} />
+            }
+          />
+          <Route
+            path="/storages/new"
+            element={
+              <RouteWithSuspense element={<NewOrEditStoragePage />} />
+            }
+          />
+          <Route
+            path="/storages/:id"
+            element={
+              <RouteWithSuspense element={<NewOrEditStoragePage />} />
             }
           />
           <Route
