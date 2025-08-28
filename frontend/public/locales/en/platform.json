@@ -61,6 +61,7 @@
     "recover": "recover it"
   },
   "common": {
+    "close": "Close",
     "actions": "Actions",
     "save": "Save",
     "cancel": "Cancel",
@@ -136,6 +137,9 @@
   },
   "apiKeys": {
     "api_keys": "API Keys",
+    "expiresAt": "Expiration Date",
+    "created_api_key": "API Key created",
+    "expiresAt_placeholder": "Pick a date",
     "manage_api_keys": "Manage your API keys for programmatic access",
     "your_api_keys": "Your API Keys",
     "api_keys_description": "Manage your API keys for programmatic access to the API",
@@ -310,10 +314,50 @@
     }
   },
   "storage": {
+    "name": "Name",
+    "type": "Provider",
     "newStorage": "New Storage",
     "editStorage": "Edit Storage",
-    "name": "Name",
-    "type": "Type",
+    "storages": "Storages",
+    "storagesDescription": "Manage your storage providers and configurations",
+    "noStoragesFound": "No storages found",
+    "newStorageDescription": "Configure a new storage provider to store your microfrontend builds",
+    "editStorageDescription": "Update your storage provider configuration",
+    "types": {
+      "aws": "Amazon S3",
+      "google": "Google Cloud Storage",
+      "azure": "Azure Blob Storage"
+    },
+    "authTypes": {
+      "google": {
+        "serviceAccount": "Service Account",
+        "apiKey": "API Key",
+        "default": "Default"
+      },
+      "azure": {
+        "connectionString": "Connection String",
+        "sharedKey": "Shared Key",
+        "aad": "Azure AD"
+      }
+    },
+    "fields": {
+      "accessKeyId": "Access Key ID",
+      "secretAccessKey": "Secret Access Key",
+      "region": "Region",
+      "bucketName": "Bucket Name",
+      "authType": "Authentication Type",
+      "projectId": "Project ID",
+      "clientEmail": "Client Email",
+      "privateKey": "Private Key",
+      "apiKey": "API Key",
+      "containerName": "Container Name",
+      "connectionString": "Connection String",
+      "accountName": "Account Name",
+      "accountKey": "Account Key",
+      "tenantId": "Tenant ID",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret"
+    },
     "s3": {
       "accessKeyId": "Access Key ID",
       "secretAccessKey": "Secret Access Key",

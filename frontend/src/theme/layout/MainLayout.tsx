@@ -51,11 +51,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <LayoutDashboard className="h-5 w-5" />
     },
     {
-      name: "Storages",
-      path: '/storages',
-      icon: <HardDrive className="h-5 w-5" />
-    },
-    {
       name: t('deployments.title'),
       path: '/deployments',
       icon: <RocketIcon className="h-5 w-5" />
@@ -66,10 +61,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <LinkIcon className="h-5 w-5" />
     },
     {
-      name: t('sftp.title'),
-      path: '/sftp',
-      disabled: true,
-      icon: <FileText className="h-5 w-5" />
+      name: "Storages",
+      path: '/storages',
+      icon: <HardDrive className="h-5 w-5" />
     },
     {
       name: t('project_users.title'),
@@ -77,16 +71,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <User className="h-5 w-5" />
     },
     {
+      name: t('apiKeys.api_keys'),
+      path: '/api-keys',
+      icon: <KeyIcon className="h-5 w-5" />
+    },
+    {
+      name: t('sftp.title'),
+      path: '/sftp',
+      disabled: true,
+      icon: <FileText className="h-5 w-5" />
+    },
+    {
       name: t('settings.title'),
       path: '/settings',
       disabled: true,
       icon: <Settings className="h-5 w-5" />
     },
-    {
-      name: t('apiKeys.api_keys'),
-      path: '/api-keys',
-      icon: <KeyIcon className="h-5 w-5" />
-    }
   ];
 
   return (

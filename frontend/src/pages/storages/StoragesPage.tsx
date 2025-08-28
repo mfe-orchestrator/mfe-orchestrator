@@ -33,20 +33,17 @@ const StoragesPage: React.FC = () => {
   return (
     <ApiDataFetcher queries={[storagesQuery]}>
       <SinglePageHeader
-        title={t('storages.storages')}
-        description={t('storages.storagesDescription')}
+        title={t('storage.storages')}
+        description={t('storage.storagesDescription')}
         buttons={
           <Button onClick={handleCreate}>
             <Plus className="mr-2 h-4 w-4" />
-            {t('storages.newStorage')}
+            {t('storage.newStorage')}
           </Button>
         }
       />
 
       <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Storage List</CardTitle>
-        </CardHeader>
         <CardContent>
             <div className="space-y-4">
               {storagesQuery.data && storagesQuery.data?.length > 0 ? (
@@ -78,7 +75,7 @@ const StoragesPage: React.FC = () => {
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  No storages found
+                  {t('storage.noStoragesFound')}
                 </div>
               )}
             </div>

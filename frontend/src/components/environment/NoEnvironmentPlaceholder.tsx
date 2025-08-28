@@ -7,6 +7,7 @@ import EnvironmentSet from '@/components/environment/EnvironmentSet';
 import EnvironmentList from '@/components/environment/EnvironmentList';
 import useEnvironmentsApi, { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
 import { useMutation } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader } from '../ui/card';
 
 interface NoEnvironmentPlaceholderProps {
   onSaveSuccess: (environments: EnvironmentDTO[]) => void;
@@ -32,12 +33,13 @@ const NoEnvironmentPlaceholder : React.FC<NoEnvironmentPlaceholderProps> = ({onS
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow">
-      <div className="flex justify-between items-center mb-6">
+    <Card className="max-w-4xl mx-auto p-6 rounded-lg shadow">
+      <CardContent>
+      <CardHeader className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
           {t('environment.configure')}
         </h2>
-      </div>
+      </CardHeader>
 
       <div className="mt-8">
         <h4 className="text-sm font-medium text-gray-500 mb-4">{t('environment.preset_environments')}</h4>
@@ -57,7 +59,8 @@ const NoEnvironmentPlaceholder : React.FC<NoEnvironmentPlaceholderProps> = ({onS
         environments={customEnvironments}
         onSaveEnvironments={async (e) => { await saveEnvironmentsMutation.mutateAsync(e) }}
       />
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

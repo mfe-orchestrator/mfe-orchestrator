@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search } from 'lucide-react';
 import useProjectStore from '@/store/useProjectStore';
 import MicrofrontendList from '@/components/microfrontend/MicrofrontendList';
+import SinglePageHeader from '@/components/SinglePageHeader';
 
 const MicrofrontendDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,34 +20,33 @@ const MicrofrontendDashboard = () => {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <h2 className="text-3xl font-bold tracking-tight">
-              {projectStore.project?.name}
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cerca microfrontend..."
-                  className="pl-8 w-full md:w-[250px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filtra per stato" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutti</SelectItem>
-                  <SelectItem value="ACTIVE">Attivi</SelectItem>
-                  <SelectItem value="DISABLED">Disabilitati</SelectItem>
-                </SelectContent>
-              </Select>
+        <SinglePageHeader
+          title={"Microfrontends"}
+          description={"Gestisci i microfrontends del tuo progetto"}
+          buttons={
+            <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cerca microfrontend..."
+                className="pl-8 w-full md:w-[250px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-        </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtra per stato" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti</SelectItem>
+                <SelectItem value="ACTIVE">Attivi</SelectItem>
+                <SelectItem value="DISABLED">Disabilitati</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          }
+        />
         <MicrofrontendList searchTerm={searchTerm} statusFilter={statusFilter} onResetFilters={onResetFilters} projectId={projectStore.project?._id} /> 
       </div>
     </>

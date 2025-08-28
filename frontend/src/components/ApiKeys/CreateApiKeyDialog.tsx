@@ -6,6 +6,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import useApiKeysApi from '@/hooks/apiClients/useApiKeysApi';
 import useProjectStore from '@/store/useProjectStore';
+import { useEffect } from 'react';
 
 interface CreateApiKeyDialogProps {
     isCreateDialogOpen: boolean;
@@ -19,6 +20,13 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
     const apiKeysApi = useApiKeysApi()
     const queryClient = useQueryClient()
     const project = useProjectStore()
+
+    useEffect(()=>{
+        if(isCreateDialogOpen){
+            form.reset()
+            createApiKeyMutation.reset()
+        }
+    }, [isCreateDialogOpen])
 
     const createApiKeyMutation = useMutation({
         mutationFn: apiKeysApi.createApiKey,
@@ -62,6 +70,7 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
                                     {createApiKeyMutation.data.apiKey}
                                 </span>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         navigator.clipboard.writeText(createApiKeyMutation.data.apiKey);
                                     }}
@@ -84,6 +93,7 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
                         <DialogFooter>
                             <Button
                                 variant="outline"
+                                type="button"
                                 onClick={() => setIsCreateDialogOpen(false)}
                                 disabled={form.formState.isSubmitting}
                             >
@@ -94,6 +104,7 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
                         <DialogFooter>
                             <Button
                                 variant="outline"
+                                type="button"
                                 onClick={() => setIsCreateDialogOpen(false)}
                                 disabled={form.formState.isSubmitting}
                             >

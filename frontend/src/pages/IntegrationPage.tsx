@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import useServeApi, { IServeMicrofronted } from '@/hooks/apiClients/useServeApi';
 import { useQuery } from '@tanstack/react-query';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
+import SinglePageHeader from '@/components/SinglePageHeader';
 
 
 const getViteConfig = (microfrontends: IServeMicrofronted[]) => {
@@ -116,16 +117,17 @@ const IntegrationPage: React.FC = () => {
     <ApiDataFetcher 
       queries={[microfrontendQuery]}
     >
-    <div className="container mx-auto p-4 max-w-4xl">
-      <h1 className="text-2xl font-bold mb-4">Integration Guide</h1>
+      <>
+      <SinglePageHeader
+        title="Integration Guide"
+        description="Follow the instructions below to integrate with our platform using your preferred method."
+      />
+    <div className="container mx-auto p-4 max-w-4xl"> 
       {projectStore.environment &&
         <p className="mb-6">
             Environment : <Badge variant="outline" style={{ backgroundColor: projectStore.environment.color }} >{projectStore.environment.slug}</Badge>
         </p>
     }
-      <p className="mb-6">
-        Follow the instructions below to integrate with our platform using your preferred method.
-      </p>
       
       
       <Card className="p-4">
@@ -172,6 +174,7 @@ const IntegrationPage: React.FC = () => {
         </Tabs>
       </Card>
     </div>
+    </>
     </ApiDataFetcher>
   );
 };

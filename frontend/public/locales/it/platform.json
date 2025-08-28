@@ -61,6 +61,7 @@
     "recover": "recuperala"
   },
   "common": {
+    "close": "Chiudi",
     "actions": "Azioni",
     "save": "Salva",
     "cancel": "Annulla",
@@ -212,6 +213,9 @@
   },
   "apiKeys": {
     "api_keys": "Chiavi API",
+    "expiresAt": "Data di scadenza",
+    "created_api_key": "Chiave API creata",
+    "expiresAt_placeholder": "Seleziona una data",
     "manage_api_keys": "Gestisci le tue chiavi API per l'accesso programmatico",
     "your_api_keys": "Le tue chiavi API",
     "api_keys_description": "Gestisci le tue chiavi API per l'accesso programmatico alle API",
@@ -293,23 +297,63 @@
     "create_error": "Impossibile creare il microfrontend"
   },
   "storage": {
-  "newStorage": "Nuovo Storage",
-  "editStorage": "Modifica Storage",
-  "name": "Nome",
-  "type": "Tipo",
-  "s3": {
-    "accessKeyId": "Access Key ID",
-    "secretAccessKey": "Chiave Segreta",
-    "region": "Regione",
-    "bucket": "Bucket"
-  },
-  "gcs": {
-    "keyFilename": "Percorso File Chiave",
-    "bucket": "Bucket"
-  },
-  "createSuccess": "Storage creato",
-  "createSuccessDescription": "Lo storage è stato creato con successo.",
-  "updateSuccess": "Storage aggiornato",
-  "updateSuccessDescription": "Lo storage è stato aggiornato con successo."
-}
+    "name": "Nome",
+    "type": "Provider",
+    "newStorage": "Nuovo Storage",
+    "editStorage": "Modifica Storage",
+    "storages": "Storage",
+    "storagesDescription": "Gestisci i tuoi provider di storage e le configurazioni",
+    "noStoragesFound": "Nessuno storage trovato",
+    "newStorageDescription": "Configura un nuovo provider di storage per i tuoi microfrontend",
+    "editStorageDescription": "Aggiorna la configurazione del tuo storage",
+    "types": {
+      "aws": "Amazon S3",
+      "google": "Google Cloud Storage",
+      "azure": "Azure Blob Storage"
+    },
+    "authTypes": {
+      "google": {
+        "serviceAccount": "Account di Servizio",
+        "apiKey": "Chiave API",
+        "default": "Predefinito"
+      },
+      "azure": {
+        "connectionString": "Stringa di Connessione",
+        "sharedKey": "Chiave Condivisa",
+        "aad": "Azure AD"
+      }
+    },
+    "fields": {
+      "accessKeyId": "ID Chiave di Accesso",
+      "secretAccessKey": "Chiave Segreta di Accesso",
+      "region": "Regione",
+      "bucketName": "Nome Bucket",
+      "authType": "Tipo di Autenticazione",
+      "projectId": "ID Progetto",
+      "clientEmail": "Email Cliente",
+      "privateKey": "Chiave Privata",
+      "apiKey": "Chiave API",
+      "containerName": "Nome Contenitore",
+      "connectionString": "Stringa di Connessione",
+      "accountName": "Nome Account",
+      "accountKey": "Chiave Account",
+      "tenantId": "ID Tenant",
+      "clientId": "ID Cliente",
+      "clientSecret": "Segreto Cliente"
+    },
+    "s3": {
+      "accessKeyId": "Access Key ID",
+      "secretAccessKey": "Chiave Segreta",
+      "region": "Regione",
+      "bucket": "Bucket"
+    },
+    "gcs": {
+      "keyFilename": "Percorso File Chiave",
+      "bucket": "Bucket"
+    },
+    "createSuccess": "Storage creato",
+    "createSuccessDescription": "Lo storage è stato creato con successo.",
+    "updateSuccess": "Storage aggiornato",
+    "updateSuccessDescription": "Lo storage è stato aggiornato con successo."
+  }
 }

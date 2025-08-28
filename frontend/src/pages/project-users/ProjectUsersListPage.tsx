@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Gravatar from 'react-gravatar';
 import { AddUserButton } from './AddUserButton';
+import SinglePageHeader from '@/components/SinglePageHeader';
 
 type ViewType = 'table' | 'grid';
 
@@ -144,23 +145,20 @@ const ProjectUsersList: React.FC = () => {
 
   return (
     <ApiDataFetcher queries={[userQuery]}>
-      
-        <h2 className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-xl font-bold">
-              {t('project_users.title')}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {t('project_users.subtitle', { count: users.length })}
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="ml-2">
-              {t('project_users.count', { count: users.length })}
-            </Badge>
-            <AddUserButton />
-          </div>
-        </h2>
+        <SinglePageHeader
+          title={t('project_users.title')}
+          description={t('project_users.subtitle', { count: users.length })}
+          buttons={
+            <>
+              <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="ml-2">
+                {t('project_users.count', { count: users.length })}
+              </Badge>
+              <AddUserButton />
+            </div>
+            </>
+          }
+        />
         <div>
           <Tabs 
             defaultValue="table" 

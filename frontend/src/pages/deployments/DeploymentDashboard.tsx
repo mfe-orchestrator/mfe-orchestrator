@@ -6,6 +6,7 @@ import EnvironmentsGate from "@/theme/EnvironmentsGate"
 import { Button } from "@/components/ui/button"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
 import { useQueryClient } from "@tanstack/react-query"
+import SinglePageHeader from "@/components/SinglePageHeader"
 
 const DeploymentDashboard: React.FC = () => {
     const projectStore = useProjectStore()
@@ -20,20 +21,25 @@ const DeploymentDashboard: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <h2 className="text-3xl font-bold tracking-tight">{projectStore.project?.name}</h2>
+        <>
+        <SinglePageHeader
+            title="Deployments"
+            description="Gestisci i deployment del tuo progetto"
+            buttons={
+                <>
                     {isThereAtLeastOneEnvironment && (
                         <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
                     )}
                     <Button onClick={handleDeploy}>Deploy</Button>
-                </div>
-            </div>
+                </>
+            }
+        />
+        <div className="space-y-6 mt-6">
             <EnvironmentsGate>
                 <DeploymentList environmentId={projectStore.environment?._id} />
             </EnvironmentsGate>
         </div>
+        </>
     )
 }
 

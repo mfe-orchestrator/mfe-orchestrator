@@ -15,30 +15,31 @@ import { useQuery } from '@tanstack/react-query';
 import SinglePageHeader from '@/components/SinglePageHeader';
 import { FormProvider } from 'react-hook-form';
 
-const storageTypes = [
-  { value: StorageType.AWS, label: 'Amazon S3' },
-  { value: StorageType.GOOGLE, label: 'Google Cloud Storage' },
-  { value: StorageType.AZURE, label: 'Azure Blob Storage' }
-];
-
-const googleAuthTypes = [
-  { value: 'serviceAccount', label: 'Service Account' },
-  { value: 'apiKey', label: 'API Key' },
-  { value: 'default', label: 'Default' }
-];
-
-const azureAuthTypes = [
-  { value: 'connectionString', label: 'Connection String' },
-  { value: 'sharedKey', label: 'Shared Key' },
-  { value: 'aad', label: 'Azure AD' }
-];
-
 const NewOrEditStoragePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const storageApi = useStorageApi();
+
+  const storageTypes = [
+    { value: StorageType.AWS, label: t('storage.types.aws') },
+    { value: StorageType.GOOGLE, label: t('storage.types.google') },
+    { value: StorageType.AZURE, label: t('storage.types.azure') }
+  ];
+
+  const googleAuthTypes = [
+    { value: 'serviceAccount', label: t('storage.authTypes.google.serviceAccount') },
+    { value: 'apiKey', label: t('storage.authTypes.google.apiKey') },
+    { value: 'default', label: t('common.default') }
+  ];
+
+  const azureAuthTypes = [
+    { value: 'connectionString', label: t('storage.authTypes.azure.connectionString') },
+    { value: 'sharedKey', label: t('storage.authTypes.azure.sharedKey') },
+    { value: 'aad', label: t('storage.authTypes.azure.aad') }
+  ];
+
 
   const form = useForm<CreateStorageDTO>({
     defaultValues: {
@@ -87,18 +88,18 @@ const NewOrEditStoragePage = () => {
           <>
             <TextField
               name="authConfig.accessKeyId"
-              label="Access Key ID"
+              label={t('storage.fields.accessKeyId')}
               rules={{ required: t('validation.required') }}
             />
             <TextField
               name="authConfig.secretAccessKey"
-              label="Secret Access Key"
+              label={t('storage.fields.secretAccessKey')}
               type="password"
               rules={{ required: t('validation.required') }}
             />
             <TextField
               name="authConfig.region"
-              label="Region"
+              label={t('storage.fields.region')}
               rules={{ required: t('validation.required') }}
             />
             <TextField
@@ -116,14 +117,14 @@ const NewOrEditStoragePage = () => {
           <>
             <SelectField
               name="authConfig.authType"
-              label="Authentication Type"
+              label={t('storage.fields.authType')}
               options={googleAuthTypes}
               rules={{ required: t('validation.required') }}
             />
 
             <TextField
               name="authConfig.projectId"
-              label="Project ID"
+              label={t('storage.fields.projectId')}
               rules={{ required: t('validation.required') }}
             />
 
@@ -137,12 +138,12 @@ const NewOrEditStoragePage = () => {
               <>
                 <TextField
                   name="authConfig.credentials.client_email"
-                  label="Client Email"
+                  label={t('storage.fields.clientEmail')}
                   rules={{ required: true }}
                 />
                 <TextField
                   name="authConfig.credentials.private_key"
-                  label="Private Key"
+                  label={t('storage.fields.privateKey')}
                   type="password"
                   rules={{ required: true }}
                 />
@@ -152,7 +153,7 @@ const NewOrEditStoragePage = () => {
             {googleAuthType === 'apiKey' && (
               <TextField
                 name="authConfig.apiKey"
-                label="API Key"
+                label={t('storage.fields.apiKey')}
                 type="password"
                 rules={{ required: true }}
               />
@@ -167,21 +168,21 @@ const NewOrEditStoragePage = () => {
           <>
             <SelectField
               name="authConfig.authType"
-              label="Authentication Type"
+              label={t('storage.fields.authType')}
               options={azureAuthTypes}
               rules={{ required: t('validation.required') }}
             />
 
             <TextField
               name="authConfig.containerName"
-              label="Container Name"
+              label={t('storage.fields.containerName')}
               rules={{ required: t('validation.required') }}
             />
 
             {azureAuthType === 'connectionString' && (
               <TextField
                 name="authConfig.connectionString"
-                label="Connection String"
+                label={t('storage.fields.connectionString')}
                 type="password"
                 rules={{ required: true }}
               />
@@ -190,7 +191,7 @@ const NewOrEditStoragePage = () => {
             {(azureAuthType === 'sharedKey' || azureAuthType === 'aad') && (
               <TextField
                 name="authConfig.accountName"
-                label="Account Name"
+                label={t('storage.fields.accountName')}
                 rules={{ required: true }}
               />
             )}
@@ -198,7 +199,7 @@ const NewOrEditStoragePage = () => {
             {azureAuthType === 'sharedKey' && (
               <TextField
                 name="authConfig.accountKey"
-                label="Account Key"
+                label={t('storage.fields.accountKey')}
                 type="password"
                 rules={{ required: true }}
               />
@@ -208,17 +209,17 @@ const NewOrEditStoragePage = () => {
               <>
                 <TextField
                   name="authConfig.tenantId"
-                  label="Tenant ID"
+                  label={t('storage.fields.tenantId')}
                   rules={{ required: true }}
                 />
                 <TextField
                   name="authConfig.clientId"
-                  label="Client ID"
+                  label={t('storage.fields.clientId')}
                   rules={{ required: true }}
                 />
                 <TextField
                   name="authConfig.clientSecret"
-                  label="Client Secret"
+                  label={t('storage.fields.clientSecret')}
                   type="password"
                   rules={{ required: true }}
                 />
@@ -233,7 +234,7 @@ const NewOrEditStoragePage = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>{t('common.loading')}</div>;
   }
 
   return (
@@ -242,8 +243,8 @@ const NewOrEditStoragePage = () => {
         title={isEditMode ? t('storage.editStorage') : t('storage.newStorage')}
         description={
           isEditMode 
-            ? t('storage.editStorageDescription', 'Edit your storage configuration')
-            : t('storage.newStorageDescription', 'Create a new storage configuration')
+            ? t('storage.editStorageDescription')
+            : t('storage.newStorageDescription')
         }
       />
 

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 import { FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import useUserStore from '@/store/useUserStore';
+import GoogleAuthWrapper from '@/authentication/GoogleAuthWrapper';
+import Auth0AuthWrapper from '@/authentication/Auth0AuthWrapper';
+import MicrosoftAuthWrapper from '@/authentication/MicrosoftAuthWrapper';
+import SocialLoginRow from '@/authentication/components/SocialLoginRow';
 
 interface RegisterFirstUserData{
   email: string;
@@ -21,32 +25,34 @@ const RegisterFirstUser: React.FC = () => {
   const userApi = useUserApi();
   const startupApi = useStartupApi();
   const userStore = useUserStore()
+  const query = useQueryClient()
   
   const onSubmit = async (data: RegisterFirstUserData) => {
     try {
       await startupApi.createFirstUserAndProject(data)
-      window.location.reload()
+      query.invalidateQueries({ queryKey: ['first-startup-users'] })
     } catch (error) {
       console.log(error)
     }
   };
 
-  // const profileQuery = useMutation({
-  //   mutationFn: async () =>{
-  //     try{
-  //       const profile = await userApi.getProfile()
-  //       userStore.setUser(profile)
-  //       return profile;
-  //     }catch(e){
-  //       console.log(e)
-  //       return null;
-  //     }
-  //   }
-  // });
+  const profileQuery = useMutation({
+    mutationFn: async () =>{
+      try{
+        const profile = await userApi.getProfile()
+        userStore.setUser(profile)
+        return profile;
+      }catch(e){
+        console.log(e)
+        return null;
+      }
+    }
+  });
 
-  // const onSuccessLogin = () =>{
-  //   profileQuery.mutate()
-  // }
+  const onSuccessLogin = async () =>{
+    await profileQuery.mutateAsync()
+    query.invalidateQueries({ queryKey: ['first-startup-users'] })
+  }
   
   return (
     <AuthenticationLayout 
@@ -67,6 +73,7 @@ const RegisterFirstUser: React.FC = () => {
                 }
               }} 
               placeholder={t('auth.email_placeholder')}
+              autoComplete='email'
             />
             <TextField 
               name="password" 
@@ -80,6 +87,7 @@ const RegisterFirstUser: React.FC = () => {
                 }
               }} 
               placeholder="••••••••"
+              autoComplete='new-password'
             />
             <TextField 
               name="project" 
@@ -101,13 +109,13 @@ const RegisterFirstUser: React.FC = () => {
           </div>
         </form> 
       </FormProvider>
-      {/* <GoogleAuthWrapper>
+      <GoogleAuthWrapper>
         <Auth0AuthWrapper>
           <MicrosoftAuthWrapper>
             <SocialLoginRow onSuccessLogin={onSuccessLogin} />
           </MicrosoftAuthWrapper>
         </Auth0AuthWrapper>
-      </GoogleAuthWrapper> */}
+      </GoogleAuthWrapper>
     </AuthenticationLayout>
   );
 }
@@ -118,7 +126,7 @@ const FirstStartupWrapper : React.FC<React.PropsWithChildren> = ({children}) =>{
     const startupApi = useStartupApi();
 
     const usersQuery = useQuery({
-      queryKey: ["users"],
+      queryKey: ["first-startup-users"],
       queryFn: startupApi.existsAtLeastOneUser
     });
 
