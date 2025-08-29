@@ -14,14 +14,11 @@ const LoginWithAuth0Button : React.FC<LoginComponentProps> = ({onSuccessLogin}) 
     onSuccessLogin?.();
   }  
     
-  return <Button 
-    variant="outline" 
-    type="button" 
-    className="flex flex-1"
-    onClick={handleAuth0Login}
-  >
-    Auth0
-  </Button>
+  return (
+      <Button variant="secondary" type="button" className="flex flex-1" onClick={handleAuth0Login}>
+          Auth0
+      </Button>
+  )
 
 }
 

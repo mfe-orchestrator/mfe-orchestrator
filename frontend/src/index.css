@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400..700;1,400..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +35,7 @@
     --ring: 253 76% 34% / 25%;
 
     --radius: 0.75rem;
+	--font-sans: "Familjen Grotesk", "system-ui", sans-serif;
 
     --sidebar-background: 270 100% 99%;
     --sidebar-foreground: 270 9% 8%;
@@ -42,6 +45,11 @@
     --sidebar-accent-foreground: 270 100% 99%;
     --sidebar-border: 250 28% 6%;
     --sidebar-ring: 253 76% 34% / 25%;
+
+	--button-inner-shadow: inset 2px 2px 6px rgba(243, 238, 255, 0.25), inset -2px -2px 6px rgba(13, 0, 72, 0.25);
+	--button-lg-inner-shadow: inset 4px 4px 8px rgba(243, 238, 255, 0.25), inset -4px -4px 8px rgba(13, 0, 72, 0.25);
+	--button-active-inner-shadow: inset -2px -2px 6px rgba(243, 238, 255, 0.25), inset 2px 2px 6px rgba(13, 0, 72, 0.25);
+	--button-lg-active-inner-shadow: inset -4px -4px 8px rgba(243, 238, 255, 0.25), inset 4px 4px 8px rgba(13, 0, 72, 0.25);
   }
 
   .dark {

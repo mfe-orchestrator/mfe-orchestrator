@@ -12,6 +12,12 @@ export default {
                 "2xl": "1400px"
             }
         },
+        fontFamily: {
+            sans: "var(--font-sans)"
+        },
+        letterSpacing: {
+            normal: "0.0125em"
+        },
         extend: {
             colors: {
                 border: "hsl(var(--border))",
@@ -69,6 +75,12 @@ export default {
                 lg: "var(--radius)",
                 md: "calc(var(--radius) - 4px)",
                 sm: "calc(var(--radius) - 6px)"
+            },
+            boxShadow: {
+                button: "var(--button-inner-shadow)",
+                "button-active": "var(--button-active-inner-shadow)",
+                "button-lg": "var(--button-lg-inner-shadow)",
+                "button-lg-active": "var(--button-lg-active-inner-shadow)"
             },
             keyframes: {
                 "accordion-down": {
