@@ -21,10 +21,8 @@ export interface Microfrontend {
     slug: string;
     name: string;
     version: string;
-    canaryVersion?: string;
     continuousDeployment?: boolean;
-    url: string;
-    environmentId: string;
+    projectId?: string
     canary?: {
         enabled: boolean;
         percentage: number;
@@ -36,11 +34,11 @@ export interface Microfrontend {
     host: {
         type: HostedOn;
         url?: string;
+        storageId?: string
     }
-    status?: string;
     description?: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 const useMicrofrontendsApi = () => {
@@ -72,7 +70,7 @@ const useMicrofrontendsApi = () => {
 
     const update = async (id: string, microfrontend: Microfrontend) => {
         const response = await apiClient.doRequest({
-            url: `/api/microfrontends/${microfrontend}`,
+            url: `/api/microfrontends/${id}`,
             method: "PUT",
             data: microfrontend
         });
@@ -92,7 +90,8 @@ const useMicrofrontendsApi = () => {
         getByProjectId,
         create,
         update,
-        deleteSingle
+        deleteSingle,
+        getSingle
     }
 }
 

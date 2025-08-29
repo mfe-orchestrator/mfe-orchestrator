@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
-import useMicrofrontendsApi from '@/hooks/apiClients/useMicrofrontendsApi';
+import useMicrofrontendsApi, { Microfrontend } from '@/hooks/apiClients/useMicrofrontendsApi';
 import TextField from '@/components/input/TextField.rhf';
 import TextareaField from '@/components/input/TextareaField.rhf';
 import SelectField from '@/components/input/SelectField.rhf';
@@ -14,6 +14,7 @@ import Switch from '@/components/input/Switch.rhf';
 import { useQuery } from '@tanstack/react-query';
 import useProjectStore from '@/store/useProjectStore';
 import useStorageApi from '@/hooks/apiClients/useStorageApi';
+import SinglePageHeader from '@/components/SinglePageHeader';
 
 // Define form schema with validation
 const formSchema = z.object({
@@ -22,24 +23,26 @@ const formSchema = z.object({
   name: z.string().min(3).max(100),
   description: z.string().optional(),
   version: z.string().min(1, "Version is required"),
-  
+  continuousDeployment: z.boolean().default(false),
+
   // Hosting Information
   host: z.object({
     type: z.enum(['MFE_ORCHESTRATOR_HUB', 'CUSTOM_URL', 'CUSTOM_SOURCE']),
-    url: z.string().optional()
+    url: z.string().optional(),
+    storageId: z.string().optional()
   }).refine(
     (data) => data.type !== 'CUSTOM_URL' || (data.url && data.url.length > 0),
     { message: "URL is required for custom hosting" }
   ),
-  
+
   // Canary Settings
   canary: z.object({
     enabled: z.boolean().default(false),
     percentage: z.number().min(0).max(100).default(0),
     type: z.enum(['ON_SESSIONS', 'ON_USER', 'COOKIE_BASED']).optional(),
     deploymentType: z.enum(['BASED_ON_VERSION', 'BASED_ON_URL']).optional(),
-    canaryVersion: z.string().optional(),
-    canaryUrl: z.string().optional()
+    url: z.string().optional(),
+    version: z.string().optional()
   }).optional()
 }).refine(
   (data) => {
@@ -69,11 +72,6 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
   const storageApi = useStorageApi();
   const { project } = useProjectStore();
 
-  const editMfeQuery = useQuery({
-    queryKey: ['mfe', id],
-    queryFn: () => microfrontendsApi.g(id)
-  })
-
   const storagesQuery = useQuery({
     queryKey: ['storages', project?._id],
     queryFn: () => storageApi.getMultiple(project?._id)
@@ -94,11 +92,21 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         percentage: 0,
         type: 'ON_SESSIONS',
         deploymentType: 'BASED_ON_VERSION',
-        canaryVersion: '',
-        canaryUrl: ''
+        version: '',
+        url: ''
       }
     }
   });
+
+  const editMfeQuery = useQuery({
+    queryKey: ['mfe', id],
+    queryFn: async () => {
+      const mfe = await microfrontendsApi.getSingle(id)
+      form.reset(mfe)
+      return mfe;
+    },
+    enabled: isEdit
+  })
 
   const { watch } = form;
   const canaryEnabled = watch('canary.enabled');
@@ -106,24 +114,37 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
   const notificationToast = useToastNotificationStore();
 
   const onSubmit = async (data: FormValues) => {
-    await microfrontendsApi.create({
+    const dataToSend = {
       ...data,
-      // Clean up the canary object if not enabled
-      canary: data.canary?.enabled ? data.canary : undefined
-    });
-    
-    notificationToast.showSuccessNotification({
-      message: t('microfrontend.created_success_message')
-    });
-    
+    } as Microfrontend
+    if (isEdit) {
+      await microfrontendsApi.update(id, dataToSend);
+      notificationToast.showSuccessNotification({
+        message: t('microfrontend.updated_success_message')
+      });
+    } else {
+      await microfrontendsApi.create(dataToSend);
+      notificationToast.showSuccessNotification({
+        message: t('microfrontend.updated_success_message')
+      });
+    }
+
     navigate(`/microfrontends`);
   };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('microfrontend.add_new')}</h1>
-      </div>
+      {isEdit ?
+        <SinglePageHeader
+          title={t('microfrontend.edit')}
+          description={t('microfrontend.edit_description')}
+        />
+        :
+        <SinglePageHeader
+          title={t('microfrontend.add_new')}
+          description={t('microfrontend.add_new_description')}
+        />
+      }
 
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -151,11 +172,11 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                 />
               </div>
               <TextField
-                  name="version"
-                  label={t('microfrontend.version')}
-                  placeholder={t('microfrontend.version_placeholder')}
-                  required
-                />
+                name="version"
+                label={t('microfrontend.version')}
+                placeholder={t('microfrontend.version_placeholder')}
+                required
+              />
               <TextareaField
                 name="description"
                 label={t('microfrontend.description')}
@@ -226,14 +247,14 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             {canaryEnabled && (
               <CardContent className="space-y-4">
                 <TextField
-                    name="canary.percentage"
-                    label={t('microfrontend.canary_percentage')}
-                    placeholder="38%"
-                    // type="number"
-                    // required
-                    // min={0}
-                    // max={100}
-                  />
+                  name="canary.percentage"
+                  label={t('microfrontend.canary_percentage')}
+                  placeholder="38%"
+                // type="number"
+                // required
+                // min={0}
+                // max={100}
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <SelectField
                     name="canary.type"
@@ -255,7 +276,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     required
                   />
 
-                  
+
                 </div>
                 {form.watch('canary.deploymentType') === 'BASED_ON_VERSION' && (
                   <TextField

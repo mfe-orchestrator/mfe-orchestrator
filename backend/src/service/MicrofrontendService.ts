@@ -19,7 +19,7 @@ import AzureStorageClient from "../client/AzureStorageAccount"
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
-        const microfrontend = await Microfrontend.findById(idObj, { session })
+        const microfrontend = await Microfrontend.findById(idObj, {}, { session })
         if (!microfrontend) {
             return null
         }
@@ -126,14 +126,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
             throw new Error("Microfrontend host type is not supported")
         } else if (microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
-            if (!microfrontend.storageId) {
+            if (!microfrontend.host.storageId) {
                 throw new EntityNotFoundError("Microfrontend storage id is not set")
             }
 
-            const storage = await Storage.findById(microfrontend.storageId)
+            const storage = await Storage.findById(microfrontend.host.storageId)
 
             if (!storage) {
-                throw new EntityNotFoundError("Storage not found for id " + microfrontend.storageId.toString())
+                throw new EntityNotFoundError("Storage not found for id " + microfrontend.host.storageId.toString())
             }
 
             const path = project.slug + "-" + project._id.toString() + "/" + microfrontendSlug + "/" + version

@@ -24,9 +24,6 @@ export default async function microfrontendController(fastify: FastifyInstance) 
 
     fastify.post<{
         Body: MicrofrontendDTO
-        Querystring: {
-            environment: string
-        }
     }>("/microfrontends", async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {

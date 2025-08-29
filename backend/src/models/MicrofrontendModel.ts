@@ -4,9 +4,7 @@ export interface IMicrofrontend extends Document<ObjectId> {
     slug: string
     name: string
     version: string
-    canaryVersion?: string
     continuousDeployment?: boolean
-    url: string
     projectId: ObjectId
     canary?: {
         enabled: boolean
@@ -46,7 +44,7 @@ export enum CanaryDeploymentType {
 const microfrontendHostTypeSchema = new Schema({
     type: {
         type: String,
-        enum: [HostedOn.CUSTOM_URL, HostedOn.MFE_ORCHESTRATOR_HUB],
+        enum: [HostedOn.CUSTOM_URL, HostedOn.MFE_ORCHESTRATOR_HUB, HostedOn.CUSTOM_SOURCE],
         default: HostedOn.CUSTOM_URL,
         required: true
     },

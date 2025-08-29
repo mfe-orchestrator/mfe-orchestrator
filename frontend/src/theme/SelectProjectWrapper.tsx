@@ -9,6 +9,7 @@ import TextField from "@/components/input/TextField.rhf";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/hooks/apiClients/useProjectApi";
 import SelectField from '@/components/input/SelectField.rhf';
+import { getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from '@/utils/localStorageUtils';
 
 interface CreateFirstProjectFormData{
   name: string
@@ -79,6 +80,7 @@ const SelectProjectForm: React.FC = () => {
       const selectedProject = projectStore.projects?.find(p => p._id === data.projectId);
       if (selectedProject) {
         projectStore.setProject(selectedProject);
+        setProjectIdInLocalStorage(selectedProject._id);
       }
     } catch (error) {
       console.error(t('common.error_occurred'), error);
@@ -140,7 +142,14 @@ const SelectProjectWrapper : React.FC<React.PropsWithChildren> = (props) =>{
             projectStore.setProjects(projects);
             if(projects.length === 1){
               projectStore.setProject(projects[0]);
+              setProjectIdInLocalStorage(projects[0]._id);
             }
+            //Here we have several projects
+            const projectId = getProjectIdFromLocalStorage();
+            if(projectId){
+              projectStore.setProject(projects.find(p => p._id === projectId));
+            }
+
             return projects;
         } catch (error) {
             console.error("Error fetching projects:", error);

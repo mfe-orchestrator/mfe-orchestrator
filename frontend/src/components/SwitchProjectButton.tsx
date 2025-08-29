@@ -10,6 +10,7 @@ import TextField from './input/TextField.rhf';
 import useProjectApi from '@/hooks/apiClients/useProjectApi';
 import { Project } from '@/hooks/apiClients/useProjectApi';
 import TextareaField from './input/TextareaField.rhf';
+import { setProjectIdInLocalStorage } from '@/utils/localStorageUtils';
 
 interface CreateNewProjectFormData {
     name: string;
@@ -35,6 +36,7 @@ const CreateNewProjectForm: React.FC<CreateNewProjectFormProps> = ({ onSuccess }
         // Update the projects list in the store
         projectStore.setProjects([...projectStore.projects, newProject]);
         projectStore.setProject(newProject);
+        setProjectIdInLocalStorage(newProject._id);
 
         onSuccess?.();
         form.reset();

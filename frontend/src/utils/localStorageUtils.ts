@@ -18,3 +18,13 @@ export const getThemeFromLocalStorage = () => {
     if(!localStorage) return
     return localStorage.getItem('theme');
 }
+
+export const setProjectIdInLocalStorage = (projectId: string) =>{
+    if(!localStorage) return
+    localStorage.setItem('projectId', projectId);
+}
+
+export const getProjectIdFromLocalStorage = () => {
+    if(!localStorage) return
+    return localStorage.getItem('projectId');
+}
