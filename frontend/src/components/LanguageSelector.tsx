@@ -25,23 +25,19 @@ const LanguageSelector = () => {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Globe className="h-5 w-5" />
-          <span className="sr-only">{t('language.change')}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => changeLanguage('en')}>
-          {t('language.english')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeLanguage('it')}>
-          {t('language.italian')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+      <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Language selector">
+                  <Globe />
+                  <span className="sr-only">{t("language.change")}</span>
+              </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => changeLanguage("en")}>{t("language.english")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => changeLanguage("it")}>{t("language.italian")}</DropdownMenuItem>
+          </DropdownMenuContent>
+      </DropdownMenu>
+  )
 };
 
 export default LanguageSelector;

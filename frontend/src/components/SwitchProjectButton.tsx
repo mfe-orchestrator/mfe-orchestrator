@@ -85,8 +85,8 @@ const SwitchProjectButton = () => {
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="secondary" size="sm" className="text-sm font-medium">
-                    <Repeat className="h-4 w-4" />
+                <Button variant="secondary" size="icon-sm">
+                    <Repeat />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

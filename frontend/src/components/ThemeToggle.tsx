@@ -29,41 +29,41 @@ const ThemeToggle: React.FC = () => {
   
 
   const getThemeIcon = () => {
-    switch (theme) {
-      case ThemeEnum.DARK:
-        return <Moon className="h-5 w-5" />;
-      case ThemeEnum.LIGHT:
-        return <Sun className="h-5 w-5" />;
-      case ThemeEnum.SYSTEM:
-      default:
-        return <Monitor className="h-5 w-5" />;
-    }
-  };
+      switch (theme) {
+          case ThemeEnum.DARK:
+              return <Moon />
+          case ThemeEnum.LIGHT:
+              return <Sun />
+          case ThemeEnum.SYSTEM:
+          default:
+              return <Monitor />
+      }
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          {getThemeIcon()}
-          <span className="sr-only">{t('theme.toggle_theme')}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.LIGHT)}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>{t('theme.light')}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.DARK)}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>{t('theme.dark')}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.SYSTEM)}>
-          <Monitor className="mr-2 h-4 w-4" />
-          <span>{t('theme.system')}</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+      <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Theme toggle">
+                  {getThemeIcon()}
+                  <span className="sr-only">{t("theme.toggle_theme")}</span>
+              </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.LIGHT)}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>{t("theme.light")}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.DARK)}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>{t("theme.dark")}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.SYSTEM)}>
+                  <Monitor className="mr-2 h-4 w-4" />
+                  <span>{t("theme.system")}</span>
+              </DropdownMenuItem>
+          </DropdownMenuContent>
+      </DropdownMenu>
+  )
 };
 
 export default ThemeToggle;

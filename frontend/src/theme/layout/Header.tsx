@@ -140,22 +140,18 @@ const Header: React.FC = () => {
 
     return (
         <header className="bg-background border-b border-border h-16 flex items-center justify-between px-6">
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex flex-row gap-3 items-center">
                 <SwitchProjectButton />
                 <h1 className="text-xl font-semibold">{project?.name}</h1>
             </div>
 
             <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                    <a
-                        href="https://github.com/Lory1990/micro-frontend-orchestrator-hub"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                        aria-label="GitHub repository"
-                    >
-                        <Github className="h-5 w-5" />
-                    </a>
+                    <Button asChild variant="link" size="icon" aria-label="GitHub repository">
+                        <a href="https://github.com/Lory1990/micro-frontend-orchestrator-hub" target="_blank" rel="noopener noreferrer">
+                            <Github />
+                        </a>
+                    </Button>
                     <LanguageSelector />
                     <ThemeToggle />
                 </div>

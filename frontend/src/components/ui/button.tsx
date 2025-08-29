@@ -86,7 +86,8 @@ const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconStyle, a
             default: "px-4 py-2",
             sm: "gap-[0.375rem] text-xs rounded-md px-3 py-2",
             lg: "gap-[0.75rem] text-base rounded-xl px-6 py-4 shadow-button-lg active:shadow-button-lg-active",
-            icon: "p-3"
+            icon: "p-3",
+            "icon-sm": "p-2"
         }
     },
     defaultVariants: {
@@ -95,10 +96,8 @@ const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconStyle, a
     }
 })
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+    asChild?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
