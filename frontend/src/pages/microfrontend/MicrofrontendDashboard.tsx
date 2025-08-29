@@ -1,12 +1,11 @@
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { IceCream, Search } from "lucide-react"
-import useProjectStore from "@/store/useProjectStore"
 import MicrofrontendList from "@/components/microfrontend/MicrofrontendList"
 import SinglePageHeader from "@/components/SinglePageHeader"
-import { Button } from "@/components/ui/button"
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import useProjectStore from "@/store/useProjectStore"
+import { Search } from "lucide-react"
+import { useState } from "react"
 
 const MicrofrontendDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("")
