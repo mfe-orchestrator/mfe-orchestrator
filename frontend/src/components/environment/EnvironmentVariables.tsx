@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Trash2, Variable } from "lucide-react"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
@@ -123,17 +123,17 @@ const EnvironmentVariables: React.FC<EnvironmentVariablesProps> = ({ environment
                             )}
 
                             <div className="flex flex-col space-y-2">
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div className="col-span-1">
+                                <div className="flex flex-wrap gap-2">
+                                    <div className="flex-[1_1_30%]">
                                         <Label htmlFor="env-key">Chiave</Label>
-                                        <Input id="env-key" placeholder="API_URL" value={newEnvKey} onChange={e => setNewEnvKey(e.target.value)} />
+                                        <Input id="env-key" fullWidth placeholder="API_URL" value={newEnvKey} onChange={e => setNewEnvKey(e.target.value)} />
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="flex-[2_1_60%]">
                                         <Label htmlFor="env-value">Valore</Label>
                                         <div className="flex gap-2">
-                                            <Input id="env-value" placeholder="https://api.example.com" value={newEnvValue} onChange={e => setNewEnvValue(e.target.value)} className="flex-1" />
-                                            <Button variant="secondary" size="icon" onClick={addEnvironmentVariable} disabled={newEnvKey.trim() === ""} title="Aggiungi variabile">
-                                                <Plus className="h-4 w-4" />
+                                            <Input id="env-value" fullWidth placeholder="https://api.example.com" value={newEnvValue} onChange={e => setNewEnvValue(e.target.value)} />
+                                            <Button variant="secondary" size="icon" onClick={addEnvironmentVariable} disabled={newEnvKey.trim() === ""} title="Aggiungi variabile" className="shrink-0">
+                                                <Plus />
                                             </Button>
                                         </div>
                                     </div>

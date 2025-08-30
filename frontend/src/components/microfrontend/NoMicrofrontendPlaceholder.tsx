@@ -2,7 +2,7 @@
 
 import { useForm, FormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button/button"
 import TextField from '@/components/input/TextField.rhf';
 import Switch from '@/components/input/Switch.rhf';
 import SelectField from '@/components/input/SelectField.rhf';

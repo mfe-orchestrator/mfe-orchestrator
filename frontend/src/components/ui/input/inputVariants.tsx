@@ -1,6 +1,5 @@
 import { cn } from "@/utils/styleUtils"
-import { cva, VariantProps } from "class-variance-authority"
-import * as React from "react"
+import { cva } from "class-variance-authority"
 
 const baseStyle = `
 	text-sm
@@ -13,7 +12,9 @@ const baseStyle = `
 	border-input
 	bg-background
 	ring-offset-background
+	shadow-input
 	placeholder:text-foreground/50
+	invalid:border-destructive
 `
 
 const focusStyle = `
@@ -21,6 +22,7 @@ const focusStyle = `
 	focus-visible:ring-2
 	focus-visible:ring-ring
 	focus-visible:ring-offset-2
+	focus-visible:border-primary
 `
 
 const fileInputStyle = `
@@ -37,20 +39,12 @@ const disabledStyle = `
 	disabled:bg-foreground/25
 `
 
-const iconStyle = `
-	
-`
-
-const activeStyle = `
-	
-`
-
-const inputVariants = cva(cn(baseStyle, fileInputStyle, focusStyle, disabledStyle, iconStyle, activeStyle), {
+export const inputVariants = cva(cn(baseStyle, fileInputStyle, focusStyle, disabledStyle), {
     variants: {
         layoutSize: {
             default: "px-3 py-2",
             sm: "gap-[0.375rem] text-xs rounded-sm px-2 py-[0.375rem]",
-            lg: "gap-[0.75rem] text-base rounded-lg px-4 py-3"
+            lg: "gap-[0.75rem] text-base rounded-lg px-4 py-3 shadow-input-lg"
         },
         fullWidth: {
             true: "w-full",
@@ -61,14 +55,3 @@ const inputVariants = cva(cn(baseStyle, fileInputStyle, focusStyle, disabledStyl
         layoutSize: "default"
     }
 })
-
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement>, VariantProps<typeof inputVariants> {
-    fullWidth?: boolean
-}
-
-const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type, layoutSize, fullWidth, ...props }, ref) => {
-    return <input type={type} className={cn(inputVariants({ layoutSize, fullWidth, className }))} ref={ref} {...props} />
-})
-Input.displayName = "Input"
-
-export { Input }

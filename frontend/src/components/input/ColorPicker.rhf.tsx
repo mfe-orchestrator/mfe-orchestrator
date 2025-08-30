@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { DEFAULT_COLORS } from "@/utils/EnviromentsPresets"
 import { ColorPicker as ColorPickerComponent } from "react-pick-color"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 
 type ColorPickerCustomProps<T extends FieldValues> = {
     name: Path<T>

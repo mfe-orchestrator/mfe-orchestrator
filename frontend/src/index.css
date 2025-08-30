@@ -54,6 +54,9 @@
 	--button-lg-inner-shadow: inset 4px 4px 8px rgba(243, 238, 255, 0.25), inset -4px -4px 8px rgba(13, 0, 72, 0.25);
 	--button-active-inner-shadow: inset -2px -2px 6px rgba(243, 238, 255, 0.25), inset 2px 2px 6px rgba(13, 0, 72, 0.25);
 	--button-lg-active-inner-shadow: inset -4px -4px 8px rgba(243, 238, 255, 0.25), inset 4px 4px 8px rgba(13, 0, 72, 0.25);
+
+	--input-inner-shadow: inset -1px -1px 4px rgba(243, 238, 255, 0.25), inset 1px 1px 4px rgba(13, 0, 72, 0.25);
+	--input-lg-inner-shadow: inset -2px -2px 6px rgba(243, 238, 255, 0.25), inset 2px 2px 6px rgba(13, 0, 72, 0.25);
   }
 
   .dark {

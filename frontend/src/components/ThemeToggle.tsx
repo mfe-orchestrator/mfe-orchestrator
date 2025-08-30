@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore";
-import { Button } from "./ui/button";
+import { Button } from "./ui/button/button"
 import { Moon, Sun, Monitor } from "lucide-react";
 import {
   DropdownMenu,

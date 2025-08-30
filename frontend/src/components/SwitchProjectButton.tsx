@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"

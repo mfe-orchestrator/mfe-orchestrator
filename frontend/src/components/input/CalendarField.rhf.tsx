@@ -3,7 +3,7 @@ import { Controller, FieldError, FieldValues, Path, useFormContext } from "react
 import { DayPicker } from "react-day-picker"
 import "react-day-picker/dist/style.css"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { Button } from "../ui/button"
+import { Button } from "../ui/button/button"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/utils/styleUtils"
 

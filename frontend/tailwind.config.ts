@@ -84,7 +84,9 @@ export default {
                 button: "var(--button-inner-shadow)",
                 "button-active": "var(--button-active-inner-shadow)",
                 "button-lg": "var(--button-lg-inner-shadow)",
-                "button-lg-active": "var(--button-lg-active-inner-shadow)"
+                "button-lg-active": "var(--button-lg-active-inner-shadow)",
+                input: "var(--input-inner-shadow)",
+                "input-lg": "var(--input-lg-inner-shadow)"
             },
             keyframes: {
                 "accordion-down": {

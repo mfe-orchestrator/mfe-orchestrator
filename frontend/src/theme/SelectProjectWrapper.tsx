@@ -6,7 +6,7 @@ import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 import { FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button"
 import { Project } from "@/hooks/apiClients/useProjectApi";
 import SelectField from '@/components/input/SelectField.rhf';
 import { getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from '@/utils/localStorageUtils';

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react"
 import MicrofrontendCard from "../../components/microfrontend/MicrofrontendCard"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Percent, Settings } from "lucide-react"

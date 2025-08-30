@@ -3,7 +3,7 @@ import EnvironmentSelector from "../../components/environment/EnvironmentSelecto
 import useProjectStore from "@/store/useProjectStore"
 import DeploymentList from "./DeploymentList"
 import EnvironmentsGate from "@/theme/EnvironmentsGate"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
 import { useQueryClient } from "@tanstack/react-query"
 import SinglePageHeader from "@/components/SinglePageHeader"

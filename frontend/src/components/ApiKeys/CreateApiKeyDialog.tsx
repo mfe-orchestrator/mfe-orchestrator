@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiKeyFormData, CreateApiKeyFormInner } from "./CreateApiKeyForm"
 import { useTranslation } from "react-i18next"

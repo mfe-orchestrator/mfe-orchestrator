@@ -1,10 +1,8 @@
 import { cn } from "@/utils/styleUtils"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
-import * as React from "react"
+import { cva } from "class-variance-authority"
 
 const baseStyle = `
-    inline-flex
+	inline-flex
 	items-center
 	justify-center
 	gap-2
@@ -33,7 +31,7 @@ const disabledStyle = `
 
 const iconStyle = `
 	[&_svg]:pointer-events-none 
-	[&_svg]:size-4
+	[&_svg]:size-5
 	[&_svg]:shrink-0
 `
 
@@ -41,7 +39,7 @@ const activeStyle = `
 	active:shadow-button-active
 `
 
-const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconStyle, activeStyle), {
+export const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconStyle, activeStyle), {
     variants: {
         variant: {
             primary: `
@@ -85,8 +83,8 @@ const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconStyle, a
             default: "px-4 py-2",
             sm: "gap-[0.375rem] text-xs rounded-sm px-3 py-[0.375rem]",
             lg: "gap-[0.75rem] text-base rounded-lg px-5 py-3 shadow-button-lg active:shadow-button-lg-active",
-            icon: "p-3",
-            "icon-sm": "p-2"
+            icon: "p-2 aspect-square",
+            "icon-sm": "p-[0.375rem] aspect-square"
         }
     },
     defaultVariants: {
@@ -94,15 +92,3 @@ const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconStyle, a
         size: "default"
     }
 })
-
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
-    asChild?: boolean
-}
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
-})
-Button.displayName = "Button"
-
-export { Button, buttonVariants }

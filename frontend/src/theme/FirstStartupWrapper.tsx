@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 import { FormProvider, useForm } from "react-hook-form";
 import TextField from "@/components/input/TextField.rhf";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button"
 import useStartupApi from "@/hooks/apiClients/useStartupApi";
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import useUserStore from '@/store/useUserStore';

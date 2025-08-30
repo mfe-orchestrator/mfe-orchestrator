@@ -1,8 +1,8 @@
 
 import MicrofrontendList from "@/components/microfrontend/MicrofrontendList"
 import SinglePageHeader from "@/components/SinglePageHeader"
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from "@/components/ui/input/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import useProjectStore from "@/store/useProjectStore"
 import { Search } from "lucide-react"
 import { useState } from "react"
@@ -25,7 +25,7 @@ const MicrofrontendDashboard = () => {
                 buttons={
                     <div className="flex items-center gap-2">
                         <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search className="absolute left-3 top-3 h-4 w-4 text-secondary" />
                             <Input placeholder="Cerca microfrontend..." className="pl-8 w-full md:w-[250px]" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                         </div>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>

@@ -1,6 +1,6 @@
 import { FormProvider, useForm } from "react-hook-form"
 import { useEffect, useState } from "react"
-import { Button } from "../ui/button"
+import { Button } from "../ui/button/button"
 import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import TextField from "../input/TextField.rhf"
 import Switch from "../input/Switch.rhf"

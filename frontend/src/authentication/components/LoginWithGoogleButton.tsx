@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { TokenResponse, useGoogleLogin } from "@react-oauth/google"
 import { LoginComponentProps } from "./LoginPage"
 import { setToken } from "../tokenUtils"
