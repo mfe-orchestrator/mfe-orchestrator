@@ -1,7 +1,13 @@
 import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
 import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
-import { IDeployment } from "../models/DeploymentModel"
+import Deployment, { IDeployment } from "../models/DeploymentModel"
+import Environment from "../models/EnvironmentModel"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import Project, { IProject } from "../models/ProjectModel"
+import path from "path"
+import fs from "fs"
+import { fastify } from ".."
 
 export interface MicrofrontendAdaptedToServe {
     url: string
@@ -51,9 +57,22 @@ export default class ServeService {
      * @param microfrontendSlug The slug of the microfrontend
      * @returns Promise with Microfrontend object or null if not found
      */
-    async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string): Promise<IMicrofrontend | null> {
-        // TODO: Implement database query to fetch by environment slug, project ID, and microfrontend slug
-        return null
+    async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<IMicrofrontend | null> {
+        const environment = await Environment.findOne({ slug: environmentSlug })
+        if (!environment) {
+            throw new EntityNotFoundError(environmentSlug)
+        }
+
+        const project = await Project.findOne({ _id: projectId })
+        if (!project) {
+            throw new EntityNotFoundError(projectId)
+        }
+
+        const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
     }
 
     /**
@@ -96,6 +115,28 @@ export default class ServeService {
     async getGlobalVariablesByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<Record<string, any>> {
         // TODO: Implement database query to fetch global variables by project ID and environment slug
         return {}
+    }
+
+    async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string): Promise<any> {
+        const microfrontend = deployment.microfrontends?.find(mfe => mfe.slug === microfrontendSlug)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendSlug)
+        }
+        const version = microfrontend.version
+        
+        //Adesso tiro fuori il MFE
+        const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
+        if (!fs.existsSync(basePath)) {
+            throw new Error("Microfrontend not found")
+        }
+
+        const finalPath = path.join(basePath, filePath);
+
+        if (!fs.existsSync(finalPath)) {
+            throw new Error("File not found")
+        }
+
+        return fs.createReadStream(finalPath)
     }
 }
 

@@ -9,7 +9,7 @@ export default fastifyPlugin(
         fastify.log.info("CORS enabled for" +  fastify.config.ALLOWED_ORIGINS)
         const allowedOrigins = fastify.config.ALLOWED_ORIGINS.split(",")
         await fastify.register(fastifyCors, {
-            origin: allowedOrigins,
+            origin: "*",
             allowedHeaders: ["*"],
             credentials: true
         })

@@ -1,9 +1,11 @@
 import useApiClient from "../useApiClient"
+import { Microfrontend } from "./useMicrofrontendsApi"
 
 export interface DeploymentDTO {
     _id: string
     environmentId: string
     microfrontendId: string
+    microfrontends: Microfrontend[]
     version: string
     status: "pending" | "in-progress" | "completed" | "failed"
     createdAt: string

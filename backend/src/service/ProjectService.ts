@@ -80,7 +80,7 @@ export class ProjectService extends BaseAuthorizedService {
         try {
             const project = new Project({
                 name: projectData.name,
-                slug: projectData.slug,
+                slug: projectData.slug || projectData.name.toLowerCase().replace(" ", "-").replace("_", "-").replace(".", "-"),
                 description: projectData.description,
                 isActive: projectData.isActive ?? true
             })

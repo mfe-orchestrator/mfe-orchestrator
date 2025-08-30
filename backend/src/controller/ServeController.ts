@@ -27,9 +27,14 @@ export default async function serveController(fastify: FastifyInstance) {
             environmentSlug: string
             projectId: string
             microfrontendSlug: string
+            '*': string  // This captures the rest of the path
         }
-    }>("/serve/mfe/:environmentSlug/:projectId/:microfrontendSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        return reply.send(await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.microfrontendSlug))
+    }>("/serve/mfe/:environmentSlug/:projectId/:microfrontendSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        const filePath = request.params['*'] || ''
+        if (filePath.endsWith('.js')) {
+            reply.header('Content-Type', 'application/javascript');
+        }
+        return reply.send(await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.microfrontendSlug, filePath))
     })
 
     fastify.get<{

@@ -159,6 +159,7 @@
   },
   "deployments": {
     "title": "Distribuzioni",
+    "microfrontends_title": "Microfrontend",
     "status": {
       "completed": "Completato",
       "failed": "Fallito",
@@ -170,7 +171,8 @@
       "version": "Versione",
       "status": "Stato",
       "created": "Creato il",
-      "last_updated": "Ultimo Aggiornamento"
+      "last_updated": "Ultimo Aggiornamento",
+      "slug": "Slug"
     },
     "no_deployments": "Nessuna distribuzione trovata",
     "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
@@ -272,6 +274,8 @@
     "select_color": "Seleziona un colore"
   },
   "microfrontend": {
+    "no_microfrontends_found": "Nessun Microfrontend Trovato",
+    "add_your_first_microfrontend": "Aggiungi il tuo primo microfrontend per iniziare!",
     "name_placeholder": "Awesome Microfrontend",
     "name": "Nome",
     "add_new": "Aggiungi Nuovo Microfrontend",
