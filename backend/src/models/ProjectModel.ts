@@ -19,7 +19,7 @@ const projectSchema = new Schema<IProject>(
         },
         slug: {
             type: String,
-            required: false,
+            required: true,
             trim: true,
             maxlength: 255
         },

@@ -8,6 +8,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export interface ProjectCreateInput {
     name: string
+    slug: string
     description?: string
     isActive?: boolean
 }
@@ -79,6 +80,7 @@ export class ProjectService extends BaseAuthorizedService {
         try {
             const project = new Project({
                 name: projectData.name,
+                slug: projectData.slug,
                 description: projectData.description,
                 isActive: projectData.isActive ?? true
             })

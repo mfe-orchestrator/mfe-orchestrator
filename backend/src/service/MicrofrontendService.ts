@@ -148,9 +148,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 const azureStorageClient = new AzureStorageClient(storage.authConfig)
                 await azureStorageClient.uploadFile(path, await file.toBuffer())
             }
-
-            // MFE -> SOURCE -> Upload
-            throw new Error("Microfrontend host type is not supported NOW")
         }
     }
 

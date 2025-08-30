@@ -31,6 +31,7 @@ export function StartupController(fastify: FastifyInstance) {
         const project = await projectService.create(
             {
                 name: req.body.project,
+                slug: req.body.project.toLowerCase().replace(" ", "-").replace("_", "-").replace(".", "-"),
                 description: req.body.project
             },
             registeredUser._id

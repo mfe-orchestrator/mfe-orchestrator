@@ -16,11 +16,17 @@ resource "docker_container" "microfrontend_orchestrator_hub" {
     internal = 80
     external = 8080
   }
+
+  volumes {
+    host_path      = abspath("${path.root}/volumes/mfe-orchestrator-hub")
+    container_path = "/var/microfrontends"
+  }
   
   env = [
     "NOSQL_DATABASE_URL=mongodb://root:example@mfe-mongodb:27017",
     "REDIS_URL=redis://mfe-redis:6379",
     "REGISTRATION_ALLOWED=true",
-    "ALLOW_EMBEDDED_LOGIN=true"
+    "ALLOW_EMBEDDED_LOGIN=true",
+    "MICROFRONTEND_HOST_FOLDER=/var/microfrontends",
   ]
 }
