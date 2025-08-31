@@ -19,6 +19,14 @@ export default async function projectController(fastify: FastifyInstance) {
         return reply.send(project)
     })
 
+    fastify.get<{
+        Params: {
+            projectId: string
+        }
+    }>("/projects/:projectId/summary", async (request, reply) => {
+        return reply.send(await new ProjectService(request.databaseUser).getSummary(request.params.projectId))
+    })
+
     // Get project by ID
     fastify.get<{
         Params: {

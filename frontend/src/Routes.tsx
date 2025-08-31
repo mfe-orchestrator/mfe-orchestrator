@@ -25,6 +25,8 @@ const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewM
 const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
 const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
 const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStoragePage"));
+const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
+const EnvironmentsPage = lazy(() => import("./pages/EnvironmentsPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -119,6 +121,18 @@ const PrivateRoutes: React.FC = () => {
             path="/api-keys"
             element={
               <RouteWithSuspense element={<ApiKeysPage />} />
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RouteWithSuspense element={<SettingsPage />} />
+            }
+          />
+          <Route
+            path="/environments"
+            element={
+              <RouteWithSuspense element={<EnvironmentsPage />} />
             }
           />
           <Route

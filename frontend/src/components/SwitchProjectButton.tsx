@@ -28,6 +28,7 @@ const CreateNewProjectForm: React.FC<CreateNewProjectFormProps> = ({ onSuccess }
     const onSubmit = async (values: CreateNewProjectFormData) => {
         const newProject = await projectApi.createProject({
             name: values.name,
+            slug: values.name.toLowerCase().replace(/\s+/g, '-'),
             description: values.description
         })
 
@@ -63,6 +64,7 @@ const SwitchProjectButton = () => {
 
     const handleProjectSelect = (selectedProject: Project) => {
         setProject(selectedProject)
+        setProjectIdInLocalStorage(selectedProject._id)
         setIsOpen(false)
     }
 

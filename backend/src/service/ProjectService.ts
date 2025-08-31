@@ -5,6 +5,11 @@ import UserProjectService from "./UserProjectService"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import Environment from "../models/EnvironmentModel"
+import Microfrontend from "../models/MicrofrontendModel"
+import ApiKey from "../models/ApiKeyModel"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import Storage from "../models/StorageModel"
 
 export interface ProjectCreateInput {
     name: string
@@ -17,6 +22,17 @@ export interface ProjectUpdateInput {
     name?: string
     description?: string | null
     isActive?: boolean
+}
+
+export interface ProjectSummaryDTO{
+    project : IProject,
+    count : {
+        environments : number,
+        users : number,
+        microfrontends : number,
+        apiKeys : number,
+        storages : number
+    }
 }
 
 export class ProjectService extends BaseAuthorizedService {
@@ -49,17 +65,11 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
-    async findById(id: string): Promise<IProject | null> {
-        await this.ensureAccessToProject(id)
+    async findById(id: string | ObjectId): Promise<IProject | null> {
+        const projectIdObj = typeof id === "string" ? new Types.ObjectId(id) : id
+        await this.ensureAccessToProject(projectIdObj)
         try {
-            if (!Types.ObjectId.isValid(id)) {
-                throw createBusinessException({
-                    code: "INVALID_ID",
-                    message: "Invalid project ID format",
-                    statusCode: 400
-                })
-            }
-            return await Project.findById(id).lean()
+            return await Project.findById(projectIdObj).lean()
         } catch (error) {
             if (error instanceof BusinessException) throw error
 
@@ -69,6 +79,23 @@ export class ProjectService extends BaseAuthorizedService {
                 details: { error: error instanceof Error ? error.message : "Unknown error" },
                 statusCode: 500
             })
+        }
+    }
+
+    async getSummary(projectId: string): Promise<ProjectSummaryDTO> {        
+        const project = await this.findById(projectId)
+        if (!project) {
+            throw new EntityNotFoundError(projectId);
+        }
+        return {
+            project,
+            count: {
+                environments : await Environment.countDocuments({projectId}),
+                users: await UserProject.countDocuments({projectId}),
+                microfrontends: await Microfrontend.countDocuments({projectId}),
+                apiKeys: await ApiKey.countDocuments({projectId}),
+                storages: await Storage.countDocuments({projectId})
+            }
         }
     }
 

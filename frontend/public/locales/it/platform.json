@@ -136,8 +136,73 @@
   },
   "settings": {
     "title": "Impostazioni",
+    "subtitle": "Gestisci le impostazioni del tuo progetto",
     "profile": "Profilo",
     "account": "Account",
+    "stats": {
+      "title": "Statistiche",
+      "viewAll": "Visualizza Tutto",
+      "teamMembers": "Membri",
+      "microFrontends": "Micrfrontends",
+      "environments": "Environments",
+      "apiKeys": "API Keys",
+      "storages": "Storages"
+    },
+    "settingsPage": {
+      "title": "Impostazioni Progetto",
+      "backToDashboard": "Torna alla Dashboard",
+      "projectInfo": {
+        "title": "Informazioni Progetto",
+        "name": "Nome",
+        "slug": "Slug",
+        "id": "ID",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "edit": "Modifica",
+        "copy": "Copia",
+        "copied": "Copiato!"
+      },
+      "stats": {
+        "title": "Statistiche Progetto",
+        "teamMembers": "Membri del Team",
+        "viewTeam": "Visualizza Team",
+        "microFrontends": "Micro Frontend",
+        "viewAllMFEs": "Visualizza Tutti i MFEs"
+      },
+      "apiKeys": {
+        "title": "Chiavi API",
+        "createNewKey": "Crea Nuova Chiave",
+        "keyName": "Nome Chiave",
+        "keyPlaceholder": "es. Produzione, Sviluppo",
+        "created": "Creata il",
+        "lastUsed": "Ultimo Utilizzo",
+        "never": "Mai",
+        "actions": "Azioni",
+        "delete": "Elimina",
+        "showKey": "Mostra chiave",
+        "hideKey": "Nascondi chiave",
+        "createKeyDescription": "Crea una nuova chiave API per il tuo progetto. Assicurati di copiarla - non potrai più visualizzarla in seguito!",
+        "noKeys": "Nessuna chiave API trovata"
+      },
+      "storages": {
+        "title": "I Miei Storage",
+        "description": "Gestisci gli storage e le configurazioni del progetto",
+        "viewStorages": "Visualizza Storage"
+      },
+      "dangerZone": {
+        "title": "Zona Pericolosa",
+        "description": "Queste azioni sono irreversibili. Si prega di prestare attenzione.",
+        "deleteProject": {
+          "title": "Elimina questo progetto",
+          "description": "Una volta eliminato un progetto, non sarà più possibile recuperarlo. Si prega di prestare attenzione.",
+          "button": "Elimina Progetto",
+          "confirmTitle": "Elimina Progetto"
+        }
+      },
+      "notifications":{
+        "projectDeleted": "Progetto eliminato con successo"
+      }
+    },
     "security": "Sicurezza",
     "notifications": "Notifiche",
     "appearance": "Aspetto",
@@ -160,18 +225,13 @@
   "deployments": {
     "title": "Distribuzioni",
     "microfrontends_title": "Microfrontend",
-    "status": {
-      "completed": "Completato",
-      "failed": "Fallito",
-      "in-progress": "In Corso",
-      "pending": "In Attesa"
-    },
+    "active": "Attivo",
     "columns": {
+      "id": "ID",
+      "deployed": "Rilasciato il",
+      "created": "Creato il",
       "microfrontend": "Microfrontend",
       "version": "Versione",
-      "status": "Stato",
-      "created": "Creato il",
-      "last_updated": "Ultimo Aggiornamento",
       "slug": "Slug"
     },
     "no_deployments": "Nessuna distribuzione trovata",

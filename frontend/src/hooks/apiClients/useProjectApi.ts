@@ -3,25 +3,32 @@ import { EnvironmentDTO } from "./useEnvironmentsApi";
 
 export interface Project {
   name: string;
+  slug: string;
   description?: string;
   createdAt?: string;
   updatedAt?: string;
   _id: string
 }
 
+export interface ProjectSummaryDTO {
+    project : Project,
+    count : {
+        environments : number,
+        users : number,
+        microfrontends : number,
+        apiKeys : number,
+        storages : number
+    }
+}
+
 const useProjectApi = () => {
   const apiClient = useApiClient();
 
   const getMineProjects = async (): Promise<Project[]> => {
-    try {
-      const response = await apiClient.doRequest<Project[]>({
-        url: "/api/projects/mine",
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-      throw error;
-    }
+    const response = await apiClient.doRequest<Project[]>({
+      url: "/api/projects/mine",
+    });
+    return response.data;
   };
 
   const getEnvironmentsByProjectId = async (projectId: string) : Promise<EnvironmentDTO[]> => {
@@ -32,56 +39,44 @@ const useProjectApi = () => {
 }
 
   const getProjectById = async (id: string): Promise<Project> => {
-    try {
-      const response = await apiClient.doRequest<Project>({
-        url: `/api/projects/${id}`,
-        method: "GET"
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching project with id ${id}:`, error);
-      throw error;
-    }
+    const response = await apiClient.doRequest<Project>({
+      url: `/api/projects/${id}`,
+      method: "GET"
+    });
+    return response.data;
+  };
+
+  const getProjectSummaryById = async (id: string): Promise<ProjectSummaryDTO> => {
+    const response = await apiClient.doRequest<ProjectSummaryDTO>({
+      url: `/api/projects/${id}/summary`,
+      method: "GET"
+    });
+    return response.data;
   };
 
   const createProject = async (project: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>): Promise<Project> => {
-    try {
-      const response = await apiClient.doRequest<Project>({
-        url: "/api/projects",
-        method: "POST",
-        data: project
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error creating project:", error);
-      throw error;
-    }
+    const response = await apiClient.doRequest<Project>({
+      url: "/api/projects",
+      method: "POST",
+      data: project
+    });
+    return response.data;
   };
 
   const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
-    try {
-      const response = await apiClient.doRequest<Project>({
-        url: `/api/projects/${id}`,
-        method: "PUT",
-        data: project
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating project with id ${id}:`, error);
-      throw error;
-    }
+    const response = await apiClient.doRequest<Project>({
+      url: `/api/projects/${id}`,
+      method: "PUT",
+      data: project
+    });
+    return response.data;
   };
 
   const deleteProject = async (id: string): Promise<void> => {
-    try {
-      await apiClient.doRequest({
-        url: `/api/projects/${id}`,
-        method: "DELETE"
-      });
-    } catch (error) {
-      console.error(`Error deleting project with id ${id}:`, error);
-      throw error;
-    }
+    await apiClient.doRequest({
+      url: `/api/projects/${id}`,
+      method: "DELETE"
+    });
   };
 
   return {
@@ -89,6 +84,7 @@ const useProjectApi = () => {
     getProjectById,
     createProject,
     updateProject,
+    getProjectSummaryById,
     deleteProject,
     getEnvironmentsByProjectId
   };

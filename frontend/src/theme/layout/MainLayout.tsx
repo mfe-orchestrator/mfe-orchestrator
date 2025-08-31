@@ -61,21 +61,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <LinkIcon className="h-5 w-5" />
     },
     {
-      name: "Storages",
-      path: '/storages',
-      icon: <HardDrive className="h-5 w-5" />
-    },
-    {
-      name: t('project_users.title'),
-      path: '/project-users',
-      icon: <User className="h-5 w-5" />
-    },
-    {
-      name: t('apiKeys.api_keys'),
-      path: '/api-keys',
-      icon: <KeyIcon className="h-5 w-5" />
-    },
-    {
       name: t('sftp.title'),
       path: '/sftp',
       disabled: true,
@@ -84,7 +69,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     {
       name: t('settings.title'),
       path: '/settings',
-      disabled: true,
       icon: <Settings className="h-5 w-5" />
     },
   ];

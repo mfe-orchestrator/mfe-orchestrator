@@ -25,13 +25,11 @@ const DeploymentDashboard: React.FC = () => {
         <SinglePageHeader
             title="Deployments"
             description="Gestisci i deployment del tuo progetto"
+            center={isThereAtLeastOneEnvironment && (
+                <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
+            )}
             buttons={
-                <>
-                    {isThereAtLeastOneEnvironment && (
-                        <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
-                    )}
-                    <Button onClick={handleDeploy}>Deploy</Button>
-                </>
+                <Button onClick={handleDeploy}>Deploy</Button>
             }
         />
         <div className="space-y-6 mt-6">

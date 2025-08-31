@@ -4,18 +4,29 @@ import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import { ClientSession, ObjectId } from "mongoose"
+import { ClientSession, ObjectId, Schema, Types } from "mongoose"
 import { runInTransaction } from "../utils/runInTransaction"
 
 class DeploymentService extends BaseAuthorizedService {
     async getByEnvironmentId(environmentId: string | ObjectId) {
         await this.ensureAccessToEnvironment(environmentId)
-        return Deployment.find({ environmentId })
+        return Deployment.find({ environmentId }).sort({ deployedAt: -1 })
+    }
+
+    private async getDeploymentId(environmentId: Schema.Types.ObjectId | Types.ObjectId, session?: ClientSession) {
+        
+        const deployments = await Deployment.find({ environmentId }).session(session || null)
+        if(!deployments || deployments.length === 0){
+            return "#1"
+        }else{
+            return `#${deployments.length + 1}`
+        }
     }
 
     async createRaw(environmentId: string | ObjectId, session?: ClientSession) {
         await this.ensureAccessToEnvironment(environmentId, session)
-        const environment = await Environment.findById(environmentId).session(session || null)
+        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
+        const environment = await Environment.findById(environmentIdObj).session(session || null)
         if (!environment) {
             throw new EntityNotFoundError(environmentId.toString())
         }
@@ -23,13 +34,20 @@ class DeploymentService extends BaseAuthorizedService {
         const microfrontend = await Microfrontend.find({ projectId: environment.projectId }).session(session || null)
         const variables = await GlobalVariable.find({ projectId: environment.projectId }).session(session || null)
 
-        const deployment: Partial<IDeployment> = {
+        const deploymentId = await this.getDeploymentId(environmentIdObj, session)
+
+
+        const deployment =  await new Deployment({
             environmentId: environment._id,
             microfrontends: microfrontend,
-            variables: variables
-        }
+            variables: variables,
+            deploymentId,
+            active: true
+        }).save({ session })
 
-        return await new Deployment(deployment).save({ session })
+        await Deployment.updateMany({ environmentId, _id: { $ne: deployment._id } }, { active: false }, { session })
+
+        return deployment
     }
 
     async createMultipleRaw(environmentIds: (string | ObjectId)[], session?: ClientSession) {
@@ -59,13 +77,13 @@ class DeploymentService extends BaseAuthorizedService {
 
         await this.ensureAccessToEnvironment(deployment.environmentId)
 
-        const newDeployment: Partial<IDeployment> = {
-            environmentId: deployment.environmentId,
-            microfrontends: deployment.microfrontends,
-            variables: deployment.variables
-        }
+        deployment.active = true
+        deployment.deployedAt = new Date()
+        await deployment.save()
 
-        return await Deployment.create(newDeployment)
+        await Deployment.updateMany({ environmentId: deployment.environmentId, _id: { $ne: deployment._id } }, { active: false })
+
+        return deployment
     }
 }
 

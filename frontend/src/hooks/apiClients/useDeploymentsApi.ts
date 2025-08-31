@@ -1,18 +1,17 @@
 import useApiClient from "../useApiClient"
+import { GlobalVariable } from "./useGlobalVariablesClient"
 import { Microfrontend } from "./useMicrofrontendsApi"
 
 export interface DeploymentDTO {
     _id: string
     environmentId: string
-    microfrontendId: string
     microfrontends: Microfrontend[]
-    version: string
-    status: "pending" | "in-progress" | "completed" | "failed"
+    variables: GlobalVariable[]
+    deploymentId: string
+    active: boolean
     createdAt: string
     updatedAt: string
-    deployedAt?: string
-    deployedBy?: string
-    metadata?: Record<string, any>
+    deployedAt: string
 }
 
 interface CreateDeploymentDTO {
@@ -51,10 +50,19 @@ const useDeploymentsApi = () => {
         return response.data
     }
 
+    const redeploy = async (deploymentId: string) => {
+        const response = await apiClient.doRequest<DeploymentDTO>({
+            url: `/api/deployment/${deploymentId}/redeployment`,
+            method: "POST"
+        })
+        return response.data
+    }
+
     return {
         getDeployments,
         createDeployment,
-        getDeployment
+        getDeployment,
+        redeploy
     }
 }
 

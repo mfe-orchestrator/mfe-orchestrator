@@ -134,8 +134,73 @@
   },
   "settings": {
     "title": "Settings",
+    "subtitle": "Manage your project",
     "profile": "Profile",
     "account": "Account",
+    "stats": {
+      "title": "Statistics",
+      "viewAll": "View All",
+      "teamMembers": "Team Members",
+      "microFrontends": "Microfrontends",
+      "environments": "Environments",
+      "apiKeys": "API Keys",
+      "storages": "Storages"
+    },
+    "settingsPage": {
+      "title": "Project Settings",
+      "backToDashboard": "Back to Dashboard",
+      "projectInfo": {
+        "title": "Project Information",
+        "name": "Name",
+        "slug": "Slug",
+        "id": "ID",
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "copy": "Copy",
+        "copied": "Copied!"
+      },
+      "stats": {
+        "title": "Project Statistics",
+        "teamMembers": "Team Members",
+        "viewTeam": "View Team",
+        "microFrontends": "Micro Frontends",
+        "viewAllMFEs": "View All MFEs"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "createNewKey": "Create New Key",
+        "keyName": "Key Name",
+        "keyPlaceholder": "e.g., Production, Development",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "never": "Never",
+        "actions": "Actions",
+        "delete": "Delete",
+        "showKey": "Show key",
+        "hideKey": "Hide key",
+        "createKeyDescription": "Create a new API key for your project. Make sure to copy it - you won't be able to see it again!",
+        "noKeys": "No API keys found"
+      },
+      "storages": {
+        "title": "My Storages",
+        "description": "Manage your project storages and configurations",
+        "viewStorages": "View Storages"
+      },
+      "dangerZone": {
+        "title": "Danger Zone",
+        "description": "These actions are irreversible. Please be certain.",
+        "deleteProject": {
+          "title": "Delete this project",
+          "description": "Once you delete a project, there is no going back. Please be certain.",
+          "button": "Delete Project",
+          "confirmTitle": "Delete Project"
+        }
+      },
+      "notifications":{
+        "projectDeleted": "Project deleted"
+      }
+    },
     "security": "Security",
     "notifications": "Notifications",
     "appearance": "Appearance",
@@ -202,18 +267,21 @@
   },
   "deployments": {
     "title": "Deployments",
-    "status": {
-      "completed": "Completed",
-      "failed": "Failed",
-      "in-progress": "In Progress",
-      "pending": "Pending"
-    },
+    "microfrontends_title": "Microfrontend",
+    "active": "Active",
     "columns": {
+      "id": "ID",
+      "deployed": "Deployed",
+      "created": "Created",
       "microfrontend": "Microfrontend",
       "version": "Version",
-      "status": "Status",
-      "created": "Created",
-      "last_updated": "Last Updated"
+      "slug": "Slug",
+      "actions": "Actions"
+    },
+    "actions": {
+      "redeploy": "Redeploy",
+      "redeploying": "Redeploying...",
+      "redeploy_tooltip": "Redeploy this version"
     },
     "no_deployments": "No deployments found",
     "no_deployments_description": "Deployments will appear here once created",

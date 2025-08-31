@@ -6,6 +6,7 @@ type ApiDataFetcherProps<TData = unknown, TError = unknown> = {
   queries: UseQueryResult<TData, TError>[];
   loadingComponent?: ReactNode;
   errorComponent?: (error: TError) => ReactNode;
+  emptyComponent?: ReactNode,
   children: ReactNode;
 };
 
@@ -22,9 +23,15 @@ export function ApiDataFetcher<TData = unknown, TError = unknown>({
       Error: {error instanceof Error ? error.message : 'An error occurred'}
     </div>
   ),
+  emptyComponent = (
+    <div className="p-4 text-red-500">
+      No data
+    </div>
+  ),
 }: ApiDataFetcherProps<TData, TError>) {
-  const isLoading = queries.some((query) => query.isLoading || query.isFetching);
+  const isLoading = queries.some((query) => query.isLoading || query.isFetching || query.isPending);
   const error = queries.find((query) => query.isError)?.error;
+  const isEmpty = queries.some((query) => !query.data);
 
   if (isLoading) {
     return <>{loadingComponent}</>;

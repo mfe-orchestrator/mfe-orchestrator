@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RefreshCw, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import useDeploymentsApi from '../../hooks/apiClients/useDeploymentsApi';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import { useState } from 'react';
 
@@ -16,7 +16,7 @@ interface DeploymentListProps {
 
 const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
     const { t } = useTranslation('platform');
-    const { getDeployments } = useDeploymentsApi();
+    const { getDeployments, redeploy } = useDeploymentsApi();
     const [selectedDeploymentId, setSelectedDeploymentId] = useState<string | null>(null);
 
     const dataQuery = useQuery({
@@ -24,38 +24,16 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
         queryFn: () => getDeployments(environmentId),
     });
 
+    const redeployQuery = useMutation({
+        mutationFn: redeploy,
+        onSuccess: () => dataQuery.refetch()
+    })
+
+    const onRedeploy = (deploymentId: string) => {
+        redeployQuery.mutate(deploymentId)
+    }
+
     const deployments = dataQuery.data || [];
-
-    const getStatusBadge = (status: string) => {
-        const statusMap: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success', icon: React.ReactNode }> = {
-            'completed': {
-                variant: 'success',
-                icon: <CheckCircle2 className="h-3 w-3 mr-1" />
-            },
-            'failed': {
-                variant: 'destructive',
-                icon: <AlertCircle className="h-3 w-3 mr-1" />
-            },
-            'in-progress': {
-                variant: 'default',
-                icon: <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-            },
-            'pending': {
-                variant: 'outline',
-                icon: <Clock className="h-3 w-3 mr-1" />
-            }
-        };
-
-        const statusConfig = statusMap[status] || { variant: 'default' as const, icon: null };
-        const displayStatus = t(`deployments.status.${status}`, { defaultValue: status });
-
-        return (
-            <Badge className="gap-1">
-                {statusConfig.icon}
-                {displayStatus}
-            </Badge>
-        );
-    };
 
     const selectedDeployment = deployments.find(deployment => deployment._id === selectedDeploymentId);
 
@@ -90,13 +68,22 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead>{t('deployments.columns.id')}</TableHead>
                                     <TableHead>{t('deployments.columns.created')}</TableHead>
+                                    <TableHead>{t('deployments.columns.deployed')}</TableHead>
+                                    <TableHead className="w-32">{t('deployments.columns.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {deployments.length > 0 ? (
                                     deployments.map((deployment) => (
                                         <TableRow key={deployment._id} onClick={() => setSelectedDeploymentId(deployment._id)}>
+                                            <TableCell>
+                                                {deployment.deploymentId}
+                                                {deployment.active && (
+                                                    <Badge variant="outline" className="ml-2">{t('deployments.active')}</Badge>
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 <TooltipProvider>
                                                     <Tooltip>
@@ -107,6 +94,42 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>{new Date(deployment.createdAt).toLocaleString()}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </TableCell>
+                                            <TableCell>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <span className="text-sm text-muted-foreground cursor-help">
+                                                                {new Date(deployment.deployedAt).toLocaleDateString()}
+                                                            </span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{new Date(deployment.deployedAt).toLocaleString()}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </TableCell>
+                                            <TableCell>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onRedeploy(deployment._id)
+                                                                }}
+                                                                disabled={redeployQuery.isPending || deployment.active}
+                                                            >
+                                                                <RefreshCw className="h-4 w-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{t('deployments.actions.redeploy_tooltip')}</p>
                                                         </TooltipContent>
                                                     </Tooltip>
                                                 </TooltipProvider>

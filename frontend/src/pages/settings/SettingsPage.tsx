@@ -1,0 +1,115 @@
+import { useTranslation } from 'react-i18next';
+import { Box, Key, Server, Users, HardDrive } from 'lucide-react';
+import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+
+// Hooks & Stores
+import useToastNotificationStore from '@/store/useToastNotificationStore';
+import useProjectStore from '@/store/useProjectStore';
+import useProjectApi, { Project } from '@/hooks/apiClients/useProjectApi';
+
+// Components
+import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
+import { ProjectInfoSection } from '@/components/settings/ProjectInfoSection';
+import { ProjectStatsSection } from '@/components/settings/ProjectStatsSection';
+import { DangerZone } from '@/components/settings/DangerZone';
+import SinglePageHeader from '@/components/SinglePageHeader';
+
+
+const SettingsPage: React.FC = () => {
+  const notifications = useToastNotificationStore();
+  const { t } = useTranslation();
+  const { project, setProject } = useProjectStore();
+  const projectApi = useProjectApi();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const projectQuery = useQuery({
+    queryKey: ['project-summary', project._id],
+    queryFn: () => projectApi.getProjectSummaryById(project._id),
+    enabled: !!project._id,
+  });
+
+  const handleDeleteProjectSuccess = async () => {
+    notifications.showSuccessNotification({ message: t('settings.notifications.projectDeleted') });
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
+    setProject(null);
+    navigate('/');
+  }
+
+  const updateProjectMutation = useMutation({
+    mutationFn: (projectData: Partial<Project>) => projectApi.updateProject(project._id, projectData)
+  })
+
+  const handleProjectNameUpdate = async (newName: string) => {
+    if (!newName.trim()) return;
+
+    try {
+      //await updateProjectName(newName);
+      notifications.showSuccessNotification({ message: t('settings.notifications.projectNameUpdated') });
+    } catch (error) {
+      console.error('Failed to update project name:', error);
+      notifications.showErrorNotification({ message: t('settings.notifications.projectNameUpdateFailed') });
+      throw error; // Re-throw to let the component handle the error
+    }
+  };
+
+
+  const projectData = projectQuery.data?.project;
+  
+  return (
+    <ApiDataFetcher queries={[projectQuery]}>
+      <SinglePageHeader
+        title={t('settings.title')}
+        description={t('settings.subtitle')}
+      />
+      <div className="space-y-8 mt-8">
+        {projectData &&
+          <ProjectInfoSection
+            {...projectData}
+            onUpdateProjectName={handleProjectNameUpdate}
+          />
+        }
+
+        <ProjectStatsSection
+          stats={[
+            {
+              icon: <Server className="h-6 w-6" />,
+              title: t('settings.stats.environments'),
+              value: projectQuery.data?.count?.environments,
+              href: "/environments"
+            },
+            {
+              icon: <Users className="h-6 w-6" />,
+              title: t('settings.stats.teamMembers'),
+              value: projectQuery.data?.count?.users,
+              href: "/project-users"
+            },
+            {
+              icon: <Box className="h-6 w-6" />,
+              title: t('settings.stats.microFrontends'),
+              value: projectQuery.data?.count?.microfrontends,
+              href: '/microfrontends'
+            },
+            {
+              icon: <HardDrive className="h-6 w-6" />,
+              title: t('settings.stats.storages'),
+              value: projectQuery.data?.count?.storages,
+              href: '/storages'
+            },
+            {
+              icon: <Key className="h-6 w-6" />,
+              title: t('settings.stats.apiKeys'),
+              value: projectQuery.data?.count?.apiKeys,
+              href: '/api-keys'
+            }
+          ]}
+        />
+
+        <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
+      </div>
+    </ApiDataFetcher>
+  );
+}
+
+export default SettingsPage
