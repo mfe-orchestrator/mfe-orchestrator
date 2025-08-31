@@ -7,6 +7,7 @@ const baseStyle = `
 	tracking-normal
 	flex
 	items-center
+	justify-between
 	gap-2
 	rounded-md
 	border-2
@@ -16,6 +17,8 @@ const baseStyle = `
 	shadow-input
 	placeholder:text-foreground/50
 	invalid:border-destructive
+	[&>span]:line-clamp-1
+	[&_svg]:size-4
 `
 
 const focusStyle = `
@@ -26,26 +29,18 @@ const focusStyle = `
 	focus-visible:border-primary
 `
 
-const fileInputStyle = `
-	file:border-0
-	file:bg-transparent
-	file:text-sm
-	file:font-medium
-	file:text-foreground
-`
-
 const disabledStyle = `
 	disabled:cursor-not-allowed
 	disabled:opacity-75
 	disabled:bg-foreground/25
 `
 
-export const inputVariants = cva(cn(baseStyle, fileInputStyle, focusStyle, disabledStyle), {
+export const selectTriggerVariants = cva(cn(baseStyle, focusStyle, disabledStyle), {
     variants: {
         layoutSize: {
-            default: "px-3 py-2",
-            sm: "gap-[0.375rem] text-xs rounded-sm px-2 py-[0.375rem]",
-            lg: "gap-[0.75rem] text-base rounded-lg px-4 py-3 shadow-input-lg"
+            default: "ps-3 pe-2 py-2",
+            sm: "gap-[0.375rem] text-xs rounded-sm ps-2 pe-[0.375rem] py-[0.375rem]",
+            lg: "gap-[0.75rem] text-base rounded-lg ps-4 pe-3 py-3 shadow-input-lg [&_svg]:size-5"
         },
         fullWidth: {
             true: "w-full",

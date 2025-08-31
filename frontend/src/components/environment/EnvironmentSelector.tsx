@@ -1,15 +1,13 @@
 
 import React from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
-import { useTranslation } from 'react-i18next';
+
+import { Badge } from "@/components/ui/badge"
+import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
+import { useTranslation } from "react-i18next"
+import { SelectTrigger } from "../ui/select/partials/selectTrigger/selectTrigger"
+import { Select, SelectValue } from "../ui/select/select"
+import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
+import { SelectContent } from "../ui/select/partials/selectContent/selectContent"
 
 interface EnvironmentSelectorProps {
   selectedEnvironment: EnvironmentDTO;

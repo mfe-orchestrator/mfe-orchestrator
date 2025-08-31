@@ -78,7 +78,8 @@ export default {
             borderRadius: {
                 lg: "calc(var(--radius) + 2px)",
                 md: "var(--radius)",
-                sm: "calc(var(--radius) - 2px)"
+                sm: "calc(var(--radius) - 2px)",
+                xs: "calc(var(--radius) - 4px)"
             },
             boxShadow: {
                 button: "var(--button-inner-shadow)",
