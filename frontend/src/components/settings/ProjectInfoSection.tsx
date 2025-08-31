@@ -1,7 +1,7 @@
 import { Project } from '@/hooks/apiClients/useProjectApi';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Copy } from 'lucide-react';

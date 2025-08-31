@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { AlertCircle, Trash2 } from 'lucide-react';
+import useProjectApi from '@/hooks/apiClients/useProjectApi';
+import { useMutation } from '@tanstack/react-query';
+import { Button } from '../ui/button/button';
+import { Input } from '../ui/input/input';
+
 // Simple class name concatenation helper
 const cn = (...classes: (string | boolean | undefined)[]) => 
   classes.filter(Boolean).join(' ');
@@ -27,11 +31,7 @@ const TypographySmall = ({ className, children }: { className?: string; children
     {children}
   </small>
 );
-import { AlertCircle, Trash2 } from 'lucide-react';
-import useToastNotificationStore from '../../store/useToastNotificationStore';
-import { useNavigate } from 'react-router-dom'
-import useProjectApi from '@/hooks/apiClients/useProjectApi';
-import { useMutation } from '@tanstack/react-query';
+
 
 interface DangerZoneProps {
   projectName: string;
