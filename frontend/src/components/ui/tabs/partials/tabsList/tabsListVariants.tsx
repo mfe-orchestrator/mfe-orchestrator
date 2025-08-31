@@ -3,7 +3,7 @@ import { cva } from "class-variance-authority"
 const baseStyle = `
 	p-0.5
 	inline-flex
-	items-stretch
+	items-center
 	justify-center
 	gap-0.5
 	bg-background
@@ -22,7 +22,7 @@ export const tabsListVariants = cva(baseStyle, {
         },
         fullWidth: {
             true: "w-full grow",
-            false: ""
+            false: null
         }
     },
     defaultVariants: {

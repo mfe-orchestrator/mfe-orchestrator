@@ -44,7 +44,7 @@ export const selectTriggerVariants = cva(cn(baseStyle, focusStyle, disabledStyle
         },
         fullWidth: {
             true: "w-full",
-            false: ""
+            false: null
         }
     },
     defaultVariants: {

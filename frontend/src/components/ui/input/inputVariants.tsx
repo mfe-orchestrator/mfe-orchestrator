@@ -49,7 +49,7 @@ export const inputVariants = cva(cn(baseStyle, fileInputStyle, focusStyle, disab
         },
         fullWidth: {
             true: "w-full",
-            false: ""
+            false: null
         }
     },
     defaultVariants: {

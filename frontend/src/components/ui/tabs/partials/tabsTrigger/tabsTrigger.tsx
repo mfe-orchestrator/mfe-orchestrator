@@ -8,10 +8,10 @@ import { VariantProps } from "class-variance-authority"
 
 const TabsTrigger = React.forwardRef<React.ComponentRef<typeof TabsPrimitive.Trigger>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & VariantProps<typeof tabsTriggerVariants>>(
     ({ className, ...props }, ref) => {
-        const { layoutSize, tabsListPosition } = React.useContext(TabsContext)
+        const { layoutSize, tabsListPosition, iconButtons } = React.useContext(TabsContext)
         const fullWidth = tabsListPosition === "fullWidth"
 
-        return <TabsPrimitive.Trigger ref={ref} className={cn(tabsTriggerVariants({ layoutSize, fullWidth }), className)} {...props} />
+        return <TabsPrimitive.Trigger ref={ref} className={cn(tabsTriggerVariants({ layoutSize, fullWidth, iconButtons }), className)} {...props} />
     }
 )
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName

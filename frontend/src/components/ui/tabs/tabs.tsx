@@ -4,13 +4,14 @@ import * as React from "react"
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
     layoutSize?: "default" | "sm" | "lg"
     tabsListPosition?: "start" | "end" | "center" | "fullWidth"
+    iconButtons?: boolean
 }
 
 const TabsContext = React.createContext<TabsProps>({})
 
 const Tabs = React.forwardRef<React.ComponentRef<typeof TabsPrimitive.Root>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> & TabsProps>(
-    ({ children, layoutSize = "default", tabsListPosition = "start", ...props }) => {
-        const tabsProps = React.useMemo(() => ({ layoutSize, tabsListPosition, ...props }), [layoutSize, tabsListPosition, props])
+    ({ children, layoutSize = "default", tabsListPosition = "start", iconButtons = false, ...props }) => {
+        const tabsProps = React.useMemo(() => ({ layoutSize, tabsListPosition, iconButtons, ...props }), [layoutSize, tabsListPosition, iconButtons, props])
 
         return (
             <TabsContext.Provider value={tabsProps}>

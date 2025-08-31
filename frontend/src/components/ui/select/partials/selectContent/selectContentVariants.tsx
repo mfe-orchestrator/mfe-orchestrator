@@ -44,11 +44,11 @@ export const selectContentVariants = cva(cn(baseStyle), {
         },
         fullWidth: {
             true: "w-full",
-            false: ""
+            false: null
         },
         position: {
             popper: popperStyle,
-            "item-aligned": ""
+            "item-aligned": null
         }
     },
     defaultVariants: {

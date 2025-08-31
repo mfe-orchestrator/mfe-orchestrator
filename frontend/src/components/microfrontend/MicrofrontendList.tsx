@@ -12,6 +12,7 @@ import { TabsTrigger } from "../ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "../ui/tabs/tabs"
 import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
+import { LayoutGrid, StretchHorizontal } from "lucide-react"
 
 interface MicrofrontendListProps {
     searchTerm?: string
@@ -36,10 +37,14 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
             <div className="flex justify-between items-center">
                 <Button variant="secondary">Aggiungi Microfrontend</Button>
             </div>
-            <Tabs defaultValue="grid" className="space-y-4">
+            <Tabs defaultValue="grid" className="space-y-4" iconButtons>
                 <TabsList>
-                    <TabsTrigger value="grid">Griglia</TabsTrigger>
-                    <TabsTrigger value="list">Lista</TabsTrigger>
+                    <TabsTrigger value="grid">
+                        <LayoutGrid />
+                    </TabsTrigger>
+                    <TabsTrigger value="list">
+                        <StretchHorizontal />
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="grid">
