@@ -51,6 +51,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <LayoutDashboard className="h-5 w-5" />
     },
     {
+      name: t('environmentVariables.title'),
+      path: '/environment-variables',
+      icon: <FileText className="h-5 w-5" />
+    },
+    {
       name: t('deployments.title'),
       path: '/deployments',
       icon: <RocketIcon className="h-5 w-5" />

@@ -1,4 +1,4 @@
-import {  FastifyInstance } from "fastify"
+import {  FastifyInstance, FastifyReply } from "fastify"
 import ServeService from "../service/ServeService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
@@ -24,42 +24,19 @@ export default async function serveController(fastify: FastifyInstance) {
 
     fastify.get<{
         Params: {
-            environmentSlug: string
-            projectId: string
-            microfrontendSlug: string
-            '*': string  // This captures the rest of the path
+            environmentId: string
         }
-    }>("/serve/mfe/:environmentSlug/:projectId/:microfrontendSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        const filePath = request.params['*'] || ''
-        if (filePath.endsWith('.js')) {
-            reply.header('Content-Type', 'application/javascript');
-        }
-        return reply.send(await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.microfrontendSlug, filePath))
-    })
-
-    fastify.get<{
-        Params: {
-            mfeId: string
-        }
-    }>("/serve/mfe/:mfeId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        return reply.send(await serveService.getMicrofrontendByMicrofrontendId(request.params.mfeId))
-    })
-
-    fastify.get<{
-        Params: {
-            projectId: string
-            environmentSlug: string
-        }
-    }>("/serve/mfe/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        return reply.send(await serveService.getMicrofrontendByProjectIdAndEnvironmentSlug(request.params.projectId, request.params.environmentSlug))
+    }>("/serve/global-variables/:environmentId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await serveService.getGlobalVariablesByEnvironmentId(request.params.environmentId))
     })
 
     fastify.get<{
         Params: {
             environmentId: string
         }
-    }>("/serve/global-variables/:environmentId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        return reply.send(await serveService.getGlobalVariablesByEnvironmentId(request.params.environmentId))
+    }>("/serve/global-variables/:environmentId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        reply.header('Content-Type', 'application/javascript');
+        return reply.send(await serveService.getGlobalVariablesByEnvironmentIdFile(request.params.environmentId))
     })
 
     fastify.get<{
@@ -70,4 +47,89 @@ export default async function serveController(fastify: FastifyInstance) {
     }>("/serve/global-variables/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
         return reply.send(await serveService.getGlobalVariablesByProjectIdAndEnvironmentSlug(request.params.projectId, request.params.environmentSlug))
     })
+
+    fastify.get<{
+        Params: {
+            mfeId: string
+        }
+    }>("/serve/mfe/config/:mfeId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        const referer = request.headers.referer;
+        if (!referer) {
+            throw new Error("Referer not found")
+        }
+        return reply.send(await serveService.getMicrofrontendConfigurationByMicrofrontendId(request.params.mfeId, referer))
+    })
+
+    fastify.get<{
+        Params: {
+            projectId: string
+            environmentSlug: string
+            mfeSlug: string
+        }
+    }>("/serve/mfe/config/:projectId/:environmentSlug/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await serveService.getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(request.params.projectId, request.params.environmentSlug, request.params.mfeSlug))
+    })
+
+    fastify.get<{
+        Params: {
+            environmentId: string
+            mfeSlug: string
+        }
+    }>("/serve/mfe/config/:environmentId/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await serveService.getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(request.params.environmentId, request.params.mfeSlug))
+    })
+
+    fastify.get<{
+        Params: {
+            projectId: string
+            environmentSlug: string
+            mfeSlug: string
+            '*': string
+        }
+    }>("/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        const filePath = request.params['*'] || ''
+        addHeaderfFromFilePath(filePath, reply)
+        return reply.send(await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.mfeSlug, filePath))
+    })
+
+    fastify.get<{
+        Params: {
+            mfeId: string
+            '*': string
+        }
+    }>("/serve/mfe/files/:mfeId/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        const referer = request.headers.referer;
+        if (!referer) {
+            throw new Error("Referer not found")
+        }
+        const filePath = request.params['*'] || ''
+        addHeaderfFromFilePath(filePath, reply)
+        return reply.send(await serveService.getMicrofrontendFilesByMicrofrontendId(request.params.mfeId, filePath, referer))
+    })
+
+    fastify.get<{
+        Params: {
+            projectId: string
+            mfeSlug: string
+            '*': string
+        }
+    }>("/serve/mfe/files/:projectId/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        const referer = request.headers.referer;
+        if (!referer) {
+            throw new Error("Referer not found")
+        }
+        const filePath = request.params['*'] || ''
+        addHeaderfFromFilePath(filePath, reply)
+        return reply.send(await serveService.getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(request.params.projectId, request.params.mfeSlug, filePath, referer))
+    })
+
+    function addHeaderfFromFilePath(filePath: string, reply: FastifyReply){
+        if (filePath.endsWith('.js')) {
+            reply.header('Content-Type', 'application/javascript');
+        }
+    }
+
+    
+
+    
 }

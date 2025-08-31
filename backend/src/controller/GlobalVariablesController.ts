@@ -5,6 +5,12 @@ import GlobalVariablesService from "../service/GlobalVariablesService"
 import EnvironmentHeaderNotFoundError from "../errors/EnvironmentHeaderNotFoundError"
 
 export default async function globalVariablesController(fastify: FastifyInstance) {
+
+    fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/global-variables", async (request, reply) => {
+        const projectId = request.params.projectId
+        return reply.send(await new GlobalVariablesService(request.databaseUser).getAllByProjectId(projectId))
+    })
+
     fastify.get("/global-variables", async (request, reply) => {
         const environmentId = getEnvironmentIdFromRequest(request)
         if (!environmentId) {

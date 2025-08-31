@@ -367,6 +367,19 @@
     "created_success_message": "Your microfrontend has been created successfully",
     "create_error": "Failed to create microfrontend"
   },
+  "environmentVariables": {
+    "title": "Environment Variables",
+    "variable": "Variable",
+    "noVariables": "No environment variables found",
+    "noEnvironments": "No environments available. Please create at least one environment first.",
+    "addVariable": "Add Variable",
+    "editVariable": "Edit Variable",
+    "deleteVariable": "Delete Variable",
+    "deleteConfirmation": "Are you sure you want to delete this variable?",
+    "key": "Key",
+    "value": "Value",
+    "actions": "Actions"
+  },
   "environment": {
     "production": "Production",
     "edit_title": "Edit environment",

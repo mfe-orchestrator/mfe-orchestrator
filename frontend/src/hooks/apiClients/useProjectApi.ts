@@ -1,5 +1,6 @@
 import useApiClient from "../useApiClient";
 import { EnvironmentDTO } from "./useEnvironmentsApi";
+import { GlobalVariable } from "./useGlobalVariablesApi";
 
 export interface Project {
   name: string;
@@ -11,14 +12,14 @@ export interface Project {
 }
 
 export interface ProjectSummaryDTO {
-    project : Project,
-    count : {
-        environments : number,
-        users : number,
-        microfrontends : number,
-        apiKeys : number,
-        storages : number
-    }
+  project: Project,
+  count: {
+    environments: number,
+    users: number,
+    microfrontends: number,
+    apiKeys: number,
+    storages: number
+  }
 }
 
 const useProjectApi = () => {
@@ -31,12 +32,12 @@ const useProjectApi = () => {
     return response.data;
   };
 
-  const getEnvironmentsByProjectId = async (projectId: string) : Promise<EnvironmentDTO[]> => {
+  const getEnvironmentsByProjectId = async (projectId: string): Promise<EnvironmentDTO[]> => {
     const response = await apiClient.doRequest<EnvironmentDTO[]>({
-        url:`/api/projects/${projectId}/environments`,
+      url: `/api/projects/${projectId}/environments`,
     });
     return response.data;
-}
+  }
 
   const getProjectById = async (id: string): Promise<Project> => {
     const response = await apiClient.doRequest<Project>({

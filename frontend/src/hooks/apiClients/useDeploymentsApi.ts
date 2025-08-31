@@ -1,5 +1,5 @@
 import useApiClient from "../useApiClient"
-import { GlobalVariable } from "./useGlobalVariablesClient"
+import { GlobalVariable } from "./useGlobalVariablesApi"
 import { Microfrontend } from "./useMicrofrontendsApi"
 
 export interface DeploymentDTO {

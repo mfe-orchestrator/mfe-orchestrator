@@ -264,6 +264,19 @@
       "viewer": "Visualizzatore"
     }
   },
+  "environmentVariables": {
+    "title": "Variabili d'Ambiente",
+    "variable": "Variabile",
+    "noVariables": "Nessuna variabile d'ambiente trovata",
+    "noEnvironments": "Nessun ambiente disponibile. Crea almeno un ambiente per iniziare.",
+    "addVariable": "Aggiungi Variabile",
+    "editVariable": "Modifica Variabile",
+    "deleteVariable": "Elimina Variabile",
+    "deleteConfirmation": "Sei sicuro di voler eliminare questa variabile?",
+    "key": "Chiave",
+    "value": "Valore",
+    "actions": "Azioni"
+  },
   "environment": {
     "production": "Produzione",
     "edit_title": "Modifica ambiente",

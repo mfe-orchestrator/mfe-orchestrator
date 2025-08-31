@@ -1,6 +1,6 @@
 import { AuthenticationType } from "@/api/apiClient";
 import useApiClient from "../useApiClient";
-import { GlobalVariable } from "./useGlobalVariablesClient";
+import { GlobalVariable } from "./useGlobalVariablesApi";
 
 export interface IServeMicrofronted {
     url: string,

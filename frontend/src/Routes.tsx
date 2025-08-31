@@ -27,6 +27,7 @@ const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
 const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStoragePage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
 const EnvironmentsPage = lazy(() => import("./pages/EnvironmentsPage"));
+const EnvironmentVariablesPage = lazy(() => import("./pages/environment-variables/EnvironmentVariablesPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -133,6 +134,12 @@ const PrivateRoutes: React.FC = () => {
             path="/environments"
             element={
               <RouteWithSuspense element={<EnvironmentsPage />} />
+            }
+          />
+          <Route
+            path="/environment-variables"
+            element={
+              <RouteWithSuspense element={<EnvironmentVariablesPage />} />
             }
           />
           <Route

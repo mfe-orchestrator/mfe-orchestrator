@@ -1,15 +1,23 @@
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import GlobalVariable from "../models/GlobalVariableModel"
+import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
 import GlobalVariableDTO from "../types/GlobalVariableDTO"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import Environment from "../models/EnvironmentModel"    
+
 
 export default class GlobalVariablesService extends BaseAuthorizedService {
+
+    async getAllByProjectId(projectId: string): Promise<IGlobalVariable[]> {
+        await this.ensureAccessToProject(projectId)
+        const environmentIds = await Environment.find({ projectId }).select("_id")
+        return GlobalVariable.find({ environmentId: { $in: environmentIds } }).sort({ key: 1 })
+    }
     /**
      * Get all global variables for a specific environment
      * @param environmentId The ID of the environment
      * @returns Promise with array of global variables
      */
-    async getAll(environmentId: string) {
+    async getAll(environmentId: string): Promise<IGlobalVariable[]> {
         await this.ensureAccessToEnvironment(environmentId)
         return GlobalVariable.find({ environmentId }).sort({ key: 1 })
     }
@@ -20,7 +28,7 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
      * @param environmentId The ID of the environment
      * @returns Promise with the created global variable
      */
-    async create(variableData: GlobalVariableDTO, environmentId: string) {
+    async create(variableData: GlobalVariableDTO, environmentId: string): Promise<IGlobalVariable> {
         await this.ensureAccessToEnvironment(environmentId)
         const variable = new GlobalVariable({
             ...variableData,
@@ -36,7 +44,7 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
      * @param environmentId The ID of the environment (for validation)
      * @returns Promise with the updated global variable
      */
-    async update(id: string, variableData: GlobalVariableDTO, environmentId: string) {
+    async update(id: string, variableData: GlobalVariableDTO, environmentId: string): Promise<IGlobalVariable> {
         await this.ensureAccessToEnvironment(environmentId)
         const updatedVariable = await GlobalVariable.findOneAndUpdate({ _id: id, environmentId }, variableData, { new: true, runValidators: true })
 
@@ -53,7 +61,7 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
      * @param environmentId The ID of the environment (for validation)
      * @returns Promise with the deleted global variable
      */
-    async delete(id: string, environmentId: string) {
+    async delete(id: string, environmentId: string): Promise<IGlobalVariable> {
         await this.ensureAccessToEnvironment(environmentId)
         const deletedVariable = await GlobalVariable.findOneAndDelete({
             _id: id,

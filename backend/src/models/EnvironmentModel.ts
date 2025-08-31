@@ -7,6 +7,7 @@ export interface IEnvironment extends Document<ObjectId> {
     projectId: Types.ObjectId
     color: string
     isProduction: boolean
+    url?: string
 }
 
 const environmentSchema = new Schema<IEnvironment>(
@@ -35,6 +36,10 @@ const environmentSchema = new Schema<IEnvironment>(
             ref: "Project",
             required: true,
             index: true
+        },
+        url:{
+            type: String,
+            required: false
         }
     },
     {

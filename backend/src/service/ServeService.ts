@@ -8,6 +8,8 @@ import Project, { IProject } from "../models/ProjectModel"
 import path from "path"
 import fs from "fs"
 import { fastify } from ".."
+import { ObjectId } from "mongoose"
+import Stream from "stream"
 
 export interface MicrofrontendAdaptedToServe {
     url: string
@@ -16,8 +18,8 @@ export interface MicrofrontendAdaptedToServe {
 }
 
 export interface GetAllDataDTO {
-    globalVariables: IGlobalVariable[]
-    microfrontends: MicrofrontendAdaptedToServe[]
+    globalVariables?: IGlobalVariable[]
+    microfrontends?: MicrofrontendAdaptedToServe[]
 }
 
 //NOTE: Here we need speed so please do not use any third party service
@@ -28,13 +30,16 @@ export default class ServeService {
      * @param environmentId The ID of the environment
      * @returns Promise with array of Microfrontend objects
      */
-    async getAllByEnvironmentId(environmentId: string): Promise<GetAllDataDTO> {
-        const globalVariables = await GlobalVariable.find({ environmentId })
-        const microFrontends = await Microfrontend.find({ environmentId })
-        const microFrontendsAdapted = await Promise.all(microFrontends.map(adaptMicrofrontendToServe))
+    async getAllByEnvironmentId(environmentId: string | ObjectId): Promise<GetAllDataDTO> {
+        const deployment = await Deployment.findOne({ environmentId, active: true });
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+
+        const microFrontendsAdapted = deployment.microfrontends ? await Promise.all(deployment.microfrontends.map(adaptMicrofrontendToServe)) : undefined
 
         return {
-            globalVariables,
+            globalVariables : deployment.variables,
             microfrontends: microFrontendsAdapted
         }
     }
@@ -45,9 +50,116 @@ export default class ServeService {
      * @param environmentSlug The slug of the environment
      * @returns Promise with array of Microfrontend objects
      */
-    async getAllByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<IMicrofrontend[]> {
-        // TODO: Implement database query to fetch by project ID and environment slug
-        return []
+    async getAllByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<GetAllDataDTO> {
+        const environment = await Environment.findOne({ slug: environmentSlug, projectId })
+        if (!environment) {
+            throw new EntityNotFoundError(environmentSlug)
+        }
+        return this.getAllByEnvironmentId(environment._id)
+    }
+
+    /**
+     * Get microfrontend by microfrontend ID
+     * @param mfeId The ID of the microfrontend
+     * @param referer The referer of the request
+     * @returns Promise with Microfrontend object or null if not found
+     */
+    async getMicrofrontendConfigurationByMicrofrontendId(mfeId: string, referer: string): Promise<MicrofrontendAdaptedToServe> {
+        const microfrontend = await Microfrontend.findById(mfeId)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(mfeId)
+        }
+        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId);
+
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
+        const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        const deployedMFE = deployment.microfrontends?.find(mfe => mfe._id.toString() === mfeId)
+        if (!deployedMFE) {
+            throw new EntityNotFoundError(mfeId)
+        }
+        return await adaptMicrofrontendToServe(deployedMFE)
+    }
+
+    /**
+     * Get microfrontend by project ID and environment slug
+     * @param projectId The ID of the project
+     * @param environmentSlug The slug of the environment
+     * @param mfeSlug The slug of the microfrontend
+     * @returns Promise with Microfrontend object or null if not found
+     */
+    async getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(projectId: string, environmentSlug: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
+        const environment = await Environment.findOne({ 
+            projectId,
+            slug: environmentSlug
+        })
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
+        const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        const deployedMFE = deployment.microfrontends?.find(mfe => mfe.slug === mfeSlug)
+        if (!deployedMFE) {
+            throw new EntityNotFoundError(mfeSlug)
+        }
+        return await adaptMicrofrontendToServe(deployedMFE)
+    }
+
+    async getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(environmentId: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
+        const deployment = await Deployment.findOne({ environmentId, active: true });
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        const deployedMFE = deployment.microfrontends?.find(mfe => mfe.slug === mfeSlug)
+        if (!deployedMFE) {
+            throw new EntityNotFoundError(mfeSlug)
+        }
+        return await adaptMicrofrontendToServe(deployedMFE)
+    }
+
+    /**
+     * Get global variables by environment ID
+     * @param environmentId The ID of the environment
+     * @returns Promise with global variables object
+     */
+    async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<IGlobalVariable[]> {
+        const deployment = await Deployment.findOne({ environmentId, active: true });
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        return deployment.variables || []
+    }
+
+    async getGlobalVariablesByEnvironmentIdFile(environmentId: string): Promise<string> {
+        const variables = await this.getGlobalVariablesByEnvironmentId(environmentId)
+        const fileData = `<script> window.globalConfig = {
+            ${variables.map(v => `${v.key}: ${v.value}`).join(",\n")}
+        }</script>`
+        return fileData
+    }
+
+    /**
+     * Get global variables by project ID and environment slug
+     * @param projectId The ID of the project
+     * @param environmentSlug The slug of the environment
+     * @returns Promise with global variables object
+     */
+    async getGlobalVariablesByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<IGlobalVariable[]> {
+        const environment = await Environment.findOne({ slug: environmentSlug, projectId })
+        if (!environment) {
+            throw new EntityNotFoundError(environmentSlug)
+        }
+        const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        return deployment.variables || []
     }
 
     /**
@@ -57,7 +169,7 @@ export default class ServeService {
      * @param microfrontendSlug The slug of the microfrontend
      * @returns Promise with Microfrontend object or null if not found
      */
-    async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<IMicrofrontend | null> {
+    async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<Stream> {
         const environment = await Environment.findOne({ slug: environmentSlug })
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
@@ -75,49 +187,25 @@ export default class ServeService {
         return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
     }
 
-    /**
-     * Get microfrontend by microfrontend ID
-     * @param mfeId The ID of the microfrontend
-     * @returns Promise with Microfrontend object or null if not found
-     */
-    async getMicrofrontendByMicrofrontendId(mfeId: string): Promise<IMicrofrontend | null> {
-        // TODO: Implement database query to fetch by microfrontend ID
-        return null
+    async getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId: string, microfrontendSlug: string, filePath: string, referer: string): Promise<Stream> {
+        const project = await Project.findById(projectId)
+        if (!project) {
+            throw new EntityNotFoundError(projectId)
+        }
+        
+        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
+
+        const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
     }
 
-    /**
-     * Get microfrontend by project ID and environment slug
-     * @param projectId The ID of the project
-     * @param environmentSlug The slug of the environment
-     * @returns Promise with Microfrontend object or null if not found
-     */
-    async getMicrofrontendByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<IMicrofrontend | null> {
-        // TODO: Implement database query to fetch by project ID and environment slug
-        return null
-    }
-
-    /**
-     * Get global variables by environment ID
-     * @param environmentId The ID of the environment
-     * @returns Promise with global variables object
-     */
-    async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<Record<string, any>> {
-        // TODO: Implement database query to fetch global variables by environment ID
-        return {}
-    }
-
-    /**
-     * Get global variables by project ID and environment slug
-     * @param projectId The ID of the project
-     * @param environmentSlug The slug of the environment
-     * @returns Promise with global variables object
-     */
-    async getGlobalVariablesByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<Record<string, any>> {
-        // TODO: Implement database query to fetch global variables by project ID and environment slug
-        return {}
-    }
-
-    async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string): Promise<any> {
+    async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string): Promise<Stream> {
         const microfrontend = deployment.microfrontends?.find(mfe => mfe.slug === microfrontendSlug)
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendSlug)
@@ -125,6 +213,39 @@ export default class ServeService {
         const version = microfrontend.version
         
         //Adesso tiro fuori il MFE
+        return this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+    }
+
+    async getMicrofrontendFilesByMicrofrontendId(mfeId: string, filePath: string, referer: string): Promise<Stream> {
+        const microfrontend = await Microfrontend.findById(mfeId)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(mfeId)
+        }
+        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId);
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
+        const project = await Project.findById(environment.projectId)
+        if (!project) {
+            throw new EntityNotFoundError("Project")
+        }
+
+        const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
+        if (!deployment) {
+            throw new EntityNotFoundError("Active deployment")
+        }
+        const deployedMFE = deployment.microfrontends?.find(mfe => mfe._id.toString() === mfeId)
+        if (!deployedMFE) {
+            throw new EntityNotFoundError(mfeId)
+        }
+
+        const microfrontendSlug = deployedMFE.slug
+        const version = deployedMFE.version
+
+        return this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+    }
+
+    getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream{
         const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
         if (!fs.existsSync(basePath)) {
             throw new Error("Microfrontend not found")
@@ -137,6 +258,16 @@ export default class ServeService {
         }
 
         return fs.createReadStream(finalPath)
+    }
+
+    getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | ObjectId){
+        return Environment.findOne({ 
+            projectId,
+            $or: [
+                { url: { $regex: new RegExp(referer, 'i') } },
+                { url: { $regex: new RegExp(new URL(referer).origin, 'i') } }
+            ]
+        })
     }
 }
 
@@ -151,6 +282,8 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, version?: stri
             throw new Error("Microfrontend URL is not defined")
         }
         return microfrontend.host.url?.replace("$version", version || microfrontend.version)
+    } else if(microfrontend.host.type === HostedOn.CUSTOM_SOURCE){
+        return "This is custom source => will come soon :)"
     } else {
         throw new Error("Microfrontend host type is not defined")
     }
