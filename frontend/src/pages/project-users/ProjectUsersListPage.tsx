@@ -1,20 +1,23 @@
-import React, { useState } from "react"
-import { useTranslation } from "react-i18next"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button/button"
-import { Trash2 } from "lucide-react"
-import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import useToastNotificationStore from "@/store/useToastNotificationStore"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import useProjectStore from "@/store/useProjectStore"
+import SinglePageHeader from "@/components/SinglePageHeader"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
+import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
+import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
+import { Tabs } from "@/components/ui/tabs/tabs"
+import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
+import useProjectStore from "@/store/useProjectStore"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Trash2 } from "lucide-react"
+import React, { useState } from "react"
 import Gravatar from "react-gravatar"
+import { useTranslation } from "react-i18next"
 import { AddUserButton } from "./AddUserButton"
-import SinglePageHeader from "@/components/SinglePageHeader"
 
 type ViewType = "table" | "grid"
 
@@ -137,15 +140,13 @@ const ProjectUsersList: React.FC = () => {
                 }
             />
             <div>
-                <Tabs defaultValue="table" className="space-y-4" onValueChange={value => setViewType(value as ViewType)}>
-                    <div className="flex justify-end">
-                        <TabsList>
-                            <TabsTrigger value="table">{t("project_users.table_view")}</TabsTrigger>
-                            <TabsTrigger value="grid">{t("project_users.grid_view")}</TabsTrigger>
-                        </TabsList>
-                    </div>
+                <Tabs defaultValue="table" className="space-y-4" tabsListPosition="end" onValueChange={value => setViewType(value as ViewType)}>
+                    <TabsList>
+                        <TabsTrigger value="table">{t("project_users.table_view")}</TabsTrigger>
+                        <TabsTrigger value="grid">{t("project_users.grid_view")}</TabsTrigger>
+                    </TabsList>
 
-                    <TabsContent value="table" className="space-y-4">
+                    <TabsContent value="table">
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>

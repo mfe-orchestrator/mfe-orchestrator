@@ -16,7 +16,8 @@ export default {
             sans: "var(--font-sans)"
         },
         letterSpacing: {
-            normal: "0.0125em"
+            normal: "0.0125em",
+            wide: "0.025em"
         },
         extend: {
             colors: {

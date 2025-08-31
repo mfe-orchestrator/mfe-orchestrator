@@ -1,15 +1,17 @@
-import React, { useMemo, useState } from "react"
-import MicrofrontendCard from "../../components/microfrontend/MicrofrontendCard"
-import { Button } from "@/components/ui/button/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { useQuery } from "@tanstack/react-query"
-import useProjectStore from "@/store/useProjectStore"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button/button"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
+import { useQuery } from "@tanstack/react-query"
+import React, { useMemo } from "react"
 import { useNavigate } from "react-router-dom"
+import MicrofrontendCard from "../../components/microfrontend/MicrofrontendCard"
+import { TabsContent } from "../ui/tabs/partials/tabsContent/tabsContent"
+import { TabsList } from "../ui/tabs/partials/tabsList/tabsList"
+import { TabsTrigger } from "../ui/tabs/partials/tabsTrigger/tabsTrigger"
+import { Tabs } from "../ui/tabs/tabs"
 import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
+import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
 
 interface MicrofrontendListProps {
     searchTerm?: string
@@ -35,14 +37,12 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                 <Button variant="secondary">Aggiungi Microfrontend</Button>
             </div>
             <Tabs defaultValue="grid" className="space-y-4">
-                <div className="flex items-center">
-                    <TabsList>
-                        <TabsTrigger value="grid">Griglia</TabsTrigger>
-                        <TabsTrigger value="list">Lista</TabsTrigger>
-                    </TabsList>
-                </div>
+                <TabsList>
+                    <TabsTrigger value="grid">Griglia</TabsTrigger>
+                    <TabsTrigger value="list">Lista</TabsTrigger>
+                </TabsList>
 
-                <TabsContent value="grid" className="space-y-4">
+                <TabsContent value="grid">
                     {microfrontends && microfrontends.length > 0 ? (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
