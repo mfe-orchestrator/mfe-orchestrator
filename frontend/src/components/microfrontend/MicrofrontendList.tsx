@@ -3,8 +3,6 @@ import MicrofrontendCard from "../../components/microfrontend/MicrofrontendCard"
 import { Button } from "@/components/ui/button/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Percent, Settings } from "lucide-react"
-import EnvironmentVariables from "../../components/environment/EnvironmentVariables"
 import { useQuery } from "@tanstack/react-query"
 import useProjectStore from "@/store/useProjectStore"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
@@ -15,7 +13,6 @@ import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 
 interface MicrofrontendListProps {
     searchTerm?: string
-    statusFilter?: string
     projectId?: string
     onResetFilters: () => void
 }
@@ -26,7 +23,6 @@ interface MicrofrontendListRealProps {
 }
 
 const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters }) => {
-    const projectStore = useProjectStore()
     const navigate = useNavigate()
 
     const onAddNewMicrofrontend = () => {
@@ -36,7 +32,6 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     return (
         <>
             <div className="flex justify-between items-center">
-                <EnvironmentVariables environment={projectStore.environment} />
                 <Button variant="secondary">Aggiungi Microfrontend</Button>
             </div>
             <Tabs defaultValue="grid" className="space-y-4">
@@ -50,10 +45,10 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                 <TabsContent value="grid" className="space-y-4">
                     {microfrontends && microfrontends.length > 0 ? (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
                             {microfrontends.map(mfe => (
                                 <MicrofrontendCard key={mfe._id} mfe={mfe} />
                             ))}
-                            <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -72,53 +67,28 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                 <thead>
                                     <tr className="border-b transition-colors hover:bg-muted/50">
                                         <th className="h-12 px-4 text-left align-middle font-medium">Nome</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium">Versione</th>
+                                        <th className="h-12 px-4 text-left align-middle font-medium">Slug</th>
                                         <th className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium">Stato</th>
+                                        <th className="h-12 px-4 text-left align-middle font-medium">Versione</th>
                                         <th className="h-12 px-4 text-left align-middle font-medium">Canary</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium">Env Vars</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium">Ambiente</th>
                                         <th className="h-12 px-4 text-left align-middle font-medium">Azioni</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {microfrontends?.map(mfe => {
-                                        const version = mfe.version
-                                        const canaryPercentage: number = 234
-                                        const environmentVariables = {}
-                                        const envVarsCount = environmentVariables && Object.keys(environmentVariables).length
-
+                                        const canaryPercentage: number = 23
                                         return (
-                                            <tr key={mfe.id} className="border-b transition-colors hover:bg-muted/50">
+                                            <tr key={mfe._id} className="border-b transition-colors hover:bg-muted/50">
                                                 <td className="p-4 align-middle font-medium">{mfe.name}</td>
-                                                <td className="p-4 align-middle">{mfe.version}</td>
+                                                <td className="p-4 align-middle font-medium">{mfe.slug}</td>
                                                 <td className="p-4 align-middle hidden md:table-cell">
                                                     <div className="line-clamp-1">{mfe.description}</div>
                                                 </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={`
-                        ${mfe.status === "active" ? "bg-green-500" : mfe.status === "inactive" ? "bg-yellow-500" : "bg-red-500"} 
-                        text-white
-                      `}
-                                                    >
-                                                        {mfe.status === "active" ? "Attivo" : mfe.status === "inactive" ? "Inattivo" : "Errore"}
-                                                    </Badge>
-                                                </td>
+                                                <td className="p-4 align-middle">{mfe.version}</td>
                                                 <td className="p-4 align-middle">
                                                     {canaryPercentage > 0 ? (
                                                         <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
-                                                            <Percent className="h-3 w-3" /> {canaryPercentage}%
-                                                        </Badge>
-                                                    ) : (
-                                                        <span className="text-muted-foreground text-xs">-</span>
-                                                    )}
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    {envVarsCount > 0 ? (
-                                                        <Badge variant="outline" className="bg-blue-100 text-blue-800 flex items-center gap-1 whitespace-nowrap">
-                                                            <Settings className="h-3 w-3" /> {envVarsCount}
+                                                            {canaryPercentage}%
                                                         </Badge>
                                                     ) : (
                                                         <span className="text-muted-foreground text-xs">-</span>
@@ -151,7 +121,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     )
 }
 
-const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statusFilter, projectId, onResetFilters }) => {
+const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, projectId, onResetFilters }) => {
     const microfrontendsApi = useMicrofrontendsApi()
 
     const microfrontendListQuery = useQuery({
@@ -166,16 +136,15 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, statu
             return null
         }
 
-        if (!searchTerm && !statusFilter) return data
+        if (!searchTerm) return data
 
         const filteredData = data.filter(mfe => {
             const nameMatch = searchTerm ? mfe.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
-            const statusMatch = statusFilter && statusFilter !== "all" ? mfe.status === statusFilter : true
-            return nameMatch && statusMatch
+            return nameMatch
         })
 
         return filteredData
-    }, [microfrontendListQuery?.data, searchTerm, statusFilter])
+    }, [microfrontendListQuery?.data, searchTerm])
 
     return (
         <ApiDataFetcher queries={[microfrontendListQuery]}>

@@ -6,42 +6,48 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import useProjectStore from "@/store/useProjectStore"
 import { Search } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 const MicrofrontendDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const projectStore = useProjectStore()
+    const { t } = useTranslation()
 
     const onResetFilters = () => {
         setSearchTerm("")
-        setStatusFilter("all")
     }
 
     return (
         <div className="space-y-6">
             <SinglePageHeader
-                title={"Microfrontends"}
-                description={"Gestisci i microfrontends del tuo progetto"}
+                title={t('microfrontend.dashboard.title')}
+                description={t('microfrontend.dashboard.description')}
                 buttons={
                     <div className="flex items-center gap-2">
                         <div className="relative">
                             <Search className="absolute left-3 top-3 h-4 w-4 text-secondary" />
-                            <Input placeholder="Cerca microfrontend..." className="pl-8 w-full md:w-[250px]" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                            <Input 
+                                placeholder={t('microfrontend.dashboard.searchPlaceholder')} 
+                                className="pl-8 w-full md:w-[250px]" 
+                                value={searchTerm} 
+                                onChange={e => setSearchTerm(e.target.value)} 
+                            />
                         </div>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Filtra per stato" />
+                                <SelectValue placeholder={t('microfrontend.dashboard.filterStatus')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tutti</SelectItem>
-                                <SelectItem value="ACTIVE">Attivi</SelectItem>
-                                <SelectItem value="DISABLED">Disabilitati</SelectItem>
+                                <SelectItem value="all">{t('microfrontend.dashboard.statusAll')}</SelectItem>
+                                <SelectItem value="ACTIVE">{t('microfrontend.dashboard.statusActive')}</SelectItem>
+                                <SelectItem value="DISABLED">{t('microfrontend.dashboard.statusDisabled')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 }
             />
-            <MicrofrontendList searchTerm={searchTerm} statusFilter={statusFilter} onResetFilters={onResetFilters} projectId={projectStore.project?._id} />
+            <MicrofrontendList searchTerm={searchTerm} onResetFilters={onResetFilters} projectId={projectStore.project?._id} />
         </div>
     )
 }

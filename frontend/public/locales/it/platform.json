@@ -347,7 +347,16 @@
     "select_color": "Seleziona un colore"
   },
   "microfrontend": {
-    "no_microfrontends_found": "Nessun Microfrontend Trovato",
+    "dashboard": {
+      "title": "Microfrontend",
+      "description": "Gestisci i microfrontend del tuo progetto",
+      "searchPlaceholder": "Cerca microfrontend...",
+      "filterStatus": "Filtra per stato",
+      "statusAll": "Tutti",
+      "statusActive": "Attivi",
+      "statusDisabled": "Disabilitati"
+    },
+    "no_microfrontends_found": "Nessun microfrontend trovato",
     "add_your_first_microfrontend": "Aggiungi il tuo primo microfrontend per iniziare!",
     "name_placeholder": "Awesome Microfrontend",
     "name": "Nome",

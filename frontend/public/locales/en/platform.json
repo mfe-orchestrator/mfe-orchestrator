@@ -262,12 +262,6 @@
   "theme": {
     "light": "Light",
     "dark": "Dark",
-    "system": "System",
-    "toggle_theme": "Toggle theme"
-  },
-  "deployments": {
-    "title": "Deployments",
-    "microfrontends_title": "Microfrontend",
     "active": "Active",
     "columns": {
       "id": "ID",
@@ -314,6 +308,15 @@
     }
   },
   "microfrontend": {
+    "dashboard": {
+      "title": "Microfrontends",
+      "description": "Manage your project's microfrontends",
+      "searchPlaceholder": "Search microfrontend...",
+      "filterStatus": "Filter by status",
+      "statusAll": "All",
+      "statusActive": "Active",
+      "statusDisabled": "Disabled"
+    },
     "no_microfrontends_found": "No Microfrontends Found",
     "add_your_first_microfrontend": "Add your first microfrontend to get started!",
     "add_new": "Add New Microfrontend",

@@ -21,10 +21,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
     const navigate = useNavigate()
 
     // Get environment-specific data or fall back to default
-    const envData = mfe.environmentVariables
-    const version = envData?.version || mfe.version
-    //const canaryPercentage = envData?.canaryPercentage || mfe.canaryPercentage || 0;
-    const parameters = envData?.parameters || mfe.parameters || {}
+    const version = mfe.version
 
     const [editParameters, setEditParameters] = useState<Record<string, string>>(null)
     const [editCanaryPercentage, setEditCanaryPercentage] = useState<number>(null)
@@ -66,7 +63,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
                 <CardHeader>
                     <div className="flex items-start justify-between">
                         <CardTitle className="text-lg font-medium">{mfe.name}</CardTitle>
-                        <Badge className={`${statusColor[mfe.status]} text-white`}>{mfe.status === "active" ? "Attivo" : mfe.status === "inactive" ? "Inattivo" : "Errore"}</Badge>
+                        <Badge className={`text-white`}>{mfe.slug}</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">
                         <div className="flex items-center justify-between">
@@ -91,65 +88,6 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
                     </Button>
                 </CardFooter>
             </Card>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Configurazione: {mfe.name}</DialogTitle>
-                    </DialogHeader>
-                    <Tabs defaultValue="general" className="w-full">
-                        <TabsList className="mb-4">
-                            <TabsTrigger value="general">Generale</TabsTrigger>
-                            <TabsTrigger value="parameters">Parametri</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="general">
-                            <div className="space-y-4 py-2">
-                                <div className="border-b pb-4">
-                                    <Label className="mb-2 block font-medium">Canary Release</Label>
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm">Percentuale di utenti:</span>
-                                            <Badge variant="outline" className="font-mono">
-                                                {editCanaryPercentage}%
-                                            </Badge>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <Slider value={[editCanaryPercentage]} max={100} step={5} onValueChange={value => setEditCanaryPercentage(value[0])} className="flex-1" />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-1">La versione {version} sarà visibile solo a questa percentuale di utenti in ambiente.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="parameters">
-                            <div className="space-y-4 py-2">
-                                <div className="space-y-2">
-                                    <Label className="font-medium">Parametri di configurazione</Label>
-                                    {Object.keys(editParameters || {}).map(key => (
-                                        <div key={key} className="grid grid-cols-4 items-center gap-4">
-                                            <Label htmlFor={key} className="text-right col-span-1">
-                                                {key}
-                                            </Label>
-                                            <Input id={key} value={editParameters[key]} onChange={e => handleParameterChange(key, e.target.value)} className="col-span-3" />
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button type="button" variant="secondary" size="sm" onClick={addParameter}>
-                                    Aggiungi parametro
-                                </Button>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-
-                    <div className="flex justify-end mt-4">
-                        <Button type="button" onClick={saveConfiguration}>
-                            Salva configurazione
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
         </>
     )
 }
