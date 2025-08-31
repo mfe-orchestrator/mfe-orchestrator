@@ -9,6 +9,7 @@ import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import SinglePageHeader from '@/components/SinglePageHeader';
 import EnvironmentsGate from '@/theme/EnvironmentsGate';
 import EnvironmentSelector from '@/components/environment/EnvironmentSelector';
+import DeploymentGate from '@/components/DeploymentGate';
 
 
 const getViteConfig = (microfrontends: IServeMicrofronted[]) => {
@@ -122,59 +123,61 @@ const IntegrationPage: React.FC = () => {
       description="Follow the instructions below to integrate with our platform using your preferred method."
       center={isThereAtLeastOneEnvironment && (
         <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
-    )}
+      )}
     />
     <EnvironmentsGate>
-      <ApiDataFetcher
-        queries={[microfrontendQuery]}
-      >
+      <DeploymentGate environmentId={projectStore.environment?._id}>
+        <ApiDataFetcher
+          queries={[microfrontendQuery]}
+        >
 
-        <div className="container mx-auto p-4 max-w-4xl">
-          <Card className="p-4">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-3 mb-4">
-                <TabsTrigger value="vite">Vite</TabsTrigger>
-                <TabsTrigger value="webpack">Webpack</TabsTrigger>
-                <TabsTrigger value="curl">CURL</TabsTrigger>
-              </TabsList>
+          <div className="container mx-auto p-4 max-w-4xl">
+            <Card className="p-4">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="vite">Vite</TabsTrigger>
+                  <TabsTrigger value="webpack">Webpack</TabsTrigger>
+                  <TabsTrigger value="curl">CURL</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="vite" className="space-y-4">
-                <h2 className="text-xl font-semibold">Vite Module Federation Setup</h2>
-                <p>To integrate using Vite Module Federation, first install the required plugin:</p>
-                <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                  <code>npm install @originjs/vite-plugin-federation --save-dev</code>
-                </pre>
-                <p>Then, update your Vite configuration:</p>
-                <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                  <code>{getViteConfig(microfrontendQuery.data?.microfrontends)}</code>
-                </pre>
-              </TabsContent>
+                <TabsContent value="vite" className="space-y-4">
+                  <h2 className="text-xl font-semibold">Vite Module Federation Setup</h2>
+                  <p>To integrate using Vite Module Federation, first install the required plugin:</p>
+                  <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                    <code>npm install @originjs/vite-plugin-federation --save-dev</code>
+                  </pre>
+                  <p>Then, update your Vite configuration:</p>
+                  <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                    <code>{getViteConfig(microfrontendQuery.data?.microfrontends)}</code>
+                  </pre>
+                </TabsContent>
 
-              <TabsContent value="webpack" className="space-y-4">
-                <h2 className="text-xl font-semibold">Webpack Module Federation Setup</h2>
-                <p>For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:</p>
-                <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                  <code>{getWebpackConfig(microfrontendQuery.data?.microfrontends)}</code>
-                </pre>
-              </TabsContent>
+                <TabsContent value="webpack" className="space-y-4">
+                  <h2 className="text-xl font-semibold">Webpack Module Federation Setup</h2>
+                  <p>For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:</p>
+                  <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                    <code>{getWebpackConfig(microfrontendQuery.data?.microfrontends)}</code>
+                  </pre>
+                </TabsContent>
 
-              <TabsContent value="curl" className="space-y-4">
-                <h2 className="text-xl font-semibold">Direct API Access via CURL</h2>
-                <p>You can also interact with our API directly using CURL:</p>
-                <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                  <code>{curlExample}</code>
-                </pre>
-                <p>Here is the preview</p>
-                <iframe src={`https://${window.location.host}/api/serve/all/${projectStore.environment?._id}`} width="100%" height="500px" />
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </div>
-      </ApiDataFetcher>
+                <TabsContent value="curl" className="space-y-4">
+                  <h2 className="text-xl font-semibold">Direct API Access via CURL</h2>
+                  <p>You can also interact with our API directly using CURL:</p>
+                  <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                    <code>{curlExample}</code>
+                  </pre>
+                  <p>Here is the preview</p>
+                  <iframe src={`https://${window.location.host}/api/serve/all/${projectStore.environment?._id}`} width="100%" height="500px" />
+                </TabsContent>
+              </Tabs>
+            </Card>
+          </div>
+        </ApiDataFetcher>
+      </DeploymentGate>
     </EnvironmentsGate>
   </>
   );
