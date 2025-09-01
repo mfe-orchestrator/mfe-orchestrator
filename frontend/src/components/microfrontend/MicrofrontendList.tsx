@@ -1,5 +1,5 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { useQuery } from "@tanstack/react-query"
@@ -92,9 +92,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                                 <td className="p-4 align-middle">{mfe.version}</td>
                                                 <td className="p-4 align-middle">
                                                     {canaryPercentage > 0 ? (
-                                                        <Badge variant="outline" className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">
-                                                            {canaryPercentage}%
-                                                        </Badge>
+                                                        <Badge className="bg-orange-100 text-orange-800 flex items-center gap-1 whitespace-nowrap">{canaryPercentage}%</Badge>
                                                     ) : (
                                                         <span className="text-muted-foreground text-xs">-</span>
                                                     )}

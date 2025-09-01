@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RefreshCw, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import useDeploymentsApi from '../../hooks/apiClients/useDeploymentsApi';
@@ -39,27 +39,20 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
 
     return (
         <ApiDataFetcher queries={[dataQuery]}>
-            <div className='flex flex-row gap-4'>
+            <div className="flex flex-row gap-4">
                 <Card className="flex-1">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-lg font-semibold">
-                            {t('deployments.title')}
-                        </CardTitle>
+                        <CardTitle className="text-lg font-semibold">{t("deployments.title")}</CardTitle>
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => dataQuery.refetch()}
-                                    >
-                                        <RefreshCw className={`h-4 w-4 ${dataQuery.isRefetching ? 'animate-spin' : ''}`} />
-                                        <span className="sr-only">{t('deployments.refresh')}</span>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => dataQuery.refetch()}>
+                                        <RefreshCw className={`h-4 w-4 ${dataQuery.isRefetching ? "animate-spin" : ""}`} />
+                                        <span className="sr-only">{t("deployments.refresh")}</span>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>{t('deployments.refresh')}</p>
+                                    <p>{t("deployments.refresh")}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -68,29 +61,25 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>{t('deployments.columns.id')}</TableHead>
-                                    <TableHead>{t('deployments.columns.created')}</TableHead>
-                                    <TableHead>{t('deployments.columns.deployed')}</TableHead>
-                                    <TableHead className="w-32">{t('deployments.columns.actions')}</TableHead>
+                                    <TableHead>{t("deployments.columns.id")}</TableHead>
+                                    <TableHead>{t("deployments.columns.created")}</TableHead>
+                                    <TableHead>{t("deployments.columns.deployed")}</TableHead>
+                                    <TableHead className="w-32">{t("deployments.columns.actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {deployments.length > 0 ? (
-                                    deployments.map((deployment) => (
+                                    deployments.map(deployment => (
                                         <TableRow key={deployment._id} onClick={() => setSelectedDeploymentId(deployment._id)}>
                                             <TableCell>
                                                 {deployment.deploymentId}
-                                                {deployment.active && (
-                                                    <Badge variant="outline" className="ml-2">{t('deployments.active')}</Badge>
-                                                )}
+                                                {deployment.active && <Badge className="ml-2">{t("deployments.active")}</Badge>}
                                             </TableCell>
                                             <TableCell>
                                                 <TooltipProvider>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
-                                                            <span className="text-sm text-muted-foreground cursor-help">
-                                                                {new Date(deployment.createdAt).toLocaleDateString()}
-                                                            </span>
+                                                            <span className="text-sm text-muted-foreground cursor-help">{new Date(deployment.createdAt).toLocaleDateString()}</span>
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>{new Date(deployment.createdAt).toLocaleString()}</p>
@@ -102,9 +91,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 <TooltipProvider>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
-                                                            <span className="text-sm text-muted-foreground cursor-help">
-                                                                {new Date(deployment.deployedAt).toLocaleDateString()}
-                                                            </span>
+                                                            <span className="text-sm text-muted-foreground cursor-help">{new Date(deployment.deployedAt).toLocaleDateString()}</span>
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>{new Date(deployment.deployedAt).toLocaleString()}</p>
@@ -119,8 +106,8 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
+                                                                onClick={e => {
+                                                                    e.stopPropagation()
                                                                     onRedeploy(deployment._id)
                                                                 }}
                                                                 disabled={redeployQuery.isPending || deployment.active}
@@ -129,7 +116,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                             </Button>
                                                         </TooltipTrigger>
                                                         <TooltipContent>
-                                                            <p>{t('deployments.actions.redeploy_tooltip')}</p>
+                                                            <p>{t("deployments.actions.redeploy_tooltip")}</p>
                                                         </TooltipContent>
                                                     </Tooltip>
                                                 </TooltipProvider>
@@ -140,12 +127,8 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                     <TableRow>
                                         <TableCell colSpan={5} className="h-24 text-center">
                                             <div className="flex flex-col items-center justify-center space-y-2">
-                                                <p className="text-sm font-medium">
-                                                    {t('deployments.no_deployments')}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {t('deployments.no_deployments_description')}
-                                                </p>
+                                                <p className="text-sm font-medium">{t("deployments.no_deployments")}</p>
+                                                <p className="text-sm text-muted-foreground">{t("deployments.no_deployments_description")}</p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -154,49 +137,37 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                         </Table>
                     </CardContent>
                 </Card>
-                {selectedDeployment &&
+                {selectedDeployment && (
                     <Card className="flex-1">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-lg font-semibold">
-                                {t('deployments.microfrontends_title')}
-                            </CardTitle>
+                            <CardTitle className="text-lg font-semibold">{t("deployments.microfrontends_title")}</CardTitle>
                         </CardHeader>
                         <CardContent className="px-6 pb-4">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>{t('deployments.columns.microfrontend')}</TableHead>
-                                        <TableHead>{t('deployments.columns.version')}</TableHead>
-                                        <TableHead>{t('deployments.columns.slug')}</TableHead>
+                                        <TableHead>{t("deployments.columns.microfrontend")}</TableHead>
+                                        <TableHead>{t("deployments.columns.version")}</TableHead>
+                                        <TableHead>{t("deployments.columns.slug")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {selectedDeployment.microfrontends.length > 0 ? (
-                                        selectedDeployment.microfrontends.map((singleMicrofrontend) => (
+                                        selectedDeployment.microfrontends.map(singleMicrofrontend => (
                                             <TableRow key={singleMicrofrontend._id}>
-                                                <TableCell className="font-medium">
-                                                    {singleMicrofrontend.name}
-                                                </TableCell>
+                                                <TableCell className="font-medium">{singleMicrofrontend.name}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline" className="font-mono">
-                                                        {singleMicrofrontend.version}
-                                                    </Badge>
+                                                    <Badge className="font-mono">{singleMicrofrontend.version}</Badge>
                                                 </TableCell>
-                                                <TableCell>
-                                                    {singleMicrofrontend.slug}
-                                                </TableCell>
+                                                <TableCell>{singleMicrofrontend.slug}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={5} className="h-24 text-center">
                                                 <div className="flex flex-col items-center justify-center space-y-2">
-                                                    <p className="text-sm font-medium">
-                                                        {t('deployments.no_deployments')}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {t('deployments.no_deployments_description')}
-                                                    </p>
+                                                    <p className="text-sm font-medium">{t("deployments.no_deployments")}</p>
+                                                    <p className="text-sm text-muted-foreground">{t("deployments.no_deployments_description")}</p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -205,10 +176,10 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                             </Table>
                         </CardContent>
                     </Card>
-                }
+                )}
             </div>
         </ApiDataFetcher>
-    );
+    )
 };
 
 export default DeploymentList;

@@ -1,7 +1,7 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import SinglePageHeader from "@/components/SinglePageHeader"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -76,7 +76,7 @@ const ProjectUsersList: React.FC = () => {
                 </div>
             </TableCell>
             <TableCell>
-                <Badge variant="outline">{user.role}</Badge>
+                <Badge>{user.role}</Badge>
             </TableCell>
             <TableCell className="text-right">
                 <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserMutation.isPending}>
@@ -97,9 +97,7 @@ const ProjectUsersList: React.FC = () => {
                     <div className="text-center space-y-1">
                         <h3 className="text-lg font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</h3>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <Badge variant="outline" className="mt-2">
-                            {user.role}
-                        </Badge>
+                        <Badge className="mt-2">{user.role}</Badge>
                     </div>
                     <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserMutation.isPending}>
                         <Trash2 className="mr-2 h-4 w-4 text-destructive" />
@@ -131,9 +129,7 @@ const ProjectUsersList: React.FC = () => {
                 buttons={
                     <>
                         <div className="flex items-center space-x-2">
-                            <Badge variant="outline" className="ml-2">
-                                {t("project_users.count", { count: users.length })}
-                            </Badge>
+                            <Badge className="ml-2">{t("project_users.count", { count: users.length })}</Badge>
                             <AddUserButton />
                         </div>
                     </>

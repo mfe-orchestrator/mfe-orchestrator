@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -53,37 +53,35 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
     const canaryPercentage = 38
 
     return (
-        <>
-            <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
-                <CardHeader>
-                    <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg font-medium">{mfe.name}</CardTitle>
-                        <Badge className={`text-white`}>{mfe.slug}</Badge>
+        <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
+            <CardHeader>
+                <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg font-medium">{mfe.name}</CardTitle>
+                    <Badge>{mfe.slug}</Badge>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                        <span>Versione {version}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                        <div className="flex items-center justify-between">
-                            <span>Versione {version}</span>
+                </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+                <p className="text-sm">{mfe.description}</p>
+                {canaryPercentage > 0 && (
+                    <div className="mt-3 p-2 bg-orange-100 rounded-md text-sm">
+                        <div className="font-semibold flex items-center text-orange-700">
+                            <Percent className="mr-1 h-4 w-4" /> Canary Release
                         </div>
+                        <div className="text-orange-600">Attiva per il {canaryPercentage}% degli utenti</div>
                     </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <p className="text-sm">{mfe.description}</p>
-                    {canaryPercentage > 0 && (
-                        <div className="mt-3 p-2 bg-orange-100 rounded-md text-sm">
-                            <div className="font-semibold flex items-center text-orange-700">
-                                <Percent className="mr-1 h-4 w-4" /> Canary Release
-                            </div>
-                            <div className="text-orange-600">Attiva per il {canaryPercentage}% degli utenti</div>
-                        </div>
-                    )}
-                </CardContent>
-                <CardFooter className="flex justify-between items-center border-t pt-4">
-                    <Button size="sm" variant="secondary" onClick={() => navigate(`/microfronted/${mfe._id}`)}>
-                        Configurazione
-                    </Button>
-                </CardFooter>
-            </Card>
-        </>
+                )}
+            </CardContent>
+            <CardFooter className="flex justify-between items-center border-t pt-4">
+                <Button size="sm" variant="secondary" onClick={() => navigate(`/microfronted/${mfe._id}`)}>
+                    Configurazione
+                </Button>
+            </CardFooter>
+        </Card>
     )
 }
 
