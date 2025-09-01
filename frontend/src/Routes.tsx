@@ -23,6 +23,7 @@ const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRe
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
 const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
 const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
+const CanaryUsersPage = lazy(() => import("./pages/deployments/CanaryUsers"));
 const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
 const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStoragePage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
@@ -82,12 +83,20 @@ const PrivateRoutes: React.FC = () => {
               <RouteWithSuspense element={<SftpViewerPage />} />
             }
           />
-          <Route
-            path="/deployments"
-            element={
-              <RouteWithSuspense element={<DeploymentsPage />} />
-            }
-          />
+          <Route path="/deployments">
+            <Route
+              index
+              element={
+                <RouteWithSuspense element={<DeploymentsPage />} />
+              }
+            />
+            <Route
+              path=":deploymentId/canary-users"
+              element={
+                <RouteWithSuspense element={<CanaryUsersPage />} />
+              }
+            />
+          </Route>
           <Route
             path="/integration"
             element={

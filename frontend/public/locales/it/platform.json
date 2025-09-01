@@ -228,15 +228,33 @@
     "active": "Attivo",
     "columns": {
       "id": "ID",
-      "deployed": "Rilasciato il",
-      "created": "Creato il",
+      "deployed": "Distribuito",
+      "created": "Creato",
       "microfrontend": "Microfrontend",
       "version": "Versione",
-      "slug": "Slug"
+      "slug": "Slug",
+      "actions": "Azioni"
     },
     "no_deployments": "Nessuna distribuzione trovata",
     "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
-    "refresh": "Aggiorna distribuzioni"
+    "refresh": "Aggiorna distribuzioni",
+    "actions": {
+      "view_canary_users": "Visualizza Utenti Canary"
+    },
+    "canary_users": {
+      "title": "Utenti Canary",
+      "subtitle": "Utenti con accesso alla versione canary",
+      "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
+      "columns": {
+        "user": "Utente",
+        "email": "Email",
+        "status": "Stato"
+      },
+      "status": {
+        "active": "Attivo",
+        "inactive": "Inattivo"
+      }
+    }
   },
   "project_users": {
     "title": "Membri del Progetto",

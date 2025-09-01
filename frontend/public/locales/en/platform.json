@@ -291,11 +291,29 @@
             "created": "Created",
             "microfrontend": "Microfrontend",
             "version": "Version",
-            "slug": "Slug"
+            "slug": "Slug",
+            "actions": "Actions"
         },
-        "no_deployments": "Nessuna distribuzione trovata",
-        "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
-        "refresh": "Aggiorna distribuzioni"
+        "no_deployments": "No deployments found",
+        "no_deployments_description": "Deployments will appear here once created",
+        "refresh": "Refresh deployments",
+        "actions": {
+            "view_canary_users": "View Canary Users"
+        },
+        "canary_users": {
+            "title": "Canary Users",
+            "subtitle": "Users with access to canary version",
+            "no_users": "No users have access to this canary version yet.",
+            "columns": {
+                "user": "User",
+                "email": "Email",
+                "status": "Status"
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            }
+        }
     },
     "project_users": {
         "title": "Project Members",

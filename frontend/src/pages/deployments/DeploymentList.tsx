@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from "@/components/ui/badge/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { RefreshCw, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { RefreshCw, CheckCircle2, AlertCircle, Clock, Users } from 'lucide-react';
 import useDeploymentsApi from '../../hooks/apiClients/useDeploymentsApi';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface DeploymentListProps {
     environmentId: string;
@@ -99,7 +100,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                     </Tooltip>
                                                 </TooltipProvider>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="flex items-center space-x-2">
                                                 <TooltipProvider>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
@@ -117,6 +118,24 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>{t("deployments.actions.redeploy_tooltip")}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                asChild
+                                                            >
+                                                                <Link to={`/deployments/${deployment._id}/canary-users`}>
+                                                                    <Users className="h-4 w-4" />
+                                                                </Link>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{t("deployments.actions.view_canary_users")}</p>
                                                         </TooltipContent>
                                                     </Tooltip>
                                                 </TooltipProvider>
