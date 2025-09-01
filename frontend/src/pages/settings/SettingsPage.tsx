@@ -14,6 +14,7 @@ import { ProjectInfoSection } from '@/components/settings/ProjectInfoSection';
 import { ProjectStatsSection } from '@/components/settings/ProjectStatsSection';
 import { DangerZone } from '@/components/settings/DangerZone';
 import SinglePageHeader from '@/components/SinglePageHeader';
+import SinglePageLayout from '@/components/SinglePageLayout';
 
 
 const SettingsPage: React.FC = () => {
@@ -59,11 +60,10 @@ const SettingsPage: React.FC = () => {
   
   return (
     <ApiDataFetcher queries={[projectQuery]}>
-      <SinglePageHeader
+      <SinglePageLayout
         title={t('settings.title')}
         description={t('settings.subtitle')}
-      />
-      <div className="space-y-8 mt-8">
+      >
         {projectData &&
           <ProjectInfoSection
             {...projectData}
@@ -107,7 +107,7 @@ const SettingsPage: React.FC = () => {
         />
 
         <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
-      </div>
+      </SinglePageLayout>
     </ApiDataFetcher>
   );
 }

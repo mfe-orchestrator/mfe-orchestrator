@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -57,25 +58,29 @@ export function DangerZone({ projectName, projectId, onDeleteSuccess }: DangerZo
 
   };
 
+  const { t } = useTranslation();
+
   return (
-    <Card className="border-destructive/50">
-      <div className="space-y-4 p-6">
+    <Card className="border-destructive/50 p-6">
+      <div className="space-y-4">
         <div>
           <TypographyH3 className="text-destructive">
-            Danger Zone
+            {t('settings.dangerZone.title')}
           </TypographyH3>
           <TypographySmall className="text-muted-foreground">
-            These actions are irreversible. Please be certain.
+            {t('settings.dangerZone.subtitle')}
           </TypographySmall>
         </div>
 
         <Separator className="bg-destructive/20" />
 
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <TypographyP className="font-semibold">Delete this project</TypographyP>
+            <TypographyP className="font-semibold">
+              {t('settings.dangerZone.delete.title')}
+            </TypographyP>
             <TypographySmall className="text-muted-foreground">
-              Once you delete a project, there is no going back. Please be certain.
+              {t('settings.dangerZone.delete.description')}
             </TypographySmall>
           </div>
           <Button 
@@ -84,7 +89,7 @@ export function DangerZone({ projectName, projectId, onDeleteSuccess }: DangerZo
             onClick={() => setOpened(true)}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete Project
+            {t('settings.dangerZone.delete.button')}
           </Button>
         </div>
       </div>
@@ -92,25 +97,23 @@ export function DangerZone({ projectName, projectId, onDeleteSuccess }: DangerZo
       <Dialog open={opened} onOpenChange={setOpened}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Delete Project</DialogTitle>
+            <DialogTitle>{t('settings.dangerZone.delete.dialog.title')}</DialogTitle>
           </DialogHeader>
           
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Warning!</AlertTitle>
+            <AlertTitle>{t('settings.dangerZone.delete.dialog.warning')}</AlertTitle>
             <AlertDescription>
-              <div className="space-y-2">
-                <p className="font-semibold">This action cannot be undone</p>
-                <p className="text-sm">
-                  This will permanently delete the project, configurations, and all associated data.
-                </p>
+              {t('settings.dangerZone.delete.dialog.description', { projectName })}
+              <div className="mt-2">
+                {t('settings.dangerZone.delete.dialog.confirmation', { projectName: <span className="font-bold">{projectName}</span> })}
               </div>
             </AlertDescription>
           </Alert>
 
           <div className="space-y-4 py-4">
             <TypographySmall>
-              Please type <span className="font-bold">{projectName}</span> to confirm.
+              {t('settings.dangerZone.delete.dialog.confirmationText', { projectName })}
             </TypographySmall>
 
             <Input
@@ -123,30 +126,24 @@ export function DangerZone({ projectName, projectId, onDeleteSuccess }: DangerZo
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button 
-              variant="secondary"
+              variant="ghost"
               onClick={() => setOpened(false)}
-              className="w-full sm:w-auto"
+              className="mr-2"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button 
               variant="destructive"
               onClick={handleDeleteProject}
-              disabled={confirmationText !== projectName}
+              disabled={confirmationText !== projectName || deleteProjectMutation.isPending}
               className={cn(
                 "w-full sm:w-auto",
                 deleteProjectMutation.isPending && "opacity-50 cursor-not-allowed"
               )}
             >
-              {deleteProjectMutation.isPending ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Deleting...
-                </>
-              ) : 'Delete Project'}
+              {deleteProjectMutation.isPending 
+                ? t('settings.dangerZone.delete.dialog.deleting') 
+                : t('settings.dangerZone.delete.dialog.confirmButton')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -187,16 +187,6 @@
                 "description": "Manage your project storages and configurations",
                 "viewStorages": "View Storages"
             },
-            "dangerZone": {
-                "title": "Danger Zone",
-                "description": "These actions are irreversible. Please be certain.",
-                "deleteProject": {
-                    "title": "Delete this project",
-                    "description": "Once you delete a project, there is no going back. Please be certain.",
-                    "button": "Delete Project",
-                    "confirmTitle": "Delete Project"
-                }
-            },
             "notifications": {
                 "projectDeleted": "Project deleted"
             }
@@ -416,6 +406,24 @@
         "key": "Key",
         "value": "Value",
         "actions": "Actions"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "subtitle": "These actions are irreversible. Please be certain.",
+      "delete": {
+        "title": "Delete this project",
+        "description": "Once you delete a project, there is no going back. Please be certain.",
+        "button": "Delete Project",
+        "dialog": {
+          "title": "Delete Project",
+          "warning": "Warning!",
+          "description": "This action cannot be undone. This will permanently delete the project \"{{projectName}}\" and all its data.",
+          "confirmation": "Please type \"{{projectName}}\" to confirm.",
+          "confirmationText": "Please type the project name to confirm deletion.",
+          "deleting": "Deleting...",
+          "confirmButton": "Delete Project"
+        }
+      }
     },
     "environment": {
         "production": "Production",

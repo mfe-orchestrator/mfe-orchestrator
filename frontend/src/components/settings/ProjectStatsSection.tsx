@@ -1,4 +1,4 @@
-import { Card } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button/button';
 import { useTranslation } from 'react-i18next';
 import { ReactNode } from 'react';
@@ -13,13 +13,13 @@ interface StatCardProps {
   href?: string;
 }
 
-const StatCard = ({ 
-  icon, 
-  title, 
-  value, 
-  buttonText, 
-  onAction, 
-  href 
+const StatCard = ({
+  icon,
+  title,
+  value,
+  buttonText,
+  onAction,
+  href
 }: StatCardProps) => {
   const { t } = useTranslation();
   const buttonTestReal = buttonText || t('settings.stats.viewAll')
@@ -35,7 +35,7 @@ const StatCard = ({
             <p className="text-lg font-bold text-gray-900 dark:text-white">{value}</p>
           </div>
         </div>
-        <Button 
+        <Button
           variant="ghost"
           size="sm"
           onClick={onAction}
@@ -53,32 +53,31 @@ interface ProjectStatsSectionProps {
   stats: StatCardProps[]
 }
 
-export function ProjectStatsSection({ 
+export function ProjectStatsSection({
   stats
 }: ProjectStatsSectionProps) {
   const { t } = useTranslation();
 
   return (
     <Card className="p-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold">
-          {t('settings.stats.title')}
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <StatCard 
-            key={index}
-            icon={stat.icon}
-            title={stat.title}
-            value={stat.value}
-            buttonText={stat.buttonText}
-            onAction={stat.onAction}
-            href={stat.href}
-          />
-        ))}
-      </div>
+      <CardTitle>
+        {t('settings.stats.title')}
+      </CardTitle>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {stats.map((stat, index) => (
+            <StatCard
+              key={index}
+              icon={stat.icon}
+              title={stat.title}
+              value={stat.value}
+              buttonText={stat.buttonText}
+              onAction={stat.onAction}
+              href={stat.href}
+            />
+          ))}
+        </div>
+      </CardContent>
     </Card>
   );
 }
