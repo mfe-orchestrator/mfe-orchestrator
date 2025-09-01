@@ -13,7 +13,7 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(({ children, className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-lg/6 tracking-normal font-semibold", className)} {...props}>
+    <h3 ref={ref} className={cn("text-lg/6 tracking-normal font-semibold mb-3", className)} {...props}>
         {children}
     </h3>
 ))
