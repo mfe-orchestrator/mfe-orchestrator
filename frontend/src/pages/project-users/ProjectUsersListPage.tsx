@@ -18,6 +18,7 @@ import React, { useState } from "react"
 import Gravatar from "react-gravatar"
 import { useTranslation } from "react-i18next"
 import { AddUserButton } from "./AddUserButton"
+import SinglePageLayout from "@/components/SinglePageLayout"
 
 type ViewType = "table" | "grid"
 
@@ -63,29 +64,6 @@ const ProjectUsersList: React.FC = () => {
         return user?.email?.[0].toUpperCase()
     }
 
-    const renderTableRow = (user: any) => (
-        <TableRow key={user._id}>
-            <TableCell className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                    <Gravatar email={user.email} className="rounded-full" />
-                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <div className="font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
-                </div>
-            </TableCell>
-            <TableCell>
-                <Badge>{user.role}</Badge>
-            </TableCell>
-            <TableCell className="text-right">
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserMutation.isPending}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-            </TableCell>
-        </TableRow>
-    )
-
     const renderUserCard = (user: any) => (
         <Card key={user._id} className="w-full sm:w-[300px] h-full">
             <CardContent className="pt-6">
@@ -123,45 +101,65 @@ const ProjectUsersList: React.FC = () => {
 
     return (
         <ApiDataFetcher queries={[userQuery]}>
-            <SinglePageHeader
+            <SinglePageLayout
                 title={t("project_users.title")}
                 description={t("project_users.subtitle", { count: users.length })}
-                buttons={
+                right={
                     <>
-                        <div className="flex items-center space-x-2">
-                            <Badge className="ml-2">{t("project_users.count", { count: users.length })}</Badge>
-                            <AddUserButton />
-                        </div>
+                        <AddUserButton />
                     </>
                 }
-            />
-            <div>
-                <Tabs defaultValue="table" className="space-y-4" tabsListPosition="end" onValueChange={value => setViewType(value as ViewType)}>
-                    <TabsList>
-                        <TabsTrigger value="table">{t("project_users.table_view")}</TabsTrigger>
-                        <TabsTrigger value="grid">{t("project_users.grid_view")}</TabsTrigger>
-                    </TabsList>
+            >
+                <div>
+                    <Tabs defaultValue="table" className="space-y-4" tabsListPosition="end" onValueChange={value => setViewType(value as ViewType)}>
+                        <TabsList>
+                            <TabsTrigger value="table">{t("project_users.table_view")}</TabsTrigger>
+                            <TabsTrigger value="grid">{t("project_users.grid_view")}</TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="table">
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>{t("project_users.user")}</TableHead>
-                                        <TableHead>{t("project_users.role")}</TableHead>
-                                        <TableHead className="w-[100px]">{t("common.actions")}</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>{users.map(user => renderTableRow(user))}</TableBody>
-                            </Table>
-                        </div>
-                    </TabsContent>
+                        <TabsContent value="table">
+                            <Card>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t("project_users.user")}</TableHead>
+                                            <TableHead>{t("project_users.role")}</TableHead>
+                                            <TableHead className="w-[100px]">{t("common.actions")}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>{users.map(user => {
 
-                    <TabsContent value="grid" className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{users.map(user => renderUserCard(user))}</div>
-                    </TabsContent>
-                </Tabs>
-            </div>
+                                        return <TableRow key={user._id}>
+                                            <TableCell className="flex items-center space-x-3">
+                                                <Avatar className="h-8 w-8">
+                                                    <Gravatar email={user.email} className="rounded-full" />
+                                                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <div className="font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</div>
+                                                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge>{user.role}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserMutation.isPending}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    })}</TableBody>
+                                </Table>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="grid" className="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{users.map(user => renderUserCard(user))}</div>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </SinglePageLayout>
         </ApiDataFetcher>
     )
 }

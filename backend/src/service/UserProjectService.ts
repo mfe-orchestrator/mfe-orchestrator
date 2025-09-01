@@ -117,7 +117,7 @@ class UserProjectService extends BaseAuthorizedService {
         // Format the response
         return userProjects.map<IUserInProject>(up => {
             return {
-                ...up.user,
+                ...up.userId,
                 role: up.role,
                 joinedAt: up.createdAt
             }

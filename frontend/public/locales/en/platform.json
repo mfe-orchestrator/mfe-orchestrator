@@ -326,6 +326,7 @@
     "project_users": {
         "title": "Project Members",
         "subtitle": "{{count}} team members",
+        "subtitle_one": "One team member",
         "no_users": "No members found for this project",
         "user": "User",
         "name": "Name",
