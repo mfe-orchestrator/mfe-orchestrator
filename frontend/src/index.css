@@ -8,6 +8,7 @@
   :root {
 	--background: 270 100% 99%;
 	--foreground: 270 9% 8%;
+	--foreground-secondary: 249 11% 31%;
 
     --card: 270 100% 99%;
     --card-foreground: 270 9% 8%;
@@ -37,6 +38,7 @@
     --border: 250 28% 6%;
     --input: 250 28% 6%;
     --ring: 253 76% 34% / 25%;
+	--divider: 254 17% 80%;
 
     --radius: 0.5rem;
 	--font-sans: "Familjen Grotesk", "system-ui", sans-serif;
@@ -62,6 +64,7 @@
   .dark {
 	--background: 249 24% 16%;
 	--foreground: 266 39% 92%;
+	--foreground-secondary: 260 7% 73%;
   
 	--card: 249 24% 16%;
 	--card-foreground: 266 39% 92%;
@@ -87,6 +90,7 @@
 	--border: 270 18% 86%;
 	--input: 270 18% 86%;
 	--ring: 247 100% 88% / 25%;
+	--divider: 249 9% 30%;
 
     --sidebar-background: 249 24% 16%;
     --sidebar-foreground: 266 39% 92%;

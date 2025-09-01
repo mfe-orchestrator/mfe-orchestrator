@@ -24,8 +24,10 @@ export default {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
+                divider: "hsl(var(--divider))",
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
+                "foreground-secondary": "hsl(var(--foreground-secondary))",
                 primary: {
                     DEFAULT: "hsl(var(--primary))",
                     foreground: "hsl(var(--primary-foreground))",
