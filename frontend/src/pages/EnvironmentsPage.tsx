@@ -1,98 +1,180 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input/input';
-import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import useEnvironmentsApi from '@/hooks/apiClients/useEnvironmentsApi';
+import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog";
+import useEnvironmentsApi, { EnvironmentDTO } from '@/hooks/apiClients/useEnvironmentsApi';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
 import useProjectStore from '@/store/useProjectStore';
 import { useQuery } from '@tanstack/react-query';
 import useProjectApi from '@/hooks/apiClients/useProjectApi';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
-import NoEnvironmentPlaceholder from '@/components/environment/NoEnvironmentPlaceholder';
-import SinglePageHeader from '@/components/SinglePageHeader';
 import { Card } from '@/components/ui/card';
+import SinglePageLayout from '@/components/SinglePageLayout';
+import EnvironmentsGate from '@/theme/EnvironmentsGate';
+import { FormProvider, useForm } from 'react-hook-form';
+import TextField from '@/components/input/TextField.rhf';
+import TextareaField from '@/components/input/TextareaField.rhf';
+import ColorPicker from '@/components/input/ColorPicker.rhf';
+import Switch from '@/components/input/Switch.rhf';
 
-type Environment = {
-    _id: string;
+interface EnvironmentDialogFormData {
     name: string;
     slug: string;
     description?: string;
     color?: string;
     isProduction?: boolean;
-};
+}
+
+interface EnvironmentDialogProps {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSubmitSuccess?: () => Promise<void>;
+    formData: EnvironmentDialogFormData;
+    id?: string;
+}
+
+function EnvironmentDialog({
+    isOpen,
+    onOpenChange,
+    onSubmitSuccess,
+    formData,
+    id,
+}: EnvironmentDialogProps) {
+    const { t } = useTranslation();
+    const isEdit = Boolean(id)
+    const form = useForm<EnvironmentDialogFormData>();
+    const environemtnApi = useEnvironmentsApi();
+    const notifications = useToastNotificationStore();
+
+    const onSubmit = async (data: EnvironmentDialogFormData) => {
+        if (isEdit) {
+            await environemtnApi.editEnvironment(id, data)
+            notifications.showSuccessNotification({
+                message: t('environment.update_success')
+            })
+        } else {
+            await environemtnApi.createEnvironment(data)
+            notifications.showSuccessNotification({
+                message: t('environment.create_success')
+            })
+        }
+
+        await onSubmitSuccess?.()
+    }
+
+
+    useEffect(() => {
+        if (!formData) {
+            console.log('reset')
+            form.reset({}, { keepValues: false, keepDirty: false })
+        } else {
+            form.reset(formData, { keepValues: false, keepDirty: false })
+        }
+    }, [formData, isOpen])
+
+    return (
+        <Dialog open={isOpen} onOpenChange={form.formState.isSubmitting ? undefined : onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>
+                        {id ? t('environment.page.form.edit_title', { name: formData.name }) : t('environment.page.form.create_title')}
+                    </DialogTitle>
+                </DialogHeader>
+                <FormProvider {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <TextField
+                            name="name"
+                            label={t('environment.form.name')}
+                            placeholder={t('environment.form.name_placeholder')}
+                            rules={{ 
+                                required: t('environment.form.name_required') as string 
+                            }}
+                            required
+                        />
+                        <TextField
+                            name="slug"
+                            label={t('environment.form.slug')}
+                            placeholder={t('environment.form.slug_placeholder')}
+                            rules={{ 
+                                required: t('environment.form.slug_required') as string 
+                            }}
+                            disabled={isEdit}
+                            required
+                        />
+                        <TextareaField
+                            name="description"
+                            label={t('environment.form.description')}
+                            placeholder={t('environment.form.description_placeholder')}
+                        />
+                        <ColorPicker
+                            name="color"
+                            label={t('environment.color')}
+                            rules={{ 
+                                required: t('environment.form.color_required') as string 
+                            }}
+                            required
+                        />
+                        <Switch
+                            name="isProduction"
+                            label={t('environment.is_production')}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={form.formState.isSubmitting}>
+                                {t('environment.page.form.cancel')}
+                            </Button>
+                            <Button type="submit" disabled={form.formState.isSubmitting}>
+                                {id ? t('environment.page.form.update') : t('environment.page.form.create')}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </FormProvider>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function EnvironmentsPage() {
-    const notifications = useToastNotificationStore();
+    const { t } = useTranslation();
+
     const {
-        createEnvironment,
-        editEnvironment,
         deleteEnvironment
     } = useEnvironmentsApi();
     const projectApi = useProjectApi();
-
+    const notifications = useToastNotificationStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [currentEnvironment, setCurrentEnvironment] = useState<Partial<Environment> | null>(null);
+    const [currentEnvironment, setCurrentEnvironment] = useState<EnvironmentDTO>();
     const { project } = useProjectStore();
-    const [formData, setFormData] = useState({
-        name: '',
-        slug: '',
-        description: '',
-        color: '#3b82f6',
-        isProduction: false,
-    });
 
     const environmentQuery = useQuery({
         queryKey: ['environments', project._id],
         queryFn: () => projectApi.getEnvironmentsByProjectId(project._id),
     });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
+    const onSubmitSuccess = async () => {
+        await environmentQuery.refetch();
+        setIsDialogOpen(false);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            //   if (currentEnvironment?._id) {
-            //     await editEnvironment(currentEnvironment._id, formData);
-            //     toast({
-            //       title: 'Success',
-            //       description: 'Environment updated successfully',
-            //     });
-            //   } else {
-            //     await createEnvironment(formData);
-            //     toast({
-            //       title: 'Success',
-            //       description: 'Environment created successfully',
-            //     });
-            //   }
-            //   setIsDialogOpen(false);
-            //   fetchEnvironments();
-        } catch (error) {
-            //   toast({
-            //     title: 'Error',
-            //     description: `Failed to ${currentEnvironment?._id ? 'update' : 'create'} environment`,
-            //     variant: 'destructive',
-            //   });
-        }
-    };
-
-    const handleEdit = (env: Environment) => {
+    const handleEdit = (env: EnvironmentDTO) => {
         setCurrentEnvironment(env);
-        setFormData({
-            name: env.name,
-            slug: env.slug,
-            description: env.description || '',
-            color: env.color || '#3b82f6',
-            isProduction: env.isProduction || false,
+        setIsDialogOpen(true);
+    };
+
+    const getRandomColor = () => {
+        return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    };
+
+    const openCreateDialog = () => {
+        setCurrentEnvironment({
+            name: '',
+            slug: '',
+            description: '',
+            color: getRandomColor(),
+            isProduction: false
         });
         setIsDialogOpen(true);
     };
@@ -100,64 +182,38 @@ export default function EnvironmentsPage() {
     const handleDelete = async () => {
         if (!currentEnvironment?._id) return;
 
-        // try {
-        //   await deleteEnvironment(currentEnvironment._id);
-        //   toast({
-        //     title: 'Success',
-        //     description: 'Environment deleted successfully',
-        //   });
-        //   setIsDeleteDialogOpen(false);
-        //   fetchEnvironments();
-        // } catch (error) {
-        //   toast({
-        //     title: 'Error',
-        //     description: 'Failed to delete environment',
-        //     variant: 'destructive',
-        //   });
-        // }
-    };
-
-    const openCreateDialog = () => {
-        setCurrentEnvironment(null);
-        setFormData({
-            name: '',
-            slug: '',
-            description: '',
-            color: '#3b82f6',
-            isProduction: false,
+        await deleteEnvironment(currentEnvironment._id);
+        await environmentQuery.refetch();
+        notifications.showSuccessNotification({
+            message: t('environment.page.delete.success', { name: currentEnvironment.name }),
         });
-        setIsDialogOpen(true);
     };
 
-    const onSaveEnvironmentsSuccess = () => {
-        environmentQuery.refetch();
-    }
 
     return (
-        <div>
-            <SinglePageHeader
-                title="Environments"
-                description="Gestisci gli ambienti del tuo progetto"
-                buttons={
+        <SinglePageLayout
+            title={t('environment.page.title')}
+            description={t('environment.page.description')}
+            right={
+                !environmentQuery.isLoading && environmentQuery.data?.length != 0 ?
                     <Button onClick={openCreateDialog}>
                         <Plus className="mr-2 h-4 w-4" />
-                        New Environment
+                        {t('environment.page.new_environment')}
                     </Button>
-                }
-            />
-            <Card className="mt-6">
-                <ApiDataFetcher queries={[environmentQuery]}>
-                    {!environmentQuery.data || environmentQuery.data.length == 0 ?
-                        <NoEnvironmentPlaceholder onSaveSuccess={onSaveEnvironmentsSuccess} />
-                        :
+                    : null
+            }
+        >
+            <Card>
+                <EnvironmentsGate onSaveSuccess={() => { environmentQuery.refetch() }}>
+                    <ApiDataFetcher queries={[environmentQuery]}>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Slug</TableHead>
-                                    <TableHead>Production</TableHead>
-                                    <TableHead>Color</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead>{t('environment.form.name')}</TableHead>
+                                    <TableHead>{t('environment.form.slug')}</TableHead>
+                                    <TableHead>{t('environment.production')}</TableHead>
+                                    <TableHead>{t('environment.page.color')}</TableHead>
+                                    <TableHead className="text-right">{t('environment.page.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -196,102 +252,28 @@ export default function EnvironmentsPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                    }
-                </ApiDataFetcher>
+                    </ApiDataFetcher>
+                </EnvironmentsGate>
 
                 {/* Create/Edit Dialog */}
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                {currentEnvironment?._id ? 'Edit Environment' : 'Create New Environment'}
-                            </DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="slug">Slug</Label>
-                                <Input
-                                    id="slug"
-                                    name="slug"
-                                    value={formData.slug}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="description">Description</Label>
-                                <Input
-                                    id="description"
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="color">Color</Label>
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        id="color"
-                                        name="color"
-                                        type="color"
-                                        value={formData.color}
-                                        onChange={handleInputChange}
-                                        className="w-16 h-10 p-1"
-                                    />
-                                    <span>{formData.color}</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    id="isProduction"
-                                    name="isProduction"
-                                    type="checkbox"
-                                    checked={formData.isProduction}
-                                    onChange={handleInputChange}
-                                    className="h-4 w-4"
-                                />
-                                <Label htmlFor="isProduction">Production Environment</Label>
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit">
-                                    {currentEnvironment?._id ? 'Update' : 'Create'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <EnvironmentDialog
+                    isOpen={isDialogOpen}
+                    onOpenChange={setIsDialogOpen}
+                    id={currentEnvironment?._id}
+                    onSubmitSuccess={onSubmitSuccess}
+                    formData={currentEnvironment}
+                />
 
                 {/* Delete Confirmation Dialog */}
-                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Delete Environment</DialogTitle>
-                        </DialogHeader>
-                        <p>Are you sure you want to delete the environment "{currentEnvironment?.name}"?</p>
-                        <DialogFooter>
-                            <Button variant="secondary" onClick={() => setIsDeleteDialogOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button variant="destructive" onClick={handleDelete}>
-                                Delete
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <DeleteConfirmationDialog
+                    isOpen={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                    onDelete={handleDelete}
+                    itemName={currentEnvironment?.name || ''}
+                    title={t('environment.page.delete.title')}
+                    description={t('environment.page.delete.confirmation')}
+                />
             </Card>
-        </div>
+        </SinglePageLayout>
     );
 }

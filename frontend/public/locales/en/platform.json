@@ -429,6 +429,8 @@
         "production": "Production",
         "edit_title": "Edit environment",
         "delete_title": "Delete environment",
+        "create_success": "Environment created successfully",
+        "update_success": "Environment updated successfully",
         "color_tooltip": "Environment color: {{name}}",
         "name": "Name",
         "slug": "Slug",
@@ -438,6 +440,25 @@
         "preset_environments": "Default Environments",
         "custom_environments": "Your Custom Environments",
         "your_environments": "Your Environments",
+        "page": {
+            "title": "Environments",
+            "description": "Manage your project environments",
+            "new_environment": "New Environment",
+            "actions": "Actions",
+            "color": "Color",
+            "delete": {
+                "title": "Delete Environment",
+                "confirmation": "Are you sure you want to delete the environment",
+                "success": "Environment \"{{name}}\" has been deleted"
+            },
+            "form": {
+                "create_title": "Create New Environment",
+                "edit_title": "Edit {{name}}",
+                "cancel": "Cancel",
+                "create": "Create",
+                "update": "Update"
+            }
+        },
         "add_environment": "Add Environment",
         "form": {
             "name": "Name",

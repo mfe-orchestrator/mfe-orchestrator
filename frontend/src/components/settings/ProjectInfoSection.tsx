@@ -64,7 +64,7 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
   const { t } = useTranslation();
 
   return (
-    <Card className="p-6">
+    <Card>
       <CardTitle>
         {t('settings.settingsPage.projectInfo.title')}
       </CardTitle>

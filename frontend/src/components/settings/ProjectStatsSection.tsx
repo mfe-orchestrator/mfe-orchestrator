@@ -59,7 +59,7 @@ export function ProjectStatsSection({
   const { t } = useTranslation();
 
   return (
-    <Card className="p-6">
+    <Card>
       <CardTitle>
         {t('settings.stats.title')}
       </CardTitle>

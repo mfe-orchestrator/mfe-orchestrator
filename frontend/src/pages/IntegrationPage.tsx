@@ -133,7 +133,7 @@ const IntegrationPage: React.FC = () => {
                 <DeploymentGate environmentId={projectStore.environment?._id}>
                     <ApiDataFetcher queries={[microfrontendQuery]}>
                         <div className="container mx-auto p-4 max-w-4xl">
-                            <Card className="p-4">
+                            <Card>
                                 <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
                                     <TabsList>
                                         <TabsTrigger value="vite">Vite</TabsTrigger>

@@ -307,24 +307,67 @@
     "production": "Produzione",
     "edit_title": "Modifica ambiente",
     "delete_title": "Elimina ambiente",
+    "create_success": "Ambiente creato con successo",
+    "update_success": "Ambiente aggiornato con successo",
     "color_tooltip": "Colore per l'ambiente {{name}}",
     "configure": "Configura Ambienti",
     "preset_environments": "Ambienti Predefiniti",
     "custom_environments": "I Tuoi Ambienti Personalizzati",
     "your_environments": "I tuoi ambienti",
     "add_environment": "Aggiungi ambiente",
+    "color": "Colore",
+    "is_production": "Ambiente di produzione",
+    "page": {
+      "new_environment": "Nuovo Ambiente",
+      "title": "Ambienti",
+      "description": "Gestisci gli ambienti del tuo progetto",
+      "create_button": "Nuovo Ambiente",
+      "delete": {
+        "title": "Elimina Ambiente",
+        "description": "Sei sicuro di voler eliminare l'ambiente {{name}}? Questa azione non può essere annullata.",
+        "success": "Ambiente eliminato con successo",
+        "error": "Errore durante l'eliminazione dell'ambiente"
+      },
+      "form": {
+        "create_title": "Nuovo Ambiente",
+        "edit_title": "Modifica {{name}}",
+        "cancel": "Annulla",
+        "create": "Crea",
+        "update": "Aggiorna"
+      },
+      "create_success": "Ambiente creato con successo",
+      "update_success": "Ambiente aggiornato con successo"
+    },
     "form": {
       "name": "Nome",
-      "name_placeholder": "Nome ambiente",
+      "name_placeholder": "Inserisci il nome dell'ambiente",
       "name_required": "Il nome è obbligatorio",
       "slug": "Slug",
-      "slug_placeholder": "Inserisci uno slug",
-      "source": "Sorgente",
+      "slug_placeholder": "Inserisci lo slug dell'ambiente",
       "slug_required": "Lo slug è obbligatorio",
+      "slug_invalid": "Lo slug può contenere solo lettere minuscole, numeri e trattini",
       "description": "Descrizione",
-      "description_placeholder": "Breve descrizione dell'ambiente",
+      "description_placeholder": "Inserisci una descrizione per l'ambiente",
+      "color": "Colore",
+      "color_placeholder": "Seleziona un colore",
+      "is_production": "Ambiente di produzione",
+      "is_production_description": "Indica se questo è un ambiente di produzione",
+      "source": "Sorgente",
+      "submit": "Salva",
+      "cancel": "Annulla",
+      "validation": {
+        "name_required": "Il nome è obbligatorio",
+        "slug_required": "Lo slug è obbligatorio",
+        "slug_invalid": "Lo slug può contenere solo lettere minuscole, numeri e trattini"
+      }
+    },
+    "table": {
+      "name": "Nome",
+      "slug": "Slug",
+      "description": "Descrizione",
       "is_production": "Produzione",
-      "color": "Colore"
+      "actions": "Azioni",
+      "no_environments": "Nessun ambiente trovato"
     }
   },
   "apiKeys": {

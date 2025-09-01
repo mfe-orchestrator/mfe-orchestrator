@@ -56,7 +56,7 @@ const useEnvironmentsApi = () => {
 
   const editEnvironment = async (id: string, data: CreateEnvironmentDTO) => {
     const response = await apiClient.doRequest<EnvironmentDTO>({
-      url: `/environments/${id}`,
+      url: `/api/environments/${id}`,
       method: 'PUT',
       data
     });
