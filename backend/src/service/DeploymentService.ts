@@ -32,7 +32,7 @@ class DeploymentService extends BaseAuthorizedService {
         }
 
         const microfrontend = await Microfrontend.find({ projectId: environment.projectId }).session(session || null)
-        const variables = await GlobalVariable.find({ projectId: environment.projectId, environmentId }).session(session || null)
+        const variables = await GlobalVariable.find({ environmentId }).session(session || null)
 
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
 

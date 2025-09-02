@@ -128,19 +128,19 @@ export default class ServeService {
      * @param environmentId The ID of the environment
      * @returns Promise with global variables object
      */
-    async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<IGlobalVariable[]> {
+    async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<{ key: string, value: string }[]> {
         const deployment = await Deployment.findOne({ environmentId, active: true });
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
-        return deployment.variables || []
+        return deployment.variables?.map(v => ({ key: v.key, value: v.value })) || []
     }
 
     async getGlobalVariablesByEnvironmentIdFile(environmentId: string): Promise<string> {
         const variables = await this.getGlobalVariablesByEnvironmentId(environmentId)
-        const fileData = `<script> window.globalConfig = {
-            ${variables.map(v => `${v.key}: ${v.value}`).join(",\n")}
-        }</script>`
+        const fileData = `window.globalConfig = {
+  ${variables.map(v => `"${v.key}": "${v.value}"`).join(",\n  ")}
+}`
         return fileData
     }
 
