@@ -19,8 +19,42 @@ import Gravatar from "react-gravatar"
 import { useTranslation } from "react-i18next"
 import { AddUserButton } from "./AddUserButton"
 import SinglePageLayout from "@/components/SinglePageLayout"
+import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
+import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 
-type ViewType = "table" | "grid"
+const getUserInitials = (user?: { name?: string; surname?: string; email: string }) => {
+    if (!user) return ""
+    if (user.name && user.surname) {
+        return `${user.name[0]}${user.surname[0]}`.toUpperCase()
+    }
+    if (user.name) return user.name[0].toUpperCase()
+    if (user.surname) return user.surname[0].toUpperCase()
+    return user?.email?.[0].toUpperCase()
+}
+
+const UserCard: React.FC<{ user: any, handleDeleteUser: (userId: string, userName: string) => void, deleteUserDisabled: boolean }> = ({ user, handleDeleteUser, deleteUserDisabled }) => {
+    const { t } = useTranslation()
+
+    return <Card key={user._id} className="w-full sm:w-[300px] h-full">
+        <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-4">
+                <Avatar className="h-20 w-20">
+                    <Gravatar email={user.email} className="rounded-full" />
+                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                </Avatar>
+                <div className="text-center space-y-1">
+                    <h3 className="text-lg font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</h3>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <Badge className="mt-2">{user.role}</Badge>
+                </div>
+                <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserDisabled}>
+                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                    {t("common.remove")}
+                </Button>
+            </div>
+        </CardContent>
+    </Card>
+}
 
 const ProjectUsersList: React.FC = () => {
     const { t } = useTranslation()
@@ -28,7 +62,7 @@ const ProjectUsersList: React.FC = () => {
     const notifications = useToastNotificationStore()
     const projectUserApi = useProjectUserApi()
     const queryClient = useQueryClient()
-    const [viewType, setViewType] = useState<ViewType>("table")
+    const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; userId?: string; userName?: string }>({ isOpen: false })
 
     const userQuery = useQuery({
         queryKey: ["projectUsers", project?._id],
@@ -49,42 +83,15 @@ const ProjectUsersList: React.FC = () => {
     })
 
     const handleDeleteUser = (userId: string, userName: string) => {
-        if (window.confirm(t("project_users.confirm_remove", { name: userName }))) {
-            deleteUserMutation.mutate(userId)
-        }
+        setDeleteDialog({ isOpen: true, userId, userName })
     }
 
-    const getUserInitials = (user?: { name?: string; surname?: string; email: string }) => {
-        if (!user) return ""
-        if (user.name && user.surname) {
-            return `${user.name[0]}${user.surname[0]}`.toUpperCase()
+    const confirmDeleteUser = async () => {
+        if (deleteDialog.userId) {
+            deleteUserMutation.mutate(deleteDialog.userId)
+            setDeleteDialog({ isOpen: false })
         }
-        if (user.name) return user.name[0].toUpperCase()
-        if (user.surname) return user.surname[0].toUpperCase()
-        return user?.email?.[0].toUpperCase()
     }
-
-    const renderUserCard = (user: any) => (
-        <Card key={user._id} className="w-full sm:w-[300px] h-full">
-            <CardContent className="pt-6">
-                <div className="flex flex-col items-center space-y-4">
-                    <Avatar className="h-20 w-20">
-                        <Gravatar email={user.email} className="rounded-full" />
-                        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
-                    </Avatar>
-                    <div className="text-center space-y-1">
-                        <h3 className="text-lg font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</h3>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <Badge className="mt-2">{user.role}</Badge>
-                    </div>
-                    <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserMutation.isPending}>
-                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                        {t("common.remove")}
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    )
 
     if (users.length === 0) {
         return (
@@ -111,7 +118,7 @@ const ProjectUsersList: React.FC = () => {
                 }
             >
                 <div>
-                    <Tabs defaultValue="table" className="space-y-4" tabsListPosition="end" onValueChange={value => setViewType(value as ViewType)}>
+                    <Tabs defaultValue="table" className="space-y-4" tabsListPosition="end">
                         <TabsList>
                             <TabsTrigger value="table">{t("project_users.table_view")}</TabsTrigger>
                             <TabsTrigger value="grid">{t("project_users.grid_view")}</TabsTrigger>
@@ -124,6 +131,7 @@ const ProjectUsersList: React.FC = () => {
                                         <TableRow>
                                             <TableHead>{t("project_users.user")}</TableHead>
                                             <TableHead>{t("project_users.role")}</TableHead>
+                                            <TableHead>{t("project_users.invite_state")}</TableHead>
                                             <TableHead className="w-[100px]">{t("common.actions")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -143,8 +151,13 @@ const ProjectUsersList: React.FC = () => {
                                             <TableCell>
                                                 <Badge>{user.role}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserMutation.isPending}>
+                                            <TableCell>
+                                                <Badge variant={user.invitationToken ? "accent" : "default"}>
+                                                    {user.invitationToken ? t("project_users.invited") : t("project_users.accepted")}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={(user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1) || deleteUserMutation.isPending || users.length === 1}>
                                                     <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             </TableCell>
@@ -155,11 +168,19 @@ const ProjectUsersList: React.FC = () => {
                         </TabsContent>
 
                         <TabsContent value="grid" className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{users.map(user => renderUserCard(user))}</div>
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{users.map(user => <UserCard key={user._id} user={user} handleDeleteUser={handleDeleteUser} deleteUserDisabled={(user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1) || deleteUserMutation.isPending || users.length === 1} />)}</div>
                         </TabsContent>
                     </Tabs>
                 </div>
             </SinglePageLayout>
+
+            <DeleteConfirmationDialog
+                isOpen={deleteDialog.isOpen}
+                onOpenChange={(open) => setDeleteDialog({ isOpen: open })}
+                onDelete={confirmDeleteUser}
+                title={t("project_users.confirm_remove_title")}
+                description={t("project_users.confirm_remove", { name: deleteDialog.userName })}
+            />
         </ApiDataFetcher>
     )
 }

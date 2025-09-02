@@ -1,11 +1,10 @@
+import SelectField from "@/components/input/SelectField.rhf"
+import TextField from "@/components/input/TextField.rhf"
 import { Button } from "@/components/ui/button/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input/input"
-import { SelectContent } from "@/components/ui/select/partials/selectContent/selectContent"
-import { SelectItem } from "@/components/ui/select/partials/selectItem/selectItem"
-import { SelectTrigger } from "@/components/ui/select/partials/selectTrigger/selectTrigger"
-import { Select, SelectValue } from "@/components/ui/select/select"
+import { Form } from "@/components/ui/form"
+import useProjectApi, { RoleInProject } from "@/hooks/apiClients/useProjectApi"
+import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
@@ -17,7 +16,7 @@ import { z } from "zod"
 
 const inviteUserSchema = z.object({
     email: z.string().email("Inserisci un indirizzo email valido"),
-    role: z.enum(["admin", "editor", "viewer"], {
+    role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
         required_error: "Seleziona un ruolo per l'utente"
     })
 })
@@ -32,34 +31,33 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     const { t } = useTranslation()
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
     const notifications = useToastNotificationStore()
+    const projectApi = useProjectApi();
+    const { project } = useProjectStore()
 
     const form = useForm<InviteUserFormValues>({
         resolver: zodResolver(inviteUserSchema),
         defaultValues: {
             email: "",
-            role: "viewer"
+            role: RoleInProject.VIEWER
         }
     })
 
     const inviteUserMutation = useMutation({
-        mutationFn: async (values: InviteUserFormValues) => {
-            // TODO: Implement the actual API call to invite a user
-            console.log("Inviting user:", values)
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
-        },
-        onSuccess: () => {
-            notifications.showSuccessNotification({
-                message: t("project_users.invite_success")
-            })
-            setIsInviteModalOpen(false)
-            onSuccess?.()
-            form.reset()
-        }
+        mutationFn: projectApi.inviteUser,
     })
 
     const onSubmit = async (values: InviteUserFormValues) => {
-        await inviteUserMutation.mutateAsync(values)
+        await inviteUserMutation.mutateAsync({
+            email: values.email!,
+            role: values.role,
+            projectId: project._id
+        })
+        notifications.showSuccessNotification({
+            message: t("project_users.invite_success")
+        })
+        setIsInviteModalOpen(false)
+        onSuccess?.()
+        form.reset()
     }
 
     return (
@@ -78,40 +76,21 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
                             <DialogDescription>{t("project_users.invite_user_modal_description")}</DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <FormField
-                                control={form.control}
+                            <TextField
                                 name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t("auth.email")}</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder={t("auth.email_placeholder")} type="email" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label={t("auth.email")}
+                                placeholder={t("auth.email_placeholder")}
+                                type="email"
                             />
-                            <FormField
-                                control={form.control}
+                            <SelectField
                                 name="role"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t("project_users.role")}</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={t("project_users.select_role")} />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="admin">{t("project_users.roles.admin")}</SelectItem>
-                                                <SelectItem value="editor">{t("project_users.roles.editor")}</SelectItem>
-                                                <SelectItem value="viewer">{t("project_users.roles.viewer")}</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                label={t("project_users.role")}
+                                placeholder={t("project_users.select_role")}
+                                options={[
+                                    { value: "OWNER", label: t("project_users.roles.admin") },
+                                    { value: "MEMBER", label: t("project_users.roles.editor") },
+                                    { value: "VIEWER", label: t("project_users.roles.viewer") }
+                                ]}
                             />
                         </div>
                         <DialogFooter>

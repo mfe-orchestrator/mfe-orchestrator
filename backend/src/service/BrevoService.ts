@@ -10,7 +10,7 @@ export class BrevoService {
         this.listId = parseInt(process.env.BREVO_LIST_ID || "0", 10)
 
         if (!apiKey) {
-            console.error("BREVO_API_KEY environment variable is not set")
+            console.error("Brevo environment variables not set, will not init Brevo")
             return
         }
 

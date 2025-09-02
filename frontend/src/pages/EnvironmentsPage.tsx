@@ -269,9 +269,8 @@ export default function EnvironmentsPage() {
                     isOpen={isDeleteDialogOpen}
                     onOpenChange={setIsDeleteDialogOpen}
                     onDelete={handleDelete}
-                    itemName={currentEnvironment?.name || ''}
                     title={t('environment.page.delete.title')}
-                    description={t('environment.page.delete.confirmation')}
+                    description={t('environment.page.delete.confirmation', { name: currentEnvironment?.name || '' })}
                 />
             </Card>
         </SinglePageLayout>

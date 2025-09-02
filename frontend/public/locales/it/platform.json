@@ -82,6 +82,7 @@
     "save_changes": "Salva modifiche",
     "save_all": "Salva tutto",
     "delete": "Elimina",
+    "deleting": "Eliminazione...",
     "edit": "Modifica",
     "create": "Crea",
     "update": "Aggiorna",
@@ -276,6 +277,8 @@
     "no_name": "Nessun nome",
     "user_removed": "Utente rimosso con successo",
     "confirm_remove": "Sei sicuro di voler rimuovere {{name}} da questo progetto?",
+    "confirm_remove_title": "Rimuovi Utente",
+    "confirm_remove_description": "Sei sicuro di voler rimuovere",
     "table_view": "Vista tabella",
     "grid_view": "Vista griglia",
     "count": "{{count}} utenti",
@@ -289,7 +292,10 @@
       "admin": "Amministratore",
       "editor": "Editore",
       "viewer": "Visualizzatore"
-    }
+    },
+    "invited": "Invitato",
+    "accepted": "Accettato",
+    "invite_state": "Stato"
   },
   "environmentVariables": {
     "title": "Variabili d'Ambiente",
@@ -325,10 +331,11 @@
       "create_button": "Nuovo Ambiente",
       "delete": {
         "title": "Elimina Ambiente",
-        "description": "Sei sicuro di voler eliminare l'ambiente {{name}}? Questa azione non può essere annullata.",
+        "confirmation": "Sei sicuro di voler eliminare l'ambiente {{name}}? Questa azione non può essere annullata.",
         "success": "Ambiente eliminato con successo",
         "error": "Errore durante l'eliminazione dell'ambiente"
       },
+      
       "form": {
         "create_title": "Nuovo Ambiente",
         "edit_title": "Modifica {{name}}",
@@ -373,6 +380,7 @@
   },
   "apiKeys": {
     "api_keys": "Chiavi API",
+    "no_api_keys": "Nessuna chiave API trovata",
     "expiresAt": "Data di scadenza",
     "created_api_key": "Chiave API creata",
     "expiresAt_placeholder": "Seleziona una data",

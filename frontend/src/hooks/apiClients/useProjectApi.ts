@@ -1,6 +1,11 @@
 import useApiClient from "../useApiClient";
 import { EnvironmentDTO } from "./useEnvironmentsApi";
-import { GlobalVariable } from "./useGlobalVariablesApi";
+
+export enum RoleInProject {
+  OWNER = "OWNER",
+  MEMBER = "MEMBER",
+  VIEWER = "VIEWER"
+}
 
 export interface Project {
   name: string;
@@ -20,6 +25,11 @@ export interface ProjectSummaryDTO {
     apiKeys: number,
     storages: number
   }
+}
+
+interface AddUserToProjectDTO {
+  email: string
+  role: RoleInProject
 }
 
 const useProjectApi = () => {
@@ -80,6 +90,14 @@ const useProjectApi = () => {
     });
   };
 
+  const inviteUser = async (dto: AddUserToProjectDTO & { projectId: string }): Promise<void> => {
+    await apiClient.doRequest({
+      url: `/api/projects/${dto.projectId}/users`,
+      method: "POST",
+      data: dto
+    });
+  };
+
   return {
     getMineProjects: getMineProjects,
     getProjectById,
@@ -87,7 +105,8 @@ const useProjectApi = () => {
     updateProject,
     getProjectSummaryById,
     deleteProject,
-    getEnvironmentsByProjectId
+    getEnvironmentsByProjectId,
+    inviteUser
   };
 };
 

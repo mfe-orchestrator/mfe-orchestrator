@@ -80,6 +80,7 @@
         "save": "Save",
         "cancel": "Cancel",
         "delete": "Delete",
+        "deleting": "Deleting...",
         "edit": "Edit",
         "create": "Create",
         "update": "Update",
@@ -224,6 +225,7 @@
     },
     "apiKeys": {
         "api_keys": "API Keys",
+        "no_api_keys": "No API keys found",
         "expiresAt": "Expiration Date",
         "created_api_key": "API Key created",
         "expiresAt_placeholder": "Pick a date",
@@ -335,6 +337,7 @@
         "no_name": "No name",
         "user_removed": "User removed successfully",
         "confirm_remove": "Are you sure you want to remove {{name}} from this project?",
+        "confirm_remove_title": "Remove User",
         "table_view": "Table view",
         "grid_view": "Grid view",
         "count": "{{count}} users",
@@ -348,7 +351,10 @@
             "admin": "Admin",
             "editor": "Editor",
             "viewer": "Viewer"
-        }
+        },
+        "invited": "Invited",
+        "accepted": "Accepted",
+        "invite_state": "Status"
     },
     "microfrontend": {
         "dashboard": {
@@ -449,7 +455,7 @@
             "color": "Color",
             "delete": {
                 "title": "Delete Environment",
-                "confirmation": "Are you sure you want to delete the environment",
+                "confirmation": "Are you sure you want to delete the {{name}} environment",
                 "success": "Environment \"{{name}}\" has been deleted"
             },
             "form": {

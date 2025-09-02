@@ -7,6 +7,7 @@ export interface ProjectUser {
   name?: string;
   surname?: string;
   role: string;
+  invitationToken?: string;
   createdAt: string;
   updatedAt: string;
 }

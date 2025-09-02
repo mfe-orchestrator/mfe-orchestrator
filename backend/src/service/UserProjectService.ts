@@ -10,10 +10,13 @@ import User from "../models/UserModel"
 import UserService from "../service/UserService"
 import { randomBytes } from "crypto"
 import EmailSenderService from "./EmailSenderService"
+import { fastify } from ".."
+
 // Get all user-project relationships for this project
 interface IUserInProject extends Partial<IUser> {
     joinedAt: Date
-    role: RoleInProject
+    role: RoleInProject,
+    invitationToken?: string
 }
 class UserProjectService extends BaseAuthorizedService {
     emailSenderService = new EmailSenderService()
@@ -31,23 +34,28 @@ class UserProjectService extends BaseAuthorizedService {
         if (user) {
             return (await this.addUserToProject(user._id, projectId, role)).userProject
         }
+
         // qui devo assolutamente inviatre l'utente
+        fastify.log.info(`Inviting user ${email} to project ${projectIdObj.toString()}`)
         const registeredUser = await this.userService.register(
             {
                 email,
-                status: UserStatus.INVITED
+                status: UserStatus.INVITED,
             },
             false
         )
 
         const canSendEmail = this.emailSenderService.canSendEmails()
 
+        fastify.log.info(`User ${email} registered with ID ${registeredUser._id}`)
+        
         // Add user to project
         const userProject = new UserProject({
             userId: registeredUser._id,
             projectId: projectIdObj,
             role,
-            invitationToken: canSendEmail ? randomBytes(32).toString("hex") : undefined
+            invitationToken: canSendEmail ? randomBytes(32).toString("hex") : undefined,
+            inviationTokenExpiresAt: canSendEmail ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined
         })
 
         const out = await userProject.save()
@@ -117,9 +125,10 @@ class UserProjectService extends BaseAuthorizedService {
         // Format the response
         return userProjects.map<IUserInProject>(up => {
             return {
+                ...up,
                 ...up.userId,
-                role: up.role,
-                joinedAt: up.createdAt
+                joinedAt: up.createdAt,
+                userId: undefined,
             }
         })
     }

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from "./button/button";
 import {
   Dialog,
@@ -14,7 +15,6 @@ interface DeleteConfirmationDialogProps {
   onDelete: () => Promise<void> | void;
   onDeleteSuccess?: () => void;
   onCancel?: () => void;
-  itemName: string;
   title?: string;
   description?: string;
 }
@@ -25,10 +25,10 @@ export function DeleteConfirmationDialog({
   onDelete,
   onDeleteSuccess,
   onCancel,
-  itemName,
   title = "Delete Confirmation",
   description = "Are you sure you want to delete",
 }: DeleteConfirmationDialogProps) {
+  const { t } = useTranslation();
   const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleDelete = async () => {
@@ -54,18 +54,18 @@ export function DeleteConfirmationDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <p>
-          {description} "{itemName}"?
+          {description}
         </p>
         <DialogFooter>
           <Button variant="secondary" onClick={handleCancel} disabled={isDeleting}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? t("common.deleting") : t("common.delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

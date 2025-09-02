@@ -24,22 +24,24 @@ export const CreateApiKeyFormInner = () => {
     </div>
 }
 
-interface CreateApiKeyFormProps {
-    onSubmit: (data: ApiKeyFormData) => Promise<void>;
+interface CreateApiKeyFormProps{
+    onSubmit: (data: ApiKeyFormData) => Promise<void> | void;
+    buttons?: React.ReactNode
 }
-const CreateApiKeyForm = ({ onSubmit: onSubmitCallback }: CreateApiKeyFormProps) => {
+const CreateApiKeyForm = ({ onSubmit: onSubmitCallback, buttons }: CreateApiKeyFormProps) => {
 
     const form = useForm<ApiKeyFormData>()
 
     const onSubmit = (data: ApiKeyFormData) => {
         if (onSubmitCallback) return onSubmitCallback(data)
-        console.log(data)
+        
     }
 
     return (
         <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <CreateApiKeyFormInner />
+                {buttons}
             </form>
         </FormProvider>
     )

@@ -11,6 +11,7 @@ export interface IUserProject extends Document<ObjectId> {
     projectId: ObjectId
     role: RoleInProject
     invitationToken: string
+    inviationTokenExpiresAt: Date
     createdAt: Date
     updatedAt: Date
 }
@@ -37,6 +38,10 @@ const userProjectSchema = new Schema<IUserProject>(
         },
         invitationToken: {
             type: String,
+            required: false
+        },
+        inviationTokenExpiresAt: {
+            type: Date,
             required: false
         }
     },
