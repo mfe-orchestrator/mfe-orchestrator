@@ -477,7 +477,8 @@
             "description": "Description",
             "description_placeholder": "Short description of the environment",
             "is_production": "Production",
-            "color": "Color"
+            "color": "Color",
+            "color_required": "Color is required"
         }
     },
     "storage": {

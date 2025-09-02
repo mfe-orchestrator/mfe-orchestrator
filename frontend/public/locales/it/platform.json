@@ -358,6 +358,7 @@
       "description_placeholder": "Inserisci una descrizione per l'ambiente",
       "color": "Colore",
       "color_placeholder": "Seleziona un colore",
+      "color_required": "Il colore è obbligatorio",
       "is_production": "Ambiente di produzione",
       "is_production_description": "Indica se questo è un ambiente di produzione",
       "source": "Sorgente",
