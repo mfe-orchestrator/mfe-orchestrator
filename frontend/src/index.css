@@ -43,6 +43,7 @@
     --radius: 0.5rem;
 	--font-sans: "Familjen Grotesk", "system-ui", sans-serif;
 
+	--sidebar-height: calc(100vh - 16px);
     --sidebar-background: 270 100% 99%;
     --sidebar-foreground: 270 9% 8%;
     --sidebar-primary: 253 76% 34%;

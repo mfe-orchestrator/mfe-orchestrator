@@ -29,8 +29,9 @@ const disabledStyle = `
 	disabled:bg-foreground/75
 `
 
+// TODO: remove size
 const iconStyle = `
-	[&_svg]:pointer-events-none 
+	[&_svg]:pointer-events-none
 	[&_svg]:size-5
 	[&_svg]:shrink-0
 `

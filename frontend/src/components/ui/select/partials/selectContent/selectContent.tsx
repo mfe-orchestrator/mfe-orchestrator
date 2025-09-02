@@ -12,7 +12,7 @@ const SelectContent = React.forwardRef<React.ComponentRef<typeof SelectPrimitive
 
         return (
             <SelectPrimitive.Portal>
-                <SelectPrimitive.Content ref={ref} className={cn(selectContentVariants({ layoutSize, fullWidth, position, className }), className)} position={position} {...props}>
+                <SelectPrimitive.Content ref={ref} className={cn(selectContentVariants({ layoutSize, fullWidth, position }), className)} position={position} {...props}>
                     <SelectScrollUpButton />
                     <SelectPrimitive.Viewport className="viewport">{children}</SelectPrimitive.Viewport>
                     <SelectScrollDownButton />

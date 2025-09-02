@@ -78,6 +78,9 @@ export default {
                     border: "#E5DEFF"
                 }
             },
+            height: {
+                sidebar: "var(--sidebar-height)"
+            },
             borderRadius: {
                 lg: "calc(var(--radius) + 2px)",
                 md: "var(--radius)",

@@ -8,7 +8,7 @@ import { selectTriggerVariants } from "./selecTriggerVariants"
 const SelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPrimitive.Trigger>, React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>>(({ className, children, ...props }, ref) => {
     const { layoutSize, fullWidth } = React.useContext(SelectContext)
     return (
-        <SelectPrimitive.Trigger ref={ref} className={cn(selectTriggerVariants({ layoutSize, fullWidth, className }), className)} {...props}>
+        <SelectPrimitive.Trigger ref={ref} className={cn(selectTriggerVariants({ layoutSize, fullWidth }), className)} {...props}>
             {children}
             <SelectPrimitive.Icon asChild>
                 <ChevronDown />
