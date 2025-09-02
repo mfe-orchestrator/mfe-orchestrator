@@ -1,13 +1,15 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import SinglePageHeader from "@/components/SinglePageHeader"
+import SinglePageLayout from "@/components/SinglePageLayout"
 import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import useStorageApi from "@/hooks/apiClients/useStorageApi"
 import useProjectStore from "@/store/useProjectStore"
 import { useQuery } from "@tanstack/react-query"
 import { Pencil, Plus, Trash2 } from "lucide-react"
-import React from "react"
+import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -16,6 +18,9 @@ const StoragesPage: React.FC = () => {
     const navigate = useNavigate()
     const projectStore = useProjectStore()
     const storagesApi = useStorageApi()
+
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [storageToDelete, setStorageToDelete] = useState<{ id: string, name: string } | null>(null)
 
     const storagesQuery = useQuery({
         queryKey: ["storages", projectStore.project?._id],
@@ -37,43 +42,79 @@ const StoragesPage: React.FC = () => {
 
     return (
         <ApiDataFetcher queries={[storagesQuery]}>
-            <SinglePageHeader
+            <SinglePageLayout
                 title={t("storage.storages")}
                 description={t("storage.storagesDescription")}
-                buttons={
+                right={storagesQuery.data?.length > 0 ? (
                     <Button onClick={handleCreate}>
                         <Plus className="mr-2 h-4 w-4" />
                         {t("storage.newStorage")}
                     </Button>
-                }
-            />
+                ) : null}
+            >
 
-            <Card className="mt-6">
-                <CardContent className="p-4">
-                    <div className="space-y-4">
+                <Card>
+                    <CardContent>
                         {storagesQuery.data && storagesQuery.data?.length > 0 ? (
-                            storagesQuery.data?.map(storage => (
-                                <div key={storage._id} className="flex items-center justify-between p-4 border rounded-lg">
-                                    <div>
-                                        <h3 className="font-medium">{storage.name}</h3>
-                                        <Badge className="mt-1">{storage.type}</Badge>
-                                    </div>
-                                    <div className="flex space-x-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(storage._id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>{t('storage.name')}</TableHead>
+                                        <TableHead>{t('storage.type')}</TableHead>
+                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {storagesQuery.data?.map((storage) => (
+                                        <TableRow key={storage._id}>
+                                            <TableCell className="font-medium">{storage.name}</TableCell>
+                                            <TableCell>
+                                                <Badge>{storage.type}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end space-x-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)}>
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => {
+                                                        setStorageToDelete({ id: storage._id, name: storage.name })
+                                                        setIsDeleteDialogOpen(true)
+                                                    }}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         ) : (
-                            <div className="text-center py-8 text-muted-foreground">{t("storage.noStoragesFound")}</div>
+                            <div className="flex flex-col items-center justify-center h-full">
+                                <div className="text-center py-8 text-muted-foreground">{t("storage.noStoragesFound")}</div>
+                                <Button onClick={handleCreate}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    {t("storage.newStorage")}
+                                </Button>
+                            </div>
                         )}
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+
+                <DeleteConfirmationDialog
+                    isOpen={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                    onDelete={async () => {
+                        if (storageToDelete) {
+                            await handleDelete(storageToDelete.id)
+                        }
+                    }}
+                    onDeleteSuccess={() => {
+                        setStorageToDelete(null)
+                    }}
+                    title={t('common.delete')}
+                    description={storageToDelete ? `${t('common.delete')} "${storageToDelete.name}"?` : ''}
+                />
+            </SinglePageLayout>
         </ApiDataFetcher>
     )
 }
