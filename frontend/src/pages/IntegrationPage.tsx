@@ -2,6 +2,7 @@ import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import DeploymentGate from "@/components/DeploymentGate"
 import EnvironmentSelector from "@/components/environment/EnvironmentSelector"
 import SinglePageHeader from "@/components/SinglePageHeader"
+import SinglePageLayout from "@/components/SinglePageLayout"
 import { Card } from "@/components/ui/card"
 import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
 import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
@@ -120,7 +121,7 @@ const IntegrationPage: React.FC = () => {
 
     return (
         <>
-            <SinglePageHeader
+            <SinglePageLayout
                 title="Integration Guide"
                 description="Follow the instructions below to integrate with our platform using your preferred method."
                 center={
@@ -128,54 +129,55 @@ const IntegrationPage: React.FC = () => {
                         <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
                     )
                 }
-            />
-            <EnvironmentsGate>
-                <DeploymentGate environmentId={projectStore.environment?._id}>
-                    <ApiDataFetcher queries={[microfrontendQuery]}>
-                        <div className="container mx-auto p-4 max-w-4xl">
-                            <Card>
-                                <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
-                                    <TabsList>
-                                        <TabsTrigger value="vite">Vite</TabsTrigger>
-                                        <TabsTrigger value="webpack">Webpack</TabsTrigger>
-                                        <TabsTrigger value="curl">CURL</TabsTrigger>
-                                    </TabsList>
+            >
+              <EnvironmentsGate>
+                  <DeploymentGate environmentId={projectStore.environment?._id}>
+                      <ApiDataFetcher queries={[microfrontendQuery]}>
+                          <div className="container mx-auto p-4 max-w-4xl">
+                              <Card>
+                                  <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
+                                      <TabsList>
+                                          <TabsTrigger value="vite">Vite</TabsTrigger>
+                                          <TabsTrigger value="webpack">Webpack</TabsTrigger>
+                                          <TabsTrigger value="curl">CURL</TabsTrigger>
+                                      </TabsList>
 
-                                    <TabsContent value="vite">
-                                        <h2 className="text-xl font-semibold">Vite Module Federation Setup</h2>
-                                        <p>To integrate using Vite Module Federation, first install the required plugin:</p>
-                                        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                                            <code>npm install @originjs/vite-plugin-federation --save-dev</code>
-                                        </pre>
-                                        <p>Then, update your Vite configuration:</p>
-                                        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                                            <code>{getViteConfig(microfrontendQuery.data?.microfrontends)}</code>
-                                        </pre>
-                                    </TabsContent>
+                                      <TabsContent value="vite">
+                                          <h2 className="text-xl font-semibold">Vite Module Federation Setup</h2>
+                                          <p>To integrate using Vite Module Federation, first install the required plugin:</p>
+                                          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                                              <code>npm install @originjs/vite-plugin-federation --save-dev</code>
+                                          </pre>
+                                          <p>Then, update your Vite configuration:</p>
+                                          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                                              <code>{getViteConfig(microfrontendQuery.data?.microfrontends)}</code>
+                                          </pre>
+                                      </TabsContent>
 
-                                    <TabsContent value="webpack">
-                                        <h2 className="text-xl font-semibold">Webpack Module Federation Setup</h2>
-                                        <p>For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:</p>
-                                        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                                            <code>{getWebpackConfig(microfrontendQuery.data?.microfrontends)}</code>
-                                        </pre>
-                                    </TabsContent>
+                                      <TabsContent value="webpack">
+                                          <h2 className="text-xl font-semibold">Webpack Module Federation Setup</h2>
+                                          <p>For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:</p>
+                                          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                                              <code>{getWebpackConfig(microfrontendQuery.data?.microfrontends)}</code>
+                                          </pre>
+                                      </TabsContent>
 
-                                    <TabsContent value="curl">
-                                        <h2 className="text-xl font-semibold">Direct API Access via CURL</h2>
-                                        <p>You can also interact with our API directly using CURL:</p>
-                                        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
-                                            <code>{curlExample}</code>
-                                        </pre>
-                                        <p>Here is the preview</p>
-                                        <iframe src={`https://${window.location.host}/api/serve/all/${projectStore.environment?._id}`} width="100%" height="500px" />
-                                    </TabsContent>
-                                </Tabs>
-                            </Card>
-                        </div>
-                    </ApiDataFetcher>
-                </DeploymentGate>
-            </EnvironmentsGate>
+                                      <TabsContent value="curl">
+                                          <h2 className="text-xl font-semibold">Direct API Access via CURL</h2>
+                                          <p>You can also interact with our API directly using CURL:</p>
+                                          <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+                                              <code>{curlExample}</code>
+                                          </pre>
+                                          <p>Here is the preview</p>
+                                          <iframe src={`https://${window.location.host}/api/serve/all/${projectStore.environment?._id}`} width="100%" height="500px" />
+                                      </TabsContent>
+                                  </Tabs>
+                              </Card>
+                          </div>
+                      </ApiDataFetcher>
+                  </DeploymentGate>
+              </EnvironmentsGate>
+            </SinglePageLayout>
         </>
     )
 }
