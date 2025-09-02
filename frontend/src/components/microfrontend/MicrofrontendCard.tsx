@@ -56,7 +56,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
         <Card className="h-full flex flex-col">
             <CardHeader className="flex-row items-end justify-between flex-wrap-reverse">
                 <div>
-                    <CardTitle>{mfe.name}</CardTitle>
+                    <CardTitle className="mb-0">{mfe.name}</CardTitle>
                     <div className="text-sm text-foreground-secondary">{mfe.slug}</div>
                 </div>
                 <Badge>{mfe.version}</Badge>
