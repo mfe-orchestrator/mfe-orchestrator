@@ -1,8 +1,10 @@
 import { FastifyInstance } from "fastify"
 import GlobalVariableDTO from "../types/GlobalVariableDTO"
-import { getEnvironmentIdFromRequest } from "../utils/requestUtils"
+import { getEnvironmentIdFromRequest, getProjectIdFromRequest } from "../utils/requestUtils"
 import GlobalVariablesService from "../service/GlobalVariablesService"
 import EnvironmentHeaderNotFoundError from "../errors/EnvironmentHeaderNotFoundError"
+import GlobalVariableCreateDTO, { GlobalVariableUpdateDTO } from "../types/GlobalVariableCreateDTO"
+import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 
 export default async function globalVariablesController(fastify: FastifyInstance) {
 
@@ -19,27 +21,27 @@ export default async function globalVariablesController(fastify: FastifyInstance
         return reply.send(await new GlobalVariablesService(request.databaseUser).getAll(environmentId))
     })
 
-    fastify.post<{ Body: GlobalVariableDTO }>("/global-variables", async (request, reply) => {
-        const environmentId = getEnvironmentIdFromRequest(request)
-        if (!environmentId) {
-            throw new EnvironmentHeaderNotFoundError()
+    fastify.post<{ Body: GlobalVariableCreateDTO }>("/global-variables", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
         }
-        return reply.send(await new GlobalVariablesService(request.databaseUser).create(request.body, environmentId))
+        return reply.send(await new GlobalVariablesService(request.databaseUser).createForProject(request.body, projectId))
     })
 
-    fastify.put<{ Body: GlobalVariableDTO; Params: { id: string } }>("/global-variables/:id", async (request, reply) => {
-        const environmentId = getEnvironmentIdFromRequest(request)
-        if (!environmentId) {
-            throw new EnvironmentHeaderNotFoundError()
+    fastify.put<{ Body: GlobalVariableUpdateDTO }>("/global-variables", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
         }
-        return reply.send(await new GlobalVariablesService(request.databaseUser).update(request.params.id, request.body, environmentId))
+        return reply.send(await new GlobalVariablesService(request.databaseUser).updateByProjectId(request.body, projectId))
     })
 
-    fastify.delete<{ Params: { id: string } }>("/global-variables/:id", async (request, reply) => {
-        const environmentId = getEnvironmentIdFromRequest(request)
-        if (!environmentId) {
-            throw new EnvironmentHeaderNotFoundError()
+    fastify.delete<{ Body: { key: string } }>("/global-variables", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
         }
-        return reply.send(await new GlobalVariablesService(request.databaseUser).delete(request.params.id, environmentId))
+        return reply.send(await new GlobalVariablesService(request.databaseUser).deleteByProjectId(request.body.key, projectId))
     })
 }

@@ -8,6 +8,7 @@ export interface IEnvironment extends Document<ObjectId> {
     color: string
     isProduction: boolean
     url?: string
+    order: number
 }
 
 const environmentSchema = new Schema<IEnvironment>(
@@ -40,6 +41,10 @@ const environmentSchema = new Schema<IEnvironment>(
         url:{
             type: String,
             required: false
+        },
+        order: {
+            type: Number,
+            required: true
         }
     },
     {
