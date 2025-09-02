@@ -235,6 +235,7 @@
     "title": "Distribuzioni",
     "microfrontends_title": "Microfrontend",
     "active": "Attivo",
+    "deploy_now": "Distribuisci ora",
     "columns": {
       "id": "ID",
       "deployed": "Distribuito",

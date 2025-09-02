@@ -295,6 +295,7 @@
         "title": "Deployments",
         "microfrontends_title": "Microfrontend",
         "active": "Active",
+        "deploy_now": "Deploy Now",
         "columns": {
             "id": "ID",
             "deployed": "Deployed",

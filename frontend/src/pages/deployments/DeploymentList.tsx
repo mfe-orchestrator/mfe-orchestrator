@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { PackageOpen, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -42,35 +43,19 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
         <ApiDataFetcher queries={[dataQuery]}>
             <div className="flex flex-row gap-4">
                 <Card className="flex-1">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-lg font-semibold">{t("deployments.title")}</CardTitle>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => dataQuery.refetch()}>
-                                        <RefreshCw className={`h-4 w-4 ${dataQuery.isRefetching ? "animate-spin" : ""}`} />
-                                        <span className="sr-only">{t("deployments.refresh")}</span>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{t("deployments.refresh")}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </CardHeader>
                     <CardContent className="px-6 pb-4">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>{t("deployments.columns.id")}</TableHead>
-                                    <TableHead>{t("deployments.columns.created")}</TableHead>
-                                    <TableHead>{t("deployments.columns.deployed")}</TableHead>
-                                    <TableHead className="w-32">{t("deployments.columns.actions")}</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {deployments.length > 0 ? (
-                                    deployments.map(deployment => (
+                        {deployments.length > 0 ?
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>{t("deployments.columns.id")}</TableHead>
+                                        <TableHead>{t("deployments.columns.created")}</TableHead>
+                                        <TableHead>{t("deployments.columns.deployed")}</TableHead>
+                                        <TableHead className="w-32">{t("deployments.columns.actions")}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {deployments.map(deployment => (
                                         <TableRow key={deployment._id} onClick={() => setSelectedDeploymentId(deployment._id)}>
                                             <TableCell>
                                                 {deployment.deploymentId}
@@ -142,18 +127,24 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                             </TableCell>
                                         </TableRow>
                                     ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center">
-                                            <div className="flex flex-col items-center justify-center space-y-2">
-                                                <p className="text-sm font-medium">{t("deployments.no_deployments")}</p>
-                                                <p className="text-sm text-muted-foreground">{t("deployments.no_deployments_description")}</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                    }
+                                </TableBody>
+                            </Table>
+                            :
+                            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                                <PackageOpen className="h-12 w-12 text-muted-foreground" />
+                                <div className="text-center space-y-2">
+                                    <h3 className="text-lg font-medium">{t("deployments.no_deployments")}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {t("deployments.no_deployments_description")}
+                                    </p>
+                                </div>
+                                <Button>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {t("deployments.deploy_now")}
+                                </Button>
+                            </div>
+                        }
                     </CardContent>
                 </Card>
                 {selectedDeployment && (
