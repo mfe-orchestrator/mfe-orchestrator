@@ -6,7 +6,7 @@ import { Globe } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { NavItem } from "./NavItem/NavItem"
 
-const LanguageSelector = () => {
+const LanguageSelector: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) => {
     const { t, i18n } = useTranslation()
     const userApi = useUserApi()
     const userStore = useUserStore()
@@ -22,7 +22,7 @@ const LanguageSelector = () => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger>
-                <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" />
+                <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" isSidebarCollapsed={isSidebarCollapsed} />
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start">
                 <DropdownMenuItem onClick={() => changeLanguage("en")}>{t("language.english")}</DropdownMenuItem>

@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../dropdown-menu"
 import { NavItem } from "./NavItem/NavItem"
 
-const ThemeToggle: React.FC = () => {
+const ThemeToggle: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) => {
     const { t } = useTranslation()
     const { theme, setTheme } = useThemeStore()
     const { user } = useUserStore()
@@ -36,7 +36,7 @@ const ThemeToggle: React.FC = () => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger>
-                <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" />
+                <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start">
                 <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.LIGHT)}>

@@ -34,7 +34,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
         <div
             onMouseEnter={mouseEnterHandler}
             onMouseLeave={mouseLeaveHandler}
-            className={`bg-sidebar fixed h-sidebar top-2 left-2 flex flex-col transition-all duration-300 ease-in-out border-2 border-sidebar-border rounded-md py-6 ${!isCollapsed ? "w-64 px-3" : "w-20 px-2"}`}
+            className={`relative bg-sidebar h-sidebar flex flex-col transition-all duration-300 ease-in-out border-2 border-sidebar-border rounded-md py-6 ${!isCollapsed ? "w-64 px-3" : "w-20 px-2"}`}
         >
             <div className={`flex items-center mb-12 ${isCollapsed ? "justify-center" : "justify-start"}`}>
                 <div className="flex items-center p-2 gap-3">
@@ -52,9 +52,9 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
             )}
 
 			<div className="flex flex-col gap-1 border-t border-divider py-2">
-				<LanguageSelector />
-				<ThemeToggle />
-				<NavItem type="secondary" icon={<Github />} name="Contribute" action={() => window.open("https://github.com/Lory1990/micro-frontend-orchestrator-hub", "_blank")} />
+				<LanguageSelector isSidebarCollapsed={isCollapsed} />
+				<ThemeToggle isSidebarCollapsed={isCollapsed} />
+				<NavItem type="secondary" icon={<Github />} name="Contribute" action={() => window.open("https://github.com/Lory1990/micro-frontend-orchestrator-hub", "_blank")} isSidebarCollapsed={isCollapsed} />
             </div>
 
             <div className="border-t border-divider pt-2"><UserButton isSidebarCollapsed={isCollapsed} /></div>

@@ -1,5 +1,5 @@
 import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
-import { FileText, Github, Languages, LayoutDashboard, Link as LinkIcon, Rocket as RocketIcon, Settings, Sun } from "lucide-react"
+import { FileText, LayoutDashboard, Link as LinkIcon, Rocket as RocketIcon, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import Header from "./Header"
@@ -51,15 +51,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     ]
 
     return (
-        <div className="min-h-screen flex">
+        <div className="h-screen w-screen flex gap-2 p-2 overflow-hidden">
             <Sidebar isCollapsed={isSidebarCollapsed} mainNavItems={mainNavItems} toggleCollapsed={toggleSidebar} />
 
             {/* Main content */}
-            <div className={`flex-1 transition-all duration-300 ${!isSidebarCollapsed ? "ml-[17rem]" : "ml-[6rem]"}`}>
+            <div className="flex-1 min-h-screen overflow-y-auto flex flex-col gap-2 transition-all duration-300">
                 {/* Header */}
                 <Header />
                 {/* Page Content */}
-                <main className="p-6">{children}</main>
+                <main className="flex-grow p-3">{children}</main>
             </div>
         </div>
     )

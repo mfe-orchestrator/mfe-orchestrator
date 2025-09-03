@@ -29,10 +29,8 @@ const disabledStyle = `
 	disabled:bg-foreground/75
 `
 
-// TODO: remove size
 const iconStyle = `
 	[&_svg]:pointer-events-none
-	[&_svg]:size-5
 	[&_svg]:shrink-0
 `
 
@@ -81,11 +79,11 @@ export const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconS
 				`
         },
         size: {
-            default: "px-4 py-2",
-            sm: "gap-[0.375rem] text-xs rounded-sm px-3 py-[0.375rem]",
-            lg: "gap-[0.75rem] text-base rounded-lg px-5 py-3 shadow-button-lg active:shadow-button-lg-active",
-            icon: "p-2 aspect-square",
-            "icon-sm": "p-[0.375rem] aspect-square"
+            default: "px-4 py-2 [&_svg]:size-5",
+            sm: "gap-[0.375rem] text-xs rounded-sm px-3 py-[0.375rem] [&_svg]:size-4",
+            lg: "gap-[0.75rem] text-base rounded-lg px-5 py-3 shadow-button-lg active:shadow-button-lg-active [&_svg]:size-5",
+            icon: "p-2 aspect-square [&_svg]:size-5",
+            "icon-sm": "p-[0.375rem] aspect-square [&_svg]:size-4"
         }
     },
     defaultVariants: {

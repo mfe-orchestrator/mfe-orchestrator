@@ -5,11 +5,9 @@ const Header: React.FC = () => {
     const { project } = useProjectStore()
 
     return (
-        <header className="bg-background border-b border-border h-16 flex items-center justify-between px-6">
-            <div className="flex flex-row gap-3 items-center">
-                <SwitchProjectButton />
-                <h1 className="text-xl font-semibold">{project?.name}</h1>
-            </div>
+        <header className="bg-background border-b border-divider flex items-center justify-between px-1 mx-2 pt-2 pb-4">
+            <h1 className="text-lg font-semibold text-foreground-secondary">{project?.name}</h1>
+            <SwitchProjectButton />
         </header>
     )
 }
