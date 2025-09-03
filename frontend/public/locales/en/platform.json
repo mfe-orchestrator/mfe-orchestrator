@@ -272,6 +272,7 @@
     "theme": {
         "light": "Light",
         "dark": "Dark",
+        "system": "System",
         "active": "Active",
         "columns": {
             "id": "ID",
@@ -289,7 +290,8 @@
         },
         "no_deployments": "No deployments found",
         "no_deployments_description": "Deployments will appear here once created",
-        "refresh": "Refresh deployments"
+        "refresh": "Refresh deployments",
+        "toggle_theme": "Toggle theme"
     },
     "deployments": {
         "title": "Deployments",

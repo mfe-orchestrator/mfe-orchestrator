@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useTranslation } from "react-i18next"
-import { Globe } from "lucide-react"
-import { setLanguageInLocalStorage } from "@/utils/localStorageUtils"
 import useUserApi from "@/hooks/apiClients/useUserApi"
 import useUserStore from "@/store/useUserStore"
+import { setLanguageInLocalStorage } from "@/utils/localStorageUtils"
+import { Globe } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { NavItem } from "./NavItem/NavItem"
 
 const LanguageSelector = () => {
     const { t, i18n } = useTranslation()
@@ -21,13 +21,10 @@ const LanguageSelector = () => {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Language selector">
-                    <Globe />
-                    <span className="sr-only">{t("language.change")}</span>
-                </Button>
+            <DropdownMenuTrigger>
+                <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent side="right" align="start">
                 <DropdownMenuItem onClick={() => changeLanguage("en")}>{t("language.english")}</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => changeLanguage("it")}>{t("language.italian")}</DropdownMenuItem>
             </DropdownMenuContent>

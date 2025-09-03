@@ -2,6 +2,7 @@ import { cn } from "@/utils/styleUtils"
 import { cva } from "class-variance-authority"
 
 const baseStyle = `
+	w-full
 	font-medium
 	flex
 	items-center
@@ -13,7 +14,14 @@ const baseStyle = `
 	hover:border-accent/25
 `
 
-export const navItemVariants = cva(cn(baseStyle), {
+const labelStyle = `
+	[&_span]:w-full
+	[&_span]:text-start
+	[&_span]:overflow-hidden
+	[&_span]:text-ellipsis
+`
+
+export const navItemVariants = cva(cn(baseStyle, labelStyle), {
     variants: {
         type: {
             main: "text-base text-foreground px-4 [&_svg]:size-5",

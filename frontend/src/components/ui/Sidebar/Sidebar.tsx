@@ -1,8 +1,11 @@
-import { NavItem } from "@/components/ui/Sidebar/partials/NavItem"
-import { ArrowLeftFromLine, ArrowRightFromLine } from "lucide-react"
+import { NavItem } from "@/components/ui/Sidebar/partials/NavItem/NavItem"
+import { ArrowLeftFromLine, ArrowRightFromLine, Github } from "lucide-react"
 import * as React from "react"
 import { Button } from "../button/button"
 import { useTranslation } from "react-i18next"
+import { UserButton } from "./partials/UserButton"
+import LanguageSelector from "./partials/LanguageSelector"
+import ThemeToggle from "./partials/ThemeToggle"
 
 export interface SidebarNavItemProps {
     name?: string
@@ -17,11 +20,10 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     toggleCollapsed?: () => void
     sidebarHeader?: React.ReactNode | React.ReactNode[]
     mainNavItems?: SidebarNavItemProps[]
-    secondaryNavItems?: SidebarNavItemProps[]
     isMobile?: boolean
 }
 
-const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sidebarHeader, mainNavItems, secondaryNavItems, isMobile, isCollapsed, toggleCollapsed, ...props }, ref) => {
+const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sidebarHeader, mainNavItems, isMobile, isCollapsed, toggleCollapsed, ...props }, ref) => {
     const { t } = useTranslation()
     const [showCollapseButton, setShowCollapseButton] = React.useState(false)
 
@@ -32,7 +34,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
         <div
             onMouseEnter={mouseEnterHandler}
             onMouseLeave={mouseLeaveHandler}
-            className={`bg-sidebar fixed h-sidebar top-2 left-2 transition-all duration-300 ease-in-out border-2 border-sidebar-border rounded-md py-6 ${!isCollapsed ? "w-64 px-3" : "w-20 px-2"}`}
+            className={`bg-sidebar fixed h-sidebar top-2 left-2 flex flex-col transition-all duration-300 ease-in-out border-2 border-sidebar-border rounded-md py-6 ${!isCollapsed ? "w-64 px-3" : "w-20 px-2"}`}
         >
             <div className={`flex items-center mb-12 ${isCollapsed ? "justify-center" : "justify-start"}`}>
                 <div className="flex items-center p-2 gap-3">
@@ -42,22 +44,20 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
             </div>
 
             {mainNavItems && (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 flex-grow">
                     {mainNavItems.map(item => (
                         <NavItem key={item.path} type="main" to={item.path} icon={item.icon} name={item.name} isSidebarCollapsed={isCollapsed} disabled={item.disabled} />
                     ))}
                 </div>
             )}
 
-            {secondaryNavItems && (
-                <div className="flex flex-col gap-1">
-                    {secondaryNavItems.map(item => (
-                        <NavItem key={item.path} type="secondary" action={item.action} icon={item.icon} name={item.name} isSidebarCollapsed={isCollapsed} disabled={item.disabled} />
-                    ))}
-                </div>
-            )}
+			<div className="flex flex-col gap-1 border-t border-divider py-2">
+				<LanguageSelector />
+				<ThemeToggle />
+				<NavItem type="secondary" icon={<Github />} name="Contribute" action={() => window.open("https://github.com/Lory1990/micro-frontend-orchestrator-hub", "_blank")} />
+            </div>
 
-            <div></div>
+            <div className="border-t border-divider pt-2"><UserButton isSidebarCollapsed={isCollapsed} /></div>
 
             {showCollapseButton && (
                 <Button variant="secondary" size="icon-sm" onClick={toggleCollapsed} className="absolute -bottom-2 left-1/2 -translate-x-1/2 [&_svg]:size-4">

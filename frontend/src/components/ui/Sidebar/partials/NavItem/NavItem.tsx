@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom"
 import { navItemVariants } from "./NavItemVariants"
 import { cn } from "@/utils/styleUtils"
 
-interface NavItemProps extends React.HTMLAttributes<HTMLAnchorElement> {
+export interface NavItemProps extends React.HTMLAttributes<HTMLAnchorElement> {
     type?: "main" | "secondary"
     to?: string
     icon?: React.ReactNode

@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import MainLogo from "@/components/MainLogo";
-import LanguageSelector from "@/components/LanguageSelector";
-import ThemeToggle from "@/components/ThemeToggle";
+import LanguageSelector from "@/components/ui/Sidebar/partials/LanguageSelector"
+import ThemeToggle from "@/components/ui/Sidebar/partials/ThemeToggle"
+
 
 interface AuthenticationLayoutProps {
   title: string | ReactNode;
