@@ -279,15 +279,20 @@ export default class ServeService {
     }
 }
 
+const getBackendUrl = (): string => {
+    return process.env.BACKEND_URL || process.env.FRONTEND_URL + "/api"
+}
+
 const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlug?: string): string => {
     if (!microfrontend.host) {
         throw new Error("Microfrontend host is not defined from microfrontend " + microfrontend.slug)
     }
     if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB) {
+        const backendUrl = getBackendUrl();
         if (environmentSlug) {
-            return `${process.env.BACKEND_URL}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
+            return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
         } else {
-            return `${process.env.BACKEND_URL}/serve/mfe/files/${microfrontend._id}/${microfrontend.host.entryPoint || "index.js"}`
+            return `${backendUrl}/serve/mfe/files/${microfrontend._id}/${microfrontend.host.entryPoint || "index.js"}`
         }
 
     } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
