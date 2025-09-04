@@ -12,45 +12,9 @@ interface MicrofrontendCardProps {
 }
 
 const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const navigate = useNavigate()
 
-    // Get environment-specific data or fall back to default
-    const version = mfe.version
-
-    const [editParameters, setEditParameters] = useState<Record<string, string>>(null)
-    const [editCanaryPercentage, setEditCanaryPercentage] = useState<number>(null)
-    const notifications = useToastNotificationStore()
-
-    const statusColor = {
-        active: "bg-green-500",
-        inactive: "bg-yellow-500",
-        error: "bg-red-500"
-    }
-
-    const handleParameterChange = (key: string, value: string) => {
-        setEditParameters(prev => ({
-            ...prev,
-            [key]: value
-        }))
-    }
-
-    const addParameter = () => {
-        setEditParameters(prev => ({
-            ...prev,
-            [`param${Object.keys(editParameters).length + 1}`]: ""
-        }))
-    }
-
-    const saveConfiguration = () => {
-        // Here you would typically save the parameters to your backend
-        notifications.showSuccessNotification({
-            message: `I parametri per ${mfe.name} sono stati aggiornati.`
-        })
-        setIsDialogOpen(false)
-    }
-
-    const canaryPercentage = 38
+    const isCanary = mfe?.canary?.enabled
 
     return (
         <Card className="h-full flex flex-col">
@@ -62,13 +26,54 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
                 <Badge>{mfe.version}</Badge>
             </CardHeader>
             <CardContent className="flex-grow py-3 flex flex-col gap-2">
-                {mfe.description && <p className="text-foreground-secondary">{mfe.description}</p>}
-                {canaryPercentage > 0 && (
-                    <div className="flex items-start gap-2 leading-snug">
-                        <UsersRound size="1.25rem" className="mt-0.5" />
-                        <div>
-                            <div className="font-semibold">Canary Release:</div>
-                            <div>Attiva per il {canaryPercentage}% degli utenti</div>
+                <div className="text-foreground-secondary mt-2 flex flex-row">
+                    <div className="font-medium mr-2">Host: </div>
+                    <div>
+                        {mfe.host.type === 'CUSTOM_URL' && 'Custom Url'}
+                        {mfe.host.type === 'MFE_ORCHESTRATOR_HUB' && 'MFE Orchestrator Hub'}
+                        {mfe.host.type === 'CUSTOM_SOURCE' && 'Custom Source'}
+                    </div>
+                </div>
+                {isCanary && (
+                    <div className="mt-2 p-3 bg-muted/30 rounded-md border border-muted-foreground/20">
+                        <div className="flex items-center gap-2 text-primary font-semibold mb-2">
+                            <UsersRound size="1.1rem" />
+                            <span>Canary Release Attiva</span>
+                        </div>
+                        <div className="grid gap-1.5 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-foreground-secondary">Distribuzione:</span>
+                                <span className="font-medium">{mfe.canary.percentage}% degli utenti</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-foreground-secondary">Tipo:</span>
+                                <span className="font-medium">
+                                    {mfe.canary.type === 'ON_SESSIONS' && 'Sessione'}
+                                    {mfe.canary.type === 'ON_USER' && 'Utente'}
+                                    {mfe.canary.type === 'COOKIE_BASED' && 'Basato su Cookie'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-foreground-secondary">Deployment:</span>
+                                <span className="font-medium">
+                                    {mfe.canary.deploymentType === 'BASED_ON_VERSION' && 'Basato su Versione'}
+                                    {mfe.canary.deploymentType === 'BASED_ON_URL' && 'Basato su URL'}
+                                </span>
+                            </div>
+                            {mfe.canary.url && (
+                                <div className="flex justify-between">
+                                    <span className="text-foreground-secondary">URL Canary:</span>
+                                    <span className="font-medium truncate max-w-[200px]" title={mfe.canary.url}>
+                                        {mfe.canary.url}
+                                    </span>
+                                </div>
+                            )}
+                            {mfe.canary.version && (
+                                <div className="flex justify-between">
+                                    <span className="text-foreground-secondary">Versione Canary:</span>
+                                    <span className="font-medium">{mfe.canary.version}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

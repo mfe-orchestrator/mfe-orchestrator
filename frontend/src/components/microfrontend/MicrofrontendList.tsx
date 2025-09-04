@@ -13,6 +13,14 @@ import { Tabs } from "../ui/tabs/tabs"
 import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
 import { LayoutGrid, StretchHorizontal } from "lucide-react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface MicrofrontendListProps {
     searchTerm?: string
@@ -66,55 +74,49 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                 </TabsContent>
 
                 <TabsContent value="list">
-                    <div className="rounded-md border-2 border-border w-full overflow-hidden">
-                        <div className="w-full overflow-x-auto">
-                            <table className="w-full caption-bottom text-sm">
-                                <thead>
-                                    <tr className="bg-primary/25 text-foreground border-b-2 border-border transition-colors">
-                                        <th className="px-4 py-2 text-left align-middle font-medium">Nome</th>
-                                        <th className="px-4 py-2 text-left align-middle font-medium">Slug</th>
-                                        <th className="px-4 py-2 text-left align-middle font-medium hidden md:table-cell">Descrizione</th>
-                                        <th className="px-4 py-2 text-left align-middle font-medium">Versione</th>
-                                        <th className="px-4 py-2 text-left align-middle font-medium">Canary release</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {microfrontends?.map(mfe => {
-                                        const canaryPercentage: number = 23
-                                        return (
-                                            <tr key={mfe._id} className="border-b border-divider last-of-type:border-b-0 transition-colors even:bg-primary/10">
-                                                <td className="p-4 align-middle font-medium">{mfe.name}</td>
-                                                <td className="p-4 align-middle ">{mfe.slug}</td>
-                                                <td className="p-4 align-middle hidden md:table-cell">
-                                                    <div className="line-clamp-1">{mfe.description}</div>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge>{mfe.version}</Badge>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    {canaryPercentage > 0 ? <span>{canaryPercentage}% degli utenti</span> : <span className="text-muted-foreground text-xs">-</span>}
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Button variant="primary" size="sm">
-                                                        Configurazione
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-
-                                    {!microfrontends ||
-                                        (microfrontends.length === 0 && (
-                                            <tr>
-                                                <td colSpan={8} className="h-24 text-center text-muted-foreground">
-                                                    Nessun microfrontend trovato
-                                                </td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-primary/25 hover:bg-primary/25">
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Slug</TableHead>
+                                    <TableHead>Versione</TableHead>
+                                    <TableHead>Canary release</TableHead>
+                                    <TableHead className="w-[100px]"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {microfrontends?.map((mfe) => {
+                                    const canaryPercentage: number = mfe.canary?.percentage || 0
+                                    return (
+                                        <TableRow key={mfe._id} className="hover:bg-primary/10">
+                                            <TableCell className="font-medium">{mfe.name}</TableCell>
+                                            <TableCell>{mfe.slug}</TableCell>
+                                            <TableCell>
+                                                <Badge>{mfe.version}</Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                {canaryPercentage > 0 ? (
+                                                    <span>{canaryPercentage}% degli utenti</span>
+                                                ) : (
+                                                    <span className="text-muted-foreground text-xs">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button 
+                                                    variant="primary" 
+                                                    size="sm" 
+                                                    onClick={() => navigate(`/microfronted/${mfe._id}`)}
+                                                    className="w-full"
+                                                >
+                                                    Configurazione
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
                     </div>
                 </TabsContent>
             </Tabs>

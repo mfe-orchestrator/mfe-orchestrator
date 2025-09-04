@@ -2,8 +2,9 @@ import useApiClient from "../useApiClient"
 
 export enum HostedOn {
     MFE_ORCHESTRATOR_HUB = 'MFE_ORCHESTRATOR_HUB',
-    CUSTOM_URL = 'CUSTOM_URL'
-  }
+    CUSTOM_URL = 'CUSTOM_URL',
+    CUSTOM_SOURCE = 'CUSTOM_SOURCE'
+}
   
   export enum CanaryType{
     ON_SESSIONS = 'ON_SESSIONS',
