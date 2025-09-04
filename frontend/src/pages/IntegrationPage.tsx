@@ -66,7 +66,7 @@ const getWebpackConfig = (microfrontends: IServeMicrofronted[]) => {
         .map((mfe, index) => {
             const name = mfe?.slug?.replace(/\//g, "_") || `mfe${index + 1}`
             const url = mfe.url.endsWith("/") ? mfe.url : `${mfe.url}/`
-            return `        '${name}': '${name}@${url}remoteEntry.js'`
+            return `        '${name}': '${name}@${url}'`
         })
         .join(",\n")
 
