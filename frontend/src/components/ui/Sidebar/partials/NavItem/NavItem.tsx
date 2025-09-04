@@ -5,6 +5,7 @@ import { cn } from "@/utils/styleUtils"
 export interface NavItemProps extends React.HTMLAttributes<HTMLAnchorElement> {
     type?: "main" | "secondary"
     to?: string
+    href?: string
     icon?: React.ReactNode
     name?: string
     action?: () => void
@@ -12,7 +13,7 @@ export interface NavItemProps extends React.HTMLAttributes<HTMLAnchorElement> {
     disabled?: boolean
 }
 
-export const NavItem = ({ to, icon, name, isSidebarCollapsed, disabled = false, type = "main", action, className }: NavItemProps) => {
+export const NavItem = ({ to, href, icon, name, isSidebarCollapsed, disabled = false, type = "main", action, className }: NavItemProps) => {
     const location = useLocation()
     const isActive = location.pathname === to
 
@@ -26,6 +27,15 @@ export const NavItem = ({ to, icon, name, isSidebarCollapsed, disabled = false, 
                 {icon}
                 {!isSidebarCollapsed && <span>{name}</span>}
             </div>
+        )
+    }
+
+    if(href){
+        return (
+            <a href={href} className={cn(navItemVariants({ type, active: isActive, isSidebarCollapsed }), className)}>
+                {icon}
+                {!isSidebarCollapsed && <a href={href} target="_blank">{name}</a>}
+            </a>
         )
     }
 

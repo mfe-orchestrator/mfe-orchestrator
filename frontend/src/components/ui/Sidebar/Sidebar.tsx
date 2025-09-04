@@ -1,5 +1,5 @@
 import { NavItem } from "@/components/ui/Sidebar/partials/NavItem/NavItem"
-import { ArrowLeftFromLine, ArrowRightFromLine, Github } from "lucide-react"
+import { ArrowLeftFromLine, ArrowRightFromLine, Github, BookOpen } from "lucide-react"
 import * as React from "react"
 import { Button } from "../button/button"
 import { useTranslation } from "react-i18next"
@@ -54,7 +54,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
 			<div className="flex flex-col gap-1 border-t border-divider py-2">
 				<LanguageSelector isSidebarCollapsed={isCollapsed} />
 				<ThemeToggle isSidebarCollapsed={isCollapsed} />
-				<NavItem type="secondary" icon={<Github />} name="Contribute" action={() => window.open("https://github.com/Lory1990/micro-frontend-orchestrator-hub", "_blank")} isSidebarCollapsed={isCollapsed} />
+                <NavItem type="secondary" icon={<BookOpen />} name="Documentation" href={"https://mfe-orchestrator-hub.github.io/documentation/"} isSidebarCollapsed={isCollapsed} />
+				<NavItem type="secondary" icon={<Github />} name="Contribute" href={"https://github.com/mfe-orchestrator-hub"} isSidebarCollapsed={isCollapsed} />
             </div>
 
             <div className="border-t border-divider pt-2"><UserButton isSidebarCollapsed={isCollapsed} /></div>

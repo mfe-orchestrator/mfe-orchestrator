@@ -131,69 +131,79 @@ const EnvironmentVariablesPageInner: React.FC = () => {
       >
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-64">{t('environmentVariables.variable')}</TableHead>
-                  {environments.map((env) => (
-                    <TableHead key={env.slug} className="text-center">
-                      {env.name}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-32">{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.keys(variables).map((variableKey) => {
-                  const variable = variables[variableKey];
-                  return (
-                    <TableRow key={variable.key}>
-                      <TableCell className="font-mono">
-                        {variableKey}
-                      </TableCell>
-                      {environments.map((env) => {
-                        const value = variables[variableKey].values.find(v => v.environmentId === env._id);
-                        const valueKey = `${variable.key}-${env.slug}`;
+            {!variables || Object.keys(variables).length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <p className="text-muted-foreground mb-4">{t('environmentVariables.noVariables')}</p>
+                <Button onClick={handleAddNew}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('environmentVariables.addVariable')}
+                </Button>
+              </div>
+            ):(
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-64">{t('environmentVariables.variable')}</TableHead>
+                    {environments.map((env) => (
+                      <TableHead key={env.slug} className="text-center">
+                        {env.name}
+                      </TableHead>
+                    ))}
+                    <TableHead className="w-32">{t('common.actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.keys(variables).map((variableKey) => {
+                    const variable = variables[variableKey];
+                    return (
+                      <TableRow key={variable.key}>
+                        <TableCell className="font-mono">
+                          {variableKey}
+                        </TableCell>
+                        {environments.map((env) => {
+                          const value = variables[variableKey].values.find(v => v.environmentId === env._id);
+                          const valueKey = `${variable.key}-${env.slug}`;
 
-                        return (
-                          <TableCell key={env.slug} className="text-center">
-                            {value ? (
-                              <div className="flex items-center justify-center space-x-2">
-                                <span className="font-mono">
-                                  {value.value}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                      <TableCell className="w-32">
-                        <div className="flex space-x-4">
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(variable)}
-                            className="text-muted-foreground hover:text-foreground"
-                            title={t('common.edit')}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteClick(variable.key)}
-                            className="text-destructive hover:text-destructive/80"
-                            title={t('common.delete')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                          return (
+                            <TableCell key={env.slug} className="text-center">
+                              {value ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                  <span className="font-mono">
+                                    {value.value}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="w-32">
+                          <div className="flex space-x-4">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(variable)}
+                              className="text-muted-foreground hover:text-foreground"
+                              title={t('common.edit')}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(variable.key)}
+                              className="text-destructive hover:text-destructive/80"
+                              title={t('common.delete')}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </SinglePageLayout>
