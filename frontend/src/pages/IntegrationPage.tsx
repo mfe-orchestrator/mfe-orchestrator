@@ -64,8 +64,8 @@ const getWebpackConfig = (microfrontends: IServeMicrofronted[]) => {
     // Generate remotes string with proper formatting
     const remotesString = microfrontends
         .map((mfe, index) => {
-            const name = mfe?.slug?.replace(/\//g, "_") || `mfe${index + 1}`
-            const url = mfe.url.endsWith("/") ? mfe.url : `${mfe.url}/`
+            const name = mfe?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${index + 1}`
+            const url = mfe.url
             return `        '${name}': '${name}@${url}'`
         })
         .join(",\n")
