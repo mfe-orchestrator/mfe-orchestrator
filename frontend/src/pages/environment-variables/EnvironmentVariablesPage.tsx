@@ -122,12 +122,12 @@ const EnvironmentVariablesPageInner: React.FC = () => {
     <ApiDataFetcher queries={[variablesQuery]}>
       <SinglePageLayout
         title={t('environmentVariables.title')}
-        right={
+        right={variables && Object.keys(variables).length !== 0 ?
           <Button onClick={handleAddNew}>
             <Plus className="mr-2 h-4 w-4" />
             {t('environmentVariables.addVariable')}
           </Button>
-        }
+          : null}
       >
         <Card>
           <CardContent className="p-0">
