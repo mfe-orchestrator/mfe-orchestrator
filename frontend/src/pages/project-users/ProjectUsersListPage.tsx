@@ -1,5 +1,4 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import SinglePageHeader from "@/components/SinglePageHeader"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"

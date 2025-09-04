@@ -14,7 +14,7 @@ import Switch from "@/components/input/Switch.rhf"
 import { useQuery } from "@tanstack/react-query"
 import useProjectStore from "@/store/useProjectStore"
 import useStorageApi from "@/hooks/apiClients/useStorageApi"
-import SinglePageHeader from "@/components/SinglePageHeader"
+import SinglePageLayout from "@/components/SinglePageLayout"
 
 // Define form schema with validation
 const formSchema = z
@@ -138,13 +138,10 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
-            {isEdit ? (
-                <SinglePageHeader title={t("microfrontend.edit")} description={t("microfrontend.edit_description")} />
-            ) : (
-                <SinglePageHeader title={t("microfrontend.add_new")} description={t("microfrontend.add_new_description")} />
-            )}
-
+        <SinglePageLayout
+            title={isEdit ? t("microfrontend.edit") : t("microfrontend.add_new")}
+            description={isEdit ? t("microfrontend.edit_description") : t("microfrontend.add_new_description")}
+        >
             <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {/* General Information Section */}
@@ -266,7 +263,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     </div>
                 </form>
             </FormProvider>
-        </div>
+        </SinglePageLayout>
     )
 }
 

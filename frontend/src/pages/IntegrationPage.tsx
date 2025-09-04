@@ -1,7 +1,6 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import DeploymentGate from "@/components/DeploymentGate"
 import EnvironmentSelector from "@/components/environment/EnvironmentSelector"
-import SinglePageHeader from "@/components/SinglePageHeader"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Card } from "@/components/ui/card"
 import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"

@@ -1,5 +1,5 @@
 import MicrofrontendList from "@/components/microfrontend/MicrofrontendList"
-import SinglePageHeader from "@/components/SinglePageHeader"
+import SinglePageLayout from "@/components/SinglePageLayout"
 import { Input } from "@/components/ui/input/input"
 import useProjectStore from "@/store/useProjectStore"
 import { Search } from "lucide-react"
@@ -16,11 +16,10 @@ const MicrofrontendDashboard = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <SinglePageHeader
+            <SinglePageLayout
                 title={t("microfrontend.dashboard.title")}
                 description={t("microfrontend.dashboard.description")}
-                buttons={
+                right={
                     <div className="flex items-center gap-2">
                         <div className="relative">
                             <Search className="absolute left-3 top-3 h-4 w-4 text-secondary" />
@@ -28,9 +27,9 @@ const MicrofrontendDashboard = () => {
                         </div>
                     </div>
                 }
-            />
+            >
             <MicrofrontendList searchTerm={searchTerm} onResetFilters={onResetFilters} projectId={projectStore.project?._id} />
-        </div>
+        </SinglePageLayout>
     )
 }
 

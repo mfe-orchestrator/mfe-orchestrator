@@ -13,7 +13,6 @@ import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import { ProjectInfoSection } from '@/components/settings/ProjectInfoSection';
 import { ProjectStatsSection } from '@/components/settings/ProjectStatsSection';
 import { DangerZone } from '@/components/settings/DangerZone';
-import SinglePageHeader from '@/components/SinglePageHeader';
 import SinglePageLayout from '@/components/SinglePageLayout';
 
 
