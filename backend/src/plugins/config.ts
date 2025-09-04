@@ -62,6 +62,9 @@ export default fastifyPlugin(
                 FRONTEND_URL: {
                     type: "string"
                 },
+                BACKEND_URL: {
+                    type: "string"
+                },
                 AUTH0_DOMAIN: {
                     type: "string"
                 },

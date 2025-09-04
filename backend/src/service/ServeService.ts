@@ -35,11 +35,15 @@ export default class ServeService {
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
+        const environment = await Environment.findById(environmentId)
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
 
-        const microFrontendsAdapted = deployment.microfrontends ? await Promise.all(deployment.microfrontends.map(adaptMicrofrontendToServe)) : undefined
+        const microFrontendsAdapted = deployment.microfrontends ? await Promise.all(deployment.microfrontends.map((microfrontend) => adaptMicrofrontendToServe(microfrontend, environment.slug))) : undefined
 
         return {
-            globalVariables : deployment.variables,
+            globalVariables: deployment.variables,
             microfrontends: microFrontendsAdapted
         }
     }
@@ -82,7 +86,7 @@ export default class ServeService {
         if (!deployedMFE) {
             throw new EntityNotFoundError(mfeId)
         }
-        return await adaptMicrofrontendToServe(deployedMFE)
+        return await adaptMicrofrontendToServe(deployedMFE, environment.slug)
     }
 
     /**
@@ -93,7 +97,7 @@ export default class ServeService {
      * @returns Promise with Microfrontend object or null if not found
      */
     async getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(projectId: string, environmentSlug: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
-        const environment = await Environment.findOne({ 
+        const environment = await Environment.findOne({
             projectId,
             slug: environmentSlug
         })
@@ -108,7 +112,7 @@ export default class ServeService {
         if (!deployedMFE) {
             throw new EntityNotFoundError(mfeSlug)
         }
-        return await adaptMicrofrontendToServe(deployedMFE)
+        return await adaptMicrofrontendToServe(deployedMFE, environmentSlug)
     }
 
     async getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(environmentId: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
@@ -120,7 +124,11 @@ export default class ServeService {
         if (!deployedMFE) {
             throw new EntityNotFoundError(mfeSlug)
         }
-        return await adaptMicrofrontendToServe(deployedMFE)
+        const environment = await Environment.findById(environmentId)
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
+        return await adaptMicrofrontendToServe(deployedMFE, environment.slug)
     }
 
     /**
@@ -192,7 +200,7 @@ export default class ServeService {
         if (!project) {
             throw new EntityNotFoundError(projectId)
         }
-        
+
         const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
         if (!environment) {
             throw new EntityNotFoundError("Environment")
@@ -211,7 +219,7 @@ export default class ServeService {
             throw new EntityNotFoundError(microfrontendSlug)
         }
         const version = microfrontend.version
-        
+
         //Adesso tiro fuori il MFE
         return this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
     }
@@ -245,7 +253,7 @@ export default class ServeService {
         return this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
     }
 
-    getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream{
+    getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream {
         const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
         if (!fs.existsSync(basePath)) {
             throw new Error("Microfrontend not found")
@@ -260,8 +268,8 @@ export default class ServeService {
         return fs.createReadStream(finalPath)
     }
 
-    getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | ObjectId){
-        return Environment.findOne({ 
+    getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | ObjectId) {
+        return Environment.findOne({
             projectId,
             $or: [
                 { url: { $regex: new RegExp(referer, 'i') } },
@@ -271,18 +279,23 @@ export default class ServeService {
     }
 }
 
-const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, version?: string): string => {
+const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlug?: string): string => {
     if (!microfrontend.host) {
         throw new Error("Microfrontend host is not defined from microfrontend " + microfrontend.slug)
     }
     if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB) {
-        return `${process.env.FRONTEND_URL}/api/mfe/${microfrontend._id}`
+        if (environmentSlug) {
+            return `${process.env.BACKEND_URL}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
+        } else {
+            return `${process.env.BACKEND_URL}/serve/mfe/files/${microfrontend._id}/${microfrontend.host.entryPoint || "index.js"}`
+        }
+
     } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
         if (!microfrontend.host.url) {
             throw new Error("Microfrontend URL is not defined")
         }
-        return microfrontend.host.url?.replace("$version", version || microfrontend.version)
-    } else if(microfrontend.host.type === HostedOn.CUSTOM_SOURCE){
+        return microfrontend.host.url?.replace("$version", microfrontend.version)
+    } else if (microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
         return "This is custom source => will come soon :)"
     } else {
         throw new Error("Microfrontend host type is not defined")
@@ -294,9 +307,9 @@ const getCanaryFromCookie = (): boolean => {
     return Math.random() < 0.5
 }
 
-const getMicrofrontendUrlCanary = async (microfrontend: IMicrofrontend): Promise<string> => {
+const getMicrofrontendUrlCanary = async (microfrontend: IMicrofrontend, environmentSlug?: string): Promise<string> => {
     if (microfrontend.canary?.deploymentType === CanaryDeploymentType.BASED_ON_VERSION) {
-        return getMicrofrontendUrlStatic(microfrontend, microfrontend.canary?.version)
+        return getMicrofrontendUrlStatic(microfrontend, environmentSlug)
     } else if (microfrontend.canary?.deploymentType === CanaryDeploymentType.BASED_ON_URL) {
         if (!microfrontend.canary?.url) {
             throw new Error("Microfrontend canary URL is not defined")
@@ -307,21 +320,21 @@ const getMicrofrontendUrlCanary = async (microfrontend: IMicrofrontend): Promise
     }
 }
 
-const getMicrofrontendUrlCanaryOrStatic = async (microfrontend: IMicrofrontend, deployment?: IDeployment, userId?: string): Promise<string> => {
+const getMicrofrontendUrlCanaryOrStatic = async (microfrontend: IMicrofrontend, deployment?: IDeployment, environmentSlug?: string, userId?: string): Promise<string> => {
     if (microfrontend.canary?.type === CanaryType.ON_SESSIONS) {
         const isCanary = Math.random() < microfrontend.canary?.percentage
         if (isCanary) {
-            return getMicrofrontendUrlCanary(microfrontend)
+            return getMicrofrontendUrlCanary(microfrontend, environmentSlug)
         } else {
-            return getMicrofrontendUrlStatic(microfrontend)
+            return getMicrofrontendUrlStatic(microfrontend, environmentSlug)
         }
     } else if (microfrontend.canary?.type === CanaryType.ON_USER) {
         //TODO questo va rivisto tutto(!)
         const deploymentToCanaryUsers = await DeploymentToCanaryUsers.findOne({ microfrontendId: microfrontend._id, userId, deploymentId: deployment?._id })
         if (deploymentToCanaryUsers) {
-            return getMicrofrontendUrlCanary(microfrontend)
+            return getMicrofrontendUrlCanary(microfrontend, environmentSlug)
         } else {
-            return getMicrofrontendUrlStatic(microfrontend)
+            return getMicrofrontendUrlStatic(microfrontend, environmentSlug)
         }
     } else if (microfrontend.canary?.type === CanaryType.COOKIE_BASED) {
         const isCookieOkCanry = getCanaryFromCookie()
@@ -334,18 +347,17 @@ const getMicrofrontendUrlCanaryOrStatic = async (microfrontend: IMicrofrontend, 
         throw new Error("Microfrontend canary type is not defined")
     }
 }
-const getMicrofrontendUrl = async (microfrontend: IMicrofrontend): Promise<string> => {
+const getMicrofrontendUrl = async (microfrontend: IMicrofrontend, environmentSlug?: string): Promise<string> => {
     const isCanary = microfrontend.canary?.enabled
     if (isCanary) {
-        return getMicrofrontendUrlCanaryOrStatic(microfrontend)
+        return getMicrofrontendUrlCanaryOrStatic(microfrontend, undefined, environmentSlug)
     }
-    return getMicrofrontendUrlStatic(microfrontend)
+    return getMicrofrontendUrlStatic(microfrontend, environmentSlug)
 }
 
-async function adaptMicrofrontendToServe(microfrontend: IMicrofrontend): Promise<MicrofrontendAdaptedToServe> {
-    let url = await getMicrofrontendUrl(microfrontend)
+async function adaptMicrofrontendToServe(microfrontend: IMicrofrontend, environmentSlug?: string): Promise<MicrofrontendAdaptedToServe> {
     return {
-        url,
+        url: await getMicrofrontendUrl(microfrontend, environmentSlug),
         slug: microfrontend.slug,
         continuousDeployment: microfrontend.continuousDeployment
     }

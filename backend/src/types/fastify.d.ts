@@ -42,6 +42,7 @@ declare module "fastify" {
             EMAIL_SMTP_PASSWORD: string
             EMAIL_SMTP_FROM: string
             FRONTEND_URL: string
+            BACKEND_URL: string
             HOST: string
             NODE_ENV: string
             AZURE_ENTRAID_TENANT_ID: string

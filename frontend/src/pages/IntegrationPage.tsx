@@ -16,10 +16,11 @@ import React, { useState } from "react"
 
 const getViteConfig = (microfrontends: IServeMicrofronted[]) => {
     // Generate remotes object from microfrontends array
+    console.log("microfrontends", microfrontends)
     if (!microfrontends) return
     const remotes = microfrontends.reduce((acc, mfe, index) => {
-        const name = mfe?.slug?.replace(/\//g, "_") || `mfe${index + 1}`
-        acc[name] = (mfe.url.endsWith("/") ? mfe.url : `${mfe.url}/`) + "index.js"
+        const name = mfe?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${index + 1}`
+        acc[name] = mfe.url
         return acc
     }, {} as Record<string, string>)
 
