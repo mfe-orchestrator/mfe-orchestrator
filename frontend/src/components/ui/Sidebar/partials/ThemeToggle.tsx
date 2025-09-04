@@ -6,8 +6,14 @@ import { Monitor, Moon, Sun } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../dropdown-menu"
 import { NavItem } from "./NavItem/NavItem"
+import { Button } from "../../button/button"
 
-const ThemeToggle: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) => {
+interface ThemeToggleProps {
+    isSidebarCollapsed?: boolean
+    purpose?: "sidebar" | "page"
+}
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose = "sidebar" }: ThemeToggleProps) => {
     const { t } = useTranslation()
     const { theme, setTheme } = useThemeStore()
     const { user } = useUserStore()
@@ -36,9 +42,15 @@ const ThemeToggle: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebarColla
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
+                {purpose === "page" ? (
+                    <Button variant="ghost" size="icon" aria-label="Language selector">
+                        {getThemeIcon()}
+                    </Button>
+                ) : (
+                    <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
+                )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start">
+            <DropdownMenuContent side={purpose === "page" ? "bottom" : "right"} align={purpose === "page" ? "end" : "start"}>
                 <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.LIGHT)}>
                     <Sun className="mr-2 h-4 w-4" />
                     <span>{t("theme.light")}</span>

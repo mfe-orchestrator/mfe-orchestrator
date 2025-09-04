@@ -5,8 +5,14 @@ import { setLanguageInLocalStorage } from "@/utils/localStorageUtils"
 import { Globe } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { NavItem } from "./NavItem/NavItem"
+import { Button } from "../../button/button"
 
-const LanguageSelector: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebarCollapsed }: { isSidebarCollapsed: boolean }) => {
+interface LanguageSelectorProps {
+    isSidebarCollapsed?: boolean
+    purpose?: "sidebar" | "page"
+}
+
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isSidebarCollapsed, purpose = "sidebar" }: LanguageSelectorProps) => {
     const { t, i18n } = useTranslation()
     const userApi = useUserApi()
     const userStore = useUserStore()
@@ -22,9 +28,15 @@ const LanguageSelector: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebar
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" isSidebarCollapsed={isSidebarCollapsed} />
+                {purpose === "page" ? (
+                    <Button variant="ghost" size="icon" aria-label="Language selector">
+                        {<Globe />}
+                    </Button>
+                ) : (
+                    <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" isSidebarCollapsed={isSidebarCollapsed} />
+                )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start">
+            <DropdownMenuContent side={purpose === "page" ? "bottom" : "right"} align={purpose === "page" ? "end" : "start"}>
                 <DropdownMenuItem onClick={() => changeLanguage("en")}>{t("language.english")}</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => changeLanguage("it")}>{t("language.italian")}</DropdownMenuItem>
             </DropdownMenuContent>
