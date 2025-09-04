@@ -18,6 +18,7 @@ export interface IMicrofrontend extends Document<ObjectId> {
         type: HostedOn
         url?: string,
         storageId?: ObjectId
+        entryPoint?: string
     }
     description?: string
     createdAt: Date
@@ -55,6 +56,10 @@ const microfrontendHostTypeSchema = new Schema({
     storageId: {
         type: Schema.Types.ObjectId,
         ref: "Storage",
+        required: false
+    },
+    entryPoint: {
+        type: String,
         required: false
     }
 })

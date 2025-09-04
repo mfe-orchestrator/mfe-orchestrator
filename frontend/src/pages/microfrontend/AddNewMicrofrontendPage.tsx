@@ -31,7 +31,8 @@ const formSchema = z
             .object({
                 type: z.enum(["MFE_ORCHESTRATOR_HUB", "CUSTOM_URL", "CUSTOM_SOURCE"]),
                 url: z.string().optional(),
-                storageId: z.string().optional()
+                storageId: z.string().optional(),
+                entryPoint: z.string().optional()
             })
             .refine(data => data.type !== "CUSTOM_URL" || (data.url && data.url.length > 0), { message: "URL is required for custom hosting" }),
 
@@ -88,7 +89,8 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             description: "",
             version: "1.0.0",
             host: {
-                type: "MFE_ORCHESTRATOR_HUB"
+                type: "MFE_ORCHESTRATOR_HUB",
+                entryPoint: "index.js"
             },
             canary: {
                 enabled: false,
@@ -101,7 +103,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         }
     })
 
-    const editMfeQuery = useQuery({
+    useQuery({
         queryKey: ["mfe", id],
         queryFn: async () => {
             const mfe = await microfrontendsApi.getSingle(id)
@@ -177,6 +179,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     { value: "CUSTOM_SOURCE", label: t("microfrontend.custom_source") }
                                 ]}
                                 required
+                            />
+
+                            <TextField
+                                name="host.entryPoint"
+                                label={t("microfrontend.entry_point")}
+                                placeholder="index.js"
                             />
 
                             {hostType === "CUSTOM_URL" && <TextField name="host.url" label={t("microfrontend.custom_url")} placeholder="https://example.com" required />}

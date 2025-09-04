@@ -454,6 +454,7 @@
     "hosting_information": "Informazioni di Hosting",
     "hosting_information_description": "Configura dove è ospitato il tuo microfrontend",
     "hosting_type": "Tipo di Hosting",
+    "entry_point": "Punto di ingresso",
     "select_hosting_type": "Seleziona il tipo di hosting",
     "mfe_orchestrator_hub": "MFE Orchestrator Hub",
     "custom_url": "URL Personalizzato",

@@ -398,6 +398,7 @@
         "hosting_information": "Hosting Information",
         "hosting_information_description": "Configure where your microfrontend is hosted",
         "hosting_type": "Hosting Type",
+        "entry_point": "Entry Point",
         "select_hosting_type": "Select hosting type",
         "mfe_orchestrator_hub": "MFE Orchestrator Hub",
         "custom_url": "Custom URL",

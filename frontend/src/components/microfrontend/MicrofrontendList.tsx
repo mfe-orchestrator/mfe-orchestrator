@@ -42,9 +42,6 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
 
     return (
         <>
-            <div className="flex justify-between items-center">
-                <Button variant="secondary">Aggiungi Microfrontend</Button>
-            </div>
             <Tabs defaultValue="grid" className="space-y-4" iconButtons>
                 <TabsList>
                     <TabsTrigger value="grid">

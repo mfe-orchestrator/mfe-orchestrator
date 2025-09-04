@@ -35,7 +35,8 @@ export interface Microfrontend {
     host: {
         type: HostedOn;
         url?: string;
-        storageId?: string
+        storageId?: string;
+        entryPoint?: string
     }
     description?: string;
     createdAt?: Date;
