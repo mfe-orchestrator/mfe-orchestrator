@@ -256,13 +256,13 @@ export default class ServeService {
     getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream {
         const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
         if (!fs.existsSync(basePath)) {
-            throw new Error("Microfrontend file not found")
+            throw new Error("Microfrontend file not found in path " + basePath)
         }
 
         const finalPath = path.join(basePath, filePath);
 
         if (!fs.existsSync(finalPath)) {
-            throw new Error("File not found")
+            throw new Error("File not found for path: " + finalPath)
         }
 
         return fs.createReadStream(finalPath)
