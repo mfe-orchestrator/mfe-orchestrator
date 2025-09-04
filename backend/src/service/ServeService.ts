@@ -178,7 +178,7 @@ export default class ServeService {
      * @returns Promise with Microfrontend object or null if not found
      */
     async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<Stream> {
-        const environment = await Environment.findOne({ slug: environmentSlug })
+        const environment = await Environment.findOne({ slug: environmentSlug, projectId })
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
         }
@@ -256,7 +256,7 @@ export default class ServeService {
     getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream {
         const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
         if (!fs.existsSync(basePath)) {
-            throw new Error("Microfrontend not found")
+            throw new Error("Microfrontend file not found")
         }
 
         const finalPath = path.join(basePath, filePath);
