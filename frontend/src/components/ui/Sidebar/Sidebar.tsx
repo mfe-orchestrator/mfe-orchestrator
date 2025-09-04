@@ -51,14 +51,16 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
                 </div>
             )}
 
-			<div className="flex flex-col gap-1 border-t border-divider py-2">
-				<LanguageSelector isSidebarCollapsed={isCollapsed} />
-				<ThemeToggle isSidebarCollapsed={isCollapsed} />
-                <NavItem type="secondary" icon={<BookOpen />} name="Documentation" href={"https://mfe-orchestrator-hub.github.io/documentation/"} isSidebarCollapsed={isCollapsed} />
-				<NavItem type="secondary" icon={<Github />} name="Contribute" href={"https://github.com/mfe-orchestrator-hub"} isSidebarCollapsed={isCollapsed} />
+            <div className="flex flex-col gap-1 border-t border-divider py-2">
+                <LanguageSelector isSidebarCollapsed={isCollapsed} />
+                <ThemeToggle isSidebarCollapsed={isCollapsed} />
+                <NavItem type="secondary" icon={<BookOpen />} name="Documentation" href="https://mfe-orchestrator-hub.github.io/documentation/" isSidebarCollapsed={isCollapsed} />
+                <NavItem type="secondary" icon={<Github />} name="Contribute" href="https://github.com/mfe-orchestrator-hub" isSidebarCollapsed={isCollapsed} />
             </div>
 
-            <div className="border-t border-divider pt-2"><UserButton isSidebarCollapsed={isCollapsed} /></div>
+            <div className="border-t border-divider pt-2">
+                <UserButton isSidebarCollapsed={isCollapsed} />
+            </div>
 
             {showCollapseButton && (
                 <Button variant="secondary" size="icon-sm" onClick={toggleCollapsed} className="absolute -bottom-2 left-1/2 -translate-x-1/2 [&_svg]:size-4">

@@ -21,7 +21,7 @@ const LanguageSelector: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebar
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
                 <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" isSidebarCollapsed={isSidebarCollapsed} />
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start">

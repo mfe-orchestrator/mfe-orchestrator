@@ -127,7 +127,7 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
                 <NavItem
                     type="secondary"
                     icon={profilePictureUrl ? <img src={profilePictureUrl} alt="Profile" className="rounded-full h-8 w-8 border-2 border-border" /> : <User />}

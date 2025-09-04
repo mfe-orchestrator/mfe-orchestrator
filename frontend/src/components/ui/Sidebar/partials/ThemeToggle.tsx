@@ -35,7 +35,7 @@ const ThemeToggle: React.FC<{ isSidebarCollapsed: boolean }> = ({ isSidebarColla
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
                 <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start">
