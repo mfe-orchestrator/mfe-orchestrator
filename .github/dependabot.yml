@@ -5,11 +5,11 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pnpm" # See documentation for possible values
+  - package-ecosystem: "npm" # See documentation for possible values
     directory: "/frontend" # Location of package manifests
     schedule:
       interval: "weekly"
-  - package-ecosystem: "pnpm" # See documentation for possible values
+  - package-ecosystem: "npm" # See documentation for possible values
     directory: "/backend" # Location of package manifests
     schedule:
       interval: "weekly"
