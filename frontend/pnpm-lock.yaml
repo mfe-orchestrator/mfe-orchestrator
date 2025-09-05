@@ -19,7 +19,7 @@ dependencies:
     version: 2.2.0(react@19.1.0)
   '@hookform/resolvers':
     specifier: ^3.10.0
-    version: 3.10.0(react-hook-form@7.58.1)
+    version: 3.10.0(react-hook-form@7.62.0)
   '@radix-ui/react-accordion':
     specifier: ^1.2.11
     version: 1.2.11(@types/react-dom@19.1.6)(@types/react@19.1.8)(react-dom@19.1.0)(react@19.1.0)
@@ -159,8 +159,8 @@ dependencies:
     specifier: ^2.0.5
     version: 2.0.5(react@19.1.0)
   react-hook-form:
-    specifier: ^7.58.1
-    version: 7.58.1(react@19.1.0)
+    specifier: ^7.62.0
+    version: 7.62.0(react@19.1.0)
   react-i18next:
     specifier: ^15.6.1
     version: 15.6.1(i18next@25.3.2)(react-dom@19.1.0)(react@19.1.0)(typescript@5.8.3)
@@ -651,12 +651,12 @@ packages:
       react: 19.1.0
     dev: false
 
-  /@hookform/resolvers@3.10.0(react-hook-form@7.58.1):
+  /@hookform/resolvers@3.10.0(react-hook-form@7.62.0):
     resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
     peerDependencies:
       react-hook-form: ^7.0.0
     dependencies:
-      react-hook-form: 7.58.1(react@19.1.0)
+      react-hook-form: 7.62.0(react@19.1.0)
     dev: false
 
   /@humanfs/core@0.19.1:
@@ -3825,8 +3825,8 @@ packages:
       shallowequal: 1.1.0
     dev: false
 
-  /react-hook-form@7.58.1(react@19.1.0):
-    resolution: {integrity: sha512-Lml/KZYEEFfPhUVgE0RdCVpnC4yhW+PndRhbiTtdvSlQTL8IfVR+iQkBjLIvmmc6+GGoVeM11z37ktKFPAb0FA==}
+  /react-hook-form@7.62.0(react@19.1.0):
+    resolution: {integrity: sha512-7KWFejc98xqG/F4bAxpL41NB3o1nnvQO1RWZT3TqRZYL8RryQETGfEdVnJN2fy1crCiBLLjkRBVK05j24FxJGA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
