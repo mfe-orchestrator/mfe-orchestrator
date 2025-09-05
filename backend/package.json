@@ -41,7 +41,7 @@
         "fastify-multipart": "^5.4.0",
         "fastify-plugin": "^5.0.1",
         "fs-extra": "^11.3.1",
-        "google-auth-library": "^10.2.1",
+        "google-auth-library": "^10.3.0",
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^8.18.0",
         "nodemailer": "^7.0.3",
