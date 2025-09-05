@@ -183,7 +183,30 @@
         "showKey": "Mostra chiave",
         "hideKey": "Nascondi chiave",
         "createKeyDescription": "Crea una nuova chiave API per il tuo progetto. Assicurati di copiarla - non potrai più visualizzarla in seguito!",
-        "noKeys": "Nessuna chiave API trovata"
+        "noKeys": "Nessuna chiave API trovata",
+        "microfrontend": {
+          "host": "Host",
+          "hostTypes": {
+            "customUrl": "URL Personalizzato",
+            "mfeOrchestratorHub": "MFE Orchestrator Hub",
+            "customSource": "Sorgente Personalizzata"
+          },
+          "canaryReleaseActive": "Canary Release Attiva",
+          "distribution": "Distribuzione:",
+          "usersPercentage": "{{percentage}}% degli utenti",
+          "type": "Tipo:",
+          "sessionType": "Sessione",
+          "ipType": "Indirizzo IP",
+        "deployment": "Distribuzione",
+        "deploymentTypes": {
+            "basedOnVersion": "Basato su Versione",
+            "basedOnUrl": "Basato su URL"
+        },
+        "canaryUrl": "URL Canary",
+        "canaryVersion": "Versione Canary",
+        "userType": "Utente",
+        "cookieBasedType": "Basato su Cookie"
+        }
       },
       "storages": {
         "title": "I Miei Storage",
@@ -426,9 +449,6 @@
   "validation": {
     "required": "Questo campo è obbligatorio"
   },
-  "color_picker": {
-    "select_color": "Seleziona un colore"
-  },
   "microfrontend": {
     "dashboard": {
       "title": "Microfrontend",
@@ -441,20 +461,55 @@
     },
     "no_microfrontends_found": "Nessun microfrontend trovato",
     "add_your_first_microfrontend": "Aggiungi il tuo primo microfrontend per iniziare!",
-    "name_placeholder": "Awesome Microfrontend",
-    "name": "Nome",
-    "add_new": "Aggiungi Nuovo Microfrontend",
+    "add_new": "Nuovo Microfrontend",
     "add_new_description": "Crea un nuovo microfrontend da aggiungere al tuo progetto",
     "edit": "Modifica Microfrontend",
     "edit_description": "Aggiorna i dettagli del tuo microfrontend",
     "updated_success_message": "Microfrontend aggiornato con successo",
+    "click_to_create": "Clicca per creare un nuovo microfrontend",
+    "name": "Nome",
+    "name_placeholder": "Inserisci il nome del microfrontend",
+    "slug": "Slug",
+    "slug_placeholder": "Inserisci uno slug",
+    "source": "Sorgente",
+    "description": "Descrizione",
+    "description_placeholder": "Inserisci una breve descrizione",
+    "version": "Versione",
+    "version_placeholder": "es. 1.0.0",
+    "continuous_deployment": "Deploy Continuo",
+    "continuous_deployment_description": "Abilita il deploy automatico delle nuove versioni",
+    "status": "Stato",
+    "dont_worry": "Non preoccuparti, puoi modificare queste impostazioni in seguito.",
+    "create_microfrontend": "Crea Microfrontend",
+    "your_microfrontend_has_been_created": "Il tuo microfrontend è stato creato con successo!",
     "general_information": "Informazioni Generali",
     "general_information_description": "Informazioni di base sul tuo microfrontend",
-    "slug_description": "Una versione URL-friendly del nome",
+    "slug_description": "Una versione del nome adatta agli URL",
     "hosting_information": "Informazioni di Hosting",
     "hosting_information_description": "Configura dove è ospitato il tuo microfrontend",
     "hosting_type": "Tipo di Hosting",
-    "entry_point": "Punto di ingresso",
+    "host": "Host",
+    "hostTypes": {
+      "customUrl": "URL Personalizzato",
+      "mfeOrchestratorHub": "MFE Orchestrator Hub",
+      "customSource": "Sorgente Personalizzata"
+    },
+    "canaryReleaseActive": "Canary Release Attiva",
+    "distribution": "Distribuzione:",
+    "usersPercentage": "{{percentage}}% degli utenti",
+    "type": "Tipo:",
+    "sessionType": "Sessione",
+    "ipType": "Indirizzo IP",
+    "deployment": "Distribuzione",
+    "deploymentTypes": {
+      "basedOnVersion": "Basato su Versione",
+      "basedOnUrl": "Basato su URL"
+    },
+    "canaryUrl": "URL Canary",
+    "canaryVersion": "Versione Canary",
+    "userType": "Utente",
+    "cookieBasedType": "Basato su Cookie",
+    "entry_point": "Punto di Ingresso",
     "select_hosting_type": "Seleziona il tipo di hosting",
     "mfe_orchestrator_hub": "MFE Orchestrator Hub",
     "custom_url": "URL Personalizzato",
@@ -466,8 +521,8 @@
     "canary_percentage_description": "Percentuale di traffico da indirizzare alla versione canary",
     "canary_type": "Tipo di Canary",
     "select_canary_type": "Seleziona il tipo di canary",
-    "on_sessions": "Per Sessioni",
-    "on_user": "Per Utente",
+    "on_sessions": "Sulle Sessioni",
+    "on_user": "Sull'Utente",
     "cookie_based": "Basato su Cookie",
     "deployment_type": "Tipo di Distribuzione",
     "select_deployment_type": "Seleziona il tipo di distribuzione",
@@ -477,7 +532,12 @@
     "canary_url": "URL Canary",
     "created_success": "Microfrontend creato",
     "created_success_message": "Il tuo microfrontend è stato creato con successo",
-    "create_error": "Impossibile creare il microfrontend"
+    "create_error": "Errore durante la creazione del microfrontend",
+    "noMicrofrontendsFound": "Nessun microfrontend trovato",
+    "ofUsers": "degli utenti"
+  },
+  "color_picker": {
+    "select_color": "Seleziona un colore"
   },
   "storage": {
     "name": "Nome",

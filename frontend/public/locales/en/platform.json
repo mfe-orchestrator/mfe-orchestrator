@@ -398,6 +398,27 @@
         "hosting_information": "Hosting Information",
         "hosting_information_description": "Configure where your microfrontend is hosted",
         "hosting_type": "Hosting Type",
+        "host": "Host",
+        "hostTypes": {
+            "customUrl": "Custom URL",
+            "mfeOrchestratorHub": "MFE Orchestrator Hub",
+            "customSource": "Custom Source"
+        },
+        "canaryReleaseActive": "Canary Release Active",
+        "distribution": "Distribution:",
+        "usersPercentage": "{{percentage}}% of users",
+        "type": "Type:",
+        "sessionType": "Session",
+        "ipType": "IP Address",
+        "deployment": "Deployment",
+        "deploymentTypes": {
+            "basedOnVersion": "Based on Version",
+            "basedOnUrl": "Based on URL"
+        },
+        "canaryUrl": "Canary URL",
+        "canaryVersion": "Canary Version",
+        "userType": "User",
+        "cookieBasedType": "Cookie Based",
         "entry_point": "Entry Point",
         "select_hosting_type": "Select hosting type",
         "mfe_orchestrator_hub": "MFE Orchestrator Hub",
