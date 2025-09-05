@@ -51,8 +51,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
       '@google-cloud/storage':
-        specifier: ^7.16.0
-        version: 7.16.0
+        specifier: ^7.17.0
+        version: 7.17.0
       '@redis/client':
         specifier: ^5.5.6
         version: 5.5.6
@@ -564,6 +564,12 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
 
+  '@eslint-community/eslint-utils@4.8.0':
+    resolution: {integrity: sha512-MJQFqrZgcW0UNYLGOuQpey/oTN59vyWwplvCGZztn1cKz9agZPPYpJB7h2OMmuu7VLqkvEjN8feFZJmxNF9D+Q==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
+
   '@eslint-community/regexpp@4.12.1':
     resolution: {integrity: sha512-CCZCDJuduB9OUkFkY2IgppNZMi2lBQgD2qzwXkEia16cge2pijY/aXi96CJMquDMn3nJdlPV1A5KrJEXwfLNzQ==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
@@ -695,8 +701,8 @@ packages:
     resolution: {integrity: sha512-Orxzlfb9c67A15cq2JQEyVc7wEsmFBmHjZWZYQMUyJ1qivXyMwdyNOs9odi79hze+2zqdTtu1E19IM/FtqZ10g==}
     engines: {node: '>=14'}
 
-  '@google-cloud/storage@7.16.0':
-    resolution: {integrity: sha512-7/5LRgykyOfQENcm6hDKP8SX/u9XxE5YOiWOkgkwcoO+cG8xT/cyOvp9wwN3IxfdYgpHs8CE7Nq2PKX2lNaEXw==}
+  '@google-cloud/storage@7.17.0':
+    resolution: {integrity: sha512-5m9GoZqKh52a1UqkxDBu/+WVFDALNtHg5up5gNmNbXQWBcV813tzJKsyDtKjOPrlR1em1TxtD7NSPCrObH7koQ==}
     engines: {node: '>=14'}
 
   '@grpc/grpc-js@1.13.4':
@@ -1962,9 +1968,6 @@ packages:
 
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
-
-  end-of-stream@1.4.4:
-    resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
 
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
@@ -5093,6 +5096,11 @@ snapshots:
       eslint: 9.34.0
       eslint-visitor-keys: 3.4.3
 
+  '@eslint-community/eslint-utils@4.8.0(eslint@9.34.0)':
+    dependencies:
+      eslint: 9.34.0
+      eslint-visitor-keys: 3.4.3
+
   '@eslint-community/regexpp@4.12.1': {}
 
   '@eslint/config-array@0.21.0':
@@ -5295,7 +5303,7 @@ snapshots:
 
   '@google-cloud/promisify@4.0.0': {}
 
-  '@google-cloud/storage@7.16.0':
+  '@google-cloud/storage@7.17.0':
     dependencies:
       '@google-cloud/paginator': 5.0.2
       '@google-cloud/projectify': 4.0.0
@@ -6891,10 +6899,6 @@ snapshots:
 
   emoji-regex@9.2.2: {}
 
-  end-of-stream@1.4.4:
-    dependencies:
-      once: 1.4.0
-
   end-of-stream@1.4.5:
     dependencies:
       once: 1.4.0
@@ -7048,7 +7052,7 @@ snapshots:
 
   eslint-plugin-es-x@7.8.0(eslint@9.34.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.7.0(eslint@9.34.0)
+      '@eslint-community/eslint-utils': 4.8.0(eslint@9.34.0)
       '@eslint-community/regexpp': 4.12.1
       eslint: 9.34.0
       eslint-compat-utils: 0.5.1(eslint@9.34.0)
@@ -7084,7 +7088,7 @@ snapshots:
 
   eslint-plugin-n@16.6.2(eslint@9.34.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.7.0(eslint@9.34.0)
+      '@eslint-community/eslint-utils': 4.8.0(eslint@9.34.0)
       builtins: 5.1.0
       eslint: 9.34.0
       eslint-plugin-es-x: 7.8.0(eslint@9.34.0)
@@ -8910,7 +8914,7 @@ snapshots:
 
   pump@3.0.2:
     dependencies:
-      end-of-stream: 1.4.4
+      end-of-stream: 1.4.5
       once: 1.4.0
 
   punycode@2.3.1: {}
