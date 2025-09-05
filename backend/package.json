@@ -43,7 +43,7 @@
         "fs-extra": "^11.3.1",
         "google-auth-library": "^10.2.1",
         "jsonwebtoken": "^9.0.2",
-        "mongoose": "^8.15.1",
+        "mongoose": "^8.18.0",
         "nodemailer": "^7.0.3",
         "nodemon": "^3.1.10",
         "pug": "^3.0.3",
