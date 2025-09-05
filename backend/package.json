@@ -59,7 +59,7 @@
         "testcontainers": "^11.0.2",
         "ts-jest": "^29.3.4",
         "ts-node": "^10.9.2",
-        "eslint": "^9.34.0",
+        "eslint": "^9.35.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-config-standard-with-typescript": "^43.0.1",
         "eslint-plugin-prettier": "^5.5.4",
