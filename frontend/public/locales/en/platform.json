@@ -95,7 +95,8 @@
         "ok": "OK",
         "active": "Active",
         "inactive": "Inactive",
-        "creating": "Creating"
+        "creating": "Creating",
+        "configuration": "Configuration"
     },
     "setup": {
         "title": "Initial Setup",
@@ -306,7 +307,9 @@
             "microfrontend": "Microfrontend",
             "version": "Version",
             "slug": "Slug",
-            "actions": "Actions"
+            "actions": "Actions",
+            "variable": "Variable",
+            "value": "Value"
         },
         "no_deployments": "No deployments found",
         "no_deployments_description": "Deployments will appear here once created",

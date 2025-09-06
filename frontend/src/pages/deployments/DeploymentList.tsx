@@ -153,6 +153,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                             <CardTitle className="text-lg font-semibold">{t("deployments.microfrontends_title")}</CardTitle>
                         </CardHeader>
                         <CardContent className="px-6 pb-4">
+                            {selectedDeployment.microfrontends.length > 0 &&
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -162,7 +163,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {selectedDeployment.microfrontends.length > 0 ? (
+                                    {
                                         selectedDeployment.microfrontends.map(singleMicrofrontend => (
                                             <TableRow key={singleMicrofrontend._id}>
                                                 <TableCell className="font-medium">{singleMicrofrontend.name}</TableCell>
@@ -172,18 +173,30 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 <TableCell>{singleMicrofrontend.slug}</TableCell>
                                             </TableRow>
                                         ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">
-                                                <div className="flex flex-col items-center justify-center space-y-2">
-                                                    <p className="text-sm font-medium">{t("deployments.no_deployments")}</p>
-                                                    <p className="text-sm text-muted-foreground">{t("deployments.no_deployments_description")}</p>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                                    }
                                 </TableBody>
                             </Table>
+                            }   
+                            {selectedDeployment.variables.length > 0 &&
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>{t("deployments.columns.variable")}</TableHead>
+                                        <TableHead>{t("deployments.columns.value")}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {
+                                        selectedDeployment.variables.map(singleVariable => (
+                                            <TableRow key={singleVariable._id}>
+                                                <TableCell className="font-medium">{singleVariable.key}</TableCell>
+                                                <TableCell>{singleVariable.value}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    }
+                                </TableBody>
+                            </Table>
+                            }
                         </CardContent>
                     </Card>
                 )}

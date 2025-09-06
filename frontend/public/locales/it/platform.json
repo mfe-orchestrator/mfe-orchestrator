@@ -97,7 +97,8 @@
     "ok": "OK",
     "active": "Attivo",
     "inactive": "Disattivo",
-    "creating": "Creazione in corso"
+    "creating": "Creazione in corso",
+    "configuration": "Configurazione"
   },
   "setup": {
     "title": "Configurazione Iniziale",
@@ -267,7 +268,9 @@
       "microfrontend": "Microfrontend",
       "version": "Versione",
       "slug": "Slug",
-      "actions": "Azioni"
+      "actions": "Azioni",
+      "variable": "Variabile",
+      "value": "Valore"
     },
     "no_deployments": "Nessuna distribuzione trovata",
     "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
