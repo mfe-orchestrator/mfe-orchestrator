@@ -10,7 +10,12 @@ export default async function configurationController(fastify: FastifyInstance) 
             canRegister: Boolean(config.REGISTRATION_ALLOWED) && Boolean(config.ALLOW_EMBEDDED_LOGIN),
             allowEmbeddedLogin: Boolean(config.ALLOW_EMBEDDED_LOGIN),
             frontendUrl: config.FRONTEND_URL,
-            providers: {}
+            providers: {},
+            codeRepository: {
+                github: {
+                    clientId: config.CODE_REPOSITORY_GITHUB_CLIENT_ID
+                }
+            }
         }
 
         // Aggiungi provider solo se attivo

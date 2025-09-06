@@ -10,6 +10,7 @@ import Microfrontend from "../models/MicrofrontendModel"
 import ApiKey from "../models/ApiKeyModel"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Storage from "../models/StorageModel"
+import CodeRepository from "../models/CodeRepositoryModel"
 
 export interface ProjectCreateInput {
     name: string
@@ -31,7 +32,8 @@ export interface ProjectSummaryDTO{
         users : number,
         microfrontends : number,
         apiKeys : number,
-        storages : number
+        storages : number,
+        codeRepositories : number
     }
 }
 
@@ -94,7 +96,8 @@ export class ProjectService extends BaseAuthorizedService {
                 users: await UserProject.countDocuments({projectId}),
                 microfrontends: await Microfrontend.countDocuments({projectId}),
                 apiKeys: await ApiKey.countDocuments({projectId}),
-                storages: await Storage.countDocuments({projectId})
+                storages: await Storage.countDocuments({projectId}),
+                codeRepositories : await CodeRepository.countDocuments({projectId})
             }
         }
     }

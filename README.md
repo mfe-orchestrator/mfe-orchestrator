@@ -66,6 +66,8 @@ terraform apply
 | `GOOGLE_AUTH_SCOPE` | `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile` | Required scopes to get Google email and profile. |
 | `ALLOWED_ORIGINS` | *(empty)* | List of allowed URLs for cross-origin requests comma separated. |
 | `LOG_LEVEL` | `info` *(debug/info/warn/error)* | Logging level. |
+| `CODE_REPOSITORY_GITHUB_CLIENT_ID` | *(empty)* | Client ID for GitHub OAuth authentication. |
+| `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | *(empty)* | Client secret for GitHub OAuth authentication. |
 
 ### Local Installation for development 🛠️
 

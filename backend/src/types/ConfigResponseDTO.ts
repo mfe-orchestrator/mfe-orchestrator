@@ -3,6 +3,11 @@ export default interface ConfigResponseDTO {
     canSendEmail: boolean
     canRegister: boolean
     allowEmbeddedLogin: boolean
+    codeRepository?: {
+        github?: {
+            clientId: string
+        }
+    }
     providers: {
         auth0?: {
             domain: string

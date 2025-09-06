@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema, ObjectId } from "mongoose"
+import { GithubUser, GithubOrganization } from "../client/GithubClient"
 
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
@@ -11,6 +12,10 @@ export interface ICodeRepository extends Document<ObjectId> {
     provider: CodeRepositoryProvider
     accessToken: string
     refreshToken?: string
+    githubData?: {
+        user: GithubUser,
+        organizations: GithubOrganization[]
+    },
     isActive: boolean
     projectId: ObjectId
     createdAt: Date
@@ -39,6 +44,10 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
         refreshToken: {
             type: String,
             trim: true
+        },
+        githubData: {
+            type: Object,
+            required: true
         },
         isActive: {
             type: Boolean,

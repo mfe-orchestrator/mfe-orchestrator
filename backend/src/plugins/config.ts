@@ -150,6 +150,12 @@ export default fastifyPlugin(
                 },
                 BREVO_LIST_ID: {
                     type: "string"
+                },
+                CODE_REPOSITORY_GITHUB_CLIENT_ID: {
+                    type: "string"
+                },
+                CODE_REPOSITORY_GITHUB_CLIENT_SECRET: {
+                    type: "string"
                 }
             }
         }

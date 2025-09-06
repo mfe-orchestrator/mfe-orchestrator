@@ -163,7 +163,8 @@
             "microFrontends": "Microfrontends",
             "environments": "Environments",
             "apiKeys": "API Keys",
-            "storages": "Storages"
+            "storages": "Storages",
+            "codeRepositories": "Code Repositories"
         },
         "settingsPage": {
             "title": "Project Settings",
@@ -570,5 +571,37 @@
         "createSuccessDescription": "The storage has been successfully created.",
         "updateSuccess": "Storage updated",
         "updateSuccessDescription": "The storage has been successfully updated."
+    },
+    "codeRepositories": {
+        "title": "Code Repositories",
+        "description": "Manage your code repositories from different providers",
+        "addRepository": "Add Repository",
+        "noRepositoriesFound": "No repositories found. Add your first repository to get started.",
+        "columns": {
+            "name": "Name",
+            "provider": "Provider"
+        },
+        "deleteDialog": {
+            "title": "Delete Repository",
+            "description": "Delete \"{{repositoryName}}\"?"
+        },
+        "addDialog": {
+            "title": "Add Repository",
+            "description": "Choose a provider to connect your code repository",
+            "providers": {
+                "github": {
+                    "name": "GitHub",
+                    "description": "Connect to GitHub repositories"
+                },
+                "azure": {
+                    "name": "Azure DevOps",
+                    "description": "Connect to Azure DevOps repositories"
+                },
+                "gitlab": {
+                    "name": "GitLab",
+                    "description": "Connect to GitLab repositories"
+                }
+            }
+        }
     }
 }

@@ -60,6 +60,8 @@ declare module "fastify" {
             RECAPTCHA_SECRET_KEY: string
             BREVO_API_KEY: string
             BREVO_LIST_ID: string
+            CODE_REPOSITORY_GITHUB_CLIENT_ID: string
+            CODE_REPOSITORY_GITHUB_CLIENT_SECRET: string
         }
     }
 

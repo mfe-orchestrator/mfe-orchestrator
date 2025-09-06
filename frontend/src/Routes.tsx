@@ -29,6 +29,9 @@ const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStorag
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
 const EnvironmentsPage = lazy(() => import("./pages/EnvironmentsPage"));
 const EnvironmentVariablesPage = lazy(() => import("./pages/environment-variables/EnvironmentVariablesPage"));
+const CodeRepositoryPage = lazy(() => import("./pages/code-repositories/CodeRepositoryPage"));
+const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCallbackPage"));
+const RepositorySelectionPage = lazy(() => import("./pages/code-repositories/RepositorySelectionPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -149,6 +152,24 @@ const PrivateRoutes: React.FC = () => {
             path="/environment-variables"
             element={
               <RouteWithSuspense element={<EnvironmentVariablesPage />} />
+            }
+          />
+          <Route
+            path="/code-repositories"
+            element={
+              <RouteWithSuspense element={<CodeRepositoryPage />} />
+            }
+          />
+          <Route
+            path="/code-repositories/callback/github"
+            element={
+              <RouteWithSuspense element={<GitHubCallbackPage />} />
+            }
+          />
+          <Route
+            path="/code-repositories/select"
+            element={
+              <RouteWithSuspense element={<RepositorySelectionPage />} />
             }
           />
           <Route

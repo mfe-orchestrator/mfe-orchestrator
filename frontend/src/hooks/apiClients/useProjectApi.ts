@@ -22,6 +22,7 @@ export interface ProjectSummaryDTO {
     environments: number,
     users: number,
     microfrontends: number,
+    codeRepositories: number,
     apiKeys: number,
     storages: number
   }

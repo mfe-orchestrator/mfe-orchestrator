@@ -32,4 +32,9 @@ export default interface GlobalConfigDTO {
     registrationAllowed: boolean;
     canSendEmail: boolean;
     providers: AuthProvidersConfig;
+    codeRepository?: {
+        github?: {
+            clientId: string
+        }
+    }
 }

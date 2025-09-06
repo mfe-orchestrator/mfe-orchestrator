@@ -1,0 +1,136 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from "@/components/ui/button/button"
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
+import { Plus, Trash2, GitBranch } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
+import useProjectStore from '@/store/useProjectStore';
+import SinglePageLayout from '@/components/SinglePageLayout';
+import { Badge } from "@/components/ui/badge/badge"
+import AddRepositoryDialog from './AddRepositoryDialog';
+import useCodeRepositoriesApi, { CodeRepositoryProvider } from '@/hooks/apiClients/useCodeRepositoriesApi';
+
+const CodeRepositoryPage = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const project = useProjectStore();
+  const codeRepositoriesApi = useCodeRepositoriesApi();
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [repositoryToDelete, setRepositoryToDelete] = useState<{ id: string, name: string } | null>(null);
+
+  // Mock data query - replace with actual API call
+  const repositoriesQuery = useQuery({
+    queryKey: ['code-repositories', project.project?._id],
+    queryFn: () => codeRepositoriesApi.getRepositoriesByProjectId(project.project?._id)
+  });
+
+  // Mock delete mutation - replace with actual API call
+  const deleteRepositoryMutation = useMutation({
+    mutationFn: async (id: string) => codeRepositoriesApi.deleteSingle(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['code-repositories', project.project?._id] });
+    },
+  });
+
+  const getProviderColor = (provider: CodeRepositoryProvider) => {
+    switch (provider) {
+      case CodeRepositoryProvider.GITHUB: return 'bg-gray-100 text-gray-800';
+      case CodeRepositoryProvider.GITLAB: return 'bg-blue-100 text-blue-800';
+      case CodeRepositoryProvider.AZURE_DEV_OPS: return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <ApiDataFetcher queries={[repositoriesQuery]}>
+      <SinglePageLayout
+        title={t('codeRepositories.title')}
+        description={t('codeRepositories.description')}
+        right={repositoriesQuery.data?.length === 0 ? null :
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('codeRepositories.addRepository')}
+          </Button>
+        }
+      >
+        <Card>
+          <CardContent>
+            {repositoriesQuery.data?.length === 0 ?
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="text-center py-8 text-muted-foreground">
+                  {t('codeRepositories.noRepositoriesFound')}
+                </div>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('codeRepositories.addRepository')}
+                </Button>
+              </div>
+              :
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('codeRepositories.columns.name')}</TableHead>
+                    <TableHead>{t('codeRepositories.columns.provider')}</TableHead>
+                    <TableHead className="text-right">{t('common.actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {repositoriesQuery.data?.map((repository) => (
+                    <TableRow key={repository._id}>
+                      <TableCell className="font-medium">{repository.name}</TableCell>
+                      <TableCell>
+                        <Badge className={getProviderColor(repository.provider)}>
+                          {repository.provider}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={deleteRepositoryMutation.isPending}
+                          onClick={() => {
+                            setRepositoryToDelete({ id: repository._id, name: repository.name });
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            }
+          </CardContent>
+        </Card>
+        
+        <AddRepositoryDialog 
+          isOpen={isCreateDialogOpen} 
+          onOpenChange={setIsCreateDialogOpen} 
+        />
+        
+        <DeleteConfirmationDialog
+          isOpen={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onDelete={async () => {
+            if (repositoryToDelete) {
+              await deleteRepositoryMutation.mutateAsync(repositoryToDelete.id);
+            }
+          }}
+          onDeleteSuccess={() => {
+            setRepositoryToDelete(null);
+          }}
+          title={t('codeRepositories.deleteDialog.title')}
+          description={repositoryToDelete ? t('codeRepositories.deleteDialog.description', { repositoryName: repositoryToDelete.name }) : ''}
+        />
+      </SinglePageLayout>
+    </ApiDataFetcher>
+  );
+};
+
+export default CodeRepositoryPage;

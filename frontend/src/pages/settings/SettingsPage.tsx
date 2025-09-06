@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Box, Key, Server, Users, HardDrive } from 'lucide-react';
+import { Box, Key, Server, Users, HardDrive, GitBranch } from 'lucide-react';
 import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
@@ -101,6 +101,12 @@ const SettingsPage: React.FC = () => {
               title: t('settings.stats.apiKeys'),
               value: projectQuery.data?.count?.apiKeys,
               href: '/api-keys'
+            },
+            {
+              icon: <GitBranch className="h-6 w-6" />,
+              title: t('settings.stats.codeRepositories'),
+              value: projectQuery.data?.count?.codeRepositories,
+              href: '/code-repositories'
             }
           ]}
         />
