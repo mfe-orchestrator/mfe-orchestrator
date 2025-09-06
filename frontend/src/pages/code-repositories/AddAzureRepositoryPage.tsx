@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, ExternalLink, Eye, EyeOff, Info } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import useCodeRepositoriesApi from '@/hooks/apiClients/useCodeRepositoriesApi';
 import SinglePageLayout from '@/components/SinglePageLayout';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -22,6 +22,7 @@ const AddAzureRepositoryPage = () => {
   const [showPat, setShowPat] = useState(false);
   const [error, setError] = useState('');
   const repositoryApi = useCodeRepositoriesApi();
+  const params = useParams<{ id: string }>();
 
   const addRepositoryMutation = useMutation({
     mutationFn: repositoryApi.addRepositoryAzure,
@@ -31,6 +32,16 @@ const AddAzureRepositoryPage = () => {
     onError: (error: unknown) => {
       setError((error as Error)?.message || t('codeRepositories.azure.error.failedToAdd'));
     }
+  });
+
+  const getRepositoryQuery = useQuery({
+    queryKey: ['getRepository', params.id],
+    queryFn:  async () => {
+      const data = await repositoryApi.getRepositoryById(params.id);
+      form.setValue('organization', data.name);
+      form.setValue('pat', data.accessToken);
+    },
+    enabled: !!params.id
   });
 
   const testConnectionMutation = useMutation({

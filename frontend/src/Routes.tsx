@@ -174,7 +174,19 @@ const PrivateRoutes: React.FC = () => {
             }
           />
           <Route
+            path="/code-repositories/azure/:id"
+            element={
+              <RouteWithSuspense element={<AddAzure />} />
+            }
+          />
+          <Route
             path="/code-repositories/gitlab"
+            element={
+              <RouteWithSuspense element={<AddGitlab />} />
+            }
+          />
+          <Route
+            path="/code-repositories/gitlab/:id"
             element={
               <RouteWithSuspense element={<AddGitlab />} />
             }

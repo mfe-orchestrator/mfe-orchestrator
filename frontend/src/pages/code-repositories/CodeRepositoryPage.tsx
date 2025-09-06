@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button"
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
-import { Plus, Trash2, GitBranch } from 'lucide-react';
+import { Plus, Trash2, GitBranch, Edit } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useProjectStore from '@/store/useProjectStore';
@@ -12,6 +12,7 @@ import SinglePageLayout from '@/components/SinglePageLayout';
 import { Badge } from "@/components/ui/badge/badge"
 import AddRepositoryDialog from './AddRepositoryDialog';
 import useCodeRepositoriesApi, { CodeRepositoryProvider } from '@/hooks/apiClients/useCodeRepositoriesApi';
+import { useNavigate } from 'react-router-dom';
 
 const CodeRepositoryPage = () => {
   const { t } = useTranslation();
@@ -22,6 +23,8 @@ const CodeRepositoryPage = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [repositoryToDelete, setRepositoryToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [repositoryToEdit, setRepositoryToEdit] = useState<any | null>(null);
+  const navigate = useNavigate();
 
   // Mock data query - replace with actual API call
   const repositoriesQuery = useQuery({
@@ -89,17 +92,34 @@ const CodeRepositoryPage = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={deleteRepositoryMutation.isPending}
-                          onClick={() => {
-                            setRepositoryToDelete({ id: repository._id, name: repository.name });
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex gap-2 justify-end">
+                          {[CodeRepositoryProvider.AZURE_DEV_OPS, CodeRepositoryProvider.GITLAB].includes(repository.provider) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+                                  navigate(`/code-repositories/azure/${repository._id}`);
+                                } else {
+                                  navigate(`/code-repositories/gitlab/${repository._id}`);
+                                }
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={deleteRepositoryMutation.isPending}
+                            onClick={() => {
+                              setRepositoryToDelete({ id: repository._id, name: repository.name });
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -111,7 +131,12 @@ const CodeRepositoryPage = () => {
         
         <AddRepositoryDialog 
           isOpen={isCreateDialogOpen} 
-          onOpenChange={setIsCreateDialogOpen} 
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) {
+              setRepositoryToEdit(null);
+            }
+          }}
         />
         
         <DeleteConfirmationDialog

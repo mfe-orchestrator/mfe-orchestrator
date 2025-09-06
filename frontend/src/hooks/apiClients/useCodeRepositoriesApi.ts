@@ -148,7 +148,7 @@ const useCodeRepositoriesApi = () => {
         return data.data
     }
 
-    const getRepositoryById = async (repositoryId: string) => {
+    const getRepositoryById = async (repositoryId: string) : Promise<any> => {
         const data = await apiClient.doRequest({
             url: `/api/repositories/${repositoryId}`,
         });
