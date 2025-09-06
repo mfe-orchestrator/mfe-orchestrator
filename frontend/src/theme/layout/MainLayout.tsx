@@ -38,12 +38,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             icon: <LinkIcon />
         },
         {
-            name: t("sftp.title"),
-            path: "/sftp",
-            disabled: true,
-            icon: <FileText />
-        },
-        {
             name: t("settings.title"),
             path: "/settings",
             icon: <Settings />

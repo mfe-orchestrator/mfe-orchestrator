@@ -75,4 +75,57 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send()
         
     })
+
+    fastify.post<{
+        Body: {
+            organization: string
+            pat: string
+        }
+    }>('/repositories/azure',  async (request, reply) =>{
+        const projectId = getProjectIdFromRequest(request)
+        if(!projectId){
+            throw new ProjectHeaderNotFoundError()
+        }
+        await new CodeRepositoryService(request.databaseUser).addRepositoryAzure(
+            request.body.organization,
+            request.body.pat,
+            projectId
+        )
+        reply.send()
+    })
+
+    fastify.post<{Body: {organization: string, pat: string}}>('/repositories/azure/test',  async (request, reply) =>{
+        const result = await new CodeRepositoryService(request.databaseUser).testConnectionAzure(
+            request.body.organization,
+            request.body.pat
+        )
+        reply.send(result)
+    })
+
+    fastify.post<{
+        Body: {
+            url: string
+            pat: string
+        }
+    }>('/repositories/gitlab',  async (request, reply) =>{
+        const projectId = getProjectIdFromRequest(request)
+        if(!projectId){
+            throw new ProjectHeaderNotFoundError()
+        }
+        await new CodeRepositoryService(request.databaseUser).addRepositoryGitlab(
+            request.body.url,
+            request.body.pat,
+            projectId
+        )
+        reply.send()
+    })
+
+    fastify.post<{Body: {url: string, pat: string}}>('/repositories/gitlab/test',  async (request, reply) =>{
+        const result = await new CodeRepositoryService(request.databaseUser).testConnectionGitlab(
+            request.body.url,
+            request.body.pat
+        )
+        reply.send(result)
+    })
+
 }

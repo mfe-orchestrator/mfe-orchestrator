@@ -633,6 +633,114 @@
           "description": "Connetti ai repository GitLab"
         }
       }
+    },
+    "azure": {
+      "title": "Connetti Azure DevOps",
+      "description": "Connetti la tua organizzazione Azure DevOps utilizzando un Personal Access Token",
+      "connection": "Connessione Azure DevOps",
+      "organizationName": "Nome Organizzazione",
+      "organizationPlaceholder": "tua-organizzazione",
+      "organizationHelp": "Il nome della tua organizzazione Azure DevOps (es. se il tuo URL è https://dev.azure.com/miaorg, inserisci \"miaorg\")",
+      "pat": "Personal Access Token",
+      "patPlaceholder": "Inserisci il tuo Azure DevOps PAT",
+      "patHelp": "Il tuo PAT sarà memorizzato in modo sicuro e utilizzato per accedere alle tue risorse Azure DevOps",
+      "testConnection": "Testa Connessione",
+      "connecting": "Connessione in corso...",
+      "connect": "Connetti Azure DevOps",
+      "connectionSuccess": "Connessione riuscita!",
+      "projectsFound": "Trovato {{count}} progetto",
+      "projectsFound_plural": "Trovati {{count}} progetti",
+      "howToCreate": "Come Creare un Personal Access Token",
+      "openAzureDevOps": "Apri Azure DevOps",
+      "requiredScopes": "Scopes Richiesti per il Token",
+      "scopesWarning": "Assicurati di selezionare esattamente questi scopes quando crei il tuo PAT. Il token dovrebbe avere accesso a tutte le organizzazioni che vuoi connettere.",
+      "steps": {
+        "step1": {
+          "title": "Vai su Azure DevOps",
+          "description": "Naviga alla tua organizzazione Azure DevOps"
+        },
+        "step2": {
+          "title": "Accedi alle Impostazioni Utente",
+          "description": "Clicca sul tuo profilo → Impostazioni utente → Personal access tokens"
+        },
+        "step3": {
+          "title": "Crea Nuovo Token",
+          "description": "Clicca \"Nuovo Token\" e configura gli scopes richiesti"
+        }
+      },
+      "scopes": {
+        "code": {
+          "name": "Code (lettura, scrittura e manage)",
+          "description": "Accesso per leggere codice sorgente, commit e branch"
+        },
+        "project": {
+          "name": "Project and team (lettura)",
+          "description": "Accesso a progetti e informazioni del team"
+        },
+        "build": {
+          "name": "Build (lettura, scrittura e manage)",
+          "description": "Accesso a pipeline di build e risultati di build"
+        },
+        "release": {
+          "name": "Release (lettura, scrittura e manage)",
+          "description": "Accesso a pipeline di release e informazioni di deployment"
+        }
+      },
+      "error": {
+        "failedToAdd": "Impossibile aggiungere il repository Azure DevOps"
+      }
+    },
+    "gitlab": {
+      "title": "Connetti GitLab",
+      "description": "Connetti la tua istanza GitLab utilizzando un Personal Access Token",
+      "connection": "Connessione GitLab",
+      "gitlabUrl": "URL GitLab",
+      "gitlabUrlPlaceholder": "https://gitlab.com",
+      "gitlabUrlHelp": "L'URL della tua istanza GitLab (es. https://gitlab.com o https://gitlab.azienda.com)",
+      "pat": "Personal Access Token",
+      "patPlaceholder": "Inserisci il tuo GitLab PAT",
+      "patHelp": "Il tuo PAT sarà memorizzato in modo sicuro e utilizzato per accedere alle tue risorse GitLab",
+      "testConnection": "Testa Connessione",
+      "connecting": "Connessione in corso...",
+      "connect": "Connetti GitLab",
+      "connectionSuccess": "Connessione riuscita!",
+      "projectsFound": "Trovato {{count}} progetto",
+      "projectsFound_plural": "Trovati {{count}} progetti",
+      "howToCreate": "Come Creare un Personal Access Token",
+      "openGitlab": "Apri GitLab",
+      "requiredScopes": "Scopes Richiesti per il Token",
+      "scopesWarning": "Assicurati di selezionare esattamente questi scopes quando crei il tuo PAT. Il token dovrebbe avere accesso a tutti i progetti che vuoi connettere.",
+      "steps": {
+        "step1": {
+          "title": "Vai su GitLab",
+          "description": "Naviga alla tua istanza GitLab"
+        },
+        "step2": {
+          "title": "Accedi alle Preferenze",
+          "description": "Clicca sul tuo profilo → Preferenze → Token di accesso"
+        },
+        "step3": {
+          "title": "Crea Nuovo Token",
+          "description": "Clicca \"Aggiungi nuovo token\" e configura gli scopes richiesti"
+        }
+      },
+      "scopes": {
+        "api": {
+          "name": "api",
+          "description": "Accesso completo alle API GitLab"
+        },
+        "read_user": {
+          "name": "read_user",
+          "description": "Accesso in lettura alle informazioni utente"
+        },
+        "read_repository": {
+          "name": "read_repository",
+          "description": "Accesso in lettura ai repository"
+        }
+      },
+      "error": {
+        "failedToAdd": "Impossibile aggiungere il repository GitLab"
+      }
     }
   }
 }

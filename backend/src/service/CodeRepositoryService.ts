@@ -6,6 +6,8 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import axios from "axios"
 import { fastify } from ".."
 import GithubClient from "../client/GithubClient"
+import AzureDevOpsClient from "../client/AzureDevOpsClient"
+import GitLabClient from "../client/GitlabClient"
 
 export interface CodeRepositoryCreateInput {
     name: string
@@ -148,6 +150,42 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         })
 
         return await repository.save()
+    }
+
+    async addRepositoryAzure(organization: string, pat: string, projectId: string) {
+        await this.ensureAccessToProject(projectId)
+
+        const repository = new CodeRepository({
+            name: organization,
+            provider: CodeRepositoryProvider.AZURE_DEV_OPS,
+            accessToken: pat,
+            projectId: new Types.ObjectId(projectId),
+            isActive: true
+        })
+
+        return await repository.save()
+    }
+
+    async testConnectionAzure(organization: string, pat: string) {
+        return new AzureDevOpsClient().getProjects(pat, organization)
+    }
+
+    async addRepositoryGitlab(url: string, pat: string, projectId: string) {
+        await this.ensureAccessToProject(projectId)
+        
+        const repository = new CodeRepository({
+            name: url,
+            provider: CodeRepositoryProvider.GITLAB,
+            accessToken: pat,
+            projectId: new Types.ObjectId(projectId),
+            isActive: true
+        })
+
+        return await repository.save()
+    }
+
+    async testConnectionGitlab(url: string, pat: string) {
+        return new GitLabClient(url, pat).getGroups()
     }
 }
 

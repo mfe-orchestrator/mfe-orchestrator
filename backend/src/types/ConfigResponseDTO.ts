@@ -7,6 +7,9 @@ export default interface ConfigResponseDTO {
         github?: {
             clientId: string
         }
+        azure?: {
+            clientId: string
+        }
     }
     providers: {
         auth0?: {

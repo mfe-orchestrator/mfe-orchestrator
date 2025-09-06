@@ -36,5 +36,8 @@ export default interface GlobalConfigDTO {
         github?: {
             clientId: string
         }
+        azure?: {
+            clientId: string
+        }
     }
 }

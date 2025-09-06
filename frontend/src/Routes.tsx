@@ -31,7 +31,8 @@ const EnvironmentsPage = lazy(() => import("./pages/EnvironmentsPage"));
 const EnvironmentVariablesPage = lazy(() => import("./pages/environment-variables/EnvironmentVariablesPage"));
 const CodeRepositoryPage = lazy(() => import("./pages/code-repositories/CodeRepositoryPage"));
 const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCallbackPage"));
-const RepositorySelectionPage = lazy(() => import("./pages/code-repositories/RepositorySelectionPage"));
+const AddAzure = lazy(() => import("./pages/code-repositories/AddAzureRepositoryPage"));
+const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlabRepositoryPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -167,9 +168,15 @@ const PrivateRoutes: React.FC = () => {
             }
           />
           <Route
-            path="/code-repositories/select"
+            path="/code-repositories/azure"
             element={
-              <RouteWithSuspense element={<RepositorySelectionPage />} />
+              <RouteWithSuspense element={<AddAzure />} />
+            }
+          />
+          <Route
+            path="/code-repositories/gitlab"
+            element={
+              <RouteWithSuspense element={<AddGitlab />} />
             }
           />
           <Route

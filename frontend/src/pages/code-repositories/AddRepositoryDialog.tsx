@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { GitBranch } from 'lucide-react';
 import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
+import { useNavigate } from 'react-router-dom';
 
 interface AddRepositoryDialogProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
   const [selectedProvider, setSelectedProvider] = useState<RepositoryProvider | null>(null);
   const globalParameters = useGlobalParameters(); 
   const githubClientId = globalParameters.getParameter("codeRepository.github.clientId")
+  const navigate = useNavigate();
 
   const providers = [
     githubClientId && {
@@ -53,7 +55,7 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
       ),
       color: 'bg-orange-50 hover:bg-orange-100 border-orange-200'
     }
-  ];
+  ].filter(Boolean);
 
   const handleProviderSelect = (providerId: RepositoryProvider) => {
     setSelectedProvider(providerId);
@@ -74,15 +76,12 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
       return;
     }
     
-    // For other providers (Azure, GitLab), implement similar OAuth flows
     if (providerId === 'azure') {
-      // TODO: Implement Azure DevOps OAuth
-      console.log('Azure DevOps OAuth not yet implemented');
+      navigate('/code-repositories/azure');
     }
     
     if (providerId === 'gitlab') {
-      // TODO: Implement GitLab OAuth
-      console.log('GitLab OAuth not yet implemented');
+      navigate('/code-repositories/gitlab');
     }
     
     // Close dialog for now

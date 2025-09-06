@@ -5,6 +5,16 @@ export interface AddRepositoryGithubDTO{
     state: string
 }
 
+export interface AddRepositoryAzureDTO{
+    pat: string
+    organization: string
+}
+
+export interface AddRepositoryGitlabDTO{
+    pat: string
+    url: string
+}
+
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
     GITLAB = "GITLAB",
@@ -97,6 +107,36 @@ export interface ICodeRepository {
     updatedAt: Date
 }
 
+
+export interface AzureDevOpsProject {
+    id: string;
+    name: string;
+    url: string;
+    state: string;
+    revision: number;
+    visibility: string;
+    lastUpdateTime: string;
+    description?: string; // opzionale perché non tutte le voci hanno description
+  }
+  
+  export interface AzureDevOpsProjectsResponse {
+    count: number;
+    value: AzureDevOpsProject[];
+  }
+
+  export interface GitlabProject {
+    id: number;
+    name: string;
+    path: string;
+    path_with_namespace: string;
+    description?: string;
+    visibility: string;
+    web_url: string;
+    created_at: string;
+    last_activity_at: string;
+  }
+
+
 const useCodeRepositoriesApi = () => {
 
     const apiClient = useApiClient()
@@ -123,6 +163,40 @@ const useCodeRepositoriesApi = () => {
         });
     }
 
+    const addRepositoryAzure = async (data: AddRepositoryAzureDTO) =>{
+        await apiClient.doRequest({
+            url: `/api/repositories/azure`,
+            method: 'POST',
+            data
+        });
+    }
+
+    const testConnectionAzure = async (data: AddRepositoryAzureDTO) : Promise<AzureDevOpsProjectsResponse>=>{
+        const response = await apiClient.doRequest<AzureDevOpsProjectsResponse>({
+            url: `/api/repositories/azure/test`,
+            method: 'POST',
+            data
+        });
+        return response.data
+    }
+
+    const addRepositoryGitlab = async (data: AddRepositoryGitlabDTO) =>{
+        await apiClient.doRequest({
+            url: `/api/repositories/gitlab`,
+            method: 'POST',
+            data
+        });
+    }
+
+    const testConnectionGitlab = async (data: AddRepositoryGitlabDTO) : Promise<GitlabProject[]>=>{
+        const response = await apiClient.doRequest<GitlabProject[]>({
+            url: `/api/repositories/gitlab/test`,
+            method: 'POST',
+            data
+        });
+        return response.data
+    }
+
 
     const deleteSingle = async (repositoryId: string) =>{
         await apiClient.doRequest({
@@ -135,7 +209,11 @@ const useCodeRepositoriesApi = () => {
         getRepositoriesByProjectId,
         getRepositoryById,
         addRepositoryGithub,
-        deleteSingle
+        addRepositoryAzure,
+        addRepositoryGitlab,
+        deleteSingle,
+        testConnectionAzure,
+        testConnectionGitlab
     }
     
 }

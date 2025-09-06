@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema, ObjectId } from "mongoose"
 import { GithubUser, GithubOrganization } from "../client/GithubClient"
+import { AzureOrganization, AzureUser } from "../client/AzureDevOpsClient"
 
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
@@ -12,9 +13,14 @@ export interface ICodeRepository extends Document<ObjectId> {
     provider: CodeRepositoryProvider
     accessToken: string
     refreshToken?: string
+    default?: boolean,
     githubData?: {
         user: GithubUser,
         organizations: GithubOrganization[]
+    },
+    azureData?:{
+        user: AzureUser,
+        organizations: AzureOrganization[]
     },
     isActive: boolean
     projectId: ObjectId
@@ -45,9 +51,17 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
             type: String,
             trim: true
         },
+        default: {
+            type: Boolean,
+            default: false
+        },
         githubData: {
             type: Object,
-            required: true
+            required: false
+        },
+        azureData: {
+            type: Object,
+            required: false
         },
         isActive: {
             type: Boolean,
@@ -66,7 +80,7 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
 )
 
 // Add index on provider and name for faster lookups
-codeRepositorySchema.index({ provider: 1, name: 1 }, { unique: true })
+codeRepositorySchema.index({ accessToken: 1 }, { unique: true })
 
 const CodeRepository = mongoose.model<ICodeRepository>("CodeRepository", codeRepositorySchema)
 export default CodeRepository
