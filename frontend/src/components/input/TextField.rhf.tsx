@@ -26,15 +26,15 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
             control={control}
             rules={rules}
             render={({ field, formState }) => (
-                <div className={`grid gap-2 ${containerClassName || ""}`}>
-                    <Label htmlFor={inputId} className={error ? "text-destructive" : ""}>
+                <div className={`flex flex-col gap-1 ${containerClassName}`}>
+                    <Label htmlFor={inputId} className={error ? "text-destructive" : "text-foreground-secondary"}>
                         {label}
                         {props.required && <span className="text-destructive ml-1">*</span>}
                     </Label>
                     <Input
                         disabled={formState.isSubmitting}
                         id={inputId}
-                        className={`${className || ""} ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                        className={`${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         {...field}
                         {...props}
                         onChange={e => {

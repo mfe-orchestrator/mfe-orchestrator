@@ -26,16 +26,16 @@ const AuthenticationLayout: React.FC<AuthenticationLayoutProps> = ({
               <ThemeToggle purpose="page" />
           </div>
           <div className="w-full max-w-md">
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-6">
                   <MainLogo />
               </div>
 
-              <Card>
+              <Card className="py-5">
                   <CardHeader>
-                      <CardTitle className="text-2xl text-center">{title}</CardTitle>
-                      {description && <CardDescription className="text-center">{description}</CardDescription>}
+                      <CardTitle className="text-2xl text-center mb-0">{title}</CardTitle>
+                      {description && <CardDescription className="text-base text-center">{description}</CardDescription>}
                   </CardHeader>
-                  <CardContent>{children}</CardContent>
+                  <CardContent className="py-3">{children}</CardContent>
                   {footer && <CardFooter className="flex justify-center">{footer}</CardFooter>}
               </Card>
           </div>

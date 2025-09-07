@@ -50,78 +50,78 @@ const RegisterPage = () => {
   };
 
   return (
-    <AuthenticationLayout
-      title={t('auth.create_account')}
-      description={t('auth.register_description')}
-      footer={<p className="text-sm text-muted-foreground">
-        {t('auth.already_have_account')}{" "}
-        <Link to="/login" className="text-primary underline-offset-4 hover:underline">
-          {t('auth.login')}
-        </Link>
-      </p>}
-    >
-      {showGreeting ? (
-        <p className='text-center'>
-          {t('auth.registration_success_email')}
-        </p>
-      ) : (
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(handleRegister)}>
-          <div className="grid gap-4">
-            <TextField
-              name="email"
-              label={t('auth.email')}
-              type="email"
-              placeholder={t('auth.email_placeholder')}
-              rules={{
-                required: t('common.required_field') as string,
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: t('auth.invalid_email') as string
-                }
-              }}
-            />
+      <AuthenticationLayout
+          title={t("auth.create_account")}
+          description={t("auth.register_description")}
+          footer={
+              <p className="text-sm text-foreground-secondary">
+                  {t("auth.already_have_account")}{" "}
+                  <Link to="/login" className="text-primary underline-offset-4 underline">
+                      {t("auth.login")}
+                  </Link>
+              </p>
+          }
+      >
+          {showGreeting ? (
+              <p className="text-center">{t("auth.registration_success_email")}</p>
+          ) : (
+              <FormProvider {...form}>
+                  <form onSubmit={form.handleSubmit(handleRegister)}>
+                      <div>
+                          <TextField
+                              name="email"
+                              label={t("auth.email")}
+                              type="email"
+                              placeholder={t("auth.email_placeholder")}
+                              rules={{
+                                  required: t("common.required_field") as string,
+                                  pattern: {
+                                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                      message: t("auth.invalid_email") as string
+                                  }
+                              }}
+                          />
 
-            <TextField
-              name="password"
-              label={t('auth.password')}
-              type="password"
-              placeholder="••••••••"
-              rules={{
-                required: t('common.required_field') as string,
-                minLength: {
-                  value: 8,
-                  message: t('auth.password_min_length') as string
-                }
-              }}
-            />
+                          <TextField
+                              name="password"
+                              label={t("auth.password")}
+                              type="password"
+                              placeholder="••••••••"
+                              rules={{
+                                  required: t("common.required_field") as string,
+                                  minLength: {
+                                      value: 8,
+                                      message: t("auth.password_min_length") as string
+                                  }
+                              }}
+                              containerClassName="mt-4"
+                          />
 
-            <TextField
-              name="confirmPassword"
-              label={t('auth.confirm_password')}
-              type="password"
-              placeholder="••••••••"
-              rules={{
-                required: t('common.required_field') as string,
-                validate: (value: string) =>
-                  value === form.getValues('password') ||
-                  (t('auth.passwords_dont_match') as string)
-              }}
-            />
+                          <TextField
+                              name="confirmPassword"
+                              label={t("auth.confirm_password")}
+                              type="password"
+                              placeholder="••••••••"
+                              rules={{
+                                  required: t("common.required_field") as string,
+                                  validate: (value: string) => value === form.getValues("password") || (t("auth.passwords_dont_match") as string)
+                              }}
+                              containerClassName="mt-4"
+                          />
 
-            {registerMutation.isPending ? (
-              <Spinner />
-            ) : (
-              <Button type="submit" className="w-full">
-                {t('auth.create_account')}
-              </Button>
-            )}
-          </div>
-        </form>
-      </FormProvider>
-      )}
-    </AuthenticationLayout>
-  );
+                          {registerMutation.isPending ? (
+                              <Spinner />
+                          ) : (
+                              <Button type="submit" className="w-full mt-5">
+                                  {t("auth.create_account")}
+                              </Button>
+                          )}
+                      </div>
+                  </form>
+              </FormProvider>
+          )}
+      </AuthenticationLayout>
+  )
 };
 
 export default RegisterPage;

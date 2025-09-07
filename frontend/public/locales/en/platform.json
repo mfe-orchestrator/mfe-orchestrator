@@ -41,7 +41,7 @@
         "password_min_length": "Password must be at least 8 characters",
         "passwords_dont_match": "Passwords don't match",
         "confirm_password": "Confirm Password",
-        "forgot_password": "Forgot Password?",
+        "forgot_password": "Forgot password?",
         "reset_password": "Reset Password",
         "reset_password_description": "Enter your new password",
         "reset_password_success": "Password has been reset successfully",
@@ -58,7 +58,7 @@
         "sign_in_with_microsoft": "Sign in with Microsoft",
         "sign_in_with_auth0": "Sign in with Auth0",
         "or_continue_with": "Or continue with",
-        "recover": "recover it"
+        "recover": "Recover it"
     },
     "project": {
         "name": "Name",

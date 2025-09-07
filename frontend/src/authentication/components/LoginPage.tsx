@@ -43,61 +43,65 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
     setToken(loginData.accessToken, "microfronted.orchestrator.hub")
   };
 
-  const footer = <p className="text-sm text-muted-foreground">
-    {t('auth.no_account')}{" "}
-    <Link to="/register" className="text-primary underline-offset-4 hover:underline">
-      {t('auth.register')}
-    </Link>
-    
-  </p>
+  const footer = (
+      <p className="text-sm text-foreground-secondary">
+          {t("auth.no_account")}{" "}
+          <Link to="/register" className="text-primary underline underline-offset-4">
+              {t("auth.register")}
+          </Link>
+      </p>
+  )
 
-  return <AuthenticationLayout 
-    title={t('auth.login')} 
-    description={parameters.getParameter("allowEmbeddedLogin") ? t('auth.login_description') : undefined} 
-    footer={parameters.getParameter("canRegister") ? footer : undefined}
-  >
-    {parameters.getParameter("allowEmbeddedLogin") &&
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(handleLogin)}>
-          <div className="grid gap-4">
-            <TextField
-              name="email"
-              label={t('auth.email')}
-              type="email"
-              autoComplete="email"
-              placeholder={t('auth.email_placeholder')}
-              rules={{ required: t('common.required_field') as string }}
-            />
-            <TextField
-              name="password"
-              label={t('auth.password')}
-              autoComplete="current-password"
-              type="password"
-              placeholder="••••••••"
-              rules={{ required: t('common.required_field') as string }}
-            />
-            {parameters.getParameter("canSendEmail") &&
-              <p className="text-sm text-muted-foreground text-right">
-                {t('auth.forgot_password')}{" "}
-                <Link to="/reset-password-request" className="text-primary underline-offset-4 hover:underline">
-                  {t('auth.recover')}
-                </Link>
-              </p>
-            }
-            {loginMutation.isPending ?
-              <Spinner />
-              :
-              <Button type="submit" className="w-full" id="access">
-                {t('auth.login')}
-              </Button>
-            }
-          </div>
-        </form>
-      </FormProvider>
-}
+  return (
+      <AuthenticationLayout
+          title={t("auth.login")}
+          description={parameters.getParameter("allowEmbeddedLogin") ? t("auth.login_description") : undefined}
+          footer={parameters.getParameter("canRegister") ? footer : undefined}
+      >
+          {parameters.getParameter("allowEmbeddedLogin") && (
+              <FormProvider {...form}>
+                  <form onSubmit={form.handleSubmit(handleLogin)}>
+                      <div>
+                          <TextField
+                              name="email"
+                              label={t("auth.email")}
+                              type="email"
+                              autoComplete="email"
+                              placeholder={t("auth.email_placeholder")}
+                              rules={{ required: t("common.required_field") as string }}
+                          />
+                          <TextField
+                              name="password"
+                              label={t("auth.password")}
+                              autoComplete="current-password"
+                              type="password"
+                              placeholder="••••••••"
+                              rules={{ required: t("common.required_field") as string }}
+                              containerClassName="mt-4"
+                          />
+                          {parameters.getParameter("canSendEmail") && (
+                              <p className="text-sm text-foreground-secondary text-right mt-2">
+                                  {t("auth.forgot_password")}{" "}
+                                  <Link to="/reset-password-request" className="text-primary underline-offset-4 underline">
+                                      {t("auth.recover")}
+                                  </Link>
+                              </p>
+                          )}
+                          {loginMutation.isPending ? (
+                              <Spinner />
+                          ) : (
+                              <Button type="submit" className="w-full mt-5" id="access">
+                                  {t("auth.login")}
+                              </Button>
+                          )}
+                      </div>
+                  </form>
+              </FormProvider>
+          )}
 
-    <SocialLoginRow onSuccessLogin={onSuccessLogin}/>
-  </AuthenticationLayout>
+          <SocialLoginRow onSuccessLogin={onSuccessLogin} />
+      </AuthenticationLayout>
+  )
 
 };
 

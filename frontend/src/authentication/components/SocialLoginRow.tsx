@@ -18,36 +18,30 @@ const SocialLoginRow: React.FC<SocialLoginRowProps> = ({  onSuccessLogin  }) => 
         return null;
     }
 
-    return <>
-        {providersCount > 0 &&
+    return (
         <>
-            {parameters.getParameter("allowEmbeddedLogin") &&
-                <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">
-                    {t('auth.or_continue_with')}
-                    </span>
-                </div>
-                </div>
-            }
+            {providersCount > 0 && (
+                <>
+                    {parameters.getParameter("allowEmbeddedLogin") && (
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-divider" />
+                            </div>
+                            <div className="relative flex justify-center text-sm uppercase">
+                                <span className="bg-card px-2 text-foreground-secondary">{t("auth.or_continue_with")}</span>
+                            </div>
+                        </div>
+                    )}
 
-            <div className="flex flex-row gap-4">
-            {parameters.getParameter("providers.google") &&
-                <LoginWithGoogleButton onSuccessLogin={onSuccessLogin} />
-            }
-            {parameters.getParameter("providers.auth0") &&
-                <LoginWithAuth0Button onSuccessLogin={onSuccessLogin} />
-            }
-            {parameters.getParameter("providers.azure") && (
-                <LoginWithMicrosoftButton onSuccessLogin={onSuccessLogin} />
+                    <div className="flex flex-row gap-4">
+                        {parameters.getParameter("providers.google") && <LoginWithGoogleButton onSuccessLogin={onSuccessLogin} />}
+                        {parameters.getParameter("providers.auth0") && <LoginWithAuth0Button onSuccessLogin={onSuccessLogin} />}
+                        {parameters.getParameter("providers.azure") && <LoginWithMicrosoftButton onSuccessLogin={onSuccessLogin} />}
+                    </div>
+                </>
             )}
-            </div>
         </>
-        }
-    </>
+    )
 }
 
 export default SocialLoginRow
