@@ -234,13 +234,9 @@ const IntegrationPage: React.FC = () => {
         <SinglePageLayout
             title="Integration Guide"
             description="Follow the instructions below to integrate with our platform."
-            center={
+            left={
                 isThereAtLeastOneEnvironment && (
-                    <EnvironmentSelector 
-                        selectedEnvironment={projectStore.environment} 
-                        environments={projectStore.environments} 
-                        onEnvironmentChange={projectStore.setEnvironment} 
-                    />
+                    <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
                 )
             }
         >
@@ -248,28 +244,18 @@ const IntegrationPage: React.FC = () => {
                 <DeploymentGate environmentId={projectStore.environment?._id}>
                     <ApiDataFetcher queries={[microfrontendQuery]}>
                         <div className="container mx-auto p-4 max-w-4xl space-y-8">
-                            <Tabs 
-                                value={activeSection} 
-                                onValueChange={setActiveSection}
-                                className="w-full"
-                                tabsListPosition="fullWidth"
-                            >
+                            <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full" tabsListPosition="fullWidth">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="frontend">Frontend Integration</TabsTrigger>
                                     <TabsTrigger value="env-vars">Environment Variables</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="frontend" className="mt-6">
-                                    <FrontendIntegration 
-                                        microfrontends={microfrontendQuery.data?.microfrontends || []} 
-                                        environmentId={projectStore.environment?._id}
-                                    />
+                                    <FrontendIntegration microfrontends={microfrontendQuery.data?.microfrontends || []} environmentId={projectStore.environment?._id} />
                                 </TabsContent>
 
                                 <TabsContent value="env-vars" className="mt-6">
-                                    <EnvironmentVariablesIntegration 
-                                        environmentId={projectStore.environment?._id}
-                                    />
+                                    <EnvironmentVariablesIntegration environmentId={projectStore.environment?._id} />
                                 </TabsContent>
                             </Tabs>
                         </div>

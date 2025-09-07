@@ -7,6 +7,8 @@ const baseStyle = `
 	justify-center
 	gap-2
 	tracking-normal
+	text-wrap
+	text-start
 	border-2 
 	shadow-button 
 	whitespace-nowrap 

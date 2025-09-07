@@ -1,30 +1,29 @@
 export interface SinglePageHeaderProps extends React.PropsWithChildren {
-  title: string;
-  description?: string;
-  center?: React.ReactNode;
-  right?: React.ReactNode;
+    title: string
+    description?: string
+    left?: React.ReactNode
+    right?: React.ReactNode
+    lrContainerClassname?: string
 }
 
-const SinglePageLayout: React.FC<SinglePageHeaderProps> = ({ title, description, center, right, children }) => {
-  return (
-    <div className="flex flex-col space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {description && <p className="text-muted-foreground">
-            {description}
-          </p>}
+const SinglePageLayout: React.FC<SinglePageHeaderProps> = ({ title, description, left, right, children, lrContainerClassname }) => {
+    return (
+        <div className="flex flex-col space-y-6">
+            <div className="border-b border-divider pb-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+                    {description && <p className="text-primary">{description}</p>}
+                </div>
+                {(left || right) && (
+                    <div className={`mt-4 flex justify-between items-center gap-y-2 gap-x-4 flex-wrap ${lrContainerClassname}`}>
+                        {left && <>{left}</>}
+                        {right && <>{right}</>}
+                    </div>
+                )}
+            </div>
+            {children}
         </div>
-        {center && <div>
-          {center}
-        </div>}
-        {right && <div>
-          {right}
-        </div>}
-      </div>
-      {children}
-    </div>
-  )
+    )
 }
 
 export default SinglePageLayout

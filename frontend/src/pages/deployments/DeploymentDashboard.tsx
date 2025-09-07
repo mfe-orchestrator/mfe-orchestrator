@@ -24,12 +24,12 @@ const DeploymentDashboard: React.FC = () => {
         <SinglePageLayout
             title="Deployments"
             description="Gestisci i deployment del tuo progetto"
-            center={isThereAtLeastOneEnvironment && (
-                <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
-            )}
-            right={
-                <Button onClick={handleDeploy}>Deploy</Button>
+            left={
+                isThereAtLeastOneEnvironment && (
+                    <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
+                )
             }
+            right={<Button onClick={handleDeploy}>Deploy</Button>}
         >
             <EnvironmentsGate>
                 <DeploymentList environmentId={projectStore.environment?._id} />
