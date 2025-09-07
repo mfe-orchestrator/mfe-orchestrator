@@ -11,7 +11,7 @@ import MainLayout from "./theme/layout/MainLayout";
 
 
 // Lazy load all page components
-const IntegrationPage = lazy(() => import("./pages/IntegrationPage"));
+const IntegrationPage = lazy(() => import("./pages/integration/IntegrationPage"))
 const ProjectUsersListPage = lazy(() => import("./pages/project-users/ProjectUsersListPage"));
 const StoragesPage = lazy(() => import("./pages/storages/StoragesPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));

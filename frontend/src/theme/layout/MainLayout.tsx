@@ -49,11 +49,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Sidebar isCollapsed={isSidebarCollapsed} mainNavItems={mainNavItems} toggleCollapsed={toggleSidebar} />
 
             {/* Main content */}
-            <div className="flex-1 min-h-screen overflow-y-auto flex flex-col gap-2 transition-all duration-300">
+            <div className="flex-1 h-[calc(100vh-1rem)] overflow-y-auto flex flex-col gap-2 transition-all duration-300">
                 {/* Header */}
                 <Header />
                 {/* Page Content */}
-                <main className="flex-grow p-3">{children}</main>
+                <main className="flex-grow p-3 pb-0">{children}</main>
             </div>
         </div>
     )

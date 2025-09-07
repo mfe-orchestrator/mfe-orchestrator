@@ -4,13 +4,13 @@ const baseStyle = `
 	p-0.5
 	inline-flex
 	items-center
-	justify-center
 	gap-0.5
 	bg-background
 	text-foreground
 	border-2
 	border-border
 	h-max
+	flex-wrap
 `
 
 export const tabsListVariants = cva(baseStyle, {
