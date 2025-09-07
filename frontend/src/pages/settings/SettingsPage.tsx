@@ -1,120 +1,110 @@
-import { useTranslation } from 'react-i18next';
-import { Box, Key, Server, Users, HardDrive, GitBranch } from 'lucide-react';
-import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Box, GitBranch, HardDrive, Key, Server, Users } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 
 // Hooks & Stores
-import useToastNotificationStore from '@/store/useToastNotificationStore';
-import useProjectStore from '@/store/useProjectStore';
-import useProjectApi, { Project } from '@/hooks/apiClients/useProjectApi';
+import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
+import useProjectStore from "@/store/useProjectStore"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 // Components
-import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
-import { ProjectInfoSection } from '@/components/settings/ProjectInfoSection';
-import { ProjectStatsSection } from '@/components/settings/ProjectStatsSection';
-import { DangerZone } from '@/components/settings/DangerZone';
-import SinglePageLayout from '@/components/SinglePageLayout';
-
+import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
+import { DangerZone } from "@/components/settings/DangerZone"
+import { ProjectInfoSection } from "@/components/settings/ProjectInfoSection"
+import { ProjectStatsSection } from "@/components/settings/ProjectStatsSection"
+import SinglePageLayout from "@/components/SinglePageLayout"
 
 const SettingsPage: React.FC = () => {
-  const notifications = useToastNotificationStore();
-  const { t } = useTranslation();
-  const { project, setProject } = useProjectStore();
-  const projectApi = useProjectApi();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+    const notifications = useToastNotificationStore()
+    const { t } = useTranslation()
+    const { project, setProject } = useProjectStore()
+    const projectApi = useProjectApi()
+    const navigate = useNavigate()
+    const queryClient = useQueryClient()
 
-  const projectQuery = useQuery({
-    queryKey: ['project-summary', project._id],
-    queryFn: () => projectApi.getProjectSummaryById(project._id),
-    enabled: !!project._id,
-  });
+    const projectQuery = useQuery({
+        queryKey: ["project-summary", project._id],
+        queryFn: () => projectApi.getProjectSummaryById(project._id),
+        enabled: !!project._id
+    })
 
-  const handleDeleteProjectSuccess = async () => {
-    notifications.showSuccessNotification({ message: t('settings.notifications.projectDeleted') });
-    queryClient.invalidateQueries({ queryKey: ['projects'] });
-    setProject(null);
-    navigate('/');
-  }
-
-  const updateProjectMutation = useMutation({
-    mutationFn: (projectData: Partial<Project>) => projectApi.updateProject(project._id, projectData)
-  })
-
-  const handleProjectNameUpdate = async (newName: string) => {
-    if (!newName.trim()) return;
-
-    try {
-      //await updateProjectName(newName);
-      notifications.showSuccessNotification({ message: t('settings.notifications.projectNameUpdated') });
-    } catch (error) {
-      console.error('Failed to update project name:', error);
-      notifications.showErrorNotification({ message: t('settings.notifications.projectNameUpdateFailed') });
-      throw error; // Re-throw to let the component handle the error
+    const handleDeleteProjectSuccess = async () => {
+        notifications.showSuccessNotification({ message: t("settings.notifications.projectDeleted") })
+        queryClient.invalidateQueries({ queryKey: ["projects"] })
+        setProject(null)
+        navigate("/")
     }
-  };
 
+    const updateProjectMutation = useMutation({
+        mutationFn: (projectData: Partial<Project>) => projectApi.updateProject(project._id, projectData)
+    })
 
-  const projectData = projectQuery.data?.project;
-  
-  return (
-    <ApiDataFetcher queries={[projectQuery]}>
-      <SinglePageLayout
-        title={t('settings.title')}
-        description={t('settings.subtitle')}
-      >
-        {projectData &&
-          <ProjectInfoSection
-            {...projectData}
-            onUpdateProjectName={handleProjectNameUpdate}
-          />
+    const handleProjectNameUpdate = async (newName: string) => {
+        if (!newName.trim()) return
+
+        try {
+            //await updateProjectName(newName);
+            notifications.showSuccessNotification({ message: t("settings.notifications.projectNameUpdated") })
+        } catch (error) {
+            console.error("Failed to update project name:", error)
+            notifications.showErrorNotification({ message: t("settings.notifications.projectNameUpdateFailed") })
+            throw error // Re-throw to let the component handle the error
         }
+    }
 
-        <ProjectStatsSection
-          stats={[
-            {
-              icon: <Server className="h-6 w-6" />,
-              title: t('settings.stats.environments'),
-              value: projectQuery.data?.count?.environments,
-              href: "/environments"
-            },
-            {
-              icon: <Users className="h-6 w-6" />,
-              title: t('settings.stats.teamMembers'),
-              value: projectQuery.data?.count?.users,
-              href: "/project-users"
-            },
-            {
-              icon: <Box className="h-6 w-6" />,
-              title: t('settings.stats.microFrontends'),
-              value: projectQuery.data?.count?.microfrontends,
-              href: '/microfrontends'
-            },
-            {
-              icon: <HardDrive className="h-6 w-6" />,
-              title: t('settings.stats.storages'),
-              value: projectQuery.data?.count?.storages,
-              href: '/storages'
-            },
-            {
-              icon: <Key className="h-6 w-6" />,
-              title: t('settings.stats.apiKeys'),
-              value: projectQuery.data?.count?.apiKeys,
-              href: '/api-keys'
-            },
-            {
-              icon: <GitBranch className="h-6 w-6" />,
-              title: t('settings.stats.codeRepositories'),
-              value: projectQuery.data?.count?.codeRepositories,
-              href: '/code-repositories'
-            }
-          ]}
-        />
+    const projectData = projectQuery.data?.project
 
-        <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
-      </SinglePageLayout>
-    </ApiDataFetcher>
-  );
+    return (
+        <ApiDataFetcher queries={[projectQuery]}>
+            <SinglePageLayout title={t("settings.title")} description={t("settings.subtitle")}>
+                {projectData && <ProjectInfoSection {...projectData} onUpdateProjectName={handleProjectNameUpdate} />}
+
+                <ProjectStatsSection
+                    stats={[
+                        {
+                            icon: <Server className="h-6 w-6" />,
+                            title: t("settings.stats.environments"),
+                            value: projectQuery.data?.count?.environments,
+                            href: "/environments"
+                        },
+                        {
+                            icon: <Users className="h-6 w-6" />,
+                            title: t("settings.stats.teamMembers"),
+                            value: projectQuery.data?.count?.users,
+                            href: "/project-users"
+                        },
+                        {
+                            icon: <Box className="h-6 w-6" />,
+                            title: t("settings.stats.microFrontends"),
+                            value: projectQuery.data?.count?.microfrontends,
+                            href: "/microfrontends"
+                        },
+                        {
+                            icon: <HardDrive className="h-6 w-6" />,
+                            title: t("settings.stats.storages"),
+                            value: projectQuery.data?.count?.storages,
+                            href: "/storages"
+                        },
+                        {
+                            icon: <Key className="h-6 w-6" />,
+                            title: t("settings.stats.apiKeys"),
+                            value: projectQuery.data?.count?.apiKeys,
+                            href: "/api-keys"
+                        },
+                        {
+                            icon: <GitBranch className="h-6 w-6" />,
+                            title: t("settings.stats.codeRepositories"),
+                            value: projectQuery.data?.count?.codeRepositories,
+                            href: "/code-repositories"
+                        }
+                    ]}
+                />
+
+                <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
+            </SinglePageLayout>
+        </ApiDataFetcher>
+    )
 }
 
 export default SettingsPage

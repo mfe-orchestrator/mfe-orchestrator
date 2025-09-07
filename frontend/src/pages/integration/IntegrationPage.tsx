@@ -41,8 +41,12 @@ const IntegrationPage: React.FC = () => {
                     <ApiDataFetcher queries={[microfrontendQuery]}>
                         <Tabs value={activeSection} onValueChange={setActiveSection} tabsListPosition="fullWidth">
                             <TabsList>
-                                <TabsTrigger value="frontend">Frontend Integration</TabsTrigger>
-                                <TabsTrigger value="env-vars">Environment Variables</TabsTrigger>
+                                <TabsTrigger value="frontend" className="flex-1">
+                                    Frontend Integration
+                                </TabsTrigger>
+                                <TabsTrigger value="env-vars" className="flex-1">
+                                    Environment Variables
+                                </TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="frontend">

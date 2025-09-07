@@ -12,7 +12,7 @@ import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Trash2 } from "lucide-react"
+import { LayoutGrid, StretchHorizontal, Trash2 } from "lucide-react"
 import React, { useState } from "react"
 import Gravatar from "react-gravatar"
 import { useTranslation } from "react-i18next"
@@ -31,28 +31,30 @@ const getUserInitials = (user?: { name?: string; surname?: string; email: string
     return user?.email?.[0].toUpperCase()
 }
 
-const UserCard: React.FC<{ user: any, handleDeleteUser: (userId: string, userName: string) => void, deleteUserDisabled: boolean }> = ({ user, handleDeleteUser, deleteUserDisabled }) => {
+const UserCard: React.FC<{ user: any; handleDeleteUser: (userId: string, userName: string) => void; deleteUserDisabled: boolean }> = ({ user, handleDeleteUser, deleteUserDisabled }) => {
     const { t } = useTranslation()
 
-    return <Card key={user._id} className="w-full sm:w-[300px] h-full">
-        <CardContent className="pt-6">
-            <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-20 w-20">
-                    <Gravatar email={user.email} className="rounded-full" />
-                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
-                </Avatar>
-                <div className="text-center space-y-1">
-                    <h3 className="text-lg font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</h3>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                    <Badge className="mt-2">{user.role}</Badge>
+    return (
+        <Card key={user._id} className="w-full sm:w-[300px] h-full">
+            <CardContent className="pt-6">
+                <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-20 w-20">
+                        <Gravatar email={user.email} className="rounded-full" />
+                        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                    </Avatar>
+                    <div className="text-center space-y-1">
+                        <h3 className="text-lg font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</h3>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <Badge className="mt-2">{user.role}</Badge>
+                    </div>
+                    <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserDisabled}>
+                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                        {t("common.remove")}
+                    </Button>
                 </div>
-                <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserDisabled}>
-                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                    {t("common.remove")}
-                </Button>
-            </div>
-        </CardContent>
-    </Card>
+            </CardContent>
+        </Card>
+    )
 }
 
 const ProjectUsersList: React.FC = () => {
@@ -107,20 +109,16 @@ const ProjectUsersList: React.FC = () => {
 
     return (
         <ApiDataFetcher queries={[userQuery]}>
-            <SinglePageLayout
-                title={t("project_users.title")}
-                description={t("project_users.subtitle", { count: users.length })}
-                right={
-                    <>
-                        <AddUserButton />
-                    </>
-                }
-            >
+            <SinglePageLayout title={t("project_users.title")} description={t("project_users.subtitle", { count: users.length })} right={<AddUserButton />}>
                 <div>
-                    <Tabs defaultValue="table" className="space-y-4" tabsListPosition="end">
+                    <Tabs defaultValue="grid" className="space-y-4" iconButtons>
                         <TabsList>
-                            <TabsTrigger value="table">{t("project_users.table_view")}</TabsTrigger>
-                            <TabsTrigger value="grid">{t("project_users.grid_view")}</TabsTrigger>
+                            <TabsTrigger value="grid">
+                                <LayoutGrid />
+                            </TabsTrigger>
+                            <TabsTrigger value="table">
+                                <StretchHorizontal />
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="table">
@@ -134,40 +132,67 @@ const ProjectUsersList: React.FC = () => {
                                             <TableHead className="w-[100px]">{t("common.actions")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
-                                    <TableBody>{users.map(user => {
-
-                                        return <TableRow key={user._id}>
-                                            <TableCell className="flex items-center space-x-3">
-                                                <Avatar className="h-8 w-8">
-                                                    <Gravatar email={user.email} className="rounded-full" />
-                                                    <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <div className="font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</div>
-                                                    <div className="text-sm text-muted-foreground">{user.email}</div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge>{user.role}</Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={user.invitationToken ? "accent" : "default"}>
-                                                    {user.invitationToken ? t("project_users.invited") : t("project_users.accepted")}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={(user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1) || deleteUserMutation.isPending || users.length === 1}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    })}</TableBody>
+                                    <TableBody>
+                                        {users.map(user => {
+                                            return (
+                                                <TableRow key={user._id}>
+                                                    <TableCell className="flex items-center space-x-3">
+                                                        <Avatar className="h-8 w-8">
+                                                            <Gravatar email={user.email} className="rounded-full" />
+                                                            <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}
+                                                            </div>
+                                                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge>{user.role}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={user.invitationToken ? "accent" : "default"}>
+                                                            {user.invitationToken ? t("project_users.invited") : t("project_users.accepted")}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleDeleteUser(user._id, user.name || user.email)}
+                                                            disabled={
+                                                                (user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1) ||
+                                                                deleteUserMutation.isPending ||
+                                                                users.length === 1
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
                                 </Table>
                             </Card>
                         </TabsContent>
 
                         <TabsContent value="grid" className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{users.map(user => <UserCard key={user._id} user={user} handleDeleteUser={handleDeleteUser} deleteUserDisabled={(user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1) || deleteUserMutation.isPending || users.length === 1} />)}</div>
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {users.map(user => (
+                                    <UserCard
+                                        key={user._id}
+                                        user={user}
+                                        handleDeleteUser={handleDeleteUser}
+                                        deleteUserDisabled={
+                                            (user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1) ||
+                                            deleteUserMutation.isPending ||
+                                            users.length === 1
+                                        }
+                                    />
+                                ))}
+                            </div>
                         </TabsContent>
                     </Tabs>
                 </div>
@@ -175,7 +200,7 @@ const ProjectUsersList: React.FC = () => {
 
             <DeleteConfirmationDialog
                 isOpen={deleteDialog.isOpen}
-                onOpenChange={(open) => setDeleteDialog({ isOpen: open })}
+                onOpenChange={open => setDeleteDialog({ isOpen: open })}
                 onDelete={confirmDeleteUser}
                 title={t("project_users.confirm_remove_title")}
                 description={t("project_users.confirm_remove", { name: deleteDialog.userName })}

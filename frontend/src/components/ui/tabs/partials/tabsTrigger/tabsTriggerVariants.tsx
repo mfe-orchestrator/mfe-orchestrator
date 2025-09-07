@@ -11,7 +11,6 @@ const baseStyle = `
 	tracking-normal
 	border-2
 	border-transparent
-	flex-[1_1_120px]
 `
 
 const hoverFocusState = `

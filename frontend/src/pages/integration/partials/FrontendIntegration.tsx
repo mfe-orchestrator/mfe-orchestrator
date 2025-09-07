@@ -113,9 +113,15 @@ const FrontendIntegration = ({ microfrontends, environmentId }: { microfrontends
                 <CardContent>
                     <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
                         <TabsList>
-                            <TabsTrigger value="vite">Vite</TabsTrigger>
-                            <TabsTrigger value="webpack">Webpack</TabsTrigger>
-                            <TabsTrigger value="curl">CURL</TabsTrigger>
+                            <TabsTrigger className="flex-[1_1_120px]" value="vite">
+                                Vite
+                            </TabsTrigger>
+                            <TabsTrigger className="flex-[1_1_120px]" value="webpack">
+                                Webpack
+                            </TabsTrigger>
+                            <TabsTrigger className="flex-[1_1_120px]" value="curl">
+                                CURL
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="vite">
