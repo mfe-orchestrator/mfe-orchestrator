@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button/button"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
 import { useQueryClient } from "@tanstack/react-query"
 import SinglePageLayout from "@/components/SinglePageLayout"
+import { ArrowUpRight } from "lucide-react"
 
 const DeploymentDashboard: React.FC = () => {
     const projectStore = useProjectStore()
@@ -29,7 +30,13 @@ const DeploymentDashboard: React.FC = () => {
                     <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
                 )
             }
-            right={<Button onClick={handleDeploy}>Deploy</Button>}
+            right={
+                <Button className="min-w-32" onClick={handleDeploy}>
+                    <ArrowUpRight />
+                    Deploy
+                </Button>
+            }
+            lrContainerClassname="items-end"
         >
             <EnvironmentsGate>
                 <DeploymentList environmentId={projectStore.environment?._id} />

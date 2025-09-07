@@ -27,7 +27,7 @@ const MicrofrontendDashboard = () => {
             title={t("microfrontend.dashboard.title")}
             description={t("microfrontend.dashboard.description")}
             right={
-                <div className="flex-[1_1_280px] flex items-center justify-end gap-2 max-w-xs">
+                <div className="flex-[1_1_280px] flex items-center justify-end gap-2 @[509px]:max-w-xs">
                     <div className="relative w-full flex-grow">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-secondary" />
                         <Input placeholder={t("microfrontend.dashboard.searchPlaceholder")} className="pl-8 w-full" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />

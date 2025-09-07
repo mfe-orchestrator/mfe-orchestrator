@@ -1,121 +1,108 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { useQuery } from "@tanstack/react-query"
+import { LayoutGrid, StretchHorizontal } from "lucide-react"
 import React, { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import MicrofrontendCard from "../../components/microfrontend/MicrofrontendCard"
 import { TabsContent } from "../ui/tabs/partials/tabsContent/tabsContent"
 import { TabsList } from "../ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "../ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "../ui/tabs/tabs"
-import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
-import { LayoutGrid, StretchHorizontal } from "lucide-react"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { useTranslation } from "react-i18next"
 
 interface MicrofrontendListProps {
-  searchTerm?: string
-  projectId?: string
-  onResetFilters: () => void
+    searchTerm?: string
+    projectId?: string
+    onResetFilters: () => void
 }
 
 interface MicrofrontendListRealProps {
-  microfrontends: Microfrontend[]
-  onResetFilters: () => void
+    microfrontends: Microfrontend[]
+    onResetFilters: () => void
 }
 
 const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters }) => {
-  const { t } = useTranslation('platform')
-  const navigate = useNavigate()
+    const { t } = useTranslation("platform")
+    const navigate = useNavigate()
 
-  const onAddNewMicrofrontend = () => {
-    navigate(`/microfronted/new`)
-  }
+    return (
+        <Tabs defaultValue="grid" className="space-y-4" iconButtons>
+            <TabsList>
+                <TabsTrigger value="grid">
+                    <LayoutGrid />
+                </TabsTrigger>
+                <TabsTrigger value="list">
+                    <StretchHorizontal />
+                </TabsTrigger>
+            </TabsList>
 
-  return (
-      <Tabs defaultValue="grid" className="space-y-4" iconButtons>
-          <TabsList>
-              <TabsTrigger value="grid">
-                  <LayoutGrid />
-              </TabsTrigger>
-              <TabsTrigger value="list">
-                  <StretchHorizontal />
-              </TabsTrigger>
-          </TabsList>
+            <TabsContent value="grid">
+                {microfrontends && microfrontends.length > 0 ? (
+                    <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,_1fr))]">
+                        {microfrontends.map(mfe => (
+                            <MicrofrontendCard key={mfe._id} mfe={mfe} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <p className="text-muted-foreground mb-4">{t("microfrontend.noMicrofrontendsFound")}</p>
+                        <Button variant="secondary" onClick={onResetFilters}>
+                            {t("common.resetFilters")}
+                        </Button>
+                    </div>
+                )}
+            </TabsContent>
 
-          <TabsContent value="grid">
-              {microfrontends && microfrontends.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {/* <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} /> */}
-                      {microfrontends.map(mfe => (
-                          <MicrofrontendCard key={mfe._id} mfe={mfe} />
-                      ))}
-                  </div>
-              ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <p className="text-muted-foreground mb-4">{t("microfrontend.noMicrofrontendsFound")}</p>
-                      <Button variant="secondary" onClick={onResetFilters}>
-                          {t("common.resetFilters")}
-                      </Button>
-                  </div>
-              )}
-          </TabsContent>
-
-          <TabsContent value="list">
-              <div className="rounded-md border">
-                  <Table>
-                      <TableHeader>
-                          <TableRow className="bg-primary/25 hover:bg-primary/25">
-                              <TableHead>{t("common.name")}</TableHead>
-                              <TableHead>{t("microfrontend.slug")}</TableHead>
-                              <TableHead>{t("microfrontend.version")}</TableHead>
-                              <TableHead>{t("microfrontend.canaryRelease")}</TableHead>
-                              <TableHead className="w-[100px]"></TableHead>
-                          </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                          {microfrontends?.map(mfe => {
-                              const canaryPercentage: number = mfe.canary?.percentage || 0
-                              return (
-                                  <TableRow key={mfe._id} className="hover:bg-primary/10">
-                                      <TableCell className="font-medium">{mfe.name}</TableCell>
-                                      <TableCell>{mfe.slug}</TableCell>
-                                      <TableCell>
-                                          <Badge>{mfe.version}</Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                          {canaryPercentage > 0 ? (
-                                              <span>
-                                                  {canaryPercentage}% {t("microfrontend.ofUsers")}
-                                              </span>
-                                          ) : (
-                                              <span className="text-muted-foreground text-xs">{t("common.none")}</span>
-                                          )}
-                                      </TableCell>
-                                      <TableCell>
-                                          <Button variant="primary" size="sm" onClick={() => navigate(`/microfronted/${mfe._id}`)} className="w-full">
-                                              {t("microfrontend.configuration")}
-                                          </Button>
-                                      </TableCell>
-                                  </TableRow>
-                              )
-                          })}
-                      </TableBody>
-                  </Table>
-              </div>
-          </TabsContent>
-      </Tabs>
-  )
+            <TabsContent value="list">
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-primary/25 hover:bg-primary/25">
+                                <TableHead>{t("common.name")}</TableHead>
+                                <TableHead>{t("microfrontend.slug")}</TableHead>
+                                <TableHead>{t("microfrontend.version")}</TableHead>
+                                <TableHead>{t("microfrontend.canaryRelease")}</TableHead>
+                                <TableHead className="w-[100px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {microfrontends?.map(mfe => {
+                                const canaryPercentage: number = mfe.canary?.percentage || 0
+                                return (
+                                    <TableRow key={mfe._id} className="hover:bg-primary/10">
+                                        <TableCell className="font-medium">{mfe.name}</TableCell>
+                                        <TableCell>{mfe.slug}</TableCell>
+                                        <TableCell>
+                                            <Badge>{mfe.version}</Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            {canaryPercentage > 0 ? (
+                                                <span>
+                                                    {canaryPercentage}% {t("microfrontend.ofUsers")}
+                                                </span>
+                                            ) : (
+                                                <span className="text-muted-foreground text-xs">{t("common.no_data")}</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button variant="primary" size="sm" onClick={() => navigate(`/microfronted/${mfe._id}`)} className="w-full">
+                                                {t("common.configuration")}
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
+            </TabsContent>
+        </Tabs>
+    )
 }
 
 const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, projectId, onResetFilters }) => {

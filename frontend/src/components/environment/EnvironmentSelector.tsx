@@ -4,10 +4,10 @@ import React from 'react';
 import { Badge } from "@/components/ui/badge/badge"
 import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import { useTranslation } from "react-i18next"
+import { SelectContent } from "../ui/select/partials/selectContent/selectContent"
+import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
 import { SelectTrigger } from "../ui/select/partials/selectTrigger/selectTrigger"
 import { Select, SelectValue } from "../ui/select/select"
-import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
-import { SelectContent } from "../ui/select/partials/selectContent/selectContent"
 
 interface EnvironmentSelectorProps {
     selectedEnvironment: EnvironmentDTO
@@ -17,9 +17,10 @@ interface EnvironmentSelectorProps {
 
 const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvironment, environments, onEnvironmentChange }) => {
     const { t } = useTranslation()
+
     return (
-        <div className="flex items-center">
-            <span className="text-sm font-medium mr-2">Ambiente:</span>
+        <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-foreground-secondary">Ambiente:</span>
             <Select
                 value={selectedEnvironment?._id}
                 onValueChange={value => {
@@ -27,7 +28,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                 }}
             >
                 {selectedEnvironment && (
-                    <SelectTrigger className="w-[130px] h-9">
+                    <SelectTrigger className="w-40 py-1">
                         <SelectValue>
                             <Badge style={{ backgroundColor: selectedEnvironment.color }}>{selectedEnvironment.slug}</Badge>
                         </SelectValue>
