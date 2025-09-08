@@ -44,8 +44,12 @@ const formSchema = z
             .object({
                 enabled: z.boolean().default(false),
                 repositoryId: z.string().optional(),
-                azureProjectId: z.string().optional(),
-                repositoryName: z.string().optional()
+                azure: z
+                    .object({
+                        projectId: z.string().optional()
+                    })
+                    .optional(),
+                name: z.string().optional()
             })
             .optional(),
 
@@ -115,8 +119,10 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             codeRepository: {
                 enabled: false,
                 repositoryId: "",
-                azureProjectId: "",
-                repositoryName: ""
+                azure: {
+                    projectId: ""
+                },
+                name: ""
             },
             canary: {
                 enabled: false,
@@ -144,13 +150,13 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     const hostType = watch("host.type")
     const codeRepositoryEnabled = watch("codeRepository.enabled")
     const selectedRepositoryId = watch("codeRepository.repositoryId")
-    const selectedAzureProjectId = watch("codeRepository.azureProjectId")
-    const repositoryName = watch("codeRepository.repositoryName")
+    const selectedAzureProjectId = watch("codeRepository.azure.projectId")
+    const repositoryName = watch("codeRepository.name")
 
     const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<{
-        checking: boolean;
-        available: boolean | null;
-        error: string | null;
+        checking: boolean
+        available: boolean | null
+        error: string | null
     }>({
         checking: false,
         available: null,
@@ -218,10 +224,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     }
 
     return (
-        <SinglePageLayout
-            title={isEdit ? t("microfrontend.edit") : t("microfrontend.add_new")}
-            description={isEdit ? t("microfrontend.edit_description") : t("microfrontend.add_new_description")}
-        >
+        <SinglePageLayout title={isEdit ? t("microfrontend.edit") : t("microfrontend.add_new")} description={isEdit ? t("microfrontend.edit_description") : t("microfrontend.add_new_description")}>
             <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {/* General Information Section */}
@@ -258,11 +261,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 required
                             />
 
-                            <TextField
-                                name="host.entryPoint"
-                                label={t("microfrontend.entry_point")}
-                                placeholder="index.js"
-                            />
+                            <TextField name="host.entryPoint" label={t("microfrontend.entry_point")} placeholder="index.js" />
 
                             {hostType === "CUSTOM_URL" && <TextField name="host.url" label={t("microfrontend.custom_url")} placeholder="https://example.com" required />}
 
@@ -306,7 +305,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
 
                                 {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS" && (
                                     <SelectField
-                                        name="codeRepository.azureProjectId"
+                                        name="codeRepository.azure.projectId"
                                         label={t("microfrontend.azure_project")}
                                         options={azureProjectsQuery.data?.value?.map(project => ({
                                             value: project.id,
@@ -317,42 +316,29 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 )}
 
                                 <div className="space-y-2">
-                                    <TextField
-                                        name="codeRepository.repositoryName"
-                                        label={t("microfrontend.repository_name")}
-                                        placeholder={t("microfrontend.repository_name_placeholder")}
-                                        required
-                                    />
-                                    
+                                    <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
+
                                     {repositoryNameAvailability.checking && (
                                         <Alert>
-                                            <AlertDescription>
-                                                Checking repository name availability...
-                                            </AlertDescription>
+                                            <AlertDescription>Checking repository name availability...</AlertDescription>
                                         </Alert>
                                     )}
-                                    
+
                                     {repositoryNameAvailability.available === false && (
                                         <Alert variant="destructive">
-                                            <AlertDescription>
-                                                Repository name is already taken. Please choose a different name.
-                                            </AlertDescription>
+                                            <AlertDescription>Repository name is already taken. Please choose a different name.</AlertDescription>
                                         </Alert>
                                     )}
-                                    
+
                                     {repositoryNameAvailability.available === true && (
                                         <Alert>
-                                            <AlertDescription>
-                                                Repository name is available.
-                                            </AlertDescription>
+                                            <AlertDescription>Repository name is available.</AlertDescription>
                                         </Alert>
                                     )}
-                                    
+
                                     {repositoryNameAvailability.error && (
                                         <Alert variant="destructive">
-                                            <AlertDescription>
-                                                {repositoryNameAvailability.error}
-                                            </AlertDescription>
+                                            <AlertDescription>{repositoryNameAvailability.error}</AlertDescription>
                                         </Alert>
                                     )}
                                 </div>

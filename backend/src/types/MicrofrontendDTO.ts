@@ -12,8 +12,10 @@ interface MicrofrontendDTO {
     codeRepository: {
         enabled: boolean
         repositoryId: string
-        azureProjectId: string
-        repositoryName: string
+        azure: {
+            projectId: string
+        }
+        name: string
     }
     canary: {
         enabled: boolean

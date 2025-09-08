@@ -16,17 +16,17 @@ export interface IMicrofrontend extends Document<ObjectId> {
     }
     host: {
         type: HostedOn
-        url?: string,
+        url?: string
         storageId?: ObjectId
         entryPoint?: string
-    },
+    }
     codeRepository?: {
         repositoryId: ObjectId
-        repositoryName: string
+        name: string
         azure: {
-            azureProjectId?: string
+            projectId?: string
         }
-    },
+    }
     description?: string
     createdAt: Date
     updatedAt: Date
@@ -105,12 +105,12 @@ const microfrontendCodeRepositorySchema = new Schema({
         ref: "Repository",
         required: false
     },
-    repositoryName: {
+    name: {
         type: String,
         required: false
     },
     azure: {
-        azureProjectId: {
+        projectId: {
             type: String,
             required: false
         }

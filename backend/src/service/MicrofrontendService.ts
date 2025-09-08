@@ -15,6 +15,8 @@ import Storage, { StorageType } from "../models/StorageModel"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import AzureStorageClient from "../client/AzureStorageAccount"
+import AzureDevOpsClient from "../client/AzureDevOpsClient"
+import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -36,6 +38,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async create(microfrontend: MicrofrontendDTO, projectId: string | ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         await this.ensureAccessToProject(projectIdObj)
+        const azureDevOpsClient = new AzureDevOpsClient()
+        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
+
+        if (codeRepository && codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+            await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.name, microfrontend.codeRepository.azure.projectId, microfrontend.codeRepository.name)
+        }
+
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
     }
 
