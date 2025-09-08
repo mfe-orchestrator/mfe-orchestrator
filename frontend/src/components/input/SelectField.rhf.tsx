@@ -10,7 +10,7 @@ type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElem
     name: Path<T>
     label?: string
     rules?: any
-    options: { value: string; label: string }[]
+    options: { value: string; label: string; icon?: string }[]
     containerClassName?: string
 }
 
@@ -38,12 +38,28 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
                     )}
                     <Select value={field.value || ""} onValueChange={field.onChange} disabled={formState.isSubmitting}>
                         <SelectTrigger>
-                            <SelectValue placeholder={placeholder}>{options.find(option => option.value === field.value)?.label || placeholder}</SelectValue>
+                            <SelectValue placeholder={placeholder}>
+                                {field.value ? (
+                                    <div className="flex items-center gap-2">
+                                        {options.find(option => option.value === field.value)?.icon && (
+                                            <img src={options.find(option => option.value === field.value)?.icon} alt="" className="w-4 h-4" />
+                                        )}
+                                        {options.find(option => option.value === field.value)?.label}
+                                    </div>
+                                ) : (
+                                    placeholder
+                                )}
+                            </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             {options.map(option => (
                                 <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
+                                    <div className="flex items-center gap-2">
+                                        {option.icon && (
+                                            <img src={option.icon} alt="" className="w-4 h-4" />
+                                        )}
+                                        {option.label}
+                                    </div>
                                 </SelectItem>
                             ))}
                         </SelectContent>

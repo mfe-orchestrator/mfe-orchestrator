@@ -21,9 +21,10 @@ export interface IMicrofrontend extends Document<ObjectId> {
         entryPoint?: string
     }
     codeRepository?: {
+        enabled: boolean
         repositoryId: ObjectId
         name: string
-        azure: {
+        azure?: {
             projectId?: string
         }
     }
@@ -100,6 +101,10 @@ const microfrontendCanaryTypeSchema = new Schema({
 })
 
 const microfrontendCodeRepositorySchema = new Schema({
+    enabled: {
+        type: Boolean,
+        default: false
+    },
     repositoryId: {
         type: Schema.Types.ObjectId,
         ref: "Repository",

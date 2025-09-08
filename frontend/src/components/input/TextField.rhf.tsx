@@ -2,6 +2,7 @@ import { InputHTMLAttributes } from 'react';
 import { Controller, FieldError, FieldValues, Path, useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from "@/components/ui/input/input"
+import clsx from 'clsx';
 
 type TextFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElement> & {
     name: Path<T>
@@ -26,7 +27,7 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
             control={control}
             rules={rules}
             render={({ field, formState }) => (
-                <div className={`flex flex-col gap-1 ${containerClassName}`}>
+                <div className={clsx(`flex flex-col gap-2`,containerClassName)}>
                     <Label htmlFor={inputId} className={error ? "text-destructive" : "text-foreground-secondary"}>
                         {label}
                         {props.required && <span className="text-destructive ml-1">*</span>}

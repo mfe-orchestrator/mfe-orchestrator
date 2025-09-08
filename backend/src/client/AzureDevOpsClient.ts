@@ -64,18 +64,18 @@ export interface AzureDevOpsProject {
     value: AzureDevOpsProject[];
   }
 
-class AzureClient {
+class AzureDevOpsClient {
 
     // Ottieni l'ID utente dal profilo
     async getUserId(token: string) {
-        const res = await fetch("https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.3", {
+        const response = await axios.request({
+            url: "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.3",
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });
-        const data = await res.json();
-        return data.id; // userId
+        return response.data.id; // userId
     }
 
     // Ottieni tutte le orgs dell'utente
@@ -83,39 +83,39 @@ class AzureClient {
         const userId = await this.getUserId(token);
         const url = `https://app.vssps.visualstudio.com/_apis/accounts?memberId=${userId}&api-version=7.1-preview.1`;
 
-        const res = await fetch(url, {
+        const response = await axios.request({
+            url,
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });
-        const data = await res.json();
-        return data.value; // array di orgs
+        return response.data.value; // array di orgs
     }
 
     async getProjects(token: string, organization: string) : Promise<AzureDevOpsProjectsResponse> {
         const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`;
-        const res = await fetch(url, {
+        const response = await axios.request<AzureDevOpsProjectsResponse>({
+            url,
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });
-        const data = await res.json();
-        return data;
+        return response.data;
     }
 
     async getRepositories(token: string, organization: string, project: string) {
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`;
-        const res = await fetch(url, {
+        const response = await axios.request({
+            url,
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });
-        const data = await res.json();
-        console.log(data);
-        return data;
+        console.log(response.data);
+        return response.data;
     }
 
     async createRepository(token: string, organization: string, project: string, repositoryName: string) {
@@ -127,30 +127,31 @@ class AzureClient {
             }
         };
 
-        const res = await fetch(url, {
+        const response = await axios.request({
             method: 'POST',
+            url,
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(body)
+            data: body
         });
 
-        const data = await res.json();
-        return data;
+        return response.data;
     }
 
     async getRepository(token: string, organization: string, project: string, repositoryName: string){
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}?api-version=7.1-preview.1`;
-            const res = await fetch(url, {
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            });
+        const response = await axios.request({
+            url,
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
 
-            return res;
+        return response.data;
     }
 }
 
-export default AzureClient
+export default AzureDevOpsClient

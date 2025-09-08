@@ -444,6 +444,12 @@
         "based_on_url": "Based on URL",
         "canary_version": "Canary Version",
         "canary_url": "Canary URL",
+        "code_repository": "Code Repository",
+        "code_repository_description": "Configure code repository settings for automatic deployments",
+        "repository": "Repository",
+        "azure_project": "Azure Project",
+        "repository_name": "Repository Name",
+        "repository_name_placeholder": "Enter repository name",
         "created_success": "Microfrontend created",
         "created_success_message": "Your microfrontend has been created successfully",
         "create_error": "Failed to create microfrontend"

@@ -84,6 +84,78 @@ export interface GithubOrganization {
     type: string
 }
 
+export interface CreateRepositoryRequest {
+    name: string
+    description?: string
+    homepage?: string
+    private?: boolean
+    has_issues?: boolean
+    has_projects?: boolean
+    has_wiki?: boolean
+    is_template?: boolean
+    team_id?: number
+    auto_init?: boolean
+    gitignore_template?: string
+    license_template?: string
+    allow_squash_merge?: boolean
+    allow_merge_commit?: boolean
+    allow_rebase_merge?: boolean
+    allow_auto_merge?: boolean
+    delete_branch_on_merge?: boolean
+    has_downloads?: boolean
+    visibility?: 'public' | 'private' | 'internal'
+}
+
+export interface GithubRepository {
+    id: number
+    node_id: string
+    name: string
+    full_name: string
+    owner: {
+        login: string
+        id: number
+        avatar_url: string
+        type: string
+    }
+    private: boolean
+    html_url: string
+    description: string | null
+    fork: boolean
+    url: string
+    clone_url: string
+    ssh_url: string
+    svn_url: string
+    homepage: string | null
+    size: number
+    stargazers_count: number
+    watchers_count: number
+    language: string | null
+    has_issues: boolean
+    has_projects: boolean
+    has_wiki: boolean
+    has_pages: boolean
+    forks_count: number
+    archived: boolean
+    disabled: boolean
+    open_issues_count: number
+    license: {
+        key: string
+        name: string
+        spdx_id: string
+        url: string
+    } | null
+    allow_forking: boolean
+    is_template: boolean
+    topics: string[]
+    visibility: string
+    forks: number
+    open_issues: number
+    watchers: number
+    default_branch: string
+    created_at: string
+    updated_at: string
+}
+
 class GithubClient {
 
 
@@ -138,6 +210,25 @@ class GithubClient {
                 'Accept': 'application/vnd.github.v3+json',
                 'User-Agent': 'MFE-Orchestrator-Hub'
             }
+        })
+
+        return response.data
+    }
+
+    createRepository = async (repositoryData: CreateRepositoryRequest, accessToken: string, orgName?: string): Promise<GithubRepository> => {
+        const url = orgName 
+            ? `https://api.github.com/orgs/${orgName}/repos`
+            : 'https://api.github.com/user/repos'
+
+        const response = await axios.request<GithubRepository>({
+            method: 'POST',
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator-Hub'
+            },
+            data: repositoryData
         })
 
         return response.data

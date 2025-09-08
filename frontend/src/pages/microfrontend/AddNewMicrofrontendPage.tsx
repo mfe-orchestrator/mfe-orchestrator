@@ -19,6 +19,12 @@ import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { useState, useEffect } from "react"
 
+const logoMap: Record<string, string> = {
+    'GITHUB': '/img/GitHub.svg',
+    'GITLAB': '/img/GitLab.svg',
+    'AZURE_DEV_OPS': '/img/AzureDevOps.svg',
+}
+
 // Define form schema with validation
 const formSchema = z
     .object({
@@ -296,10 +302,13 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 <SelectField
                                     name="codeRepository.repositoryId"
                                     label={t("microfrontend.repository")}
-                                    options={repositoriesQuery.data?.map(repo => ({
-                                        value: repo._id,
-                                        label: `${repo.name} (${repo.provider})`
-                                    }))}
+                                    options={repositoriesQuery.data?.map(repo => {
+                                        return {
+                                            value: repo._id,
+                                            label: `${repo.name} (${repo.provider})`,
+                                            icon: logoMap[repo.provider]
+                                        }
+                                    })}
                                     required
                                 />
 
