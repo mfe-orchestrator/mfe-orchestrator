@@ -19,7 +19,14 @@ export interface IMicrofrontend extends Document<ObjectId> {
         url?: string,
         storageId?: ObjectId
         entryPoint?: string
-    }
+    },
+    codeRepository?: {
+        repositoryId: ObjectId
+        repositoryName: string
+        azure: {
+            azureProjectId?: string
+        }
+    },
     description?: string
     createdAt: Date
     updatedAt: Date
@@ -92,6 +99,24 @@ const microfrontendCanaryTypeSchema = new Schema({
     }
 })
 
+const microfrontendCodeRepositorySchema = new Schema({
+    repositoryId: {
+        type: Schema.Types.ObjectId,
+        ref: "Repository",
+        required: false
+    },
+    repositoryName: {
+        type: String,
+        required: false
+    },
+    azure: {
+        azureProjectId: {
+            type: String,
+            required: false
+        }
+    }
+})
+
 const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
     {
         slug: {
@@ -127,6 +152,10 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             type: microfrontendHostTypeSchema,
             required: true
         },
+        codeRepository: {
+            type: microfrontendCodeRepositorySchema,
+            required: false
+        }
     },
     {
         timestamps: true
