@@ -60,7 +60,7 @@ const GitHubCallbackPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
           <div className="text-center">

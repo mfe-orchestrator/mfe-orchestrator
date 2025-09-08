@@ -26,34 +26,22 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
       id: 'github' as const,
       name: t('codeRepositories.addDialog.providers.github.name'),
       description: t('codeRepositories.addDialog.providers.github.description'),
-      icon: (
-        <div className="h-8 w-8 bg-gray-800 rounded flex items-center justify-center">
-          <span className="text-white text-xs font-bold">GH</span>
-        </div>
-      ),
-      color: 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+      icon: <img src="/img/GitHub.svg" alt="GitHub" className="h-8 w-8" />,
+      color: 'bg-muted hover:bg-muted/80'
     },
     {
       id: 'azure' as const,
       name: t('codeRepositories.addDialog.providers.azure.name'),
       description: t('codeRepositories.addDialog.providers.azure.description'),
-      icon: (
-        <div className="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
-          <span className="text-white text-xs font-bold">Az</span>
-        </div>
-      ),
-      color: 'bg-blue-50 hover:bg-blue-100 border-blue-200'
+      icon: <img src="/img/AzureDevOps.svg" alt="Azure DevOps" className="h-8 w-8" />,
+      color: 'bg-muted hover:bg-muted/80'
     },
     {
       id: 'gitlab' as const,
       name: t('codeRepositories.addDialog.providers.gitlab.name'),
       description: t('codeRepositories.addDialog.providers.gitlab.description'),
-      icon: (
-        <div className="h-8 w-8 bg-orange-600 rounded flex items-center justify-center">
-          <GitBranch className="h-5 w-5 text-white" />
-        </div>
-      ),
-      color: 'bg-orange-50 hover:bg-orange-100 border-orange-200'
+      icon: <img src="/img/GitLab.svg" alt="GitLab" className="h-8 w-8" />,
+      color: 'bg-muted hover:bg-muted/80'
     }
   ].filter(Boolean);
 
