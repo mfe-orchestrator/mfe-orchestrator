@@ -14,7 +14,7 @@ type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElem
     containerClassName?: string
 }
 
-const SelectField = <T extends FieldValues>({ name, label, rules, className, containerClassName, id, options, placeholder, ...props }: SelectFieldProps<T>) => {
+const SelectField = <T extends FieldValues>({ name, label, rules, className, containerClassName, id, options = [], placeholder, ...props }: SelectFieldProps<T>) => {
     const {
         control,
         formState: { errors }
