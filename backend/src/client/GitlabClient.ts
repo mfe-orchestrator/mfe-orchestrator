@@ -69,6 +69,14 @@ class GitLabClient {
     return res.data;
   }
 
+  async getRepositoryPathsByGroupId(groupId: number): Promise<string[]> {
+    const repositories = await this.getRepositoriesByGroupId(groupId);
+    const paths = repositories.map(repo => repo.path_with_namespace);
+    
+    // Rimuovi eventuali duplicati e filtra valori undefined/null
+    return [...new Set(paths.filter(path => path != null))];
+  }
+
   async createRepository(repositoryData: CreateRepositoryRequest): Promise<GitLabProject> {
     const res = await this.api.post<GitLabProject>("/projects", repositoryData);
     return res.data;

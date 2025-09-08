@@ -30,6 +30,11 @@ export interface IMicrofrontend extends Document<ObjectId> {
         github?: {
             organizationId?: string
             private?: boolean
+        },
+        gitlab?: {
+            groupId?: number,
+            path?: string,
+            private?: boolean
         }
     }
     description?: string
@@ -126,6 +131,20 @@ const microfrontendCodeRepositorySchema = new Schema({
     },
     github: {
         organizationId: {
+            type: String,
+            required: false
+        },
+        private: {
+            type: Boolean,
+            default: false
+        }
+    },
+    gitlab: {
+        groupId: {
+            type: Number,
+            required: false
+        },
+        path: {
             type: String,
             required: false
         },

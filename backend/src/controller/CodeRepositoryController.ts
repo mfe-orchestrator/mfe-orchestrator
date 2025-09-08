@@ -134,16 +134,30 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         ))
     })
 
-    fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/github/organizations',  async (request, reply) =>{
-        reply.send(await new CodeRepositoryService(request.databaseUser).getGithubOrganizations(
+    fastify.get<{Params: {repositoryId: string, projectId: string}}>('/repositories/:repositoryId/azure/projects/:projectId/repositories',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(
+            request.params.repositoryId,
+            request.params.projectId
+        ))
+    })
+
+    fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/gitlab/groups',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabGroups(
             request.params.repositoryId
         ))
     })
 
-    fastify.post<{Params: {repositoryId: string, projectId: string}}>('/repositories/:repositoryId/azure/projects/:projectId/repositories',  async (request, reply) =>{
-        reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(
+    fastify.get<{Params: {repositoryId: string, groupId: string}}>('/repositories/:repositoryId/gitlab/groups/:groupId/paths',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabPaths(
             request.params.repositoryId,
-            request.params.projectId
+            parseInt(request.params.groupId,10)
+        ))
+    })
+
+    fastify.get<{Params: {repositoryId: string, groupId: string}}>('/repositories/:repositoryId/gitlab/groups/:groupId/repositories',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabRepositories(
+            request.params.repositoryId,
+            parseInt(request.params.groupId,10)
         ))
     })
 

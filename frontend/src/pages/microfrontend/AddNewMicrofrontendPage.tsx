@@ -63,7 +63,13 @@ const formSchema = z
                     .object({
                         organizationId: z.string().optional(),
                         private: z.boolean().default(false),
-                        visibility: z.enum(["public", "private", "internal"]).optional()
+                    })
+                    .optional(),
+                gitlab: z
+                    .object({
+                        groupId: z.string().optional(),
+                        path: z.string().optional(),
+                        private: z.boolean().default(false),
                     })
                     .optional(),
             })
@@ -141,7 +147,11 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                 github: {
                     organizationId: "",
                     private: false,
-                    visibility: "public"
+                },
+                gitlab: {
+                    groupId: "",
+                    path: "",
+                    private: false,
                 },
                 name: ""
             },
@@ -171,9 +181,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     const hostType = watch("host.type")
     const codeRepositoryEnabled = watch("codeRepository.enabled")
     const selectedRepositoryId = watch("codeRepository.repositoryId")
-    const selectedAzureProjectId = watch("codeRepository.azure.projectId")
-    const selectedGithubOrganizationId = watch("codeRepository.github.organizationId")
-    const repositoryName = watch("codeRepository.name")
+    const selectedGitlabGroupId = watch("codeRepository.gitlab.groupId")
 
     const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<{
         checking: boolean
@@ -195,6 +203,18 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         queryKey: ["githubOrganizations", selectedRepositoryId],
         queryFn: () => codeRepositoriesApi.getGithubOrganizations(selectedRepositoryId!),
         enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITHUB"
+    })
+
+    const gitlabGroupsQuery = useQuery({
+        queryKey: ["gitlabGroups", selectedRepositoryId],
+        queryFn: () => codeRepositoriesApi.getGitlabGroups(selectedRepositoryId!),
+        enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB"
+    })
+
+    const gitlabGroupPathsQuery = useQuery({
+        queryKey: ["gitlabGroupPaths", selectedRepositoryId, selectedGitlabGroupId],
+        queryFn: () => codeRepositoriesApi.getGitlabGroupPaths(selectedRepositoryId!, selectedGitlabGroupId!),
+        enabled: !!selectedRepositoryId && !!selectedGitlabGroupId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB"
     })
 
     // Repository name availability check with debounce
@@ -393,6 +413,48 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                             <Switch 
                                                 name="codeRepository.github.private" 
                                                 label={t("microfrontend.github_private")}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB" && (
+                                    <div className="space-y-4">
+                                        <SelectField
+                                            name="codeRepository.gitlab.groupId"
+                                            label={t("microfrontend.gitlab_group")}
+                                            addClearButton
+                                            options={gitlabGroupsQuery.data?.map(group => ({
+                                                value: group.id.toString(),
+                                                label: group.name || group.full_name
+                                            }))}
+                                        />
+
+                                        {selectedGitlabGroupId && (
+                                            <SelectField
+                                                name="codeRepository.gitlab.path"
+                                                label={t("microfrontend.gitlab_repository_path")}
+                                                addClearButton
+                                                options={gitlabGroupPathsQuery.data?.map(repo => ({
+                                                    value: repo,
+                                                    label: repo
+                                                }))}
+                                            />
+                                        )}
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Switch 
+                                                name="codeRepository.gitlab.private" 
+                                                label={t("microfrontend.gitlab_private")}
+                                            />
+                                            <SelectField
+                                                name="codeRepository.gitlab.visibility"
+                                                label={t("microfrontend.gitlab_visibility")}
+                                                options={[
+                                                    { value: "public", label: t("microfrontend.visibility_public") },
+                                                    { value: "private", label: t("microfrontend.visibility_private") },
+                                                    { value: "internal", label: t("microfrontend.visibility_internal") }
+                                                ]}
                                             />
                                         </div>
                                     </div>

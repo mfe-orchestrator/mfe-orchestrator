@@ -238,6 +238,30 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
+    const getGitlabGroups = async (repositoryId: string): Promise<any[]> => {
+        const response = await apiClient.doRequest<any[]>({
+            url: `/api/repositories/${repositoryId}/gitlab/groups`,
+            method: 'GET',
+        });
+        return response.data
+    }
+
+    const getGitlabGroupRepositories = async (repositoryId: string, groupId: string): Promise<any[]> => {
+        const response = await apiClient.doRequest<any[]>({
+            url: `/api/repositories/${repositoryId}/gitlab/groups/${groupId}/repositories`,
+            method: 'GET',
+        });
+        return response.data
+    }
+
+    const getGitlabGroupPaths = async (repositoryId: string, groupId: string): Promise<any[]> => {
+        const response = await apiClient.doRequest<any[]>({
+            url: `/api/repositories/${repositoryId}/gitlab/groups/${groupId}/paths`,
+            method: 'GET',
+        });
+        return response.data
+    }
+
     return {
         getRepositoriesByProjectId,
         getRepositoryById,
@@ -250,7 +274,10 @@ const useCodeRepositoriesApi = () => {
         getAzureProjects,
         getAzureRepositories,
         checkRepositoryNameAvailability,
-        getGithubOrganizations
+        getGithubOrganizations,
+        getGitlabGroups,
+        getGitlabGroupRepositories,
+        getGitlabGroupPaths
     }
     
 }

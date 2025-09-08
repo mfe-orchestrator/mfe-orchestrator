@@ -238,6 +238,51 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
         return new GithubClient().getUserOrganizations(repository.accessToken)
     }
+
+    async getGitlabGroups(repositoryId: string): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitLab",
+                statusCode: 400
+            })
+        }
+        return new GitLabClient(repository.name, repository.accessToken).getGroups()
+    }
+
+    async getGitlabPaths(repositoryId: string, groupId: number): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitLab",
+                statusCode: 400
+            })
+        }
+        return new GitLabClient(repository.name, repository.accessToken).getRepositoryPathsByGroupId(groupId)
+    }
+
+    async getGitlabRepositories(repositoryId: string, groupId: number): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitLab",
+                statusCode: 400
+            })
+        }
+        return new GitLabClient(repository.name, repository.accessToken).getRepositoriesByGroupId(groupId)
+    }
 }
 
 export default CodeRepositoryService
