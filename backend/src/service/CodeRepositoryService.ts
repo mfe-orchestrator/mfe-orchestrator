@@ -1,9 +1,8 @@
-import { ClientSession, DeleteResult, ObjectId, Types } from "mongoose"
+import { DeleteResult, Types } from "mongoose"
 import CodeRepository, { ICodeRepository, CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import axios from "axios"
 import { fastify } from ".."
 import GithubClient from "../client/GithubClient"
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
@@ -222,6 +221,22 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             repository.accessToken,
             repository?.name,
         )
+    }
+
+    async getGithubOrganizations(repositoryId: string): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.GITHUB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitHub",
+                statusCode: 400
+            })
+        }
+
+        return new GithubClient().getUserOrganizations(repository.accessToken)
     }
 }
 

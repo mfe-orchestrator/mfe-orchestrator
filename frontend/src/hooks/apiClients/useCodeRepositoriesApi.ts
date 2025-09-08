@@ -230,6 +230,14 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
+    const getGithubOrganizations = async (repositoryId: string): Promise<GithubOrganization[]> => {
+        const response = await apiClient.doRequest<GithubOrganization[]>({
+            url: `/api/repositories/${repositoryId}/github/organizations`,
+            method: 'GET',
+        });
+        return response.data
+    }
+
     return {
         getRepositoriesByProjectId,
         getRepositoryById,
@@ -241,7 +249,8 @@ const useCodeRepositoriesApi = () => {
         testConnectionGitlab,
         getAzureProjects,
         getAzureRepositories,
-        checkRepositoryNameAvailability
+        checkRepositoryNameAvailability,
+        getGithubOrganizations
     }
     
 }

@@ -134,6 +134,12 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         ))
     })
 
+    fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/github/organizations',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGithubOrganizations(
+            request.params.repositoryId
+        ))
+    })
+
     fastify.post<{Params: {repositoryId: string, projectId: string}}>('/repositories/:repositoryId/azure/projects/:projectId/repositories',  async (request, reply) =>{
         reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(
             request.params.repositoryId,

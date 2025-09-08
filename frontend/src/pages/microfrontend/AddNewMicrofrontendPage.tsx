@@ -23,6 +23,9 @@ const logoMap: Record<string, string> = {
     'GITHUB': '/img/GitHub.svg',
     'GITLAB': '/img/GitLab.svg',
     'AZURE_DEV_OPS': '/img/AzureDevOps.svg',
+    'AWS': '/img/aws.svg',
+    'GOOGLE': '/img/GoogleCloud.svg',
+    'AZURE': '/img/Azure.svg'
 }
 
 // Define form schema with validation
@@ -50,12 +53,19 @@ const formSchema = z
             .object({
                 enabled: z.boolean().default(false),
                 repositoryId: z.string().optional(),
+                name: z.string().optional(),
                 azure: z
                     .object({
                         projectId: z.string().optional()
                     })
                     .optional(),
-                name: z.string().optional()
+                github: z
+                    .object({
+                        organizationId: z.string().optional(),
+                        private: z.boolean().default(false),
+                        visibility: z.enum(["public", "private", "internal"]).optional()
+                    })
+                    .optional(),
             })
             .optional(),
 
@@ -128,6 +138,11 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                 azure: {
                     projectId: ""
                 },
+                github: {
+                    organizationId: "",
+                    private: false,
+                    visibility: "public"
+                },
                 name: ""
             },
             canary: {
@@ -157,6 +172,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     const codeRepositoryEnabled = watch("codeRepository.enabled")
     const selectedRepositoryId = watch("codeRepository.repositoryId")
     const selectedAzureProjectId = watch("codeRepository.azure.projectId")
+    const selectedGithubOrganizationId = watch("codeRepository.github.organizationId")
     const repositoryName = watch("codeRepository.name")
 
     const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<{
@@ -173,6 +189,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         queryKey: ["azureProjects", selectedRepositoryId],
         queryFn: () => codeRepositoriesApi.getAzureProjects(selectedRepositoryId!),
         enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS"
+    })
+
+    const githubOrganizationsQuery = useQuery({
+        queryKey: ["githubOrganizations", selectedRepositoryId],
+        queryFn: () => codeRepositoriesApi.getGithubOrganizations(selectedRepositoryId!),
+        enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITHUB"
     })
 
     // Repository name availability check with debounce
@@ -262,8 +284,8 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 options={[
                                     { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
                                     { value: "CUSTOM_URL", label: t("microfrontend.custom_url") },
-                                    { value: "CUSTOM_SOURCE", label: t("microfrontend.custom_source") }
-                                ]}
+                                    storagesQuery.data?.length > 0 && { value: "CUSTOM_SOURCE", label: t("microfrontend.custom_source") }
+                                ].filter(Boolean)}
                                 required
                             />
 
@@ -276,10 +298,13 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     name="host.storageId"
                                     label={t("microfrontend.source")}
                                     required
-                                    options={storagesQuery.data?.map(storage => ({
-                                        value: storage._id,
-                                        label: storage.name
-                                    }))}
+                                    options={storagesQuery.data?.map(storage => {
+                                        return {
+                                            value: storage._id,
+                                            label: `${storage.name}`,
+                                            icon: logoMap[storage.type]
+                                        }
+                                    })}
                                 />
                             )}
                         </CardContent>
@@ -312,18 +337,6 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     required
                                 />
 
-                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS" && (
-                                    <SelectField
-                                        name="codeRepository.azure.projectId"
-                                        label={t("microfrontend.azure_project")}
-                                        options={azureProjectsQuery.data?.value?.map(project => ({
-                                            value: project.id,
-                                            label: project.name
-                                        }))}
-                                        required
-                                    />
-                                )}
-
                                 <div className="space-y-2">
                                     <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
 
@@ -351,6 +364,38 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                         </Alert>
                                     )}
                                 </div>
+
+                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS" && (
+                                    <SelectField
+                                        name="codeRepository.azure.projectId"
+                                        label={t("microfrontend.azure_project")}
+                                        options={azureProjectsQuery.data?.value?.map(project => ({
+                                            value: project.id,
+                                            label: project.name
+                                        }))}
+                                        required
+                                    />
+                                )}
+
+                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "GITHUB" && (
+                                    <div className="space-y-4">
+                                        <SelectField
+                                            name="codeRepository.github.organizationId"
+                                            label={t("microfrontend.github_organization")}
+                                            options={[{ value: "", label: t("microfrontend.github_select_an_organization") }, ...(githubOrganizationsQuery.data?.map(org => ({
+                                                value: org.id.toString(),
+                                                label: org.login
+                                            })) || [])]}
+                                        />
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Switch 
+                                                name="codeRepository.github.private" 
+                                                label={t("microfrontend.github_private")}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         )}
                     </Card>
