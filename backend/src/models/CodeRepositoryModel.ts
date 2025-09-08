@@ -22,6 +22,9 @@ export interface ICodeRepository extends Document<ObjectId> {
         user: AzureUser,
         organizations: AzureOrganization[]
     },
+    gitlabData?: {
+        url: string
+    },
     isActive: boolean
     projectId: ObjectId
     createdAt: Date

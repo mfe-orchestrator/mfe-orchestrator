@@ -58,10 +58,6 @@ const AddAzureRepositoryPage = () => {
       description: t('codeRepositories.azure.scopes.code.description')
     },
     {
-      scope: t('codeRepositories.azure.scopes.project.name'),
-      description: t('codeRepositories.azure.scopes.project.description')
-    },
-    {
       scope: t('codeRepositories.azure.scopes.build.name'),
       description: t('codeRepositories.azure.scopes.build.description')
     },
@@ -85,9 +81,7 @@ const AddAzureRepositoryPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">Az</span>
-                  </div>
+                  <img src="/img/AzureDevOps.svg" alt="Azure DevOps" className="h-8 w-8" />
                   {t('codeRepositories.azure.connection')}
                 </CardTitle>
               </CardHeader>

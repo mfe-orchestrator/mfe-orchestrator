@@ -14,7 +14,11 @@ interface MicrofrontendDTO {
         repositoryId: string
         azure: {
             projectId: string
-        }
+        },
+        github: {
+            organizationId: string
+            private: boolean
+        },
         name: string
     }
     canary: {

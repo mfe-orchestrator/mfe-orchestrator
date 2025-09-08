@@ -51,7 +51,7 @@ const CalendarField = <T extends FieldValues>({ name, label, rules, id, classNam
                     </Popover>
                 )}
             />
-            {error?.message && <p className="mt-1 text-sm text-red-600">{error.message}</p>}
+            {error?.message && <p className="mt-1 text-sm text-destructive">{error.message}</p>}
         </div>
     )
 }

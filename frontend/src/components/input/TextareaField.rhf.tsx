@@ -1,6 +1,7 @@
 import { Controller, FieldError, FieldValues, Path, useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '../ui/textarea';
+import clsx from 'clsx';
 
 type TextFieldProps<T extends FieldValues> = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
   name: Path<T>;
@@ -33,28 +34,24 @@ const TextareaField = <T extends FieldValues>({
       name={name}
       control={control}
       rules={rules}
-      render={({ field,formState }) => (
-        <div className={`grid gap-2 ${containerClassName || ''}`}>
-          <Label htmlFor={inputId} className={error ? 'text-destructive' : ''}>
+      render={({ field, formState }) => (
+        <div className={clsx(`flex flex-col gap-2`, containerClassName)}>
+          <Label htmlFor={inputId} className={error ? "text-destructive" : "text-foreground-secondary"}>
             {label}
             {props.required && <span className="text-destructive ml-1">*</span>}
           </Label>
           <Textarea
             disabled={formState.isSubmitting}
             id={inputId}
-            className={`${className || ''} ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+            className={`${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
             {...field}
             {...props}
-            onChange={e=>{
+            onChange={e => {
               field.onChange(textTransform ? textTransform(e.target.value) : e.target.value)
             }}
-            value={field.value || ''}
+            value={field.value || ""}
           />
-          {error && (
-            <p className="text-sm font-medium text-destructive">
-              {error.message}
-            </p>
-          )}
+          {error && <p className="text-sm font-medium text-destructive">{error.message}</p>}
         </div>
       )}
     />

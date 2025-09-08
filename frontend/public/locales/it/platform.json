@@ -90,6 +90,7 @@
     "no_data": "Nessun dato disponibile",
     "loading": "Caricamento...",
     "success": "Operazione completata con successo",
+    "default": "Predefinito",
     "error": "Si è verificato un errore",
     "required_field": "Questo campo è obbligatorio",
     "name": "Nome",

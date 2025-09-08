@@ -310,7 +310,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Code Repository Section */}
+                    {repositoriesQuery.data?.length > 0 && (
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
@@ -382,10 +382,11 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                         <SelectField
                                             name="codeRepository.github.organizationId"
                                             label={t("microfrontend.github_organization")}
-                                            options={[{ value: "", label: t("microfrontend.github_select_an_organization") }, ...(githubOrganizationsQuery.data?.map(org => ({
+                                            addClearButton
+                                            options={githubOrganizationsQuery.data?.map(org => ({
                                                 value: org.id.toString(),
                                                 label: org.login
-                                            })) || [])]}
+                                            }))}
                                         />
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -399,7 +400,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                             </CardContent>
                         )}
                     </Card>
-
+                    )}
                     {/* Canary Settings Section */}
                     <Card>
                         <CardHeader>

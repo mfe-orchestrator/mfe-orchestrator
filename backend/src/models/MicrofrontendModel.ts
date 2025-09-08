@@ -26,6 +26,10 @@ export interface IMicrofrontend extends Document<ObjectId> {
         name: string
         azure?: {
             projectId?: string
+        },
+        github?: {
+            organizationId?: string
+            private?: boolean
         }
     }
     description?: string
@@ -118,6 +122,16 @@ const microfrontendCodeRepositorySchema = new Schema({
         projectId: {
             type: String,
             required: false
+        }
+    },
+    github: {
+        organizationId: {
+            type: String,
+            required: false
+        },
+        private: {
+            type: Boolean,
+            default: false
         }
     }
 })

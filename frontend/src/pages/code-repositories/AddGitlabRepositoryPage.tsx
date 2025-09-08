@@ -86,9 +86,7 @@ const AddGitlabRepositoryPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="h-8 w-8 bg-orange-600 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">GL</span>
-                  </div>
+                  <img src="/img/GitLab.svg" alt="GitLab" className="h-8 w-8" />
                   {t('codeRepositories.gitlab.connection')}
                 </CardTitle>
               </CardHeader>

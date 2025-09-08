@@ -17,6 +17,8 @@ import S3BucketClient from "../client/S3Buckets"
 import AzureStorageClient from "../client/AzureStorageAccount"
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
+import GithubClient from "../client/GithubClient"
+import GitlabClient from "../client/GitlabClient"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -38,11 +40,29 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async create(microfrontend: MicrofrontendDTO, projectId: string | ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         await this.ensureAccessToProject(projectIdObj)
-        const azureDevOpsClient = new AzureDevOpsClient()
+        
         const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
 
-        if (codeRepository && codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-            await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.name, microfrontend.codeRepository.azure.projectId, microfrontend.codeRepository.name)
+        if(codeRepository){
+            if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+                const azureDevOpsClient = new AzureDevOpsClient()
+                await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.name, microfrontend.codeRepository.azure.projectId, microfrontend.codeRepository.name)
+            }else if(codeRepository.provider === CodeRepositoryProvider.GITLAB){
+                if(!codeRepository.gitlabData?.url){
+                    throw new Error("Gitlab url is not set")
+                }
+                const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
+                await gitlabClient.createRepository({
+                    name: microfrontend.codeRepository.name,
+                })
+            }else if(codeRepository.provider === CodeRepositoryProvider.GITHUB){
+                const githubClient = new GithubClient()
+                await githubClient.createRepository({
+                    name: microfrontend.codeRepository.name,
+                    private: microfrontend.codeRepository.github.private,
+                    visibility: microfrontend.codeRepository.github.private ? "private" : "public"
+                }, codeRepository.accessToken, microfrontend.codeRepository.github.organizationId)
+            }
         }
 
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })

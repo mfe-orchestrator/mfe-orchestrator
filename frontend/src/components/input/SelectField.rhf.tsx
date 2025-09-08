@@ -5,6 +5,7 @@ import { SelectContent } from "../ui/select/partials/selectContent/selectContent
 import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
 import { SelectTrigger } from "../ui/select/partials/selectTrigger/selectTrigger"
 import { Select, SelectValue } from "../ui/select/select"
+import { X } from "lucide-react"
 
 type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElement> & {
     name: Path<T>
@@ -12,9 +13,10 @@ type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElem
     rules?: any
     options: { value: string; label: string; icon?: string }[]
     containerClassName?: string
+    addClearButton?: boolean
 }
 
-const SelectField = <T extends FieldValues>({ name, label, rules, className, containerClassName, id, options = [], placeholder, ...props }: SelectFieldProps<T>) => {
+const SelectField = <T extends FieldValues>({ name, label, rules, className, containerClassName, id, options = [], placeholder, addClearButton, ...props }: SelectFieldProps<T>) => {
     const {
         control,
         formState: { errors }
@@ -37,7 +39,7 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
                         </Label>
                     )}
                     <Select value={field.value || ""} onValueChange={field.onChange} disabled={formState.isSubmitting}>
-                        <SelectTrigger>
+                        <SelectTrigger className="relative">
                             <SelectValue placeholder={placeholder}>
                                 {field.value ? (
                                     <div className="flex items-center gap-2">
@@ -50,6 +52,23 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
                                     placeholder
                                 )}
                             </SelectValue>
+                            {addClearButton && field.value && (
+                                <button
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        field.onChange("");
+                                    }}
+                                    className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-sm transition-colors z-10"
+                                >
+                                    <X className="w-3 h-3 text-muted-foreground hover:text-foreground" />
+                                </button>
+                            )}
                         </SelectTrigger>
                         <SelectContent>
                             {options.map(option => (

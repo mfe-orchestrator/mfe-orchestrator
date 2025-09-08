@@ -90,6 +90,7 @@
         "success": "Operation completed successfully",
         "error": "An error occurred",
         "required_field": "This field is required",
+        "default": "Default",
         "name": "Name",
         "select": "Select",
         "ok": "OK",

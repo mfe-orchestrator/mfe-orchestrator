@@ -124,10 +124,10 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                         </div>
 
                         {googleAuthType === "serviceAccount" && (
-                            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-blue-600" />
-                                    <h4 className="text-sm font-medium text-blue-900">Service Account Credentials</h4>
+                                    <Key className="h-4 w-4 text-primary" />
+                                    <h4 className="text-sm font-medium text-foreground">Service Account Credentials</h4>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
                                     <TextField 
@@ -147,10 +147,10 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                         )}
 
                         {googleAuthType === "apiKey" && (
-                            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-blue-600" />
-                                    <h4 className="text-sm font-medium text-blue-900">API Key Authentication</h4>
+                                    <Key className="h-4 w-4 text-primary" />
+                                    <h4 className="text-sm font-medium text-foreground">API Key Authentication</h4>
                                 </div>
                                 <TextField 
                                     name="authConfig.apiKey" 
@@ -182,10 +182,10 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                         />
 
                         {azureAuthType === "connectionString" && (
-                            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-blue-600" />
-                                    <h4 className="text-sm font-medium text-blue-900">Connection String</h4>
+                                    <Key className="h-4 w-4 text-primary" />
+                                    <h4 className="text-sm font-medium text-foreground">Connection String</h4>
                                 </div>
                                 <TextField 
                                     name="authConfig.connectionString" 
@@ -208,10 +208,10 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                         )}
 
                         {azureAuthType === "sharedKey" && (
-                            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-blue-600" />
-                                    <h4 className="text-sm font-medium text-blue-900">Shared Key Authentication</h4>
+                                    <Key className="h-4 w-4 text-primary" />
+                                    <h4 className="text-sm font-medium text-foreground">Shared Key Authentication</h4>
                                 </div>
                                 <TextField 
                                     name="authConfig.accountKey" 
@@ -223,10 +223,10 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                         )}
 
                         {azureAuthType === "aad" && (
-                            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-blue-600" />
-                                    <h4 className="text-sm font-medium text-blue-900">Azure AD Authentication</h4>
+                                    <Key className="h-4 w-4 text-primary" />
+                                    <h4 className="text-sm font-medium text-foreground">Azure AD Authentication</h4>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <TextField 
@@ -322,7 +322,7 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <Settings className="h-5 w-5 text-gray-600" />
+                            <Settings className="h-5 w-5 text-muted-foreground" />
                             <CardTitle>Basic Information</CardTitle>
                         </div>
                         <CardDescription>
@@ -361,7 +361,7 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
-                            <Key className="h-5 w-5 text-gray-600" />
+                            <Key className="h-5 w-5 text-muted-foreground" />
                             <CardTitle>Provider Configuration</CardTitle>
                         </div>
                         <CardDescription>
