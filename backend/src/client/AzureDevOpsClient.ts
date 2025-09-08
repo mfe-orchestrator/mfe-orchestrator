@@ -118,7 +118,39 @@ class AzureClient {
         return data;
     }
 
+    async createRepository(token: string, organization: string, project: string, repositoryName: string) {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`;
+        const body = {
+            name: repositoryName,
+            project: {
+                id: project
+            }
+        };
 
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+        return data;
+    }
+
+    async getRepository(token: string, organization: string, project: string, repositoryName: string){
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}?api-version=7.1-preview.1`;
+            const res = await fetch(url, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            return res;
+    }
 }
 
 export default AzureClient

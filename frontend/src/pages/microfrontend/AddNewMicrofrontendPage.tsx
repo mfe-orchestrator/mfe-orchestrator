@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useNavigate, useParams } from "react-router-dom"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -14,7 +15,9 @@ import Switch from "@/components/input/Switch.rhf"
 import { useQuery } from "@tanstack/react-query"
 import useProjectStore from "@/store/useProjectStore"
 import useStorageApi from "@/hooks/apiClients/useStorageApi"
+import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import SinglePageLayout from "@/components/SinglePageLayout"
+import { useState, useEffect } from "react"
 
 // Define form schema with validation
 const formSchema = z
@@ -35,6 +38,16 @@ const formSchema = z
                 entryPoint: z.string().optional()
             })
             .refine(data => data.type !== "CUSTOM_URL" || (data.url && data.url.length > 0), { message: "URL is required for custom hosting" }),
+
+        // Code Repository Settings
+        codeRepository: z
+            .object({
+                enabled: z.boolean().default(false),
+                repositoryId: z.string().optional(),
+                azureProjectId: z.string().optional(),
+                repositoryName: z.string().optional()
+            })
+            .optional(),
 
         // Canary Settings
         canary: z
@@ -74,11 +87,18 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     const microfrontendsApi = useMicrofrontendsApi()
     const navigate = useNavigate()
     const storageApi = useStorageApi()
+    const codeRepositoriesApi = useCodeRepositoriesApi()
     const { project } = useProjectStore()
 
     const storagesQuery = useQuery({
         queryKey: ["storages", project?._id],
         queryFn: () => storageApi.getMultiple(project?._id)
+    })
+
+    const repositoriesQuery = useQuery({
+        queryKey: ["repositories", project?._id],
+        queryFn: () => codeRepositoriesApi.getRepositoriesByProjectId(project?._id!),
+        enabled: !!project?._id
     })
 
     const form = useForm<FormValues>({
@@ -91,6 +111,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             host: {
                 type: "MFE_ORCHESTRATOR_HUB",
                 entryPoint: "index.js"
+            },
+            codeRepository: {
+                enabled: false,
+                repositoryId: "",
+                azureProjectId: "",
+                repositoryName: ""
             },
             canary: {
                 enabled: false,
@@ -116,6 +142,60 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     const { watch } = form
     const canaryEnabled = watch("canary.enabled")
     const hostType = watch("host.type")
+    const codeRepositoryEnabled = watch("codeRepository.enabled")
+    const selectedRepositoryId = watch("codeRepository.repositoryId")
+    const selectedAzureProjectId = watch("codeRepository.azureProjectId")
+    const repositoryName = watch("codeRepository.repositoryName")
+
+    const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<{
+        checking: boolean;
+        available: boolean | null;
+        error: string | null;
+    }>({
+        checking: false,
+        available: null,
+        error: null
+    })
+
+    const azureProjectsQuery = useQuery({
+        queryKey: ["azureProjects", selectedRepositoryId],
+        queryFn: () => codeRepositoriesApi.getAzureProjects(selectedRepositoryId!),
+        enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS"
+    })
+
+    // Repository name availability check with debounce
+    /*useEffect(() => {
+        if (!repositoryName || !selectedRepositoryId || !selectedAzureProjectId || repositoryName.length < 3) {
+            setRepositoryNameAvailability({ checking: false, available: null, error: null })
+            return
+        }
+
+        const timeoutId = setTimeout(async () => {
+            setRepositoryNameAvailability({ checking: true, available: null, error: null })
+            
+            try {
+                const result = await codeRepositoriesApi.checkRepositoryNameAvailability(
+                    selectedRepositoryId,
+                    selectedAzureProjectId,
+                    repositoryName
+                )
+                setRepositoryNameAvailability({ 
+                    checking: false, 
+                    available: result.available, 
+                    error: null 
+                })
+            } catch (error) {
+                setRepositoryNameAvailability({ 
+                    checking: false, 
+                    available: null, 
+                    error: "Error checking repository name availability" 
+                })
+            }
+        }, 500)
+
+        return () => clearTimeout(timeoutId)
+    }, [repositoryName, selectedRepositoryId, selectedAzureProjectId, codeRepositoriesApi])*/
+
     const notificationToast = useToastNotificationStore()
 
     const onSubmit = async (data: FormValues) => {
@@ -198,6 +278,86 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 />
                             )}
                         </CardContent>
+                    </Card>
+
+                    {/* Code Repository Section */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>{t("microfrontend.code_repository")}</CardTitle>
+                                    <CardDescription>{t("microfrontend.code_repository_description")}</CardDescription>
+                                </div>
+                                <Switch name="codeRepository.enabled" />
+                            </div>
+                        </CardHeader>
+
+                        {codeRepositoryEnabled && (
+                            <CardContent className="space-y-4">
+                                <SelectField
+                                    name="codeRepository.repositoryId"
+                                    label={t("microfrontend.repository")}
+                                    options={repositoriesQuery.data?.map(repo => ({
+                                        value: repo._id,
+                                        label: `${repo.name} (${repo.provider})`
+                                    }))}
+                                    required
+                                />
+
+                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS" && (
+                                    <SelectField
+                                        name="codeRepository.azureProjectId"
+                                        label={t("microfrontend.azure_project")}
+                                        options={azureProjectsQuery.data?.value?.map(project => ({
+                                            value: project.id,
+                                            label: project.name
+                                        }))}
+                                        required
+                                    />
+                                )}
+
+                                <div className="space-y-2">
+                                    <TextField
+                                        name="codeRepository.repositoryName"
+                                        label={t("microfrontend.repository_name")}
+                                        placeholder={t("microfrontend.repository_name_placeholder")}
+                                        required
+                                    />
+                                    
+                                    {repositoryNameAvailability.checking && (
+                                        <Alert>
+                                            <AlertDescription>
+                                                Checking repository name availability...
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                    
+                                    {repositoryNameAvailability.available === false && (
+                                        <Alert variant="destructive">
+                                            <AlertDescription>
+                                                Repository name is already taken. Please choose a different name.
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                    
+                                    {repositoryNameAvailability.available === true && (
+                                        <Alert>
+                                            <AlertDescription>
+                                                Repository name is available.
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                    
+                                    {repositoryNameAvailability.error && (
+                                        <Alert variant="destructive">
+                                            <AlertDescription>
+                                                {repositoryNameAvailability.error}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                </div>
+                            </CardContent>
+                        )}
                     </Card>
 
                     {/* Canary Settings Section */}

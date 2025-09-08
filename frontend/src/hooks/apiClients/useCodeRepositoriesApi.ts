@@ -203,7 +203,32 @@ const useCodeRepositoriesApi = () => {
             url: `/api/repositories/${repositoryId}`,
             method: 'DELETE',
         });
-    } 
+    }
+
+    const getAzureProjects = async (repositoryId: string): Promise<AzureDevOpsProjectsResponse> => {
+        const response = await apiClient.doRequest<AzureDevOpsProjectsResponse>({
+            url: `/api/repositories/${repositoryId}/azure/projects`,
+            method: 'GET',
+        });
+        return response.data
+    }
+
+    const getAzureRepositories = async (repositoryId: string, projectId: string): Promise<any[]> => {
+        const response = await apiClient.doRequest<any[]>({
+            url: `/api/repositories/${repositoryId}/azure/projects/${projectId}/repositories`,
+            method: 'POST',
+        });
+        return response.data
+    }
+
+    const checkRepositoryNameAvailability = async (repositoryId: string, projectId: string, repositoryName: string): Promise<{available: boolean}> => {
+        const response = await apiClient.doRequest<{available: boolean}>({
+            url: `/api/repositories/${repositoryId}/azure/projects/${projectId}/repositories/check-name`,
+            method: 'POST',
+            data: { repositoryName }
+        });
+        return response.data
+    }
 
     return {
         getRepositoriesByProjectId,
@@ -213,7 +238,10 @@ const useCodeRepositoriesApi = () => {
         addRepositoryGitlab,
         deleteSingle,
         testConnectionAzure,
-        testConnectionGitlab
+        testConnectionGitlab,
+        getAzureProjects,
+        getAzureRepositories,
+        checkRepositoryNameAvailability
     }
     
 }

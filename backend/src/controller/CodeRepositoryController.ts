@@ -128,4 +128,29 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send(result)
     })
 
+    fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/azure/projects',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getAzureProjects(
+            request.params.repositoryId
+        ))
+    })
+
+    fastify.post<{Params: {repositoryId: string, projectId: string}}>('/repositories/:repositoryId/azure/projects/:projectId/repositories',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(
+            request.params.repositoryId,
+            request.params.projectId
+        ))
+    })
+
+    fastify.post<{
+        Params: {repositoryId: string, projectId: string}, 
+        Body: {repositoryName: string}
+    }>('/repositories/:repositoryId/azure/projects/:projectId/repositories/check-name',  async (request, reply) =>{
+        const repositories = await new CodeRepositoryService(request.databaseUser).getAzureRepositories(
+            request.params.repositoryId,
+            request.params.projectId
+        ) as any[]
+        const isAvailable = !repositories.some((repo: any) => repo.name.toLowerCase() === request.body.repositoryName.toLowerCase())
+        reply.send({ available: isAvailable })
+    })
+
 }

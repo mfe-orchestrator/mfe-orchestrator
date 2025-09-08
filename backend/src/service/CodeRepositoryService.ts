@@ -187,6 +187,42 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     async testConnectionGitlab(url: string, pat: string) {
         return new GitLabClient(url, pat).getGroups()
     }
+
+    async getAzureRepositories(repositoryId: string, projectId: string): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.AZURE_DEV_OPS){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not Azure DevOps",
+                statusCode: 400
+            })
+        }
+        return new AzureDevOpsClient().getRepositories(
+            repository.accessToken,
+            repository?.name,
+            projectId
+        )
+    }
+    async getAzureProjects(repositoryId: string): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.AZURE_DEV_OPS){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not Azure DevOps",
+                statusCode: 400
+            })
+        }
+        return new AzureDevOpsClient().getProjects(
+            repository.accessToken,
+            repository?.name,
+        )
+    }
 }
 
 export default CodeRepositoryService
