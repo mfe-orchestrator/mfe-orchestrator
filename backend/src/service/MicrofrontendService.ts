@@ -9,9 +9,10 @@ import { MultipartFile } from "@fastify/multipart"
 import path from "path"
 import fs from "fs"
 import unzipper from "unzipper"
+import os from "os"
 import { fastify } from ".."
-import Project from "../models/ProjectModel"
-import Storage, { StorageType } from "../models/StorageModel"
+import Project, { IProject } from "../models/ProjectModel"
+import Storage, { IStorage, StorageType } from "../models/StorageModel"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import AzureStorageClient from "../client/AzureStorageAccount"
@@ -40,15 +41,15 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async create(microfrontend: MicrofrontendDTO, projectId: string | ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         await this.ensureAccessToProject(projectIdObj)
-        
+
         const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
 
-        if(codeRepository){
+        if (codeRepository) {
             if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
                 const azureDevOpsClient = new AzureDevOpsClient()
                 await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.name, microfrontend.codeRepository.azure.projectId, microfrontend.codeRepository.name)
-            }else if(codeRepository.provider === CodeRepositoryProvider.GITLAB){
-                if(!codeRepository.gitlabData?.url){
+            } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+                if (!codeRepository.gitlabData?.url) {
                     throw new Error("Gitlab url is not set")
                 }
                 const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
@@ -57,7 +58,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     path: microfrontend.codeRepository.gitlab.path,
                     visibility: microfrontend.codeRepository.gitlab.private ? "private" : "public"
                 })
-            }else if(codeRepository.provider === CodeRepositoryProvider.GITHUB){
+            } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
                 const githubClient = new GithubClient()
                 await githubClient.createRepository({
                     name: microfrontend.codeRepository.name,
@@ -145,56 +146,105 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendSlug)
         }
 
+        // Validate that the file is a ZIP
+        if (file.mimetype !== 'application/zip' && !file.filename?.endsWith('.zip')) {
+            throw new Error('File must be a ZIP archive')
+        }
+
         if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB) {
             const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
             if (!fs.existsSync(basePath)) {
                 fastify.log.info("Creating directory " + basePath)
                 fs.mkdirSync(basePath, { recursive: true })
             }
-
-            //TODO ensure it is ZIP!!!!!
-            await this.pumpStreamToFile(file, basePath)
+            
+            await this.extractZipToDirectory(file, basePath)
         } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
             throw new Error("Microfrontend host type is not supported")
         } else if (microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
             if (!microfrontend.host.storageId) {
-                throw new EntityNotFoundError("Microfrontend storage id is not set")
+                throw new EntityNotFoundError("Storage id is not set")
             }
-
-            const storage = await Storage.findById(microfrontend.host.storageId)
-
-            if (!storage) {
-                throw new EntityNotFoundError("Storage not found for id " + microfrontend.host.storageId.toString())
-            }
-
-            const path = project.slug + "-" + project._id.toString() + "/" + microfrontendSlug + "/" + version
-
-            if (storage.type === StorageType.GOOGLE) {
-                const googleStorageClient = new GoogleStorageClient(storage.authConfig)
-                await googleStorageClient.uploadFile(path, await file.toBuffer())
-            } else if (storage.type === StorageType.AWS) {
-                const s3Client = new S3BucketClient(storage.authConfig)
-                await s3Client.uploadFile(path, await file.toBuffer())
-            } else if (storage.type === StorageType.AZURE) {
-                storage.authConfig
-                const azureStorageClient = new AzureStorageClient(storage.authConfig)
-                await azureStorageClient.uploadFile(path, await file.toBuffer())
-            }
+            await this.uploadToCloudSource(microfrontend.host.storageId, project, microfrontendSlug, version, file)
         }
     }
 
-    ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
-        return this.ensureAccessToProject(microfrontend.projectId)
+    async uploadToCloudSource(storageId: string | ObjectId, project: IProject, microfrontendSlug: string, version: string, file: MultipartFile) {
+        const storage = await Storage.findById(storageId)
+
+        if (!storage) {
+            throw new EntityNotFoundError("Storage not found for id " + storageId.toString())
+        }
+
+        const pathToWrite = project.slug + "-" + project._id.toString() + "/" + microfrontendSlug + "/" + version
+
+        // Validate that the file is a ZIP
+        if (file.mimetype !== 'application/zip' && !file.filename?.endsWith('.zip')) {
+            throw new Error('File must be a ZIP archive')
+        }
+
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unzip-'))
+        try {
+            const extractDir = path.join(tempDir, 'extracted')
+            // Estrai direttamente dal stream del file
+            await this.extractZipToDirectory(file, extractDir)
+
+            if (storage.type === StorageType.GOOGLE) {
+                const googleStorageClient = new GoogleStorageClient(storage.authConfig)
+                await googleStorageClient.uploadFile(pathToWrite, await file.toBuffer())
+            } else if (storage.type === StorageType.AWS) {
+                const s3Client = new S3BucketClient(storage.authConfig)
+                await s3Client.uploadFile(pathToWrite, await file.toBuffer())
+            } else if (storage.type === StorageType.AZURE) {
+                const pathToWriteAzure = storage.path ? path.join(storage.path, pathToWrite) : pathToWrite
+                await this.uploadDirectoryToAzure(extractDir, pathToWriteAzure, new AzureStorageClient(storage.authConfig))
+            }
+        } finally {
+            // Pulisci i file temporanei
+            fs.rmSync(tempDir, { recursive: true, force: true })
+        }
     }
 
-    async pumpStreamToFile(stream: MultipartFile, destPath: string) {
+    private async extractZipToDirectory(file: MultipartFile, extractDir: string): Promise<void> {
         // Stream dal client → unzipper → cartella
-        await new Promise((resolve, reject) => {
-            stream.file
-                .pipe(unzipper.Extract({ path: destPath }))
+        return new Promise((resolve, reject) => {
+            file.file
+                .pipe(unzipper.Extract({ path: extractDir }))
                 .on("close", resolve)
                 .on("error", reject)
         })
+    }
+
+    private async uploadDirectoryToAzure(localDir: string, azureBasePath: string, azureClient: AzureStorageClient): Promise<void> {
+        const uploadFile = async (filePath: string, relativePath: string) => {
+            const content = fs.readFileSync(filePath)
+            const azurePath = path.posix.join(azureBasePath, relativePath.replace(/\\/g, '/'))
+            await azureClient.uploadFile(azurePath, content)
+        }
+
+        const processDirectory = async (dir: string, basePath: string = '') => {
+            const items = fs.readdirSync(dir)
+
+            for (const item of items) {
+                const fullPath = path.join(dir, item)
+                const relativePath = path.join(basePath, item)
+                const stats = fs.statSync(fullPath)
+
+                if (stats.isDirectory()) {
+                    await processDirectory(fullPath, relativePath)
+                } else if (stats.isFile()) {
+                    await uploadFile(fullPath, relativePath)
+                }
+            }
+        }
+
+        await processDirectory(localDir)
+    }
+
+    
+
+    ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
+        return this.ensureAccessToProject(microfrontend.projectId)
     }
 }
 

@@ -52,7 +52,13 @@ const storageSchema = new Schema<IStorage>(
             required: true,
             validate: {
                 validator: function (value: any) {
-                    const storageType = (this as any).type as StorageType
+                    // In update context, 'this' might be the query, get type from the update data
+                    const storageType = this.get("type")
+                    //const storageType = (this as any)?.type || (this as any)?._update?.$set.type as StorageType
+
+                    if(!storageType){
+                        return false;
+                    }
 
                     switch (storageType) {
                         case StorageType.GOOGLE:
@@ -72,7 +78,7 @@ const storageSchema = new Schema<IStorage>(
                     }
                 },
                 message: function (props: any) {
-                    const storageType = (this as any).type as StorageType
+                    const storageType = (this as any)?.type || (this as any)?._update?.type as StorageType
                     return `Invalid authConfig for ${storageType} storage: ${JSON.stringify(props.value)}`
                 }
             }

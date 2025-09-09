@@ -184,7 +184,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                         />
 
                         <TextField 
-                            name="authConfig.path" 
+                            name="path"
                             label={t("storage.fields.path")} 
                             placeholder="/"
                         />

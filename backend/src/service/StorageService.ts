@@ -45,7 +45,7 @@ export class StorageService extends BaseAuthorizedService {
     async updateRaw(storageId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
         const storage = await this.getByIdRaw(storageId, session)
 
-        const updated = await Storage.findByIdAndUpdate(storage._id, storageData, { new: true, runValidators: true })
+        const updated = await Storage.findByIdAndUpdate(storage._id, {...storageData, projectId: storage.projectId}, { new: true, runValidators: true, context: 'query' })
             .session(session || null)
             .lean()
 
