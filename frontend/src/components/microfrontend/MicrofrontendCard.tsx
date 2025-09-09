@@ -1,10 +1,14 @@
 import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input/input"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { UsersRound } from "lucide-react"
+import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
+import { UsersRound, Hammer } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from 'react-i18next'
+import { useState } from "react"
 
 interface MicrofrontendCardProps {
     mfe: Microfrontend
@@ -13,8 +17,28 @@ interface MicrofrontendCardProps {
 const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
     const { t } = useTranslation('platform')
     const navigate = useNavigate()
+    const { build } = useMicrofrontendsApi()
+    
+    const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false)
+    const [buildVersion, setBuildVersion] = useState('')
+    const [isBuilding, setIsBuilding] = useState(false)
 
     const isCanary = mfe?.canary?.enabled
+
+    const handleBuild = async () => {
+        if (!buildVersion.trim() || !mfe._id) return
+        
+        setIsBuilding(true)
+        try {
+            await build(mfe._id, buildVersion)
+            setIsBuildDialogOpen(false)
+            setBuildVersion('')
+        } catch (error) {
+            console.error('Build failed:', error)
+        } finally {
+            setIsBuilding(false)
+        }
+    }
 
     return (
         <Card className="h-full flex flex-col">
@@ -78,11 +102,52 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
                     </div>
                 )}
             </CardContent>
-            <CardFooter>
-                <Button variant="primary" onClick={() => navigate(`/microfronted/${mfe._id}`)} className="w-full">
+            <CardFooter className="flex gap-2">
+                <Button variant="primary" onClick={() => navigate(`/microfronted/${mfe._id}`)} className="flex-1">
                     {t('common.configuration')}
                 </Button>
+                <Button variant="secondary" onClick={() => setIsBuildDialogOpen(true)} className="flex-1">
+                    <Hammer className="mr-2 h-4 w-4" />
+                    Build
+                </Button>
             </CardFooter>
+            
+            <Dialog open={isBuildDialogOpen} onOpenChange={setIsBuildDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Build {mfe.name}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="version" className="text-sm font-medium">
+                                Version
+                            </label>
+                            <Input
+                                id="version"
+                                value={buildVersion}
+                                onChange={(e) => setBuildVersion(e.target.value)}
+                                placeholder="Enter version (e.g., 1.0.0)"
+                                className="mt-1"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button 
+                            variant="secondary" 
+                            onClick={() => setIsBuildDialogOpen(false)}
+                            disabled={isBuilding}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleBuild}
+                            disabled={!buildVersion.trim() || isBuilding}
+                        >
+                            {isBuilding ? 'Building...' : 'Start Build'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     )
 }

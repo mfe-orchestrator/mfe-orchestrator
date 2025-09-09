@@ -22,6 +22,14 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         return reply.send(await new MicrofrontendService(request.databaseUser).getById(request.params.id))
     })
 
+    fastify.get<{
+        Params: {
+            id: string
+        }
+    }>("/microfrontends/:id/versions", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).getVersionsById(request.params.id))
+    })
+
     fastify.post<{
         Body: MicrofrontendDTO
     }>("/microfrontends", async (request, reply) => {
@@ -61,4 +69,17 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         }
         return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, projectId, data))
     })
+
+    fastify.post<{
+        Params: {
+            id: string
+        },
+        Body: {
+            version: string
+        }
+    }>("/microfrontends/:id/build", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).build(request.params.id, request.body.version))
+    })
+
+
 }

@@ -156,6 +156,17 @@ export interface GithubRepository {
     updated_at: string
 }
 
+export interface CreateBuildRequest {
+    name: string
+    version?: string
+    ref?: string
+    inputs?: Record<string, any>
+}
+
+export interface GithubWorkflowDispatchResponse {
+    message?: string
+}
+
 class GithubClient {
 
 
@@ -232,6 +243,33 @@ class GithubClient {
         })
 
         return response.data
+    }
+
+    createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
+        const owner = 'mfe-orchestrator-hub'
+        const repo = 'examples-vite-module-federation'
+        const workflowId = 'build-and-deploy-remotes.yml'
+        
+        const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`
+
+        const response = await axios.request<GithubWorkflowDispatchResponse>({
+            method: 'POST',
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator-Hub'
+            },
+            data: {
+                ref: buildData.ref || 'main',
+                inputs: {
+                    version: buildData.version || '${{github.ref_name}}',
+                    ...buildData.inputs
+                }
+            }
+        })
+
+        return response.data || {}
     }
 
     

@@ -36,6 +36,7 @@ const formSchema = z
         name: z.string().min(3).max(100),
         description: z.string().optional(),
         version: z.string().min(1, "Version is required"),
+        customVersion: z.string().optional(),
         continuousDeployment: z.boolean().default(false),
 
         // Hosting Information
@@ -198,13 +199,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         queryFn: () => codeRepositoriesApi.getAzureProjects(selectedRepositoryId!),
         enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS"
     })
-
-    const githubOrganizationsQuery = useQuery({
-        queryKey: ["githubOrganizations", selectedRepositoryId],
-        queryFn: () => codeRepositoriesApi.getGithubOrganizations(selectedRepositoryId!),
-        enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITHUB"
-    })
-
+    
     const gitlabGroupsQuery = useQuery({
         queryKey: ["gitlabGroups", selectedRepositoryId],
         queryFn: () => codeRepositoriesApi.getGitlabGroups(selectedRepositoryId!),
@@ -215,6 +210,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         queryKey: ["gitlabGroupPaths", selectedRepositoryId, selectedGitlabGroupId],
         queryFn: () => codeRepositoriesApi.getGitlabGroupPaths(selectedRepositoryId!, selectedGitlabGroupId!),
         enabled: !!selectedRepositoryId && !!selectedGitlabGroupId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB"
+    })
+
+    const versionsQuery = useQuery({
+        queryKey: ["versions", id],
+        queryFn: () => microfrontendsApi.getVersions(id!),
+        enabled: isEdit
     })
 
     // Repository name availability check with debounce
@@ -254,8 +255,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
 
     const onSubmit = async (data: FormValues) => {
         const dataToSend = {
-            ...data
+            ...data,
+            version: data.version === "custom" ? data.customVersion : data.version
         } as Microfrontend
+        
+        delete (dataToSend as any).customVersion
+        
         if (isEdit) {
             await microfrontendsApi.update(id, dataToSend)
             notificationToast.showSuccessNotification({
@@ -286,7 +291,32 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 <TextField name="name" label={t("microfrontend.name")} placeholder={t("microfrontend.name_placeholder")} required />
                                 <TextField name="slug" label={t("microfrontend.slug")} placeholder={t("microfrontend.slug_placeholder")} required />
                             </div>
-                            <TextField name="version" label={t("microfrontend.version")} placeholder={t("microfrontend.version_placeholder")} required />
+                            {isEdit && versionsQuery.data && versionsQuery.data.length > 0 ? (
+                                <div className="space-y-4">
+                                    <SelectField
+                                        name="version"
+                                        label={t("microfrontend.version")}
+                                        options={[
+                                            ...versionsQuery.data.map(version => ({
+                                                value: version,
+                                                label: version
+                                            })),
+                                            { value: "custom", label: t("microfrontend.custom_version") }
+                                        ]}
+                                        required
+                                    />
+                                    {form.watch("version") === "custom" && (
+                                        <TextField 
+                                            name="customVersion" 
+                                            label={t("microfrontend.custom_version")} 
+                                            placeholder={t("microfrontend.version_placeholder")} 
+                                            required 
+                                        />
+                                    )}
+                                </div>
+                            ) : (
+                                <TextField name="version" label={t("microfrontend.version")} placeholder={t("microfrontend.version_placeholder")} required />
+                            )}
                             <TextareaField name="description" label={t("microfrontend.description")} placeholder={t("microfrontend.description_placeholder")} />
                         </CardContent>
                     </Card>
@@ -399,16 +429,6 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
 
                                 {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "GITHUB" && (
                                     <div className="space-y-4">
-                                        <SelectField
-                                            name="codeRepository.github.organizationId"
-                                            label={t("microfrontend.github_organization")}
-                                            addClearButton
-                                            options={githubOrganizationsQuery.data?.map(org => ({
-                                                value: org.id.toString(),
-                                                label: org.login
-                                            }))}
-                                        />
-                                        
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Switch 
                                                 name="codeRepository.github.private" 

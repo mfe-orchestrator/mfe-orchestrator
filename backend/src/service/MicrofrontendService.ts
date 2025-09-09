@@ -23,6 +23,7 @@ import GitlabClient from "../client/GitlabClient"
 import BuiltFrontend from "../models/BuiltFrontendModel"
 
 export class MicrofrontendService extends BaseAuthorizedService {
+
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
         const microfrontend = await Microfrontend.findById(idObj, {}, { session })
@@ -270,6 +271,40 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         await processDirectory(localDir)
+    }
+
+    async build(microfrontendId: string, version: string): Promise<void> {
+        const microfrontend = await this.getById(microfrontendId)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendId)
+        }
+        await this.ensureAccessToMicrofrontend(microfrontend)
+        
+        if(!microfrontend.codeRepository?.enabled) return;
+
+        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
+        if(!codeRepository) {
+            throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
+        }
+
+        if(codeRepository.provider === CodeRepositoryProvider.GITHUB) {
+            const githubClient = new GithubClient()
+            if(!codeRepository.githubData) {
+                throw new Error("Github data not set")
+            }
+            await githubClient.createBuild({
+                name: microfrontend.codeRepository.name,
+                version: version
+            }, codeRepository.accessToken)
+        }
+    }
+
+    async getVersionsById(id: string){
+        const microfrontend = await this.getById(id)
+        if(!microfrontend){
+            throw new EntityNotFoundError(id)
+        }
+        return BuiltFrontend.find({ microfrontendId: microfrontend._id }).select("version").distinct("version")
     }
 
     ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {

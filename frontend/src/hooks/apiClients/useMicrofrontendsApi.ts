@@ -86,6 +86,22 @@ const useMicrofrontendsApi = () => {
         });
         return response.data;
     };
+
+    const build = async (id: string, version: string) => {
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/${id}/build`,
+            method: "POST",
+            data: { version }
+        });
+        return response.data;
+    };
+
+    const getVersions = async (id: string): Promise<string[]> => {
+        const response = await apiClient.doRequest<string[]>({
+            url: `/api/microfrontends/${id}/versions`,
+        });
+        return response.data;
+    };
     
 
     return {
@@ -93,7 +109,9 @@ const useMicrofrontendsApi = () => {
         create,
         update,
         deleteSingle,
-        getSingle
+        getSingle,
+        build,
+        getVersions
     }
 }
 
