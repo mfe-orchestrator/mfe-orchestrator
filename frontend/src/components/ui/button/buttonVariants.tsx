@@ -74,7 +74,7 @@ export const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconS
 				active:bg-primary/30 active:shadow-none active:text-primary-active
 				`,
             link: `
-				border-0 shadow-none text-primary underline underline-offset-4 decoration-[.125rem]
+				border-0 shadow-none text-primary underline underline-offset-4 
 				hover:text-primary/75
 				focus-visible:text-primary/75
 				active:ring-4 active:ring-ring active:ring-offset-2 active:shadow-none

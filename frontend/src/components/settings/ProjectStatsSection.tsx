@@ -17,16 +17,16 @@ const StatCard = ({ icon, title, value, buttonText, onAction, href }: StatCardPr
     const { t } = useTranslation()
     const buttonTestReal = buttonText || t("settings.stats.viewAll")
     return (
-        <div className="p-3 bg-muted rounded-md border-2 border-border">
-            <div className="flex items-end justify-between gap-2 h-full">
-                <div className="flex items-start gap-2">
-                    <div className="text-muted-foreground [&>svg]:w-5 [&>svg]:h-5">{icon}</div>
-                    <div>
-                        <h3 className="text-base text-muted-foreground leading-tight">{title}</h3>
-                        <p className="text-lg font-bold text-foreground">{value}</p>
+        <div className="p-3 bg-muted rounded-md border-2 border-border flex-[1_0_180px] lg:flex-[1_0_280px]">
+            <div className="flex flex-col gap-2 h-full">
+                <div>
+                    <div className="flex items-center gap-2 border-b border-divider pb-2">
+                        <div className="text-foreground [&>svg]:w-4 [&>svg]:h-4">{icon}</div>
+                        <h3 className="text-base text-foreground font-medium">{title}</h3>
                     </div>
+                    <p className="text-5xl text-foreground-secondary text-center mt-3">{value}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={onAction} asChild={!!href}>
+                <Button variant="link" onClick={onAction} asChild={!!href} className="self-end -me-2 -mb-1">
                     {href ? <Link to={href}>{buttonTestReal}</Link> : buttonTestReal}
                 </Button>
             </div>
@@ -43,11 +43,11 @@ export function ProjectStatsSection({ stats }: ProjectStatsSectionProps) {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="border-none">
                 <h2 className="text-lg font-semibold">{t("settings.stats.title")}</h2>
             </CardHeader>
-            <CardContent className="pt-4">
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+            <CardContent>
+                <div className="flex flex-wrap items-center gap-4">
                     {stats.map((stat, index) => (
                         <StatCard key={index} icon={stat.icon} title={stat.title} value={stat.value} buttonText={stat.buttonText} onAction={stat.onAction} href={stat.href} />
                     ))}
