@@ -20,6 +20,7 @@ import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
+import BuiltFrontend from "../models/BuiltFrontendModel"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -167,6 +168,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
             }
             await this.uploadToCloudSource(microfrontend.host.storageId, project, microfrontendSlug, version, file)
         }
+
+        await BuiltFrontend.create({
+            microfrontendId: microfrontend._id,
+            version,
+        })
     }
 
     async uploadToCloudSource(storageId: string | ObjectId, project: IProject, microfrontendSlug: string, version: string, file: MultipartFile) {
@@ -190,11 +196,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
             await this.extractZipToDirectory(file, extractDir)
 
             if (storage.type === StorageType.GOOGLE) {
-                const googleStorageClient = new GoogleStorageClient(storage.authConfig)
-                await googleStorageClient.uploadFile(pathToWrite, await file.toBuffer())
+                await this.uploadDirectoryToGoogle(extractDir, pathToWrite, new GoogleStorageClient(storage.authConfig))
             } else if (storage.type === StorageType.AWS) {
-                const s3Client = new S3BucketClient(storage.authConfig)
-                await s3Client.uploadFile(pathToWrite, await file.toBuffer())
+                await this.uploadDirectoryToS3(extractDir, pathToWrite, new S3BucketClient(storage.authConfig))
             } else if (storage.type === StorageType.AZURE) {
                 const pathToWriteAzure = storage.path ? path.join(storage.path, pathToWrite) : pathToWrite
                 await this.uploadDirectoryToAzure(extractDir, pathToWriteAzure, new AzureStorageClient(storage.authConfig))
@@ -215,6 +219,26 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
     }
 
+    private async uploadDirectoryToS3(localDir: string, s3BasePath: string, s3Client: S3BucketClient): Promise<void> {
+        const uploadFile = async (filePath: string, relativePath: string) => {
+            const content = fs.readFileSync(filePath)
+            const s3Path = path.posix.join(s3BasePath, relativePath.replace(/\\/g, '/'))
+            await s3Client.uploadFile(s3Path, content)
+        }
+
+        await this.processDirectoryRecursive(localDir, uploadFile)
+    }
+
+    private async uploadDirectoryToGoogle(localDir: string, gcsBasePath: string, googleClient: GoogleStorageClient): Promise<void> {
+        const uploadFile = async (filePath: string, relativePath: string) => {
+            const content = fs.readFileSync(filePath)
+            const gcsPath = path.posix.join(gcsBasePath, relativePath.replace(/\\/g, '/'))
+            await googleClient.uploadFile(gcsPath, content)
+        }
+
+        await this.processDirectoryRecursive(localDir, uploadFile)
+    }
+
     private async uploadDirectoryToAzure(localDir: string, azureBasePath: string, azureClient: AzureStorageClient): Promise<void> {
         const uploadFile = async (filePath: string, relativePath: string) => {
             const content = fs.readFileSync(filePath)
@@ -222,6 +246,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
             await azureClient.uploadFile(azurePath, content)
         }
 
+        await this.processDirectoryRecursive(localDir, uploadFile)
+    }
+
+    private async processDirectoryRecursive(
+        localDir: string, 
+        fileHandler: (filePath: string, relativePath: string) => Promise<void>
+    ): Promise<void> {
         const processDirectory = async (dir: string, basePath: string = '') => {
             const items = fs.readdirSync(dir)
 
@@ -233,15 +264,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 if (stats.isDirectory()) {
                     await processDirectory(fullPath, relativePath)
                 } else if (stats.isFile()) {
-                    await uploadFile(fullPath, relativePath)
+                    await fileHandler(fullPath, relativePath)
                 }
             }
         }
 
         await processDirectory(localDir)
     }
-
-    
 
     ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
         return this.ensureAccessToProject(microfrontend.projectId)
