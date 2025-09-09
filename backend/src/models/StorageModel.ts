@@ -16,6 +16,7 @@ export type IStorageAuth =
       }
     | {
           type: StorageType.AZURE
+          path?: string
           authConfig: AzureStorageConfig
       }
     | {
@@ -28,40 +29,6 @@ export type IStorage = Document<ObjectId> &
         name: string
         projectId: ObjectId
     }
-
-// Define schemas for each storage type's auth config
-const googleStorageConfigSchema = new Schema<GoogleStorageConfig>({
-    authType: { 
-        type: String, 
-        enum: ['serviceAccount', 'apiKey', 'default'],
-        required: true 
-    },
-    projectId: { type: String, required: true },
-    // Only one of these fields will be present based on authType
-    credentials: {
-        client_email: { type: String, required: false },
-        private_key: { type: String, required: false }
-    },
-    apiKey: { type: String, required: false },
-    bucketName: { type: String, required: true }
-}, { 
-    _id: false,
-    discriminatorKey: 'authType'
-});
-
-const azureStorageConfigSchema = new Schema<AzureStorageConfig>({
-    accountName: { type: String, required: true },
-    accountKey: { type: String, required: true },
-    containerName: { type: String, required: true }
-}, { _id: false });
-
-const s3StorageConfigSchema = new Schema<S3ClientConfig>({
-    region: { type: String, required: true },
-    accessKeyId: { type: String, required: true },
-    secretAccessKey: { type: String, required: true },
-    bucketName: { type: String, required: true }
-}, { _id: false });
-
 // Main storage schema
 const storageSchema = new Schema<IStorage>(
     {

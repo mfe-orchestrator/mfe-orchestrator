@@ -127,7 +127,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                             <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">Service Account Credentials</h4>
+                                    <h4 className="text-sm font-medium text-foreground">{t("storage.serviceAccountCredentials")}</h4>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
                                     <TextField 
@@ -150,7 +150,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                             <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">API Key Authentication</h4>
+                                    <h4 className="text-sm font-medium text-foreground">{t("storage.apiKeyAuthentication")}</h4>
                                 </div>
                                 <TextField 
                                     name="authConfig.apiKey" 
@@ -171,6 +171,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                             name="authConfig.authType" 
                             label={t("storage.fields.authType")} 
                             options={azureAuthTypes} 
+                            required
                             rules={{ required: t("validation.required") }} 
                         />
                         
@@ -178,19 +179,27 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                             name="authConfig.containerName" 
                             label={t("storage.fields.containerName")} 
                             placeholder="my-container"
+                            required
                             rules={{ required: t("validation.required") }} 
+                        />
+
+                        <TextField 
+                            name="authConfig.path" 
+                            label={t("storage.fields.path")} 
+                            placeholder="/"
                         />
 
                         {azureAuthType === "connectionString" && (
                             <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">Connection String</h4>
+                                    <h4 className="text-sm font-medium text-foreground">{t("storage.connectionString")}</h4>
                                 </div>
                                 <TextField 
                                     name="authConfig.connectionString" 
                                     label={t("storage.fields.connectionString")} 
                                     type="password" 
+                                    required
                                     rules={{ required: true }} 
                                 />
                             </div>
@@ -202,6 +211,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                                     name="authConfig.accountName" 
                                     label={t("storage.fields.accountName")} 
                                     placeholder="mystorageaccount"
+                                    required
                                     rules={{ required: true }} 
                                 />
                             </div>
@@ -211,11 +221,12 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                             <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">Shared Key Authentication</h4>
+                                    <h4 className="text-sm font-medium text-foreground">{t("storage.sharedKeyAuthentication")}</h4>
                                 </div>
                                 <TextField 
                                     name="authConfig.accountKey" 
                                     label={t("storage.fields.accountKey")} 
+                                    required
                                     type="password" 
                                     rules={{ required: true }} 
                                 />
@@ -226,7 +237,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                             <div className="space-y-4 p-4 bg-muted border rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">Azure AD Authentication</h4>
+                                    <h4 className="text-sm font-medium text-foreground">{t("storage.azureAdAuthentication")}</h4>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <TextField 
@@ -323,10 +334,10 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                     <CardHeader>
                         <div className="flex items-center gap-2">
                             <Settings className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Basic Information</CardTitle>
+                            <CardTitle>{t("storage.basicInformation")}</CardTitle>
                         </div>
                         <CardDescription>
-                            Configure the basic settings for your storage provider
+                            {t("storage.basicInformationDescription")}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -334,7 +345,7 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                             <TextField 
                                 name="name" 
                                 label={t("storage.name")} 
-                                placeholder="Enter storage name"
+                                placeholder={t("storage.enterStorageName")}
                                 rules={{ required: t("validation.required") }} 
                             />
                             <SelectField
@@ -350,7 +361,7 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                             <Alert>
                                 <Info className="h-4 w-4" />
                                 <AlertDescription>
-                                    The storage provider type cannot be changed after creation.
+                                    {t("storage.typeCannotBeChanged")}
                                 </AlertDescription>
                             </Alert>
                         )}
@@ -362,10 +373,10 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                     <CardHeader>
                         <div className="flex items-center gap-2">
                             <Key className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Provider Configuration</CardTitle>
+                            <CardTitle>{t("storage.providerConfiguration")}</CardTitle>
                         </div>
                         <CardDescription>
-                            Configure authentication and access settings for your {selectedStorageType} storage
+                            {t("storage.providerConfigurationDescription", { storageType: selectedStorageType })}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -377,8 +388,7 @@ const StorageForm: React.FC<StorageFormProps> = ({initialData, id, onCancel, onS
                 <Alert>
                     <Key className="h-4 w-4" />
                     <AlertDescription>
-                        <strong>Security Notice:</strong> All credentials are encrypted and stored securely. 
-                        They are only used to access your storage resources and are never shared with third parties.
+                        <strong>{t("storage.securityNotice")}</strong> {t("storage.securityNoticeDescription")}
                     </AlertDescription>
                 </Alert>
 

@@ -604,7 +604,8 @@
       "accountKey": "Chiave Account",
       "tenantId": "ID Tenant",
       "clientId": "ID Cliente",
-      "clientSecret": "Segreto Cliente"
+      "clientSecret": "Segreto Cliente",
+      "path": "Percorso"
     },
     "s3": {
       "accessKeyId": "Access Key ID",
@@ -619,7 +620,21 @@
     "createSuccess": "Storage creato",
     "createSuccessDescription": "Lo storage è stato creato con successo.",
     "updateSuccess": "Storage aggiornato",
-    "updateSuccessDescription": "Lo storage è stato aggiornato con successo."
+    "updateSuccessDescription": "Lo storage è stato aggiornato con successo.",
+    "serviceAccountCredentials": "Credenziali Account di Servizio",
+    "apiKeyAuthentication": "Autenticazione con Chiave API",
+    "connectionString": "Stringa di Connessione",
+    "sharedKeyAuthentication": "Autenticazione con Chiave Condivisa",
+    "azureAdAuthentication": "Autenticazione Azure AD",
+    "basicInformation": "Informazioni di Base",
+    "basicInformationDescription": "Configura le impostazioni di base per il tuo provider di storage",
+    "enterStorageName": "Inserisci nome storage",
+    "typeCannotBeChanged": "Il tipo di provider di storage non può essere modificato dopo la creazione.",
+    "providerConfiguration": "Configurazione Provider",
+    "providerConfigurationDescription": "Configura le impostazioni di autenticazione e accesso per il tuo storage {{storageType}}",
+    "securityNotice": "Avviso di Sicurezza:",
+    "securityNoticeDescription": "Tutte le credenziali sono criptate e memorizzate in modo sicuro. Vengono utilizzate solo per accedere alle tue risorse di storage e non vengono mai condivise con terze parti.",
+    "path": "Percorso"
   },
   "codeRepositories": {
     "title": "Repository di Codice",

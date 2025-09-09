@@ -576,7 +576,8 @@
             "accountKey": "Account Key",
             "tenantId": "Tenant ID",
             "clientId": "Client ID",
-            "clientSecret": "Client Secret"
+            "clientSecret": "Client Secret",
+            "path": "Path"
         },
         "s3": {
             "accessKeyId": "Access Key ID",
@@ -591,7 +592,21 @@
         "createSuccess": "Storage created",
         "createSuccessDescription": "The storage has been successfully created.",
         "updateSuccess": "Storage updated",
-        "updateSuccessDescription": "The storage has been successfully updated."
+        "updateSuccessDescription": "The storage has been successfully updated.",
+        "serviceAccountCredentials": "Service Account Credentials",
+        "apiKeyAuthentication": "API Key Authentication",
+        "connectionString": "Connection String",
+        "sharedKeyAuthentication": "Shared Key Authentication",
+        "azureAdAuthentication": "Azure AD Authentication",
+        "basicInformation": "Basic Information",
+        "basicInformationDescription": "Configure the basic settings for your storage provider",
+        "enterStorageName": "Enter storage name",
+        "typeCannotBeChanged": "The storage provider type cannot be changed after creation.",
+        "providerConfiguration": "Provider Configuration",
+        "providerConfigurationDescription": "Configure authentication and access settings for your {{storageType}} storage",
+        "securityNotice": "Security Notice:",
+        "securityNoticeDescription": "All credentials are encrypted and stored securely. They are only used to access your storage resources and are never shared with third parties.",
+        "path": "Path"
     },
     "codeRepositories": {
         "title": "Code Repositories",

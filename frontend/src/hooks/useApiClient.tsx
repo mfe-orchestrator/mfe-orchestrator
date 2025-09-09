@@ -74,7 +74,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
             //console.log("[doRequest] Ho fatto la richiesta", realConfig.url, result.data)
             return result
         } catch (e: any) {
-            console.error("[doRequest]Errore nella richbiesta", realConfig.url, e)
+            console.error("[doRequest] Erro in request ", realConfig.url, e)
             console.error(e)
             if (!silent) {
                 notifications.showErrorNotification({

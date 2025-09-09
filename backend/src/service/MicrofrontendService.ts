@@ -176,6 +176,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 const s3Client = new S3BucketClient(storage.authConfig)
                 await s3Client.uploadFile(path, await file.toBuffer())
             } else if (storage.type === StorageType.AZURE) {
+                storage.authConfig
                 const azureStorageClient = new AzureStorageClient(storage.authConfig)
                 await azureStorageClient.uploadFile(path, await file.toBuffer())
             }
