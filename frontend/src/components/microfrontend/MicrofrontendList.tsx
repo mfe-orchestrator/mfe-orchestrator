@@ -13,30 +13,37 @@ import { TabsContent } from "../ui/tabs/partials/tabsContent/tabsContent"
 import { TabsList } from "../ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "../ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "../ui/tabs/tabs"
+import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
 
 interface MicrofrontendListProps {
     searchTerm?: string
     projectId?: string
     onResetFilters: () => void
+    setTabsValue: (value: "grid" | "list") => void
 }
 
 interface MicrofrontendListRealProps {
     microfrontends: Microfrontend[]
     onResetFilters: () => void
+    setTabsValue: (value: "grid" | "list") => void
 }
 
-const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters }) => {
+const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters, setTabsValue }) => {
     const { t } = useTranslation("platform")
     const navigate = useNavigate()
 
+    const onAddNewMicrofrontend = () => {
+        navigate(`/microfronted/new`)
+    }
+
     return (
-        <Tabs defaultValue="grid" className="space-y-4" iconButtons>
+        <Tabs defaultValue="grid" className="space-y-4" iconButtons tabsListPosition="end">
             <TabsList>
-                <TabsTrigger value="grid">
+                <TabsTrigger value="grid" onClick={() => setTabsValue("grid")}>
                     <LayoutGrid />
                 </TabsTrigger>
-                <TabsTrigger value="list">
+                <TabsTrigger value="list" onClick={() => setTabsValue("list")}>
                     <StretchHorizontal />
                 </TabsTrigger>
             </TabsList>
@@ -44,6 +51,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
             <TabsContent value="grid">
                 {microfrontends && microfrontends.length > 0 ? (
                     <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,_1fr))]">
+                        <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
                         {microfrontends.map(mfe => (
                             <MicrofrontendCard key={mfe._id} mfe={mfe} />
                         ))}
@@ -59,23 +67,23 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
             </TabsContent>
 
             <TabsContent value="list">
-                <div className="rounded-md border">
+                <div className="rounded-md border-2 border-border overflow-hidden">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-primary/25 hover:bg-primary/25">
-                                <TableHead>{t("common.name")}</TableHead>
-                                <TableHead>{t("microfrontend.slug")}</TableHead>
-                                <TableHead>{t("microfrontend.version")}</TableHead>
-                                <TableHead>{t("microfrontend.canaryRelease")}</TableHead>
-                                <TableHead className="w-[100px]"></TableHead>
+                            <TableRow className="bg-primary/25">
+                                <TableHead className="text-foreground">{t("common.name")}</TableHead>
+                                <TableHead className="text-foreground">{t("microfrontend.slug")}</TableHead>
+                                <TableHead className="text-foreground">{t("microfrontend.version")}</TableHead>
+                                <TableHead className="text-foreground">{t("microfrontend.canary_release")}</TableHead>
+                                <TableHead className="text-foreground"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {microfrontends?.map(mfe => {
                                 const canaryPercentage: number = mfe.canary?.percentage || 0
                                 return (
-                                    <TableRow key={mfe._id} className="hover:bg-primary/10">
-                                        <TableCell className="font-medium">{mfe.name}</TableCell>
+                                    <TableRow key={mfe._id}>
+                                        <TableCell className="font-medium text-primary">{mfe.name}</TableCell>
                                         <TableCell>{mfe.slug}</TableCell>
                                         <TableCell>
                                             <Badge>{mfe.version}</Badge>
@@ -86,7 +94,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                                     {canaryPercentage}% {t("microfrontend.ofUsers")}
                                                 </span>
                                             ) : (
-                                                <span className="text-muted-foreground text-xs">{t("common.no_data")}</span>
+                                                <span className="italic text-foreground-secondary">{t("common.no_data")}</span>
                                             )}
                                         </TableCell>
                                         <TableCell>
@@ -105,7 +113,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     )
 }
 
-const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, projectId, onResetFilters }) => {
+const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, projectId, onResetFilters, setTabsValue }) => {
     const microfrontendsApi = useMicrofrontendsApi()
 
     const microfrontendListQuery = useQuery({
@@ -133,7 +141,7 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, proje
     return (
         <ApiDataFetcher queries={[microfrontendListQuery]}>
             {microfrontendListQuery?.data?.length !== 0 ? (
-                <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} />
+                <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} setTabsValue={setTabsValue} />
             ) : (
                 <NoMicrofrontendPlaceholder projectId={projectId} />
             )}

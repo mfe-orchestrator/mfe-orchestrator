@@ -429,6 +429,7 @@
         "mfe_orchestrator_hub": "MFE Orchestrator Hub",
         "custom_url": "Custom URL",
         "custom_source": "Custom Source",
+        "canary_release": "Canary Release",
         "canary_settings": "Canary Settings",
         "canary_settings_description": "Configure canary deployment settings",
         "enable_canary": "Enable Canary Deployment",

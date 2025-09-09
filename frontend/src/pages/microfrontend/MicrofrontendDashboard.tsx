@@ -12,7 +12,8 @@ const MicrofrontendDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const projectStore = useProjectStore()
     const { t } = useTranslation()
-    const navigate = useNavigate()
+	const navigate = useNavigate()
+    const [tabsValue, setTabsValue] = useState<"grid" | "list">("grid")
 
     const onResetFilters = () => {
         setSearchTerm("")
@@ -26,7 +27,7 @@ const MicrofrontendDashboard = () => {
         <SinglePageLayout
             title={t("microfrontend.dashboard.title")}
             description={t("microfrontend.dashboard.description")}
-            right={
+            left={
                 <div className="flex-[1_1_280px] flex items-center justify-end gap-2 @[509px]:max-w-xs">
                     <div className="relative w-full flex-grow">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-secondary" />
@@ -34,17 +35,18 @@ const MicrofrontendDashboard = () => {
                     </div>
                 </div>
             }
-            left={
-                <div>
-                    <Button variant="secondary" onClick={onAddNewMicrofrontend} className="flex-[0_0_auto]">
-                        <CirclePlus />
-                        {t("microfrontend.add_new")}
-                    </Button>
-                </div>
+            right={
+                tabsValue !== "grid" ? (
+                    <div>
+                        <Button variant="secondary" onClick={onAddNewMicrofrontend} className="flex-[0_0_auto]">
+                            <CirclePlus />
+                            {t("microfrontend.add_new")}
+                        </Button>
+                    </div>
+                ) : null
             }
-            lrContainerClassname="flex-wrap-reverse"
         >
-            <MicrofrontendList searchTerm={searchTerm} onResetFilters={onResetFilters} projectId={projectStore.project?._id} />
+            <MicrofrontendList searchTerm={searchTerm} onResetFilters={onResetFilters} projectId={projectStore.project?._id} setTabsValue={setTabsValue} />
         </SinglePageLayout>
     )
 }
