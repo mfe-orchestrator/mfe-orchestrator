@@ -9,7 +9,7 @@ import useStorageApi from "@/hooks/apiClients/useStorageApi"
 import useProjectStore from "@/store/useProjectStore"
 import { useQuery } from "@tanstack/react-query"
 import { Pencil, Plus, Trash2 } from "lucide-react"
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -69,7 +69,12 @@ const StoragesPage: React.FC = () => {
                                         <TableRow key={storage._id}>
                                             <TableCell className="font-medium">{storage.name}</TableCell>
                                             <TableCell>
-                                                <Badge>{storage.type}</Badge>
+                                                <div className="flex items-center gap-2">
+                                                    {storage.type === 'AWS' && <img src="/img/aws.svg" alt="AWS" className="h-5 w-5" />}
+                                                    {storage.type === 'AZURE' && <img src="/img/Azure.svg" alt="Azure" className="h-5 w-5" />}
+                                                    {storage.type === 'GOOGLE' && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-5 w-5" />}
+                                                    <Badge>{storage.type}</Badge>
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end space-x-2">

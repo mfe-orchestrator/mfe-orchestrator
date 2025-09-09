@@ -13,7 +13,13 @@ import Notification from './theme/Notification';
 import ThemeHandler from './theme/ThemeHandler';
 import InitialThemeWrapper from './theme/InitialThemeWrapper';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App: React.FC = () => (
   <Suspense fallback={<Spinner />}>
@@ -36,6 +42,6 @@ const App: React.FC = () => (
     </I18nextProvider>
 
   </Suspense>
-);
+)
 
 export default App;
