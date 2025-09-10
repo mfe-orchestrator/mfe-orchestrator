@@ -45,7 +45,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     ]
 
     return (
-        <div className="h-screen w-screen flex gap-2 p-2 overflow-hidden">
+        <div className="h-screen w-screen flex gap-2 p-2 overflow-hidden max-w-screen-2xl mx-auto">
             <Sidebar isCollapsed={isSidebarCollapsed} mainNavItems={mainNavItems} toggleCollapsed={toggleSidebar} />
 
             {/* Main content */}

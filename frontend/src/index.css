@@ -75,19 +75,23 @@
   
 	--primary: 247 100% 88%;
 	--primary-foreground: 252 21% 6%;
-  
+    --primary-active: 247 100% 81%;
+
 	--secondary: 247 100% 78%;
 	--secondary-foreground: 252 21% 6%;
+	--secondary-active: 247 100% 72%;
 
 	--muted: 247 40% 25%;
 	--muted-foreground: 247 55% 75%;
   
 	--accent: 96 100% 92%;
 	--accent-foreground: 252 21% 6%;
-  
+  	--accent-active: 96 100% 85%;
+
 	--destructive: 359 100% 85%;
 	--destructive-foreground: 252 21% 6%;
-  
+  	--destructive-active: 359 100% 78%;
+
 	--border: 270 18% 86%;
 	--input: 270 18% 86%;
 	--ring: 247 100% 88% / 25%;

@@ -63,37 +63,37 @@ const SettingsPage: React.FC = () => {
                 <ProjectStatsSection
                     stats={[
                         {
-                            icon: <Server className="h-6 w-6" />,
+                            icon: <Server />,
                             title: t("settings.stats.environments"),
                             value: projectQuery.data?.count?.environments,
                             href: "/environments"
                         },
                         {
-                            icon: <Users className="h-6 w-6" />,
+                            icon: <Users />,
                             title: t("settings.stats.teamMembers"),
                             value: projectQuery.data?.count?.users,
                             href: "/project-users"
                         },
                         {
-                            icon: <Box className="h-6 w-6" />,
+                            icon: <Box />,
                             title: t("settings.stats.microFrontends"),
                             value: projectQuery.data?.count?.microfrontends,
                             href: "/microfrontends"
                         },
                         {
-                            icon: <HardDrive className="h-6 w-6" />,
+                            icon: <HardDrive />,
                             title: t("settings.stats.storages"),
                             value: projectQuery.data?.count?.storages,
                             href: "/storages"
                         },
                         {
-                            icon: <Key className="h-6 w-6" />,
+                            icon: <Key />,
                             title: t("settings.stats.apiKeys"),
                             value: projectQuery.data?.count?.apiKeys,
                             href: "/api-keys"
                         },
                         {
-                            icon: <GitBranch className="h-6 w-6" />,
+                            icon: <GitBranch />,
                             title: t("settings.stats.codeRepositories"),
                             value: projectQuery.data?.count?.codeRepositories,
                             href: "/code-repositories"
