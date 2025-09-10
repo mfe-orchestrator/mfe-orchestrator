@@ -34,7 +34,7 @@ const AddAzureRepositoryPage = () => {
     }
   });
 
-  const getRepositoryQuery = useQuery({
+  useQuery({
     queryKey: ['getRepository', params.id],
     queryFn:  async () => {
       const data = await repositoryApi.getRepositoryById(params.id);

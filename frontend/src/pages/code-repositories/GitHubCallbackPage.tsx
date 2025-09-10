@@ -42,13 +42,13 @@ const GitHubCallbackPage = () => {
     }
 
 
-    await saveRepositoryMutation.mutateAsync({
+    const repository = await saveRepositoryMutation.mutateAsync({
       code,
       state
     })
     setStatus('success');
 
-    navigate('/code-repositories')
+    navigate(`/code-repositories/github/${repository._id}`)
   }
 
   useEffect(() => {

@@ -8,28 +8,78 @@ export enum CodeRepositoryProvider {
     AZURE_DEV_OPS = "AZURE_DEV_OPS"
 }
 
+export interface IGithubData {
+    organizationId?: string,
+    type: 'personal' | 'organization'
+}
+
+export interface IAzureData {
+    projectId: string,
+    organization?: string
+}
+
+export interface IGitlabData {
+    url: string,
+    project: string
+}
+
 export interface ICodeRepository extends Document<ObjectId> {
     name: string
     provider: CodeRepositoryProvider
     accessToken: string
     refreshToken?: string
+    githubData?: IGithubData,
+    azureData?: IAzureData,
+    gitlabData?: IGitlabData,
     default?: boolean,
-    githubData?: {
-        user: GithubUser,
-        organizations: GithubOrganization[]
-    },
-    azureData?:{
-        user: AzureUser,
-        organizations: AzureOrganization[]
-    },
-    gitlabData?: {
-        url: string
-    },
-    isActive: boolean
+    isActive?: boolean
     projectId: ObjectId
     createdAt: Date
     updatedAt: Date
 }
+
+const githubDataSchema = new Schema<IGithubData>(
+    {
+        organizationId: {
+            type: String,
+            required: false
+        },
+        type: {
+            type: String,
+            enum: ['personal', 'organization'],
+            required: true,
+            default: 'personal'
+        }
+    }
+)
+
+const azureDataSchema = new Schema<IAzureData>(
+    {
+        projectId: {
+            type: String,
+            required: true
+        },
+        organization: {
+            type: String,
+            required: false,
+        }
+    }
+)
+
+const gitlabDataSchema = new Schema<IGitlabData>(
+    {
+        url: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        project: {
+            type: String,
+            required: false,
+            trim: true
+        }
+    }
+)
 
 const codeRepositorySchema = new Schema<ICodeRepository>(
     {
@@ -54,21 +104,27 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
             type: String,
             trim: true
         },
-        default: {
-            type: Boolean,
-            default: false
-        },
         githubData: {
-            type: Object,
+            type: githubDataSchema,
             required: false
         },
         azureData: {
-            type: Object,
+            type: azureDataSchema,
             required: false
+        },
+        gitlabData: {
+            required: false,
+            type: gitlabDataSchema
         },
         isActive: {
             type: Boolean,
-            default: true
+            default: true,
+            required: false
+        },
+        default: {
+            type: Boolean,
+            default: false,
+            required: false
         },
         projectId: {
             type: Schema.Types.ObjectId,

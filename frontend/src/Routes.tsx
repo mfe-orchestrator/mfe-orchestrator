@@ -33,6 +33,7 @@ const CodeRepositoryPage = lazy(() => import("./pages/code-repositories/CodeRepo
 const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCallbackPage"));
 const AddAzure = lazy(() => import("./pages/code-repositories/AddAzureRepositoryPage"));
 const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlabRepositoryPage"));
+const AddGithub = lazy(() => import("./pages/code-repositories/AddGithubRepositoryPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -189,6 +190,12 @@ const PrivateRoutes: React.FC = () => {
             path="/code-repositories/gitlab/:id"
             element={
               <RouteWithSuspense element={<AddGitlab />} />
+            }
+          />
+          <Route
+            path="/code-repositories/github/:id"
+            element={
+              <RouteWithSuspense element={<AddGithub />} />
             }
           />
           <Route

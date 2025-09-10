@@ -3,6 +3,7 @@ import CodeRepositoryService, { CodeRepositoryCreateInput, CodeRepositoryUpdateI
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import UpdateGithubDTO from "../types/UpdateGithubDTO"
 
 export default async function codeRepositoryController(fastify: FastifyInstance) {
     
@@ -47,7 +48,6 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
 
     fastify.post<{
         Params: {
-            projectId: string
             repositoryId: string
         }
     }>('/repositories/:repositoryId/deactivate', async (request, reply) => {
@@ -67,13 +67,30 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         if(!projectId){
             throw new ProjectHeaderNotFoundError()
         }
-        await new CodeRepositoryService(request.databaseUser).addRepositoryGithub(
+        const repository = await new CodeRepositoryService(request.databaseUser).addRepositoryGithub(
             code,
             state,
             projectId
         )
-        reply.send()
+        reply.send(repository)
         
+    })
+
+    fastify.put<{
+        Params: {
+            repositoryId: string
+        }
+    }>('/repositories/:repositoryId/default', async (request, reply) => {
+        reply.send(await new CodeRepositoryService(request.databaseUser).makeDefault(request.params.repositoryId))
+    })
+
+    fastify.put<{
+        Params: {
+            repositoryId: string
+        },
+        Body: UpdateGithubDTO
+    }>('/repositories/:repositoryId/github', async (request, reply) => {
+        reply.send(await new CodeRepositoryService(request.databaseUser).updateGithub(request.params.repositoryId, request.body))
     })
 
     fastify.post<{
@@ -126,6 +143,18 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             request.body.pat
         )
         reply.send(result)
+    })
+
+    fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/github/organizations',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGithubOrganizations(
+            request.params.repositoryId
+        ))
+    })
+
+    fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/github/user',  async (request, reply) =>{
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGithubUser(
+            request.params.repositoryId
+        ))
     })
 
     fastify.get<{Params: {repositoryId: string}}>('/repositories/:repositoryId/azure/projects',  async (request, reply) =>{

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button"
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
-import { Plus, Trash2, GitBranch, Edit } from 'lucide-react';
+import { Plus, Trash2, GitBranch, Edit, Star } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useProjectStore from '@/store/useProjectStore';
@@ -35,6 +35,14 @@ const CodeRepositoryPage = () => {
   // Mock delete mutation - replace with actual API call
   const deleteRepositoryMutation = useMutation({
     mutationFn: async (id: string) => codeRepositoriesApi.deleteSingle(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['code-repositories', project.project?._id] });
+    },
+  });
+
+  // Set repository as default mutation
+  const setDefaultMutation = useMutation({
+    mutationFn: async (repositoryId: string) => codeRepositoriesApi.setRepositoryAsDefault(repositoryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['code-repositories', project.project?._id] });
     },
@@ -79,6 +87,7 @@ const CodeRepositoryPage = () => {
                   <TableRow>
                     <TableHead>{t('codeRepositories.columns.name')}</TableHead>
                     <TableHead>{t('codeRepositories.columns.provider')}</TableHead>
+                    <TableHead>Default</TableHead>
                     <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -91,23 +100,40 @@ const CodeRepositoryPage = () => {
                           {repository.provider}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={setDefaultMutation.isPending}
+                          onClick={() => setDefaultMutation.mutate(repository._id)}
+                          className="h-8 w-8"
+                        >
+                          <Star
+                            className={`h-4 w-4 ${
+                              repository.default
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300 hover:text-yellow-400'
+                            }`}
+                          />
+                        </Button>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                          {[CodeRepositoryProvider.AZURE_DEV_OPS, CodeRepositoryProvider.GITLAB].includes(repository.provider) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                                  navigate(`/code-repositories/azure/${repository._id}`);
-                                } else {
-                                  navigate(`/code-repositories/gitlab/${repository._id}`);
-                                }
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+                                navigate(`/code-repositories/azure/${repository._id}`);
+                              } else if (repository.provider === CodeRepositoryProvider.GITHUB) {
+                                navigate(`/code-repositories/github/${repository._id}`);
+                              } else if (repository.provider === CodeRepositoryProvider.GITLAB) {
+                                navigate(`/code-repositories/gitlab/${repository._id}`);
+                              }
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -128,9 +154,9 @@ const CodeRepositoryPage = () => {
             }
           </CardContent>
         </Card>
-        
-        <AddRepositoryDialog 
-          isOpen={isCreateDialogOpen} 
+
+        <AddRepositoryDialog
+          isOpen={isCreateDialogOpen}
           onOpenChange={(open) => {
             setIsCreateDialogOpen(open);
             if (!open) {
@@ -138,7 +164,7 @@ const CodeRepositoryPage = () => {
             }
           }}
         />
-        
+
         <DeleteConfirmationDialog
           isOpen={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}

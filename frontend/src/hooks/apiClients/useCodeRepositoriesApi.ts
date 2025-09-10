@@ -94,12 +94,13 @@ export interface GithubOrganization {
 export interface ICodeRepository {
     _id: string
     name: string
+    default: boolean
     provider: CodeRepositoryProvider
     accessToken: string
     refreshToken?: string
     githubData?: {
-        user: GithubUser,
-        organizations: GithubOrganization[]
+        organizationId: string,
+        type: 'personal' | 'organization'
     },
     isActive: boolean
     projectId: string
@@ -107,6 +108,11 @@ export interface ICodeRepository {
     updatedAt: Date
 }
 
+export interface IUpdateCodeRepositoryGithubData {
+    name: string,
+    organizationId: string,
+    type: 'personal' | 'organization'
+}
 
 export interface AzureDevOpsProject {
     id: string;
@@ -155,12 +161,40 @@ const useCodeRepositoriesApi = () => {
         return data.data
     }
 
-    const addRepositoryGithub = async (data: AddRepositoryGithubDTO) =>{
-        await apiClient.doRequest({
+    const updateRepository = async (repositoryId: string, data: ICodeRepository) : Promise<any> => {
+        const response = await apiClient.doRequest({
+            url: `/api/repositories/${repositoryId}`,
+            method: 'PUT',
+            data,
+        });
+        return response.data
+    }
+
+    const updateRepositoryGithub = async (repositoryId: string, data: IUpdateCodeRepositoryGithubData) : Promise<any> => {
+        const response = await apiClient.doRequest({
+            url: `/api/repositories/${repositoryId}/github`,
+            method: 'PUT',
+            data,
+        });
+        return response.data
+    }
+
+    const setRepositoryAsDefault = async (repositoryId: string): Promise<any> => {
+        const response = await apiClient.doRequest({
+            url: `/api/repositories/${repositoryId}/default`,
+            method: 'PUT',
+        });
+        return response.data
+    }
+    
+
+    const addRepositoryGithub = async (data: AddRepositoryGithubDTO) : Promise<ICodeRepository> =>{
+        const request = await apiClient.doRequest<ICodeRepository>({
             url: `/api/repositories/callback/github`,
             method: 'POST',
             data
         });
+        return request.data
     }
 
     const addRepositoryAzure = async (data: AddRepositoryAzureDTO) =>{
@@ -238,6 +272,14 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
+    const getGithubUser = async (repositoryId: string): Promise<GithubUser> => {
+        const response = await apiClient.doRequest<GithubUser>({
+            url: `/api/repositories/${repositoryId}/github/user`,
+            method: 'GET',
+        });
+        return response.data
+    }
+
     const getGitlabGroups = async (repositoryId: string): Promise<any[]> => {
         const response = await apiClient.doRequest<any[]>({
             url: `/api/repositories/${repositoryId}/gitlab/groups`,
@@ -269,15 +311,19 @@ const useCodeRepositoriesApi = () => {
         addRepositoryAzure,
         addRepositoryGitlab,
         deleteSingle,
+        updateRepository,
         testConnectionAzure,
         testConnectionGitlab,
         getAzureProjects,
         getAzureRepositories,
         checkRepositoryNameAvailability,
         getGithubOrganizations,
+        getGithubUser,
         getGitlabGroups,
         getGitlabGroupRepositories,
-        getGitlabGroupPaths
+        getGitlabGroupPaths,
+        updateRepositoryGithub,
+        setRepositoryAsDefault
     }
     
 }

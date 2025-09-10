@@ -7,6 +7,7 @@ import { fastify } from ".."
 import GithubClient from "../client/GithubClient"
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import GitLabClient from "../client/GitlabClient"
+import UpdateGithubDTO from "../types/UpdateGithubDTO"
 
 export interface CodeRepositoryCreateInput {
     name: string
@@ -44,6 +45,23 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         await this.ensureAccessToProject(repository.projectId)
         
         return repository
+    }
+
+    async makeDefault(repositoryId: string){
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+
+        if(repository.default) return
+        
+        repository.default = true
+        await repository.save()
+        
+        await CodeRepository.updateMany(
+            { _id: { $ne: repositoryId } },
+            { default: false }
+        )
     }
 
     async create(projectId: string, repositoryData: CodeRepositoryCreateInput): Promise<ICodeRepository> {
@@ -107,6 +125,30 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         }
     }
 
+    async updateGithub(repositoryId: string, body: UpdateGithubDTO): Promise<ICodeRepository | null> {
+        const repository = await this.findById(repositoryId)
+
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+
+        if(repository.provider !== CodeRepositoryProvider.GITHUB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitHub",
+                statusCode: 400
+            })
+        }
+
+        repository.name = body.name
+        repository.githubData = {
+            type: body.type,
+            organizationId: body.organizationId
+        }
+
+        return await repository.save()
+    }
+
     async delete(repositoryId: string): Promise<DeleteResult> {
         const repository = await this.findById(repositoryId)
         if (!repository) {
@@ -140,10 +182,6 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             name: userGithub.name,
             provider: CodeRepositoryProvider.GITHUB,
             accessToken: responseGithub.access_token,
-            githubData: {
-                user: userGithub,
-                organizations: userOrganizations
-            },
             projectId: new Types.ObjectId(projectId),
             isActive: true
         })
@@ -237,6 +275,21 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         }
 
         return new GithubClient().getUserOrganizations(repository.accessToken)
+    }
+
+    async getGithubUser(repositoryId: string): Promise<unknown> {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.GITHUB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitHub",
+                statusCode: 400
+            })
+        }
+        return new GithubClient().getUser(repository.accessToken)
     }
 
     async getGitlabGroups(repositoryId: string): Promise<unknown> {

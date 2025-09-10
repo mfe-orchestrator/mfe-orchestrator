@@ -107,10 +107,12 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
                     <Cog />
                     {t("common.configuration")}
                 </Button>
-                <Button variant="secondary" onClick={() => setIsBuildDialogOpen(true)} className="flex-1">
-                    <Hammer />
-                    Build
-                </Button>
+                {mfe.codeRepository?.enabled &&
+                    <Button variant="secondary" onClick={() => setIsBuildDialogOpen(true)} className="flex-1">
+                        <Hammer />
+                        Build
+                    </Button>
+                }
             </CardFooter>
 
             <Dialog open={isBuildDialogOpen} onOpenChange={setIsBuildDialogOpen}>

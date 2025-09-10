@@ -37,6 +37,23 @@ export interface Microfrontend {
         url?: string;
         storageId?: string;
         entryPoint?: string
+    },
+    codeRepository?: {
+        enabled: boolean
+        repositoryId: string
+        name: string
+        azure?: {
+            projectId?: string
+        },
+        github?: {
+            organizationId?: string
+            private?: boolean
+        },
+        gitlab?: {
+            groupId?: number,
+            path?: string,
+            private?: boolean
+        }
     }
     description?: string;
     createdAt?: Date;
