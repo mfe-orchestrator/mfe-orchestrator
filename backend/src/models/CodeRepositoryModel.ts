@@ -138,8 +138,6 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
     }
 )
 
-// Add index on provider and name for faster lookups
-codeRepositorySchema.index({ accessToken: 1 }, { unique: true })
 
 const CodeRepository = mongoose.model<ICodeRepository>("CodeRepository", codeRepositorySchema)
 export default CodeRepository

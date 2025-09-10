@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify"
-import CodeRepositoryService, { CodeRepositoryCreateInput, CodeRepositoryUpdateInput } from "../service/CodeRepositoryService"
-import AuthenticationMethod from "../types/AuthenticationMethod"
+import CodeRepositoryService from "../service/CodeRepositoryService"
+import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
@@ -93,6 +93,15 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send(await new CodeRepositoryService(request.databaseUser).updateGithub(request.params.repositoryId, request.body))
     })
 
+    fastify.put<{
+        Params: {
+            repositoryId: string
+        },
+        Body: CreateGitlabRepositoryDto
+    }>('/repositories/:repositoryId/gitlab', async (request, reply) => {
+        reply.send(await new CodeRepositoryService(request.databaseUser).editRepositoryGitlab(request.body, request.params.repositoryId))
+    })
+
     fastify.post<{
         Body: {
             organization: string
@@ -119,19 +128,13 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send(result)
     })
 
-    fastify.post<{
-        Body: {
-            url: string
-            pat: string
-        }
-    }>('/repositories/gitlab',  async (request, reply) =>{
+    fastify.post<{ Body: CreateGitlabRepositoryDto }>('/repositories/gitlab',  async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if(!projectId){
             throw new ProjectHeaderNotFoundError()
         }
         await new CodeRepositoryService(request.databaseUser).addRepositoryGitlab(
-            request.body.url,
-            request.body.pat,
+            request.body,
             projectId
         )
         reply.send()

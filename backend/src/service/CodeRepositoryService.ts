@@ -8,6 +8,7 @@ import GithubClient from "../client/GithubClient"
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import GitLabClient from "../client/GitlabClient"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
+import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 
 export interface CodeRepositoryCreateInput {
     name: string
@@ -207,17 +208,47 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return new AzureDevOpsClient().getProjects(pat, organization)
     }
 
-    async addRepositoryGitlab(url: string, pat: string, projectId: string) {
+    async addRepositoryGitlab(body: CreateGitlabRepositoryDto, projectId: string) {
         await this.ensureAccessToProject(projectId)
         
         const repository = new CodeRepository({
-            name: url,
+            name: body.name,
             provider: CodeRepositoryProvider.GITLAB,
-            accessToken: pat,
+            accessToken: body.pat,
             projectId: new Types.ObjectId(projectId),
-            isActive: true
+            isActive: true,
+            gitlabData: {
+                url: body.url,
+                project: body.project
+            },
+            githubData: undefined,
+            azureData: undefined
         })
 
+        return await repository.save()
+    }
+
+    async editRepositoryGitlab(body: CreateGitlabRepositoryDto, repositoryId: string) {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitLab",
+                statusCode: 400
+            })
+        }
+
+        repository.name = body.name
+        repository.accessToken = body.pat
+        repository.gitlabData = {
+            url: body.url,
+            project: body.project
+        }
+        repository.githubData = undefined
+        repository.azureData = undefined
         return await repository.save()
     }
 

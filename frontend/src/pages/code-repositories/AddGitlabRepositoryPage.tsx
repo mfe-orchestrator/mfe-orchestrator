@@ -10,10 +10,13 @@ import useCodeRepositoriesApi, { GitlabProject } from '@/hooks/apiClients/useCod
 import SinglePageLayout from '@/components/SinglePageLayout';
 import { FormProvider, useForm } from 'react-hook-form';
 import TextField from '@/components/input/TextField.rhf';
+import SelectField from '@/components/input/SelectField.rhf';
 
 interface AddGitlabFormValues {
+    name: string
     url: string
     pat: string
+    project?: string
 }
 
 const AddGitlabRepositoryPage = () => {
@@ -34,12 +37,31 @@ const AddGitlabRepositoryPage = () => {
     }
   });
 
-  const getRepositoryQuery = useQuery({
+  const editRepositoryMutation = useMutation({
+    mutationFn: (data : AddGitlabFormValues) => repositoryApi.editRepositoryGitlab(params.id, data),
+    onSuccess: () => {
+      navigate('/code-repositories');
+    },
+    onError: (error: unknown) => {
+      setError((error as Error)?.message || t('codeRepositories.gitlab.error.failedToEdit'));
+    }
+  });
+
+  useQuery({
     queryKey: ['getRepository', params.id],
     queryFn: async () => {
       const data = await repositoryApi.getRepositoryById(params.id);
-      form.setValue('url', data.name);
+      form.setValue('name', data.name);
+      form.setValue('url', data.gitlabData?.url);
       form.setValue('pat', data.accessToken);
+      if (data.gitlabData?.project) {
+        form.setValue('project', data.gitlabData.project);
+        testConnectionMutation.mutateAsync({
+          name: data.name,
+          url: data.gitlabData.url,
+          pat: data.accessToken,
+        })
+      }
 
       return data;
     },
@@ -47,11 +69,18 @@ const AddGitlabRepositoryPage = () => {
   });
 
   const testConnectionMutation = useMutation({
-    mutationFn: repositoryApi.testConnectionGitlab
+    mutationFn: repositoryApi.testConnectionGitlab,
+    onError: (error: unknown) => {
+      setError((error as Error)?.message || t('codeRepositories.gitlab.error.connectionFailed'));
+    }
   });
 
   const handleSubmit = async (values : AddGitlabFormValues) => {
-    await addRepositoryMutation.mutateAsync(values);
+    if(params.id){
+      await editRepositoryMutation.mutateAsync(values);
+    }else{
+      await addRepositoryMutation.mutateAsync(values);
+    }
   };
 
   const requiredScopes = [
@@ -92,6 +121,15 @@ const AddGitlabRepositoryPage = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <TextField
+                      name="name"
+                      label={t('codeRepositories.gitlab.name')}
+                      placeholder={t('codeRepositories.gitlab.namePlaceholder')}
+                      required
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <TextField
                       name="url"
@@ -139,41 +177,41 @@ const AddGitlabRepositoryPage = () => {
                     type="button"
                     variant='secondary'
                     className="w-full"
-                    disabled={addRepositoryMutation.isPending || testConnectionMutation.isPending}
+                    disabled={addRepositoryMutation.isPending || testConnectionMutation.isPending || editRepositoryMutation.isPending}
                     onClick={() => testConnectionMutation.mutateAsync(form.getValues())}
                   >
                     {t('codeRepositories.gitlab.testConnection')}
                   </Button>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={!testConnectionMutation.data || addRepositoryMutation.isPending || testConnectionMutation.isPending}
-                  >
-                    {addRepositoryMutation.isPending ? t('codeRepositories.gitlab.connecting') : t('codeRepositories.gitlab.connect')}
-                  </Button>
-                </form>
-              </CardContent>
-              {testConnectionMutation.data && (
+                  {testConnectionMutation.data && (
                 <CardContent className="pt-4 border-t mt-4">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                     <p className="text-sm font-medium text-green-600">{t('codeRepositories.gitlab.connectionSuccess')}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {t('codeRepositories.gitlab.projectsFound', { count: testConnectionMutation.data.length })}:
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {testConnectionMutation.data.map((project: GitlabProject) => (
-                      <span 
-                        key={project.id}
-                        className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-md"
-                      >
-                        {project.name}
-                      </span>
-                    ))}
+                  <div className="mt-3">
+                    <SelectField
+                      name="project"
+                      label={t('codeRepositories.gitlab.selectProject')}
+                      placeholder={t('codeRepositories.gitlab.selectProjectPlaceholder')}
+                      options={testConnectionMutation.data.map((project: GitlabProject) => ({
+                        value: project.id.toString(),
+                        label: project.name
+                      }))}
+                      required
+                    />
                   </div>
                 </CardContent>
               )}
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={!testConnectionMutation.data || !form.watch('project') || addRepositoryMutation.isPending || testConnectionMutation.isPending || editRepositoryMutation.isPending}
+                  >
+                    {(addRepositoryMutation.isPending || editRepositoryMutation.isPending) ? (params.id ? t('codeRepositories.gitlab.updating') : t('codeRepositories.gitlab.connecting')) : (params.id ? t('codeRepositories.gitlab.update') : t('codeRepositories.gitlab.connect'))}
+                  </Button>
+                </form>
+              </CardContent>
+              
             </Card>
           </FormProvider>
 

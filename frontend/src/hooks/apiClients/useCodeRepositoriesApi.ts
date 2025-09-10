@@ -11,6 +11,7 @@ export interface AddRepositoryAzureDTO{
 }
 
 export interface AddRepositoryGitlabDTO{
+    name: string
     pat: string
     url: string
 }
@@ -222,6 +223,14 @@ const useCodeRepositoriesApi = () => {
         });
     }
 
+    const editRepositoryGitlab = async (repositoryId: string, data: AddRepositoryGitlabDTO) =>{
+        await apiClient.doRequest({
+            url: `/api/repositories/${repositoryId}/gitlab`,
+            method: 'PUT',
+            data
+        });
+    }
+
     const testConnectionGitlab = async (data: AddRepositoryGitlabDTO) : Promise<GitlabProject[]>=>{
         const response = await apiClient.doRequest<GitlabProject[]>({
             url: `/api/repositories/gitlab/test`,
@@ -323,7 +332,8 @@ const useCodeRepositoriesApi = () => {
         getGitlabGroupRepositories,
         getGitlabGroupPaths,
         updateRepositoryGithub,
-        setRepositoryAsDefault
+        setRepositoryAsDefault,
+        editRepositoryGitlab
     }
     
 }

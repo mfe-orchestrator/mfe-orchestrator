@@ -700,6 +700,8 @@
             "title": "Connect GitLab",
             "description": "Connect your GitLab instance using a Personal Access Token",
             "connection": "GitLab Connection",
+            "name": "Name",
+            "namePlaceholder": "Enter connection name",
             "gitlabUrl": "GitLab URL",
             "gitlabUrlPlaceholder": "https://gitlab.com",
             "gitlabUrlHelp": "The URL of your GitLab instance (e.g., https://gitlab.com or https://gitlab.company.com)",
@@ -712,6 +714,8 @@
             "connectionSuccess": "Connection successful!",
             "projectsFound": "Found {{count}} project",
             "projectsFound_plural": "Found {{count}} projects",
+            "selectProject": "Select Project",
+            "selectProjectPlaceholder": "Choose a project to work with",
             "howToCreate": "How to Create a Personal Access Token",
             "openGitlab": "Open GitLab",
             "requiredScopes": "Required Token Scopes",
@@ -745,8 +749,13 @@
                 }
             },
             "error": {
-                "failedToAdd": "Failed to add GitLab repository"
-            }
+                "failedToAdd": "Failed to add GitLab repository",
+                "failedToEdit": "Failed to edit GitLab repository",
+                "connectionFailed": "Failed to connect to GitLab"
+            },
+            "updating": "Updating...",
+            "connecting": "Connecting...",
+            "update": "Update"
         }
     }
 }
