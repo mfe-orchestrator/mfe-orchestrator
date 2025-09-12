@@ -245,11 +245,26 @@ class GithubClient {
         return response.data
     }
 
-    createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
-        const owner = 'mfe-orchestrator-hub'
-        const repo = 'examples-vite-module-federation'
+    getRepositories = async (accessToken: string, orgName?: string): Promise<GithubRepository[]> => {
+        const url = orgName 
+            ? `https://api.github.com/orgs/${orgName}/repos`
+            : 'https://api.github.com/user/repos'
+
+        const response = await axios.request<GithubRepository[]>({
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator-Hub'
+            }
+        })
+
+        return response.data
+    }
+
+    createBuild = async (buildData: CreateBuildRequest, owner: string, repo: string,  accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
         const workflowId = 'build-and-deploy-remotes.yml'
-        
+
         const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`
 
         const response = await axios.request<GithubWorkflowDispatchResponse>({

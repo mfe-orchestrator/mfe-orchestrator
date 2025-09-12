@@ -13,17 +13,18 @@ import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import { GitBranch } from "lucide-react"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
+import { CodeRepositoryType } from "@/hooks/apiClients/useCodeRepositoriesApi"
 
 interface GitHubConnectionForm {
     connectionName: string
     selectedOwner: string
-    ownerType: 'personal' | 'organization'
+    ownerType: CodeRepositoryType
 }
 
 interface OwnerOption {
     value: string
     label: string
-    type: 'personal' | 'organization'
+    type: CodeRepositoryType
     icon?: string
 }
 
@@ -38,7 +39,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
         defaultValues: {
             connectionName: "",
             selectedOwner: "",
-            ownerType: 'personal'
+            ownerType: CodeRepositoryType.PERSONAL
         }
     })
 
@@ -60,8 +61,8 @@ const AddGitHubRepositoryPage: React.FC = () => {
             const data = await getGithubOrganizations(repositoryId!)
 
             if (data.length === 0) {
-                form.setValue('selectedOwner', 'personal')
-                form.setValue('ownerType', 'personal')
+                form.setValue('selectedOwner', CodeRepositoryType.PERSONAL)
+                form.setValue('ownerType', CodeRepositoryType.PERSONAL)
             }
 
             return data;
@@ -83,17 +84,17 @@ const AddGitHubRepositoryPage: React.FC = () => {
         // Add personal profile with real user data
         if (githubUser) {
             options.push({
-                value: 'personal',
+                value: CodeRepositoryType.PERSONAL,
                 label: githubUser.name || githubUser.login || t('codeRepositories.github.personalProfile'),
-                type: 'personal',
+                type: CodeRepositoryType.PERSONAL,
                 icon: githubUser.avatar_url
             })
         } else {
             // Fallback while loading
             options.push({
-                value: 'personal',
+                value: CodeRepositoryType.PERSONAL,
                 label: t('codeRepositories.github.personalProfile'),
-                type: 'personal',
+                type: CodeRepositoryType.PERSONAL,
                 icon: 'https://github.com/identicons/personal.png'
             })
         }
@@ -104,7 +105,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
                 options.push({
                     value: org.login,
                     label: org.name || org.login,
-                    type: 'organization',
+                    type: CodeRepositoryType.ORGANIZATION,
                     icon: org.avatar_url
                 })
             })
@@ -119,12 +120,12 @@ const AddGitHubRepositoryPage: React.FC = () => {
         console.log(repository)
         if (repository?.githubData) {
             form.setValue('connectionName', repository.name || '')
-            form.setValue('ownerType', repository.githubData.type || 'personal')
+            form.setValue('ownerType', repository.githubData.type || CodeRepositoryType.PERSONAL)
             
-            if (repository.githubData.type === 'organization' && repository.githubData.organizationId) {
+            if (repository.githubData.type === CodeRepositoryType.ORGANIZATION && repository.githubData.organizationId) {
                 form.setValue('selectedOwner', repository.githubData.organizationId)
             } else {
-                form.setValue('selectedOwner', 'personal')
+                form.setValue('selectedOwner', CodeRepositoryType.PERSONAL)
             }
         }
     }, [repositoryQuery.data, form])
@@ -136,8 +137,8 @@ const AddGitHubRepositoryPage: React.FC = () => {
 
         await updateRepositoryGithub(repositoryId, {
             name: data.connectionName,
-            type: data.selectedOwner === 'personal' ? 'personal' : 'organization',
-            organizationId: data.selectedOwner !== 'personal' ? data.selectedOwner : undefined,
+            type: data.selectedOwner === CodeRepositoryType.ORGANIZATION ? CodeRepositoryType.ORGANIZATION : CodeRepositoryType.PERSONAL,
+            organizationId: data.selectedOwner !== CodeRepositoryType.PERSONAL ? data.selectedOwner : undefined,
             
         })
 

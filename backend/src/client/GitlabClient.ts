@@ -64,7 +64,7 @@ class GitLabClient {
     return res.data;
   }
 
-  async getRepositoriesByGroupId(groupId: number): Promise<GitLabProject[]> {
+  async getRepositoriesByGroupId(groupId: string | number): Promise<GitLabProject[]> {
     const res = await this.api.get<GitLabProject[]>(`/groups/${groupId}/projects`);
     return res.data;
   }

@@ -17,7 +17,7 @@ import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import AzureStorageClient from "../client/AzureStorageAccount"
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
-import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
+import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType } from "../models/CodeRepositoryModel"
 import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
 import BuiltFrontend from "../models/BuiltFrontendModel"
@@ -295,7 +295,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
             await githubClient.createBuild({
                 name: microfrontend.codeRepository.name,
                 version: version
-            }, codeRepository.accessToken)
+            }, 
+            codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
+            microfrontend.codeRepository.name,
+            codeRepository.accessToken)
         }
     }
 

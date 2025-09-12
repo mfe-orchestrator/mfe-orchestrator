@@ -98,6 +98,10 @@ export interface GithubOrganization {
     type: string
 }
 
+export enum CodeRepositoryType {
+    PERSONAL = "PERSONAL",
+    ORGANIZATION = "ORGANIZATION"
+}
 
 export interface ICodeRepository {
     _id: string
@@ -108,7 +112,7 @@ export interface ICodeRepository {
     refreshToken?: string
     githubData?: {
         organizationId: string,
-        type: 'personal' | 'organization'
+        type: CodeRepositoryType
     },
     isActive: boolean
     projectId: string
@@ -119,7 +123,7 @@ export interface ICodeRepository {
 export interface IUpdateCodeRepositoryGithubData {
     name: string,
     organizationId: string,
-    type: 'personal' | 'organization'
+    type: CodeRepositoryType
 }
 
 export interface AzureDevOpsProject {

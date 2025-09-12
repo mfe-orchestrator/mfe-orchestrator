@@ -1,5 +1,5 @@
 import { DeleteResult, Types } from "mongoose"
-import CodeRepository, { ICodeRepository, CodeRepositoryProvider } from "../models/CodeRepositoryModel"
+import CodeRepository, { ICodeRepository, CodeRepositoryProvider, CodeRepositoryType } from "../models/CodeRepositoryModel"
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
@@ -396,6 +396,43 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             })
         }
         return new GitLabClient(repository.name, repository.accessToken).getRepositoriesByGroupId(groupId)
+    }
+
+    async getRepositories(repositoryId: string) {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider === CodeRepositoryProvider.GITHUB){
+            if(!repository.githubData?.type || !repository.githubData?.organizationId){
+                throw new BusinessException({
+                    code: "INVALID_PROVIDER",
+                    message: "Repository provider is not GitHub",
+                    statusCode: 400
+                })
+            }
+            return new GithubClient().getRepositories(repository.accessToken, repository.githubData?.type === CodeRepositoryType.ORGANIZATION ? repository.githubData.organizationId : undefined)
+        }
+        if(repository.provider === CodeRepositoryProvider.GITLAB){
+            if(!repository.gitlabData?.project){
+                throw new BusinessException({
+                    code: "INVALID_PROVIDER",
+                    message: "Repository provider is not GitLab",
+                    statusCode: 400
+                })
+            }
+            return new GitLabClient(repository.name, repository.accessToken).getRepositoriesByGroupId(repository.gitlabData?.project)
+        }
+        if(repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS){
+            if(!repository.azureData?.organization || !repository.azureData?.projectId){
+                throw new BusinessException({
+                    code: "INVALID_PROVIDER",
+                    message: "Repository provider is not Azure DevOps",
+                    statusCode: 400
+                })
+            }
+            return new AzureDevOpsClient().getRepositories(repository.accessToken, repository.azureData?.organization, repository.azureData?.projectId)
+        }   
     }
 }
 

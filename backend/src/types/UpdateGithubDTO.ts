@@ -1,5 +1,7 @@
+import { CodeRepositoryType } from "../models/CodeRepositoryModel"
+
 export default interface UpdateGithubDTO {
     name: string
-    type: 'personal' | 'organization'
+    type: CodeRepositoryType
     organizationId?: string
 }

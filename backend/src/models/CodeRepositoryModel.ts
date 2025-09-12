@@ -8,9 +8,14 @@ export enum CodeRepositoryProvider {
     AZURE_DEV_OPS = "AZURE_DEV_OPS"
 }
 
+export enum CodeRepositoryType {
+    PERSONAL = "PERSONAL",
+    ORGANIZATION = "ORGANIZATION"
+}
+
 export interface IGithubData {
     organizationId?: string,
-    type: 'personal' | 'organization'
+    type: CodeRepositoryType
 }
 
 export interface IAzureData {
@@ -46,9 +51,9 @@ const githubDataSchema = new Schema<IGithubData>(
         },
         type: {
             type: String,
-            enum: ['personal', 'organization'],
+            enum: Object.values(CodeRepositoryType),
             required: true,
-            default: 'personal'
+            default: CodeRepositoryType.PERSONAL
         }
     }
 )

@@ -27,6 +27,16 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         return reply.send(repository)
     })
 
+    fastify.get<{
+        Params: {
+            projectId: string
+            repositoryId: string
+        }
+    }>("/repositories/:repositoryId/repositories", async (request, reply) => {
+        const repository = await new CodeRepositoryService(request.databaseUser).getRepositories(request.params.repositoryId)
+        return reply.send(repository)
+    })
+
     fastify.delete<{
         Params: {
             projectId: string
