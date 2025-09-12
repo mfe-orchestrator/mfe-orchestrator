@@ -556,6 +556,10 @@
       "created_success": "Microfrontend creato",
       "created_success_message": "Il tuo microfrontend è stato creato con successo",
       "create_error": "Errore durante la creazione del microfrontend",
+      "select_repository": "Seleziona Repository",
+      "select_repository_placeholder": "Scegli un repository...",
+      "sourceCodeProvider": "Provider Codice Sorgente",
+      "create_new_repository": "Crea nuovo...",
       "noMicrofrontendsFound": "Nessun microfrontend trovato",
       "ofUsers": "degli utenti"
   },

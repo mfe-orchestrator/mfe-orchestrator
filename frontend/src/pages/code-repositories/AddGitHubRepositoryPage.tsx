@@ -137,7 +137,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
 
         await updateRepositoryGithub(repositoryId, {
             name: data.connectionName,
-            type: data.selectedOwner === CodeRepositoryType.ORGANIZATION ? CodeRepositoryType.ORGANIZATION : CodeRepositoryType.PERSONAL,
+            type: data.selectedOwner !== CodeRepositoryType.PERSONAL ? CodeRepositoryType.ORGANIZATION : CodeRepositoryType.PERSONAL,
             organizationId: data.selectedOwner !== CodeRepositoryType.PERSONAL ? data.selectedOwner : undefined,
             
         })

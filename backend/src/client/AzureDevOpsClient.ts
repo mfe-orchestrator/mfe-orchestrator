@@ -64,6 +64,25 @@ export interface AzureDevOpsProject {
     value: AzureDevOpsProject[];
   }
 
+  export interface RepositoryData{
+    id : string,
+    name : string,
+    url : string,
+    project : any,
+    defaultBranch : string,
+    size : number,
+    remoteUrl : string,
+    sshUrl : string,
+    webUrl : string,
+    isDisabled : boolean,
+    isInMaintenance : boolean
+  }
+
+  export interface GetRepositoryDTO{
+    count : number,
+    value : RepositoryData[]
+  }
+
 class AzureDevOpsClient {
 
     // Ottieni l'ID utente dal profilo
@@ -105,7 +124,7 @@ class AzureDevOpsClient {
         return response.data;
     }
 
-    async getRepositories(token: string, organization: string, project: string) {
+    async getRepositories(token: string, organization: string, project: string) : Promise<GetRepositoryDTO>{
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`;
         const response = await axios.request({
             url,

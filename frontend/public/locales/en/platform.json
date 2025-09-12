@@ -465,7 +465,11 @@
         "repository_name_placeholder": "Enter repository name",
         "created_success": "Microfrontend created",
         "created_success_message": "Your microfrontend has been created successfully",
-        "create_error": "Failed to create microfrontend"
+        "create_error": "Failed to create microfrontend",
+        "select_repository": "Select Repository",
+        "select_repository_placeholder": "Choose a repository...",
+        "sourceCodeProvider": "Source Code Provider",
+        "create_new_repository": "Create new..."
     },
     "environmentVariables": {
         "title": "Environment Variables",

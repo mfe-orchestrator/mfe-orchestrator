@@ -69,7 +69,7 @@ class GitLabClient {
     return res.data;
   }
 
-  async getRepositoryPathsByGroupId(groupId: number): Promise<string[]> {
+  async getRepositoryPathsByGroupId(groupId: string | number): Promise<string[]> {
     const repositories = await this.getRepositoriesByGroupId(groupId);
     const paths = repositories.map(repo => repo.path_with_namespace);
     

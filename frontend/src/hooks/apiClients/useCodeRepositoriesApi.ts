@@ -173,6 +173,13 @@ const useCodeRepositoriesApi = () => {
         return data.data
     }
 
+    const getRepositories = async (repositoryId : string) : Promise<any> => {
+        const data = await apiClient.doRequest({
+            url: `/api/repositories/${repositoryId}/repositories`,
+        });
+        return data.data
+    }
+
     const updateRepository = async (repositoryId: string, data: ICodeRepository) : Promise<any> => {
         const response = await apiClient.doRequest({
             url: `/api/repositories/${repositoryId}`,
@@ -353,7 +360,8 @@ const useCodeRepositoriesApi = () => {
         getGitlabGroupPaths,
         updateRepositoryGithub,
         setRepositoryAsDefault,
-        editRepositoryGitlab
+        editRepositoryGitlab,
+        getRepositories
     }
     
 }

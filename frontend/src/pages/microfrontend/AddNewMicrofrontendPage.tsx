@@ -12,7 +12,7 @@ import TextField from "@/components/input/TextField.rhf"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import SelectField from "@/components/input/SelectField.rhf"
 import Switch from "@/components/input/Switch.rhf"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation } from "@tanstack/react-query"
 import useProjectStore from "@/store/useProjectStore"
 import useStorageApi from "@/hooks/apiClients/useStorageApi"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
@@ -53,26 +53,8 @@ const formSchema = z
         codeRepository: z
             .object({
                 enabled: z.boolean().default(false),
+                codeRepositoryId: z.string().optional(),
                 repositoryId: z.string().optional(),
-                name: z.string().optional(),
-                azure: z
-                    .object({
-                        projectId: z.string().optional()
-                    })
-                    .optional(),
-                github: z
-                    .object({
-                        organizationId: z.string().optional(),
-                        private: z.boolean().default(false),
-                    })
-                    .optional(),
-                gitlab: z
-                    .object({
-                        groupId: z.string().optional(),
-                        path: z.string().optional(),
-                        private: z.boolean().default(false),
-                    })
-                    .optional(),
             })
             .optional(),
 
@@ -141,28 +123,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             },
             codeRepository: {
                 enabled: false,
-                repositoryId: "",
-                azure: {
-                    projectId: ""
-                },
-                github: {
-                    organizationId: "",
-                    private: false,
-                },
-                gitlab: {
-                    groupId: "",
-                    path: "",
-                    private: false,
-                },
-                name: ""
             },
             canary: {
                 enabled: false,
                 percentage: 0,
                 type: "ON_SESSIONS",
                 deploymentType: "BASED_ON_VERSION",
-                version: "",
-                url: ""
             }
         }
     })
@@ -181,8 +147,8 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     const canaryEnabled = watch("canary.enabled")
     const hostType = watch("host.type")
     const codeRepositoryEnabled = watch("codeRepository.enabled")
+    const selectedCodeRepositoryId = watch("codeRepository.codeRepositoryId")
     const selectedRepositoryId = watch("codeRepository.repositoryId")
-    const selectedGitlabGroupId = watch("codeRepository.gitlab.groupId")
 
     const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<{
         checking: boolean
@@ -194,22 +160,30 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         error: null
     })
 
-    const azureProjectsQuery = useQuery({
-        queryKey: ["azureProjects", selectedRepositoryId],
-        queryFn: () => codeRepositoriesApi.getAzureProjects(selectedRepositoryId!),
-        enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS"
-    })
-    
     const gitlabGroupsQuery = useQuery({
-        queryKey: ["gitlabGroups", selectedRepositoryId],
-        queryFn: () => codeRepositoriesApi.getGitlabGroups(selectedRepositoryId!),
-        enabled: !!selectedRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB"
+        queryKey: ["gitlabGroups", selectedCodeRepositoryId],
+        queryFn: () => codeRepositoriesApi.getGitlabGroups(selectedCodeRepositoryId!),
+        enabled: !!selectedCodeRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB"
     })
 
+    ///TODO Penso che sia da eliminare
     const gitlabGroupPathsQuery = useQuery({
-        queryKey: ["gitlabGroupPaths", selectedRepositoryId, selectedGitlabGroupId],
-        queryFn: () => codeRepositoriesApi.getGitlabGroupPaths(selectedRepositoryId!, selectedGitlabGroupId!),
-        enabled: !!selectedRepositoryId && !!selectedGitlabGroupId && repositoriesQuery.data?.find(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB"
+        queryKey: ["gitlabGroupPaths", selectedCodeRepositoryId],
+        queryFn: () => codeRepositoriesApi.getGitlabGroupPaths(selectedCodeRepositoryId!, "xx"),
+        enabled: !!selectedCodeRepositoryId && repositoriesQuery.data?.find(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB"
+    })
+
+    const [fetchedRepositories, setFetchedRepositories] = useState<any[]>([])
+
+    const fetchRepositoriesMutation = useMutation({
+        mutationFn: (repositoryId: string) => codeRepositoriesApi.getRepositories(repositoryId),
+        onSuccess: (data) => {
+            setFetchedRepositories(data || [])
+        },
+        onError: (error) => {
+            console.error('Error fetching repositories:', error)
+            setFetchedRepositories([])
+        }
     })
 
     const versionsQuery = useQuery({
@@ -217,6 +191,17 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         queryFn: () => microfrontendsApi.getVersions(id!),
         enabled: isEdit
     })
+
+    // Effect to fetch repositories when a repository is selected
+    useEffect(() => {
+        if (selectedCodeRepositoryId && codeRepositoryEnabled) {
+            fetchRepositoriesMutation.mutate(selectedCodeRepositoryId)
+            // Reset selected repository when connection changes
+            form.setValue("codeRepository.repositoryId", "")
+        } else {
+            setFetchedRepositories([])
+        }
+    }, [selectedCodeRepositoryId, codeRepositoryEnabled])
 
     // Repository name availability check with debounce
     /*useEffect(() => {
@@ -258,9 +243,9 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             ...data,
             version: data.version === "custom" ? data.customVersion : data.version
         } as Microfrontend
-        
+
         delete (dataToSend as any).customVersion
-        
+
         if (isEdit) {
             await microfrontendsApi.update(id, dataToSend)
             notificationToast.showSuccessNotification({
@@ -306,11 +291,11 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                         required
                                     />
                                     {form.watch("version") === "custom" && (
-                                        <TextField 
-                                            name="customVersion" 
-                                            label={t("microfrontend.custom_version")} 
-                                            placeholder={t("microfrontend.version_placeholder")} 
-                                            required 
+                                        <TextField
+                                            name="customVersion"
+                                            label={t("microfrontend.custom_version")}
+                                            placeholder={t("microfrontend.version_placeholder")}
+                                            required
                                         />
                                     )}
                                 </div>
@@ -361,127 +346,148 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     </Card>
 
                     {repositoriesQuery.data?.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle>{t("microfrontend.code_repository")}</CardTitle>
-                                    <CardDescription>{t("microfrontend.code_repository_description")}</CardDescription>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>{t("microfrontend.code_repository")}</CardTitle>
+                                        <CardDescription>{t("microfrontend.code_repository_description")}</CardDescription>
+                                    </div>
+                                    <Switch name="codeRepository.enabled" />
                                 </div>
-                                <Switch name="codeRepository.enabled" />
-                            </div>
-                        </CardHeader>
+                            </CardHeader>
 
-                        {codeRepositoryEnabled && (
-                            <CardContent className="space-y-4">
-                                <SelectField
-                                    name="codeRepository.repositoryId"
-                                    label={t("microfrontend.repository")}
-                                    options={repositoriesQuery.data?.map(repo => {
-                                        return {
-                                            value: repo._id,
-                                            label: `${repo.name} (${repo.provider})`,
-                                            icon: logoMap[repo.provider]
-                                        }
-                                    })}
-                                    required
-                                />
-
-                                <div className="space-y-2">
-                                    <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
-
-                                    {repositoryNameAvailability.checking && (
-                                        <Alert>
-                                            <AlertDescription>Checking repository name availability...</AlertDescription>
-                                        </Alert>
-                                    )}
-
-                                    {repositoryNameAvailability.available === false && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>Repository name is already taken. Please choose a different name.</AlertDescription>
-                                        </Alert>
-                                    )}
-
-                                    {repositoryNameAvailability.available === true && (
-                                        <Alert>
-                                            <AlertDescription>Repository name is available.</AlertDescription>
-                                        </Alert>
-                                    )}
-
-                                    {repositoryNameAvailability.error && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>{repositoryNameAvailability.error}</AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-
-                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "AZURE_DEV_OPS" && (
+                            {codeRepositoryEnabled && (
+                                <CardContent className="space-y-4">
                                     <SelectField
-                                        name="codeRepository.azure.projectId"
-                                        label={t("microfrontend.azure_project")}
-                                        options={azureProjectsQuery.data?.value?.map(project => ({
-                                            value: project.id,
-                                            label: project.name
-                                        }))}
+                                        name="codeRepository.codeRepositoryId"
+                                        label={t("microfrontend.sourceCodeProvider")}
+                                        options={repositoriesQuery.data?.map(repo => {
+                                            return {
+                                                value: repo._id,
+                                                label: `${repo.name} (${repo.provider})`,
+                                                icon: logoMap[repo.provider]
+                                            }
+                                        })}
                                         required
                                     />
-                                )}
 
-                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "GITHUB" && (
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Switch 
-                                                name="codeRepository.github.private" 
-                                                label={t("microfrontend.github_private")}
-                                            />
+                                    {selectedCodeRepositoryId &&
+                                        <>
+                                            {fetchRepositoriesMutation.isPending ?
+                                                <Alert>
+                                                    <AlertDescription>{t("common.loading")}...</AlertDescription>
+                                                </Alert>
+                                                :
+                                                <SelectField
+                                                    name="codeRepository.selectedRepositoryId"
+                                                    label={t("microfrontend.select_repository")}
+                                                    options={[
+                                                        {
+                                                            value: "create_new",
+                                                            label: t("microfrontend.create_new_repository")
+                                                        },
+                                                        ...fetchedRepositories.map(repo => ({
+                                                            value: repo.id + "",
+                                                            label: repo.name || repo.full_name || repo.path_with_namespace
+                                                        })),
+                                                    ]}
+                                                    placeholder={t("microfrontend.select_repository_placeholder")}
+                                                />
+                                            }
+                                        </>
+                                    }
+
+                                    {selectedRepositoryId === "create_new" && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
+
+                                                {repositoryNameAvailability.checking && (
+                                                    <Alert>
+                                                        <AlertDescription>Checking repository name availability...</AlertDescription>
+                                                    </Alert>
+                                                )}
+
+                                                {repositoryNameAvailability.available === false && (
+                                                    <Alert variant="destructive">
+                                                        <AlertDescription>Repository name is already taken. Please choose a different name.</AlertDescription>
+                                                    </Alert>
+                                                )}
+
+                                                {repositoryNameAvailability.available === true && (
+                                                    <Alert>
+                                                        <AlertDescription>Repository name is available.</AlertDescription>
+                                                    </Alert>
+                                                )}
+
+                                                {repositoryNameAvailability.error && (
+                                                    <Alert variant="destructive">
+                                                        <AlertDescription>{repositoryNameAvailability.error}</AlertDescription>
+                                                    </Alert>
+                                                )}
+                                            </div></>)
+                                    }
+
+                                    {selectedCodeRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITHUB" && (
+                                        <div className="space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Switch
+                                                    name="codeRepository.github.private"
+                                                    label={t("microfrontend.github_private")}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {selectedRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedRepositoryId)?.provider === "GITLAB" && (
-                                    <div className="space-y-4">
-                                        <SelectField
-                                            name="codeRepository.gitlab.groupId"
-                                            label={t("microfrontend.gitlab_group")}
-                                            addClearButton
-                                            options={gitlabGroupsQuery.data?.map(group => ({
-                                                value: group.id.toString(),
-                                                label: group.name || group.full_name
-                                            }))}
-                                        />
-
-                                        {selectedGitlabGroupId && (
+                                    {selectedCodeRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && (
+                                        <div className="space-y-4">
                                             <SelectField
-                                                name="codeRepository.gitlab.path"
-                                                label={t("microfrontend.gitlab_repository_path")}
+                                                name="codeRepository.gitlab.groupId"
+                                                label={t("microfrontend.gitlab_group")}
                                                 addClearButton
-                                                options={gitlabGroupPathsQuery.data?.map(repo => ({
-                                                    value: repo,
-                                                    label: repo
+                                                options={gitlabGroupsQuery.data?.map(group => ({
+                                                    value: group.id.toString(),
+                                                    label: group.name || group.full_name
                                                 }))}
                                             />
-                                        )}
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Switch 
-                                                name="codeRepository.gitlab.private" 
-                                                label={t("microfrontend.gitlab_private")}
-                                            />
-                                            <SelectField
-                                                name="codeRepository.gitlab.visibility"
-                                                label={t("microfrontend.gitlab_visibility")}
-                                                options={[
-                                                    { value: "public", label: t("microfrontend.visibility_public") },
-                                                    { value: "private", label: t("microfrontend.visibility_private") },
-                                                    { value: "internal", label: t("microfrontend.visibility_internal") }
-                                                ]}
-                                            />
+
+                                            {/* {selectedGitlabGroupId && (
+                                                <SelectField
+                                                    name="codeRepository.gitlab.path"
+                                                    label={t("microfrontend.gitlab_repository_path")}
+                                                    addClearButton
+                                                    options={gitlabGroupPathsQuery.data?.map(repo => ({
+                                                        value: repo,
+                                                        label: repo
+                                                    }))}
+                                                />
+                                            )} */}
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Switch
+                                                    name="codeRepository.gitlab.private"
+                                                    label={t("microfrontend.gitlab_private")}
+                                                />
+                                                <SelectField
+                                                    name="codeRepository.gitlab.visibility"
+                                                    label={t("microfrontend.gitlab_visibility")}
+                                                    options={[
+                                                        { value: "public", label: t("microfrontend.visibility_public") },
+                                                        { value: "private", label: t("microfrontend.visibility_private") },
+                                                        { value: "internal", label: t("microfrontend.visibility_internal") }
+                                                    ]}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </CardContent>
-                        )}
-                    </Card>
+                                    )}
+                                </CardContent>
+                            )}
+                        </Card>
                     )}
                     {/* Canary Settings Section */}
                     <Card>
@@ -501,10 +507,10 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     name="canary.percentage"
                                     label={t("microfrontend.canary_percentage")}
                                     placeholder="38%"
-                                    // type="number"
-                                    // required
-                                    // min={0}
-                                    // max={100}
+                                // type="number"
+                                // required
+                                // min={0}
+                                // max={100}
                                 />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <SelectField
@@ -546,7 +552,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     </div>
                 </form>
             </FormProvider>
-        </SinglePageLayout>
+        </SinglePageLayout >
     )
 }
 

@@ -5,7 +5,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { fastify } from ".."
 import GithubClient from "../client/GithubClient"
-import AzureDevOpsClient from "../client/AzureDevOpsClient"
+import AzureDevOpsClient, { RepositoryData } from "../client/AzureDevOpsClient"
 import GitLabClient from "../client/GitlabClient"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
@@ -286,7 +286,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return new GitLabClient(url, pat).getGroups()
     }
 
-    async getAzureRepositories(repositoryId: string, projectId: string): Promise<unknown> {
+    async getAzureRepositories(repositoryId: string, projectId: string): Promise<RepositoryData[]> {
         const repository = await this.findById(repositoryId)
         if(!repository){
             throw new EntityNotFoundError(repositoryId)
@@ -298,12 +298,13 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                 statusCode: 400
             })
         }
-        return new AzureDevOpsClient().getRepositories(
+        return (await new AzureDevOpsClient().getRepositories(
             repository.accessToken,
             repository?.name,
             projectId
-        )
+        ))?.value
     }
+
     async getAzureProjects(repositoryId: string): Promise<unknown> {
         const repository = await this.findById(repositoryId)
         if(!repository){
@@ -358,14 +359,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         if(!repository){
             throw new EntityNotFoundError(repositoryId)
         }
-        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+        if(repository.provider !== CodeRepositoryProvider.GITLAB || !repository.gitlabData?.url){
             throw new BusinessException({
                 code: "INVALID_PROVIDER",
                 message: "Repository provider is not GitLab",
                 statusCode: 400
             })
         }
-        return new GitLabClient(repository.name, repository.accessToken).getGroups()
+        return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getGroups()
     }
 
     async getGitlabPaths(repositoryId: string, groupId: number): Promise<unknown> {
@@ -373,14 +374,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         if(!repository){
             throw new EntityNotFoundError(repositoryId)
         }
-        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+        if(repository.provider !== CodeRepositoryProvider.GITLAB || !repository.gitlabData?.url || !repository.gitlabData?.project){
             throw new BusinessException({
                 code: "INVALID_PROVIDER",
                 message: "Repository provider is not GitLab",
                 statusCode: 400
             })
         }
-        return new GitLabClient(repository.name, repository.accessToken).getRepositoryPathsByGroupId(groupId)
+        return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoryPathsByGroupId(repository.gitlabData?.project)
     }
 
     async getGitlabRepositories(repositoryId: string, groupId: number): Promise<unknown> {
@@ -388,14 +389,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         if(!repository){
             throw new EntityNotFoundError(repositoryId)
         }
-        if(repository.provider !== CodeRepositoryProvider.GITLAB){
+        if(repository.provider !== CodeRepositoryProvider.GITLAB || !repository.gitlabData?.url){
             throw new BusinessException({
                 code: "INVALID_PROVIDER",
                 message: "Repository provider is not GitLab",
                 statusCode: 400
             })
         }
-        return new GitLabClient(repository.name, repository.accessToken).getRepositoriesByGroupId(groupId)
+        return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(groupId)
     }
 
     async getRepositories(repositoryId: string) {
@@ -404,7 +405,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             throw new EntityNotFoundError(repositoryId)
         }
         if(repository.provider === CodeRepositoryProvider.GITHUB){
-            if(!repository.githubData?.type || !repository.githubData?.organizationId){
+            if(!repository.githubData?.type){
                 throw new BusinessException({
                     code: "INVALID_PROVIDER",
                     message: "Repository provider is not GitHub",
@@ -421,7 +422,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                     statusCode: 400
                 })
             }
-            return new GitLabClient(repository.name, repository.accessToken).getRepositoriesByGroupId(repository.gitlabData?.project)
+            return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(repository.gitlabData?.project)
         }
         if(repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS){
             if(!repository.azureData?.organization || !repository.azureData?.projectId){
@@ -431,7 +432,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                     statusCode: 400
                 })
             }
-            return new AzureDevOpsClient().getRepositories(repository.accessToken, repository.azureData?.organization, repository.azureData?.projectId)
+            return (await new AzureDevOpsClient().getRepositories(repository.accessToken, repository.azureData?.organization, repository.azureData?.projectId))?.value
         }   
     }
 }
