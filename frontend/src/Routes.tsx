@@ -33,7 +33,7 @@ const CodeRepositoryPage = lazy(() => import("./pages/code-repositories/CodeRepo
 const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCallbackPage"));
 const AddAzure = lazy(() => import("./pages/code-repositories/AddAzureRepositoryPage"));
 const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlabRepositoryPage"));
-const AddGithub = lazy(() => import("./pages/code-repositories/AddGithubRepositoryPage"));
+const AddGithub = lazy(() => import("./pages/code-repositories/AddGitHubRepositoryPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
