@@ -10,36 +10,39 @@ import useCodeRepositoriesApi from '@/hooks/apiClients/useCodeRepositoriesApi';
 import SinglePageLayout from '@/components/SinglePageLayout';
 import { FormProvider, useForm } from 'react-hook-form';
 import TextField from '@/components/input/TextField.rhf';
+import useToastNotificationStore from '@/store/useToastNotificationStore';
+import SelectField from '@/components/input/SelectField.rhf';
 
 interface AddAzureFormValues {
-    organization: string
-    pat: string
+  organization: string
+  pat: string
+  name: string
+  project: string
 }
 
 const AddAzureRepositoryPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPat, setShowPat] = useState(false);
-  const [error, setError] = useState('');
   const repositoryApi = useCodeRepositoriesApi();
+  const notificationStore = useToastNotificationStore();
   const params = useParams<{ id: string }>();
 
-  const addRepositoryMutation = useMutation({
-    mutationFn: repositoryApi.addRepositoryAzure,
-    onSuccess: () => {
-      navigate('/code-repositories');
-    },
-    onError: (error: unknown) => {
-      setError((error as Error)?.message || t('codeRepositories.azure.error.failedToAdd'));
-    }
-  });
 
   useQuery({
     queryKey: ['getRepository', params.id],
-    queryFn:  async () => {
+    queryFn: async () => {
       const data = await repositoryApi.getRepositoryById(params.id);
-      form.setValue('organization', data.name);
+      form.setValue('organization', data.azureData?.organization);
       form.setValue('pat', data.accessToken);
+      form.setValue('name', data.name);
+      form.setValue('project', data.azureData?.projectId);
+      if(data.azureData?.projectId){
+        testConnectionMutation.mutateAsync({
+          organization: data.azureData.organization,
+          pat: data.accessToken,
+        })
+      }
     },
     enabled: !!params.id
   });
@@ -48,8 +51,19 @@ const AddAzureRepositoryPage = () => {
     mutationFn: repositoryApi.testConnectionAzure
   });
 
-  const handleSubmit = async (values : AddAzureFormValues) => {
-    await addRepositoryMutation.mutateAsync(values);
+  const handleSubmit = async (values: AddAzureFormValues) => {
+    if (params.id) {
+      await repositoryApi.editRepositoryAzure(params.id, values);
+      notificationStore.showSuccessNotification({
+        message: t('codeRepositories.azure.successEdit'),
+      });
+    } else {
+      await repositoryApi.addRepositoryAzure(values);
+      notificationStore.showSuccessNotification({
+        message: t('codeRepositories.azure.successAdd'),
+      });
+    }
+    navigate('/code-repositories');
   };
 
   const requiredScopes = [
@@ -89,6 +103,12 @@ const AddAzureRepositoryPage = () => {
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <div className="space-y-2">
                     <TextField
+                      name="name"
+                      label={t('codeRepositories.azure.name')}
+                      placeholder={t('codeRepositories.azure.namePlaceholder')}
+                      required
+                    />
+                    <TextField
                       name="organization"
                       label={t('codeRepositories.azure.organizationName')}
                       placeholder={t('codeRepositories.azure.organizationPlaceholder')}
@@ -124,51 +144,47 @@ const AddAzureRepositoryPage = () => {
                     </p>
                   </div>
 
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-
                   <Button
                     type="button"
                     variant='secondary'
                     className="w-full"
-                    disabled={addRepositoryMutation.isPending || testConnectionMutation.isPending}
+                    disabled={form.formState.isSubmitting || testConnectionMutation.isPending}
                     onClick={() => testConnectionMutation.mutateAsync(form.getValues())}
                   >
                     {t('codeRepositories.azure.testConnection')}
                   </Button>
+                  {testConnectionMutation.data && (
+                    <CardContent className="pt-4 border-t mt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <p className="text-sm font-medium text-green-600">{t('codeRepositories.gitlab.connectionSuccess')}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {t('codeRepositories.azure.projectsFound', { count: testConnectionMutation.data.value.length })}:
+                      </p>
+                      <div className="mt-3">
+                        <SelectField
+                          name="project"
+                          label={t('codeRepositories.gitlab.selectProject')}
+                          placeholder={t('codeRepositories.gitlab.selectProjectPlaceholder')}
+                          options={testConnectionMutation.data.value.map((project) => ({
+                            value: project.id.toString(),
+                            label: project.name
+                          }))}
+                          required
+                        />
+                      </div>
+                    </CardContent>
+                  )}
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={!testConnectionMutation.data || addRepositoryMutation.isPending || testConnectionMutation.isPending}
+                    disabled={!testConnectionMutation.data || form.formState.isSubmitting || testConnectionMutation.isPending}
                   >
-                    {addRepositoryMutation.isPending ? t('codeRepositories.azure.connecting') : t('codeRepositories.azure.connect')}
+                    {form.formState.isSubmitting ? t('codeRepositories.azure.connecting') : t('codeRepositories.azure.connect')}
                   </Button>
                 </form>
               </CardContent>
-              {testConnectionMutation.data && (
-                <CardContent className="pt-4 border-t mt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <p className="text-sm font-medium text-green-600">{t('codeRepositories.azure.connectionSuccess')}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {t('codeRepositories.azure.projectsFound', { count: testConnectionMutation.data.value.length })}:
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {testConnectionMutation.data.value.map((project) => (
-                      <span 
-                        key={project.name}
-                        className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md"
-                      >
-                        {project.name}
-                      </span>
-                    ))}
-                  </div>
-                </CardContent>
-              )}
             </Card>
           </FormProvider>
 

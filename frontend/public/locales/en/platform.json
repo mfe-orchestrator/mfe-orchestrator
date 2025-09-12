@@ -692,6 +692,10 @@
                     "description": "Access to release pipelines and deployment information"
                 }
             },
+            "successEdit": "Azure DevOps repository updated successfully",
+            "successAdd": "Azure DevOps repository added successfully",
+            "name": "Name",
+            "namePlaceholder": "Enter connection name",
             "error": {
                 "failedToAdd": "Failed to add Azure DevOps repository"
             }
@@ -756,6 +760,26 @@
             "updating": "Updating...",
             "connecting": "Connecting...",
             "update": "Update"
+        },
+        "github": {
+            "title": "GitHub Connection",
+            "description": "Configure your GitHub connection settings",
+            "connectionName": "Connection Name",
+            "connectionNamePlaceholder": "Enter connection name",
+            "connectionNameRequired": "Connection name is required",
+            "connectionNameMinLength": "Connection name must be at least 3 characters",
+            "connection": "Connection",
+            "personalProfile": "Personal Profile",
+            "personalProfileAutoSelected": "Personal Profile (auto-selected)",
+            "noOrganizationsFound": "No organizations found. Using your personal GitHub profile.",
+            "selectConnection": "Select GitHub connection",
+            "selectOwner": "Select GitHub owner",
+            "selectOwnerRequired": "Please select a GitHub owner",
+            "chooseProfileOrOrg": "Choose between your personal profile or organization.",
+            "selectFromOptions": "Select from your personal profile or {{count}} organization{{count, plural, =1 {} other {s}}}.",
+            "saveConnection": "Save Connection",
+            "connectionSaved": "GitHub connection \"{{name}}\" saved successfully",
+            "repositoryIdRequired": "Repository ID is required to configure GitHub connection."
         }
     }
 }

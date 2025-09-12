@@ -720,6 +720,10 @@
           "description": "Accesso a pipeline di release e informazioni di deployment"
         }
       },
+      "successEdit": "Repository Azure DevOps aggiornato con successo",
+      "successAdd": "Repository Azure DevOps aggiunto con successo",
+      "name": "Nome",
+      "namePlaceholder": "Inserisci nome connessione",
       "error": {
         "failedToAdd": "Impossibile aggiungere il repository Azure DevOps"
       }
@@ -784,6 +788,26 @@
       "updating": "Aggiornamento...",
       "connecting": "Connessione...",
       "update": "Aggiorna"
+    },
+    "github": {
+      "title": "Connessione GitHub",
+      "description": "Configura le impostazioni di connessione a GitHub",
+      "connectionName": "Nome Connessione",
+      "connectionNamePlaceholder": "Inserisci il nome della connessione",
+      "connectionNameRequired": "Il nome della connessione è obbligatorio",
+      "connectionNameMinLength": "Il nome della connessione deve essere di almeno 3 caratteri",
+      "connection": "Connessione",
+      "personalProfile": "Profilo Personale",
+      "personalProfileAutoSelected": "Profilo Personale (selezionato automaticamente)",
+      "noOrganizationsFound": "Nessuna organizzazione trovata. Utilizzo del tuo profilo GitHub personale.",
+      "selectConnection": "Seleziona connessione GitHub",
+      "selectOwner": "Seleziona proprietario GitHub",
+      "selectOwnerRequired": "Seleziona un proprietario GitHub",
+      "chooseProfileOrOrg": "Scegli tra il tuo profilo personale o l'organizzazione.",
+      "selectFromOptions": "Seleziona dal tuo profilo personale o {{count}} organizzazione{{count, plural, =1 {} other {i}}}.",
+      "saveConnection": "Salva Connessione",
+      "connectionSaved": "Connessione GitHub \"{{name}}\" salvata con successo",
+      "repositoryIdRequired": "L'ID del repository è necessario per configurare la connessione GitHub."
     }
   }
 }

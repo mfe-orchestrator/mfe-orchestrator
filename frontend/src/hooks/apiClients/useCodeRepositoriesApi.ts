@@ -8,6 +8,13 @@ export interface AddRepositoryGithubDTO{
 export interface AddRepositoryAzureDTO{
     pat: string
     organization: string
+    name: string
+    project: string
+}
+
+export interface TestConnectionAzureRepositoryAzureDTO{
+    pat: string
+    organization: string
 }
 
 export interface AddRepositoryGitlabDTO{
@@ -206,7 +213,15 @@ const useCodeRepositoriesApi = () => {
         });
     }
 
-    const testConnectionAzure = async (data: AddRepositoryAzureDTO) : Promise<AzureDevOpsProjectsResponse>=>{
+    const editRepositoryAzure = async (repositoryId: string, data: AddRepositoryAzureDTO) =>{
+        await apiClient.doRequest({
+            url: `/api/repositories/${repositoryId}/azure`,
+            method: 'PUT',
+            data
+        });
+    }
+
+    const testConnectionAzure = async (data: TestConnectionAzureRepositoryAzureDTO) : Promise<AzureDevOpsProjectsResponse>=>{
         const response = await apiClient.doRequest<AzureDevOpsProjectsResponse>({
             url: `/api/repositories/azure/test`,
             method: 'POST',
@@ -323,6 +338,7 @@ const useCodeRepositoriesApi = () => {
         updateRepository,
         testConnectionAzure,
         testConnectionGitlab,
+        editRepositoryAzure,
         getAzureProjects,
         getAzureRepositories,
         checkRepositoryNameAvailability,

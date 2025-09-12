@@ -4,6 +4,7 @@ import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
+import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
 
 export default async function codeRepositoryController(fastify: FastifyInstance) {
     
@@ -103,22 +104,24 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
     })
 
     fastify.post<{
-        Body: {
-            organization: string
-            pat: string
-        }
+        Body: CreateAzureDevOpsRepositoryDTO
     }>('/repositories/azure',  async (request, reply) =>{
         const projectId = getProjectIdFromRequest(request)
         if(!projectId){
             throw new ProjectHeaderNotFoundError()
         }
         await new CodeRepositoryService(request.databaseUser).addRepositoryAzure(
-            request.body.organization,
-            request.body.pat,
+            request.body,
             projectId
         )
         reply.send()
     })
+
+    fastify.put<{Body: CreateAzureDevOpsRepositoryDTO, Params: {repositoryId: string}}>('/repositories/:repositoryId/azure',  async (request, reply) =>{        
+        await new CodeRepositoryService(request.databaseUser).editRepositoryAzureDevOps(request.body, request.params.repositoryId)
+        reply.send()
+    })
+    
 
     fastify.post<{Body: {organization: string, pat: string}}>('/repositories/azure/test',  async (request, reply) =>{
         const result = await new CodeRepositoryService(request.databaseUser).testConnectionAzure(

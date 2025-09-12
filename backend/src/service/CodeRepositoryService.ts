@@ -9,6 +9,7 @@ import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import GitLabClient from "../client/GitlabClient"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
+import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
 
 export interface CodeRepositoryCreateInput {
     name: string
@@ -177,7 +178,6 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         })
 
         const userGithub = await githubClient.getUser(responseGithub.access_token)
-        const userOrganizations = await githubClient.getUserOrganizations(responseGithub.access_token)
         
         const repository = new CodeRepository({
             name: userGithub.name,
@@ -190,17 +190,47 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return await repository.save()
     }
 
-    async addRepositoryAzure(organization: string, pat: string, projectId: string) {
+    async addRepositoryAzure(body: CreateAzureDevOpsRepositoryDTO, projectId: string) {
         await this.ensureAccessToProject(projectId)
 
         const repository = new CodeRepository({
-            name: organization,
+            name: body.name,
             provider: CodeRepositoryProvider.AZURE_DEV_OPS,
-            accessToken: pat,
+            accessToken: body.pat,
             projectId: new Types.ObjectId(projectId),
+            azureData: {
+                organization: body.organization,
+                projectId: body.project
+            },
+            githubData: undefined,
+            gitlabData: undefined,
             isActive: true
         })
 
+        return await repository.save()
+    }
+
+    async editRepositoryAzureDevOps(body: CreateAzureDevOpsRepositoryDTO, repositoryId: string) {
+        const repository = await this.findById(repositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(repositoryId)
+        }
+        if(repository.provider !== CodeRepositoryProvider.AZURE_DEV_OPS){
+            throw new BusinessException({
+                code: "INVALID_PROVIDER",
+                message: "Repository provider is not GitLab",
+                statusCode: 400
+            })
+        }
+
+        repository.name = body.name
+        repository.accessToken = body.pat
+        repository.gitlabData = undefined
+        repository.githubData = undefined
+        repository.azureData = {
+            organization: body.organization,
+            projectId: body.project
+        }
         return await repository.save()
     }
 

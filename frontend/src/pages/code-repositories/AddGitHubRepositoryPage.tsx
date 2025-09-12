@@ -2,6 +2,7 @@ import React, { useMemo, useEffect } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { useNavigate, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -27,6 +28,7 @@ interface OwnerOption {
 }
 
 const AddGitHubRepositoryPage: React.FC = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const { id: repositoryId } = useParams<{ id: string }>()
     const { showSuccessNotification } = useToastNotificationStore()
@@ -82,7 +84,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
         if (githubUser) {
             options.push({
                 value: 'personal',
-                label: githubUser.name || githubUser.login || 'Personal Profile',
+                label: githubUser.name || githubUser.login || t('codeRepositories.github.personalProfile'),
                 type: 'personal',
                 icon: githubUser.avatar_url
             })
@@ -90,7 +92,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
             // Fallback while loading
             options.push({
                 value: 'personal',
-                label: 'Personal Profile',
+                label: t('codeRepositories.github.personalProfile'),
                 type: 'personal',
                 icon: 'https://github.com/identicons/personal.png'
             })
@@ -141,7 +143,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
 
 
         showSuccessNotification({
-            message: `GitHub connection "${data.connectionName}" saved successfully`
+            message: t('codeRepositories.github.connectionSaved', { name: data.connectionName })
         })
         navigate("/code-repositories")
     }
@@ -149,10 +151,10 @@ const AddGitHubRepositoryPage: React.FC = () => {
 
     if (!repositoryId) {
         return (
-            <SinglePageLayout title="GitHub Connection">
+            <SinglePageLayout title={t('codeRepositories.github.title')}>
                 <Alert>
                     <AlertDescription>
-                        Repository ID is required to configure GitHub connection.
+                        {t('codeRepositories.github.repositoryIdRequired')}
                     </AlertDescription>
                 </Alert>
             </SinglePageLayout>
@@ -161,7 +163,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
 
     return (
 
-        <SinglePageLayout title="GitHub Connection">
+        <SinglePageLayout title={t('codeRepositories.github.title')}>
             <ApiDataFetcher<unknown, unknown> queries={[repositoryQuery, githubOrganizationQuery, githubUserQuery]}>
                 <div className="max-w-2xl mx-auto">
                     <Card>
@@ -169,9 +171,9 @@ const AddGitHubRepositoryPage: React.FC = () => {
                             <div className="flex items-center space-x-2">
                                 <GitBranch className="h-6 w-6" />
                                 <div>
-                                    <CardTitle>GitHub Connection</CardTitle>
+                                    <CardTitle>{t('codeRepositories.github.title')}</CardTitle>
                                     <CardDescription>
-                                        Configure your GitHub connection settings
+                                        {t('codeRepositories.github.description')}
                                     </CardDescription>
                                 </div>
                             </div>
@@ -181,45 +183,45 @@ const AddGitHubRepositoryPage: React.FC = () => {
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                     <TextField
                                         name="connectionName"
-                                        label="Connection Name"
-                                        placeholder="Enter connection name"
+                                        label={t('codeRepositories.github.connectionName')}
+                                        placeholder={t('codeRepositories.github.connectionNamePlaceholder')}
                                         required
                                         rules={{
-                                            required: "Connection name is required",
+                                            required: t('codeRepositories.github.connectionNameRequired'),
                                             minLength: {
                                                 value: 3,
-                                                message: "Connection name must be at least 3 characters"
+                                                message: t('codeRepositories.github.connectionNameMinLength')
                                             }
                                         }}
                                     />
 
                                     <div className="space-y-3">
-                                        <label className="text-sm font-medium">Connection</label>
+                                        <label className="text-sm font-medium">{t('codeRepositories.github.connection')}</label>
                                         {!organizations || organizations.length === 0 ? (
                                             <div className="space-y-2">
                                                 <div className="flex items-center space-x-2 p-3 border rounded-md bg-muted">
                                                     <GitBranch className="h-4 w-4" />
-                                                    <span className="text-sm">Personal Profile (auto-selected)</span>
+                                                    <span className="text-sm">{t('codeRepositories.github.personalProfileAutoSelected')}</span>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground">
-                                                    No organizations found. Using your personal GitHub profile.
+                                                    {t('codeRepositories.github.noOrganizationsFound')}
                                                 </p>
                                             </div>
                                         ) : organizations.length === 1 ? (
                                             <div className="space-y-3">
                                                 <SelectField
                                                     name="selectedOwner"
-                                                    placeholder="Select GitHub connection"
+                                                    placeholder={t('codeRepositories.github.selectConnection')}
                                                     required
                                                     options={ownerOptions.map(option => ({
                                                         value: option.value,
                                                         label: option.label,
                                                         icon: option.icon
                                                     }))}
-                                                    rules={{ required: "Please select a GitHub owner" }}
+                                                    rules={{ required: t('codeRepositories.github.selectOwnerRequired') }}
                                                 />
                                                 <p className="text-xs text-muted-foreground">
-                                                    Choose between your personal profile or organization.
+                                                    {t('codeRepositories.github.chooseProfileOrOrg')}
                                                 </p>
                                             </div>
                                         ) : (
@@ -227,16 +229,16 @@ const AddGitHubRepositoryPage: React.FC = () => {
                                                 <SelectField
                                                     name="selectedOwner"
                                                     required
-                                                    placeholder="Select GitHub owner"
+                                                    placeholder={t('codeRepositories.github.selectOwner')}
                                                     options={ownerOptions.map(option => ({
                                                         value: option.value,
                                                         label: option.label,
                                                         icon: option.icon
                                                     }))}
-                                                    rules={{ required: "Please select a GitHub owner" }}
+                                                    rules={{ required: t('codeRepositories.github.selectOwnerRequired') }}
                                                 />
                                                 <p className="text-xs text-muted-foreground">
-                                                    Select from your personal profile or {organizations.length} organization{organizations.length > 1 ? 's' : ''}.
+                                                    {t('codeRepositories.github.selectFromOptions', { count: organizations.length })}
                                                 </p>
                                             </div>
                                         )}
@@ -247,7 +249,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
                                             type="submit"
                                             disabled={form.formState.isSubmitting}
                                         >
-                                            Save Connection
+                                            {t('codeRepositories.github.saveConnection')}
                                         </Button>
                                     </div>
                                 </form>
