@@ -119,7 +119,7 @@ const useMicrofrontendsApi = () => {
         });
         return response.data;
     };
-    
+
 
     return {
         getByProjectId,
@@ -128,7 +128,7 @@ const useMicrofrontendsApi = () => {
         deleteSingle,
         getSingle,
         build,
-        getVersions
+        getVersions,
     }
 }
 

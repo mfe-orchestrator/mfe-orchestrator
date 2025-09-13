@@ -168,6 +168,14 @@ export interface GithubWorkflowDispatchResponse {
     message?: string
 }
 
+export interface GithubBranch {
+    name: string
+    commit: {
+        sha: string
+        url: string
+    }
+}
+
 class GithubClient {
 
     getAccessToken = async (data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> => {
@@ -240,6 +248,23 @@ class GithubClient {
                 'User-Agent': 'MFE-Orchestrator-Hub'
             },
             data: repositoryData
+        })
+
+        return response.data
+    }
+
+    getBranches = async (accessToken: string, repositoryId: string, orgName?: string): Promise<GithubBranch[]> => {
+        const url = orgName 
+            ? `https://api.github.com/orgs/${orgName}/repos/${repositoryId}/branches`
+            : `https://api.github.com/user/repos/${repositoryId}/branches`
+
+        const response = await axios.request<GithubBranch[]>({
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator-Hub'
+            }
         })
 
         return response.data

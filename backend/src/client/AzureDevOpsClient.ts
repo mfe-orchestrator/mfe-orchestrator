@@ -83,7 +83,12 @@ export interface AzureDevOpsProject {
     value : RepositoryData[]
   }
 
+  export interface AzureDeOpsBranch{
+    name : string,
+  }
+
 class AzureDevOpsClient {
+    
 
     // Ottieni l'ID utente dal profilo
     async getUserId(token: string) {
@@ -169,6 +174,18 @@ class AzureDevOpsClient {
             }
         });
 
+        return response.data;
+    }
+
+    async getBranches(token: string, organization: string, project: string, repositoryName: string) : Promise<AzureDeOpsBranch[]> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/branches?api-version=7.1-preview.1`;
+        const response = await axios.request<AzureDeOpsBranch[]>({
+            url,
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
         return response.data;
     }
 }

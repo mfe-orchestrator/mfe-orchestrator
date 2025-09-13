@@ -38,6 +38,16 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
 
     fastify.get<{
         Params: {
+            codeRepositoryId: string
+            repositoryId: string
+        }
+    }>("/repositories/:codeRepositoryId/repositories/:repositoryId/branches", async (request, reply) => {
+        const repository = await new CodeRepositoryService(request.databaseUser).getBranches(request.params.codeRepositoryId, request.params.repositoryId)
+        return reply.send(repository)
+    })
+
+    fastify.get<{
+        Params: {
             repositoryId: string
         },
         Querystring: {

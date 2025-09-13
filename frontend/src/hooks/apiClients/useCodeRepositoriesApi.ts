@@ -290,6 +290,14 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
+    const getBranches = async (codeRepositoryId: string, repositoryId: string): Promise<any[]> => {
+        const response = await apiClient.doRequest<any[]>({
+            url: `/api/repositories/${codeRepositoryId}/repositories/${repositoryId}/branches`,
+            method: 'POST',
+        });
+        return response.data
+    }
+
     const checkRepositoryNameAvailability = async (repositoryId: string, repositoryName: string): Promise<boolean> => {
         const response = await apiClient.doRequest<boolean>({
             url: `/api/repositories/${repositoryId}/repositories/check-name`,
@@ -353,6 +361,7 @@ const useCodeRepositoriesApi = () => {
         getAzureProjects,
         getAzureRepositories,
         checkRepositoryNameAvailability,
+        getBranches,
         getGithubOrganizations,
         getGithubUser,
         getGitlabGroups,

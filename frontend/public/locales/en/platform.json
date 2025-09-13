@@ -365,6 +365,12 @@
         "invite_state": "Status"
     },
     "microfrontend": {
+        "host": "Host",
+        "hostTypes": {
+            "customUrl": "Custom URL",
+            "mfeOrchestratorHub": "MFE Orchestrator Hub",
+            "customSource": "Custom Source"
+        },
         "dashboard": {
             "title": "Microfrontends",
             "description": "Manage your project's microfrontends",
@@ -373,6 +379,25 @@
             "statusAll": "All",
             "statusActive": "Active",
             "statusDisabled": "Disabled"
+        },
+        "build": {
+            "title": "Build {{name}}",
+            "branch": "Branch",
+            "selectBranch": "Select branch",
+            "loadingBranches": "Loading branches...",
+            "defaultBranch": "default",
+            "version": "Version",
+            "versionPlaceholder": "Enter version (e.g., 1.0.0)",
+            "building": "Building...",
+            "startBuild": "Start Build"
+        },
+        "card": {
+            "canary": "Canary",
+            "repository": "Repository",
+            "storage": "Storage",
+            "version": "Version {{version}}",
+            "users": "{{count}} user{{count, plural, =1 {} other {s}}}",
+            "build": "Build"
         },
         "no_microfrontends_found": "No Microfrontends Found",
         "add_your_first_microfrontend": "Add your first microfrontend to get started!",
@@ -403,12 +428,6 @@
         "hosting_information": "Hosting Information",
         "hosting_information_description": "Configure where your microfrontend is hosted",
         "hosting_type": "Hosting Type",
-        "host": "Host",
-        "hostTypes": {
-            "customUrl": "Custom URL",
-            "mfeOrchestratorHub": "MFE Orchestrator Hub",
-            "customSource": "Custom Source"
-        },
         "canaryReleaseActive": "Canary Release Active",
         "distribution": "Distribution:",
         "usersPercentage": "{{percentage}}% of users",
@@ -784,6 +803,17 @@
             "saveConnection": "Save Connection",
             "connectionSaved": "GitHub connection \"{{name}}\" saved successfully",
             "repositoryIdRequired": "Repository ID is required to configure GitHub connection."
+        }
+    },
+    "market": {
+        "title": "Market",
+        "description": "Choose from our collection of microfrontend templates",
+        "noTemplates": {
+            "title": "No templates available",
+            "description": "There are no microfrontend templates in the market yet."
+        },
+        "error": {
+            "failedToFetch": "Failed to fetch markets"
         }
     }
 }

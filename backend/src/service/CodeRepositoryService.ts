@@ -27,6 +27,31 @@ export interface CodeRepositoryUpdateInput {
 }
 
 export class CodeRepositoryService extends BaseAuthorizedService {
+    async getBranches(codeRepositoryId: string, repositoryId: string) {
+        const repository = await this.findById(codeRepositoryId)
+        if(!repository){
+            throw new EntityNotFoundError(codeRepositoryId)
+        }
+        
+        if(repository.provider === CodeRepositoryProvider.GITHUB){
+            return new GithubClient().getBranches(repository.accessToken, repositoryId, repository.githubData?.organizationId)
+        }
+        if(repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS){
+            if(!repository.azureData){
+                throw new BusinessException({
+                    code: "INVALID_PROVIDER",
+                    message: "Repository provider is not Azure DevOps",
+                    statusCode: 400
+                })
+            }
+                
+            return new AzureDevOpsClient().getBranches(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, repositoryId)
+        }
+        if(repository.provider === CodeRepositoryProvider.GITLAB){
+            //TODO da fare!!!
+            //return new GitLabClient().getBranches(repository.accessToken, repositoryId)
+        }
+    }
 
     async isRepositoryNameAvailable(repositoryId: string, name: string): Promise<boolean> {
         const repositories = await this.getRepositories(repositoryId)

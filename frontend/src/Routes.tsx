@@ -17,7 +17,6 @@ const StoragesPage = lazy(() => import("./pages/storages/StoragesPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/microfrontend/MicrofrontendDashboard"));
-const SftpViewerPage = lazy(() => import("./pages/sftp/SftpViewerPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRequestPage"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
@@ -34,6 +33,7 @@ const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCa
 const AddAzure = lazy(() => import("./pages/code-repositories/AddAzureRepositoryPage"));
 const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlabRepositoryPage"));
 const AddGithub = lazy(() => import("./pages/code-repositories/AddGitHubRepositoryPage"));
+const MarketPage = lazy(() => import("./pages/MarketPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -80,12 +80,6 @@ const PrivateRoutes: React.FC = () => {
             path="/microfronted/:id"
             element={
               <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
-            }
-          />
-          <Route
-            path="/sftp"
-            element={
-              <RouteWithSuspense element={<SftpViewerPage />} />
             }
           />
           <Route path="/deployments">
@@ -196,6 +190,12 @@ const PrivateRoutes: React.FC = () => {
             path="/code-repositories/github/:id"
             element={
               <RouteWithSuspense element={<AddGithub />} />
+            }
+          />
+          <Route
+            path="/market"
+            element={
+              <RouteWithSuspense element={<MarketPage />} />
             }
           />
           <Route
