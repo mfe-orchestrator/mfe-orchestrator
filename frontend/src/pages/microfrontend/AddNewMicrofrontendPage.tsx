@@ -192,15 +192,21 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         enabled: isEdit
     })
 
-    // Effect to fetch repositories when a repository is selected
-    useEffect(() => {
+    const fetchRepository = async () => {
         if (selectedCodeRepositoryId && codeRepositoryEnabled) {
-            fetchRepositoriesMutation.mutate(selectedCodeRepositoryId)
-            // Reset selected repository when connection changes
-            form.setValue("codeRepository.repositoryId", "")
+            const data = await fetchRepositoriesMutation.mutateAsync(selectedCodeRepositoryId)
+            const repository = data.find((repo: any) => repo.name === selectedRepositoryId)
+            if (!repository) {
+                form.setValue("codeRepository.repositoryId", "")
+            }
         } else {
             setFetchedRepositories([])
         }
+    }
+
+    // Effect to fetch repositories when a repository is selected
+    useEffect(() => {
+        fetchRepository()
     }, [selectedCodeRepositoryId, codeRepositoryEnabled])
 
     // Repository name availability check with debounce
@@ -380,18 +386,18 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                                 </Alert>
                                                 :
                                                 <SelectField
-                                                    name="codeRepository.selectedRepositoryId"
+                                                    name="codeRepository.repositoryId"
                                                     label={t("microfrontend.select_repository")}
                                                     options={[
-                                                        {
+                                                        !id && {
                                                             value: "create_new",
                                                             label: t("microfrontend.create_new_repository")
                                                         },
                                                         ...fetchedRepositories.map(repo => ({
-                                                            value: repo.id + "",
-                                                            label: repo.name || repo.full_name || repo.path_with_namespace
+                                                            value: repo.name,
+                                                            label: repo.name
                                                         })),
-                                                    ]}
+                                                    ].filter(Boolean)}
                                                     placeholder={t("microfrontend.select_repository_placeholder")}
                                                 />
                                             }
@@ -401,11 +407,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     {selectedRepositoryId === "create_new" && (
                                         <>
                                             <div className="space-y-2">
-                                                <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <TextField name="codeRepository.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
+                                                <TextField name="codeRepository.createData.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
 
                                                 {repositoryNameAvailability.checking && (
                                                     <Alert>
@@ -430,19 +432,22 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                                         <AlertDescription>{repositoryNameAvailability.error}</AlertDescription>
                                                     </Alert>
                                                 )}
-                                            </div></>)
+                                            </div>
+
+                                            {selectedCodeRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITHUB" && (
+                                                <div className="space-y-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <Switch
+                                                            name="codeRepository.createData.private"
+                                                            label={t("microfrontend.github_private")}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>)
                                     }
 
-                                    {selectedCodeRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITHUB" && (
-                                        <div className="space-y-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <Switch
-                                                    name="codeRepository.github.private"
-                                                    label={t("microfrontend.github_private")}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+                                    
 
                                     {selectedCodeRepositoryId && repositoriesQuery.data?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && (
                                         <div className="space-y-4">

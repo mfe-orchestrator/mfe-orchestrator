@@ -21,6 +21,7 @@ import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType } from "../m
 import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
 import BuiltFrontend from "../models/BuiltFrontendModel"
+import { BusinessException } from "../errors/BusinessException"
 
 export class MicrofrontendService extends BaseAuthorizedService {
 
@@ -46,7 +47,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
 
-        if (codeRepository) {
+        /*if (codeRepository) {
             if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
                 const azureDevOpsClient = new AzureDevOpsClient()
                 await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.name, microfrontend.codeRepository.azure.projectId, microfrontend.codeRepository.name)
@@ -68,7 +69,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     visibility: microfrontend.codeRepository.github.private ? "private" : "public"
                 }, codeRepository.accessToken, microfrontend.codeRepository.github.organizationId)
             }
-        }
+        }*/
 
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
     }
@@ -273,7 +274,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await processDirectory(localDir)
     }
 
-    async build(microfrontendId: string, version: string): Promise<void> {
+    async build(microfrontendId: string, version: string, ref?: string): Promise<void> {
         const microfrontend = await this.getById(microfrontendId)
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendId)
@@ -282,9 +283,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
         
         if(!microfrontend.codeRepository?.enabled) return;
 
-        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
+        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
         if(!codeRepository) {
-            throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
+            throw new EntityNotFoundError(microfrontend.codeRepository.codeRepositoryId.toString())
         }
 
         if(codeRepository.provider === CodeRepositoryProvider.GITHUB) {
@@ -293,11 +294,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 throw new Error("Github data not set")
             }
             await githubClient.createBuild({
-                name: microfrontend.codeRepository.name,
-                version: version
+                version: version,
+                owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
+                repo: microfrontend.codeRepository.repositoryId,
+                ref,
             }, 
-            codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
-            microfrontend.codeRepository.name,
             codeRepository.accessToken)
         }
     }

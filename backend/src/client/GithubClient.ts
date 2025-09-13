@@ -157,8 +157,9 @@ export interface GithubRepository {
 }
 
 export interface CreateBuildRequest {
-    name: string
     version?: string
+    owner: string
+    repo: string
     ref?: string
     inputs?: Record<string, any>
 }
@@ -168,7 +169,6 @@ export interface GithubWorkflowDispatchResponse {
 }
 
 class GithubClient {
-
 
     getAccessToken = async (data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> => {
         const responseGithub = await axios.request<GithubAccessTokenResponse>({
@@ -262,10 +262,10 @@ class GithubClient {
         return response.data
     }
 
-    createBuild = async (buildData: CreateBuildRequest, owner: string, repo: string,  accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
+    createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
         const workflowId = 'build-and-deploy-remotes.yml'
 
-        const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`
+        const url = `https://api.github.com/repos/${buildData.owner}/${buildData.repo}/actions/workflows/${workflowId}/dispatches`
 
         const response = await axios.request<GithubWorkflowDispatchResponse>({
             method: 'POST',
@@ -286,8 +286,6 @@ class GithubClient {
 
         return response.data || {}
     }
-
-    
 }
 
 export default GithubClient

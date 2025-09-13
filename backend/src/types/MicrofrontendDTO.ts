@@ -11,20 +11,12 @@ interface MicrofrontendDTO {
     updatedAt?: Date
     codeRepository: {
         enabled: boolean
+        codeRepositoryId: string
         repositoryId: string,
-        name: string,
-        azure: {
-            projectId: string
-        },
-        github: {
-            organizationId: string
-            private: boolean
-        },
-        gitlab: {
-            groupId: number
-            path: string
-            private: boolean
-        },
+        createData:{
+            name: string,
+            private?: boolean
+        }
     }
     canary: {
         enabled: boolean

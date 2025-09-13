@@ -1,42 +1,40 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose"
 
+export interface ICodeRepositoryMicrofrontend{
+    enabled: boolean
+    codeRepositoryId: ObjectId
+    repositoryId: string
+    repositoryData: any,
+    gitlab?: {
+        groupId?: number,
+        path?: string,
+    }
+}
+
+export interface ICanaryMicrofrontend{
+    enabled: boolean
+    percentage: number
+    type: CanaryType
+    deploymentType: CanaryDeploymentType
+    url?: string
+    version?: string
+}
+
+export interface IHostMicrofrontend{
+    type: HostedOn
+    url?: string
+    storageId?: ObjectId
+    entryPoint?: string
+}
 export interface IMicrofrontend extends Document<ObjectId> {
     slug: string
     name: string
     version: string
     continuousDeployment?: boolean
     projectId: ObjectId
-    canary?: {
-        enabled: boolean
-        percentage: number
-        type: CanaryType
-        deploymentType: CanaryDeploymentType
-        url?: string
-        version?: string
-    }
-    host: {
-        type: HostedOn
-        url?: string
-        storageId?: ObjectId
-        entryPoint?: string
-    }
-    codeRepository?: {
-        enabled: boolean
-        repositoryId: ObjectId
-        name: string
-        azure?: {
-            projectId?: string
-        },
-        github?: {
-            organizationId?: string
-            private?: boolean
-        },
-        gitlab?: {
-            groupId?: number,
-            path?: string,
-            private?: boolean
-        }
-    }
+    canary?: ICanaryMicrofrontend
+    host: IHostMicrofrontend
+    codeRepository?: ICodeRepositoryMicrofrontend
     description?: string
     createdAt: Date
     updatedAt: Date
@@ -59,7 +57,7 @@ export enum CanaryDeploymentType {
     BASED_ON_URL = "BASED_ON_URL"
 }
 
-const microfrontendHostTypeSchema = new Schema({
+const microfrontendHostTypeSchema = new Schema<IHostMicrofrontend>({
     type: {
         type: String,
         enum: [HostedOn.CUSTOM_URL, HostedOn.MFE_ORCHESTRATOR_HUB, HostedOn.CUSTOM_SOURCE],
@@ -80,7 +78,8 @@ const microfrontendHostTypeSchema = new Schema({
         required: false
     }
 })
-const microfrontendCanaryTypeSchema = new Schema({
+
+const microfrontendCanaryTypeSchema = new Schema<ICanaryMicrofrontend>({
     enabled: {
         type: Boolean,
         default: false
@@ -103,41 +102,33 @@ const microfrontendCanaryTypeSchema = new Schema({
         default: CanaryDeploymentType.BASED_ON_VERSION,
         required: true
     },
-    canaryUrl: {
+    url: {
+        type: String,
+        required: false
+    },
+    version: {
         type: String,
         required: false
     }
 })
 
-const microfrontendCodeRepositorySchema = new Schema({
+const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofrontend>({
     enabled: {
         type: Boolean,
         default: false
     },
-    repositoryId: {
+    codeRepositoryId: {
         type: Schema.Types.ObjectId,
         ref: "Repository",
         required: false
     },
-    name: {
+    repositoryId: {
         type: String,
         required: false
     },
-    azure: {
-        projectId: {
-            type: String,
-            required: false
-        }
-    },
-    github: {
-        organizationId: {
-            type: String,
-            required: false
-        },
-        private: {
-            type: Boolean,
-            default: false
-        }
+    repositoryData: {
+        type: Object,
+        required: false
     },
     gitlab: {
         groupId: {
@@ -147,10 +138,6 @@ const microfrontendCodeRepositorySchema = new Schema({
         path: {
             type: String,
             required: false
-        },
-        private: {
-            type: Boolean,
-            default: false
         }
     }
 })
