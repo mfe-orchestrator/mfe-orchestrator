@@ -40,6 +40,7 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
                         {...props}
                         onChange={e => {
                             field.onChange(textTransform ? textTransform(e.target.value) : e.target.value)
+                            props.onChange?.(e)
                         }}
                         value={field.value || ""}
                     />

@@ -55,6 +55,10 @@ const formSchema = z
                 enabled: z.boolean().default(false),
                 codeRepositoryId: z.string().optional(),
                 repositoryId: z.string().optional(),
+                createData: z.object({
+                    name: z.string().min(3).max(100),
+                    private: z.boolean().default(false),
+                }).optional()
             })
             .optional(),
 
@@ -144,6 +148,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     })
 
     const { watch } = form
+    const name = watch("name")
     const canaryEnabled = watch("canary.enabled")
     const hostType = watch("host.type")
     const codeRepositoryEnabled = watch("codeRepository.enabled")
@@ -279,7 +284,17 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <TextField name="name" label={t("microfrontend.name")} placeholder={t("microfrontend.name_placeholder")} required />
+                                <TextField name="name" 
+                                    label={t("microfrontend.name")} 
+                                    placeholder={t("microfrontend.name_placeholder")} 
+                                    textTransform={value => value.replace("  ", " ")}
+                                    required 
+                                    onChange={(e) => {
+                                        const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "-")
+                                        form.setValue("slug", slug)
+                                        form.setValue("codeRepository.createData.name", slug)
+                                    }}
+                                    />
                                 <TextField name="slug" label={t("microfrontend.slug")} placeholder={t("microfrontend.slug_placeholder")} required />
                             </div>
                             {isEdit && versionsQuery.data && versionsQuery.data.length > 0 ? (
