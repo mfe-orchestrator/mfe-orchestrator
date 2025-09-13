@@ -108,8 +108,8 @@ dependencies:
     specifier: ^4.2.2
     version: 4.2.2
   axios:
-    specifier: ^1.11.0
-    version: 1.11.0
+    specifier: ^1.12.0
+    version: 1.12.0
   class-variance-authority:
     specifier: ^0.7.1
     version: 0.7.1
@@ -2544,8 +2544,8 @@ packages:
       postcss-value-parser: 4.2.0
     dev: true
 
-  /axios@1.11.0:
-    resolution: {integrity: sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==}
+  /axios@1.12.0:
+    resolution: {integrity: sha512-oXTDccv8PcfjZmPGlWsPSwtOJCZ/b6W5jAMCNcfwJbCzDckwG0jrYJFaWH1yvivfCXjVzV/SPDEhMB3Q+DSurg==}
     dependencies:
       follow-redirects: 1.15.11
       form-data: 4.0.4
