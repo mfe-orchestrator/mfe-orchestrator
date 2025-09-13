@@ -1,10 +1,10 @@
 import { InputHTMLAttributes } from 'react';
 import { Controller, FieldError, FieldValues, Path, useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
-import { Input } from "@/components/ui/input/input"
+import { Input, InputProps } from "@/components/ui/input/input"
 import clsx from 'clsx';
 
-type TextFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElement> & {
+type TextFieldProps<T extends FieldValues> = InputProps & {
     name: Path<T>
     label: string
     rules?: any

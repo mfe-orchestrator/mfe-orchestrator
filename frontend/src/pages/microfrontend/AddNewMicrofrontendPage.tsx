@@ -148,7 +148,6 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
     })
 
     const { watch } = form
-    const name = watch("name")
     const canaryEnabled = watch("canary.enabled")
     const hostType = watch("host.type")
     const codeRepositoryEnabled = watch("codeRepository.enabled")
@@ -214,25 +213,23 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         fetchRepository()
     }, [selectedCodeRepositoryId, codeRepositoryEnabled])
 
-    // Repository name availability check with debounce
-    /*useEffect(() => {
-        if (!repositoryName || !selectedRepositoryId || !selectedAzureProjectId || repositoryName.length < 3) {
+
+    const onDebounceRepository = async (repositoryName: string) => {
+        if (!repositoryName || !selectedRepositoryId || repositoryName.length < 3) {
             setRepositoryNameAvailability({ checking: false, available: null, error: null })
             return
         }
 
-        const timeoutId = setTimeout(async () => {
-            setRepositoryNameAvailability({ checking: true, available: null, error: null })
+        setRepositoryNameAvailability({ checking: true, available: null, error: null })
             
             try {
                 const result = await codeRepositoriesApi.checkRepositoryNameAvailability(
-                    selectedRepositoryId,
-                    selectedAzureProjectId,
+                    selectedCodeRepositoryId,
                     repositoryName
                 )
                 setRepositoryNameAvailability({ 
                     checking: false, 
-                    available: result.available, 
+                    available: result, 
                     error: null 
                 })
             } catch (error) {
@@ -242,10 +239,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     error: "Error checking repository name availability" 
                 })
             }
-        }, 500)
-
-        return () => clearTimeout(timeoutId)
-    }, [repositoryName, selectedRepositoryId, selectedAzureProjectId, codeRepositoriesApi])*/
+    }
 
     const notificationToast = useToastNotificationStore()
 
@@ -265,7 +259,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         } else {
             await microfrontendsApi.create(dataToSend)
             notificationToast.showSuccessNotification({
-                message: t("microfrontend.updated_success_message")
+                message: t("microfrontend.created_success_message")
             })
         }
 
@@ -291,11 +285,13 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     required 
                                     onChange={(e) => {
                                         const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "-")
-                                        form.setValue("slug", slug)
-                                        form.setValue("codeRepository.createData.name", slug)
+                                        if(!isEdit){
+                                            form.setValue("slug", slug)
+                                            form.setValue("codeRepository.createData.name", slug)
+                                        }
                                     }}
                                     />
-                                <TextField name="slug" label={t("microfrontend.slug")} placeholder={t("microfrontend.slug_placeholder")} required />
+                                <TextField name="slug" disabled={isEdit} label={t("microfrontend.slug")} placeholder={t("microfrontend.slug_placeholder")} required />
                             </div>
                             {isEdit && versionsQuery.data && versionsQuery.data.length > 0 ? (
                                 <div className="space-y-4">
@@ -315,6 +311,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                         <TextField
                                             name="customVersion"
                                             label={t("microfrontend.custom_version")}
+                                            textTransform={value => value.replace(" ", "")}
                                             placeholder={t("microfrontend.version_placeholder")}
                                             required
                                         />
@@ -421,8 +418,15 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
 
                                     {selectedRepositoryId === "create_new" && (
                                         <>
-                                            <div className="space-y-2">
-                                                <TextField name="codeRepository.createData.name" label={t("microfrontend.repository_name")} placeholder={t("microfrontend.repository_name_placeholder")} required />
+                                            <div className="space-y-4">
+                                                <TextField name="codeRepository.createData.name"
+                                                    textTransform={value => value.toLowerCase().replace(/[^a-z0-9]/g, "-")}
+                                                    label={t("microfrontend.repository_name")}
+                                                    placeholder={t("microfrontend.repository_name_placeholder")}
+                                                    onDebounce={onDebounceRepository}
+                                                    debounceTime={500}
+                                                    required 
+                                                />
 
                                                 {repositoryNameAvailability.checking && (
                                                     <Alert>
@@ -475,34 +479,6 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                                     label: group.name || group.full_name
                                                 }))}
                                             />
-
-                                            {/* {selectedGitlabGroupId && (
-                                                <SelectField
-                                                    name="codeRepository.gitlab.path"
-                                                    label={t("microfrontend.gitlab_repository_path")}
-                                                    addClearButton
-                                                    options={gitlabGroupPathsQuery.data?.map(repo => ({
-                                                        value: repo,
-                                                        label: repo
-                                                    }))}
-                                                />
-                                            )} */}
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <Switch
-                                                    name="codeRepository.gitlab.private"
-                                                    label={t("microfrontend.gitlab_private")}
-                                                />
-                                                <SelectField
-                                                    name="codeRepository.gitlab.visibility"
-                                                    label={t("microfrontend.gitlab_visibility")}
-                                                    options={[
-                                                        { value: "public", label: t("microfrontend.visibility_public") },
-                                                        { value: "private", label: t("microfrontend.visibility_private") },
-                                                        { value: "internal", label: t("microfrontend.visibility_internal") }
-                                                    ]}
-                                                />
-                                            </div>
                                         </div>
                                     )}
                                 </CardContent>

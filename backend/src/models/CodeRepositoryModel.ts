@@ -20,7 +20,7 @@ export interface IGithubData {
 
 export interface IAzureData {
     projectId: string,
-    organization?: string
+    organization: string
 }
 
 export interface IGitlabData {

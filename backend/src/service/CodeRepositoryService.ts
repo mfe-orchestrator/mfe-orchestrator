@@ -28,6 +28,14 @@ export interface CodeRepositoryUpdateInput {
 
 export class CodeRepositoryService extends BaseAuthorizedService {
 
+    async isRepositoryNameAvailable(repositoryId: string, name: string): Promise<boolean> {
+        const repositories = await this.getRepositories(repositoryId)
+        if(!repositories){
+            return false
+        }
+        return !repositories.some((repository) => repository.name === name)
+    }
+
     async getByProjectId(projectId: string): Promise<ICodeRepository[]> {
         await this.ensureAccessToProject(projectId)
         return await CodeRepository.find({ projectId, isActive: true })

@@ -290,11 +290,11 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
-    const checkRepositoryNameAvailability = async (repositoryId: string, projectId: string, repositoryName: string): Promise<{available: boolean}> => {
-        const response = await apiClient.doRequest<{available: boolean}>({
-            url: `/api/repositories/${repositoryId}/azure/projects/${projectId}/repositories/check-name`,
-            method: 'POST',
-            data: { repositoryName }
+    const checkRepositoryNameAvailability = async (repositoryId: string, repositoryName: string): Promise<boolean> => {
+        const response = await apiClient.doRequest<boolean>({
+            url: `/api/repositories/${repositoryId}/repositories/check-name`,
+            method: 'GET',
+            params: { name: repositoryName }
         });
         return response.data
     }

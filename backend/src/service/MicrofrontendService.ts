@@ -21,7 +21,6 @@ import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType } from "../m
 import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
 import BuiltFrontend from "../models/BuiltFrontendModel"
-import { BusinessException } from "../errors/BusinessException"
 
 export class MicrofrontendService extends BaseAuthorizedService {
 
@@ -45,31 +44,51 @@ export class MicrofrontendService extends BaseAuthorizedService {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         await this.ensureAccessToProject(projectIdObj)
 
-        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.repositoryId)
+        if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
 
-        /*if (codeRepository) {
-            if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                const azureDevOpsClient = new AzureDevOpsClient()
-                await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.name, microfrontend.codeRepository.azure.projectId, microfrontend.codeRepository.name)
-            } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
-                if (!codeRepository.gitlabData?.url) {
-                    throw new Error("Gitlab url is not set")
-                }
-                const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
-                await gitlabClient.createRepository({
-                    name: microfrontend.codeRepository.name,
-                    path: microfrontend.codeRepository.gitlab.path,
-                    visibility: microfrontend.codeRepository.gitlab.private ? "private" : "public"
-                })
-            } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-                const githubClient = new GithubClient()
-                await githubClient.createRepository({
-                    name: microfrontend.codeRepository.name,
-                    private: microfrontend.codeRepository.github.private,
-                    visibility: microfrontend.codeRepository.github.private ? "private" : "public"
-                }, codeRepository.accessToken, microfrontend.codeRepository.github.organizationId)
+            const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
+            if (!codeRepository) {
+                throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
             }
-        }*/
+
+            if (microfrontend.codeRepository.createData) {
+                if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+                    if(!codeRepository.azureData){
+                        throw new Error("Azure data is not set")
+                    }
+
+                    const azureDevOpsClient = new AzureDevOpsClient()
+                    const ceatedRepository = await azureDevOpsClient.createRepository(
+                        codeRepository.accessToken, 
+                        codeRepository.azureData.organization,
+                        codeRepository.azureData.projectId,
+                        microfrontend.codeRepository.createData.name)
+                    microfrontend.codeRepository.repositoryId = ceatedRepository.name
+                } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+                    if (!codeRepository.gitlabData?.url) {
+                        throw new Error("Gitlab url is not set")
+                    }
+                    const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
+                    const ceatedRepository = await gitlabClient.createRepository({
+                        name: microfrontend.codeRepository.createData.name,
+                        path: microfrontend.codeRepository.createData.path,
+                        visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
+                    })
+                    microfrontend.codeRepository.repositoryId = ceatedRepository.name
+                } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
+                    const githubClient = new GithubClient()
+                    const ceatedRepository = await githubClient.createRepository({
+                        name: microfrontend.codeRepository.createData.name,
+                        private: microfrontend.codeRepository.createData.private,
+                        visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
+                    }, codeRepository.accessToken, codeRepository.githubData?.organizationId)
+
+                    microfrontend.codeRepository.repositoryId = ceatedRepository.name
+                }
+
+                microfrontend.codeRepository.createData = undefined
+            }
+        }
 
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
     }
@@ -160,7 +179,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 fastify.log.info("Creating directory " + basePath)
                 fs.mkdirSync(basePath, { recursive: true })
             }
-            
+
             await this.extractZipToDirectory(file, basePath)
         } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
             throw new Error("Microfrontend host type is not supported")
@@ -252,7 +271,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     private async processDirectoryRecursive(
-        localDir: string, 
+        localDir: string,
         fileHandler: (filePath: string, relativePath: string) => Promise<void>
     ): Promise<void> {
         const processDirectory = async (dir: string, basePath: string = '') => {
@@ -280,17 +299,17 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendId)
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
-        
-        if(!microfrontend.codeRepository?.enabled) return;
+
+        if (!microfrontend.codeRepository?.enabled) return;
 
         const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
-        if(!codeRepository) {
+        if (!codeRepository) {
             throw new EntityNotFoundError(microfrontend.codeRepository.codeRepositoryId.toString())
         }
 
-        if(codeRepository.provider === CodeRepositoryProvider.GITHUB) {
+        if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
             const githubClient = new GithubClient()
-            if(!codeRepository.githubData) {
+            if (!codeRepository.githubData) {
                 throw new Error("Github data not set")
             }
             await githubClient.createBuild({
@@ -298,14 +317,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
                 repo: microfrontend.codeRepository.repositoryId,
                 ref,
-            }, 
-            codeRepository.accessToken)
+            },
+                codeRepository.accessToken)
         }
     }
 
-    async getVersionsById(id: string){
+    async getVersionsById(id: string) {
         const microfrontend = await this.getById(id)
-        if(!microfrontend){
+        if (!microfrontend) {
             throw new EntityNotFoundError(id)
         }
         return BuiltFrontend.find({ microfrontendId: microfrontend._id }).select("version").distinct("version")

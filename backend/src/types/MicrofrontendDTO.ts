@@ -13,9 +13,10 @@ interface MicrofrontendDTO {
         enabled: boolean
         codeRepositoryId: string
         repositoryId: string,
-        createData:{
+        createData?:{
             name: string,
             private?: boolean
+            path?: string
         }
     }
     canary: {
