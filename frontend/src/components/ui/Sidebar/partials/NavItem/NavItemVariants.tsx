@@ -12,6 +12,10 @@ const baseStyle = `
 	transition-colors
 	border-2
 	hover:border-accent/25
+	focus-visible:outline-none
+	focus-visible:ring-4
+	focus-visible:ring-accent/25
+	focus-visible:ring-offset-2
 `
 
 const labelStyle = `

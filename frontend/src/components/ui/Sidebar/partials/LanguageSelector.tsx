@@ -10,9 +10,11 @@ import { Button } from "../../button/button"
 interface LanguageSelectorProps {
     isSidebarCollapsed?: boolean
     purpose?: "sidebar" | "page"
+    dropdownContentSide?: "top" | "right" | "bottom" | "left"
+    dropdownContentAlign?: "start" | "center" | "end"
 }
 
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isSidebarCollapsed, purpose = "sidebar" }: LanguageSelectorProps) => {
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isSidebarCollapsed, purpose = "sidebar", dropdownContentSide, dropdownContentAlign }: LanguageSelectorProps) => {
     const { t, i18n } = useTranslation()
     const userApi = useUserApi()
     const userStore = useUserStore()
@@ -36,7 +38,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isSidebarCollapsed,
                     <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" isSidebarCollapsed={isSidebarCollapsed} />
                 )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent side={purpose === "page" ? "bottom" : "right"} align={purpose === "page" ? "end" : "start"}>
+            <DropdownMenuContent side={dropdownContentSide || purpose === "page" ? "bottom" : "right"} align={dropdownContentAlign || purpose === "page" ? "end" : "start"}>
                 <DropdownMenuItem onClick={() => changeLanguage("en")}>{t("language.english")}</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => changeLanguage("it")}>{t("language.italian")}</DropdownMenuItem>
             </DropdownMenuContent>

@@ -11,9 +11,11 @@ import { Button } from "../../button/button"
 interface ThemeToggleProps {
     isSidebarCollapsed?: boolean
     purpose?: "sidebar" | "page"
+    dropdownContentSide?: "top" | "right" | "bottom" | "left"
+    dropdownContentAlign?: "start" | "center" | "end"
 }
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose = "sidebar" }: ThemeToggleProps) => {
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose = "sidebar", dropdownContentSide, dropdownContentAlign }: ThemeToggleProps) => {
     const { t } = useTranslation()
     const { theme, setTheme } = useThemeStore()
     const { user } = useUserStore()
@@ -50,7 +52,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose =
                     <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
                 )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent side={purpose === "page" ? "bottom" : "right"} align={purpose === "page" ? "end" : "start"}>
+            <DropdownMenuContent side={dropdownContentSide || purpose === "page" ? "bottom" : "right"} align={dropdownContentAlign || purpose === "page" ? "end" : "start"}>
                 <DropdownMenuItem onClick={() => onSetTheme(ThemeEnum.LIGHT)}>
                     <Sun className="mr-2 h-4 w-4" />
                     <span>{t("theme.light")}</span>

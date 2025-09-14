@@ -12,10 +12,12 @@ export interface NavItemProps extends React.HTMLAttributes<HTMLAnchorElement | H
     action?: () => void
     isSidebarCollapsed?: boolean
     disabled?: boolean
+    isMobile?: boolean
+    handleShowMenu?: () => void
 }
 
 export const NavItem = React.forwardRef<HTMLButtonElement | HTMLAnchorElement | HTMLDivElement, NavItemProps>(
-    ({ to, href, icon, name, isSidebarCollapsed, disabled = false, type = "main", action, className, ...props }, ref) => {
+    ({ to, href, icon, name, isSidebarCollapsed, disabled = false, type = "main", action, className, isMobile, handleShowMenu, ...props }, ref) => {
         const location = useLocation()
         const isActive = location.pathname === to
 
@@ -49,7 +51,13 @@ export const NavItem = React.forwardRef<HTMLButtonElement | HTMLAnchorElement | 
         }
 
         return (
-            <Link ref={ref as React.Ref<HTMLAnchorElement>} to={to} className={cn(navItemVariants({ type, active: isActive, isSidebarCollapsed }), className)} {...props}>
+            <Link
+                ref={ref as React.Ref<HTMLAnchorElement>}
+                to={to}
+                className={cn(navItemVariants({ type, active: isActive, isSidebarCollapsed }), className)}
+                onClick={() => isMobile && handleShowMenu()}
+                {...props}
+            >
                 {icon}
                 {!isSidebarCollapsed && <span>{name}</span>}
             </Link>
