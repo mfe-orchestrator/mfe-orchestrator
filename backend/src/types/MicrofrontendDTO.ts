@@ -16,7 +16,8 @@ interface MicrofrontendDTO {
         createData?:{
             name: string,
             private?: boolean
-            path?: string
+            path?: string,
+            templateId?: string
         }
     }
     canary: {

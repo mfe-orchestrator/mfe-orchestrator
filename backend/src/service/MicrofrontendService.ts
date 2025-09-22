@@ -84,6 +84,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     }, codeRepository.accessToken, codeRepository.githubData?.organizationId)
 
                     microfrontend.codeRepository.repositoryId = ceatedRepository.name
+
+                    // Now will inject the template
+                    await this.injectTemplateGithub()
                 }
 
                 microfrontend.codeRepository.createData = undefined
@@ -91,6 +94,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
+    }
+
+    async injectTemplateGithub(){
+        const url = "https://github.com/mfe-orchestrator-hub/template-vite-remote/archive/refs/heads/main.zip"
+        
     }
 
     async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {
