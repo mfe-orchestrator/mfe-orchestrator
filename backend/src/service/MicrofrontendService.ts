@@ -1,29 +1,31 @@
 import { ClientSession, ObjectId, Types } from "mongoose"
 import Microfrontend, { HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
 
-import MicrofrontendDTO from "../types/MicrofrontendDTO"
-import BaseAuthorizedService from "./BaseAuthorizedService"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import { runInTransaction } from "../utils/runInTransaction"
 import { MultipartFile } from "@fastify/multipart"
-import path from "path"
-import fs from "fs"
+import axios from "axios"
+import fs from "fs-extra"
+import http from "isomorphic-git/http/node"
+import * as git from "isomorphic-git"
+import os, { tmpdir } from "os"
+import path, { join } from "path"
 import unzipper from "unzipper"
-import os from "os"
 import { fastify } from ".."
-import Project, { IProject } from "../models/ProjectModel"
-import Storage, { IStorage, StorageType } from "../models/StorageModel"
-import GoogleStorageClient from "../client/GoogleStorageAccount"
-import S3BucketClient from "../client/S3Buckets"
-import AzureStorageClient from "../client/AzureStorageAccount"
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
-import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType } from "../models/CodeRepositoryModel"
+import AzureStorageClient from "../client/AzureStorageAccount"
 import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
+import GoogleStorageClient from "../client/GoogleStorageAccount"
+import S3BucketClient from "../client/S3Buckets"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import BuiltFrontend from "../models/BuiltFrontendModel"
+import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType } from "../models/CodeRepositoryModel"
+import Project, { IProject } from "../models/ProjectModel"
+import Storage, { StorageType } from "../models/StorageModel"
+import MicrofrontendDTO from "../types/MicrofrontendDTO"
+import { runInTransaction } from "../utils/runInTransaction"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export class MicrofrontendService extends BaseAuthorizedService {
-
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
         const microfrontend = await Microfrontend.findById(idObj, {}, { session })
@@ -45,7 +47,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await this.ensureAccessToProject(projectIdObj)
 
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
-
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
             if (!codeRepository) {
                 throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
@@ -53,16 +54,17 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
             if (microfrontend.codeRepository.createData) {
                 if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                    if(!codeRepository.azureData){
+                    if (!codeRepository.azureData) {
                         throw new Error("Azure data is not set")
                     }
 
                     const azureDevOpsClient = new AzureDevOpsClient()
                     const ceatedRepository = await azureDevOpsClient.createRepository(
-                        codeRepository.accessToken, 
+                        codeRepository.accessToken,
                         codeRepository.azureData.organization,
                         codeRepository.azureData.projectId,
-                        microfrontend.codeRepository.createData.name)
+                        microfrontend.codeRepository.createData.name
+                    )
                     microfrontend.codeRepository.repositoryId = ceatedRepository.name
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
                     if (!codeRepository.gitlabData?.url) {
@@ -77,16 +79,20 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     microfrontend.codeRepository.repositoryId = ceatedRepository.name
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
                     const githubClient = new GithubClient()
-                    const ceatedRepository = await githubClient.createRepository({
-                        name: microfrontend.codeRepository.createData.name,
-                        private: microfrontend.codeRepository.createData.private,
-                        visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
-                    }, codeRepository.accessToken, codeRepository.githubData?.organizationId)
+                    const ceatedRepository = await githubClient.createRepository(
+                        {
+                            name: microfrontend.codeRepository.createData.name,
+                            private: microfrontend.codeRepository.createData.private,
+                            visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
+                        },
+                        codeRepository.accessToken,
+                        codeRepository.githubData?.organizationId
+                    )
 
                     microfrontend.codeRepository.repositoryId = ceatedRepository.name
 
                     // Now will inject the template
-                    await this.injectTemplateGithub()
+                    await this.injectTemplateGithub(codeRepository.accessToken, ceatedRepository.clone_url)
                 }
 
                 microfrontend.codeRepository.createData = undefined
@@ -96,9 +102,100 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
     }
 
-    async injectTemplateGithub(){
+    async injectTemplateGithub(githubToken: string, repoUrl: string) {
         const url = "https://github.com/mfe-orchestrator-hub/template-vite-remote/archive/refs/heads/main.zip"
-        
+        const tempDir = join(tmpdir(), `template-${Date.now()}`)
+
+        let repoEmpty = false
+
+        try {
+            // Try clone
+            await git.clone({
+                fs,
+                http,
+                dir: tempDir,
+                url: repoUrl,
+                singleBranch: true,
+                depth: 1,
+                headers: { "User-Agent": "isomorphic-git" },
+                onAuth: () => ({ username: githubToken, password: "x-oauth-basic" })
+            })
+            console.log("✅ Repo cloned successfully")
+        } catch (e) {
+            console.log("⚠️ Repo might be empty → initializing...")
+            console.error(e)
+            repoEmpty = true
+            await git.init({ fs, dir: tempDir, defaultBranch: "main" })
+            await git.addRemote({ fs, dir: tempDir, remote: "origin", url: repoUrl })
+        }
+
+        // 🔑 Only checkout main if repo was cloned and main exists
+        if (!repoEmpty) {
+            try {
+                await git.checkout({ fs, dir: tempDir, ref: "main" })
+            } catch (e) {
+                console.log("🔧 Creating local main branch...")
+                console.error(e)
+
+                try {
+                    await git.branch({ fs, dir: tempDir, ref: "main" })
+                    console.log("✅ Local main branch created successfully")
+                    await git.add({ fs, dir: tempDir, filepath: "." })
+                    await git.commit({ fs, dir: tempDir, message: "Initial commit", author: { name: "Automation Bot", email: "bot@example.com" } })
+                    await git.push({ fs, http, dir: tempDir, remote: "origin", ref: "main" })
+
+                    await git.checkout({ fs, dir: tempDir, ref: "main" })
+                    console.log("✅ Local main branch checked out successfully")
+                } catch (e) {
+                    console.log("⚠️ Local main branch already exists")
+                    console.error(e)
+                }
+            }
+        }
+
+        // Download + unzip template
+        const response = await axios.get(url, { responseType: "stream" })
+        if (response.status !== 200) throw new Error(`Failed to download template: ${response.statusText}`)
+
+        await new Promise((resolve, reject) => {
+            response.data
+                .pipe(unzipper.Extract({ path: tempDir }))
+                .on("close", resolve)
+                .on("error", reject)
+        })
+
+        // Flatten GitHub zip (moves contents up)
+        const files = await fs.readdir(tempDir)
+        if (files.length === 1) {
+            const top = join(tempDir, files[0])
+            if ((await fs.stat(top)).isDirectory()) {
+                await fs.copy(top, tempDir, { overwrite: true })
+                await fs.remove(top)
+            }
+        }
+
+        // Stage + commit
+        await git.add({ fs, dir: tempDir, filepath: "." })
+        await git.commit({
+            fs,
+            dir: tempDir,
+            message: "Initial commit from template",
+            author: { name: "Automation Bot", email: "bot@example.com" }
+        })
+
+        // Push creates "main" on remote if missing
+        await git.push({
+            fs,
+            http,
+            dir: tempDir,
+            remote: "origin",
+            ref: "main",
+            onAuth: () => ({ username: githubToken, password: "x-oauth-basic" }),
+            force: true
+        })
+
+        console.log("✅ Repo is ready and pushed!")
+        return tempDir
     }
 
     async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {
@@ -177,8 +274,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         // Validate that the file is a ZIP
-        if (file.mimetype !== 'application/zip' && !file.filename?.endsWith('.zip')) {
-            throw new Error('File must be a ZIP archive')
+        if (file.mimetype !== "application/zip" && !file.filename?.endsWith(".zip")) {
+            throw new Error("File must be a ZIP archive")
         }
 
         if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB) {
@@ -200,7 +297,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         await BuiltFrontend.create({
             microfrontendId: microfrontend._id,
-            version,
+            version
         })
     }
 
@@ -214,13 +311,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
         const pathToWrite = project.slug + "-" + project._id.toString() + "/" + microfrontendSlug + "/" + version
 
         // Validate that the file is a ZIP
-        if (file.mimetype !== 'application/zip' && !file.filename?.endsWith('.zip')) {
-            throw new Error('File must be a ZIP archive')
+        if (file.mimetype !== "application/zip" && !file.filename?.endsWith(".zip")) {
+            throw new Error("File must be a ZIP archive")
         }
 
-        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unzip-'))
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "unzip-"))
         try {
-            const extractDir = path.join(tempDir, 'extracted')
+            const extractDir = path.join(tempDir, "extracted")
             // Estrai direttamente dal stream del file
             await this.extractZipToDirectory(file, extractDir)
 
@@ -251,7 +348,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     private async uploadDirectoryToS3(localDir: string, s3BasePath: string, s3Client: S3BucketClient): Promise<void> {
         const uploadFile = async (filePath: string, relativePath: string) => {
             const content = fs.readFileSync(filePath)
-            const s3Path = path.posix.join(s3BasePath, relativePath.replace(/\\/g, '/'))
+            const s3Path = path.posix.join(s3BasePath, relativePath.replace(/\\/g, "/"))
             await s3Client.uploadFile(s3Path, content)
         }
 
@@ -261,7 +358,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     private async uploadDirectoryToGoogle(localDir: string, gcsBasePath: string, googleClient: GoogleStorageClient): Promise<void> {
         const uploadFile = async (filePath: string, relativePath: string) => {
             const content = fs.readFileSync(filePath)
-            const gcsPath = path.posix.join(gcsBasePath, relativePath.replace(/\\/g, '/'))
+            const gcsPath = path.posix.join(gcsBasePath, relativePath.replace(/\\/g, "/"))
             await googleClient.uploadFile(gcsPath, content)
         }
 
@@ -271,18 +368,15 @@ export class MicrofrontendService extends BaseAuthorizedService {
     private async uploadDirectoryToAzure(localDir: string, azureBasePath: string, azureClient: AzureStorageClient): Promise<void> {
         const uploadFile = async (filePath: string, relativePath: string) => {
             const content = fs.readFileSync(filePath)
-            const azurePath = path.posix.join(azureBasePath, relativePath.replace(/\\/g, '/'))
+            const azurePath = path.posix.join(azureBasePath, relativePath.replace(/\\/g, "/"))
             await azureClient.uploadFile(azurePath, content)
         }
 
         await this.processDirectoryRecursive(localDir, uploadFile)
     }
 
-    private async processDirectoryRecursive(
-        localDir: string,
-        fileHandler: (filePath: string, relativePath: string) => Promise<void>
-    ): Promise<void> {
-        const processDirectory = async (dir: string, basePath: string = '') => {
+    private async processDirectoryRecursive(localDir: string, fileHandler: (filePath: string, relativePath: string) => Promise<void>): Promise<void> {
+        const processDirectory = async (dir: string, basePath: string = "") => {
             const items = fs.readdirSync(dir)
 
             for (const item of items) {
@@ -308,7 +402,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
 
-        if (!microfrontend.codeRepository?.enabled) return;
+        if (!microfrontend.codeRepository?.enabled) return
 
         const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
         if (!codeRepository) {
@@ -320,13 +414,15 @@ export class MicrofrontendService extends BaseAuthorizedService {
             if (!codeRepository.githubData) {
                 throw new Error("Github data not set")
             }
-            await githubClient.createBuild({
-                version: version,
-                owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
-                repo: microfrontend.codeRepository.repositoryId,
-                ref,
-            },
-                codeRepository.accessToken)
+            await githubClient.createBuild(
+                {
+                    version: version,
+                    owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
+                    repo: microfrontend.codeRepository.repositoryId,
+                    ref
+                },
+                codeRepository.accessToken
+            )
         }
     }
 
