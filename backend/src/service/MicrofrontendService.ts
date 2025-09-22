@@ -4,8 +4,8 @@ import Microfrontend, { HostedOn, IMicrofrontend } from "../models/Microfrontend
 import { MultipartFile } from "@fastify/multipart"
 import axios from "axios"
 import fs from "fs-extra"
-import http from "isomorphic-git/http/node"
 import * as git from "isomorphic-git"
+import http from "isomorphic-git/http/node"
 import os, { tmpdir } from "os"
 import path, { join } from "path"
 import unzipper from "unzipper"
@@ -59,27 +59,27 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     }
 
                     const azureDevOpsClient = new AzureDevOpsClient()
-                    const ceatedRepository = await azureDevOpsClient.createRepository(
+                    const createdRepository = await azureDevOpsClient.createRepository(
                         codeRepository.accessToken,
                         codeRepository.azureData.organization,
                         codeRepository.azureData.projectId,
                         microfrontend.codeRepository.createData.name
                     )
-                    microfrontend.codeRepository.repositoryId = ceatedRepository.name
+                    microfrontend.codeRepository.repositoryId = createdRepository.name
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
                     if (!codeRepository.gitlabData?.url) {
                         throw new Error("Gitlab url is not set")
                     }
                     const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
-                    const ceatedRepository = await gitlabClient.createRepository({
+                    const createdRepository = await gitlabClient.createRepository({
                         name: microfrontend.codeRepository.createData.name,
                         path: microfrontend.codeRepository.createData.path,
                         visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
                     })
-                    microfrontend.codeRepository.repositoryId = ceatedRepository.name
+                    microfrontend.codeRepository.repositoryId = createdRepository.name
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
                     const githubClient = new GithubClient()
-                    const ceatedRepository = await githubClient.createRepository(
+                    const createdRepository = await githubClient.createRepository(
                         {
                             name: microfrontend.codeRepository.createData.name,
                             private: microfrontend.codeRepository.createData.private,
@@ -89,10 +89,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         codeRepository.githubData?.organizationId
                     )
 
-                    microfrontend.codeRepository.repositoryId = ceatedRepository.name
+                    microfrontend.codeRepository.repositoryId = createdRepository.name
 
                     // Now will inject the template
-                    await this.injectTemplateGithub(codeRepository.accessToken, ceatedRepository.clone_url)
+                    await this.injectTemplateGithub(codeRepository.accessToken, createdRepository.clone_url)
                 }
 
                 microfrontend.codeRepository.createData = undefined
@@ -103,10 +103,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     async injectTemplateGithub(githubToken: string, repoUrl: string) {
-        const url = "https://github.com/mfe-orchestrator-hub/template-vite-remote/archive/refs/heads/main.zip"
+        const templateUrl = "https://github.com/mfe-orchestrator-hub/template-vite-remote/archive/refs/heads/main.zip"
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
-
-        let repoEmpty = false
 
         try {
             // Try clone
@@ -124,37 +122,12 @@ export class MicrofrontendService extends BaseAuthorizedService {
         } catch (e) {
             console.log("⚠️ Repo might be empty → initializing...")
             console.error(e)
-            repoEmpty = true
             await git.init({ fs, dir: tempDir, defaultBranch: "main" })
             await git.addRemote({ fs, dir: tempDir, remote: "origin", url: repoUrl })
         }
 
-        // 🔑 Only checkout main if repo was cloned and main exists
-        if (!repoEmpty) {
-            try {
-                await git.checkout({ fs, dir: tempDir, ref: "main" })
-            } catch (e) {
-                console.log("🔧 Creating local main branch...")
-                console.error(e)
-
-                try {
-                    await git.branch({ fs, dir: tempDir, ref: "main" })
-                    console.log("✅ Local main branch created successfully")
-                    await git.add({ fs, dir: tempDir, filepath: "." })
-                    await git.commit({ fs, dir: tempDir, message: "Initial commit", author: { name: "Automation Bot", email: "bot@example.com" } })
-                    await git.push({ fs, http, dir: tempDir, remote: "origin", ref: "main" })
-
-                    await git.checkout({ fs, dir: tempDir, ref: "main" })
-                    console.log("✅ Local main branch checked out successfully")
-                } catch (e) {
-                    console.log("⚠️ Local main branch already exists")
-                    console.error(e)
-                }
-            }
-        }
-
         // Download + unzip template
-        const response = await axios.get(url, { responseType: "stream" })
+        const response = await axios.get(templateUrl, { responseType: "stream" })
         if (response.status !== 200) throw new Error(`Failed to download template: ${response.statusText}`)
 
         await new Promise((resolve, reject) => {
@@ -169,33 +142,52 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (files.length === 1) {
             const top = join(tempDir, files[0])
             if ((await fs.stat(top)).isDirectory()) {
-                await fs.copy(top, tempDir, { overwrite: true })
+                // Copy each item from top-level folder into tempDir
+                const items = await fs.readdir(top)
+                for (const item of items) {
+                    await fs.move(join(top, item), join(tempDir, item), { overwrite: true })
+                }
+                // Remove the now-empty top-level folder
                 await fs.remove(top)
             }
         }
 
         // Stage + commit
-        await git.add({ fs, dir: tempDir, filepath: "." })
-        await git.commit({
-            fs,
-            dir: tempDir,
-            message: "Initial commit from template",
-            author: { name: "Automation Bot", email: "bot@example.com" }
-        })
+        try {
+            await git.branch({ fs, dir: tempDir, ref: "main", checkout: true, force: true })
+            await git.add({ fs, dir: tempDir, filepath: "." })
+            await git.commit({
+                fs,
+                dir: tempDir,
+                message: "Initial commit from template",
+                author: { name: "Automation Bot", email: "bot@example.com" }
+            })
 
-        // Push creates "main" on remote if missing
-        await git.push({
-            fs,
-            http,
-            dir: tempDir,
-            remote: "origin",
-            ref: "main",
-            onAuth: () => ({ username: githubToken, password: "x-oauth-basic" }),
-            force: true
-        })
+            // Push creates "main" on remote if missing
+            await git.push({
+                fs,
+                http,
+                dir: tempDir,
+                remote: "origin",
+                ref: "main",
+                remoteRef: "main",
+                onAuth: () => ({ username: githubToken, password: "x-oauth-basic" }),
+                force: true
+            })
 
-        console.log("✅ Repo is ready and pushed!")
-        return tempDir
+            console.log("✅ Repo is ready and pushed!")
+            return tempDir
+        } catch (e) {
+            console.error("‼️ Error pushing to remote: ", e)
+            const remotes = await git.listRemotes({ fs, dir: tempDir })
+            console.log("🔍 Known remotes:", remotes)
+
+            const branches = await git.listBranches({ fs, dir: tempDir })
+            console.log("🔍 Local branches:", branches)
+
+            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
+            console.log("🔍 Remote branches:", remoteBranches)
+        }
     }
 
     async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {
