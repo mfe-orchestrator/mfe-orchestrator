@@ -102,8 +102,8 @@ dependencies:
     specifier: ^0.12.2
     version: 0.12.2(react-dom@19.1.1)(react@19.1.1)
   '@tanstack/react-query':
-    specifier: ^5.85.9
-    version: 5.87.1(react@19.1.1)
+    specifier: ^5.90.1
+    version: 5.90.1(react@19.1.1)
   '@types/crypto-js':
     specifier: ^4.2.2
     version: 4.2.2
@@ -2219,16 +2219,16 @@ packages:
       tailwindcss: 3.4.17
     dev: true
 
-  /@tanstack/query-core@5.87.1:
-    resolution: {integrity: sha512-HOFHVvhOCprrWvtccSzc7+RNqpnLlZ5R6lTmngb8aq7b4rc2/jDT0w+vLdQ4lD9bNtQ+/A4GsFXy030Gk4ollA==}
+  /@tanstack/query-core@5.90.1:
+    resolution: {integrity: sha512-hmi8i+mWP3QnD8yq3+6LWri9IEZAlFbpbM/UVB+TJtp5RIxUfzuARqyW39b+HCfBKKnFKSHWMXNB5YN8lo/E/Q==}
     dev: false
 
-  /@tanstack/react-query@5.87.1(react@19.1.1):
-    resolution: {integrity: sha512-YKauf8jfMowgAqcxj96AHs+Ux3m3bWT1oSVKamaRPXSnW2HqSznnTCEkAVqctF1e/W9R/mPcyzzINIgpOH94qg==}
+  /@tanstack/react-query@5.90.1(react@19.1.1):
+    resolution: {integrity: sha512-tN7Fx2HuV2SBhl+STgL8enbfSInRoNU1B1+5LIU62klcMElE4lFzol4aReuRSUeD6ntzPayK0KrM6w9+ZlHEkw==}
     peerDependencies:
       react: ^18 || ^19
     dependencies:
-      '@tanstack/query-core': 5.87.1
+      '@tanstack/query-core': 5.90.1
       react: 19.1.1
     dev: false
 
