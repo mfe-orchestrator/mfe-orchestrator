@@ -138,17 +138,26 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
 
         // Flatten GitHub zip (moves contents up)
-        const files = await fs.readdir(tempDir)
+        let files = await fs.readdir(tempDir)
+        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
+
         if (files.length === 1) {
             const top = join(tempDir, files[0])
-            if ((await fs.stat(top)).isDirectory()) {
-                // Copy each item from top-level folder into tempDir
+            const stat = await fs.lstat(top)
+            if (stat.isDirectory()) {
                 const items = await fs.readdir(top)
                 for (const item of items) {
-                    await fs.move(join(top, item), join(tempDir, item), { overwrite: true })
+                    try {
+                        await fs.move(join(top, item), join(tempDir, item), { overwrite: true })
+                    } catch (err) {
+                        console.error(`Error moving ${item}:`, err)
+                    }
                 }
-                // Remove the now-empty top-level folder
-                await fs.remove(top)
+                try {
+                    await fs.remove(top)
+                } catch (err) {
+                    console.error(`Error removing top-level folder:`, err)
+                }
             }
         }
 
