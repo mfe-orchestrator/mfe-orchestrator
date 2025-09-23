@@ -23,7 +23,6 @@ const CodeRepositoryPage = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [repositoryToDelete, setRepositoryToDelete] = useState<{ id: string, name: string } | null>(null);
-  const [repositoryToEdit, setRepositoryToEdit] = useState<any | null>(null);
   const navigate = useNavigate();
 
   // Mock data query - replace with actual API call
@@ -159,9 +158,6 @@ const CodeRepositoryPage = () => {
           isOpen={isCreateDialogOpen}
           onOpenChange={(open) => {
             setIsCreateDialogOpen(open);
-            if (!open) {
-              setRepositoryToEdit(null);
-            }
           }}
         />
 

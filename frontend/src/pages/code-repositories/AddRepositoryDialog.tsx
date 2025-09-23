@@ -51,13 +51,13 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
     if (providerId === 'github') {
       // Redirect to GitHub OAuth for SSO access
       const redirectUri = `${window.location.origin}/code-repositories/callback/github`;
-      const scope = 'repo,public_repo,read:user';
+      const scope = 'repo,public_repo,read:user read:org';
       const state = btoa(JSON.stringify({ 
         provider: 'github',
         timestamp: Date.now() 
       }));
       
-      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
       
       // Open GitHub auth in current window
       window.location.href = githubAuthUrl;
