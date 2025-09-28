@@ -1,5 +1,8 @@
 name: 🏗️ Backend Build
 
+permissions:
+  contents: read
+  
 on:
   workflow_call:  
   push:
