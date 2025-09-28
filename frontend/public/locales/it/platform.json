@@ -478,7 +478,8 @@
       "version": "Versione",
       "versionPlaceholder": "Inserisci versione (es. 1.0.0)",
       "building": "Building in corso...",
-      "startBuild": "Avvia Build"
+      "startBuild": "Avvia Build",
+      "buildSuccess": "Build completata con successo per {{name}}"
     },
     "card": {
       "canary": "Canary",
@@ -828,6 +829,9 @@
       "chooseProfileOrOrg": "Scegli tra il tuo profilo personale o l'organizzazione.",
       "selectFromOptions": "Seleziona dal tuo profilo personale o {{count}} organizzazione{{count, plural, =1 {} other {i}}}.",
       "saveConnection": "Salva Connessione",
+      "updateGithubAccess": "Aggiorna Accesso GitHub",
+      "githubAccessTitle": "Accesso GitHub",
+      "githubAccessDescription": "Aggiorna la tua autenticazione GitHub se necessario",
       "connectionSaved": "Connessione GitHub \"{{name}}\" salvata con successo",
       "repositoryIdRequired": "L'ID del repository è necessario per configurare la connessione GitHub."
     }

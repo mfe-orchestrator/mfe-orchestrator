@@ -12,7 +12,7 @@ type TextFieldProps<T extends FieldValues> = InputProps & {
     containerClassName?: string
 }
 
-const TextField = <T extends FieldValues>({ name, label, rules, className, id, containerClassName, textTransform, ...props }: TextFieldProps<T>) => {
+const TextField = <T extends FieldValues>({ name, label, rules, className, id, containerClassName, textTransform, disabled, ...props }: TextFieldProps<T>) => {
     const {
         control,
         formState: { errors }
@@ -33,7 +33,7 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
                         {props.required && <span className="text-destructive ml-1">*</span>}
                     </Label>
                     <Input
-                        disabled={formState.isSubmitting}
+                        disabled={disabled || formState.isSubmitting}
                         id={inputId}
                         className={`${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         {...field}

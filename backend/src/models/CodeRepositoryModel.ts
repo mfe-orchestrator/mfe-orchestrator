@@ -1,6 +1,4 @@
 import mongoose, { Document, Schema, ObjectId } from "mongoose"
-import { GithubUser, GithubOrganization } from "../client/GithubClient"
-import { AzureOrganization, AzureUser } from "../client/AzureDevOpsClient"
 
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
@@ -15,6 +13,7 @@ export enum CodeRepositoryType {
 
 export interface IGithubData {
     organizationId?: string,
+    userName?: string,
     type: CodeRepositoryType
 }
 
@@ -46,6 +45,10 @@ export interface ICodeRepository extends Document<ObjectId> {
 const githubDataSchema = new Schema<IGithubData>(
     {
         organizationId: {
+            type: String,
+            required: false
+        },
+        userName: {
             type: String,
             required: false
         },

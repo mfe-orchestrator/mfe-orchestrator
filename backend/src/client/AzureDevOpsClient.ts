@@ -83,8 +83,22 @@ export interface AzureDevOpsProject {
     value : RepositoryData[]
   }
 
-  export interface AzureDeOpsBranch{
+  export interface AzureDevOpsBranch{
     name : string,
+    objectId: string;
+    creator: {
+        displayName: string;
+        uniqueName: string;
+        _links: {
+        avatar: { href: string };
+        };
+    };
+    url: string;
+  }
+
+  export interface AzureDevOpsBranchDTO{
+    count: number,
+    value: AzureDevOpsBranch[]
   }
 
 class AzureDevOpsClient {
@@ -177,9 +191,9 @@ class AzureDevOpsClient {
         return response.data;
     }
 
-    async getBranches(token: string, organization: string, project: string, repositoryName: string) : Promise<AzureDeOpsBranch[]> {
-        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/branches?api-version=7.1-preview.1`;
-        const response = await axios.request<AzureDeOpsBranch[]>({
+    async getBranches(token: string, organization: string, project: string, repositoryName: string) : Promise<AzureDevOpsBranchDTO> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/refs?filter=heads/&api-version=7.1-preview.1`;
+        const response = await axios.request<AzureDevOpsBranchDTO>({
             url,
             headers: {
                 "Authorization": `Bearer ${token}`,

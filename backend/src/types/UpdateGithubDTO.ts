@@ -4,4 +4,5 @@ export default interface UpdateGithubDTO {
     name: string
     type: CodeRepositoryType
     organizationId?: string
+    userName: string
 }

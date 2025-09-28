@@ -6,6 +6,12 @@ import { Button } from '../ui/button/button';
 import { Input } from '../ui/input/input';
 import useMicrofrontendsApi from '@/hooks/apiClients/useMicrofrontendsApi';
 import useCodeRepositoriesApi from '@/hooks/apiClients/useCodeRepositoriesApi';
+import { FormProvider, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import SelectField from '../input/SelectField.rhf';
+import TextField from '../input/TextField.rhf';
+import useToastNotificationStore from '@/store/useToastNotificationStore';
 
 interface BuildDialogProps {
   open: boolean;
@@ -13,6 +19,13 @@ interface BuildDialogProps {
   microfrontendId: string;
   microfrontendName: string;
 }
+
+const FormDataSchema = z.object({
+  version: z.string(),
+  branch: z.string(),
+});
+
+type FormData = z.infer<typeof FormDataSchema>;
 
 export function BuildDialog({
   open,
@@ -23,9 +36,7 @@ export function BuildDialog({
   const { t } = useTranslation();
   const { build, getSingle } = useMicrofrontendsApi();
   const { getBranches } = useCodeRepositoriesApi();
-  const [buildVersion, setBuildVersion] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState('');
-  const [isBuilding, setIsBuilding] = useState(false);
+  const notifications = useToastNotificationStore();
 
   // Get microfrontend data first
   const microfrontendQuery = useQuery({
@@ -36,77 +47,67 @@ export function BuildDialog({
 
   const branchesQuery = useQuery({
     queryKey: ['branches', microfrontendId],
-    queryFn: () => {
+    queryFn: async () => {
       const mfe = microfrontendQuery.data;
-      if (!mfe?.codeRepository?.repositoryId || !mfe?.codeRepository?.name) {
-        throw new Error('No repository configured');
+      const branches = await getBranches(mfe.codeRepository.codeRepositoryId, mfe.codeRepository.name || mfe.codeRepository.repositoryId);
+      const defaultBranch = branches.find(b => b.default) || branches?.[0];
+      if(defaultBranch){
+        form.setValue('branch', defaultBranch.branch);
       }
-      return getBranches(mfe.codeRepository.repositoryId, mfe.codeRepository.name);
+      return branches;
     },
-    enabled: open && !!microfrontendId && !!microfrontendQuery.data?.codeRepository?.repositoryId,
+    enabled: open && !!microfrontendId && !!microfrontendQuery.data?.codeRepository?.codeRepositoryId,
   });
 
-  useEffect(() => {
-    if (branchesQuery.data && branchesQuery.data.length > 0 && !selectedBranch) {
-      const defaultBranch = branchesQuery.data.find(b => b.default) || branchesQuery.data[0];
-      setSelectedBranch(defaultBranch.name);
-    }
-  }, [branchesQuery.data, selectedBranch]);
-
-  const handleBuild = async () => {
-    if (!buildVersion.trim() || !microfrontendId || !selectedBranch) return;
-
-    setIsBuilding(true);
-    try {
-      await build(microfrontendId, buildVersion.trim());
-      setBuildVersion('');
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Build failed:", error);
-    } finally {
-      setIsBuilding(false);
-    }
+  const onSubmit = async (values: FormData) => {
+    await build(microfrontendId, values.version, values.branch);
+    notifications.showSuccessNotification({
+      message: t('microfrontend.build.buildSuccess', { name: microfrontendName }),
+    });
+    onOpenChange(false);
   };
 
   const handleClose = () => {
+    form.reset();
     onOpenChange(false);
-    setBuildVersion('');
-    setSelectedBranch('');
   };
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(FormDataSchema),
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('microfrontend.build.title', { name: microfrontendName })}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="branch" className="text-sm font-medium">
-              {t('microfrontend.build.branch')}
-            </label>
-          </div>
-          <div>
-            <label htmlFor="version" className="text-sm font-medium">
-              {t('microfrontend.build.version')}
-            </label>
-            <Input
-              id="version"
-              value={buildVersion}
-              onChange={e => setBuildVersion(e.target.value)}
-              placeholder={t('microfrontend.build.versionPlaceholder')}
-              className="mt-1"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="secondary" onClick={handleClose} disabled={isBuilding}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={handleBuild} disabled={!buildVersion.trim() || !selectedBranch || isBuilding || microfrontendQuery.isLoading || branchesQuery.isLoading}>
-            {isBuilding ? t('microfrontend.build.building') : t('microfrontend.build.startBuild')}
-          </Button>
-        </DialogFooter>
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          
+            <DialogHeader>
+              <DialogTitle>{t('microfrontend.build.title', { name: microfrontendName })}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-2 mt-2 mb-4">
+              <SelectField
+                name="branch"
+                label={t('microfrontend.build.branch')}
+                options={branchesQuery.data?.map(b => ({ value: b.branch, label: b.branch }))}
+              />
+              <TextField
+                name="version"
+                label={t('microfrontend.build.version')}
+                placeholder={t('microfrontend.build.versionPlaceholder')}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={handleClose} disabled={form.formState.isSubmitting}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting || !form.formState.isValid || microfrontendQuery.isLoading || branchesQuery.isLoading}>
+                {form.formState.isSubmitting ? t('microfrontend.build.building') : t('microfrontend.build.startBuild')}
+              </Button>
+            </DialogFooter>
+        </form>
+      </FormProvider>
       </DialogContent>
     </Dialog>
   );

@@ -3,6 +3,7 @@ import useApiClient from "../useApiClient"
 export interface AddRepositoryGithubDTO{
     code: string
     state: string
+    codeRepositoryId: string
 }
 
 export interface AddRepositoryAzureDTO{
@@ -123,6 +124,7 @@ export interface ICodeRepository {
 export interface IUpdateCodeRepositoryGithubData {
     name: string,
     organizationId: string,
+    userName: string,
     type: CodeRepositoryType
 }
 
@@ -154,6 +156,15 @@ export interface AzureDevOpsProject {
     last_activity_at: string;
   }
 
+  export interface UnifiedBranch {
+    default?: boolean;
+    branch: string;
+    commitSha: string;
+    commitUrl: string;
+    author: string | null;
+    authorEmail: string | null;
+    authorAvatar: string | null;
+}
 
 const useCodeRepositoriesApi = () => {
 
@@ -290,10 +301,9 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
-    const getBranches = async (codeRepositoryId: string, repositoryId: string): Promise<any[]> => {
-        const response = await apiClient.doRequest<any[]>({
+    const getBranches = async (codeRepositoryId: string, repositoryId: string): Promise<UnifiedBranch[]> => {
+        const response = await apiClient.doRequest<UnifiedBranch[]>({
             url: `/api/repositories/${codeRepositoryId}/repositories/${repositoryId}/branches`,
-            method: 'POST',
         });
         return response.data
     }

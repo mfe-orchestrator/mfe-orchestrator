@@ -389,7 +389,8 @@
             "version": "Version",
             "versionPlaceholder": "Enter version (e.g., 1.0.0)",
             "building": "Building...",
-            "startBuild": "Start Build"
+            "startBuild": "Start Build",
+            "buildSuccess": "Build completed successfully for {{name}}"
         },
         "card": {
             "canary": "Canary",
@@ -801,6 +802,9 @@
             "chooseProfileOrOrg": "Choose between your personal profile or organization.",
             "selectFromOptions": "Select from your personal profile or {{count}} organization{{count, plural, =1 {} other {s}}}.",
             "saveConnection": "Save Connection",
+            "updateGithubAccess": "Update GitHub Access",
+            "githubAccessTitle": "GitHub Access",
+            "githubAccessDescription": "Update your GitHub authentication if needed",
             "connectionSaved": "GitHub connection \"{{name}}\" saved successfully",
             "repositoryIdRequired": "Repository ID is required to configure GitHub connection."
         }

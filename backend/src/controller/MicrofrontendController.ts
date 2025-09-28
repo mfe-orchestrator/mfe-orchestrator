@@ -76,9 +76,10 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         },
         Body: {
             version: string
+            branch?: string
         }
     }>("/microfrontends/:id/build", async (request, reply) => {
-        return reply.send(await new MicrofrontendService(request.databaseUser).build(request.params.id, request.body.version))
+        return reply.send(await new MicrofrontendService(request.databaseUser).build(request.params.id, request.body.version, request.body.branch))
     })
 
 

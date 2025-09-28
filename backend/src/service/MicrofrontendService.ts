@@ -92,9 +92,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         codeRepository.accessToken,
                         codeRepository.githubData?.organizationId
                     )
-
-                    microfrontend.codeRepository.repositoryId = createdRepository.name
-
+                    microfrontend.codeRepository.repositoryId = createdRepository.id + ""
+                    microfrontend.codeRepository.name = createdRepository.name
                     // Now will inject the template
                     if(template){
                         await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)

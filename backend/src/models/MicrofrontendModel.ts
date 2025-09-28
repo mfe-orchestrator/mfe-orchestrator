@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, ObjectId } from "mongoose"
 
 export interface ICodeRepositoryMicrofrontend{
     enabled: boolean
+    name: string
     codeRepositoryId: ObjectId
     repositoryId: string
     repositoryData: any,
@@ -123,6 +124,10 @@ const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofronten
         required: false
     },
     repositoryId: {
+        type: String,
+        required: false
+    },
+    name: {
         type: String,
         required: false
     },

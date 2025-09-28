@@ -14,6 +14,7 @@ import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import { GitBranch } from "lucide-react"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import { CodeRepositoryType } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import { useGlobalParameters } from "@/contexts/GlobalParameterProvider"
 
 interface GitHubConnectionForm {
     connectionName: string
@@ -33,6 +34,8 @@ const AddGitHubRepositoryPage: React.FC = () => {
     const navigate = useNavigate()
     const { id: repositoryId } = useParams<{ id: string }>()
     const { showSuccessNotification } = useToastNotificationStore()
+    const globalParameters = useGlobalParameters(); 
+      const githubClientId = globalParameters.getParameter("codeRepository.github.clientId")
     const { getGithubOrganizations, getGithubUser, updateRepositoryGithub, getRepositoryById } = useCodeRepositoriesApi()
 
     const form = useForm<GitHubConnectionForm>({
@@ -42,6 +45,22 @@ const AddGitHubRepositoryPage: React.FC = () => {
             ownerType: CodeRepositoryType.PERSONAL
         }
     })
+
+    const onUpdateGithubPage = () =>{
+        // Redirect to GitHub OAuth for SSO access
+        const redirectUri = `${window.location.origin}/code-repositories/callback/github?codeRepositoryId=${repositoryId}`;
+        const scope = 'repo,public_repo,read:user,read:org,workflow';
+        const state = btoa(JSON.stringify({ 
+            provider: 'github',
+            timestamp: Date.now() 
+        }));
+        
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
+        
+        // Open GitHub auth in current window
+        window.location.href = githubAuthUrl;
+        return
+    }
 
     const repositoryQuery = useQuery({
         queryKey: ['repository', repositoryId],
@@ -139,7 +158,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
             name: data.connectionName,
             type: data.selectedOwner !== CodeRepositoryType.PERSONAL ? CodeRepositoryType.ORGANIZATION : CodeRepositoryType.PERSONAL,
             organizationId: data.selectedOwner !== CodeRepositoryType.PERSONAL ? data.selectedOwner : undefined,
-            
+            userName: data.selectedOwner === CodeRepositoryType.PERSONAL ? githubUserQuery.data.login : undefined,
         })
 
 
@@ -180,6 +199,21 @@ const AddGitHubRepositoryPage: React.FC = () => {
                             </div>
                         </CardHeader>
                         <CardContent>
+                            <div className="mb-6 mt-2  p-4 bg-muted rounded-lg">
+                                <div className="flex items-center space-x-4 justify-between">
+                                    <div>
+                                        <h3 className="text-sm font-medium">{t('codeRepositories.github.githubAccessTitle')}</h3>
+                                        <p className="text-xs text-muted-foreground">{t('codeRepositories.github.githubAccessDescription')}</p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={onUpdateGithubPage}
+                                    >
+                                        {t('codeRepositories.github.updateGithubAccess')}
+                                    </Button>
+                                </div>
+                            </div>
                             <FormProvider {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                     <TextField

@@ -14,6 +14,7 @@ interface MicrofrontendDTO {
         enabled: boolean
         codeRepositoryId: string
         repositoryId: string,
+        name?: string,
         createData?:{
             name: string,
             private?: boolean

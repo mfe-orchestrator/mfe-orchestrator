@@ -22,6 +22,7 @@ const GitHubCallbackPage = () => {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
+    const codeRepositoryId = searchParams.get('codeRepositoryId');
 
     if (error) {
       setStatus('error');
@@ -44,7 +45,8 @@ const GitHubCallbackPage = () => {
 
     const repository = await saveRepositoryMutation.mutateAsync({
       code,
-      state
+      state,
+      codeRepositoryId
     })
     setStatus('success');
 

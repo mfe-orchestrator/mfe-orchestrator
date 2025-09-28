@@ -4,8 +4,8 @@ import { BusinessException, createBusinessException } from "../errors/BusinessEx
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { fastify } from ".."
-import GithubClient from "../client/GithubClient"
-import AzureDevOpsClient, { RepositoryData } from "../client/AzureDevOpsClient"
+import GithubClient, { GithubBranch } from "../client/GithubClient"
+import AzureDevOpsClient, { AzureDevOpsBranch, RepositoryData } from "../client/AzureDevOpsClient"
 import GitLabClient from "../client/GitlabClient"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
@@ -26,15 +26,52 @@ export interface CodeRepositoryUpdateInput {
     isActive?: boolean
 }
 
+export interface UnifiedBranch {
+    default?: boolean;
+    branch: string;
+    commitSha: string;
+    commitUrl: string;
+    author: string | null;
+    authorEmail: string | null;
+    authorAvatar: string | null;
+}
+
 export class CodeRepositoryService extends BaseAuthorizedService {
-    async getBranches(codeRepositoryId: string, repositoryId: string) {
+
+    mapAzureBranch(azureBranch: AzureDevOpsBranch) {
+        return {
+          default: azureBranch.name === "main" || azureBranch.name === "master",
+          branch: azureBranch.name.replace("refs/heads/", ""), // "refs/heads/main" -> "main"
+          commitSha: azureBranch.objectId, // "objectId"
+          commitUrl: azureBranch.url, // l'url alla ref
+          author: azureBranch.creator?.displayName,
+          authorEmail: azureBranch.creator?.uniqueName,
+          authorAvatar: azureBranch.creator?._links?.avatar?.href
+        };
+    }
+
+    mapGithubBranch(githubBranch: GithubBranch) {
+        return {
+          default: githubBranch.name === "main" || githubBranch.name === "master",
+          branch: githubBranch.name,
+          commitSha: githubBranch.commit?.sha,
+          commitUrl: githubBranch.commit?.url,
+          author: null, // GitHub branches API non porta info autore
+          authorEmail: null,
+          authorAvatar: null
+        };
+      }
+
+    async getBranches(codeRepositoryId: string, repositoryId: string) : Promise<UnifiedBranch[]> {
         const repository = await this.findById(codeRepositoryId)
         if(!repository){
             throw new EntityNotFoundError(codeRepositoryId)
         }
         
         if(repository.provider === CodeRepositoryProvider.GITHUB){
-            return new GithubClient().getBranches(repository.accessToken, repositoryId, repository.githubData?.organizationId)
+            return new GithubClient()
+                .getBranches(repository.accessToken, repositoryId, repository.githubData?.organizationId, repository.githubData?.userName)
+                .then(branches => branches.map(this.mapGithubBranch))
         }
         if(repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS){
             if(!repository.azureData){
@@ -44,13 +81,18 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                     statusCode: 400
                 })
             }
-                
-            return new AzureDevOpsClient().getBranches(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, repositoryId)
+            
+            return new AzureDevOpsClient()
+                .getBranches(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, repositoryId)
+                .then(dto => dto.value.map(this.mapAzureBranch))
         }
         if(repository.provider === CodeRepositoryProvider.GITLAB){
             //TODO da fare!!!
             //return new GitLabClient().getBranches(repository.accessToken, repositoryId)
+            return []
         }
+
+        return []
     }
 
     async isRepositoryNameAvailable(repositoryId: string, name: string): Promise<boolean> {
@@ -178,7 +220,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         repository.name = body.name
         repository.githubData = {
             type: body.type,
-            organizationId: body.organizationId
+            organizationId: body.organizationId,
+            userName: body.userName
         }
 
         return await repository.save()
@@ -201,7 +244,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return await this.update(repositoryId, { isActive: false })
     }
 
-    async addRepositoryGithub(code: string, state: string, projectId: string) {
+    async addRepositoryGithub(code: string, state: string, projectId: string, codeRepositoryId: string) {
         await this.ensureAccessToProject(projectId)
         const githubClient = new GithubClient()
         const responseGithub = await githubClient.getAccessToken({
@@ -210,17 +253,24 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             code
         })
 
-        const userGithub = await githubClient.getUser(responseGithub.access_token)
-        
-        const repository = new CodeRepository({
-            name: userGithub.name,
-            provider: CodeRepositoryProvider.GITHUB,
-            accessToken: responseGithub.access_token,
-            projectId: new Types.ObjectId(projectId),
-            isActive: true
-        })
+        if(codeRepositoryId){
+            return await this.update(codeRepositoryId, { accessToken: responseGithub.access_token })
+        }else{        
+            const userGithub = await githubClient.getUser(responseGithub.access_token)
+            const repository = new CodeRepository({
+                name: userGithub.name,
+                provider: CodeRepositoryProvider.GITHUB,
+                accessToken: responseGithub.access_token,
+                projectId: new Types.ObjectId(projectId),
+                isActive: true,
+                githubData: {
+                    type: CodeRepositoryType.PERSONAL,
+                    userName: userGithub.login
+                }
+            })
 
-        return await repository.save()
+            return await repository.save()
+        }
     }
 
     async addRepositoryAzure(body: CreateAzureDevOpsRepositoryDTO, projectId: string) {

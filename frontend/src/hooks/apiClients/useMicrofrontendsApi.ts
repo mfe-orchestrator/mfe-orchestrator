@@ -40,6 +40,7 @@ export interface Microfrontend {
     },
     codeRepository?: {
         enabled: boolean
+        codeRepositoryId: string,
         repositoryId: string
         name: string
         azure?: {
@@ -109,11 +110,11 @@ const useMicrofrontendsApi = () => {
         return response.data;
     };
 
-    const build = async (id: string, version: string) => {
+    const build = async (id: string, version: string, branch: string) => {
         const response = await apiClient.doRequest({
             url: `/api/microfrontends/${id}/build`,
             method: "POST",
-            data: { version }
+            data: { version, branch }
         });
         return response.data;
     };

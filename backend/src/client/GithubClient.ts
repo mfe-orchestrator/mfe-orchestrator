@@ -253,10 +253,10 @@ class GithubClient {
         return response.data
     }
 
-    getBranches = async (accessToken: string, repositoryId: string, orgName?: string): Promise<GithubBranch[]> => {
+    getBranches = async (accessToken: string, repositoryId: string, orgName?: string, userName?: string): Promise<GithubBranch[]> => {
         const url = orgName 
             ? `https://api.github.com/orgs/${orgName}/repos/${repositoryId}/branches`
-            : `https://api.github.com/user/repos/${repositoryId}/branches`
+            : `https://api.github.com/repos/${userName}/${repositoryId}/branches`
 
         const response = await axios.request<GithubBranch[]>({
             url,
@@ -288,7 +288,7 @@ class GithubClient {
     }
 
     createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
-        const workflowId = 'build-and-deploy-remotes.yml'
+        const workflowId = 'build-and-deploy.yml'
 
         const url = `https://api.github.com/repos/${buildData.owner}/${buildData.repo}/actions/workflows/${workflowId}/dispatches`
 

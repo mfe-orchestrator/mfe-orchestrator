@@ -90,10 +90,12 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Body: {
             code: string
             state: string
+            codeRepositoryId: string
         }
     }>('/repositories/callback/github',  async (request, reply) =>{
         const code = request.body.code
         const state = request.body.state
+        const codeRepositoryId = request.body.codeRepositoryId
         const projectId = getProjectIdFromRequest(request)
         if(!projectId){
             throw new ProjectHeaderNotFoundError()
@@ -101,7 +103,8 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         const repository = await new CodeRepositoryService(request.databaseUser).addRepositoryGithub(
             code,
             state,
-            projectId
+            projectId,
+            codeRepositoryId
         )
         reply.send(repository)
         
