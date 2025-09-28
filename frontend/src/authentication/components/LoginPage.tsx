@@ -40,7 +40,7 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
       password: values.password
     })
     userStore.setUser(loginData.user)
-    setToken(loginData.accessToken, "microfronted.orchestrator.hub")
+    setToken(loginData.accessToken, "microfrontend.orchestrator.hub")
   };
 
   const footer = (

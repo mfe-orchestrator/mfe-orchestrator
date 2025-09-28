@@ -118,10 +118,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 headers: { "User-Agent": "isomorphic-git" },
                 onAuth: () => ({ username: githubToken, password: "x-oauth-basic" })
             })
-            console.log("✅ Repo cloned successfully")
+            fastify.log.info("✅ Repo cloned successfully")
         } catch (e) {
-            console.log("⚠️ Repo might be empty → initializing...")
-            console.error(e)
+            fastify.log.info("⚠️ Repo might be empty → initializing...")
+            fastify.log.error(e)
             await git.init({ fs, dir: tempDir, defaultBranch: "main" })
             await git.addRemote({ fs, dir: tempDir, remote: "origin", url: repoUrl })
         }

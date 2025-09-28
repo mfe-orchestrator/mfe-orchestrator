@@ -3,10 +3,10 @@ import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsConte
 import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "@/components/ui/tabs/tabs"
-import { IServeMicrofronted } from "@/hooks/apiClients/useServeApi"
+import { IServeMicrofrontend } from "@/hooks/apiClients/useServeApi"
 import { useState } from "react"
 
-const getViteConfig = (microfrontends: IServeMicrofronted[]) => {
+const getViteConfig = (microfrontends: IServeMicrofrontend[]) => {
     // Generate remotes object from microfrontends array
     console.log("microfrontends", microfrontends)
     if (!microfrontends) return
@@ -51,7 +51,7 @@ ${remotesString}
     return viteConfig
 }
 
-const getWebpackConfig = (microfrontends: IServeMicrofronted[]) => {
+const getWebpackConfig = (microfrontends: IServeMicrofrontend[]) => {
     if (!microfrontends) return ""
 
     // Generate remotes string with proper formatting
@@ -97,7 +97,7 @@ ${remotesString}
 };`
 }
 
-const FrontendIntegration = ({ microfrontends, environmentId }: { microfrontends: IServeMicrofronted[]; environmentId?: string }) => {
+const FrontendIntegration = ({ microfrontends, environmentId }: { microfrontends: IServeMicrofrontend[]; environmentId?: string }) => {
     const [activeTab, setActiveTab] = useState("vite")
     const curlExample = `# Example CURL request to fetch a remote module
   curl -X GET https://${window.location.host}/api/serve/all/${environmentId}`

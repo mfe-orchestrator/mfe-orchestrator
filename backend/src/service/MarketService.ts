@@ -1,44 +1,22 @@
-import { Types } from "mongoose"
 import Market, { IMarket } from "../models/MarketModel"
-import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export class MarketService extends BaseAuthorizedService {
 
     async getAll(): Promise<IMarket[]> {
-        try {
-            return await Market.find().sort({ name: 1 }).lean()
-        } catch (error) {
-            throw createBusinessException({
-                code: "MARKET_FETCH_ERROR",
-                message: "Failed to fetch markets",
-                details: { error: error instanceof Error ? error.message : "Unknown error" },
-                statusCode: 500
-            })
-        }
+        const data =  await Market.find().sort({ name: 1 }).lean()
+        const seededData = await this.seed()
+        return [...data, ...seededData];
     }
 
     async getSingle(id: string): Promise<IMarket | null> {
-        try {
-            if (!Types.ObjectId.isValid(id)) {
-                throw createBusinessException({
-                    code: "INVALID_ID",
-                    message: "Invalid market ID format",
-                    statusCode: 400
-                })
-            }
+        return await Market.findById(id).lean()
+    }
 
-            return await Market.findById(id).lean()
-        } catch (error) {
-            if (error instanceof BusinessException) throw error
-
-            throw createBusinessException({
-                code: "MARKET_FETCH_ERROR",
-                message: "Failed to fetch market",
-                details: { error: error instanceof Error ? error.message : "Unknown error" },
-                statusCode: 500
-            })
-        }
+    async seed() {
+        const response = await fetch('https://raw.githubusercontent.com/mfe-orchestrator-hub/documentation/refs/heads/main/marketplace/marketplace.json')
+        const data = await response.json()
+        return data;
     }
 }
 

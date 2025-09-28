@@ -814,6 +814,31 @@
         },
         "error": {
             "failedToFetch": "Failed to fetch markets"
+        },
+        "filters": {
+            "allFrameworks": "All Frameworks",
+            "allCompilers": "All Compilers",
+            "searchPlaceholder": "Search by name...",
+            "selectFramework": "Select framework...",
+            "selectCompiler": "Select compiler...",
+            "hostType": "Host Type",
+            "remote": "Remote",
+            "host": "Host",
+            "allTypes": "All Types"
+        },
+        "noResults": {
+            "title": "No templates match your filters",
+            "description": "Try adjusting your search, framework, compiler, or host type filters"
+        },
+        "card": {
+            "comingSoon": "Coming Soon",
+            "viewOnGitHub": "View on GitHub"
+        },
+        "blank": {
+            "title": "Create Blank Template",
+            "description": "Start from scratch with an empty microfrontend template",
+            "framework": "Any Framework",
+            "tag": "Blank"
         }
     }
 }

@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, ObjectId } from "mongoose"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { AuthTokenDataDTO } from "../dto/AuthTokenData.dto"
-export const ISSUER = "microfronted.orchestrator.hub"
+export const ISSUER = "microfrontend.orchestrator.hub"
 
 export enum UserStatus {
     ACTIVE = "ACTIVE",

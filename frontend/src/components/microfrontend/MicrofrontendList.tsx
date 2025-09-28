@@ -34,7 +34,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     const navigate = useNavigate()
 
     const onAddNewMicrofrontend = () => {
-        navigate(`/microfronted/new`)
+        navigate(`/market`)
     }
 
     return (
@@ -98,7 +98,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="primary" size="sm" onClick={() => navigate(`/microfronted/${mfe._id}`)} className="w-full">
+                                            <Button variant="primary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="w-full">
                                                 {t("common.configuration")}
                                             </Button>
                                         </TableCell>

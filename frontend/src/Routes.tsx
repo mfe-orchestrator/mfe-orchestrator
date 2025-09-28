@@ -33,7 +33,7 @@ const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCa
 const AddAzure = lazy(() => import("./pages/code-repositories/AddAzureRepositoryPage"));
 const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlabRepositoryPage"));
 const AddGithub = lazy(() => import("./pages/code-repositories/AddGitHubRepositoryPage"));
-const MarketPage = lazy(() => import("./pages/MarketPage"));
+const MarketPage = lazy(() => import("./pages/market/MarketPage"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -71,13 +71,13 @@ const PrivateRoutes: React.FC = () => {
             }
           />
           <Route
-            path="/microfronted/new"
+            path="/microfrontend/new"
             element={
               <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
             }
           />
           <Route
-            path="/microfronted/:id"
+            path="/microfrontend/:id"
             element={
               <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
             }

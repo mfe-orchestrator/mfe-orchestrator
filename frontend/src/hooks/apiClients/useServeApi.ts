@@ -2,7 +2,7 @@ import { AuthenticationType } from "@/api/apiClient";
 import useApiClient from "../useApiClient";
 import { GlobalVariable } from "./useGlobalVariablesApi";
 
-export interface IServeMicrofronted {
+export interface IServeMicrofrontend {
     url: string,
     slug: string,
     continuousDevelopment: boolean,    
@@ -10,7 +10,7 @@ export interface IServeMicrofronted {
 
 export interface IServe {
     globalVariables: GlobalVariable[],
-    microfrontends: IServeMicrofronted[]
+    microfrontends: IServeMicrofrontend[]
 }
 
 const useServeApi = () => {

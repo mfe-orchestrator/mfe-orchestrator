@@ -1,13 +1,22 @@
-import { AuthenticationType } from '@/api/apiClient';
 import useApiClient from '../useApiClient';
 
 export interface Market {
   _id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  path: string;
+  name: string
+  slug: string
+  comingSoon?: boolean
+  description: string
+  icon: string
+  framework: string
+  tags: string[]
+  version?: string
+  author?: string
+  license?: string
+  repo?: string
+  type?: string
+  compiler?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 const useMarketApi = () => {
