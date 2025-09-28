@@ -504,8 +504,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
             await githubClient.createBuild(
                 {
                     version: version,
-                    owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION && codeRepository.githubData.organizationId ? codeRepository.githubData.organizationId : "personal",
-                    repo: microfrontend.codeRepository.repositoryId,
+                    type: codeRepository.githubData.type,
+                    owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION ? codeRepository.githubData.organizationId! : codeRepository.githubData.userName!,
+                    repo: microfrontend.codeRepository.name,
                     ref
                 },
                 codeRepository.accessToken

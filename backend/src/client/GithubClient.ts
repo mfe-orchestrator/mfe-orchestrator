@@ -1,4 +1,5 @@
 import axios from "axios"
+import { CodeRepositoryType } from "../models/CodeRepositoryModel"
 
 
 export interface GithubAccessTokenResponse {
@@ -158,7 +159,8 @@ export interface GithubRepository {
 
 export interface CreateBuildRequest {
     version?: string
-    owner: string
+    type?: CodeRepositoryType
+    owner: string 
     repo: string
     ref?: string
     inputs?: Record<string, any>
@@ -290,7 +292,11 @@ class GithubClient {
     createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
         const workflowId = 'build-and-deploy.yml'
 
-        const url = `https://api.github.com/repos/${buildData.owner}/${buildData.repo}/actions/workflows/${workflowId}/dispatches`
+        let url = buildData.type === CodeRepositoryType.ORGANIZATION 
+            ? `https://api.github.com/orgs/${buildData.owner}/repos/${buildData.repo}`
+            : `https://api.github.com/repos/${buildData.owner}/${buildData.repo}`
+
+        url += `/actions/workflows/${workflowId}/dispatches`
 
         const response = await axios.request<GithubWorkflowDispatchResponse>({
             method: 'POST',

@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from "react"
 import { useForm, FormProvider } from "react-hook-form"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button/button"
@@ -34,8 +34,10 @@ const AddGitHubRepositoryPage: React.FC = () => {
     const navigate = useNavigate()
     const { id: repositoryId } = useParams<{ id: string }>()
     const { showSuccessNotification } = useToastNotificationStore()
+    const [searchParams]  = useSearchParams()
     const globalParameters = useGlobalParameters(); 
-      const githubClientId = globalParameters.getParameter("codeRepository.github.clientId")
+    const githubClientId = globalParameters.getParameter("codeRepository.github.clientId")
+    const isNew = searchParams.get('isNew') === 'true'
     const { getGithubOrganizations, getGithubUser, updateRepositoryGithub, getRepositoryById } = useCodeRepositoriesApi()
 
     const form = useForm<GitHubConnectionForm>({
@@ -199,23 +201,25 @@ const AddGitHubRepositoryPage: React.FC = () => {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="mb-6 mt-2  p-4 bg-muted rounded-lg">
-                                <div className="flex items-center space-x-4 justify-between">
-                                    <div>
-                                        <h3 className="text-sm font-medium">{t('codeRepositories.github.githubAccessTitle')}</h3>
-                                        <p className="text-xs text-muted-foreground">{t('codeRepositories.github.githubAccessDescription')}</p>
+                            {!isNew && 
+                                <div className="mb-4 mt-2  p-4 bg-muted rounded-lg">
+                                    <div className="flex items-center space-x-4 justify-between">
+                                        <div>
+                                            <h3 className="text-sm font-medium">{t('codeRepositories.github.githubAccessTitle')}</h3>
+                                            <p className="text-xs text-muted-foreground">{t('codeRepositories.github.githubAccessDescription')}</p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            onClick={onUpdateGithubPage}
+                                        >
+                                            {t('codeRepositories.github.updateGithubAccess')}
+                                        </Button>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={onUpdateGithubPage}
-                                    >
-                                        {t('codeRepositories.github.updateGithubAccess')}
-                                    </Button>
                                 </div>
-                            </div>
+                            }
                             <FormProvider {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-2">
                                     <TextField
                                         name="connectionName"
                                         label={t('codeRepositories.github.connectionName')}

@@ -50,7 +50,7 @@ const GitHubCallbackPage = () => {
     })
     setStatus('success');
 
-    navigate(`/code-repositories/github/${repository._id}`)
+    navigate(`/code-repositories/github/${repository._id}?isNew=${!Boolean(codeRepositoryId)}`)
   }
 
   useEffect(() => {
