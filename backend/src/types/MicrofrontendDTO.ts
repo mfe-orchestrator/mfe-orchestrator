@@ -17,7 +17,7 @@ interface MicrofrontendDTO {
             name: string,
             private?: boolean
             path?: string,
-            templateId?: string
+            template?: string
         }
     }
     canary: {

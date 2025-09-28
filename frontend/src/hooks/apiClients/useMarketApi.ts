@@ -29,8 +29,16 @@ const useMarketApi = () => {
     return response.data;
   };
 
+  const getMarketBySlug = async ( slug: string): Promise<Market> => {
+    const response = await apiClient.doRequest<Market>({
+      url: `/api/market/${slug}`,
+    });
+    return response.data;
+  };
+
   return {
     getMarkets,
+    getMarketBySlug
   };
 };
 

@@ -13,6 +13,7 @@ export interface IMarket extends Document<ObjectId> {
     author?: string
     license?: string
     repo?: string
+    zipUrl?: string
     type?: string
     compiler?: string
     createdAt: Date

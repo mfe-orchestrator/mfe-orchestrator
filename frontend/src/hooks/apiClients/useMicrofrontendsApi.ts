@@ -53,6 +53,11 @@ export interface Microfrontend {
             groupId?: number,
             path?: string,
             private?: boolean
+        },
+        createData?: {
+            template?: string
+            name?: string
+            private?: boolean
         }
     }
     description?: string;

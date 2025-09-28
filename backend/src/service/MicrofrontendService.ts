@@ -24,6 +24,8 @@ import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import MarketService from "./MarketService"
+import { IMarket } from "../models/MarketModel"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -53,6 +55,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
             }
 
             if (microfrontend.codeRepository.createData) {
+                const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
+                
                 if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
                     if (!codeRepository.azureData) {
                         throw new Error("Azure data is not set")
@@ -92,7 +96,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     microfrontend.codeRepository.repositoryId = createdRepository.name
 
                     // Now will inject the template
-                    await this.injectTemplateGithub(codeRepository.accessToken, createdRepository.clone_url)
+                    if(template){
+                        await this.injectTemplateGithub(codeRepository.accessToken, createdRepository.clone_url, template)
+                    }
                 }
 
                 microfrontend.codeRepository.createData = undefined
@@ -102,8 +108,12 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
     }
 
-    async injectTemplateGithub(githubToken: string, repoUrl: string) {
-        const templateUrl = "https://github.com/mfe-orchestrator-hub/template-vite-remote/archive/refs/heads/main.zip"
+    async injectTemplateGithub(githubToken: string, repoUrl: string, template: IMarket) {
+        const templateUrl = template.zipUrl
+        if(!templateUrl){
+            throw new Error("Template url is not set")
+        }
+
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
         try {
@@ -115,7 +125,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 url: repoUrl,
                 singleBranch: true,
                 depth: 1,
-                headers: { "User-Agent": "isomorphic-git" },
+                headers: { "User-Agent": "mfe-orchestrator" },
                 onAuth: () => ({ username: githubToken, password: "x-oauth-basic" })
             })
             fastify.log.info("✅ Repo cloned successfully")
@@ -168,8 +178,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
             await git.commit({
                 fs,
                 dir: tempDir,
-                message: "Initial commit from template",
-                author: { name: "Automation Bot", email: "bot@example.com" }
+                message: "Initial commit",
+                author: { name: "MFE Orchestrator Bot", email: "bot@mfe-orchestrator.com" }
             })
 
             // Push creates "main" on remote if missing
@@ -180,6 +190,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 remote: "origin",
                 ref: "main",
                 remoteRef: "main",
+                headers: { "User-Agent": "mfe-orchestrator" },
                 onAuth: () => ({ username: githubToken, password: "x-oauth-basic" }),
                 force: true
             })

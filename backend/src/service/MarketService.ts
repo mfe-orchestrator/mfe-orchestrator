@@ -9,11 +9,12 @@ export class MarketService extends BaseAuthorizedService {
         return [...data, ...seededData];
     }
 
-    async getSingle(id: string): Promise<IMarket | null> {
-        return await Market.findById(id).lean()
+    async getSingle(slug: string): Promise<IMarket | null> {
+        const seededData = await this.seed()
+        return seededData.find(m => m.slug === slug) || Market.findOne({ slug }).lean();
     }
 
-    async seed() {
+    async seed() : Promise<IMarket[]> {
         const response = await fetch('https://raw.githubusercontent.com/mfe-orchestrator-hub/documentation/refs/heads/main/marketplace/marketplace.json')
         const data = await response.json()
         return data;

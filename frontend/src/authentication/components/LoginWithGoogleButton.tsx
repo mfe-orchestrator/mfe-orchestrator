@@ -5,6 +5,7 @@ import { setToken } from "../tokenUtils"
 
 const LoginWithGoogleButton: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
     const onSuccess = (tokenResponse: Omit<TokenResponse, "error" | "error_description" | "error_uri">) => {
+        tokenResponse.expires_in
         setToken(tokenResponse.access_token, "google")
         localStorage.setItem("googleData", JSON.stringify(tokenResponse))
         onSuccessLogin?.()

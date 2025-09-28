@@ -10,9 +10,9 @@ export default async function marketController(fastify: FastifyInstance) {
     // Get single market by ID
     fastify.get<{
         Params: {
-            marketId: string
+            slug: string
         }
-    }>("/market/:marketId", async (request, reply) => {
-        return reply.send(await new MarketService(request.databaseUser).getSingle(request.params.marketId))
+    }>("/market/:slug", async (request, reply) => {
+        return reply.send(await new MarketService(request.databaseUser).getSingle(request.params.slug))
     })
 }
