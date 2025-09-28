@@ -3,6 +3,7 @@ import { CanaryDeploymentType, CanaryType } from "../models/MicrofrontendModel"
 interface MicrofrontendDTO {
     id: string
     name: string
+    slug: string
     url: string
     environment: string
     version?: string

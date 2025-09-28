@@ -97,7 +97,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
                     // Now will inject the template
                     if(template){
-                        await this.injectTemplateGithub(codeRepository.accessToken, createdRepository.clone_url, template)
+                        await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)
                     }
                 }
 
@@ -108,11 +108,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
     }
 
-    async injectTemplateGithub(githubToken: string, repoUrl: string, template: IMarket) {
+    async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {
         const templateUrl = template.zipUrl
         if(!templateUrl){
             throw new Error("Template url is not set")
         }
+
+        const pipelinesUrl = "https://github.com/mfe-orchestrator-hub/template-pipelines/archive/refs/heads/main.zip"
+        const tempDirPipelines = join(tmpdir(), `template-pipelines-${Date.now()}`)
 
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
@@ -147,6 +150,18 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 .on("error", reject)
         })
 
+        //Download piplines data
+        const responsePipelines = await axios.get(pipelinesUrl, { responseType: "stream" })
+        if (responsePipelines.status !== 200) throw new Error(`Failed to download pipelines: ${responsePipelines.statusText}`)
+
+        await new Promise((resolve, reject) => {
+            responsePipelines.data
+                .pipe(unzipper.Extract({ path: tempDirPipelines }))
+                .on("close", resolve)
+                .on("error", reject)
+        })
+
+
         // Flatten GitHub zip (moves contents up)
         let files = await fs.readdir(tempDir)
         files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
@@ -171,6 +186,31 @@ export class MicrofrontendService extends BaseAuthorizedService {
             }
         }
 
+        // Copy pipelines
+        if (template.type && template.compiler) {
+            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType)
+
+            // Check if the pipeline path exists
+            if (await fs.pathExists(pipelinePath)) {
+                const githubDir = join(tempDir, ".github")
+
+                // Ensure .github directory exists
+                await fs.ensureDir(githubDir)
+
+                // Copy all contents from pipeline path to .github directory
+                await fs.copy(pipelinePath, githubDir, { overwrite: true })
+
+                // Replace placeholders in all copied files
+                await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
+
+                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
+            } else {
+                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
+            }
+        } else {
+            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
+        }
+        
         // Stage + commit
         try {
             await git.branch({ fs, dir: tempDir, ref: "main", checkout: true, force: true })
@@ -405,6 +445,42 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         await processDirectory(localDir)
+    }
+
+    private async replacePlaceholdersInDirectory(directory: string, mfeSlug: string): Promise<void> {
+        const processFile = async (filePath: string) => {
+            try {
+                const content = await fs.readFile(filePath, 'utf8')
+                let updatedContent = content
+                    .replace(/%microfrontendSlug%/g, mfeSlug)
+                    .replace(/%domain%/g, process.env.BACKEND_URL || "https://mfe-orchestrator.defrancesco.ovh")
+
+                if (content !== updatedContent) {
+                    await fs.writeFile(filePath, updatedContent, 'utf8')
+                    fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
+                }
+            } catch (error) {
+                // Skip binary files or files that can't be read as text
+                fastify.log.debug(`Skipping file ${filePath}: ${error}`)
+            }
+        }
+
+        const processDirectory = async (dir: string) => {
+            const items = await fs.readdir(dir)
+
+            for (const item of items) {
+                const fullPath = path.join(dir, item)
+                const stats = await fs.lstat(fullPath)
+
+                if (stats.isDirectory()) {
+                    await processDirectory(fullPath)
+                } else if (stats.isFile()) {
+                    await processFile(fullPath)
+                }
+            }
+        }
+
+        await processDirectory(directory)
     }
 
     async build(microfrontendId: string, version: string, ref?: string): Promise<void> {
