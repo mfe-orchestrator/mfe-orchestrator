@@ -1,4 +1,6 @@
 name: 🖥️ Frontend Build
+permissions:
+  contents: read
 
 on:
   workflow_call:  
