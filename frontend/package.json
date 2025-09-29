@@ -67,7 +67,7 @@
     "react-gravatar": "^2.6.3",
     "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.58.1",
-    "react-i18next": "^15.6.1",
+    "react-i18next": "^16.0.0",
     "react-pick-color": "^2.0.0",
     "react-resizable-panels": "^3.0.3",
     "react-router-dom": "^7.6.2",
