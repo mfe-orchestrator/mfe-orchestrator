@@ -44,7 +44,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
             <div className="flex flex-row gap-4">
                 <Card className="flex-1">
                     <CardContent className="px-6 pb-4">
-                        {deployments.length > 0 ?
+                        {deployments.length > 0 ? (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -62,28 +62,10 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 {deployment.active && <Badge className="ml-2">{t("deployments.active")}</Badge>}
                                             </TableCell>
                                             <TableCell>
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <span className="text-sm text-muted-foreground cursor-help">{new Date(deployment.createdAt).toLocaleDateString()}</span>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>{new Date(deployment.createdAt).toLocaleString()}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
+                                                <span className="text-sm text-muted-foreground">{new Date(deployment.createdAt).toLocaleDateString()}</span>
                                             </TableCell>
                                             <TableCell>
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <span className="text-sm text-muted-foreground cursor-help">{new Date(deployment.deployedAt).toLocaleDateString()}</span>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>{new Date(deployment.deployedAt).toLocaleString()}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
+                                                <span className="text-sm text-muted-foreground">{new Date(deployment.deployedAt).toLocaleDateString()}</span>
                                             </TableCell>
                                             <TableCell className="flex items-center space-x-2">
                                                 <TooltipProvider>
@@ -91,14 +73,14 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                         <TooltipTrigger asChild>
                                                             <Button
                                                                 variant="ghost"
-                                                                size="sm"
+                                                                size="icon"
                                                                 onClick={e => {
                                                                     e.stopPropagation()
                                                                     onRedeploy(deployment._id)
                                                                 }}
                                                                 disabled={redeployQuery.isPending || deployment.active}
                                                             >
-                                                                <RefreshCw className="h-4 w-4" />
+                                                                <RefreshCw />
                                                             </Button>
                                                         </TooltipTrigger>
                                                         <TooltipContent>
@@ -109,13 +91,9 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 <TooltipProvider>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                asChild
-                                                            >
+                                                            <Button variant="ghost" size="icon" asChild>
                                                                 <Link to={`/deployments/${deployment._id}/canary-users`}>
-                                                                    <Users className="h-4 w-4" />
+                                                                    <Users />
                                                                 </Link>
                                                             </Button>
                                                         </TooltipTrigger>
@@ -126,25 +104,22 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 </TooltipProvider>
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                    }
+                                    ))}
                                 </TableBody>
                             </Table>
-                            :
+                        ) : (
                             <div className="flex flex-col items-center justify-center py-12 space-y-4">
                                 <PackageOpen className="h-12 w-12 text-muted-foreground" />
                                 <div className="text-center space-y-2">
                                     <h3 className="text-lg font-medium">{t("deployments.no_deployments")}</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        {t("deployments.no_deployments_description")}
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">{t("deployments.no_deployments_description")}</p>
                                 </div>
                                 <Button>
                                     <Upload className="mr-2 h-4 w-4" />
                                     {t("deployments.deploy_now")}
                                 </Button>
                             </div>
-                        }
+                        )}
                     </CardContent>
                 </Card>
                 {selectedDeployment && (
@@ -153,18 +128,17 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                             <CardTitle className="text-lg font-semibold">{t("deployments.microfrontends_title")}</CardTitle>
                         </CardHeader>
                         <CardContent className="px-6 pb-4">
-                            {selectedDeployment.microfrontends.length > 0 &&
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>{t("deployments.columns.microfrontend")}</TableHead>
-                                        <TableHead>{t("deployments.columns.version")}</TableHead>
-                                        <TableHead>{t("deployments.columns.slug")}</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {
-                                        selectedDeployment.microfrontends.map(singleMicrofrontend => (
+                            {selectedDeployment.microfrontends.length > 0 && (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t("deployments.columns.microfrontend")}</TableHead>
+                                            <TableHead>{t("deployments.columns.version")}</TableHead>
+                                            <TableHead>{t("deployments.columns.slug")}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {selectedDeployment.microfrontends.map(singleMicrofrontend => (
                                             <TableRow key={singleMicrofrontend._id}>
                                                 <TableCell className="font-medium">{singleMicrofrontend.name}</TableCell>
                                                 <TableCell>
@@ -172,31 +146,28 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 </TableCell>
                                                 <TableCell>{singleMicrofrontend.slug}</TableCell>
                                             </TableRow>
-                                        ))
-                                    }
-                                </TableBody>
-                            </Table>
-                            }   
-                            {selectedDeployment.variables.length > 0 &&
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>{t("deployments.columns.variable")}</TableHead>
-                                        <TableHead>{t("deployments.columns.value")}</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {
-                                        selectedDeployment.variables.map(singleVariable => (
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
+                            {selectedDeployment.variables.length > 0 && (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t("deployments.columns.variable")}</TableHead>
+                                            <TableHead>{t("deployments.columns.value")}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {selectedDeployment.variables.map(singleVariable => (
                                             <TableRow key={singleVariable._id}>
                                                 <TableCell className="font-medium">{singleVariable.key}</TableCell>
                                                 <TableCell>{singleVariable.value}</TableCell>
                                             </TableRow>
-                                        ))
-                                    }
-                                </TableBody>
-                            </Table>
-                            }
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </CardContent>
                     </Card>
                 )}

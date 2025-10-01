@@ -19,7 +19,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
     const { t } = useTranslation()
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 w-full max-w-40">
             <span className="text-sm font-medium text-foreground-secondary">Ambiente:</span>
             <Select
                 value={selectedEnvironment?._id}
@@ -28,9 +28,12 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                 }}
             >
                 {selectedEnvironment && (
-                    <SelectTrigger className="w-40 py-1">
+                    <SelectTrigger>
                         <SelectValue>
-                            <Badge style={{ backgroundColor: selectedEnvironment.color }}>{selectedEnvironment.slug}</Badge>
+                            <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 rounded-full border-2 border-border" style={{ backgroundColor: selectedEnvironment.color }} />
+                                <span>{selectedEnvironment.slug}</span>
+                            </div>
                         </SelectValue>
                     </SelectTrigger>
                 )}
@@ -38,7 +41,10 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                     <SelectContent>
                         {environments.map(environment => (
                             <SelectItem key={environment._id} value={environment._id}>
-                                <Badge style={{ backgroundColor: environment.color }}>{environment.slug}</Badge>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-4 h-4 rounded-full border-2 border-border" style={{ backgroundColor: environment.color }} />
+                                    <span>{environment.slug}</span>
+                                </div>
                             </SelectItem>
                         ))}
                     </SelectContent>

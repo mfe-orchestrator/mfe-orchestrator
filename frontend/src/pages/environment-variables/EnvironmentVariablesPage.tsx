@@ -9,7 +9,7 @@ import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import EnvironmentsGate from "@/theme/EnvironmentsGate"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Pencil, Plus, PlusCircle, Trash2 } from "lucide-react"
+import { CirclePlus, Pencil, PlusCircle, Trash2 } from "lucide-react"
 import React, { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { EnvironmentVariableDialog } from "./EnvironmentVariableDialog"
@@ -130,7 +130,7 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                 right={
                     variables && Object.keys(variables).length !== 0 ? (
                         <Button onClick={handleAddNew}>
-                            <Plus className="mr-2 h-4 w-4" />
+                            <CirclePlus />
                             {t("environmentVariables.addVariable")}
                         </Button>
                     ) : null
@@ -142,7 +142,7 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                             <div className="flex flex-col items-center justify-center p-8 text-center">
                                 <p className="text-muted-foreground mb-4">{t("environmentVariables.noVariables")}</p>
                                 <Button onClick={handleAddNew}>
-                                    <PlusCircle />
+                                    <CirclePlus />
                                     {t("environmentVariables.addVariable")}
                                 </Button>
                             </div>
@@ -182,18 +182,19 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                                                     )
                                                 })}
                                                 <TableCell className="w-32">
-                                                    <div className="flex space-x-4">
-                                                        <button type="button" onClick={() => handleEdit(variable)} className="text-muted-foreground hover:text-foreground" title={t("common.edit")}>
-                                                            <Pencil className="h-4 w-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
+                                                    <div className="flex gap-1">
+                                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(variable)} title={t("common.edit")}>
+                                                            <Pencil />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
                                                             onClick={() => handleDeleteClick(variable.key)}
-                                                            className="text-destructive hover:text-destructive/80"
+                                                            className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
                                                             title={t("common.delete")}
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
+                                                            <Trash2 />
+                                                        </Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

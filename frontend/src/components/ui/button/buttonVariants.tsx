@@ -26,7 +26,7 @@ const focusStyle = `
 `
 
 const disabledStyle = `
-	disabled:pointer-events-none 
+	disabled:cursor-not-allowed
 	disabled:opacity-75
 	disabled:bg-foreground/75
 `
@@ -72,6 +72,7 @@ export const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconS
 				hover:bg-primary/15
 				focus-visible:bg-primary/15
 				active:bg-primary/30 active:shadow-none active:text-primary-active
+				disabled:bg-foreground/15 disabled:text-foreground/70
 				`,
             link: `
 				border-0 shadow-none text-primary underline underline-offset-4 

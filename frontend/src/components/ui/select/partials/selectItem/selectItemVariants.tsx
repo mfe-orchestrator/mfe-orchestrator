@@ -12,8 +12,7 @@ const baseStyle = `
 `
 
 const focusStyle = `
-	focus:bg-accent 
-	focus:text-accent-foreground 
+	focus:bg-primary/15
 `
 
 const disabledStyle = `
@@ -25,6 +24,7 @@ const activeIconStyle = `
 	[&_.icon-container]:absolute
 	[&_.icon-container]:top-[50%]
 	[&_.icon-container]:translate-y-[-50%]
+	[&_.icon-container]:text-primary
 `
 
 export const selectItemVariants = cva(cn(baseStyle, focusStyle, disabledStyle, activeIconStyle), {
