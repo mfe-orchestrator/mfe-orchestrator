@@ -31,9 +31,9 @@ services:
       timeout: 5s
       retries: 5
 
-  microfrontend-orchestrator-hub:
-    image: lory1990/microfrontend-orchestrator-hub:latest
-    container_name: microfrontend-orchestrator-hub
+  mfe-orchestrator:
+    image: lory1990/mfe-orchestrator:latest
+    container_name: mfe-orchestrator
     restart: always
     ports:
       - '8080:80'

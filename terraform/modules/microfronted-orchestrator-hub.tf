@@ -1,10 +1,10 @@
 resource "docker_image" "microfrontend_orchestrator_hub" {
-  name         = "lory1990/microfrontend-orchestrator-hub:latest"
+  name         = "lory1990/mfe-orchestrator:latest"
   keep_locally = true
 }
 resource "docker_container" "microfrontend_orchestrator_hub" {
-  name     = "microfrontend-orchestrator-hub"
-  hostname = "microfrontend-orchestrator-hub"
+  name     = "mfe-orchestrator"
+  hostname = "mfe-orchestrator"
   restart  = "unless-stopped"
   image    = docker_image.microfrontend_orchestrator_hub.image_id
 
@@ -18,7 +18,7 @@ resource "docker_container" "microfrontend_orchestrator_hub" {
   }
 
   volumes {
-    host_path      = abspath("${path.root}/volumes/mfe-orchestrator-hub")
+    host_path      = abspath("${path.root}/volumes/mfe-orchestrator")
     container_path = "/var/microfrontends"
   }
   
