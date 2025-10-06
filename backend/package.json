@@ -31,7 +31,7 @@
         "@fastify/swagger": "^9.5.1",
         "@fastify/swagger-ui": "^5.2.3",
         "@getbrevo/brevo": "^3.0.1",
-        "@google-cloud/storage": "^7.17.0",
+        "@google-cloud/storage": "^7.17.2",
         "@redis/client": "^5.8.2",
         "axios": "^1.12.1",
         "bcryptjs": "^3.0.2",
