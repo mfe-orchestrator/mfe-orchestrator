@@ -203,7 +203,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             }
         })
 
@@ -216,7 +216,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             }
         })
 
@@ -229,7 +229,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             }
         })
 
@@ -247,7 +247,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             },
             data: repositoryData
         })
@@ -265,7 +265,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             }
         })
 
@@ -282,7 +282,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             }
         })
 
@@ -304,7 +304,7 @@ class GithubClient {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator-Hub'
+                'User-Agent': 'MFE-Orchestrator'
             },
             data: {
                 ref: buildData.ref || 'main',

@@ -89,8 +89,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
                 <div className="flex flex-col gap-1 border-t border-divider py-2">
                     <LanguageSelector isSidebarCollapsed={isCollapsed} dropdownContentSide={isMobile ? "bottom" : undefined} dropdownContentAlign={isMobile ? "start" : undefined} />
                     <ThemeToggle isSidebarCollapsed={isCollapsed} dropdownContentSide={isMobile ? "bottom" : undefined} dropdownContentAlign={isMobile ? "start" : undefined} />
-                    <NavItem type="secondary" icon={<BookOpen />} name="Documentation" href="https://mfe-orchestrator-hub.github.io/documentation/" isSidebarCollapsed={isCollapsed} />
-                    <NavItem type="secondary" icon={<Github />} name="Contribute" href="https://github.com/mfe-orchestrator-hub" isSidebarCollapsed={isCollapsed} />
+                    <NavItem type="secondary" icon={<BookOpen />} name="Documentation" href="https://mfe-orchestrator.github.io/documentation/" isSidebarCollapsed={isCollapsed} />
+                    <NavItem type="secondary" icon={<Github />} name="Contribute" href="https://github.com/mfe-orchestrator" isSidebarCollapsed={isCollapsed} />
                 </div>
 
                 <div className="border-t border-divider pt-2">

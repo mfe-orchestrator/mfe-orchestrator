@@ -18,7 +18,7 @@ const getViteConfig = (microfrontends: IServeMicrofrontend[]) => {
 
     // Generate remotes string with proper indentation
     const remotesString = Object.entries(remotes)
-        .map(([key, value]) => `${key}: '${value}'`)
+        .map(([key, value]) => `        '${key}': '${value}'`)
         .join(",\n")
 
     const viteConfig = `// vite.config.js

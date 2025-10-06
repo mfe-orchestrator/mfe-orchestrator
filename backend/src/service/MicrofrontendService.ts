@@ -113,7 +113,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new Error("Template url is not set")
         }
 
-        const pipelinesUrl = "https://github.com/mfe-orchestrator-hub/template-pipelines/archive/refs/heads/main.zip"
+        const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
         const tempDirPipelines = join(tmpdir(), `template-pipelines-${Date.now()}`)
 
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
@@ -452,7 +452,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 const content = await fs.readFile(filePath, 'utf8')
                 let updatedContent = content
                     .replace(/%microfrontendSlug%/g, mfeSlug)
-                    .replace(/%domain%/g, process.env.BACKEND_URL || "https://mfe-orchestrator.defrancesco.ovh")
+                    .replace(/%domain%/g, process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev")
 
                 if (content !== updatedContent) {
                     await fs.writeFile(filePath, updatedContent, 'utf8')

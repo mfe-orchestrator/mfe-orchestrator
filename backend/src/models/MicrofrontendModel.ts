@@ -1,5 +1,9 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose"
 
+export enum MicrofrontendType {
+    HOST = "HOST",
+    REMOTE = "REMOTE"
+}
 export interface ICodeRepositoryMicrofrontend{
     enabled: boolean
     name: string
@@ -28,6 +32,8 @@ export interface IHostMicrofrontend{
     entryPoint?: string
 }
 export interface IMicrofrontend extends Document<ObjectId> {
+    type: MicrofrontendType
+    template: string
     slug: string
     name: string
     version: string
@@ -168,6 +174,16 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         version: {
             type: String,
             required: true
+        },
+        type: {
+            type: String,
+            enum: [MicrofrontendType.HOST, MicrofrontendType.REMOTE],
+            default: MicrofrontendType.HOST,
+            required: true
+        },
+        template: {
+            type: String,
+            required: false
         },
         canary: {
             type: microfrontendCanaryTypeSchema,
