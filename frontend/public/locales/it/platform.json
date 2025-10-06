@@ -277,7 +277,8 @@
     "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
     "refresh": "Aggiorna distribuzioni",
     "actions": {
-      "view_canary_users": "Visualizza Utenti Canary"
+        "view_canary_users": "Visualizza Utenti Canary",
+        "redeploy": "Ridistribuisci"
     },
     "canary_users": {
       "title": "Utenti Canary",

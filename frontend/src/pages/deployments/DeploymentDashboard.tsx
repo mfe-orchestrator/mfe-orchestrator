@@ -1,13 +1,13 @@
-import React from "react"
-import EnvironmentSelector from "../../components/environment/EnvironmentSelector"
-import useProjectStore from "@/store/useProjectStore"
-import DeploymentList from "./DeploymentList"
-import EnvironmentsGate from "@/theme/EnvironmentsGate"
+import SinglePageLayout from "@/components/SinglePageLayout"
 import { Button } from "@/components/ui/button/button"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
+import useProjectStore from "@/store/useProjectStore"
+import EnvironmentsGate from "@/theme/EnvironmentsGate"
 import { useQueryClient } from "@tanstack/react-query"
-import SinglePageLayout from "@/components/SinglePageLayout"
-import { ArrowUpRight } from "lucide-react"
+import { Rocket } from "lucide-react"
+import React from "react"
+import EnvironmentSelector from "../../components/environment/EnvironmentSelector"
+import DeploymentList from "./DeploymentList"
 
 const DeploymentDashboard: React.FC = () => {
     const projectStore = useProjectStore()
@@ -26,15 +26,15 @@ const DeploymentDashboard: React.FC = () => {
             title="Deployments"
             description="Gestisci i deployment del tuo progetto"
             left={
-                isThereAtLeastOneEnvironment && (
-                    <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
-                )
-            }
-            right={
-                <Button className="min-w-32" onClick={handleDeploy}>
-                    <ArrowUpRight />
-                    Deploy
-                </Button>
+                <div className="w-full flex items-end gap-y-2 gap-x-4 flex-wrap">
+                    {isThereAtLeastOneEnvironment && (
+                        <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
+                    )}
+                    <Button className="min-w-32" onClick={handleDeploy}>
+                        <Rocket />
+                        Deploy
+                    </Button>
+                </div>
             }
             lrContainerClassname="items-end"
         >

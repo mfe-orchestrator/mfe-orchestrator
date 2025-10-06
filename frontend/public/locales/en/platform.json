@@ -316,7 +316,8 @@
         "no_deployments_description": "Deployments will appear here once created",
         "refresh": "Refresh deployments",
         "actions": {
-            "view_canary_users": "View Canary Users"
+            "view_canary_users": "View Canary Users",
+            "redeploy": "Redeploy"
         },
         "canary_users": {
             "title": "Canary Users",

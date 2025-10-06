@@ -10,7 +10,7 @@ export interface SinglePageHeaderProps extends React.PropsWithChildren {
 
 const SinglePageLayout: React.FC<SinglePageHeaderProps> = ({ title, description, left, right, children, lrContainerClassname }) => {
     return (
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col gap-6">
             <div className="mb-4">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">{title}</h1>

@@ -19,7 +19,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
     const { t } = useTranslation()
 
     return (
-        <div className="flex flex-col gap-1 w-full max-w-40">
+        <div className="flex flex-col gap-1 w-full max-w-40 flex-shrink-0">
             <span className="text-sm font-medium text-foreground-secondary">Ambiente:</span>
             <Select
                 value={selectedEnvironment?._id}
