@@ -10,6 +10,12 @@ export interface IIntegrationData {
 }
 
 export default class IntegrationService extends BaseAuthorizedService {
+
+    async injectMicrofrontendHostData(microfrontendId: string | ObjectId){
+        const microfrontendService = new MicrofrontendService(this.getUser())
+        const microfrontend = await microfrontendService.getById(microfrontendId)
+        
+    }
     async getIntegrationDataByMicrofrontendId(microfrontendId: string | ObjectId) {
         const microfrontendService = new MicrofrontendService(this.getUser())
         const microfrontend = await microfrontendService.getById(microfrontendId)
