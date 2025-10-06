@@ -18,8 +18,8 @@ dependencies:
     specifier: ^2.2.0
     version: 2.2.0(react@19.1.1)
   '@hookform/resolvers':
-    specifier: ^3.10.0
-    version: 3.10.0(react-hook-form@7.62.0)
+    specifier: ^5.2.2
+    version: 5.2.2(react-hook-form@7.62.0)
   '@radix-ui/react-accordion':
     specifier: ^1.2.11
     version: 1.2.12(@types/react-dom@19.1.9)(@types/react@19.1.12)(react-dom@19.1.1)(react@19.1.1)
@@ -647,11 +647,12 @@ packages:
       react: 19.1.1
     dev: false
 
-  /@hookform/resolvers@3.10.0(react-hook-form@7.62.0):
-    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
+  /@hookform/resolvers@5.2.2(react-hook-form@7.62.0):
+    resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
     peerDependencies:
-      react-hook-form: ^7.0.0
+      react-hook-form: ^7.55.0
     dependencies:
+      '@standard-schema/utils': 0.3.0
       react-hook-form: 7.62.0(react@19.1.1)
     dev: false
 
@@ -2073,6 +2074,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@standard-schema/utils@0.3.0:
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
+    dev: false
 
   /@swc/core-darwin-arm64@1.13.5:
     resolution: {integrity: sha512-lKNv7SujeXvKn16gvQqUQI5DdyY8v7xcoO3k06/FJbHJS90zEwZdQiMNRiqpYw/orU543tPaWgz7cIYWhbopiQ==}
