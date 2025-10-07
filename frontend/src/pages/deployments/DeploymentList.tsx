@@ -51,7 +51,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                 <span>Active deployment</span>
                             </h2>
                             <div>
-                                <Accordion type="single">
+                                <Accordion type="single" collapsible>
                                     {deployments
                                         .filter(deployment => deployment.active)
                                         ?.map(deployment => (
@@ -96,7 +96,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                             </ul>
                                                         </div>
                                                     )}
-                                                    <div className="mt-6">
+                                                    <div className="mt-8">
                                                         <Button variant="secondary" href={`/deployments/${deployment._id}/canary-users`}>
                                                             <UsersRound />
                                                             {t("deployments.actions.view_canary_users")}
@@ -114,7 +114,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                             <History />
                             <span>History</span>
                         </h2>
-                        <Accordion type="single">
+                        <Accordion type="single" collapsible>
                             {deployments
                                 .filter(deployment => !deployment.active)
                                 ?.map(deployment => (
@@ -159,7 +159,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                     </ul>
                                                 </div>
                                             )}
-                                            <div className="flex gap-2 mt-6">
+                                            <div className="flex gap-2 mt-8">
                                                 <Button variant="secondary" href={`/deployments/${deployment._id}/canary-users`}>
                                                     <UsersRound />
                                                     {t("deployments.actions.view_canary_users")}
