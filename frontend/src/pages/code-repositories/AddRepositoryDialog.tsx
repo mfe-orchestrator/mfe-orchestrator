@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { GitBranch } from 'lucide-react';
 import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,7 +56,7 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
         timestamp: Date.now() 
       }));
       
-      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
+      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=select_account`;
       
       // Open GitHub auth in current window
       window.location.href = githubAuthUrl;
