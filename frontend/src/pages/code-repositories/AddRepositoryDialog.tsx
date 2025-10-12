@@ -56,7 +56,7 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
         timestamp: Date.now() 
       }));
       
-      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=select_account`;
+      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
       
       // Open GitHub auth in current window
       window.location.href = githubAuthUrl;

@@ -59,7 +59,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
         
         // Force GitHub to show authorization page by adding allow_signup=true
         // Note: To truly force re-authorization, users need to revoke the app from GitHub settings
-        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=select_account`;
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
         
         // Open GitHub auth in current window
         window.location.href = githubAuthUrl;
