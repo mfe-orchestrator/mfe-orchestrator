@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { GitBranch } from 'lucide-react';
 import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
 import { useNavigate } from 'react-router-dom';
 
