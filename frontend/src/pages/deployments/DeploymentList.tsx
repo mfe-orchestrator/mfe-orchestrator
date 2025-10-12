@@ -51,7 +51,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                 <span>Active deployment</span>
                             </h2>
                             <div>
-                                <Accordion type="single" collapsible>
+                                <Accordion type="single" defaultValue={deployments.find(deployment => deployment.active)?._id} collapsible>
                                     {deployments
                                         .filter(deployment => deployment.active)
                                         ?.map(deployment => (
@@ -117,7 +117,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                         <Accordion type="single" collapsible>
                             {deployments
                                 .filter(deployment => !deployment.active)
-                                ?.map(deployment => (
+                                ?.map((deployment, index) => (
                                     <AccordionItem value={deployment._id}>
                                         <AccordionTrigger>
                                             <div className="flex items-end gap-2">
@@ -183,11 +183,11 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                     </section>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="flex flex-col items-center grow justify-center gap-4 py-12">
                     <PackageOpen className="h-12 w-12 text-muted-foreground" />
-                    <div className="text-center space-y-2">
-                        <h3 className="text-lg font-medium">{t("deployments.no_deployments")}</h3>
-                        <p className="text-sm text-muted-foreground">{t("deployments.no_deployments_description")}</p>
+                    <div className="text-center">
+                        <h2 className="text-xl font-medium">{t("deployments.no_deployments")}</h2>
+                        <p className="text-foreground-secondary">{t("deployments.no_deployments_description")}</p>
                     </div>
                 </div>
             )}
