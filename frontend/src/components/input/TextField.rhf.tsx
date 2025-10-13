@@ -1,13 +1,13 @@
 import { InputHTMLAttributes } from 'react';
-import { Controller, FieldError, FieldValues, Path, useFormContext } from 'react-hook-form';
-import { Label } from '@/components/ui/label';
+import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
+import { Label } from "@/components/ui/label"
 import { Input, InputProps } from "@/components/ui/input/input"
-import clsx from 'clsx';
+import clsx from "clsx"
 
 type TextFieldProps<T extends FieldValues> = InputProps & {
     name: Path<T>
     label: string
-    rules?: any
+    rules?: Omit<RegisterOptions<T, string & Path<T>>, "disabled" | "valueAsNumber" | "valueAsDate" | "setValueAs">
     textTransform?: (value: string) => string
     containerClassName?: string
 }
@@ -27,7 +27,7 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
             control={control}
             rules={rules}
             render={({ field, formState }) => (
-                <div className={clsx(`flex flex-col gap-2`,containerClassName)}>
+                <div className={clsx(`flex flex-col gap-1`, containerClassName)}>
                     <Label htmlFor={inputId} className={error ? "text-destructive" : "text-foreground-secondary"}>
                         {label}
                         {props.required && <span className="text-destructive ml-1">*</span>}

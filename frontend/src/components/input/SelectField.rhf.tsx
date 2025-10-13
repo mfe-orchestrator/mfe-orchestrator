@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label"
 import { InputHTMLAttributes } from "react"
-import { Controller, FieldError, FieldValues, Path, useFormContext } from "react-hook-form"
+import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
 import { SelectContent } from "../ui/select/partials/selectContent/selectContent"
 import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
 import { SelectTrigger } from "../ui/select/partials/selectTrigger/selectTrigger"
@@ -10,7 +10,7 @@ import { X } from "lucide-react"
 type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElement> & {
     name: Path<T>
     label?: string
-    rules?: any
+    rules?: Omit<RegisterOptions<T, string & Path<T>>, "disabled" | "valueAsNumber" | "valueAsDate" | "setValueAs">
     options: { value: string; label: string; icon?: string }[]
     containerClassName?: string
     addClearButton?: boolean
@@ -31,7 +31,7 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
             control={control}
             rules={rules}
             render={({ field, formState }) => (
-                <div className={`grid gap-2 ${containerClassName || ""}`}>
+                <div className={`grid gap-1 ${containerClassName || ""}`}>
                     {label && (
                         <Label htmlFor={inputId} className={error ? "text-destructive" : ""}>
                             {label}
@@ -55,14 +55,14 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
                             {addClearButton && field.value && (
                                 <button
                                     type="button"
-                                    onMouseDown={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
+                                    onMouseDown={e => {
+                                        e.stopPropagation()
+                                        e.preventDefault()
                                     }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        field.onChange("");
+                                    onClick={e => {
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                        field.onChange("")
                                     }}
                                     className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-sm transition-colors z-10"
                                 >
@@ -71,16 +71,18 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
                             )}
                         </SelectTrigger>
                         <SelectContent>
-                            {options.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    <div className="flex items-center gap-2">
-                                        {option.icon && (
-                                            <img src={option.icon} alt="" className="w-4 h-4" />
-                                        )}
-                                        {option.label}
-                                    </div>
-                                </SelectItem>
-                            ))}
+                            {options.length > 0 ? (
+                                options.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        <div className="flex items-center gap-2">
+                                            {option.icon && <img src={option.icon} alt="" className="w-4 h-4" />}
+                                            {option.label}
+                                        </div>
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <span className="text-sm text-foreground-secondary px-2">No options available</span>
+                            )}
                         </SelectContent>
                     </Select>
                     {error && <p className="text-sm font-medium text-destructive">{error.message}</p>}

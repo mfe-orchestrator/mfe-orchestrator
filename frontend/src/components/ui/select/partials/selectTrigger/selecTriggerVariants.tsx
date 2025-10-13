@@ -38,7 +38,7 @@ const disabledStyle = `
 export const selectTriggerVariants = cva(cn(baseStyle, focusStyle, disabledStyle), {
     variants: {
         layoutSize: {
-            default: "ps-3 pe-2 py-2",
+            default: "ps-3 pe-2 py-2 min-h-[2.5rem]",
             sm: "gap-[0.375rem] text-xs rounded-sm ps-2 pe-[0.375rem] py-[0.375rem]",
             lg: "gap-[0.75rem] text-base rounded-lg ps-4 pe-3 py-3 shadow-input-lg [&_svg]:size-5"
         },

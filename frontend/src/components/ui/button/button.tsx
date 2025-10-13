@@ -9,15 +9,16 @@ export interface ButtonProps extends React.HTMLAttributes<HTMLButtonElement | HT
     asChild?: boolean
     href?: string
     disabled?: boolean
+    type?: "button" | "submit" | "reset"
 }
 
-const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(({ className, variant, size, asChild = false, href, disabled, ...props }, ref) => {
+const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(({ className, variant, size, asChild = false, href, disabled, type, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
 
     if (href) {
         return <Link className={cn(buttonVariants({ variant, size }), className)} to={href} ref={ref as React.Ref<HTMLAnchorElement>} {...props} />
     }
-    return <Comp className={cn(buttonVariants({ variant, size }), className)} ref={ref as React.Ref<HTMLButtonElement>} disabled={disabled} {...props} />
+    return <Comp className={cn(buttonVariants({ variant, size }), className)} ref={ref as React.Ref<HTMLButtonElement>} disabled={disabled} type={type} {...props} />
 })
 Button.displayName = "Button"
 

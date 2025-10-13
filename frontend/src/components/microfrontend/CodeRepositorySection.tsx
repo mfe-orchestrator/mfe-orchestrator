@@ -128,10 +128,10 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
 
     return (
         <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
+            <CardHeader className={!codeRepositoryEnabled ? "border-b-0 pb-0" : ""}>
+                <div className="flex items-end justify-between flex-wrap gap-x-4 gap-y-2">
                     <div>
-                        <CardTitle>{t("microfrontend.code_repository")}</CardTitle>
+                        <CardTitle className="mb-0">{t("microfrontend.code_repository")}</CardTitle>
                         <CardDescription>{t("microfrontend.code_repository_description")}</CardDescription>
                     </div>
                     <Switch name="codeRepository.enabled" />
@@ -139,7 +139,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
             </CardHeader>
 
             {codeRepositoryEnabled && (
-                <CardContent className="space-y-4">
+                <CardContent className="flex flex-col gap-2 pt-3">
                     <SelectField
                         name="codeRepository.codeRepositoryId"
                         label={t("microfrontend.sourceCodeProvider")}
@@ -148,7 +148,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
                                 value: repo._id,
                                 label: `${repo.name} (${repo.provider})`,
                                 icon: logoMap[repo.provider]
-                            };
+                            }
                         })}
                         required
                     />
@@ -171,7 +171,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
                                         ...fetchedRepositories.map(repo => ({
                                             value: repo.name,
                                             label: repo.name
-                                        })),
+                                        }))
                                     ].filter(Boolean)}
                                     placeholder={t("microfrontend.select_repository_placeholder")}
                                 />
@@ -181,7 +181,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
 
                     {(selectedRepositoryId === "create_new" || forceCreation) && (
                         <>
-                            <div className="space-y-4">
+                            <div className="flex flex-col gap-2">
                                 <TextField
                                     name="codeRepository.createData.name"
                                     textTransform={value => value.toLowerCase().replace(/[^a-z0-9]/g, "-")}
@@ -218,35 +218,26 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
                             </div>
 
                             {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITHUB" && (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Switch
-                                            name="codeRepository.createData.private"
-                                            label={t("microfrontend.github_private")}
-                                        />
-                                    </div>
-                                </div>
+                                <Switch name="codeRepository.createData.private" label={t("microfrontend.github_private")} />
                             )}
                         </>
                     )}
 
                     {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && (
-                        <div className="space-y-4">
-                            <SelectField
-                                name="codeRepository.gitlab.groupId"
-                                label={t("microfrontend.gitlab_group")}
-                                addClearButton
-                                options={gitlabGroupsQuery.data?.map(group => ({
-                                    value: group.id.toString(),
-                                    label: group.name || group.full_name
-                                }))}
-                            />
-                        </div>
+                        <SelectField
+                            name="codeRepository.gitlab.groupId"
+                            label={t("microfrontend.gitlab_group")}
+                            addClearButton
+                            options={gitlabGroupsQuery.data?.map(group => ({
+                                value: group.id.toString(),
+                                label: group.name || group.full_name
+                            }))}
+                        />
                     )}
                 </CardContent>
             )}
         </Card>
-    );
+    )
 };
 
 export default CodeRepositorySection;

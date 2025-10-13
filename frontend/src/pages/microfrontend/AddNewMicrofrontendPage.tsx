@@ -199,31 +199,41 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <FetchDataMarketCard slug={template} />
+
                     {/* General Information Section */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t("microfrontend.general_information")}</CardTitle>
+                            <CardTitle className="mb-0">{t("microfrontend.general_information")}</CardTitle>
                             <CardDescription>{t("microfrontend.general_information_description")}</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <TextField name="name" 
-                                    label={t("microfrontend.name")} 
-                                    placeholder={t("microfrontend.name_placeholder")} 
+                        <CardContent className="flex flex-col gap-2 pt-3">
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                <TextField
+                                    name="name"
+                                    label={t("microfrontend.name")}
+                                    placeholder={t("microfrontend.name_placeholder")}
                                     textTransform={value => value.replace("  ", " ")}
-                                    required 
-                                    onChange={(e) => {
+                                    required
+                                    onChange={e => {
                                         const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "-")
-                                        if(!isEdit){
+                                        if (!isEdit) {
                                             form.setValue("slug", slug)
                                             form.setValue("codeRepository.createData.name", slug)
                                         }
                                     }}
-                                    />
-                                <TextField name="slug" disabled={isEdit} label={t("microfrontend.slug")} placeholder={t("microfrontend.slug_placeholder")} required />
+                                    containerClassName="flex-[1_1_240px]"
+                                />
+                                <TextField
+                                    name="slug"
+                                    disabled={isEdit}
+                                    label={t("microfrontend.slug")}
+                                    placeholder={t("microfrontend.slug_placeholder")}
+                                    required
+                                    containerClassName="flex-[1_1_240px]"
+                                />
                             </div>
                             {isEdit && versionsQuery.data && versionsQuery.data.length > 0 ? (
-                                <div className="space-y-4">
+                                <div>
                                     <SelectField
                                         name="version"
                                         label={t("microfrontend.version")}
@@ -256,10 +266,10 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     {/* Hosting Information Section */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t("microfrontend.hosting_information")}</CardTitle>
+                            <CardTitle className="mb-0">{t("microfrontend.hosting_information")}</CardTitle>
                             <CardDescription>{t("microfrontend.hosting_information_description")}</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="flex flex-col gap-2 pt-3">
                             <SelectField
                                 name="host.type"
                                 label={t("microfrontend.hosting_type")}
@@ -292,17 +302,14 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                         </CardContent>
                     </Card>
 
-                    <CodeRepositorySection
-                        repositoriesData={repositoriesQuery.data || []}
-                        isEdit={!!id}
-                        forceCreation={Boolean(template)}
-                    />
+                    <CodeRepositorySection repositoriesData={repositoriesQuery.data || []} isEdit={!!id} forceCreation={Boolean(template)} />
+
                     {/* Canary Settings Section */}
                     <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
+                        <CardHeader className={!canaryEnabled ? "border-b-0 pb-0" : ""}>
+                            <div className="flex items-end justify-between flex-wrap gap-x-4 gap-y-2">
                                 <div>
-                                    <CardTitle>{t("microfrontend.canary_settings")}</CardTitle>
+                                    <CardTitle className="mb-0">{t("microfrontend.canary_settings")}</CardTitle>
                                     <CardDescription>{t("microfrontend.canary_settings_description")}</CardDescription>
                                 </div>
                                 <Switch name="canary.enabled" />
@@ -310,17 +317,17 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                         </CardHeader>
 
                         {canaryEnabled && (
-                            <CardContent className="space-y-4">
+                            <CardContent className="flex flex-col gap-2 pt-3">
                                 <TextField
                                     name="canary.percentage"
                                     label={t("microfrontend.canary_percentage")}
                                     placeholder="38%"
-                                // type="number"
-                                // required
-                                // min={0}
-                                // max={100}
+                                    // type="number"
+                                    // required
+                                    // min={0}
+                                    // max={100}
                                 />
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-wrap gap-x-4 gap-y-2">
                                     <SelectField
                                         name="canary.type"
                                         label={t("microfrontend.canary_type")}
@@ -330,6 +337,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                             { value: "COOKIE_BASED", label: t("microfrontend.cookie_based") }
                                         ]}
                                         required
+                                        containerClassName="flex-[1_1_240px]"
                                     />
                                     <SelectField
                                         name="canary.deploymentType"
@@ -339,6 +347,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                             { value: "BASED_ON_URL", label: t("microfrontend.based_on_url") }
                                         ]}
                                         required
+                                        containerClassName="flex-[1_1_240px]"
                                     />
                                 </div>
                                 {form.watch("canary.deploymentType") === "BASED_ON_VERSION" && (
@@ -352,7 +361,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                         )}
                     </Card>
 
-                    <div className="flex justify-end space-x-4">
+                    <div className="flex justify-end gap-2">
                         <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
                             {t("common.cancel")}
                         </Button>
@@ -360,7 +369,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                     </div>
                 </form>
             </FormProvider>
-        </SinglePageLayout >
+        </SinglePageLayout>
     )
 }
 

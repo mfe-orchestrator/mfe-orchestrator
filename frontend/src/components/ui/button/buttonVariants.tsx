@@ -15,7 +15,7 @@ const baseStyle = `
 	rounded-md 
 	text-sm 
 	font-medium 
-	transition-colors 
+	transition-colors
 `
 
 const focusStyle = `
@@ -82,9 +82,9 @@ export const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconS
 				`
         },
         size: {
-            default: "px-4 py-2 [&_svg]:size-5",
-            sm: "gap-[0.375rem] text-xs rounded-sm px-3 py-[0.375rem] [&_svg]:size-4",
-            lg: "gap-[0.75rem] text-base rounded-lg px-5 py-3 shadow-button-lg active:shadow-button-lg-active [&_svg]:size-5",
+            default: "min-w-32 px-4 py-2 [&_svg]:size-5",
+            sm: "min-w-20 gap-[0.375rem] text-xs rounded-sm px-3 py-[0.375rem] [&_svg]:size-4",
+            lg: "min-w-40 gap-[0.75rem] text-base rounded-lg px-5 py-3 shadow-button-lg active:shadow-button-lg-active [&_svg]:size-5",
             icon: "p-2 aspect-square [&_svg]:size-5",
             "icon-sm": "p-[0.375rem] aspect-square [&_svg]:size-4"
         }
