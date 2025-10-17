@@ -5,7 +5,7 @@ import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import TextField from "../input/TextField.rhf"
 import Switch from "../input/Switch.rhf"
 import ColorPicker from "../input/ColorPicker.rhf"
-import { Loader2, PencilIcon, TrashIcon } from "lucide-react"
+import { Loader2, PencilIcon, PlusCircle, Save, TrashIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { getRandomColor } from "@/utils/StringUtils"
 
@@ -207,32 +207,14 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
                 <Loader2 className="animate-spin" />
             ) : (
                 <>
-                    <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-sm font-medium text-gray-900">{t("environment.your_environments")}</h4>
-                        {environmentList && environmentList.length !== 0 && (
-                            <Button
-                                onClick={onSaveEnvironmentWrapper}
-                                disabled={loading}
-                                className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                                {t("common.save")}
-                            </Button>
-                        )}
-                    </div>
+                    <h3 className="text-sm font-medium uppercase text-foreground-secondary tracking-wide mb-2">{t("environment.your_environments")}</h3>
                     {environmentList && (
-                        <ul className="bg-white shadow overflow-hidden rounded-md divide-y divide-gray-200">
+                        <ul>
                             {environmentList.map((env, index) => {
                                 const key = env._id || index
                                 const isEditing = key === editingId
                                 return (
-                                    <li key={key} className="px-4 py-4">
+                                    <li key={key}>
                                         {isEditing ? (
                                             <SingleEnviromentEdit environment={env} onSubmit={onSaveEnvironment(index)} onCancelEdit={onCancelSingle(index)} />
                                         ) : (
@@ -243,18 +225,20 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
                             })}
                         </ul>
                     )}
-                    <div className="flex justify-center mt-4">
-                        <Button
-                            onClick={onAddEnvironment}
-                            disabled={editingId !== undefined}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                            </svg>
+                    <div className="flex justify-start gap-2 mt-4">
+                        <Button onClick={onAddEnvironment} disabled={editingId !== undefined} variant="secondary">
+                            <PlusCircle />
                             {t("environment.add_environment")}
                         </Button>
                     </div>
+                    {environmentList && environmentList.length !== 0 && (
+                        <div className="flex justify-end gap-2 mt-4">
+                            <Button onClick={onSaveEnvironmentWrapper} disabled={loading} variant="primary">
+                                <Save />
+                                {t("common.save")}
+                            </Button>
+                        </div>
+                    )}
                 </>
             )}
         </div>
