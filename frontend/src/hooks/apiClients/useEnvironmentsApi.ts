@@ -4,6 +4,7 @@ export interface EnvironmentDTO {
     slug: string;
     name: string;
     description?: string;
+    order?: number;
     createdAt?: string;
     updatedAt?: string;
     color?: string;

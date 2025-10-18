@@ -13,11 +13,12 @@ import SelectField from "@/components/input/SelectField.rhf"
 import Switch from "@/components/input/Switch.rhf"
 import { useQuery } from "@tanstack/react-query"
 import useProjectStore from "@/store/useProjectStore"
-import useStorageApi from "@/hooks/apiClients/useStorageApi"
-import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
+import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { FetchDataMarketCard } from "@/components/market"
 import { CodeRepositorySection } from "@/components/microfrontend"
+import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 
 const logoMap: Record<string, string> = {
     'AWS': '/img/aws.svg',
@@ -91,32 +92,28 @@ interface AddNewMicrofrontendPageProps {
     // Add any props if needed
 }
 
-const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
+interface AddNewMicrofrontendFormProps {
+    storages: Storage[]
+    repositories: ICodeRepository[]
+    frontend?: Microfrontend
+    versions?: string[]
+}
+
+const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
+    versions, repositories, frontend, storages
+}) => {
+
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const microfrontendsApi = useMicrofrontendsApi()
     const navigate = useNavigate()
-    const storageApi = useStorageApi()
-    const codeRepositoriesApi = useCodeRepositoriesApi()
-    const { project } = useProjectStore()
     const template = searchParams.get("template")
-
-    const storagesQuery = useQuery({
-        queryKey: ["storages", project?._id],
-        queryFn: () => storageApi.getMultiple(project?._id)
-    })
-
-    const repositoriesQuery = useQuery({
-        queryKey: ["repositories", project?._id],
-        queryFn: () => codeRepositoriesApi.getRepositoriesByProjectId(project?._id!),
-        enabled: !!project?._id
-    })
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
+        defaultValues: frontend || {
             slug: "",
             name: "",
             description: "",
@@ -125,10 +122,12 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                 type: "MFE_ORCHESTRATOR_HUB",
                 entryPoint: "index.js"
             },
-            codeRepository: {
-                enabled: Boolean(template),
-                ...(Boolean(template) ? { repositoryId: "create_new" } : {}),
-            },
+            ...(repositories && repositories.length > 0 ? {
+                codeRepository: {
+                    enabled: Boolean(template),
+                    ...(Boolean(template) ? { repositoryId: "create_new" } : {}),
+                }
+            } : {}),
             canary: {
                 enabled: false,
                 percentage: 0,
@@ -138,27 +137,9 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         }
     })
 
-    useQuery({
-        queryKey: ["mfe", id],
-        queryFn: async () => {
-            const mfe = await microfrontendsApi.getSingle(id)
-            form.reset(mfe)
-            return mfe
-        },
-        enabled: isEdit
-    })
-
     const { watch } = form
     const canaryEnabled = watch("canary.enabled")
     const hostType = watch("host.type")
-
-    const versionsQuery = useQuery({
-        queryKey: ["versions", id],
-        queryFn: () => microfrontendsApi.getVersions(id!),
-        enabled: isEdit
-    })
-
-
     const notificationToast = useToastNotificationStore()
 
     const onSubmit = async (data: FormValues) => {
@@ -232,13 +213,13 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     containerClassName="flex-[1_1_240px]"
                                 />
                             </div>
-                            {isEdit && versionsQuery.data && versionsQuery.data.length > 0 ? (
+                            {isEdit && versions && versions.length > 0 ? (
                                 <div>
                                     <SelectField
                                         name="version"
                                         label={t("microfrontend.version")}
                                         options={[
-                                            ...versionsQuery.data.map(version => ({
+                                            ...versions.map(version => ({
                                                 value: version,
                                                 label: version
                                             })),
@@ -276,7 +257,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                 options={[
                                     { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
                                     { value: "CUSTOM_URL", label: t("microfrontend.custom_url") },
-                                    storagesQuery.data?.length > 0 && { value: "CUSTOM_SOURCE", label: t("microfrontend.custom_source") }
+                                    storages?.length > 0 && { value: "CUSTOM_SOURCE", label: t("microfrontend.custom_source") }
                                 ].filter(Boolean)}
                                 required
                             />
@@ -290,7 +271,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                                     name="host.storageId"
                                     label={t("microfrontend.source")}
                                     required
-                                    options={storagesQuery.data?.map(storage => {
+                                    options={storages?.map(storage => {
                                         return {
                                             value: storage._id,
                                             label: `${storage.name}`,
@@ -302,7 +283,7 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
                         </CardContent>
                     </Card>
 
-                    <CodeRepositorySection repositoriesData={repositoriesQuery.data || []} isEdit={!!id} forceCreation={Boolean(template)} />
+                    <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={Boolean(template)} />
 
                     {/* Canary Settings Section */}
                     <Card>
@@ -371,6 +352,45 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
             </FormProvider>
         </SinglePageLayout>
     )
+}
+
+const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
+    const { id } = useParams<{ id: string }>()
+    const isEdit = Boolean(id)
+    const microfrontendsApi = useMicrofrontendsApi()
+    const storageApi = useStorageApi()
+    const codeRepositoriesApi = useCodeRepositoriesApi()
+    const { project } = useProjectStore()
+
+    const storagesQuery = useQuery({
+        queryKey: ["storages", project?._id],
+        queryFn: () => storageApi.getMultiple(project?._id)
+    })
+
+    const repositoriesQuery = useQuery({
+        queryKey: ["repositories", project?._id],
+        queryFn: () => codeRepositoriesApi.getRepositoriesByProjectId(project?._id!),
+        enabled: !!project?._id
+    })
+
+    const frontendQuery = useQuery({
+        queryKey: ["mfe", id],
+        queryFn: () => microfrontendsApi.getSingle(id),
+        enabled: isEdit
+    })
+
+    const versionsQuery = useQuery({
+        queryKey: ["versions", id],
+        queryFn: () => microfrontendsApi.getVersions(id!),
+        enabled: isEdit
+    })
+
+    return (
+        <ApiDataFetcher queries={[storagesQuery, repositoriesQuery, versionsQuery, frontendQuery]}>
+            <AddNewMicrofrontendForm storages={storagesQuery.data} repositories={repositoriesQuery.data} frontend={frontendQuery.data} versions={versionsQuery.data}/>
+        </ApiDataFetcher>
+    )
+    
 }
 
 export default AddNewMicrofrontendPage

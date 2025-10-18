@@ -515,6 +515,7 @@
         "edit_title": "Edit environment",
         "delete_title": "Delete environment",
         "create_success": "Environment created successfully",
+        "created_success_message": "Environments created successfully",
         "update_success": "Environment updated successfully",
         "color_tooltip": "Environment color: {{name}}",
         "name": "Name",

@@ -6,6 +6,7 @@ import EnvironmentList from "@/components/environment/EnvironmentList"
 import useEnvironmentsApi, { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import { useMutation } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 interface NoEnvironmentPlaceholderProps {
     onSaveSuccess: (environments: EnvironmentDTO[]) => void
@@ -14,6 +15,7 @@ interface NoEnvironmentPlaceholderProps {
 const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> = ({ onSaveSuccess }) => {
     const [customEnvironments, setCustomEnvironments] = useState<EnvironmentPreset[]>()
     const environmentsApi = useEnvironmentsApi()
+    const notificationToast = useToastNotificationStore()
 
     const handleAddPresetEnvs = (envs: EnvironmentPreset[]) => {
         const newEnvs = envs.map(env => ({ ...env }))
@@ -23,6 +25,9 @@ const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> = ({ onS
     const saveEnvironmentsMutation = useMutation({
         mutationFn: async (environments: EnvironmentDTO[]) => {
             const newEnvironments = await environmentsApi.createEnvironmentsBulk(environments)
+            notificationToast.showSuccessNotification({
+                message: t("environment.created_success_message")
+            })
             onSaveSuccess(newEnvironments)
         }
     })

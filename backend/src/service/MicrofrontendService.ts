@@ -54,7 +54,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
             }
 
-            if (microfrontend.codeRepository.createData) {
+            if (microfrontend?.codeRepository?.createData) {
                 const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
                 
                 if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {

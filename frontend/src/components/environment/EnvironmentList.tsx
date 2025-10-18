@@ -8,6 +8,7 @@ import ColorPicker from "../input/ColorPicker.rhf"
 import { Loader2, PencilIcon, PlusCircle, Save, TrashIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { getRandomColor } from "@/utils/StringUtils"
+import TextareaField from "../input/TextareaField.rhf"
 
 interface EnvironmentListProps {
     environments: EnvironmentDTO[]
@@ -93,6 +94,11 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                                 rules={{ required: t("environment.form.name_required") }}
                                 required
                                 containerClassName="md:col-span-2"
+                                onChange={e => {
+                                        const slug = e.target.value.toUpperCase().replace(/[^A-Za-z0-9]/g, "-")
+                                        console.log(slug, e.target.value, e.target.value.toUpperCase())
+                                        form.setValue("slug", slug)
+                                    }}
                             />
                             <TextField
                                 name="slug"
@@ -103,7 +109,7 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                                 required
                                 containerClassName="md:col-span-2"
                             />
-                            <TextField name="description" label={t("environment.form.description")} placeholder={t("environment.form.description_placeholder")} containerClassName="md:col-span-2" />
+                            <TextareaField name="description" label={t("environment.form.description")} placeholder={t("environment.form.description_placeholder")} containerClassName="md:col-span-2" />
                             <div className="flex items-center space-x-4">
                                 <Switch name="isProduction" label={t("environment.form.is_production")} className="flex-1" />
                                 <div className="flex-1">
@@ -156,12 +162,18 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
     const [environmentList, setEnvironmentList] = useState(environments)
 
     useEffect(() => {
-        setEnvironmentList(environments)
+        if (!environments) return
+        const newEnv = [...environments]
+        newEnv.forEach((env, index) => {
+            env.order = index
+        })
+        setEnvironmentList(newEnv)
     }, [environments])
 
     const onAddEnvironment = () => {
         const newEnvironment = {
-            color: getRandomColor()
+            color: getRandomColor(),
+            order: environmentList?.length || 0
         } as EnvironmentDTO
 
         if (!environmentList) {
