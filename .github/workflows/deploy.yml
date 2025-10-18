@@ -11,6 +11,7 @@ on:
 jobs:
   docker-build:
     uses: ./.github/workflows/docker-build.yml
+    secrets: inherit
 
   deploy:
     needs: [docker-build]
@@ -23,7 +24,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.SSH_PORT || 22 }}
+        port: ${{ secrets.SSH_PORT }}
         script: |
           cd ${{ secrets.TERRAFORM_PATH }}
           tofu init
