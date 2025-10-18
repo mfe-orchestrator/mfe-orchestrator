@@ -8,6 +8,7 @@ on:
     branches: [main]
     tags: ['*']
 
+    
 jobs:
   docker-build:
     uses: ./.github/workflows/docker-build.yml
