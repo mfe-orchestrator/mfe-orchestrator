@@ -808,6 +808,7 @@
             "githubAccessTitle": "GitHub Access",
             "githubAccessDescription": "Update your GitHub authentication if needed",
             "connectionSaved": "GitHub connection \"{{name}}\" saved successfully",
+            "error": "There are connection issues with your GitHub, refresh the connection",
             "repositoryIdRequired": "Repository ID is required to configure GitHub connection."
         }
     },

@@ -1,4 +1,4 @@
-import useApiClient from "../useApiClient"
+import useApiClient, { IClientRequestDataExtended } from "../useApiClient"
 
 export interface AddRepositoryGithubDTO{
     code: string
@@ -177,9 +177,10 @@ const useCodeRepositoriesApi = () => {
         return data.data
     }
 
-    const getRepositoryById = async (repositoryId: string) : Promise<any> => {
+    const getRepositoryById = async (repositoryId: string, config: IClientRequestDataExtended<unknown> = {}) : Promise<any> => {
         const data = await apiClient.doRequest({
             url: `/api/repositories/${repositoryId}`,
+            ...config
         });
         return data.data
     }
@@ -317,18 +318,18 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
-    const getGithubOrganizations = async (repositoryId: string): Promise<GithubOrganization[]> => {
+    const getGithubOrganizations = async (repositoryId: string, config: IClientRequestDataExtended<unknown> = {}): Promise<GithubOrganization[]> => {
         const response = await apiClient.doRequest<GithubOrganization[]>({
             url: `/api/repositories/${repositoryId}/github/organizations`,
-            method: 'GET',
+            ...config
         });
         return response.data
     }
 
-    const getGithubUser = async (repositoryId: string): Promise<GithubUser> => {
+    const getGithubUser = async (repositoryId: string, config: IClientRequestDataExtended<unknown> = {}): Promise<GithubUser> => {
         const response = await apiClient.doRequest<GithubUser>({
             url: `/api/repositories/${repositoryId}/github/user`,
-            method: 'GET',
+            ...config
         });
         return response.data
     }

@@ -68,20 +68,23 @@ const AddGitHubRepositoryPage: React.FC = () => {
 
     const repositoryQuery = useQuery({
         queryKey: ['repository', repositoryId],
-        queryFn: () => getRepositoryById(repositoryId!),
+        queryFn: () => getRepositoryById(repositoryId!, { silent: true }),
+        retry: 1,
         enabled: !!repositoryId,
     })
 
     const githubUserQuery = useQuery({
         queryKey: ['github-user', repositoryId],
-        queryFn: () => getGithubUser(repositoryId!),
+        queryFn: () => getGithubUser(repositoryId!, { silent: true }),
+        retry: 1,
         enabled: !!repositoryId,
     })
 
     const githubOrganizationQuery = useQuery({
         queryKey: ['github-organizations', repositoryId],
+        retry: 1,
         queryFn: async () => {
-            const data = await getGithubOrganizations(repositoryId!)
+            const data = await getGithubOrganizations(repositoryId!, { silent: true })
 
             if (data.length === 0) {
                 form.setValue('selectedOwner', CodeRepositoryType.PERSONAL)
@@ -185,10 +188,11 @@ const AddGitHubRepositoryPage: React.FC = () => {
         )
     }
 
-    return (
+    const isError = repositoryQuery.isError || githubOrganizationQuery.isError || githubUserQuery.isError
 
+    return (
         <SinglePageLayout title={t('codeRepositories.github.title')}>
-            <ApiDataFetcher<unknown, unknown> queries={[repositoryQuery, githubOrganizationQuery, githubUserQuery]}>
+            <ApiDataFetcher queries={[repositoryQuery, githubOrganizationQuery, githubUserQuery]} interceptError={false}>
                 <div className="max-w-2xl mx-auto">
                     <Card>
                         <CardHeader>
@@ -220,6 +224,12 @@ const AddGitHubRepositoryPage: React.FC = () => {
                                     </div>
                                 </div>
                             }
+                            {isError ? <Alert variant="destructive" >
+                                <AlertDescription>
+                                    {t('codeRepositories.github.error')}
+                                </AlertDescription>
+                            </Alert>
+                            :
                             <FormProvider {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-2">
                                     <TextField
@@ -295,6 +305,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
                                     </div>
                                 </form>
                             </FormProvider>
+                            }
                         </CardContent>
                     </Card>
                 </div>

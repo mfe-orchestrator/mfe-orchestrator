@@ -835,6 +835,7 @@
       "githubAccessTitle": "Accesso GitHub",
       "githubAccessDescription": "Aggiorna la tua autenticazione GitHub se necessario",
       "connectionSaved": "Connessione GitHub \"{{name}}\" salvata con successo",
+      "error": "Ci sono problemi di connessione al tuo github, aggiorna la connessione",
       "repositoryIdRequired": "L'ID del repository è necessario per configurare la connessione GitHub."
     }
   },

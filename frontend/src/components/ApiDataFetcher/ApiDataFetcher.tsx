@@ -8,6 +8,7 @@ type ApiDataFetcherProps = {
   errorComponent?: (error: unknown) => ReactNode;
   emptyComponent?: ReactNode,
   children: ReactNode;
+  interceptError?: boolean;
 };
 
 export function ApiDataFetcher({
@@ -28,9 +29,10 @@ export function ApiDataFetcher({
       No data
     </div>
   ),
+  interceptError = true,
 }: ApiDataFetcherProps) {
   const isLoading = queries.some((query) => (query.isLoading || query.isFetching || query.isPending) && query.isEnabled);
-  const error = queries.find((query) => query.isError)?.error;
+  const error = interceptError ? queries.find((query) => query.isError)?.error : undefined;
   const isEmpty = queries.some((query) => !query.data);
 
   if (isLoading) {
