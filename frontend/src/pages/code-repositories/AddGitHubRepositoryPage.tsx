@@ -15,6 +15,7 @@ import { GitBranch } from "lucide-react"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import { CodeRepositoryType } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import { useGlobalParameters } from "@/contexts/GlobalParameterProvider"
+import { GITHUB_SCOPES } from "./utils"
 
 interface GitHubConnectionForm {
     connectionName: string
@@ -51,7 +52,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
     const onUpdateGithubPage = () =>{
         // Redirect to GitHub OAuth for SSO access
         const redirectUri = `${window.location.origin}/code-repositories/callback/github?codeRepositoryId=${repositoryId}`;
-        const scope = 'repo,public_repo,read:user,read:org,workflow';
+        
         const state = btoa(JSON.stringify({ 
             provider: 'github',
             timestamp: Date.now() 
@@ -59,7 +60,7 @@ const AddGitHubRepositoryPage: React.FC = () => {
         
         // Force GitHub to show authorization page by adding allow_signup=true
         // Note: To truly force re-authorization, users need to revoke the app from GitHub settings
-        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
+        const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${GITHUB_SCOPES}&state=${state}&prompt=login`;
         
         // Open GitHub auth in current window
         window.location.href = githubAuthUrl;

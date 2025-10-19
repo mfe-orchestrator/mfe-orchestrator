@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useGlobalParameters } from '@/contexts/GlobalParameterProvider';
 import { useNavigate } from 'react-router-dom';
+import { GITHUB_SCOPES } from './utils';
 
 interface AddRepositoryDialogProps {
   isOpen: boolean;
@@ -50,13 +51,13 @@ const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps)
     if (providerId === 'github') {
       // Redirect to GitHub OAuth for SSO access
       const redirectUri = `${window.location.origin}/code-repositories/callback/github`;
-      const scope = 'repo,public_repo,read:user,read:org,workflow';
+      
       const state = btoa(JSON.stringify({ 
         provider: 'github',
         timestamp: Date.now() 
       }));
       
-      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=login`;
+      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${GITHUB_SCOPES}&state=${state}&prompt=login`;
       
       // Open GitHub auth in current window
       window.location.href = githubAuthUrl;

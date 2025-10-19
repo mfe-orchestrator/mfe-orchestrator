@@ -178,6 +178,26 @@ export interface GithubBranch {
     }
 }
 
+export interface GithubPublicKey {
+    key_id: string
+    key: string
+}
+
+export interface GithubBaseDTO{
+    accessToken: string, 
+    orgName?: string, 
+    userName?: string
+}
+
+export interface GithubRepositoryBaseDTO extends GithubBaseDTO {
+    repositoryId: string
+}
+
+export interface GithubUpsertSecretDTO extends GithubRepositoryBaseDTO {
+    secretName: string,
+    encryptedValue: string,
+}
+
 class GithubClient {
 
     getAccessToken = async (data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> => {
@@ -208,6 +228,52 @@ class GithubClient {
         })
 
         return response.data
+    }
+
+    getRepositoryPublicKey = async ({accessToken, orgName, userName, repositoryId} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> => {
+        const baseUrl = orgName 
+            ? `https://api.github.com/orgs/${orgName}/repos`
+            : `https://api.github.com/user/repos/${userName}`
+
+        const url = `${baseUrl}/${repositoryId}/actions/secrets/public-key`
+
+        const response = await axios.request<GithubPublicKey>({
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator'
+            }
+        })
+
+        return response.data
+    }
+
+    upsertRepositorySecret = async ({accessToken, orgName, userName, repositoryId, secretName, encryptedValue} : GithubUpsertSecretDTO): Promise<void> => {
+
+        const keyId = (await this.getRepositoryPublicKey({accessToken, orgName, userName, repositoryId})).key_id
+        
+        const baseUrl = orgName 
+            ? `https://api.github.com/orgs/${orgName}/repos`
+            : `https://api.github.com/user/repos/${userName}`
+
+        const url = `${baseUrl}/${repositoryId}/actions/secrets/${encodeURIComponent(secretName)}`
+
+        
+
+        await axios.request<void>({
+            method: 'PUT',
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator'
+            },
+            data: {
+                encrypted_value: encryptedValue,
+                key_id: keyId
+            }
+        })
     }
 
     getOrganization = async (orgName: string, accessToken: string): Promise<GithubOrganization> => {
