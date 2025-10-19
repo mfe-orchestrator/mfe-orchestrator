@@ -811,7 +811,6 @@
         "connectionFailed": "Impossibile connettersi a GitLab"
       },
       "updating": "Aggiornamento...",
-      "connecting": "Connessione...",
       "update": "Aggiorna"
     },
     "github": {
@@ -829,7 +828,8 @@
       "selectOwner": "Seleziona proprietario GitHub",
       "selectOwnerRequired": "Seleziona un proprietario GitHub",
       "chooseProfileOrOrg": "Scegli tra il tuo profilo personale o l'organizzazione.",
-      "selectFromOptions": "Seleziona dal tuo profilo personale o {{count}} organizzazione{{count, plural, =1 {} other {i}}}.",
+      "selectFromOptions_one": "Seleziona dal tuo profilo personale o l'organizzazione di cui fai parte",
+      "selectFromOptions_other": "Seleziona dal tuo profilo personale o tra {{count}} organizzazioni",
       "saveConnection": "Salva Connessione",
       "updateGithubAccess": "Aggiorna Accesso GitHub",
       "githubAccessTitle": "Accesso GitHub",

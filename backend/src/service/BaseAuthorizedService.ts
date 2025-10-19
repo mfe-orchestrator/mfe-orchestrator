@@ -8,7 +8,7 @@ import Deployment from "../models/DeploymentModel"
 import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
 
 export default abstract class BaseAuthorizedService {
-    private user?: IUser
+    protected user?: IUser
 
     public constructor(user?: IUser) {
         this.user = user

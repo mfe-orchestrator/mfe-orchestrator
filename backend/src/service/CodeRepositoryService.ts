@@ -10,6 +10,10 @@ import GitLabClient from "../client/GitlabClient"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
+import { ApiKeyService } from "./ApiKeyService"
+import { ApiKeyRole } from "../models/ApiKeyModel"
+
+const deploySecretName = "MFE_ORCHESTRATOR_DEPLOY_SECRET"
 
 export interface CodeRepositoryCreateInput {
     name: string
@@ -141,6 +145,36 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         )
     }
 
+    async injectSecretsToDeployOnGithub(repository: ICodeRepository){
+        if(repository.provider !== CodeRepositoryProvider.GITHUB) return;
+        if(!repository.githubData?.organizationId) return;
+
+        const githubClient = new GithubClient();
+
+        const exists = await githubClient.checkOrganizationSecretExists({
+            accessToken: repository.accessToken,
+            orgName: repository.githubData.organizationId,
+            secretName: deploySecretName,
+            
+        })
+
+        if(exists) return;
+
+        const apiKey = await new ApiKeyService(this.user).create(repository.projectId.toString(), {
+            name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + repository.name,
+            role: ApiKeyRole.MANAGER,
+            expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+        })
+
+        await githubClient.upsertOrganizationSecret({
+            accessToken: repository.accessToken,
+            orgName: repository.githubData.organizationId,
+            secretName: deploySecretName,
+            visibility: 'all',
+            value: apiKey.apiKey,
+        })
+    }
+
     async create(projectId: string, repositoryData: CodeRepositoryCreateInput): Promise<ICodeRepository> {
         await this.ensureAccessToProject(projectId)
 
@@ -154,7 +188,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                 isActive: true
             })
 
-            return await repository.save()
+            return repository.save()
         } catch (error: any) {
             if (error.code === 11000) {
                 throw createBusinessException({
@@ -224,7 +258,11 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             userName: body.userName
         }
 
-        return await repository.save()
+        const repositoryFromDb = await repository.save()
+
+        await this.injectSecretsToDeployOnGithub(repositoryFromDb)
+
+        return repositoryFromDb
     }
 
     async delete(repositoryId: string): Promise<DeleteResult> {

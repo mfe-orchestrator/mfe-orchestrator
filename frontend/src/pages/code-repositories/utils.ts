@@ -1,1 +1,1 @@
-export const GITHUB_SCOPES = 'repo,public_repo,read:user,read:org,workflow';
+export const GITHUB_SCOPES = 'repo,public_repo,read:user,read:org,workflow,admin:org';

@@ -1,6 +1,6 @@
 import axios from "axios"
 import { CodeRepositoryType } from "../models/CodeRepositoryModel"
-
+import sodium from 'libsodium-wrappers'
 
 export interface GithubAccessTokenResponse {
     access_token: string
@@ -183,6 +183,17 @@ export interface GithubPublicKey {
     key: string
 }
 
+export interface GithubSecret {
+    name: string
+    created_at: string
+    updated_at: string
+}
+
+export interface GithubSecretsListResponse {
+    total_count: number
+    secrets: GithubSecret[]
+}
+
 export interface GithubBaseDTO{
     accessToken: string, 
     orgName?: string, 
@@ -198,7 +209,31 @@ export interface GithubUpsertSecretDTO extends GithubRepositoryBaseDTO {
     encryptedValue: string,
 }
 
+export interface GithubOrganizationSecretDTO extends GithubBaseDTO {
+    secretName: string,
+    value: string,
+    visibility?: 'all' | 'private' | 'selected',
+    selectedRepositoryIds?: number[]
+}
+
 class GithubClient {
+
+    async encryptValueForSecret(key: string, secret: string): Promise<string> {
+        await sodium.ready
+        
+        // Convert the secret and key to a Uint8Array.
+        let binkey = sodium.from_base64(key, sodium.base64_variants.ORIGINAL)
+        let binsec = sodium.from_string(secret)
+
+        // Encrypt the secret using libsodium
+        let encBytes = sodium.crypto_box_seal(binsec, binkey)
+
+        // Convert the encrypted Uint8Array to Base64
+        let output = sodium.to_base64(encBytes, sodium.base64_variants.ORIGINAL)
+
+        // Print the output
+        return output
+    }
 
     getAccessToken = async (data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> => {
         const responseGithub = await axios.request<GithubAccessTokenResponse>({
@@ -231,7 +266,7 @@ class GithubClient {
     }
 
     getRepositoryPublicKey = async ({accessToken, orgName, userName, repositoryId} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> => {
-        const baseUrl = orgName 
+        const baseUrl = orgName
             ? `https://api.github.com/orgs/${orgName}/repos`
             : `https://api.github.com/user/repos/${userName}`
 
@@ -249,17 +284,36 @@ class GithubClient {
         return response.data
     }
 
+    getOrganizationPublicKey = async ({accessToken, orgName} : GithubBaseDTO): Promise<GithubPublicKey> => {
+        if (!orgName) {
+            throw new Error('Organization name is required')
+        }
+
+        const url = `https://api.github.com/orgs/${orgName}/actions/secrets/public-key`
+
+        const response = await axios.request<GithubPublicKey>({
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator'
+            }
+        })
+
+        return response.data
+    }
+
     upsertRepositorySecret = async ({accessToken, orgName, userName, repositoryId, secretName, encryptedValue} : GithubUpsertSecretDTO): Promise<void> => {
 
         const keyId = (await this.getRepositoryPublicKey({accessToken, orgName, userName, repositoryId})).key_id
-        
-        const baseUrl = orgName 
+
+        const baseUrl = orgName
             ? `https://api.github.com/orgs/${orgName}/repos`
             : `https://api.github.com/user/repos/${userName}`
 
         const url = `${baseUrl}/${repositoryId}/actions/secrets/${encodeURIComponent(secretName)}`
 
-        
+
 
         await axios.request<void>({
             method: 'PUT',
@@ -274,6 +328,92 @@ class GithubClient {
                 key_id: keyId
             }
         })
+    }
+
+    checkRepositorySecretExists = async ({accessToken, orgName, userName, repositoryId, secretName}: Omit<GithubUpsertSecretDTO, 'encryptedValue'>): Promise<boolean> => {
+        try {
+            const baseUrl = orgName
+                ? `https://api.github.com/orgs/${orgName}/repos`
+                : `https://api.github.com/repos/${userName}`
+
+            const url = `${baseUrl}/${repositoryId}/actions/secrets/${encodeURIComponent(secretName)}`
+
+            await axios.request({
+                method: 'GET',
+                url,
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'MFE-Orchestrator'
+                }
+            })
+
+            return true
+        } catch (error: any) {
+            if (error.response && error.response.status === 404) {
+                return false
+            }
+            throw error
+        }
+    }
+
+    upsertOrganizationSecret = async ({accessToken, orgName, secretName, value, visibility = 'private', selectedRepositoryIds} : GithubOrganizationSecretDTO): Promise<void> => {
+        if (!orgName) {
+            throw new Error('Organization name is required')
+        }
+
+        const { key_id, key } = (await this.getOrganizationPublicKey({accessToken, orgName}))
+
+        const url = `https://api.github.com/orgs/${orgName}/actions/secrets/${encodeURIComponent(secretName)}`
+
+        const data: any = {
+            encrypted_value: await this.encryptValueForSecret(key, value),
+            key_id: key_id,
+            visibility
+        }
+
+        // Se la visibilità è 'selected', aggiungi gli ID dei repository selezionati
+        if (visibility === 'selected' && selectedRepositoryIds && selectedRepositoryIds.length > 0) {
+            data.selected_repository_ids = selectedRepositoryIds
+        }
+
+        await axios.request<void>({
+            method: 'PUT',
+            url,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'MFE-Orchestrator'
+            },
+            data
+        })
+    }
+
+    checkOrganizationSecretExists = async ({accessToken, orgName, secretName}: Omit<GithubOrganizationSecretDTO, 'value' | 'visibility' | 'selectedRepositoryIds'>): Promise<boolean> => {
+        if (!orgName) {
+            throw new Error('Organization name is required')
+        }
+
+        try {
+            const url = `https://api.github.com/orgs/${orgName}/actions/secrets/${encodeURIComponent(secretName)}`
+
+            await axios.request({
+                method: 'GET',
+                url,
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'MFE-Orchestrator'
+                }
+            })
+
+            return true
+        } catch (error: any) {
+            if (error.response && error.response.status === 404) {
+                return false
+            }
+            throw error
+        }
     }
 
     getOrganization = async (orgName: string, accessToken: string): Promise<GithubOrganization> => {
