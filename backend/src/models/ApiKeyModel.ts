@@ -70,7 +70,7 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
 )
 
 apiKeySchema.pre<IApiKeyDocument>("save", async function (next) {
-    console.log("DEBUGGGER HERE")
+    console.log("TODO fix me i do not work well")
     if (this.isModified("apiKey")) {
         const salt = await bcrypt.genSalt(10)
         this.salt = salt

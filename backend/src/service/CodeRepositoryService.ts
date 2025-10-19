@@ -13,7 +13,7 @@ import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepository
 import { ApiKeyService } from "./ApiKeyService"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 
-const deploySecretName = "MFE_ORCHESTRATOR_DEPLOY_SECRET"
+export const deploySecretName = "MICROFRONTEND_ORCHESTRATOR_API_KEY"
 
 export interface CodeRepositoryCreateInput {
     name: string

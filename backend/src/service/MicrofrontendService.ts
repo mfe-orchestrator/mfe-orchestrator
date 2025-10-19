@@ -1,4 +1,4 @@
-import { ClientSession, ObjectId, Types } from "mongoose"
+import { ClientSession, Document, ObjectId, Schema, Types } from "mongoose"
 import Microfrontend, { HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
 
 import { MultipartFile } from "@fastify/multipart"
@@ -18,7 +18,7 @@ import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import BuiltFrontend from "../models/BuiltFrontendModel"
-import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType } from "../models/CodeRepositoryModel"
+import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
@@ -26,6 +26,9 @@ import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import MarketService from "./MarketService"
 import { IMarket } from "../models/MarketModel"
+import { deploySecretName } from "./CodeRepositoryService"
+import { ApiKeyService } from "./ApiKeyService"
+import { ApiKeyRole } from "../models/ApiKeyModel"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -94,6 +97,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     )
                     microfrontend.codeRepository.repositoryId = createdRepository.id + ""
                     microfrontend.codeRepository.name = createdRepository.name
+                    // Now will inject api key
+                    await this.gitHubInjectApiKey(codeRepository, microfrontend);
                     // Now will inject the template
                     if(template){
                         await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)
@@ -105,6 +110,38 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
+    }
+    async gitHubInjectApiKey(codeRepository: ICodeRepository, microfrontend: MicrofrontendDTO) {
+        if(codeRepository.provider !== CodeRepositoryProvider.GITHUB) return;
+        if(codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return;
+        if(!microfrontend.codeRepository.name) return;
+        
+        const githubClient = new GithubClient()
+
+        const exists = await githubClient.checkRepositorySecretExists({
+            accessToken: codeRepository.accessToken,
+            repositoryName: microfrontend.codeRepository.name,
+            secretName: deploySecretName
+        })
+
+        if(exists){
+            return;
+        }
+
+        const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
+            name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + microfrontend.slug,
+            role: ApiKeyRole.MANAGER,
+            expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+        })
+
+
+        await githubClient.upsertRepositorySecret({
+            accessToken: codeRepository.accessToken,
+            userName: codeRepository.githubData?.userName,
+            repositoryName: microfrontend.codeRepository.name,
+            secretName: deploySecretName,
+            value: apiKey.apiKey,
+        })  
     }
 
     async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {

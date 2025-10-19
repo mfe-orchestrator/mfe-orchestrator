@@ -843,8 +843,8 @@
             "viewOnGitHub": "View on GitHub"
         },
         "blank": {
-            "title": "Create Blank Template",
-            "description": "Start from scratch with an empty microfrontend template",
+            "title": "Create From Scratch",
+            "description": "Start from scratch without any template",
             "framework": "Any Framework",
             "tag": "Blank"
         }

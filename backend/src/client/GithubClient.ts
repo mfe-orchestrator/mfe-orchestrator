@@ -201,12 +201,12 @@ export interface GithubBaseDTO{
 }
 
 export interface GithubRepositoryBaseDTO extends GithubBaseDTO {
-    repositoryId: string
+    repositoryName: string
 }
 
 export interface GithubUpsertSecretDTO extends GithubRepositoryBaseDTO {
     secretName: string,
-    encryptedValue: string,
+    value: string,
 }
 
 export interface GithubOrganizationSecretDTO extends GithubBaseDTO {
@@ -265,12 +265,12 @@ class GithubClient {
         return response.data
     }
 
-    getRepositoryPublicKey = async ({accessToken, orgName, userName, repositoryId} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> => {
+    getRepositoryPublicKey = async ({accessToken, orgName, userName, repositoryName} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> => {
         const baseUrl = orgName
             ? `https://api.github.com/orgs/${orgName}/repos`
-            : `https://api.github.com/user/repos/${userName}`
+            : `https://api.github.com/repos/${userName}`
 
-        const url = `${baseUrl}/${repositoryId}/actions/secrets/public-key`
+        const url = `${baseUrl}/${repositoryName}/actions/secrets/public-key`
 
         const response = await axios.request<GithubPublicKey>({
             url,
@@ -303,15 +303,15 @@ class GithubClient {
         return response.data
     }
 
-    upsertRepositorySecret = async ({accessToken, orgName, userName, repositoryId, secretName, encryptedValue} : GithubUpsertSecretDTO): Promise<void> => {
+    upsertRepositorySecret = async ({accessToken, orgName, userName, repositoryName, secretName, value} : GithubUpsertSecretDTO): Promise<void> => {
 
-        const keyId = (await this.getRepositoryPublicKey({accessToken, orgName, userName, repositoryId})).key_id
+        const { key, key_id } = (await this.getRepositoryPublicKey({accessToken, orgName, userName, repositoryName}))
 
         const baseUrl = orgName
             ? `https://api.github.com/orgs/${orgName}/repos`
-            : `https://api.github.com/user/repos/${userName}`
+            : `https://api.github.com/repos/${userName}`
 
-        const url = `${baseUrl}/${repositoryId}/actions/secrets/${encodeURIComponent(secretName)}`
+        const url = `${baseUrl}/${repositoryName}/actions/secrets/${encodeURIComponent(secretName)}`
 
 
 
@@ -324,19 +324,19 @@ class GithubClient {
                 'User-Agent': 'MFE-Orchestrator'
             },
             data: {
-                encrypted_value: encryptedValue,
-                key_id: keyId
+                encrypted_value: await this.encryptValueForSecret(key, value),
+                key_id
             }
         })
     }
 
-    checkRepositorySecretExists = async ({accessToken, orgName, userName, repositoryId, secretName}: Omit<GithubUpsertSecretDTO, 'encryptedValue'>): Promise<boolean> => {
+    checkRepositorySecretExists = async ({accessToken, orgName, userName, repositoryName, secretName}: Omit<GithubUpsertSecretDTO, 'value'>): Promise<boolean> => {
         try {
             const baseUrl = orgName
                 ? `https://api.github.com/orgs/${orgName}/repos`
                 : `https://api.github.com/repos/${userName}`
 
-            const url = `${baseUrl}/${repositoryId}/actions/secrets/${encodeURIComponent(secretName)}`
+            const url = `${baseUrl}/${repositoryName}/actions/secrets/${encodeURIComponent(secretName)}`
 
             await axios.request({
                 method: 'GET',

@@ -869,8 +869,8 @@
       "viewOnGitHub": "Visualizza su GitHub"
     },
     "blank": {
-      "title": "Crea Template Vuoto",
-      "description": "Inizia da zero con un template microfrontend vuoto",
+      "title": "Crea Da Zero",
+      "description": "Inizia da zero senza nessun template",
       "framework": "Qualsiasi Framework",
       "tag": "Vuoto"
     }
