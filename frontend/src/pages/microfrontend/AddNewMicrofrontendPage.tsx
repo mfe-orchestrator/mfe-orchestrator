@@ -19,6 +19,7 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import { FetchDataMarketCard } from "@/components/market"
 import { CodeRepositorySection } from "@/components/microfrontend"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
+import { Alert } from "@/components/ui/alert"
 
 const logoMap: Record<string, string> = {
     'AWS': '/img/aws.svg',
@@ -125,7 +126,7 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
             ...(repositories && repositories.length > 0 ? {
                 codeRepository: {
                     enabled: Boolean(template),
-                    ...(Boolean(template) ? { repositoryId: "create_new" } : {}),
+                    repositoryId: "create_new",
                 }
             } : {}),
             canary: {
@@ -283,7 +284,7 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
                         </CardContent>
                     </Card>
 
-                    <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={Boolean(template)} />
+                    <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
 
                     {/* Canary Settings Section */}
                     <Card>
@@ -293,8 +294,9 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
                                     <CardTitle className="mb-0">{t("microfrontend.canary_settings")}</CardTitle>
                                     <CardDescription>{t("microfrontend.canary_settings_description")}</CardDescription>
                                 </div>
-                                <Switch name="canary.enabled" />
+                                <Switch name="canary.enabled" disabled={true} />
                             </div>
+                            <Alert className="mt-2">Coming Soon</Alert>
                         </CardHeader>
 
                         {canaryEnabled && (
