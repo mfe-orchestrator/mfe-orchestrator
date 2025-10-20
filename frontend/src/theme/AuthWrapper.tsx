@@ -7,6 +7,7 @@ import useUserStore from "@/store/useUserStore";
 import useThemeStore from "@/store/useThemeStore";
 import { setLanguageInLocalStorage, setThemeInLocalStorage } from "@/utils/localStorageUtils";
 import { useTranslation } from "react-i18next";
+import * as Sentry from "@sentry/react";
 
 const AuthWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -29,6 +30,14 @@ const AuthWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
         if(profile.theme){
           themeStore.setTheme(profile.theme);
           setThemeInLocalStorage(profile.theme);
+        }
+
+        if(Sentry.isEnabled()){
+          Sentry.setUser({
+            id: profile.id,
+            email: profile.email,
+            username: profile.email
+          })
         }
         return profile;
       }catch(e){

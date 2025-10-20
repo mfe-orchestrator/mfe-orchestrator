@@ -5,14 +5,20 @@ import { useEffect } from "react";
 const SentryInit : React.FC<React.PropsWithChildren>= ({children}) =>{
 
   useEffect(()=>{
-    if(!window.globalConfiguration.SENTRY_DSN) return
-    
+    if(!window.globalConfiguration.SENTRY_DSN) {
+        console.log("Sentry DSN not found");
+        return
+    }
+
       Sentry.init({
           dsn: window.globalConfiguration.SENTRY_DSN,
           // Setting this option to true will send default PII data to Sentry.
           // For example, automatic IP address collection on events
+          enableLogs: true,
+          enabled: true,
           sendDefaultPii: true
       });
+      console.log("Sentry initialized");
   }, [window.globalConfiguration.SENTRY_DSN])
 
   return <>{children}</>
