@@ -79,6 +79,13 @@ export const buttonVariants = cva(cn(baseStyle, focusStyle, disabledStyle, iconS
 				hover:text-primary/75
 				focus-visible:text-primary/75
 				active:ring-4 active:ring-ring active:ring-offset-2 active:shadow-none
+				`,
+            "ghost-destructive": `
+				border-0 shadow-none text-destructive
+				hover:bg-destructive/15
+				focus-visible:bg-destructive/15
+				active:bg-destructive/30 active:shadow-none active:text-destructive-active
+				disabled:bg-foreground/15 disabled:text-foreground/70
 				`
         },
         size: {

@@ -5,10 +5,12 @@ import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import TextField from "../input/TextField.rhf"
 import Switch from "../input/Switch.rhf"
 import ColorPicker from "../input/ColorPicker.rhf"
-import { Loader2, PencilIcon, PlusCircle, Save, TrashIcon } from "lucide-react"
+import { Check, Loader2, PencilIcon, PlusCircle, Save, TrashIcon, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { getRandomColor } from "@/utils/StringUtils"
 import TextareaField from "../input/TextareaField.rhf"
+import { Badge } from "../ui/badge/badge"
+import { Card } from "../ui/card"
 
 interface EnvironmentListProps {
     environments: EnvironmentDTO[]
@@ -31,48 +33,32 @@ interface SingleEnviromentSeeProps {
 const SingleEnviromentSee: React.FC<SingleEnviromentSeeProps> = ({ environment, onDelete, onEdit, disableIcons }) => {
     const { t } = useTranslation()
     return (
-        <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-            <div className="flex items-center space-x-4">
-                <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: environment.color }} title={t("environment.color_tooltip", { name: environment.name })} />
-                <div className="min-w-0">
-                    <div className="flex items-baseline space-x-2">
-                        <span className="text-sm font-medium text-gray-900 truncate">{environment.name}</span>
-                        <span className="text-xs text-gray-500">({environment.slug})</span>
+        <Card className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+                <div
+                    className="w-5 h-5 rounded-full flex-shrink-0 border-2 border-border"
+                    style={{ backgroundColor: environment.color }}
+                    title={t("environment.color_tooltip", { name: environment.name })}
+                />
+                <div>
+                    <div className="flex items-baseline gap-2">
+                        <h4 className="font-medium text-foreground">{environment.name}</h4>
+                        <span className="text-sm text-foreground-secondary">{environment.slug}</span>
                     </div>
-                    {environment.description && <p className="text-xs text-gray-500 truncate">{environment.description}</p>}
+                    {environment.description && <p className="text-sm text-foreground-secondary">{environment.description}</p>}
                 </div>
+                {environment.isProduction && <Badge variant="accent">{t("environment.production")}</Badge>}
             </div>
 
-            <div className="flex items-center space-x-3">
-                {environment.isProduction && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{t("environment.production")}</span>}
-                <div className="flex items-center space-x-1">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onEdit}
-                        className={`p-1.5 rounded-md transition-all duration-200 ${
-                            disableIcons ? "text-gray-300 cursor-not-allowed" : "text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm"
-                        }`}
-                        disabled={disableIcons}
-                        title={t("environment.edit_title")}
-                    >
-                        <PencilIcon className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDelete}
-                        className={`p-1.5 rounded-md transition-all duration-200 ${
-                            disableIcons ? "text-gray-300 cursor-not-allowed" : "text-red-600 hover:bg-red-50 hover:text-red-700 hover:shadow-sm"
-                        }`}
-                        disabled={disableIcons}
-                        title={t("environment.delete_title")}
-                    >
-                        <TrashIcon className="w-4 h-4" />
-                    </Button>
-                </div>
+            <div className="flex items-center gap-1 ms-auto">
+                <Button variant="ghost" size="icon" onClick={onEdit} disabled={disableIcons} title={t("environment.edit_title")}>
+                    <PencilIcon />
+                </Button>
+                <Button variant="ghost-destructive" size="icon" onClick={onDelete} disabled={disableIcons} title={t("environment.delete_title")}>
+                    <TrashIcon />
+                </Button>
             </div>
-        </div>
+        </Card>
     )
 }
 const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment, onSubmit, onCancelEdit }) => {
@@ -82,7 +68,7 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
     })
 
     return (
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="p-3 bg-primary/15 rounded-lg border-2 border-border">
             <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <div className="space-y-4">
@@ -95,10 +81,10 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                                 required
                                 containerClassName="md:col-span-2"
                                 onChange={e => {
-                                        const slug = e.target.value.toUpperCase().replace(/[^A-Za-z0-9]/g, "-")
-                                        console.log(slug, e.target.value, e.target.value.toUpperCase())
-                                        form.setValue("slug", slug)
-                                    }}
+                                    const slug = e.target.value.toUpperCase().replace(/[^A-Za-z0-9]/g, "-")
+                                    console.log(slug, e.target.value, e.target.value.toUpperCase())
+                                    form.setValue("slug", slug)
+                                }}
                             />
                             <TextField
                                 name="slug"
@@ -109,7 +95,12 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                                 required
                                 containerClassName="md:col-span-2"
                             />
-                            <TextareaField name="description" label={t("environment.form.description")} placeholder={t("environment.form.description_placeholder")} containerClassName="md:col-span-2" />
+                            <TextareaField
+                                name="description"
+                                label={t("environment.form.description")}
+                                placeholder={t("environment.form.description_placeholder")}
+                                containerClassName="md:col-span-2"
+                            />
                             <div className="flex items-center space-x-4">
                                 <Switch name="isProduction" label={t("environment.form.is_production")} className="flex-1" />
                                 <div className="flex-1">
@@ -118,34 +109,14 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
                             </div>
                         </div>
 
-                        <div className="flex justify-end space-x-3 pt-2">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={onCancelEdit}
-                                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-md shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
+                        <div className="flex justify-end flex-wrap gap-2 pt-2">
+                            <Button type="button" variant="secondary" onClick={onCancelEdit}>
+                                <X />
                                 {t("common.cancel")}
                             </Button>
-                            <Button
-                                type="submit"
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                                {t("common.save_changes")}
+                            <Button type="submit" variant="primary">
+                                <PlusCircle />
+                                {t("common.add")}
                             </Button>
                         </div>
                     </div>
@@ -226,7 +197,7 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
                                 const key = env._id || index
                                 const isEditing = key === editingId
                                 return (
-                                    <li key={key}>
+                                    <li key={key} className="mb-2 last:mb-0">
                                         {isEditing ? (
                                             <SingleEnviromentEdit environment={env} onSubmit={onSaveEnvironment(index)} onCancelEdit={onCancelSingle(index)} />
                                         ) : (
@@ -237,12 +208,14 @@ const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveE
                             })}
                         </ul>
                     )}
-                    <div className="flex justify-start gap-2 mt-4">
-                        <Button onClick={onAddEnvironment} disabled={editingId !== undefined} variant="secondary">
-                            <PlusCircle />
-                            {t("environment.add_environment")}
-                        </Button>
-                    </div>
+                    {editingId === undefined && (
+                        <div className="flex justify-start gap-2 mt-4">
+                            <Button onClick={onAddEnvironment} disabled={editingId !== undefined} variant="secondary">
+                                <PlusCircle />
+                                {t("environment.add_environment")}
+                            </Button>
+                        </div>
+                    )}
                     {environmentList && environmentList.length !== 0 && (
                         <div className="flex justify-end gap-2 mt-4">
                             <Button onClick={onSaveEnvironmentWrapper} disabled={loading} variant="primary">

@@ -97,7 +97,8 @@
         "active": "Active",
         "inactive": "Inactive",
         "creating": "Creating",
-        "configuration": "Configuration"
+        "configuration": "Configuration",
+        "add": "Add"
     },
     "setup": {
         "title": "Initial Setup",

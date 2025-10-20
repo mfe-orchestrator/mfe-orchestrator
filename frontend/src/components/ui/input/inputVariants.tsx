@@ -11,7 +11,7 @@ const baseStyle = `
 	rounded-md
 	border-2
 	border-input
-	bg-background
+	bg-background/75
 	ring-offset-background
 	shadow-input
 	placeholder:text-foreground/50
