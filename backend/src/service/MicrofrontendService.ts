@@ -73,6 +73,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         microfrontend.codeRepository.createData.name
                     )
                     microfrontend.codeRepository.repositoryId = createdRepository.name
+                    if(template){
+                        await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, template)
+                    }
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
                     if (!codeRepository.gitlabData?.url) {
                         throw new Error("Gitlab url is not set")
@@ -142,6 +145,114 @@ export class MicrofrontendService extends BaseAuthorizedService {
             secretName: deploySecretName,
             value: apiKey.apiKey,
         })  
+    }
+
+    async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, template: IMarket) {
+        const templateUrl = template.zipUrl
+        if(!templateUrl){
+            throw new Error("Template url is not set")
+        }
+        if(!codeRepository.azureData){
+            throw new Error("Azure data is not set")
+        }
+
+
+        const tempDir = join(tmpdir(), `template-${Date.now()}`)
+
+        const repoUrl = "https://root:"+accessToken+"@dev.azure.com/"+codeRepository.azureData.organization+"/"+codeRepository.azureData.projectId+"/_git/"+repositoryName
+
+        try {
+            // Try clone
+            await git.clone({
+                fs,
+                http,
+                dir: tempDir,
+                url: repoUrl,
+                singleBranch: true,
+                depth: 1,
+                headers: { "User-Agent": "mfe-orchestrator" },
+                onAuth: () => ({ username: accessToken, password: "x-oauth-basic" })
+            })
+            fastify.log.info("✅ Repo cloned successfully")
+        } catch (e) {
+            fastify.log.info("⚠️ Repo might be empty → initializing...")
+            fastify.log.error(e)
+            await git.init({ fs, dir: tempDir, defaultBranch: "main" })
+            await git.addRemote({ fs, dir: tempDir, remote: "origin", url: repoUrl })
+        }
+
+        // Download + unzip template
+        const response = await axios.get(templateUrl, { responseType: "stream" })
+        if (response.status !== 200) throw new Error(`Failed to download template: ${response.statusText}`)
+
+        await new Promise((resolve, reject) => {
+            response.data
+                .pipe(unzipper.Extract({ path: tempDir }))
+                .on("close", resolve)
+                .on("error", reject)
+        })
+
+
+        let files = await fs.readdir(tempDir)
+        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
+
+        if (files.length === 1) {
+            const top = join(tempDir, files[0])
+            const stat = await fs.lstat(top)
+            if (stat.isDirectory()) {
+                const items = await fs.readdir(top)
+                for (const item of items) {
+                    try {
+                        await fs.move(join(top, item), join(tempDir, item), { overwrite: true })
+                    } catch (err) {
+                        console.error(`Error moving ${item}:`, err)
+                    }
+                }
+                try {
+                    await fs.remove(top)
+                } catch (err) {
+                    console.error(`Error removing top-level folder:`, err)
+                }
+            }
+        }
+
+        // Stage + commit
+        try {
+            await git.branch({ fs, dir: tempDir, ref: "main", checkout: true, force: true })
+            await git.add({ fs, dir: tempDir, filepath: "." })
+            await git.commit({
+                fs,
+                dir: tempDir,
+                message: "Initial commit",
+                author: { name: "MFE Orchestrator Bot", email: "bot@mfe-orchestrator.dev" }
+            })
+
+            // Push creates "main" on remote if missing
+            await git.push({
+                fs,
+                http,
+                dir: tempDir,
+                remote: "origin",
+                ref: "main",
+                remoteRef: "main",
+                headers: { "User-Agent": "mfe-orchestrator" },
+                onAuth: () => ({ username: accessToken, password: "x-oauth-basic" }),
+                force: true
+            })
+
+            console.log("✅ Repo is ready and pushed!")
+            return tempDir
+        } catch (e) {
+            console.error("‼️ Error pushing to remote: ", e)
+            const remotes = await git.listRemotes({ fs, dir: tempDir })
+            console.log("🔍 Known remotes:", remotes)
+
+            const branches = await git.listBranches({ fs, dir: tempDir })
+            console.log("🔍 Local branches:", branches)
+
+            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
+            console.log("🔍 Remote branches:", remoteBranches)
+        }
     }
 
     async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {
@@ -255,7 +366,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 fs,
                 dir: tempDir,
                 message: "Initial commit",
-                author: { name: "MFE Orchestrator Bot", email: "bot@mfe-orchestrator.com" }
+                author: { name: "MFE Orchestrator Bot", email: "bot@mfe-orchestrator.dev" }
             })
 
             // Push creates "main" on remote if missing
