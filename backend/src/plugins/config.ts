@@ -104,6 +104,9 @@ export default fastifyPlugin(
                 GOOGLE_CLIENT_ID: {
                     type: "string"
                 },
+                GOOGLE_CLIENT_SECRET: {
+                    type: "string"
+                },
                 GOOGLE_REDIRECT_URI: {
                     type: "string"
                 },
