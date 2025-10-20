@@ -30,13 +30,13 @@ const initSentry = async (fastify: AppInstance) => {
         fastify.log.warn("Sentry DSN not found")
         return
     }
-    Sentry.init({
+    await Sentry.init({
             dsn: process.env.SENTRY_DSN,
             sendDefaultPii: true,
             enableLogs: true,
     });
 
-    Sentry.setupFastifyErrorHandler(fastify);
+    await Sentry.setupFastifyErrorHandler(fastify);
 }
 
 const start = async () => {
