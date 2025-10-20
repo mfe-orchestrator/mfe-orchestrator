@@ -20,7 +20,13 @@ const SentryInit : React.FC<React.PropsWithChildren>= ({children}) =>{
           enabled: true,
           sendDefaultPii: true,
           release: window?.globalConfiguration?.VERSION,
-          environment: window?.globalConfiguration?.ENVIRONMENT
+          environment: window?.globalConfiguration?.ENVIRONMENT,
+          integrations: [
+            Sentry.feedbackIntegration({
+              colorScheme: "system",
+
+            }),
+          ]
       });
       console.log("Sentry initialized");
   }, [window?.globalConfiguration?.SENTRY_DSN])
