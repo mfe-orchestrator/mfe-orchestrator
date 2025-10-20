@@ -15,6 +15,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sentry/react": "^10.20.0",
     "@auth0/auth0-react": "^2.3.0",
     "@azure/msal-browser": "^4.13.2",
     "@azure/msal-react": "^3.0.13",
