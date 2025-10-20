@@ -3,6 +3,7 @@ import Fastify from "fastify"
 import AutoLoad from "@fastify/autoload"
 import path from "path"
 import { AppInstance } from "./types/fastify"
+import * as Sentry from "@sentry/node"
 
 export const fastify: AppInstance = Fastify({
     logger: true
@@ -24,6 +25,20 @@ export async function build() {
     return fastify
 }
 
+const initSentry = async (fastify: AppInstance) => {
+    if(!process.env.SENTRY_DSN){
+        fastify.log.warn("Sentry DSN not found")
+        return
+    }
+    Sentry.init({
+            dsn: process.env.SENTRY_DSN,
+            sendDefaultPii: true,
+            enableLogs: true,
+    });
+
+    Sentry.setupFastifyErrorHandler(fastify);
+}
+
 const start = async () => {
     dotenv.config()
 
@@ -32,6 +47,7 @@ const start = async () => {
     const start = performance.now()
     try {
         fastify = await build()
+        await initSentry(fastify)
     } catch (e) {
         console.error("Error occured while building fastify")
         console.error(e)
