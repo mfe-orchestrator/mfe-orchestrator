@@ -25,13 +25,15 @@ const SentryInit : React.FC<React.PropsWithChildren>= ({children}) =>{
             Sentry.feedbackIntegration({
               colorScheme: "system",
             }),
-            Sentry.replayIntegration()
+            Sentry.replayIntegration(),
+            Sentry.browserTracingIntegration()
           ],
-          // Session Replay
+          tracePropagationTargets: ["localhost", /^https:\/\/console\.mfe-orchestrator\.dev\/api/],
+          tracesSampleRate: 0.1,
           replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
           replaysOnErrorSampleRate: 0.5 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
       });
-      
+
       console.log("Sentry initialized");
   }, [window?.globalConfiguration?.SENTRY_DSN])
 
