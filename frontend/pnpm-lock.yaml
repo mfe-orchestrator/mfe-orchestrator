@@ -18,8 +18,8 @@ dependencies:
     specifier: ^2.2.0
     version: 2.2.0(react@19.1.1)
   '@hookform/resolvers':
-    specifier: ^3.10.0
-    version: 3.10.0(react-hook-form@7.62.0)
+    specifier: ^5.2.2
+    version: 5.2.2(react-hook-form@7.62.0)
   '@lottiefiles/dotlottie-react':
     specifier: ^0.17.5
     version: 0.17.5(react@19.1.1)
@@ -653,11 +653,12 @@ packages:
       react: 19.1.1
     dev: false
 
-  /@hookform/resolvers@3.10.0(react-hook-form@7.62.0):
-    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
+  /@hookform/resolvers@5.2.2(react-hook-form@7.62.0):
+    resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
     peerDependencies:
-      react-hook-form: ^7.0.0
+      react-hook-form: ^7.55.0
     dependencies:
+      '@standard-schema/utils': 0.3.0
       react-hook-form: 7.62.0(react@19.1.1)
     dev: false
 
@@ -2149,6 +2150,10 @@ packages:
       '@sentry/core': 10.20.0
       hoist-non-react-statics: 3.3.2
       react: 19.1.1
+    dev: false
+
+  /@standard-schema/utils@0.3.0:
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
     dev: false
 
   /@swc/core-darwin-arm64@1.13.5:
