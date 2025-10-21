@@ -6,12 +6,14 @@ export interface SinglePageHeaderProps extends React.PropsWithChildren {
     left?: React.ReactNode
     right?: React.ReactNode
     lrContainerClassname?: string
+    className?: string
+    headerClassName?: string
 }
 
-const SinglePageLayout: React.FC<SinglePageHeaderProps> = ({ title, description, left, right, children, lrContainerClassname }) => {
+const SinglePageLayout: React.FC<SinglePageHeaderProps> = ({ title, description, left, right, children, lrContainerClassname, className, headerClassName }) => {
     return (
-        <div className="flex flex-col gap-6 min-h-full">
-            <div className="mb-4">
+        <div className={cn("flex flex-col gap-6 min-h-full", className)}>
+            <div className={cn("mb-4", headerClassName)}>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">{title}</h1>
                     {description && <p className="text-primary">{description}</p>}

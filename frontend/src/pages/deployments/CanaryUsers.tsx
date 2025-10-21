@@ -8,26 +8,23 @@ import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
 import useCanaryUsersApi from '@/hooks/apiClients/useCanaryUsersApi';
 import SinglePageLayout from '@/components/SinglePageLayout';
+import { DotLottieReact } from "@lottiefiles/dotlottie-react"
 
 const CanaryUsers: React.FC = () => {
-    const { t } = useTranslation();
-    const { deploymentId } = useParams<{ deploymentId: string }>();
-    const canaryUsersApi = useCanaryUsersApi();
+    const { t } = useTranslation()
+    const { deploymentId } = useParams<{ deploymentId: string }>()
+    const canaryUsersApi = useCanaryUsersApi()
 
     const query: UseQueryResult<CanaryUser[]> = useQuery({
-        queryKey: ['canaryUsers', deploymentId],
+        queryKey: ["canaryUsers", deploymentId],
         queryFn: () => canaryUsersApi.getCanaryUsers(deploymentId!),
         enabled: !!deploymentId
-    });
-
+    })
 
     return (
         <ApiDataFetcher queries={[query]}>
-            <SinglePageLayout
-                title={t('deployments.canary_users.title')}
-                description={t('deployments.canary_users.subtitle')}
-            >
-                <Card>
+            <SinglePageLayout title={t("deployments.canary_users.title")} description={t("deployments.canary_users.subtitle")} headerClassName="opacity-50">
+                {/* <Card>
                     <CardContent>
                         <ApiDataFetcher queries={[query]}>
                             <Table>
@@ -66,10 +63,14 @@ const CanaryUsers: React.FC = () => {
                             </Table>
                         </ApiDataFetcher>
                     </CardContent>
-                </Card>
+                </Card> */}
+                <div className="flex flex-col items-center justify-center w-full p-4 grow">
+                    <p className="text-foreground-secondary text-center text-xl font-semibold tracking-normal uppercase -mb-2">Coming soon</p>
+                    <DotLottieReact src="https://lottie.host/732448e9-9883-4798-81f3-aa1448f0c9bb/6MBCLiRSDA.json" loop autoplay className="max-w-[400px] max-h-[400px] w-full aspect-square" />
+                </div>
             </SinglePageLayout>
         </ApiDataFetcher>
-    );
-};
+    )
+}
 
 export default CanaryUsers;
