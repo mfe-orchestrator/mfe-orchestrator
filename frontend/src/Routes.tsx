@@ -193,7 +193,7 @@ const PrivateRoutes: React.FC = () => {
             }
           />
           <Route
-            path="/market"
+            path="/templates-library"
             element={
               <RouteWithSuspense element={<MarketPage />} />
             }

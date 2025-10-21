@@ -34,7 +34,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     const navigate = useNavigate()
 
     const onAddNewMicrofrontend = () => {
-        navigate(`/market`)
+        navigate(`/templates-library`)
     }
 
     return (

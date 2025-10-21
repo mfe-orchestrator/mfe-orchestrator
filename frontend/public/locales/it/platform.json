@@ -841,39 +841,39 @@
     }
   },
   "market": {
-    "title": "Market",
-    "description": "Scegli dalla nostra collezione di template per microfrontend",
-    "noTemplates": {
-      "title": "Nessun template disponibile",
-      "description": "Non ci sono ancora template per microfrontend nel market."
-    },
-    "error": {
-      "failedToFetch": "Errore nel caricamento dei markets"
-    },
-    "filters": {
-      "allFrameworks": "Tutti i Framework",
-      "allCompilers": "Tutti i Compiler",
-      "searchPlaceholder": "Cerca per nome...",
-      "selectFramework": "Seleziona framework...",
-      "selectCompiler": "Seleziona compiler...",
-      "hostType": "Tipo di Host",
-      "remote": "Remoto",
-      "host": "Host",
-      "allTypes": "Tutti i Tipi"
-    },
-    "noResults": {
-      "title": "Nessun template corrisponde ai tuoi filtri",
-      "description": "Prova a regolare la ricerca, i filtri framework, compiler o tipo di host"
-    },
-    "card": {
-      "comingSoon": "Prossimamente",
-      "viewOnGitHub": "Visualizza su GitHub"
-    },
-    "blank": {
-      "title": "Crea Da Zero",
-      "description": "Inizia da zero senza nessun template",
-      "framework": "Qualsiasi Framework",
-      "tag": "Vuoto"
-    }
+      "title": "Libreria di template",
+      "description": "Scegli dalla nostra collezione di template per microfrontend",
+      "noTemplates": {
+          "title": "Nessun template disponibile",
+          "description": "Non ci sono ancora template per microfrontend nel market."
+      },
+      "error": {
+          "failedToFetch": "Errore nel caricamento dei markets"
+      },
+      "filters": {
+          "allFrameworks": "Tutti i Framework",
+          "allCompilers": "Tutti i Compiler",
+          "searchPlaceholder": "Cerca per nome...",
+          "selectFramework": "Seleziona framework...",
+          "selectCompiler": "Seleziona compiler...",
+          "hostType": "Tipo di Host",
+          "remote": "Remoto",
+          "host": "Host",
+          "allTypes": "Tutti i Tipi"
+      },
+      "noResults": {
+          "title": "Nessun template corrisponde ai tuoi filtri",
+          "description": "Prova a regolare la ricerca, i filtri framework, compiler o tipo di host"
+      },
+      "card": {
+          "comingSoon": "Prossimamente",
+          "viewOnGitHub": "Visualizza su GitHub"
+      },
+      "blank": {
+          "title": "Crea Da Zero",
+          "description": "Inizia da zero senza nessun template",
+          "framework": "Qualsiasi Framework",
+          "tag": "Vuoto"
+      }
   }
 }

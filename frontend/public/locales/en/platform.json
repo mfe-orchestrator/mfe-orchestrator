@@ -815,7 +815,7 @@
         }
     },
     "market": {
-        "title": "Market",
+        "title": "Templates library",
         "description": "Choose from our collection of microfrontend templates",
         "noTemplates": {
             "title": "No templates available",

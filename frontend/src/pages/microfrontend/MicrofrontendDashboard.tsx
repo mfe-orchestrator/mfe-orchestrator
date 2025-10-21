@@ -20,7 +20,7 @@ const MicrofrontendDashboard = () => {
     }
 
     const onAddNewMicrofrontend = () => {
-        navigate(`/market`)
+        navigate(`/templates-library`)
     }
 
     return (
