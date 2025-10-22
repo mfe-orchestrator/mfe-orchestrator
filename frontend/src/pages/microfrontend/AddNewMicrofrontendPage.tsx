@@ -20,6 +20,7 @@ import { FetchDataMarketCard } from "@/components/market"
 import { CodeRepositorySection } from "@/components/microfrontend"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import { Alert } from "@/components/ui/alert"
+import DangerZoneRemoveMicrofrontend from "@/components/microfrontend/DangerZoneRemoveMicrofrontend"
 
 const logoMap: Record<string, string> = {
     'AWS': '/img/aws.svg',
@@ -346,6 +347,7 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
                         </Alert>
                     </div>
 
+                    <DangerZoneRemoveMicrofrontend microfrontend={frontend} />
                     <div className="flex justify-end gap-2">
                         <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
                             {t("common.cancel")}

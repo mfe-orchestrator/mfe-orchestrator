@@ -586,7 +586,26 @@
       "sourceCodeProvider": "Provider Codice Sorgente",
       "create_new_repository": "Crea nuovo...",
       "noMicrofrontendsFound": "Nessun microfrontend trovato",
-      "ofUsers": "degli utenti"
+      "ofUsers": "degli utenti",
+    "dangerZone": {
+      "title": "Zona Pericolosa",
+      "subtitle": "Queste azioni sono irreversibili. Sii certo di quello che fai.",
+      "delete": {
+        "title": "Elimina questo microfrontend",
+        "description": "Una volta eliminato un microfrontend, non è possibile tornare indietro. Sii certo di quello che fai.",
+        "button": "Elimina Microfrontend",
+        "success": "Microfrontend eliminato con successo",
+        "dialog": {
+          "title": "Elimina Microfrontend",
+          "warning": "Attenzione!",
+          "description": "Questa azione non può essere annullata. Il microfrontend \"{{microfrontendName}}\" e tutti i suoi dati verranno eliminati definitivamente.",
+          "confirmation": "Digita \"{{microfrontendName}}\" per confermare.",
+          "confirmationText": "Digita il nome del microfrontend per confermare l'eliminazione.",
+          "deleting": "Eliminazione in corso...",
+          "confirmButton": "Elimina Microfrontend"
+        }
+      }
+    }
   },
   "color_picker": {
     "select_color": "Seleziona un colore"

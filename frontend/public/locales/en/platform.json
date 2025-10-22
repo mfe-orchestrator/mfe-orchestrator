@@ -494,7 +494,26 @@
         "select_repository": "Select Repository",
         "select_repository_placeholder": "Choose a repository...",
         "sourceCodeProvider": "Source Code Provider",
-        "create_new_repository": "Create new..."
+        "create_new_repository": "Create new...",
+        "dangerZone": {
+            "title": "Danger Zone",
+            "subtitle": "These actions are irreversible. Please be certain.",
+            "delete": {
+                "title": "Delete this microfrontend",
+                "description": "Once you delete a microfrontend, there is no going back. Please be certain.",
+                "button": "Delete Microfrontend",
+                "success": "Microfrontend deleted successfully",
+                "dialog": {
+                    "title": "Delete Microfrontend",
+                    "warning": "Warning!",
+                    "description": "This action cannot be undone. This will permanently delete the microfrontend \"{{microfrontendName}}\" and all its data.",
+                    "confirmation": "Please type \"{{microfrontendName}}\" to confirm.",
+                    "confirmationText": "Please type the microfrontend name to confirm deletion.",
+                    "deleting": "Deleting...",
+                    "confirmButton": "Delete Microfrontend"
+                }
+            }
+        }
     },
     "environmentVariables": {
         "title": "Environment Variables",
