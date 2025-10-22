@@ -24,6 +24,7 @@ const SentryInit : React.FC<React.PropsWithChildren>= ({children}) =>{
           integrations: [
             Sentry.feedbackIntegration({
               colorScheme: "system",
+              triggerLabel: "",
             }),
             Sentry.replayIntegration(),
             Sentry.browserTracingIntegration()

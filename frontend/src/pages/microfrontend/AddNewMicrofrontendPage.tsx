@@ -349,10 +349,10 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
 
                     <DangerZoneRemoveMicrofrontend microfrontend={frontend} />
                     <div className="flex justify-end gap-2">
-                        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+                        <Button disabled={form.formState.isSubmitting} type="button" variant="secondary" onClick={() => navigate(-1)}>
                             {t("common.cancel")}
                         </Button>
-                        <Button type="submit">{t("common.save")}</Button>
+                        <Button disabled={form.formState.isSubmitting} type="submit">{t("common.save")}</Button>
                     </div>
                 </form>
             </FormProvider>

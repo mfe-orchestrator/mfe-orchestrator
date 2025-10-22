@@ -79,7 +79,7 @@ const DangerZoneRemoveMicrofrontend: React.FC<IDangerZoneRemoveMicrofrontendProp
                         <AlertTitle>{t("microfrontend.dangerZone.delete.dialog.warning")}</AlertTitle>
                         <AlertDescription className="mt-2">
                             {t("microfrontend.dangerZone.delete.dialog.description", { microfrontendName: microfrontend.name })}
-                            <div className="mt-2">{t("microfrontend.dangerZone.delete.dialog.confirmation", { microfrontendName: <span className="font-bold">{microfrontend.name}</span> })}</div>
+                            <div className="mt-2">{t("microfrontend.dangerZone.delete.dialog.confirmation", { microfrontendName: microfrontend.name })}</div>
                         </AlertDescription>
                     </Alert>
 
