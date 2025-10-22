@@ -15,7 +15,6 @@ export interface IApiKey {
     name: string
     projectId: Types.ObjectId
     apiKey: string
-    salt?: string
     role: ApiKeyRole
     expiresAt: Date
     status: ApiKeyStatus
@@ -43,10 +42,6 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
             type: String,
             required: true
         },
-        salt: {
-            type: String,
-            required: false
-        },
         role: {
             type: String,
             enum: Object.values(ApiKeyRole),
@@ -72,9 +67,7 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
 apiKeySchema.pre<IApiKeyDocument>("save", async function (next) {
     console.log("TODO fix me i do not work well")
     if (this.isModified("apiKey")) {
-        const salt = await bcrypt.genSalt(10)
-        this.salt = salt
-        this.apiKey = await bcrypt.hash(this.apiKey, salt)
+        this.apiKey = await bcrypt.hash(this.apiKey, 10)
     }
     next()
 })
@@ -86,7 +79,6 @@ apiKeySchema.methods.compareApiKey = async function (candidateApiKey: string): P
 apiKeySchema.methods.toFrontendObject = function (): IApiKey {
     const obj = this.toObject()
     delete obj.apiKey
-    delete obj.salt
     delete obj.__v
     return obj
 }

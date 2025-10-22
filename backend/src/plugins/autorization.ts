@@ -151,9 +151,15 @@ const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest): P
         throw new AuthenticationError("API key not found")
     }
 
-    const apiKeyFromDb = (await ApiKey.find()).find(async candidateApiKey => {
-        return await candidateApiKey.compareApiKey(apiKey)
-    })
+    const keys = await ApiKey.find();
+    let apiKeyFromDb = undefined;
+    for(let candidateApiKey of keys){
+        const match = await candidateApiKey.compareApiKey(apiKey)
+        if(match){
+            apiKeyFromDb = candidateApiKey;
+            break;
+        }
+    }
 
     if (!apiKeyFromDb) {
         throw new AuthenticationError("API key not found")
