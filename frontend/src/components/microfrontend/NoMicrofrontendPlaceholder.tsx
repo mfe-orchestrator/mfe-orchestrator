@@ -69,14 +69,10 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-foreground">
-                    {t('microfrontend.no_microfrontends_found')}
-                </h2>
-                <p className="mt-2 text-muted-foreground">
-                    {t('microfrontend.add_your_first_microfrontend')}
-                </p>
+                <h2 className="text-2xl font-bold text-foreground">{t("microfrontend.no_microfrontends_found")}</h2>
+                <p className="mt-2 text-muted-foreground">{t("microfrontend.add_your_first_microfrontend")}</p>
             </div>
 
             <div className="bg-card p-6 rounded-lg shadow-sm border">
@@ -86,28 +82,28 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
                             <div className="grid grid-cols-2 gap-4">
                                 <TextField
                                     name="name"
-                                    label={t('microfrontend.name')}
-                                    placeholder={t('microfrontend.name_placeholder')}
-                                    rules={{ required: t('common.required_field') }}
+                                    label={t("microfrontend.name")}
+                                    placeholder={t("microfrontend.name_placeholder")}
+                                    rules={{ required: t("common.required_field") }}
                                     required
                                     className="w-full"
                                 />
 
                                 <TextField
                                     name="slug"
-                                    textTransform={(e) => e.replace(/[^a-z0-9]/gi, '-').toLocaleLowerCase()}
-                                    label={t('microfrontend.slug')}
-                                    placeholder={t('microfrontend.slug_placeholder')}
-                                    rules={{ required: t('common.required_field') }}
+                                    textTransform={e => e.replace(/[^a-z0-9]/gi, "-").toLocaleLowerCase()}
+                                    label={t("microfrontend.slug")}
+                                    placeholder={t("microfrontend.slug_placeholder")}
+                                    rules={{ required: t("common.required_field") }}
                                     required
                                     className="w-full"
                                 />
 
                                 <TextField
                                     name="version"
-                                    label={t('microfrontend.version')}
-                                    placeholder={t('microfrontend.version_placeholder')}
-                                    rules={{ required: t('common.required_field') }}
+                                    label={t("microfrontend.version")}
+                                    placeholder={t("microfrontend.version_placeholder")}
+                                    rules={{ required: t("common.required_field") }}
                                     required
                                     className="w-full"
                                     defaultValue="1.0.0"
@@ -115,62 +111,40 @@ const NoMicrofrontendPlaceholder: React.FC<NoMicrofrontendPlaceholderProps> = ({
 
                                 <SelectField
                                     name="status"
-                                    label={t('microfrontend.status')}
+                                    label={t("microfrontend.status")}
                                     required
-                                    rules={{ required: t('common.required_field') }}
+                                    rules={{ required: t("common.required_field") }}
                                     options={[
-                                        { value: 'ACTIVE', label: t('common.active') },
-                                        { value: 'INACTIVE', label: t('common.inactive') },
+                                        { value: "ACTIVE", label: t("common.active") },
+                                        { value: "INACTIVE", label: t("common.inactive") }
                                     ]}
                                     className="w-full"
                                 />
                             </div>
 
-                            <TextareaField
-                                name="description"
-                                label={t('microfrontend.description')}
-                                placeholder={t('microfrontend.description_placeholder')}
-                            />
+                            <TextareaField name="description" label={t("microfrontend.description")} placeholder={t("microfrontend.description_placeholder")} />
 
                             <div className="flex items-center justify-between pt-2">
                                 <div>
-                                    <h4 className="text-sm font-medium">{t('microfrontend.continuous_deployment')}</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                        {t('microfrontend.continuous_deployment_description')}
-                                    </p>
+                                    <h4 className="text-sm font-medium">{t("microfrontend.continuous_deployment")}</h4>
+                                    <p className="text-sm text-muted-foreground">{t("microfrontend.continuous_deployment_description")}</p>
                                 </div>
-                                <Switch
-                                    name="continuousDeployment"
-                                    label=""
-                                    rules={{}}
-                                />
+                                <Switch name="continuousDeployment" label="" rules={{}} />
                             </div>
-
-
                         </div>
 
                         <div className="pt-4">
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {t('microfrontend.dont_worry')}
-                            </p>
+                            <p className="text-sm text-muted-foreground mb-4">{t("microfrontend.dont_worry")}</p>
 
-                            <Button
-                                type="submit"
-                                className="w-full"
-                                disabled={createMicrofrontendMutation.isPending}
-                            >
-                                {createMicrofrontendMutation.isPending ? (
-                                    <>{t('common.creating')}...</>
-                                ) : (
-                                    t('microfrontend.create_microfrontend')
-                                )}
+                            <Button type="submit" className="w-full" disabled={createMicrofrontendMutation.isPending}>
+                                {createMicrofrontendMutation.isPending ? <>{t("common.creating")}...</> : t("microfrontend.create_microfrontend")}
                             </Button>
                         </div>
                     </form>
                 </FormProvider>
             </div>
         </div>
-    );
+    )
 }
 
 export default NoMicrofrontendPlaceholder

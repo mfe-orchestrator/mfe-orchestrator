@@ -39,31 +39,30 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
 
     return (
         <Tabs defaultValue="grid" className="space-y-4" iconButtons tabsListPosition="end">
-            <TabsList>
-                <TabsTrigger value="grid" onClick={() => setTabsValue("grid")}>
-                    <LayoutGrid />
-                </TabsTrigger>
-                <TabsTrigger value="list" onClick={() => setTabsValue("list")}>
-                    <StretchHorizontal />
-                </TabsTrigger>
-            </TabsList>
+            <div className="flex items-start justify-between gap-x-6 gap-y-2 flex-wrap">
+                <div className="flex-[1_1_280px] max-w-[600px]">
+                    <h2 className="text-xl font-semibold text-foreground-secondary">
+                        {microfrontends.length > 0 ? `${microfrontends.length} ${t("microfrontend.dashboard.title")}` : t("microfrontend.no_microfrontends_found")}
+                    </h2>
+                    {microfrontends.length === 0 && <p className="text-foreground-secondary mt-1">{t("microfrontend.no_microfrontends_found_description")}</p>}
+                </div>
+                <TabsList>
+                    <TabsTrigger value="grid" onClick={() => setTabsValue("grid")}>
+                        <LayoutGrid />
+                    </TabsTrigger>
+                    <TabsTrigger value="list" onClick={() => setTabsValue("list")}>
+                        <StretchHorizontal />
+                    </TabsTrigger>
+                </TabsList>
+            </div>
 
             <TabsContent value="grid">
-                {microfrontends && microfrontends.length > 0 ? (
-                    <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,_1fr))]">
-                        <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} />
-                        {microfrontends.map(mfe => (
-                            <MicrofrontendCard key={mfe._id} mfe={mfe} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <p className="text-muted-foreground mb-4">{t("microfrontend.noMicrofrontendsFound")}</p>
-                        <Button variant="secondary" onClick={onResetFilters}>
-                            {t("common.resetFilters")}
-                        </Button>
-                    </div>
-                )}
+                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,_1fr))]">
+                    <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} className={microfrontends.length === 0 && "col-span-4"} />
+                    {microfrontends.map(mfe => (
+                        <MicrofrontendCard key={mfe._id} mfe={mfe} />
+                    ))}
+                </div>
             </TabsContent>
 
             <TabsContent value="list">
@@ -79,32 +78,40 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {microfrontends?.map(mfe => {
-                                const canaryPercentage: number = mfe.canary?.percentage || 0
-                                return (
-                                    <TableRow key={mfe._id}>
-                                        <TableCell className="font-medium text-primary">{mfe.name}</TableCell>
-                                        <TableCell>{mfe.slug}</TableCell>
-                                        <TableCell>
-                                            <Badge>{mfe.version}</Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            {canaryPercentage > 0 ? (
-                                                <span>
-                                                    {canaryPercentage}% {t("microfrontend.ofUsers")}
-                                                </span>
-                                            ) : (
-                                                <span className="italic text-foreground-secondary">{t("common.no_data")}</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="primary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="w-full">
-                                                {t("common.configuration")}
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
+                            {microfrontends.length > 0 ? (
+                                microfrontends?.map(mfe => {
+                                    const canaryPercentage: number = mfe.canary?.percentage || 0
+                                    return (
+                                        <TableRow key={mfe._id}>
+                                            <TableCell className="font-medium text-primary">{mfe.name}</TableCell>
+                                            <TableCell>{mfe.slug}</TableCell>
+                                            <TableCell>
+                                                <Badge>{mfe.version}</Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                {canaryPercentage > 0 ? (
+                                                    <span>
+                                                        {canaryPercentage}% {t("microfrontend.ofUsers")}
+                                                    </span>
+                                                ) : (
+                                                    <span className="italic text-foreground-secondary">{t("common.no_data")}</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="primary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="w-full">
+                                                    {t("common.configuration")}
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={100} className="h-24 text-center">
+                                        <span className="text-foreground-secondary">{t("microfrontend.no_microfrontends_found")}</span>
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>
@@ -140,11 +147,11 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, proje
 
     return (
         <ApiDataFetcher queries={[microfrontendListQuery]}>
-            {microfrontendListQuery?.data?.length !== 0 ? (
-                <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} setTabsValue={setTabsValue} />
+            <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} setTabsValue={setTabsValue} />
+            {/* {microfrontendListQuery?.data?.length !== 0 ? (
             ) : (
                 <NoMicrofrontendPlaceholder projectId={projectId} />
-            )}
+            )} */}
         </ApiDataFetcher>
     )
 }

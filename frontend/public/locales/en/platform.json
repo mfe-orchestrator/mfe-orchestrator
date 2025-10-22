@@ -405,6 +405,7 @@
             "build": "Build"
         },
         "no_microfrontends_found": "No Microfrontends Found",
+        "no_microfrontends_found_description": "No microfrontends have been registered yet. Once they're added, they'll appear here. You can create a new one to get started.",
         "add_your_first_microfrontend": "Add your first microfrontend to get started!",
         "add_new": "Add New Microfrontend",
         "add_new_description": "Create a new microfrontend to add to your project",
