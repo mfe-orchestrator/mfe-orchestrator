@@ -161,9 +161,10 @@ export interface CreateBuildRequest {
     version?: string
     type?: CodeRepositoryType
     owner: string 
-    repo: string
+    repositoryName: string
     ref?: string
     inputs?: Record<string, any>
+    workflowId?: string
 }
 
 export interface GithubWorkflowDispatchResponse {
@@ -235,7 +236,7 @@ class GithubClient {
         return output
     }
 
-    getAccessToken = async (data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> => {
+    async getAccessToken(data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> {
         const responseGithub = await axios.request<GithubAccessTokenResponse>({
             method: 'POST',
             url: 'https://github.com/login/oauth/access_token',
@@ -252,7 +253,7 @@ class GithubClient {
         return responseGithub.data
     }
 
-    getUser = async (accessToken: string): Promise<GithubUser> => {
+    async getUser(accessToken: string): Promise<GithubUser> {
         const response = await axios.request<GithubUser>({
             url: 'https://api.github.com/user',
             headers: {
@@ -265,12 +266,14 @@ class GithubClient {
         return response.data
     }
 
-    getRepositoryPublicKey = async ({accessToken, orgName, userName, repositoryName} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> => {
-        const baseUrl = orgName
-            ? `https://api.github.com/orgs/${orgName}/repos`
-            : `https://api.github.com/repos/${userName}`
+    private getRepositoryBaseUrl(repositoryName: string, orgName?: string, userName?: string) {
+        return orgName
+            ? `https://api.github.com/orgs/${orgName}/repos/${repositoryName}`
+            : `https://api.github.com/repos/${userName}/${repositoryName}`
+    }
 
-        const url = `${baseUrl}/${repositoryName}/actions/secrets/public-key`
+    async getRepositoryPublicKey({accessToken, orgName, userName, repositoryName} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> {
+        const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/public-key`
 
         const response = await axios.request<GithubPublicKey>({
             url,
@@ -284,7 +287,7 @@ class GithubClient {
         return response.data
     }
 
-    getOrganizationPublicKey = async ({accessToken, orgName} : GithubBaseDTO): Promise<GithubPublicKey> => {
+    async getOrganizationPublicKey({accessToken, orgName} : GithubBaseDTO): Promise<GithubPublicKey>{
         if (!orgName) {
             throw new Error('Organization name is required')
         }
@@ -303,17 +306,11 @@ class GithubClient {
         return response.data
     }
 
-    upsertRepositorySecret = async ({accessToken, orgName, userName, repositoryName, secretName, value} : GithubUpsertSecretDTO): Promise<void> => {
+    async upsertRepositorySecret({accessToken, orgName, userName, repositoryName, secretName, value} : GithubUpsertSecretDTO): Promise<void>{
 
         const { key, key_id } = (await this.getRepositoryPublicKey({accessToken, orgName, userName, repositoryName}))
 
-        const baseUrl = orgName
-            ? `https://api.github.com/orgs/${orgName}/repos`
-            : `https://api.github.com/repos/${userName}`
-
-        const url = `${baseUrl}/${repositoryName}/actions/secrets/${encodeURIComponent(secretName)}`
-
-
+        const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/${encodeURIComponent(secretName)}`
 
         await axios.request<void>({
             method: 'PUT',
@@ -330,13 +327,9 @@ class GithubClient {
         })
     }
 
-    checkRepositorySecretExists = async ({accessToken, orgName, userName, repositoryName, secretName}: Omit<GithubUpsertSecretDTO, 'value'>): Promise<boolean> => {
+    async checkRepositorySecretExists({accessToken, orgName, userName, repositoryName, secretName}: Omit<GithubUpsertSecretDTO, 'value'>): Promise<boolean> {
         try {
-            const baseUrl = orgName
-                ? `https://api.github.com/orgs/${orgName}/repos`
-                : `https://api.github.com/repos/${userName}`
-
-            const url = `${baseUrl}/${repositoryName}/actions/secrets/${encodeURIComponent(secretName)}`
+            const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/${encodeURIComponent(secretName)}`
 
             await axios.request({
                 method: 'GET',
@@ -357,7 +350,7 @@ class GithubClient {
         }
     }
 
-    upsertOrganizationSecret = async ({accessToken, orgName, secretName, value, visibility = 'private', selectedRepositoryIds} : GithubOrganizationSecretDTO): Promise<void> => {
+    async upsertOrganizationSecret({accessToken, orgName, secretName, value, visibility = 'private', selectedRepositoryIds} : GithubOrganizationSecretDTO): Promise<void>{
         if (!orgName) {
             throw new Error('Organization name is required')
         }
@@ -389,7 +382,7 @@ class GithubClient {
         })
     }
 
-    checkOrganizationSecretExists = async ({accessToken, orgName, secretName}: Omit<GithubOrganizationSecretDTO, 'value' | 'visibility' | 'selectedRepositoryIds'>): Promise<boolean> => {
+    async checkOrganizationSecretExists({accessToken, orgName, secretName}: Omit<GithubOrganizationSecretDTO, 'value' | 'visibility' | 'selectedRepositoryIds'>): Promise<boolean>{
         if (!orgName) {
             throw new Error('Organization name is required')
         }
@@ -416,7 +409,7 @@ class GithubClient {
         }
     }
 
-    getOrganization = async (orgName: string, accessToken: string): Promise<GithubOrganization> => {
+    async getOrganization(orgName: string, accessToken: string): Promise<GithubOrganization> {
         const response = await axios.request<GithubOrganization>({
             url: `https://api.github.com/orgs/${orgName}`,
             headers: {
@@ -429,7 +422,7 @@ class GithubClient {
         return response.data
     }
 
-    getUserOrganizations = async (accessToken: string): Promise<GithubOrganization[]> => {
+    async getUserOrganizations(accessToken: string): Promise<GithubOrganization[]> {
         const response = await axios.request<GithubOrganization[]>({
             url: 'https://api.github.com/user/orgs',
             headers: {
@@ -442,7 +435,7 @@ class GithubClient {
         return response.data
     }
 
-    createRepository = async (repositoryData: CreateRepositoryRequest, accessToken: string, orgName?: string): Promise<GithubRepository> => {
+    async createRepository(repositoryData: CreateRepositoryRequest, accessToken: string, orgName?: string): Promise<GithubRepository> {
         const url = orgName 
             ? `https://api.github.com/orgs/${orgName}/repos`
             : 'https://api.github.com/user/repos'
@@ -461,13 +454,9 @@ class GithubClient {
         return response.data
     }
 
-    getBranches = async (accessToken: string, repositoryId: string, orgName?: string, userName?: string): Promise<GithubBranch[]> => {
-        const url = orgName 
-            ? `https://api.github.com/orgs/${orgName}/repos/${repositoryId}/branches`
-            : `https://api.github.com/repos/${userName}/${repositoryId}/branches`
-
+    async getBranches(accessToken: string, repositoryName: string, orgName?: string, userName?: string): Promise<GithubBranch[]> {
         const response = await axios.request<GithubBranch[]>({
-            url,
+            url: `https://api.github.com/repos/${orgName || userName}/${repositoryName}/branches`,
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',
@@ -478,7 +467,7 @@ class GithubClient {
         return response.data
     }
 
-    getRepositories = async (accessToken: string, orgName?: string): Promise<GithubRepository[]> => {
+    async getRepositories(accessToken: string, orgName?: string): Promise<GithubRepository[]> {
         const url = orgName 
             ? `https://api.github.com/orgs/${orgName}/repos`
             : 'https://api.github.com/user/repos'
@@ -496,17 +485,11 @@ class GithubClient {
     }
 
     createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
-        const workflowId = 'build-and-deploy.yml'
-
-        let url = buildData.type === CodeRepositoryType.ORGANIZATION 
-            ? `https://api.github.com/orgs/${buildData.owner}/repos/${buildData.repo}`
-            : `https://api.github.com/repos/${buildData.owner}/${buildData.repo}`
-
-        url += `/actions/workflows/${workflowId}/dispatches`
+        const {workflowId = 'build-and-deploy.yml'} = buildData
 
         const response = await axios.request<GithubWorkflowDispatchResponse>({
+            url: `https://api.github.com/repos/${buildData.owner}/${buildData.repositoryName}/actions/workflows/${workflowId}/dispatches`,
             method: 'POST',
-            url,
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/vnd.github.v3+json',

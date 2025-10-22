@@ -654,7 +654,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     version: version,
                     type: codeRepository.githubData.type,
                     owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION ? codeRepository.githubData.organizationId! : codeRepository.githubData.userName!,
-                    repo: microfrontend.codeRepository.name,
+                    repositoryName: microfrontend.codeRepository.name,
                     ref
                 },
                 codeRepository.accessToken
