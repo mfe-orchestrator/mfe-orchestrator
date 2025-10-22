@@ -12,6 +12,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import SelectField from '../input/SelectField.rhf';
 import TextField from '../input/TextField.rhf';
 import useToastNotificationStore from '@/store/useToastNotificationStore';
+import ApiDataFetcher from '../ApiDataFetcher/ApiDataFetcher';
+import { Loader2 } from 'lucide-react';
 
 interface BuildDialogProps {
   open: boolean;
@@ -45,14 +47,18 @@ export function BuildDialog({
     enabled: open && !!microfrontendId,
   });
 
+  const form = useForm<FormData>({
+    resolver: zodResolver(FormDataSchema),
+  })
+
   const branchesQuery = useQuery({
     queryKey: ['branches', microfrontendId],
     queryFn: async () => {
       const mfe = microfrontendQuery.data;
       const branches = await getBranches(mfe.codeRepository.codeRepositoryId, mfe.codeRepository.name || mfe.codeRepository.repositoryId);
       const defaultBranch = branches.find(b => b.default) || branches?.[0];
-      if(defaultBranch){
-        form.setValue('branch', defaultBranch.branch);
+      if (defaultBranch) {
+        form.setValue('branch', defaultBranch.branch, { shouldValidate: true, shouldTouch: true, shouldDirty: true });
       }
       return branches;
     },
@@ -72,26 +78,33 @@ export function BuildDialog({
     onOpenChange(false);
   };
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(FormDataSchema),
-  })
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+
             <DialogHeader>
               <DialogTitle>{t('microfrontend.build.title', { name: microfrontendName })}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-2 mt-2 mb-4">
-              <SelectField
-                name="branch"
-                label={t('microfrontend.build.branch')}
-                options={branchesQuery.data?.map(b => ({ value: b.branch, label: b.branch }))}
-              />
+              <ApiDataFetcher queries={[branchesQuery]} loadingComponent={<Loader2 className="w-8 h-8 animate-spin" />}>
+                {branchesQuery.data ?
+                  <>
+                    {branchesQuery.data.length > 1 ?
+                      <SelectField
+                        name="branch"
+                        label={t('microfrontend.build.branch')}
+                        options={branchesQuery.data?.map(b => ({ value: b.branch, label: b.branch }))}
+                      /> :
+                      <label>{branchesQuery.data[0]?.branch}</label>
+                    }
+                  </>
+                  :
+                  <>No Branches</>
+                }
+              </ApiDataFetcher>
               <TextField
                 name="version"
                 label={t('microfrontend.build.version')}
@@ -106,8 +119,8 @@ export function BuildDialog({
                 {form.formState.isSubmitting ? t('microfrontend.build.building') : t('microfrontend.build.startBuild')}
               </Button>
             </DialogFooter>
-        </form>
-      </FormProvider>
+          </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   );

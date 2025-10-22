@@ -484,7 +484,7 @@ class GithubClient {
         return response.data
     }
 
-    createBuild = async (buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> => {
+    async createBuild(buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse>{
         const {workflowId = 'build-and-deploy.yml'} = buildData
 
         const response = await axios.request<GithubWorkflowDispatchResponse>({
