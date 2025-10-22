@@ -332,7 +332,9 @@
             "status": {
                 "active": "Active",
                 "inactive": "Inactive"
-            }
+            },
+            "coming_soon": "Coming soon",
+            "coming_soon_description": "This feature is still under development and will be available in a future release. Stay tuned!"
         }
     },
     "project_users": {

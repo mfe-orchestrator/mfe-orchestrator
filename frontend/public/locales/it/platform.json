@@ -282,18 +282,20 @@
         "redeploy": "Ridistribuisci"
     },
     "canary_users": {
-      "title": "Utenti Canary",
-      "subtitle": "Utenti con accesso alla versione canary",
-      "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
-      "columns": {
-        "user": "Utente",
-        "email": "Email",
-        "status": "Stato"
-      },
-      "status": {
-        "active": "Attivo",
-        "inactive": "Inattivo"
-      }
+        "title": "Utenti Canary",
+        "subtitle": "Utenti con accesso alla versione canary",
+        "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
+        "columns": {
+            "user": "Utente",
+            "email": "Email",
+            "status": "Stato"
+        },
+        "status": {
+            "active": "Attivo",
+            "inactive": "Inattivo"
+        },
+        "coming_soon": "In arrivo",
+        "coming_soon_description": "Questa funzionalità è ancora in fase di sviluppo e sarà disponibile in una prossima versione. Restate sintonizzati!"
     }
   },
   "project_users": {

@@ -64,9 +64,17 @@ const CanaryUsers: React.FC = () => {
                         </ApiDataFetcher>
                     </CardContent>
                 </Card> */}
-                <div className="flex flex-col items-center justify-center w-full p-4 grow">
-                    <p className="text-foreground-secondary text-center text-xl font-semibold tracking-normal uppercase -mb-2">Coming soon</p>
-                    <DotLottieReact src="https://lottie.host/732448e9-9883-4798-81f3-aa1448f0c9bb/6MBCLiRSDA.json" loop autoplay className="max-w-[400px] max-h-[400px] w-full aspect-square" />
+                <div className="flex items-center justify-center gap-x-4 gap-y-0 flex-wrap w-full pb-8 grow">
+                    <div className="flex-[1_1_280px] max-w-[400px]">
+                        <h2 className="text-foreground-secondary text-2xl font-semibold tracking-normal uppercase">{t("deployments.canary_users.coming_soon")}</h2>
+                        <p className="text-foreground text-lg mt-3 text-balance">{t("deployments.canary_users.coming_soon_description")}</p>
+                    </div>
+                    <DotLottieReact
+                        src="https://lottie.host/732448e9-9883-4798-81f3-aa1448f0c9bb/6MBCLiRSDA.json"
+                        loop
+                        autoplay
+                        className="flex-[1_1_240px] max-w-[400px] max-h-[400px] w-full aspect-square"
+                    />
                 </div>
             </SinglePageLayout>
         </ApiDataFetcher>
