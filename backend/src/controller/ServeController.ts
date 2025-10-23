@@ -88,8 +88,9 @@ export default async function serveController(fastify: FastifyInstance) {
         }
     }>("/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
         const filePath = request.params['*'] || ''
-        addHeaderfFromFilePath(filePath, reply)
-        return reply.send(await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.mfeSlug, filePath))
+        const data = await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.mfeSlug, filePath)
+        addHeadersFromFilePath(filePath, data.headers, reply)
+        return reply.send(data.stream)
     })
 
     fastify.get<{
@@ -103,8 +104,9 @@ export default async function serveController(fastify: FastifyInstance) {
             throw new Error("Referer not found")
         }
         const filePath = request.params['*'] || ''
-        addHeaderfFromFilePath(filePath, reply)
-        return reply.send(await serveService.getMicrofrontendFilesByMicrofrontendId(request.params.mfeId, filePath, referer))
+        const data = await serveService.getMicrofrontendFilesByMicrofrontendId(request.params.mfeId, filePath, referer);
+        addHeadersFromFilePath(filePath, data.headers, reply)
+        return reply.send(data.stream)
     })
 
     fastify.get<{
@@ -119,13 +121,19 @@ export default async function serveController(fastify: FastifyInstance) {
             throw new Error("Referer not found")
         }
         const filePath = request.params['*'] || ''
-        addHeaderfFromFilePath(filePath, reply)
-        return reply.send(await serveService.getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(request.params.projectId, request.params.mfeSlug, filePath, referer))
+        const data = await serveService.getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(request.params.projectId, request.params.mfeSlug, filePath, referer)
+        addHeadersFromFilePath(filePath, data.headers, reply)
+        return reply.send(data.stream)
     })
 
-    function addHeaderfFromFilePath(filePath: string, reply: FastifyReply){
+    function addHeadersFromFilePath(filePath: string, headers: Record<string, string>, reply: FastifyReply){
         if (filePath.endsWith('.js')) {
             reply.header('Content-Type', 'application/javascript');
+        }
+        if(headers){
+            Object.entries(headers).forEach(([key, value]) => {
+                reply.header(key, value)
+            })
         }
     }
 

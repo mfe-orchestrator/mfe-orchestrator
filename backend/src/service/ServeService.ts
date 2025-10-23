@@ -22,7 +22,20 @@ export interface GetAllDataDTO {
     microfrontends?: MicrofrontendAdaptedToServe[]
 }
 
+export interface StreamWithHeader{
+    stream: Stream
+    headers: Record<string, string>
+}
 //NOTE: Here we need speed so please do not use any third party service
+
+const HEADERS_NO_CACHE = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+}
+
+const HEADERS_CACHE = {
+}
 
 export default class ServeService {
     /**
@@ -177,7 +190,7 @@ export default class ServeService {
      * @param microfrontendSlug The slug of the microfrontend
      * @returns Promise with Microfrontend object or null if not found
      */
-    async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<Stream> {
+    async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<StreamWithHeader> {
         const environment = await Environment.findOne({ slug: environmentSlug, projectId })
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
@@ -195,7 +208,7 @@ export default class ServeService {
         return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
     }
 
-    async getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId: string, microfrontendSlug: string, filePath: string, referer: string): Promise<Stream> {
+    async getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId: string, microfrontendSlug: string, filePath: string, referer: string): Promise<StreamWithHeader> {
         const project = await Project.findById(projectId)
         if (!project) {
             throw new EntityNotFoundError(projectId)
@@ -213,7 +226,7 @@ export default class ServeService {
         return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
     }
 
-    async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string): Promise<Stream> {
+    async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string): Promise<StreamWithHeader> {
         const microfrontend = deployment.microfrontends?.find(mfe => mfe.slug === microfrontendSlug)
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendSlug)
@@ -221,10 +234,15 @@ export default class ServeService {
         const version = microfrontend.version
 
         //Adesso tiro fuori il MFE
-        return this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+        const mfeEntryPoint = microfrontend.host.entryPoint || "index.js"
+
+        return { 
+            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE, 
+            stream: await this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+        }
     }
 
-    async getMicrofrontendFilesByMicrofrontendId(mfeId: string, filePath: string, referer: string): Promise<Stream> {
+    async getMicrofrontendFilesByMicrofrontendId(mfeId: string, filePath: string, referer: string): Promise<StreamWithHeader> {
         const microfrontend = await Microfrontend.findById(mfeId)
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
@@ -250,7 +268,12 @@ export default class ServeService {
         const microfrontendSlug = deployedMFE.slug
         const version = deployedMFE.version
 
-        return this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+        const mfeEntryPoint = deployedMFE.host.entryPoint || "index.js"
+
+        return { 
+            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE, 
+            stream: await this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+        }
     }
 
     getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream {
