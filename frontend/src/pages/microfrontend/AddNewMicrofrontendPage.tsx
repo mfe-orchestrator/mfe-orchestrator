@@ -122,7 +122,7 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
             version: "1.0.0",
             host: {
                 type: "MFE_ORCHESTRATOR_HUB",
-                entryPoint: "index.js"
+                entryPoint: "assets/remoteEntry.js"
             },
             ...(repositories && repositories.length > 0 ? {
                 codeRepository: {
@@ -138,6 +138,8 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
             }
         }
     })
+
+
 
     const { watch } = form
     const canaryEnabled = watch("canary.enabled")

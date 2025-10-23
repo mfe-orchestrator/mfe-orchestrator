@@ -79,7 +79,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
 
         if (selectedCodeRepositoryId && codeRepositoryEnabled) {
             const data = await fetchRepositoriesMutation.mutateAsync(selectedCodeRepositoryId);
-            const repository = data.find((repo: any) => repo.name === selectedRepositoryId);
+            const repository = data.find((repo: any) => repo.name === selectedRepositoryId || repo.id+"" === selectedRepositoryId);
             if (!repository) {
                 setValue("codeRepository.repositoryId", "");
             }
@@ -169,7 +169,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
                                             label: t("microfrontend.create_new_repository")
                                         },
                                         ...fetchedRepositories.map(repo => ({
-                                            value: repo.name,
+                                            value: repo.id + "",
                                             label: repo.name
                                         }))
                                     ].filter(Boolean)}
