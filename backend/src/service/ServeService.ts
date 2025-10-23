@@ -31,10 +31,12 @@ export interface StreamWithHeader{
 const HEADERS_NO_CACHE = {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Pragma': 'no-cache',
-    'Expires': '0'
+    'Expires': '0',
+    'cross-origin-resource-policy': 'cross-origin'
 }
 
 const HEADERS_CACHE = {
+    'Cross-Origin-Resource-Policy': 'cross-origin'
 }
 
 export default class ServeService {
