@@ -391,7 +391,8 @@
             "loadingBranches": "Loading branches...",
             "defaultBranch": "default",
             "version": "Version",
-            "versionPlaceholder": "Enter version (e.g., 1.0.0)",
+            "version_placeholder": "Enter version (e.g., 1.0.0)",
+            "custom_version": "Custom version",
             "building": "Building...",
             "startBuild": "Start Build",
             "buildSuccess": "Build completed successfully for {{name}}"
@@ -422,6 +423,7 @@
         "description_placeholder": "Enter a brief description",
         "version": "Version",
         "version_placeholder": "e.g., 1.0.0",
+        "custom_version": "Custom version",
         "continuous_deployment": "Continuous Deployment",
         "continuous_deployment_description": "Enable automatic deployment of new versions",
         "status": "Status",
@@ -488,6 +490,9 @@
         "visibility_internal": "Internal",
         "repository_name": "Repository Name",
         "repository_name_placeholder": "Enter repository name",
+        "repository_name_checking": "Checking repository name availability...",
+        "repository_name_taken": "Repository name is already taken. Please choose a different name.",
+        "repository_name_available": "Repository name is available.",
         "created_success": "Microfrontend created",
         "created_success_message": "Your microfrontend has been created successfully",
         "create_error": "Failed to create microfrontend",
@@ -807,7 +812,6 @@
                 "connectionFailed": "Failed to connect to GitLab"
             },
             "updating": "Updating...",
-            "connecting": "Connecting...",
             "update": "Update"
         },
         "github": {

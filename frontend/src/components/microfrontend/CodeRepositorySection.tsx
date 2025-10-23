@@ -116,7 +116,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
             setRepositoryNameAvailability({
                 checking: false,
                 available: null,
-                error: error instanceof Error ? error.message : 'Unknown error occurred'
+                error: error instanceof Error ? error.message : t('app.error.generic')
             });
         }
     };
@@ -194,19 +194,19 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
 
                                 {repositoryNameAvailability.checking && (
                                     <Alert>
-                                        <AlertDescription>Checking repository name availability...</AlertDescription>
+                                        <AlertDescription>{t("microfrontend.repository_name_checking")}</AlertDescription>
                                     </Alert>
                                 )}
 
                                 {repositoryNameAvailability.available === false && (
                                     <Alert variant="destructive">
-                                        <AlertDescription>Repository name is already taken. Please choose a different name.</AlertDescription>
+                                        <AlertDescription>{t("microfrontend.repository_name_taken")}</AlertDescription>
                                     </Alert>
                                 )}
 
                                 {repositoryNameAvailability.available === true && (
                                     <Alert>
-                                        <AlertDescription>Repository name is available.</AlertDescription>
+                                        <AlertDescription>{t("microfrontend.repository_name_available")}</AlertDescription>
                                     </Alert>
                                 )}
 

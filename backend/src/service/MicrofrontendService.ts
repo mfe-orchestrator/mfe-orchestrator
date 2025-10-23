@@ -469,7 +469,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         const microfrontend = await Microfrontend.findOne({ slug: microfrontendSlug, projectId })
         if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendSlug + "_" + projectId)
+            throw new EntityNotFoundError(microfrontendSlug)
         }
 
         // Validate that the file is a ZIP
