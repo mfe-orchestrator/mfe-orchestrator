@@ -28,12 +28,14 @@ const DeploymentDashboard: React.FC = () => {
             left={
                 <div className="w-full flex items-end gap-y-2 gap-x-4 flex-wrap">
                     {isThereAtLeastOneEnvironment && (
-                        <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
+                        <>
+                            <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
+                            <Button className="min-w-32" onClick={handleDeploy}>
+                                <Rocket />
+                                Deploy
+                            </Button>
+                        </>
                     )}
-                    <Button className="min-w-32" onClick={handleDeploy}>
-                        <Rocket />
-                        Deploy
-                    </Button>
                 </div>
             }
             lrContainerClassname="items-end"
