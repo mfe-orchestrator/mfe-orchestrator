@@ -12,8 +12,8 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
   - [Documentation 📚](#documentation-)
   - [Run with Docker](#run-with-docker)
   - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
-    - [Environment variables 🔧](#environment-variables-)
-    - [Local Installation for development 🛠️](#local-installation-for-development-️)
+  - [Environment variables 🔧](#environment-variables-)
+  - [Local Installation for development 🛠️](#local-installation-for-development-️)
   - [Contributing 🤝](#contributing-)
   - [License](#license)
   - [Planned Integrations 🔍](#planned-integrations-)
@@ -51,7 +51,7 @@ terraform init
 terraform apply
 ```
 
-### Environment variables 🔧
+## Environment variables 🔧
 
 | Variable                               | Default Value                                                                                     | Description                                                     |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -92,7 +92,7 @@ terraform apply
 | `CODE_REPOSITORY_GITHUB_CLIENT_ID`     | _(empty)_                                                                                         | Client ID for GitHub OAuth authentication.                      |
 | `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | _(empty)_                                                                                         | Client secret for GitHub OAuth authentication.                  |
 
-### Local Installation for development 🛠️
+## Local Installation for development 🛠️
 
 1. Clone the repository 📝
 1. Make sure you have `pnpm` and `docker` installed
