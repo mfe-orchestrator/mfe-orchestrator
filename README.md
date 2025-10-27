@@ -94,7 +94,7 @@ terraform apply
    ```
 1. Create `.env` file in `./backend` with the following data
 ```bash
-NOSQL_DATABASE_URL=mongodb://root:example@localhost:27017/admin
+NOSQL_DATABASE_URL=mongodb://root:example@localhost:27018/admin
 REDIS_URL=redis://localhost:6379
 
 REGISTRATION_ALLOWED=true
