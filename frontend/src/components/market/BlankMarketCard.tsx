@@ -1,7 +1,6 @@
-import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge/badge';
 import { Plus } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 
 interface BlankMarketCardProps {
     onClick: () => void
@@ -11,11 +10,11 @@ const BlankMarketCard: React.FC<BlankMarketCardProps> = ({ onClick }) => {
     const { t } = useTranslation()
 
     return (
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-primary" onClick={onClick}>
+        <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary hover:scale-[1.01]" onClick={onClick}>
             <CardHeader>
                 <div className="flex items-start gap-3">
                     <div>
-                        <div className="w-8 h-8 rounded-sm bg-primary/25 flex items-center justify-center mt-1">
+                        <div className="w-8 h-8 rounded-sm bg-primary/15 flex items-center justify-center mt-1">
                             <Plus className="w-6 h-6 text-primary/75" />
                         </div>
                     </div>
@@ -32,4 +31,4 @@ const BlankMarketCard: React.FC<BlankMarketCardProps> = ({ onClick }) => {
     )
 }
 
-export default BlankMarketCard;
+export default BlankMarketCard

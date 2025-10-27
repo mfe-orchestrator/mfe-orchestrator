@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge/badge';
-import { Market } from '../../hooks/apiClients/useMarketApi';
-import { Button } from "../ui/button/button"
+import { Market } from "../../hooks/apiClients/useMarketApi"
 import { Alert } from "../ui/alert"
+import { Button } from "../ui/button/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 
 interface MarketCardProps {
     market: Market
@@ -30,7 +29,9 @@ const MarketCard: React.FC<MarketCardProps> = ({ market, onClick }) => {
 
     return (
         <Card
-            className={`transition-shadow duration-200 relative ${market.comingSoon ? "cursor-not-allowed border-border/50" : onClick ? "cursor-pointer hover:shadow-lg hover:border-primary" : ""}`}
+            className={`transition-all duration-200 relative ${
+                market.comingSoon ? "cursor-not-allowed border-border/50" : onClick ? "cursor-pointer hover:shadow-lg hover:border-primary hover:scale-[1.01]" : ""
+            }`}
             onClick={handleCardClick}
         >
             {market.comingSoon && (
