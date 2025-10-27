@@ -4,6 +4,18 @@ A centralized service for managing and orchestrating microfrontends across multi
 
 The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains separate configurations for each environment, allowing for different versions of microfrontends to be deployed in different stages of development. 📦
 
+## Table of Contents 📑
+
+- [Features](#features-)
+- [Documentation](#documentation-)
+- [Run with Docker](#run-with-docker)
+- [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
+- [Environment Variables](#environment-variables-)
+- [Local Installation for Development](#local-installation-for-development-%EF%B8%8F)
+- [Contributing](#contributing-)
+- [License](#license)
+- [Planned Integrations](#planned-integrations-)
+
 ## Features 🎯
 
 - 📝 JSON-based configuration of microfrontends with version management
@@ -19,15 +31,15 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
 
-## Run with docker
+## Run with Docker
 
-Simpy run the `docker-compose.yaml`
+Simply run the `docker-compose.yaml`
 
 ```bash
 docker compose up -d
 ```
 
-## Run with terraform (open tofu)
+## Run with Terraform (OpenTofu)
 You have a terraform template in the `terraform` folder. You can run it with:
 
 ```bash
