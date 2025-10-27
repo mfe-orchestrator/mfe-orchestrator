@@ -98,7 +98,8 @@
         "inactive": "Inactive",
         "creating": "Creating",
         "configuration": "Configuration",
-        "add": "Add"
+        "add": "Add",
+        "remove": "Remove"
     },
     "setup": {
         "title": "Initial Setup",
@@ -327,8 +328,9 @@
     },
     "project_users": {
         "title": "Project Members",
-        "subtitle": "{{count}} team members",
-        "subtitle_one": "One team member",
+        "subtitle": "Manage your project members",
+        "user_count": "{{count}} team members",
+        "user_count_one": "One team member",
         "no_users": "No members found for this project",
         "user": "User",
         "name": "Name",

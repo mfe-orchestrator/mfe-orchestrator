@@ -24,33 +24,42 @@ import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 const getUserInitials = (user?: { name?: string; surname?: string; email: string }) => {
     if (!user) return ""
     if (user.name && user.surname) {
-        return `${user.name[0]}${user.surname[0]}`.toUpperCase()
+        return `${user.name[0]} ${user.surname[0]}`.toUpperCase()
     }
     if (user.name) return user.name[0].toUpperCase()
     if (user.surname) return user.surname[0].toUpperCase()
     return user?.email?.[0].toUpperCase()
 }
 
-const UserCard: React.FC<{ user: any; handleDeleteUser: (userId: string, userName: string) => void; deleteUserDisabled: boolean }> = ({ user, handleDeleteUser, deleteUserDisabled }) => {
+const UserCard: React.FC<{ user: any; handleDeleteUser: (userId: string, userName: string) => void; deleteUserDisabled: boolean; isOwner: boolean }> = ({
+    user,
+    handleDeleteUser,
+    deleteUserDisabled,
+    isOwner
+}) => {
     const { t } = useTranslation()
 
     return (
-        <Card key={user._id} className="w-full sm:w-[300px] h-full">
-            <CardContent className="pt-6">
-                <div className="flex flex-col items-center space-y-4">
+        <Card key={user._id} className="w-full h-full relative">
+            <CardContent>
+                <div className="flex flex-col items-center gap-4">
                     <Avatar className="h-20 w-20">
-                        <Gravatar email={user.email} className="rounded-full" />
-                        <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+                        <Gravatar email={user.email} size={160} className="rounded-full w-full" default="mp" />
+                        {/* <AvatarFallback>{getUserInitials(user)}</AvatarFallback> */}
                     </Avatar>
-                    <div className="text-center space-y-1">
-                        <h3 className="text-lg font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</h3>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <Badge className="mt-2">{user.role}</Badge>
+                    <Badge variant={user.role === "OWNER" ? "accent" : "default"} className="absolute top-2 right-2">
+                        {user.role}
+                    </Badge>
+                    <div className="flex flex-col items-center">
+                        <CardTitle className="text-lg font-medium mb-0">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</CardTitle>
+                        <address className="text-sm text-foreground-secondary not-italic">{user.email}</address>
                     </div>
-                    <Button variant="secondary" size="sm" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserDisabled}>
-                        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                        {t("common.remove")}
-                    </Button>
+                    {!isOwner && (
+                        <Button variant="destructive" className="w-full" onClick={() => handleDeleteUser(user._id, user.name || user.email)} disabled={deleteUserDisabled}>
+                            <Trash2 />
+                            {t("common.remove")}
+                        </Button>
+                    )}
                 </div>
             </CardContent>
         </Card>
@@ -109,17 +118,22 @@ const ProjectUsersList: React.FC = () => {
 
     return (
         <ApiDataFetcher queries={[userQuery]}>
-            <SinglePageLayout title={t("project_users.title")} description={t("project_users.subtitle", { count: users.length })} right={<AddUserButton />}>
+            <SinglePageLayout title={t("project_users.title")} description={t("project_users.subtitle")} right={<AddUserButton />}>
                 <div>
                     <Tabs defaultValue="grid" className="space-y-4" iconButtons>
-                        <TabsList>
-                            <TabsTrigger value="grid">
-                                <LayoutGrid />
-                            </TabsTrigger>
-                            <TabsTrigger value="table">
-                                <StretchHorizontal />
-                            </TabsTrigger>
-                        </TabsList>
+                        <div className="flex items-start justify-between gap-x-6 gap-y-2 flex-wrap">
+                            <div className="flex-[1_1_280px] max-w-[600px]">
+                                <h2 className="text-xl font-semibold text-foreground-secondary">{t("project_users.user_count", { count: users.length })}</h2>
+                            </div>
+                            <TabsList>
+                                <TabsTrigger value="grid">
+                                    <LayoutGrid />
+                                </TabsTrigger>
+                                <TabsTrigger value="table">
+                                    <StretchHorizontal />
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
 
                         <TabsContent value="table">
                             <Card>
@@ -190,6 +204,7 @@ const ProjectUsersList: React.FC = () => {
                                             deleteUserMutation.isPending ||
                                             users.length === 1
                                         }
+                                        isOwner={user.role === RoleInProject.OWNER && users.filter(user => user.role === RoleInProject.OWNER).length === 1}
                                     />
                                 ))}
                             </div>

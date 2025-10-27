@@ -8,7 +8,7 @@ import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
+import { Plus, UserRoundPlus } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -31,7 +31,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     const { t } = useTranslation()
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
     const notifications = useToastNotificationStore()
-    const projectApi = useProjectApi();
+    const projectApi = useProjectApi()
     const { project } = useProjectStore()
 
     const form = useForm<InviteUserFormValues>({
@@ -43,7 +43,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     })
 
     const inviteUserMutation = useMutation({
-        mutationFn: projectApi.inviteUser,
+        mutationFn: projectApi.inviteUser
     })
 
     const onSubmit = async (values: InviteUserFormValues) => {
@@ -63,8 +63,8 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     return (
         <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" className="ml-2">
-                    <Plus className="mr-2 h-4 w-4" />
+                <Button>
+                    <UserRoundPlus />
                     {t("project_users.invite_user")}
                 </Button>
             </DialogTrigger>
@@ -76,12 +76,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
                             <DialogDescription>{t("project_users.invite_user_modal_description")}</DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <TextField
-                                name="email"
-                                label={t("auth.email")}
-                                placeholder={t("auth.email_placeholder")}
-                                type="email"
-                            />
+                            <TextField name="email" label={t("auth.email")} placeholder={t("auth.email_placeholder")} type="email" />
                             <SelectField
                                 name="role"
                                 label={t("project_users.role")}
