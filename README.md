@@ -6,15 +6,15 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
 
 ## Table of Contents 📑
 
-- [Features](#features-)
-- [Documentation](#documentation-)
+- [Features](#features)
+- [Documentation](#documentation)
 - [Run with Docker](#run-with-docker)
 - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
-- [Environment Variables](#environment-variables-)
-- [Local Installation for Development](#local-installation-for-development-)
-- [Contributing](#contributing-)
+- [Environment Variables](#environment-variables)
+- [Local Installation for Development](#local-installation-for-development)
+- [Contributing](#contributing)
 - [License](#license)
-- [Planned Integrations](#planned-integrations-)
+- [Planned Integrations](#planned-integrations)
 
 ## Features 🎯
 
