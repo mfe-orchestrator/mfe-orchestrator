@@ -12,6 +12,13 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
 - 📋 Environment-specific configurations
 - 🔌 Integration with various microfrontend technologies (coming soon)
 
+## Documentation 📚
+
+- **[Cursor Rules](.cursorrules)** - Development guidelines and coding standards
+- **[Commit Conventions](COMMIT_CONVENTIONS.md)** - Conventional Commits specification
+- **[Changelog](CHANGELOG.md)** - Project version history
+- **[Security](SECURITY.md)** - Security policy and procedures
+
 ## Run with docker
 
 Simpy run the `docker-compose.yaml`
