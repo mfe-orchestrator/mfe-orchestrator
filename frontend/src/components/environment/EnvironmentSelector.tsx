@@ -1,7 +1,4 @@
-
-import React from 'react';
-
-import { Badge } from "@/components/ui/badge/badge"
+import React from "react"
 import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import { useTranslation } from "react-i18next"
 import { SelectContent } from "../ui/select/partials/selectContent/selectContent"
@@ -20,7 +17,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
 
     return (
         <div className="flex flex-col gap-1 w-full max-w-40 flex-shrink-0">
-            <span className="text-sm font-medium text-foreground-secondary">Ambiente:</span>
+            <span className="text-sm font-medium text-foreground-secondary">{t("deployments.environment_select")}:</span>
             <Select
                 value={selectedEnvironment?._id}
                 onValueChange={value => {
@@ -54,4 +51,4 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
     )
 }
 
-export default EnvironmentSelector;
+export default EnvironmentSelector

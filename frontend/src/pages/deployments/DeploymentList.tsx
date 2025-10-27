@@ -1,24 +1,20 @@
-import { useTranslation } from 'react-i18next';
-import { BadgeCheck, PackageOpen, Upload, UsersRound, History } from "lucide-react"
-import { Button } from "@/components/ui/button/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { RefreshCw, CheckCircle2, AlertCircle, Clock, Users } from "lucide-react"
-import useDeploymentsApi from "../../hooks/apiClients/useDeploymentsApi"
-import { useMutation, useQuery } from "@tanstack/react-query"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import { useState } from "react"
-import { Link } from "react-router-dom"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Badge } from "@/components/ui/badge/badge"
+import { Button } from "@/components/ui/button/button"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { BadgeCheck, History, PackageOpen, RefreshCw, UsersRound } from "lucide-react"
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import useDeploymentsApi from "../../hooks/apiClients/useDeploymentsApi"
 
 interface DeploymentListProps {
     environmentId: string
 }
 
 const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
-    const { t } = useTranslation("platform")
+    const { t } = useTranslation()
     const { getDeployments, redeploy } = useDeploymentsApi()
     const [selectedDeploymentId, setSelectedDeploymentId] = useState<string | null>(null)
 
@@ -48,7 +44,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                         <section className="mb-8">
                             <h2 className="text-xl font-medium mb-1 text-foreground-secondary flex items-center gap-2">
                                 <BadgeCheck />
-                                <span>Active deployment</span>
+                                <span>{t("deployments.active_deployments")}</span>
                             </h2>
                             <div>
                                 <Accordion type="single" defaultValue={deployments.find(deployment => deployment.active)?._id} collapsible>
@@ -65,7 +61,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 <AccordionContent>
                                                     {deployment.microfrontends.length > 0 && (
                                                         <div>
-                                                            <h4 className="font-semibold text-primary mb-2">Microfrontends</h4>
+                                                            <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
                                                             <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
                                                                 {deployment.microfrontends.map(microfrontend => (
                                                                     <Card key={microfrontend._id}>
@@ -83,7 +79,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                     )}
                                                     {deployment.variables.length > 0 && (
                                                         <div className="mt-4">
-                                                            <h4 className="font-semibold text-primary mb-1">Environment variables</h4>
+                                                            <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
                                                             <ul>
                                                                 {deployment.variables.map(variable => (
                                                                     <li key={variable._id} className="mb-1 last-of-type:mb-0">
@@ -114,7 +110,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                         <section>
                             <h2 className="text-xl font-medium mb-1 text-foreground-secondary flex items-center gap-2">
                                 <History />
-                                <span>History</span>
+                                <span>{t("deployments.history")}</span>
                             </h2>
                             <Accordion type="single" collapsible>
                                 {deployments
@@ -130,7 +126,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                             <AccordionContent>
                                                 {deployment.microfrontends.length > 0 && (
                                                     <div>
-                                                        <h4 className="font-semibold text-primary mb-2">Microfrontends</h4>
+                                                        <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
                                                         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
                                                             {deployment.microfrontends.map(microfrontend => (
                                                                 <Card key={microfrontend._id}>
@@ -148,7 +144,7 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
                                                 )}
                                                 {deployment.variables.length > 0 && (
                                                     <div className="mt-4">
-                                                        <h4 className="font-semibold text-primary mb-1">Environment variables</h4>
+                                                        <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
                                                         <ul>
                                                             {deployment.variables.map(variable => (
                                                                 <li key={variable._id} className="mb-1 last-of-type:mb-0">
@@ -198,4 +194,4 @@ const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId }) => {
     )
 }
 
-export default DeploymentList;
+export default DeploymentList

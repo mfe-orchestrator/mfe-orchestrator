@@ -259,44 +259,32 @@
     "toggle_theme": "Cambia tema"
   },
   "deployments": {
-    "title": "Distribuzioni",
-    "microfrontends_title": "Microfrontend",
-    "active": "Attivo",
-    "deploy_now": "Distribuisci ora",
-    "columns": {
-      "id": "ID",
-      "deployed": "Distribuito",
-      "created": "Creato",
-      "microfrontend": "Microfrontend",
-      "version": "Versione",
-      "slug": "Slug",
-      "actions": "Azioni",
-      "variable": "Variabile",
-      "value": "Valore"
-    },
-    "no_deployments": "Nessuna distribuzione trovata",
-    "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
-    "refresh": "Aggiorna distribuzioni",
-    "actions": {
-        "view_canary_users": "Visualizza Utenti Canary",
-        "redeploy": "Ridistribuisci"
-    },
-    "canary_users": {
-        "title": "Utenti Canary",
-        "subtitle": "Utenti con accesso alla versione canary",
-        "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
-        "columns": {
-            "user": "Utente",
-            "email": "Email",
-            "status": "Stato"
-        },
-        "status": {
-            "active": "Attivo",
-            "inactive": "Inattivo"
-        },
-        "coming_soon": "In arrivo",
-        "coming_soon_description": "Questa funzionalità è ancora in fase di sviluppo e sarà disponibile in una prossima versione. Restate sintonizzati!"
-    }
+      "title": "Deployment",
+      "subtitle": "Gestisci i deployment del tuo progetto",
+      "environment_select": "Ambiente",
+      "deploy_button": "Deploy",
+      "active_deployments": "Deployment attivo",
+      "history": "Storico",
+      "microfrontends_title": "Microfrontend",
+      "env_variables_title": "Variabili d'ambiente",
+      "no_deployments": "Nessuna distribuzione trovata",
+      "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
+      "actions": {
+          "view_canary_users": "Visualizza utenti canary",
+          "redeploy": "Redeploy"
+      },
+      "canary_users": {
+          "title": "Utenti Canary",
+          "subtitle": "Utenti con accesso alla versione canary",
+          "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
+          "columns": {
+              "user": "Utente",
+              "email": "Email",
+              "status": "Stato"
+          },
+          "coming_soon": "In arrivo",
+          "coming_soon_description": "Questa funzionalità è ancora in fase di sviluppo e sarà disponibile in una prossima versione. Restate sintonizzati!"
+      }
   },
   "project_users": {
     "title": "Membri del Progetto",

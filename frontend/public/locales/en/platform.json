@@ -299,25 +299,17 @@
     },
     "deployments": {
         "title": "Deployments",
-        "microfrontends_title": "Microfrontend",
-        "active": "Active",
-        "deploy_now": "Deploy Now",
-        "columns": {
-            "id": "ID",
-            "deployed": "Deployed",
-            "created": "Created",
-            "microfrontend": "Microfrontend",
-            "version": "Version",
-            "slug": "Slug",
-            "actions": "Actions",
-            "variable": "Variable",
-            "value": "Value"
-        },
+        "subtitle": "Manage your project deployments",
+        "environment_select": "Environment",
+        "deploy_button": "Deploy",
+        "active_deployments": "Active deployment",
+        "history": "History",
+        "microfrontends_title": "Microfrontends",
+        "env_variables_title": "Environment variables",
         "no_deployments": "No deployments found",
         "no_deployments_description": "Deployments will appear here once created",
-        "refresh": "Refresh deployments",
         "actions": {
-            "view_canary_users": "View Canary Users",
+            "view_canary_users": "View canary users",
             "redeploy": "Redeploy"
         },
         "canary_users": {
@@ -328,10 +320,6 @@
                 "user": "User",
                 "email": "Email",
                 "status": "Status"
-            },
-            "status": {
-                "active": "Active",
-                "inactive": "Inactive"
             },
             "coming_soon": "Coming soon",
             "coming_soon_description": "This feature is still under development and will be available in a future release. Stay tuned!"

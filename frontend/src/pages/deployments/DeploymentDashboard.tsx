@@ -8,8 +8,10 @@ import { Rocket } from "lucide-react"
 import React from "react"
 import EnvironmentSelector from "../../components/environment/EnvironmentSelector"
 import DeploymentList from "./DeploymentList"
+import { useTranslation } from "react-i18next"
 
 const DeploymentDashboard: React.FC = () => {
+    const { t } = useTranslation()
     const projectStore = useProjectStore()
     const deploymentsApi = useDeploymentsApi()
     const queryClient = useQueryClient()
@@ -23,8 +25,8 @@ const DeploymentDashboard: React.FC = () => {
 
     return (
         <SinglePageLayout
-            title="Deployments"
-            description="Gestisci i deployment del tuo progetto"
+            title={t("deployments.title")}
+            description={t("deployments.subtitle")}
             left={
                 <div className="w-full flex items-end gap-y-2 gap-x-4 flex-wrap">
                     {isThereAtLeastOneEnvironment && (
@@ -32,7 +34,7 @@ const DeploymentDashboard: React.FC = () => {
                             <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
                             <Button className="min-w-32" onClick={handleDeploy}>
                                 <Rocket />
-                                Deploy
+                                {t("deployments.deploy_button")}
                             </Button>
                         </>
                     )}
