@@ -18,10 +18,10 @@ export default {
         "revert",
       ],
     ],
-    "subject-max-length": [2, "always", 80],
+    "subject-max-length": [2, "always", 100],
     "subject-min-length": [2, "always", 1],
     "subject-empty": [2, "never"],
     "subject-full-stop": [2, "never", "."],
-    "header-max-length": [2, "always", 80],
+    "header-max-length": [2, "always", 100],
   },
 };
