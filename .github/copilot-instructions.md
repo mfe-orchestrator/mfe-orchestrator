@@ -1,8 +1,15 @@
 # Microfrontend Orchestrator AI Coding Instructions
 
-This is a microfrontend orchestrator service with a Fastify backend and React frontend for managing microfrontends across multiple environments.
+This is a **monorepo** microfrontend orchestrator service with a Fastify backend and React frontend for managing microfrontends across multiple environments.
 
 ## Architecture Overview
+
+**Project Structure**:
+- **📦 Monorepo**: pnpm workspace with centralized dependency management
+- **⚡ Turbo**: Build system for optimized task orchestration and caching
+- **🎨 Biome**: Unified linting and formatting across all packages
+- **🪝 Lefthook**: Git hooks for automated code quality checks
+- **📋 Commitlint**: Enforced conventional commit messages
 
 **Backend (Fastify + TypeScript)**:
 - **Layered Architecture**: Models → Services → Controllers → Plugins
@@ -95,16 +102,35 @@ When adding new pages:
 
 ## Development Workflows
 
+**Monorepo Commands**:
+```bash
+# Development
+pnpm dev              # Start both backend and frontend
+pnpm dev:backend      # Start backend only  
+pnpm dev:frontend     # Start frontend only
+
+# Building
+pnpm build            # Build all packages
+pnpm build:backend    # Build backend only
+pnpm build:frontend   # Build frontend only
+
+# Code Quality
+pnpm lint             # Lint all packages with Biome
+pnpm format           # Format all packages with Biome
+pnpm typecheck        # TypeScript check for all packages
+
+# Testing
+pnpm test             # Run tests in all packages
+```
+
 **Local Development**:
 ```bash
-# Backend
-cd backend && pnpm install && pnpm dev
-
-# Frontend  
-cd frontend && pnpm install && pnpm dev
-
-# Docker services
+# Setup
+pnpm install          # Install dependencies for all packages
 cd docker-local && docker compose -f docker-compose-development.yaml up -d
+
+# Start development
+pnpm dev              # Starts both backend and frontend
 ```
 
 **Environment Variables**: Set in `.env` file in backend directory (see README.md for full list)
@@ -144,14 +170,17 @@ const form = useForm<FormData>({
 
 ## Critical Rules
 
-1. **Authorization**: Always use service methods for database operations (never direct model access in controllers)
-2. **Error Handling**: Use specific error classes from `src/errors/` 
-3. **UI Components**: Reuse existing shadcn/ui components before creating new ones
-4. **Icons**: Only use lucide-react icons
-5. **Routing**: Use React Router (NOT Next.js router)
-6. **Package Manager**: Use pnpm for all dependencies
-7. **Commits**: Follow Conventional Commits specification
-8. **i18n**: Internationalize all user-facing text
+1. **Monorepo Structure**: Use workspace-level commands (`pnpm dev`, `pnpm build`, etc.)
+2. **Code Quality**: Use Biome for linting/formatting (`pnpm lint`, `pnpm format`)
+3. **Authorization**: Always use service methods for database operations (never direct model access in controllers)
+4. **Error Handling**: Use specific error classes from `src/errors/` 
+5. **UI Components**: Reuse existing shadcn/ui components before creating new ones
+6. **Icons**: Only use lucide-react icons
+7. **Routing**: Use React Router (NOT Next.js router)
+8. **Package Manager**: Use pnpm for all dependencies
+9. **Commits**: Follow Conventional Commits specification (enforced by commitlint)
+10. **i18n**: Internationalize all user-facing text
+11. **Git Hooks**: Lefthook automatically runs checks on commit (lint, format, typecheck)
 
 ## File Naming & Organization
 

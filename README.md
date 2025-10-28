@@ -4,9 +4,38 @@ A centralized service for managing and orchestrating microfrontends across multi
 
 The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains separate configurations for each environment, allowing for different versions of microfrontends to be deployed in different stages of development. 📦
 
+## 🏗️ Architecture
+
+This project uses a **monorepo architecture** with the following structure:
+
+- **📦 Monorepo**: Managed with pnpm workspaces for centralized dependency management
+- **⚡ Turbo**: Build system for optimized task orchestration and caching
+- **🎨 Biome**: Unified linting and formatting across all packages
+- **🪝 Lefthook**: Git hooks for automated code quality checks
+- **📋 Commitlint**: Enforced conventional commit messages
+
+### Backend (Fastify + TypeScript)
+
+- **Layered Architecture**: Models → Services → Controllers → Plugins
+- **Auto-loading**: Controllers and plugins auto-loaded from their directories
+- **Authorization**: Project-scoped access control via `BaseAuthorizedService`
+- **Multi-auth**: Supports local JWT, Auth0, Google OAuth, Azure EntraID
+- **Database**: MongoDB with Mongoose, Redis for caching
+
+### Frontend (React + TypeScript)
+
+- **UI**: shadcn/ui components with Tailwind CSS
+- **State**: React Query for server state, Zustand for client state
+- **Routing**: React Router with lazy-loaded pages
+- **Forms**: react-hook-form with TypeScript validation
+- **i18n**: Complete internationalization with react-i18next
+
 ## Table of Contents 📑
 
 - [Microfrontend Orchestrator Hub 🏗️](#microfrontend-orchestrator-hub-️)
+  - [🏗️ Architecture](#️-architecture)
+    - [Backend (Fastify + TypeScript)](#backend-fastify--typescript)
+    - [Frontend (React + TypeScript)](#frontend-react--typescript)
   - [Table of Contents 📑](#table-of-contents-)
   - [Features 🎯](#features-)
   - [Documentation 📚](#documentation-)
@@ -14,7 +43,14 @@ The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains 
   - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
   - [Environment variables 🔧](#environment-variables-)
   - [Local Installation for development 🛠️](#local-installation-for-development-️)
+    - [Prerequisites](#prerequisites)
+    - [Quick Start](#quick-start)
+    - [Available Commands](#available-commands)
+    - [Development URLs](#development-urls)
   - [Contributing 🤝](#contributing-)
+    - [Development Workflow](#development-workflow)
+    - [Code Quality](#code-quality)
+    - [Development Guidelines](#development-guidelines)
   - [License](#license)
   - [Planned Integrations 🔍](#planned-integrations-)
 
@@ -94,36 +130,35 @@ terraform apply
 
 ## Local Installation for development 🛠️
 
-1. Clone the repository 📝
-1. Make sure you have `pnpm` and `docker` installed
-1. Run docker compose
+### Prerequisites
+
+- Node.js 18+ and pnpm installed
+- Docker and Docker Compose
+
+### Quick Start
+
+1. **Clone the repository** 📝
 
 ```bash
-   cd ./docker-local
-   docker compose -f docker-compose-development.yaml up -d
+git clone <repository-url>
+cd mfe-orchestrator
 ```
 
-1. Go to frontend folder and install dependencies: 📦
+2. **Install dependencies** (monorepo setup) 📦
 
 ```bash
-   cd ./frontend
-   pnpm install
+pnpm install
 ```
 
-1. Run frontend
+3. **Start Docker services** �
 
 ```bash
-   pnpm run dev
+cd docker-local
+docker compose -f docker-compose-development.yaml up -d
 ```
 
-1. In a new terminal go to backend and install dependencies: 📦
-
-```bash
-   cd ../backend
-   pnpm install
-```
-
-1. Create `.env` file in `./backend` with the following data
+4. **Create environment file** 🔧
+   Create `.env` file in `./backend` directory:
 
 ```bash
 NOSQL_DATABASE_URL=mongodb://root:example@localhost:27018/admin
@@ -139,23 +174,95 @@ MICROFRONTEND_HOST_FOLDER=/path/to/your/microfrontends
 # Optional: GitHub OAuth for code repository integration
 CODE_REPOSITORY_GITHUB_CLIENT_ID=your_github_client_id
 CODE_REPOSITORY_GITHUB_CLIENT_SECRET=your_github_client_secret
-
 ```
 
-1. Configure environment variables in the .env file using the one in this readme 🔧
-2. Run backend
+5. **Start development servers** 🚀
 
 ```bash
-   pnpm run dev
+# Start both backend and frontend in development mode
+pnpm dev
+
+# Or start them individually:
+# Backend only: pnpm dev:backend
+# Frontend only: pnpm dev:frontend
 ```
+
+### Available Commands
+
+The monorepo provides these workspace-level commands:
+
+```bash
+# Development
+pnpm dev              # Start both backend and frontend
+pnpm dev:backend      # Start backend only
+pnpm dev:frontend     # Start frontend only
+
+# Building
+pnpm build            # Build all packages
+pnpm build:backend    # Build backend only
+pnpm build:frontend   # Build frontend only
+
+# Code Quality
+pnpm lint             # Lint all packages with Biome
+pnpm format           # Format all packages with Biome
+pnpm typecheck        # TypeScript check for all packages
+
+# Testing
+pnpm test             # Run tests in all packages
+```
+
+### Development URLs
+
+- **Backend**: `http://localhost:8080`
+- **Frontend**: `http://localhost:3000`
+- **API Documentation**: `http://localhost:8080/api-docs`
 
 ## Contributing 🤝
 
-1. Fork the repository 🍴
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`) 🌱
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`) ✍️
-4. Push to the branch (`git push origin feature/AmazingFeature`) ⬆️
-5. Open a Pull Request 🔗
+### Development Workflow
+
+1. **Fork the repository** 🍴
+2. **Create your feature branch** 🌱
+
+```bash
+git checkout -b feature/AmazingFeature
+```
+
+3. **Follow development guidelines** 📋
+
+   - Use conventional commit messages (enforced by commitlint)
+   - Code is automatically linted and formatted with Biome
+   - Git hooks ensure code quality before commits
+
+4. **Commit your changes** ✍️
+
+```bash
+git commit -m 'feat: add some amazing feature'
+```
+
+5. **Push to the branch** ⬆️
+
+```bash
+git push origin feature/AmazingFeature
+```
+
+6. **Open a Pull Request** 🔗
+
+### Code Quality
+
+This project uses automated tools to maintain code quality:
+
+- **🎨 Biome**: Unified linting and formatting
+- **🪝 Lefthook**: Git hooks for pre-commit checks
+- **📋 Commitlint**: Conventional commit validation
+- **⚡ Turbo**: Optimized build pipeline
+
+### Development Guidelines
+
+- Use conventional commits (feat, fix, chore, docs, etc.)
+- Write tests for new features
+- Ensure TypeScript strict mode compliance
+- Update documentation for user-facing changes
 
 ## License
 
