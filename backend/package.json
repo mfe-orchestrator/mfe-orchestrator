@@ -9,8 +9,8 @@
     "dev": "pnpm run start",
     "build": "tsc && node ./postbuild.js",
     "prepare": "husky install",
-    "lint": "biome lint --write .",
-    "format": "biome format --write ."
+    "lint": "biome lint --write ./src",
+    "format": "biome format --write ./src"
   },
   "keywords": [],
   "author": "",
