@@ -4,5 +4,6 @@
             "file": "COMMIT_CONVENTIONS.md"
         }
     ],
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
 }
