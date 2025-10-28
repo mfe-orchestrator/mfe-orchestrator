@@ -8,7 +8,6 @@
     "st": "ts-node ./src/index.ts",
     "dev": "pnpm run start",
     "build": "tsc && node ./postbuild.js",
-    "prepare": "husky install",
     "lint": "biome lint --write ./src",
     "format": "biome format --write ./src"
   },
@@ -17,7 +16,6 @@
   "license": "ISC",
   "packageManager": "pnpm@10.7.0",
   "dependencies": {
-    "@sentry/node": "^10.20.0",
     "@aws-sdk/client-s3": "^3.896.0",
     "@aws-sdk/s3-request-presigner": "^3.896.0",
     "@azure/identity": "^4.12.0",
@@ -34,6 +32,7 @@
     "@getbrevo/brevo": "^3.0.1",
     "@google-cloud/storage": "^7.17.0",
     "@redis/client": "^5.8.2",
+    "@sentry/node": "^10.20.0",
     "axios": "^1.12.1",
     "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.2",
@@ -67,7 +66,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-config-standard-with-typescript": "^43.0.1",
     "eslint-plugin-prettier": "^5.5.4",
-    "husky": "^9.1.7",
     "jest": "^30.2.0",
     "testcontainers": "^11.6.0",
     "ts-jest": "^29.4.4",
