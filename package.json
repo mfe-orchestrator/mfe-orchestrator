@@ -1,0 +1,13 @@
+{
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "turbo prettier",
+    "test": "turbo test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.8"
+  }
+}
