@@ -1,13 +1,16 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
+import SinglePageLayout from "@/components/SinglePageLayout"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge/badge"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
 import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "@/components/ui/tabs/tabs"
+import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
@@ -17,9 +20,7 @@ import React, { useState } from "react"
 import Gravatar from "react-gravatar"
 import { useTranslation } from "react-i18next"
 import { AddUserButton } from "./AddUserButton"
-import SinglePageLayout from "@/components/SinglePageLayout"
-import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
-import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
+import { UserPicture } from "./UserPicture"
 
 const getUserInitials = (user?: { name?: string; surname?: string; email: string }) => {
     if (!user) return ""
@@ -43,10 +44,7 @@ const UserCard: React.FC<{ user: any; handleDeleteUser: (userId: string, userNam
         <Card key={user._id} className="w-full h-full relative">
             <CardContent>
                 <div className="flex flex-col items-center gap-4">
-                    <Avatar className="h-20 w-20">
-                        <Gravatar email={user.email} size={160} className="rounded-full w-full" default="mp" />
-                        {/* <AvatarFallback>{getUserInitials(user)}</AvatarFallback> */}
-                    </Avatar>
+                    <UserPicture userEmail={user.email} userInitials={getUserInitials(user)} />
                     <Badge variant={user.role === "OWNER" ? "accent" : "default"} className="absolute top-2 right-2">
                         {user.role}
                     </Badge>
