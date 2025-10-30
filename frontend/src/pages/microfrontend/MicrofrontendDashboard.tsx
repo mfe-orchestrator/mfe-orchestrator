@@ -2,6 +2,7 @@ import MicrofrontendList from "@/components/microfrontend/MicrofrontendList"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input/input"
+import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useProjectStore from "@/store/useProjectStore"
 import { CirclePlus, Search } from "lucide-react"
 import { useState } from "react"
@@ -11,6 +12,7 @@ import { useNavigate } from "react-router-dom"
 const MicrofrontendDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const projectStore = useProjectStore()
+    const codeRepositoriesApi = useCodeRepositoriesApi()
     const { t } = useTranslation()
 	const navigate = useNavigate()
     const [tabsValue, setTabsValue] = useState<"grid" | "list">("grid")
@@ -19,8 +21,13 @@ const MicrofrontendDashboard = () => {
         setSearchTerm("")
     }
 
-    const onAddNewMicrofrontend = () => {
-        navigate(`/templates-library`)
+    const onAddNewMicrofrontend = async () => {
+        const repositories = await codeRepositoriesApi.getRepositoriesByProjectId(projectStore.project?._id!)
+        if(repositories && repositories.length > 0){
+            navigate(`/templates-library`)
+        }else{
+            navigate(`/microfrontend/new`)
+        }
     }
 
     return (
@@ -46,7 +53,7 @@ const MicrofrontendDashboard = () => {
                 ) : null
             }
         >
-            <MicrofrontendList searchTerm={searchTerm} onResetFilters={onResetFilters} projectId={projectStore.project?._id} setTabsValue={setTabsValue} />
+            <MicrofrontendList searchTerm={searchTerm} onResetFilters={onResetFilters} projectId={projectStore.project?._id} setTabsValue={setTabsValue} onAddNewMicrofrontend={onAddNewMicrofrontend} />
         </SinglePageLayout>
     )
 }

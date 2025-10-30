@@ -21,21 +21,19 @@ interface MicrofrontendListProps {
     projectId?: string
     onResetFilters: () => void
     setTabsValue: (value: "grid" | "list") => void
+    onAddNewMicrofrontend: () => void
 }
 
 interface MicrofrontendListRealProps {
     microfrontends: Microfrontend[]
     onResetFilters: () => void
     setTabsValue: (value: "grid" | "list") => void
+    onAddNewMicrofrontend: () => void
 }
 
-const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters, setTabsValue }) => {
+const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters, setTabsValue, onAddNewMicrofrontend }) => {
     const { t } = useTranslation("platform")
     const navigate = useNavigate()
-
-    const onAddNewMicrofrontend = () => {
-        navigate(`/templates-library`)
-    }
 
     return (
         <Tabs defaultValue="grid" className="space-y-4" iconButtons tabsListPosition="end">
@@ -120,7 +118,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     )
 }
 
-const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, projectId, onResetFilters, setTabsValue }) => {
+const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, projectId, onResetFilters, setTabsValue, onAddNewMicrofrontend }) => {
     const microfrontendsApi = useMicrofrontendsApi()
 
     const microfrontendListQuery = useQuery({
@@ -147,7 +145,7 @@ const MicrofrontendList: React.FC<MicrofrontendListProps> = ({ searchTerm, proje
 
     return (
         <ApiDataFetcher queries={[microfrontendListQuery]}>
-            <MicrofrontendListReal microfrontends={microfrontendListReal} onResetFilters={onResetFilters} setTabsValue={setTabsValue} />
+            <MicrofrontendListReal onAddNewMicrofrontend={onAddNewMicrofrontend} microfrontends={microfrontendListReal} onResetFilters={onResetFilters} setTabsValue={setTabsValue} />
             {/* {microfrontendListQuery?.data?.length !== 0 ? (
             ) : (
                 <NoMicrofrontendPlaceholder projectId={projectId} />
