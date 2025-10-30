@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react"
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
 import { getLanguageFromLocalStorage, getThemeFromLocalStorage } from "@/utils/localStorageUtils"
@@ -7,7 +7,8 @@ const InitialThemeWrapper: React.FC<React.PropsWithChildren> = ({ children }) =>
     const themeStore = useThemeStore()
     const { i18n } = useTranslation()
 
-    const setThemeEndLanguageFromLocalStorage = useCallback(() => {
+    // biome-ignore lint/correctness/useExhaustiveDependencies: This should only run once on mount
+    useEffect(() => {
         const theme = getThemeFromLocalStorage()
         const language = getLanguageFromLocalStorage()
         if (theme) {
@@ -17,11 +18,7 @@ const InitialThemeWrapper: React.FC<React.PropsWithChildren> = ({ children }) =>
             themeStore.setLanguage(language)
             i18n.changeLanguage(language)
         }
-    }, [themeStore, i18n])
-
-    useEffect(() => {
-        setThemeEndLanguageFromLocalStorage()
-    }, [setThemeEndLanguageFromLocalStorage])
+    }, [])
 
     return <>{children}</>
 }
