@@ -35,6 +35,7 @@ interface MicrofrontendListRealProps {
 const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters, setTabsValue, onAddNewMicrofrontend }) => {
     const { t } = useTranslation("platform")
     const navigate = useNavigate()
+    
 
     return (
         <Tabs defaultValue="grid" className="space-y-4" iconButtons tabsListPosition="end">
