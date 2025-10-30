@@ -1,12 +1,12 @@
-import { NavItem } from "@/components/ui/Sidebar/partials/NavItem/NavItem"
-import { ArrowLeftFromLine, ArrowRightFromLine, Github, BookOpen, Menu } from "lucide-react"
+import { ArrowLeftFromLine, ArrowRightFromLine, BookOpen, Github, Menu } from "lucide-react"
 import * as React from "react"
-import { Button } from "../button/button"
 import { useTranslation } from "react-i18next"
-import { UserButton } from "./partials/UserButton"
+import { NavItem } from "@/components/ui/Sidebar/partials/NavItem/NavItem"
+import { cn } from "@/utils/styleUtils"
+import { Button } from "../button/button"
 import LanguageSelector from "./partials/LanguageSelector"
 import ThemeToggle from "./partials/ThemeToggle"
-import { cn } from "@/utils/styleUtils"
+import { UserButton } from "./partials/UserButton"
 
 export interface SidebarNavItemProps {
     name?: string
@@ -29,6 +29,14 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
     const [isMobile, setIsMobile] = React.useState(window.matchMedia("(max-width: 767px)").matches)
     const [isMenuVisible, setIsMenuVisible] = React.useState(false)
 
+    const handleShowMenu = React.useCallback(() => {
+        setIsMenuVisible(!isMenuVisible)
+        document.querySelector("#sidebar_menu")?.classList.toggle("hidden")
+        document.querySelector("#sidebar_menu")?.classList.toggle("flex")
+        document.querySelector("#sidebar_container")?.classList.toggle("h-sidebar")
+        document.querySelector("#main_content")?.classList.toggle("hidden")
+    }, [isMenuVisible])
+
     React.useEffect(() => {
         window.addEventListener("resize", () => {
             setIsMobile(window.matchMedia("(max-width: 767px)").matches)
@@ -39,15 +47,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
         if (isMenuVisible) {
             handleShowMenu()
         }
-    }, [isMobile])
-
-    const handleShowMenu = () => {
-        setIsMenuVisible(!isMenuVisible)
-        document.querySelector("#sidebar_menu")?.classList.toggle("hidden")
-        document.querySelector("#sidebar_menu")?.classList.toggle("flex")
-        document.querySelector("#sidebar_container")?.classList.toggle("h-sidebar")
-        document.querySelector("#main_content")?.classList.toggle("hidden")
-    }
+    }, [handleShowMenu, isMenuVisible])
 
     const navBarStyle = `
 		w-full p-4 sticky top-2 z-10 bg-sidebar h-fit flex flex-col transition-all duration-300 ease-in-out border-2 border-sidebar-border rounded-md

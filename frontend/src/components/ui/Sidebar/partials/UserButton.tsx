@@ -1,6 +1,3 @@
-import { deleteToken } from "@/authentication/tokenUtils"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import useUserStore from "@/store/useUserStore"
 import { useAuth0 } from "@auth0/auth0-react"
 import { AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
@@ -8,6 +5,9 @@ import CryptoJS from "crypto-js"
 import { LogOut, User } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { deleteToken } from "@/authentication/tokenUtils"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import useUserStore from "@/store/useUserStore"
 import { NavItem, NavItemProps } from "./NavItem/NavItem"
 
 export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disabled }) => {
@@ -18,16 +18,16 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
     const [nameAndSurname, setNameAndSurname] = useState<string>()
     const [profilePictureUrl, setProfilePictureUrl] = useState<string>()
 
-    const getActiveMsalAccount = (): AccountInfo | undefined => {
+    const getActiveMsalAccount = React.useCallback((): AccountInfo | undefined => {
         if (!msal || !msal.instance) return undefined
         const active = msal.instance.getActiveAccount()
         if (active) return active
         const all = msal.instance.getAllAccounts()
         if (all.length > 0) return all[0]
         return undefined
-    }
+    }, [msal])
 
-    const getNameAndSurname = async () => {
+    const getNameAndSurname = React.useCallback(async () => {
         if (user?.firstName || user?.lastName) {
             return `${user.firstName} ${user.lastName}`
         }
@@ -48,9 +48,9 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
         }
 
         return user?.email
-    }
+    }, [user, auth0.user, msal.instance, getActiveMsalAccount])
 
-    const getProfilePictureUrl = () => {
+    const getProfilePictureUrl = React.useCallback(() => {
         // Check Auth0 profile picture
         if (auth0.user?.picture) {
             return auth0.user.picture
@@ -76,7 +76,7 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
 
         // Return null if no picture is available
         return null
-    }
+    }, [user, auth0.user])
 
     const handleLogout = async () => {
         try {
@@ -123,7 +123,7 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
     useEffect(() => {
         getNameAndSurname().then(res => setNameAndSurname(res))
         setProfilePictureUrl(getProfilePictureUrl())
-    }, [user, auth0.user, msal.instance])
+    }, [getNameAndSurname, getProfilePictureUrl])
 
     return (
         <DropdownMenu>

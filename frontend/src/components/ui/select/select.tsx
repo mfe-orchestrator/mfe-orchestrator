@@ -12,7 +12,7 @@ const SelectContext = React.createContext<SelectProps>({})
 
 const Select = React.forwardRef<React.ComponentRef<typeof SelectPrimitive.Root>, React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> & SelectProps>(
     ({ children, layoutSize, fullWidth, ...props }) => {
-        const selectProps = React.useMemo(() => ({ layoutSize, fullWidth, ...props }), [layoutSize, fullWidth, props])
+        const selectProps = React.useMemo(() => ({ layoutSize, fullWidth }), [layoutSize, fullWidth])
 
         return (
             <SelectContext.Provider value={selectProps}>

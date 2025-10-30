@@ -25,7 +25,7 @@ export interface DeploymentDTO {
 interface CreateDeploymentDTO {
     microfrontendId: string
     version: string
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
 }
 
 const useDeploymentsApi = () => {

@@ -1,20 +1,20 @@
 import { format } from "date-fns"
-import { enUS, it, fr, de, es } from "date-fns/locale"
-import { Controller, FieldError, FieldValues, Path, useFormContext } from "react-hook-form"
+import { de, enUS, es, fr, it } from "date-fns/locale"
 import { DayPicker } from "react-day-picker"
+import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
 import "react-day-picker/dist/style.css"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { Button } from "../ui/button/button"
 import { Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/utils/styleUtils"
-import useUserStore from "@/store/useUserStore"
 import useThemeStore from "@/store/useThemeStore"
+import useUserStore from "@/store/useUserStore"
+import { cn } from "@/utils/styleUtils"
+import { Button } from "../ui/button/button"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 
 type CalendarFieldProps<T extends FieldValues> = {
     name: Path<T>
     id?: string
     label?: string
-    rules?: any
+    rules?: RegisterOptions<T>
     className?: string
     placeholder?: string
     disabled?: boolean
@@ -53,7 +53,16 @@ const CalendarField = <T extends FieldValues>({ name, label, rules, id, classNam
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                            <DayPicker animate={true} locale={locale} mode="single" selected={value ? new Date(value) : undefined} onSelect={date => onChange(date)} disabled={disabled} initialFocus {...field} />
+                            <DayPicker
+                                animate={true}
+                                locale={locale}
+                                mode="single"
+                                selected={value ? new Date(value) : undefined}
+                                onSelect={date => onChange(date)}
+                                disabled={disabled}
+                                initialFocus
+                                {...field}
+                            />
                         </PopoverContent>
                     </Popover>
                 )}

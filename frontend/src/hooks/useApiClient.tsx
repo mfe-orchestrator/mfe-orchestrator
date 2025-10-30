@@ -1,33 +1,37 @@
-import { AxiosResponse } from "axios"
-import { IClientRequestData } from "../api/apiClient"
-import ApiClient, { AuthenticationType, IClientRequestMetadata } from "../api/apiClient"
-import { useMsal } from "@azure/msal-react"
 import { useAuth0 } from "@auth0/auth0-react"
-import { IToken, getToken as getTokenFromStorage } from "@/authentication/tokenUtils"
-import useToastNotificationStore from "@/store/useToastNotificationStore"
-import useProjectStore from "@/store/useProjectStore"
 import { AccountEntity, AccountInfo } from "@azure/msal-browser"
+import { useMsal } from "@azure/msal-react"
+import { AxiosError, AxiosResponse } from "axios"
+import { getToken as getTokenFromStorage, IToken } from "@/authentication/tokenUtils"
+import useProjectStore from "@/store/useProjectStore"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
+import ApiClient, { AuthenticationType, IClientRequestData, IClientRequestMetadata } from "../api/apiClient"
 
 export interface IViolations {
     field: string
     message: string
 }
 
+interface IErrorResponse {
+    message?: string
+    violations?: IViolations[]
+    title?: string
+}
+
 export interface IClientRequestMetadataExtended extends IClientRequestMetadata {
     silent?: boolean
-    customErrorMessage?: string | ((error: any) => string)
+    customErrorMessage?: string | ((error: Error) => string)
 }
 
 export interface IClientRequestDataExtended<D> extends IClientRequestData<D>, IClientRequestMetadataExtended {}
 
 export interface IApiClientOptions {
     baseURL?: string
-    customErrorMessage?: string | ((error: any) => string)
+    customErrorMessage?: string | ((error: Error) => string)
     country?: string
 }
 
 export const useApiClient = (options?: IApiClientOptions) => {
-    
     const msalAuth = useMsal()
     const auth0Auth = useAuth0()
     const notifications = useToastNotificationStore()
@@ -44,7 +48,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
         const { silent = false, token, authenticated = AuthenticationType.REQUIRED, ...conf } = realConfig
 
         try {
-            let tokenReal : IToken | undefined = undefined
+            let tokenReal: IToken | undefined = undefined
 
             try {
                 if (authenticated == AuthenticationType.REQUIRED) {
@@ -68,17 +72,17 @@ export const useApiClient = (options?: IApiClientOptions) => {
                     "Project-Id": projectStore.project?._id,
                     "Environment-Id": projectStore.environment?._id
                 },
-                authenticated,
+                authenticated
             })
 
             //console.log("[doRequest] Ho fatto la richiesta", realConfig.url, result.data)
             return result
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("[doRequest] Erro in request ", realConfig.url, e)
             console.error(e)
             if (!silent) {
                 notifications.showErrorNotification({
-                    message: getErrorNotification(realConfig.customErrorMessage, e),
+                    message: getErrorNotification(realConfig.customErrorMessage, e as Error)
                     //errorCode: e?.response?.data?.errorCode
                 })
             }
@@ -86,26 +90,26 @@ export const useApiClient = (options?: IApiClientOptions) => {
         }
     }
 
-    const getActiveMsalAccount = async () : Promise<AccountInfo | undefined> => {
-        if(!msalAuth || !msalAuth.instance) return undefined;
+    const getActiveMsalAccount = async (): Promise<AccountInfo | undefined> => {
+        if (!msalAuth || !msalAuth.instance) return undefined
         const active = await msalAuth.instance.getActiveAccount()
-        if(active) return active;
+        if (active) return active
         const all = await msalAuth.instance.getAllAccounts()
-        if(all.length > 0) return all[0];
-        return undefined;
+        if (all.length > 0) return all[0]
+        return undefined
     }
 
     const getToken = async (token?: string): Promise<IToken | undefined> => {
-        if (token) return {token, issuer: ""}
+        if (token) return { token, issuer: "" }
         const tokenLocal = getTokenFromStorage()
-        if(tokenLocal) return tokenLocal
+        if (tokenLocal) return tokenLocal
         if (auth0Auth.isAuthenticated) {
             return {
-                token : await auth0Auth.getAccessTokenSilently(),
+                token: await auth0Auth.getAccessTokenSilently(),
                 issuer: "auth0"
             }
-        } 
-        const activeMsalAccount = await getActiveMsalAccount();
+        }
+        const activeMsalAccount = await getActiveMsalAccount()
         if (activeMsalAccount) {
             try {
                 //console.log("[getToken] Inizio a prendere il token con MSFT")
@@ -129,27 +133,34 @@ export const useApiClient = (options?: IApiClientOptions) => {
                         token: response?.idToken,
                         issuer: "msal"
                     }
-                }else{
+                } else {
                     console.error("[getToken] No authentication method available to get token", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts })
                 }
             }
         } else {
-            console.error("No authentication method available to get token", { token, authenticatedAuth0: auth0Auth.isAuthenticated, authenticatedMSALAccounts: msalAuth.accounts, msalInstance: msalAuth.instance, maslAccountsFromRequest: msalAuth.instance.getAllAccounts() })
+            console.error("No authentication method available to get token", {
+                token,
+                authenticatedAuth0: auth0Auth.isAuthenticated,
+                authenticatedMSALAccounts: msalAuth.accounts,
+                msalInstance: msalAuth.instance,
+                maslAccountsFromRequest: msalAuth.instance.getAllAccounts()
+            })
         }
     }
 
     const isAuthenticated = (): boolean => {
         const token = getTokenFromStorage()
-        if(token) return true;
+        if (token) return true
         const activeAccount = msalAuth.instance.getActiveAccount()
         return auth0Auth.isAuthenticated || Boolean(activeAccount)
     }
 
-    const getErrorNotification = (customErrorMessage?: any, e?: any): string | React.ReactNode => {
-        if (typeof customErrorMessage === "function") return customErrorMessage(e)
+    const getErrorNotification = (customErrorMessage?: string | ((error: Error) => string), e?: Error): string | React.ReactNode => {
+        if (typeof customErrorMessage === "function") return customErrorMessage(e as Error)
         if (customErrorMessage) return customErrorMessage
         if (!e) return "Error"
-        const responseData = e?.response?.data
+        const axiosError = e as AxiosError<IErrorResponse>
+        const responseData = axiosError?.response?.data
         if (responseData) {
             if (responseData.message) return responseData.message
             if (responseData.violations) {
