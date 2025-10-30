@@ -13,7 +13,8 @@
     "build:dev": "vite build --mode development",
     "lint": "biome lint --write ./src",
     "format": "biome format --write ./src",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.3.0",

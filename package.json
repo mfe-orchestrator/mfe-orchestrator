@@ -6,6 +6,7 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "test": "turbo test",
+    "typecheck": "turbo typecheck",
     "prepare": "lefthook install"
   },
   "devDependencies": {

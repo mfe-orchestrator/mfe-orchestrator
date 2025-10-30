@@ -9,7 +9,8 @@
     "dev": "pnpm run start",
     "build": "tsc && node ./postbuild.js",
     "lint": "biome lint --write ./src",
-    "format": "biome format --write ./src"
+    "format": "biome format --write ./src",
+    "typecheck": "pnpm exec tsc --noEmit"
   },
   "keywords": [],
   "author": "",
