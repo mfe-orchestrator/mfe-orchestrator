@@ -1,5 +1,5 @@
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import Environment from "../models/EnvironmentModel"
+import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
@@ -11,7 +11,7 @@ class EnvironmentService extends BaseAuthorizedService {
     async getByProjectId(projectId: string) {
         await this.ensureAccessToProject(projectId)
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
-        return Environment.find({ projectId: projectIdObj }).sort({ name: 1 })
+        return Environment.find({ projectId: projectIdObj }).sort({ order: 1 })
     }
 
     async getById(id: string | ObjectId, session?: ClientSession) {
@@ -20,11 +20,18 @@ class EnvironmentService extends BaseAuthorizedService {
         return await Environment.findOne({ _id: idObj }).session(session ?? null)
     }
 
-    async create(environmentData: EnvironmentDTO, projectId: string) {
+    async getMaxOrderByProjectId(projectId: Types.ObjectId) : Promise<number> {
+        return (await Environment.findOne({ projectId }).sort({ order: -1 }))?.order ?? 0
+    }
+
+    async create(environmentData: EnvironmentDTO, projectId: string) : Promise<IEnvironment> {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         await this.ensureAccessToProject(projectIdObj)
         const environment = new Environment(environmentData)
         environment.projectId = projectIdObj
+        if (!environment.order) {
+            environment.order = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
+        }
         return await environment.save()
     }
 
@@ -32,7 +39,14 @@ class EnvironmentService extends BaseAuthorizedService {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         await this.ensureAccessToProject(projectIdObj)
         const environments = body.map(env => new Environment(env))
-        environments.forEach(env => (env.projectId = projectIdObj))
+        let maxOrder = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
+        environments.forEach(env => {
+            env.projectId = projectIdObj
+            if (!env.order) {
+                env.order = maxOrder
+                maxOrder++
+            }
+        })
         return await Environment.insertMany(environments)
     }
 
