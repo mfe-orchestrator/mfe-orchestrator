@@ -1,16 +1,16 @@
 import { ClientSession, DeleteResult, ObjectId, Types } from "mongoose"
-import Project, { IProject } from "../models/ProjectModel"
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
-import UserProjectService from "./UserProjectService"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import ApiKey from "../models/ApiKeyModel"
+import CodeRepository from "../models/CodeRepositoryModel"
+import Environment from "../models/EnvironmentModel"
+import Microfrontend from "../models/MicrofrontendModel"
+import Project, { IProject } from "../models/ProjectModel"
+import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import Environment from "../models/EnvironmentModel"
-import Microfrontend from "../models/MicrofrontendModel"
-import ApiKey from "../models/ApiKeyModel"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import Storage from "../models/StorageModel"
-import CodeRepository from "../models/CodeRepositoryModel"
+import UserProjectService from "./UserProjectService"
 
 export interface ProjectCreateInput {
     name: string
@@ -25,15 +25,15 @@ export interface ProjectUpdateInput {
     isActive?: boolean
 }
 
-export interface ProjectSummaryDTO{
-    project : IProject,
-    count : {
-        environments : number,
-        users : number,
-        microfrontends : number,
-        apiKeys : number,
-        storages : number,
-        codeRepositories : number
+export interface ProjectSummaryDTO {
+    project: IProject
+    count: {
+        environments: number
+        users: number
+        microfrontends: number
+        apiKeys: number
+        storages: number
+        codeRepositories: number
     }
 }
 
@@ -61,7 +61,9 @@ export class ProjectService extends BaseAuthorizedService {
             throw createBusinessException({
                 code: "PROJECT_FETCH_ERROR",
                 message: "Failed to fetch projects",
-                details: { error: error instanceof Error ? error.message : "Unknown error" },
+                details: {
+                    error: error instanceof Error ? error.message : "Unknown error"
+                },
                 statusCode: 500
             })
         }
@@ -71,33 +73,35 @@ export class ProjectService extends BaseAuthorizedService {
         const projectIdObj = typeof id === "string" ? new Types.ObjectId(id) : id
         await this.ensureAccessToProject(projectIdObj)
         try {
-            return await Project.findById(projectIdObj).lean()
+            return await Project.findById(projectIdObj)
         } catch (error) {
             if (error instanceof BusinessException) throw error
 
             throw createBusinessException({
                 code: "PROJECT_FETCH_ERROR",
                 message: "Failed to fetch project",
-                details: { error: error instanceof Error ? error.message : "Unknown error" },
+                details: {
+                    error: error instanceof Error ? error.message : "Unknown error"
+                },
                 statusCode: 500
             })
         }
     }
 
-    async getSummary(projectId: string): Promise<ProjectSummaryDTO> {        
+    async getSummary(projectId: string): Promise<ProjectSummaryDTO> {
         const project = await this.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId);
+            throw new EntityNotFoundError(projectId)
         }
         return {
             project,
             count: {
-                environments : await Environment.countDocuments({projectId}),
-                users: await UserProject.countDocuments({projectId}),
-                microfrontends: await Microfrontend.countDocuments({projectId}),
-                apiKeys: await ApiKey.countDocuments({projectId}),
-                storages: await Storage.countDocuments({projectId}),
-                codeRepositories : await CodeRepository.countDocuments({projectId})
+                environments: await Environment.countDocuments({ projectId }),
+                users: await UserProject.countDocuments({ projectId }),
+                microfrontends: await Microfrontend.countDocuments({ projectId }),
+                apiKeys: await ApiKey.countDocuments({ projectId }),
+                storages: await Storage.countDocuments({ projectId }),
+                codeRepositories: await CodeRepository.countDocuments({ projectId })
             }
         }
     }
@@ -120,8 +124,8 @@ export class ProjectService extends BaseAuthorizedService {
             await this.userProjectService.addUserToProject(creatorUserId, savedProject._id, RoleInProject.OWNER, session)
 
             return savedProject
-        } catch (error: any) {
-            if (error.code === 11000) {
+        } catch (error: unknown) {
+            if (error && typeof error === "object" && "code" in error && error.code === 11000) {
                 // Duplicate key error
                 throw createBusinessException({
                     code: "DUPLICATE_PROJECT",
@@ -130,10 +134,11 @@ export class ProjectService extends BaseAuthorizedService {
                 })
             }
 
+            const errorMessage = error instanceof Error ? error.message : String(error)
             throw createBusinessException({
                 code: "PROJECT_CREATION_ERROR",
                 message: "Failed to create project",
-                details: { error: error.message },
+                details: { error: errorMessage },
                 statusCode: 500
             })
         }
@@ -150,13 +155,17 @@ export class ProjectService extends BaseAuthorizedService {
                 })
             }
 
+            // biome-ignore lint/suspicious/noExplicitAny: updateData needs to support MongoDB update operators dynamically
             const updateData: any = { ...projectData }
             if (updateData.description === null) {
                 updateData.$unset = { description: 1 }
                 delete updateData.description
             }
 
-            const updated = await Project.findByIdAndUpdate(projectId, updateData, { new: true, runValidators: true }).lean()
+            const updated = await Project.findByIdAndUpdate(projectId, updateData, {
+                new: true,
+                runValidators: true
+            })
 
             if (!updated) {
                 throw createBusinessException({
@@ -173,7 +182,9 @@ export class ProjectService extends BaseAuthorizedService {
             throw createBusinessException({
                 code: "PROJECT_UPDATE_ERROR",
                 message: "Failed to update project",
-                details: { error: error instanceof Error ? error.message : "Unknown error" },
+                details: {
+                    error: error instanceof Error ? error.message : "Unknown error"
+                },
                 statusCode: 500
             })
         }

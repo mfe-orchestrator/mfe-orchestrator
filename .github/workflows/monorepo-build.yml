@@ -1,0 +1,55 @@
+name: 🏗️ Monorepo Build & Test
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔄 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⬇️ Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "23.11.1"
+          cache-dependency-path: "./pnpm-lock.yaml"
+          cache: "pnpm"
+
+      - name: 📦 Install Dependencies
+        run: pnpm install
+
+      - name: 🔍 Lint & Format Check
+        run: |
+          pnpm lint
+          pnpm typecheck
+
+      - name: 🔨 Build All Packages
+        run: pnpm build
+
+      # - name: 🧪 Run Tests
+      #   run: pnpm test
+
+      - name: 📤 Upload Backend Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: backend/dist
+
+      - name: 📤 Upload Frontend Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist

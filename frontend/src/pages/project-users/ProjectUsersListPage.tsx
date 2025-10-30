@@ -1,3 +1,8 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { LayoutGrid, StretchHorizontal, Trash2 } from "lucide-react"
+import React, { useState } from "react"
+import Gravatar from "react-gravatar"
+import { useTranslation } from "react-i18next"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -11,14 +16,9 @@ import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "@/components/ui/tabs/tabs"
 import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
-import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
+import useProjectUserApi, { ProjectUser } from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { LayoutGrid, StretchHorizontal, Trash2 } from "lucide-react"
-import React, { useState } from "react"
-import Gravatar from "react-gravatar"
-import { useTranslation } from "react-i18next"
 import { AddUserButton } from "./AddUserButton"
 import { UserPicture } from "./UserPicture"
 
@@ -32,7 +32,7 @@ const getUserInitials = (user?: { name?: string; surname?: string; email: string
     return user?.email?.[0].toUpperCase()
 }
 
-const UserCard: React.FC<{ user: any; handleDeleteUser: (userId: string, userName: string) => void; deleteUserDisabled: boolean; isOwner: boolean }> = ({
+const UserCard: React.FC<{ user: ProjectUser; handleDeleteUser: (userId: string, userName: string) => void; deleteUserDisabled: boolean; isOwner: boolean }> = ({
     user,
     handleDeleteUser,
     deleteUserDisabled,
@@ -154,9 +154,7 @@ const ProjectUsersList: React.FC = () => {
                                                             <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
-                                                            <div className="font-medium">
-                                                                {user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : <div></div>}
-                                                            </div>
+                                                            <div className="font-medium">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : <div></div>}</div>
                                                             <div className="text-sm text-muted-foreground">{user.email}</div>
                                                         </div>
                                                     </TableCell>

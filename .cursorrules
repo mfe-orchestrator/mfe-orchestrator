@@ -2,11 +2,33 @@
 
 ## Project Overview
 
-This is a microfrontend orchestrator project with:
+This is a **monorepo** microfrontend orchestrator project with:
+
+- **📦 Monorepo**: pnpm workspace with centralized dependency management
+- **⚡ Turbo**: Build system for optimized task orchestration and caching
+- **🎨 Biome**: Unified linting and formatting across all packages
+- **🪝 Lefthook**: Git hooks for automated code quality checks
+- **📋 Commitlint**: Enforced conventional commit messages
+
+### Architecture
 
 - **Backend**: Fastify (Node.js/TypeScript) with MongoDB, Redis
 - **Frontend**: React with TypeScript, React Router, TanStack Query, Zustand
 - Uses shadcn/ui components, Tailwind CSS, i18n for internationalization
+
+### Workspace Structure
+
+```
+/
+├── backend/           # Fastify backend package
+├── frontend/          # React frontend package
+├── package.json       # Workspace root with shared scripts
+├── pnpm-workspace.yaml # Workspace configuration
+├── turbo.json         # Turbo build configuration
+├── biome.json         # Biome configuration for all packages
+├── lefthook.yml       # Git hooks configuration
+└── commitlint.config.js # Commit message validation
+```
 
 ---
 
@@ -234,6 +256,39 @@ CODE_REPOSITORY_GITHUB_CLIENT_SECRET=your_github_client_secret
 
 ## General Code Quality Rules
 
+### Code Quality Tools
+
+This project uses automated tools for consistent code quality:
+
+- **🎨 Biome**: Unified linting and formatting (replaces ESLint + Prettier)
+- **🪝 Lefthook**: Git hooks for pre-commit checks (replaces Husky)
+- **📋 Commitlint**: Conventional commit validation
+- **⚡ Turbo**: Optimized build pipeline with caching
+
+### Available Commands
+
+Use these workspace-level commands:
+
+```bash
+# Development
+pnpm dev              # Start both backend and frontend
+pnpm dev:backend      # Start backend only
+pnpm dev:frontend     # Start frontend only
+
+# Building
+pnpm build            # Build all packages
+pnpm build:backend    # Build backend only
+pnpm build:frontend   # Build frontend only
+
+# Code Quality
+pnpm lint             # Lint all packages with Biome
+pnpm format           # Format all packages with Biome
+pnpm typecheck        # TypeScript check for all packages
+
+# Testing
+pnpm test             # Run tests in all packages
+```
+
 ### TypeScript
 
 - Use strict TypeScript
@@ -409,17 +464,16 @@ Closes: #123
 
 ### Local Development Setup
 
-1. Start Docker services: `cd docker-local && docker compose -f docker-compose-development.yaml up -d`
-2. Create `.env` file in `backend/` directory (see Environment Variables section above)
-3. Backend: `cd backend && pnpm install && pnpm dev`
-4. Frontend: `cd frontend && pnpm install && pnpm dev`
+1. **Install dependencies**: `pnpm install` (installs for all packages)
+2. **Start Docker services**: `cd docker-local && docker compose -f docker-compose-development.yaml up -d`
+3. **Create `.env` file** in `backend/` directory (see Environment Variables section above)
+4. **Start development**: `pnpm dev` (starts both backend and frontend)
 
 ### Running the Project
 
 - Start Docker services first (MongoDB, Redis)
 - Create and configure `.env` file in backend directory
-- Run backend on configured port (default: 8080)
-- Run frontend on configured port (default: 3000)
+- Use `pnpm dev` to start both services simultaneously
 - Backend available at `http://localhost:8080`
 - Frontend available at `http://localhost:3000`
 

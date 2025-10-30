@@ -1,129 +1,130 @@
-import { useTranslation } from "react-i18next";
-import { useFormContext } from "react-hook-form";
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Alert, AlertDescription } from "../ui/alert";
-import TextField from "../input/TextField.rhf";
-import SelectField from "../input/SelectField.rhf";
-import Switch from "../input/Switch.rhf";
-import useCodeRepositoriesApi from "../../hooks/apiClients/useCodeRepositoriesApi";
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { useCallback, useEffect, useState } from "react"
+import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
+import useCodeRepositoriesApi from "../../hooks/apiClients/useCodeRepositoriesApi"
+import SelectField from "../input/SelectField.rhf"
+import Switch from "../input/Switch.rhf"
+import TextField from "../input/TextField.rhf"
+import { Alert, AlertDescription } from "../ui/alert"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 
 const logoMap: Record<string, string> = {
-    'GITHUB': '/img/GitHub.svg',
-    'GITLAB': '/img/GitLab.svg',
-    'AZURE_DEV_OPS': '/img/AzureDevOps.svg',
-    'AWS': '/img/aws.svg',
-    'GOOGLE': '/img/GoogleCloud.svg',
-    'AZURE': '/img/Azure.svg'
-};
+    GITHUB: "/img/GitHub.svg",
+    GITLAB: "/img/GitLab.svg",
+    AZURE_DEV_OPS: "/img/AzureDevOps.svg",
+    AWS: "/img/aws.svg",
+    GOOGLE: "/img/GoogleCloud.svg",
+    AZURE: "/img/Azure.svg"
+}
+
+interface Repository {
+    id?: string | number
+    name: string
+    _id: string
+    provider: string
+    [key: string]: unknown
+}
 
 interface CodeRepositorySectionProps {
-    repositoriesData: any[];
-    isEdit?: boolean;
+    repositoriesData: Repository[]
+    isEdit?: boolean
     forceCreation?: boolean
 }
 
 interface RepositoryNameAvailability {
-    checking: boolean;
-    available: boolean | null;
-    error: string | null;
+    checking: boolean
+    available: boolean | null
+    error: string | null
 }
 
-const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
-    repositoriesData,
-    isEdit = false,
-    forceCreation = false
-}) => {
-    const { t } = useTranslation();
-    const { watch, setValue } = useFormContext();
-    const codeRepositoriesApi = useCodeRepositoriesApi();
+const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositoriesData, isEdit = false, forceCreation = false }) => {
+    const { t } = useTranslation()
+    const { watch, setValue } = useFormContext()
+    const codeRepositoriesApi = useCodeRepositoriesApi()
 
     // Watch form values
-    const codeRepositoryEnabled = watch("codeRepository.enabled");
-    const selectedCodeRepositoryId = watch("codeRepository.codeRepositoryId");
-    const selectedRepositoryId = watch("codeRepository.repositoryId");
+    const codeRepositoryEnabled = watch("codeRepository.enabled")
+    const selectedCodeRepositoryId = watch("codeRepository.codeRepositoryId")
+    const selectedRepositoryId = watch("codeRepository.repositoryId")
 
     // Local state
     const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<RepositoryNameAvailability>({
         checking: false,
         available: null,
         error: null
-    });
-    const [fetchedRepositories, setFetchedRepositories] = useState<any[]>([]);
+    })
+    const [fetchedRepositories, setFetchedRepositories] = useState<Repository[]>([])
 
     // GitLab groups query
     const gitlabGroupsQuery = useQuery({
         queryKey: ["gitlabGroups", selectedCodeRepositoryId],
         queryFn: () => codeRepositoriesApi.getGitlabGroups(selectedCodeRepositoryId!),
         enabled: !!selectedCodeRepositoryId && repositoriesData?.find(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB"
-    });
+    })
 
     // Fetch repositories mutation
     const fetchRepositoriesMutation = useMutation({
         mutationFn: async (codeRepositoryId: string) => {
-            const response = await codeRepositoriesApi.getRepositories(codeRepositoryId);
-            return response;
+            const response = await codeRepositoriesApi.getRepositories(codeRepositoryId)
+            return response
         },
-        onSuccess: (data) => {
-            setFetchedRepositories(data || []);
+        onSuccess: data => {
+            setFetchedRepositories(data || [])
         }
-    });
+    })
 
     // Function to fetch repositories when code repository is selected
-    const fetchRepository = async () => {
+    const fetchRepository = useCallback(async () => {
         if (forceCreation) {
-            setValue("codeRepository.repositoryId", "create_new");
-            return;
+            setValue("codeRepository.repositoryId", "create_new")
+            return
         }
 
         if (selectedCodeRepositoryId && codeRepositoryEnabled) {
-            const data = await fetchRepositoriesMutation.mutateAsync(selectedCodeRepositoryId);
-            const repository = data.find((repo: any) => repo.name === selectedRepositoryId || repo.id+"" === selectedRepositoryId);
+            const data = await fetchRepositoriesMutation.mutateAsync(selectedCodeRepositoryId)
+            const repository = data.find(repo => repo.name === selectedRepositoryId || String(repo.id) === selectedRepositoryId)
             if (!repository) {
-                setValue("codeRepository.repositoryId", "");
+                setValue("codeRepository.repositoryId", "")
             }
         } else {
-            setFetchedRepositories([]);
+            setFetchedRepositories([])
         }
-    };
+    }, [forceCreation, selectedCodeRepositoryId, codeRepositoryEnabled, selectedRepositoryId, setValue, fetchRepositoriesMutation])
 
     // Effect to fetch repositories when a repository is selected
     useEffect(() => {
-        fetchRepository();
-    }, [selectedCodeRepositoryId, codeRepositoryEnabled, forceCreation]);
+        fetchRepository()
+    }, [fetchRepository])
 
     // Repository name availability check
     const onDebounceRepository = async (repositoryName: string) => {
-        if(!selectedCodeRepositoryId) return
+        if (!selectedCodeRepositoryId) return
         if (!repositoryName || !selectedRepositoryId || repositoryName.length < 3) {
-            setRepositoryNameAvailability({ checking: false, available: null, error: null });
-            return;
+            setRepositoryNameAvailability({ checking: false, available: null, error: null })
+            return
         }
-        setRepositoryNameAvailability({ checking: true, available: null, error: null });
+        setRepositoryNameAvailability({ checking: true, available: null, error: null })
 
         try {
-            const result = await codeRepositoriesApi.checkRepositoryNameAvailability(
-                selectedCodeRepositoryId,
-                repositoryName
-            );
+            const result = await codeRepositoriesApi.checkRepositoryNameAvailability(selectedCodeRepositoryId, repositoryName)
             setRepositoryNameAvailability({
                 checking: false,
                 available: result,
                 error: null
-            });
+            })
         } catch (error) {
             setRepositoryNameAvailability({
                 checking: false,
                 available: null,
-                error: error instanceof Error ? error.message : t('app.error.generic')
-            });
+                error: error instanceof Error ? error.message : t("app.error.generic")
+            })
         }
-    };
+    }
 
     // Don't render if no repositories available
     if (!repositoriesData || repositoriesData.length === 0) {
-        return null;
+        return null
     }
 
     return (
@@ -147,7 +148,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
                             return {
                                 value: repo._id,
                                 label: `${repo.name} (${repo.provider})`,
-                                icon: logoMap[repo.provider]
+                                icon: logoMap[repo.provider as keyof typeof logoMap]
                             }
                         })}
                         required
@@ -238,6 +239,6 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({
             )}
         </Card>
     )
-};
+}
 
-export default CodeRepositorySection;
+export default CodeRepositorySection

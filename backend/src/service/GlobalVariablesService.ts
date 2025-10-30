@@ -1,17 +1,15 @@
+import { DeleteResult } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import Environment from "../models/EnvironmentModel"
 import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
+import GlobalVariableCreateDTO, { GlobalVariableUpdateDTO } from "../types/GlobalVariableCreateDTO"
 import GlobalVariableDTO from "../types/GlobalVariableDTO"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import Environment from "../models/EnvironmentModel"    
-import GlobalVariableCreateDTO, { GlobalVariableUpdateDTO } from "../types/GlobalVariableCreateDTO"
-import { DeleteResult } from "mongoose"
-
 
 export default class GlobalVariablesService extends BaseAuthorizedService {
-
     async getAllByProjectId(projectId: string): Promise<IGlobalVariable[]> {
         await this.ensureAccessToProject(projectId)
-        const environmentIds = (await Environment.find({ projectId }).select("_id")).map((env: any) => env._id)
+        const environmentIds = (await Environment.find({ projectId }).select("_id")).map(env => env._id)
         return GlobalVariable.find({ environmentId: { $in: environmentIds } }).sort({ key: 1 })
     }
     /**
@@ -30,23 +28,28 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
         const environments = await Environment.find({ projectId }).select("_id")
 
         //Ensure that variable is unique for project
-        const variable = await GlobalVariable.findOne({ key: variableData.key, environmentId: environments[0]._id });
-        if(variable){
+        const variable = await GlobalVariable.findOne({
+            key: variableData.key,
+            environmentId: environments[0]._id
+        })
+        if (variable) {
             throw new Error("Variable already exists for project")
         }
 
-        const variables = environments.map(environment => {
-            const foundVar = variableData.values.find(value => value.environmentId === environment._id.toString())
-            if(!foundVar) {
-                return
-            }
-            return new GlobalVariable({
-                environmentId: environment._id,
-                key: variableData.key,
-                value: foundVar.value
+        const variables = environments
+            .map(environment => {
+                const foundVar = variableData.values.find(value => value.environmentId === environment._id.toString())
+                if (!foundVar) {
+                    return
+                }
+                return new GlobalVariable({
+                    environmentId: environment._id,
+                    key: variableData.key,
+                    value: foundVar.value
+                })
             })
-        }).filter(variable => variable)
-        
+            .filter(variable => variable)
+
         return GlobalVariable.insertMany(variables)
     }
 
@@ -86,15 +89,19 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
     async updateByProjectId(body: GlobalVariableUpdateDTO, projectId: string): Promise<(IGlobalVariable | null)[]> {
         await this.ensureAccessToProject(projectId)
         const envIds = (await Environment.find({ projectId }).select("_id")).map(env => env._id.toString())
-        
-        return Promise.all(body.values.filter(value => envIds.includes(value.environmentId)).map(value => {
-            return GlobalVariable.findOneAndUpdate({ key: body.originalKey, environmentId: value.environmentId }, { key: body.key, value: value.value }, { new: true, runValidators: true })    
-        }))
+
+        return Promise.all(
+            body.values
+                .filter(value => envIds.includes(value.environmentId))
+                .map(value => {
+                    return GlobalVariable.findOneAndUpdate({ key: body.originalKey, environmentId: value.environmentId }, { key: body.key, value: value.value }, { new: true, runValidators: true })
+                })
+        )
     }
 
-    async deleteByProjectId(key : string, projectId: string): Promise<DeleteResult> {
+    async deleteByProjectId(key: string, projectId: string): Promise<DeleteResult> {
         await this.ensureAccessToProject(projectId)
-        const envIds = (await Environment.find({ projectId }).select("_id")).map((env: any) => env._id)
+        const envIds = (await Environment.find({ projectId }).select("_id")).map(env => env._id)
 
         return GlobalVariable.deleteMany({ key, environmentId: { $in: envIds } })
     }

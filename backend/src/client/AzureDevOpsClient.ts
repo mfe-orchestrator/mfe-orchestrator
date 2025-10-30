@@ -45,162 +45,164 @@ export interface AzureOrganization {
     accountId: string
     accountName: string
     accountUri: string
-    properties: any
+    properties: Record<string, unknown>
 }
 
 export interface AzureDevOpsProject {
-    id: string;
-    name: string;
-    url: string;
-    state: string;
-    revision: number;
-    visibility: string;
-    lastUpdateTime: string;
-    description?: string; // opzionale perché non tutte le voci hanno description
-  }
-  
-  export interface AzureDevOpsProjectsResponse {
-    count: number;
-    value: AzureDevOpsProject[];
-  }
+    id: string
+    name: string
+    url: string
+    state: string
+    revision: number
+    visibility: string
+    lastUpdateTime: string
+    description?: string // opzionale perché non tutte le voci hanno description
+}
 
-  export interface RepositoryData{
-    id : string,
-    name : string,
-    url : string,
-    project : any,
-    defaultBranch : string,
-    size : number,
-    remoteUrl : string,
-    sshUrl : string,
-    webUrl : string,
-    isDisabled : boolean,
-    isInMaintenance : boolean
-  }
+export interface AzureDevOpsProjectsResponse {
+    count: number
+    value: AzureDevOpsProject[]
+}
 
-  export interface GetRepositoryDTO{
-    count : number,
-    value : RepositoryData[]
-  }
+export interface RepositoryData {
+    id: string
+    name: string
+    url: string
+    project: {
+        id: string
+        name: string
+        url: string
+    }
+    defaultBranch: string
+    size: number
+    remoteUrl: string
+    sshUrl: string
+    webUrl: string
+    isDisabled: boolean
+    isInMaintenance: boolean
+}
 
-  export interface AzureDevOpsBranch{
-    name : string,
-    objectId: string;
+export interface GetRepositoryDTO {
+    count: number
+    value: RepositoryData[]
+}
+
+export interface AzureDevOpsBranch {
+    name: string
+    objectId: string
     creator: {
-        displayName: string;
-        uniqueName: string;
+        displayName: string
+        uniqueName: string
         _links: {
-        avatar: { href: string };
-        };
-    };
-    url: string;
-  }
+            avatar: { href: string }
+        }
+    }
+    url: string
+}
 
-  export interface AzureDevOpsBranchDTO{
-    count: number,
+export interface AzureDevOpsBranchDTO {
+    count: number
     value: AzureDevOpsBranch[]
-  }
+}
 
 class AzureDevOpsClient {
-    
-
     // Ottieni l'ID utente dal profilo
     async getUserId(token: string) {
         const response = await axios.request({
             url: "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.3",
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
-        });
-        return response.data.id; // userId
+        })
+        return response.data.id // userId
     }
 
     // Ottieni tutte le orgs dell'utente
     async getOrganizations(token: string) {
-        const userId = await this.getUserId(token);
-        const url = `https://app.vssps.visualstudio.com/_apis/accounts?memberId=${userId}&api-version=7.1-preview.1`;
+        const userId = await this.getUserId(token)
+        const url = `https://app.vssps.visualstudio.com/_apis/accounts?memberId=${userId}&api-version=7.1-preview.1`
 
         const response = await axios.request({
             url,
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
-        });
-        return response.data.value; // array di orgs
+        })
+        return response.data.value // array di orgs
     }
 
-    async getProjects(token: string, organization: string) : Promise<AzureDevOpsProjectsResponse> {
-        const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`;
+    async getProjects(token: string, organization: string): Promise<AzureDevOpsProjectsResponse> {
+        const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`
         const response = await axios.request<AzureDevOpsProjectsResponse>({
             url,
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
-        });
-        return response.data;
+        })
+        return response.data
     }
 
-    async getRepositories(token: string, organization: string, project: string) : Promise<GetRepositoryDTO>{
-        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`;
+    async getRepositories(token: string, organization: string, project: string): Promise<GetRepositoryDTO> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`
         const response = await axios.request({
             url,
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
-        });
-        console.log(response.data);
-        return response.data;
+        })
+        console.log(response.data)
+        return response.data
     }
 
     async createRepository(token: string, organization: string, project: string, repositoryName: string) {
-        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`;
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`
         const body = {
             name: repositoryName,
             project: {
                 id: project
             }
-        };
+        }
 
         const response = await axios.request({
-            method: 'POST',
+            method: "POST",
             url,
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
             data: body
-        });
+        })
 
-        return response.data;
+        return response.data
     }
 
-    async getRepository(token: string, organization: string, project: string, repositoryName: string){
-        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}?api-version=7.1-preview.1`;
+    async getRepository(token: string, organization: string, project: string, repositoryName: string) {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}?api-version=7.1-preview.1`
         const response = await axios.request({
             url,
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
-        });
+        })
 
-        return response.data;
+        return response.data
     }
 
-    async getBranches(token: string, organization: string, project: string, repositoryName: string) : Promise<AzureDevOpsBranchDTO> {
-        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/refs?filter=heads/&api-version=7.1-preview.1`;
+    async getBranches(token: string, organization: string, project: string, repositoryName: string): Promise<AzureDevOpsBranchDTO> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/refs?filter=heads/&api-version=7.1-preview.1`
         const response = await axios.request<AzureDevOpsBranchDTO>({
             url,
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
-        });
-        return response.data;
+        })
+        return response.data
     }
 }
 

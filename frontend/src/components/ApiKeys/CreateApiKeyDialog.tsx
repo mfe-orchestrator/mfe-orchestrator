@@ -1,12 +1,12 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect } from "react"
+import { FormProvider, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ApiKeyFormData, CreateApiKeyFormInner } from "./CreateApiKeyForm"
-import { useTranslation } from "react-i18next"
-import { FormProvider, useForm } from "react-hook-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import useApiKeysApi from "@/hooks/apiClients/useApiKeysApi"
 import useProjectStore from "@/store/useProjectStore"
-import { useEffect } from "react"
+import { ApiKeyFormData, CreateApiKeyFormInner } from "./CreateApiKeyForm"
 
 interface CreateApiKeyDialogProps {
     isCreateDialogOpen: boolean
@@ -20,6 +20,13 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
     const queryClient = useQueryClient()
     const project = useProjectStore()
 
+    const createApiKeyMutation = useMutation({
+        mutationFn: apiKeysApi.createApiKey,
+        onSuccess: data => {
+            queryClient.invalidateQueries({ queryKey: ["api-keys", project.project?._id] })
+        }
+    })
+
     useEffect(() => {
         if (isCreateDialogOpen) {
             const defaultExpiration = new Date()
@@ -27,14 +34,7 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
             form.reset({ name: "", expirationDate: defaultExpiration })
             createApiKeyMutation.reset()
         }
-    }, [isCreateDialogOpen])
-
-    const createApiKeyMutation = useMutation({
-        mutationFn: apiKeysApi.createApiKey,
-        onSuccess: data => {
-            queryClient.invalidateQueries({ queryKey: ["api-keys", project.project?._id] })
-        }
-    })
+    }, [isCreateDialogOpen, createApiKeyMutation.reset, form.reset])
 
     const onSubmit = async (data: ApiKeyFormData) => {
         await createApiKeyMutation.mutateAsync({

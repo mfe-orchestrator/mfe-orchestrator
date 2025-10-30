@@ -1,5 +1,5 @@
-import { BlobServiceClient, BlockBlobUploadOptions, StorageSharedKeyCredential } from "@azure/storage-blob"
 import { ClientSecretCredential } from "@azure/identity"
+import { BlobServiceClient, BlockBlobUploadOptions, StorageSharedKeyCredential } from "@azure/storage-blob"
 import { Readable } from "stream"
 
 type AuthConfig =
@@ -28,31 +28,32 @@ export class AzureStorageClient {
     private readonly blobServiceClient: BlobServiceClient
     private readonly containerName: string
     private readonly accountName: string
-    private readonly authConfig: AuthConfig
 
     constructor(config: AzureStorageConfig) {
         this.containerName = config.containerName
-        this.authConfig = config
 
         switch (config.authType) {
-            case "connectionString":
+            case "connectionString": {
                 this.blobServiceClient = BlobServiceClient.fromConnectionString(config.connectionString)
                 // Extract account name from connection string
                 const accountMatch = config.connectionString.match(/AccountName=([^;]+)/)
                 this.accountName = accountMatch ? accountMatch[1] : ""
                 break
+            }
 
-            case "sharedKey":
+            case "sharedKey": {
                 this.accountName = config.accountName
                 const sharedKeyCredential = new StorageSharedKeyCredential(config.accountName, config.accountKey)
                 this.blobServiceClient = new BlobServiceClient(`https://${config.accountName}.blob.core.windows.net`, sharedKeyCredential)
                 break
+            }
 
-            case "aad":
+            case "aad": {
                 this.accountName = config.accountName
                 const credential = new ClientSecretCredential(config.tenantId, config.clientId, config.clientSecret)
                 this.blobServiceClient = new BlobServiceClient(`https://${config.accountName}.blob.core.windows.net`, credential)
                 break
+            }
 
             default:
                 throw new Error("Invalid authentication configuration")
@@ -77,9 +78,10 @@ export class AzureStorageClient {
         try {
             await blockBlobClient.upload(fileContent, Buffer.byteLength(fileContent as Buffer), options)
             return blockBlobClient.url
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error uploading file to Azure Blob Storage:", error)
-            throw new Error(`Failed to upload file to Azure: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to upload file to Azure: ${errorMessage}`)
         }
     }
 
@@ -93,9 +95,10 @@ export class AzureStorageClient {
 
         try {
             await blockBlobClient.delete()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error deleting file from Azure Blob Storage:", error)
-            throw new Error(`Failed to delete file from Azure: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to delete file from Azure: ${errorMessage}`)
         }
     }
 }

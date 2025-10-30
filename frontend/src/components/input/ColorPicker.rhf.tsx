@@ -1,16 +1,16 @@
-import { Controller, FieldError, FieldValues, Path, useFormContext } from "react-hook-form"
-import { Label } from "../ui/label"
 import { useState } from "react"
+import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { DEFAULT_COLORS } from "@/utils/EnviromentsPresets"
 import { ColorPicker as ColorPickerComponent } from "react-pick-color"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DEFAULT_COLORS } from "@/utils/EnviromentsPresets"
+import { Label } from "../ui/label"
 
 type ColorPickerCustomProps<T extends FieldValues> = {
     name: Path<T>
     label: string
-    rules?: any
+    rules?: RegisterOptions<T>
     id?: string
     required?: boolean
     className?: string

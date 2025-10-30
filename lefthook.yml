@@ -1,0 +1,25 @@
+# Lefthook configuration
+# See: https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md
+
+pre-commit:
+  parallel: true
+  commands:
+    lint-and-format:
+      glob: "{backend,frontend}/**/*.{js,ts,tsx,json}"
+      run: "biome check --write --staged {staged_files}"
+      stage_fixed: true
+
+    typecheck-backend:
+      root: "backend/"
+      glob: "**/*.{ts,tsx}"
+      run: "pnpm exec tsc --noEmit"
+
+    typecheck-frontend:
+      root: "frontend/"
+      glob: "**/*.{ts,tsx}"
+      run: "pnpm exec tsc --noEmit"
+
+commit-msg:
+  commands:
+    commitlint:
+      run: "pnpm exec commitlint --edit"

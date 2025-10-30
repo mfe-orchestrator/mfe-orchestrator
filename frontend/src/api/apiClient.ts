@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios"
+import axios, { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse, RawAxiosRequestHeaders } from "axios"
 import UrlPattern from "url-pattern"
 
 export enum AuthenticationType {
@@ -33,9 +33,9 @@ export const getUTMFields = (): IUTMFields | undefined => {
         if (utmString) {
             return JSON.parse(utmString)
         }
-        // eslint-disable-next-line no-empty
-    } catch (e) {}
-
+    } catch (e) {
+        console.warn("Failed to parse UTM fields from session storage:", e)
+    }
     if (!URLSearchParams) {
         // eslint-disable-next-line no-console
         console.warn("Browser does not support URLSearchParams")
@@ -85,7 +85,7 @@ const createUrl = (axiosOptions?: IClientRequestData<unknown>): string | undefin
 async function doRequest<R, D = unknown>(config?: IClientRequestData<D>): Promise<AxiosResponse<R>> {
     const { authenticated = AuthenticationType.REQUIRED, headers, addUTMFields, token, params, doNotLog = false, eventName, ...conf } = config || {}
     try {
-        let headersNew: AxiosRequestHeaders | any = {}
+        let headersNew: RawAxiosRequestHeaders = {}
 
         if (config.token) {
             headersNew["Authorization"] = `Bearer ${config.token}`
@@ -108,7 +108,7 @@ async function doRequest<R, D = unknown>(config?: IClientRequestData<D>): Promis
                 ...utm
             }
         }
-        
+
         const response = await axios.request<R, AxiosResponse<R>, D>({
             ...conf,
             headers: headersNew,

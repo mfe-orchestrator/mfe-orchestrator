@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyError, FastifyReply, FastifyRequest } from "fastify"
+import { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 import { BusinessException } from "../errors/BusinessException"
 
@@ -32,7 +32,7 @@ function isAuthorizationError(error: unknown): error is CustomError & { grants: 
 }
 
 function isAxiosError(error: unknown): error is AxiosError {
-    return error instanceof Error && (error as any)?.isAxiosError === true
+    return error instanceof Error && "isAxiosError" in error && (error as { isAxiosError?: boolean }).isAxiosError === true
 }
 
 function isBusinessException(error: unknown): error is BusinessException {
@@ -65,7 +65,7 @@ export default fastifyPlugin(
 
             if (isAuthenticationError(error as CustomError)) {
                 const authError = error as CustomError
-                fastify.log.error("Authentication error: " + authError.message, authError)
+                fastify.log.error({ authError }, "Authentication error: " + authError.message)
                 return reply.code(401).send({
                     success: false,
                     error: {

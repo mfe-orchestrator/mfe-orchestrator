@@ -1,4 +1,4 @@
-import { Storage, Bucket } from "@google-cloud/storage"
+import { Bucket, Storage } from "@google-cloud/storage"
 import { Readable } from "stream"
 
 export type AuthConfig =
@@ -106,9 +106,10 @@ export class GoogleStorageClient {
             await file.makePublic()
 
             return `https://storage.googleapis.com/${this.bucketName}/${encodeURIComponent(filePath)}`
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error uploading file to Google Cloud Storage:", error)
-            throw new Error(`Failed to upload file: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to upload file: ${errorMessage}`)
         }
     }
 
@@ -130,9 +131,10 @@ export class GoogleStorageClient {
             })
 
             return url
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error generating signed URL:", error)
-            throw new Error(`Failed to generate signed URL: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to generate signed URL: ${errorMessage}`)
         }
     }
 
@@ -145,9 +147,10 @@ export class GoogleStorageClient {
 
         try {
             await file.delete()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error deleting file from Google Cloud Storage:", error)
-            throw new Error(`Failed to delete file: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to delete file: ${errorMessage}`)
         }
     }
 }

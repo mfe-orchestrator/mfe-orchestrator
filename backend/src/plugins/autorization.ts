@@ -1,13 +1,13 @@
+import axios from "axios"
 import { FastifyInstance, FastifyRequest } from "fastify"
 import fastifyPlugin from "fastify-plugin"
-import AuthenticationError from "../errors/AuthenticationError"
-import UserModel, { getSecret, ISSUER } from "../models/UserModel"
 import jwt, { JwtPayload } from "jsonwebtoken"
-import { redisClient } from "./redis"
-import axios from "axios"
-import UserService from "../service/UserService"
+import AuthenticationError from "../errors/AuthenticationError"
 import ApiKey from "../models/ApiKeyModel"
+import UserModel, { getSecret, ISSUER } from "../models/UserModel"
+import UserService from "../service/UserService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
+import { redisClient } from "./redis"
 
 interface AuthUserDTO {
     name?: string
@@ -64,7 +64,9 @@ const getDataFromGoogle = async (fastify: FastifyInstance, authToken: string): P
         }
     })
     if (redisClient) {
-        await redisClient.set(authToken, JSON.stringify(response.data), { EX: TOKEN_EXPIRATION })
+        await redisClient.set(authToken, JSON.stringify(response.data), {
+            EX: TOKEN_EXPIRATION
+        })
     }
     return response.data
 }
@@ -96,7 +98,9 @@ const getDataFromAuth0 = async (fastify: FastifyInstance, authToken: string): Pr
     }
 
     if (redisClient && sub) {
-        await redisClient.set(sub, JSON.stringify(realResponse), { EX: TOKEN_EXPIRATION })
+        await redisClient.set(sub, JSON.stringify(realResponse), {
+            EX: TOKEN_EXPIRATION
+        })
     }
     return realResponse
 }
@@ -128,8 +132,11 @@ const getUserDataFromToken = async (fastify: FastifyInstance, authToken: string,
             return getDataFromGoogle(fastify, authToken)
         case "auth0":
             return getDataFromAuth0(fastify, authToken)
-        default:
-            const decodedToken = jwt.decode(authToken, { json: true, complete: true })
+        default: {
+            const decodedToken = jwt.decode(authToken, {
+                json: true,
+                complete: true
+            })
             if (!decodedToken) {
                 throw new AuthenticationError("Invalid token")
             }
@@ -142,22 +149,23 @@ const getUserDataFromToken = async (fastify: FastifyInstance, authToken: string,
             } else if (payload.iss == `https://login.microsoftonline.com/${fastify.config.AZURE_ENTRAID_TENANT_ID}/v2.0`) {
                 return getDataFromMsal(fastify, authToken)
             }
+        }
     }
 }
 
 const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest): Promise<string> => {
-    const apiKey = request.headers["api-key"] || (request.query as any)["apiKey"]
-    if (!apiKey) {
+    const apiKey = request.headers["api-key"] || (request.query as Record<string, unknown>)["apiKey"]
+    if (!apiKey || typeof apiKey !== "string") {
         throw new AuthenticationError("API key not found")
     }
 
-    const keys = await ApiKey.find();
-    let apiKeyFromDb = undefined;
-    for(let candidateApiKey of keys){
+    const keys = await ApiKey.find()
+    let apiKeyFromDb = undefined
+    for (const candidateApiKey of keys) {
         const match = await candidateApiKey.compareApiKey(apiKey)
-        if(match){
-            apiKeyFromDb = candidateApiKey;
-            break;
+        if (match) {
+            apiKeyFromDb = candidateApiKey
+            break
         }
     }
 
@@ -187,7 +195,7 @@ export default fastifyPlugin(
 
             fastify.log.debug("Authorization is JWT")
             const authToken = request?.headers?.["authorization"]?.replace("Bearer ", "")
-            fastify.log.debug("Auth token", authToken)
+            fastify.log.debug({ authToken }, "Auth token")
             if (!authToken) {
                 throw new AuthenticationError("Missing or invalid Authorization header")
             }

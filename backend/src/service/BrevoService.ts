@@ -15,7 +15,10 @@ export class BrevoService {
         }
 
         this.apiInstance = new ContactsApi()
-        ;(this.apiInstance as any).authentications.apiKey.apiKey = apiKey
+        const apiInstanceWithAuth = this.apiInstance as unknown as {
+            authentications: { apiKey: { apiKey: string } }
+        }
+        apiInstanceWithAuth.authentications.apiKey.apiKey = apiKey
     }
 
     async addToWaitingList(data: WaitingListDTO): Promise<void> {
