@@ -11,7 +11,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 const SelectContext = React.createContext<SelectProps>({})
 
 const Select = React.forwardRef<React.ComponentRef<typeof SelectPrimitive.Root>, React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> & SelectProps>(
-    ({ children, layoutSize, fullWidth, ...props }) => {
+    ({ children, layoutSize, fullWidth, ...props }, _ref) => {
         const selectProps = React.useMemo(() => ({ layoutSize, fullWidth }), [layoutSize, fullWidth])
 
         return (
