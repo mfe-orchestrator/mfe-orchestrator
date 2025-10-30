@@ -12,8 +12,6 @@ export async function runInTransaction<T>(fn: (session?: mongoose.ClientSession)
             result = await fn(session)
         })
         return result!
-    } catch (err) {
-        throw err
     } finally {
         session.endSession()
     }

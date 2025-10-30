@@ -1,6 +1,6 @@
 import axios from "axios"
+import sodium from "libsodium-wrappers"
 import { CodeRepositoryType } from "../models/CodeRepositoryModel"
-import sodium from 'libsodium-wrappers'
 
 export interface GithubAccessTokenResponse {
     access_token: string
@@ -104,7 +104,7 @@ export interface CreateRepositoryRequest {
     allow_auto_merge?: boolean
     delete_branch_on_merge?: boolean
     has_downloads?: boolean
-    visibility?: 'public' | 'private' | 'internal'
+    visibility?: "public" | "private" | "internal"
 }
 
 export interface GithubRepository {
@@ -160,10 +160,10 @@ export interface GithubRepository {
 export interface CreateBuildRequest {
     version?: string
     type?: CodeRepositoryType
-    owner: string 
+    owner: string
     repositoryName: string
     ref?: string
-    inputs?: Record<string, any>
+    inputs?: Record<string, unknown>
     workflowId?: string
 }
 
@@ -195,9 +195,9 @@ export interface GithubSecretsListResponse {
     secrets: GithubSecret[]
 }
 
-export interface GithubBaseDTO{
-    accessToken: string, 
-    orgName?: string, 
+export interface GithubBaseDTO {
+    accessToken: string
+    orgName?: string
     userName?: string
 }
 
@@ -206,31 +206,30 @@ export interface GithubRepositoryBaseDTO extends GithubBaseDTO {
 }
 
 export interface GithubUpsertSecretDTO extends GithubRepositoryBaseDTO {
-    secretName: string,
-    value: string,
+    secretName: string
+    value: string
 }
 
 export interface GithubOrganizationSecretDTO extends GithubBaseDTO {
-    secretName: string,
-    value: string,
-    visibility?: 'all' | 'private' | 'selected',
+    secretName: string
+    value: string
+    visibility?: "all" | "private" | "selected"
     selectedRepositoryIds?: number[]
 }
 
 class GithubClient {
-
     async encryptValueForSecret(key: string, secret: string): Promise<string> {
         await sodium.ready
-        
+
         // Convert the secret and key to a Uint8Array.
-        let binkey = sodium.from_base64(key, sodium.base64_variants.ORIGINAL)
-        let binsec = sodium.from_string(secret)
+        const binkey = sodium.from_base64(key, sodium.base64_variants.ORIGINAL)
+        const binsec = sodium.from_string(secret)
 
         // Encrypt the secret using libsodium
-        let encBytes = sodium.crypto_box_seal(binsec, binkey)
+        const encBytes = sodium.crypto_box_seal(binsec, binkey)
 
         // Convert the encrypted Uint8Array to Base64
-        let output = sodium.to_base64(encBytes, sodium.base64_variants.ORIGINAL)
+        const output = sodium.to_base64(encBytes, sodium.base64_variants.ORIGINAL)
 
         // Print the output
         return output
@@ -238,15 +237,15 @@ class GithubClient {
 
     async getAccessToken(data: GithubAccessTokenRquest): Promise<GithubAccessTokenResponse> {
         const responseGithub = await axios.request<GithubAccessTokenResponse>({
-            method: 'POST',
-            url: 'https://github.com/login/oauth/access_token',
+            method: "POST",
+            url: "https://github.com/login/oauth/access_token",
             headers: {
-                Accept: 'application/json'
+                Accept: "application/json"
             },
             data
         })
 
-        if(responseGithub.data.error){
+        if (responseGithub.data.error) {
             throw new Error(responseGithub.data.error_description)
         }
 
@@ -255,11 +254,11 @@ class GithubClient {
 
     async getUser(accessToken: string): Promise<GithubUser> {
         const response = await axios.request<GithubUser>({
-            url: 'https://api.github.com/user',
+            url: "https://api.github.com/user",
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
@@ -267,29 +266,27 @@ class GithubClient {
     }
 
     private getRepositoryBaseUrl(repositoryName: string, orgName?: string, userName?: string) {
-        return orgName
-            ? `https://api.github.com/orgs/${orgName}/repos/${repositoryName}`
-            : `https://api.github.com/repos/${userName}/${repositoryName}`
+        return orgName ? `https://api.github.com/orgs/${orgName}/repos/${repositoryName}` : `https://api.github.com/repos/${userName}/${repositoryName}`
     }
 
-    async getRepositoryPublicKey({accessToken, orgName, userName, repositoryName} : GithubRepositoryBaseDTO): Promise<GithubPublicKey> {
+    async getRepositoryPublicKey({ accessToken, orgName, userName, repositoryName }: GithubRepositoryBaseDTO): Promise<GithubPublicKey> {
         const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/public-key`
 
         const response = await axios.request<GithubPublicKey>({
             url,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
         return response.data
     }
 
-    async getOrganizationPublicKey({accessToken, orgName} : GithubBaseDTO): Promise<GithubPublicKey>{
+    async getOrganizationPublicKey({ accessToken, orgName }: GithubBaseDTO): Promise<GithubPublicKey> {
         if (!orgName) {
-            throw new Error('Organization name is required')
+            throw new Error("Organization name is required")
         }
 
         const url = `https://api.github.com/orgs/${orgName}/actions/secrets/public-key`
@@ -297,28 +294,32 @@ class GithubClient {
         const response = await axios.request<GithubPublicKey>({
             url,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
         return response.data
     }
 
-    async upsertRepositorySecret({accessToken, orgName, userName, repositoryName, secretName, value} : GithubUpsertSecretDTO): Promise<void>{
-
-        const { key, key_id } = (await this.getRepositoryPublicKey({accessToken, orgName, userName, repositoryName}))
+    async upsertRepositorySecret({ accessToken, orgName, userName, repositoryName, secretName, value }: GithubUpsertSecretDTO): Promise<void> {
+        const { key, key_id } = await this.getRepositoryPublicKey({
+            accessToken,
+            orgName,
+            userName,
+            repositoryName
+        })
 
         const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/${encodeURIComponent(secretName)}`
 
         await axios.request<void>({
-            method: 'PUT',
+            method: "PUT",
             url,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             },
             data: {
                 encrypted_value: await this.encryptValueForSecret(key, value),
@@ -327,83 +328,97 @@ class GithubClient {
         })
     }
 
-    async checkRepositorySecretExists({accessToken, orgName, userName, repositoryName, secretName}: Omit<GithubUpsertSecretDTO, 'value'>): Promise<boolean> {
+    async checkRepositorySecretExists({ accessToken, orgName, userName, repositoryName, secretName }: Omit<GithubUpsertSecretDTO, "value">): Promise<boolean> {
         try {
             const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/${encodeURIComponent(secretName)}`
 
             await axios.request({
-                method: 'GET',
+                method: "GET",
                 url,
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'MFE-Orchestrator'
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
                 }
             })
 
             return true
-        } catch (error: any) {
-            if (error.response && error.response.status === 404) {
-                return false
+        } catch (error: unknown) {
+            if (error && typeof error === "object" && "response" in error) {
+                const err = error as { response?: { status?: number } }
+                if (err.response?.status === 404) {
+                    return false
+                }
             }
             throw error
         }
     }
 
-    async upsertOrganizationSecret({accessToken, orgName, secretName, value, visibility = 'private', selectedRepositoryIds} : GithubOrganizationSecretDTO): Promise<void>{
+    async upsertOrganizationSecret({ accessToken, orgName, secretName, value, visibility = "private", selectedRepositoryIds }: GithubOrganizationSecretDTO): Promise<void> {
         if (!orgName) {
-            throw new Error('Organization name is required')
+            throw new Error("Organization name is required")
         }
 
-        const { key_id, key } = (await this.getOrganizationPublicKey({accessToken, orgName}))
+        const { key_id, key } = await this.getOrganizationPublicKey({
+            accessToken,
+            orgName
+        })
 
         const url = `https://api.github.com/orgs/${orgName}/actions/secrets/${encodeURIComponent(secretName)}`
 
-        const data: any = {
+        const data: {
+            encrypted_value: string
+            key_id: string
+            visibility: string
+            selected_repository_ids?: number[]
+        } = {
             encrypted_value: await this.encryptValueForSecret(key, value),
             key_id: key_id,
             visibility
         }
 
         // Se la visibilità è 'selected', aggiungi gli ID dei repository selezionati
-        if (visibility === 'selected' && selectedRepositoryIds && selectedRepositoryIds.length > 0) {
+        if (visibility === "selected" && selectedRepositoryIds && selectedRepositoryIds.length > 0) {
             data.selected_repository_ids = selectedRepositoryIds
         }
 
         await axios.request<void>({
-            method: 'PUT',
+            method: "PUT",
             url,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             },
             data
         })
     }
 
-    async checkOrganizationSecretExists({accessToken, orgName, secretName}: Omit<GithubOrganizationSecretDTO, 'value' | 'visibility' | 'selectedRepositoryIds'>): Promise<boolean>{
+    async checkOrganizationSecretExists({ accessToken, orgName, secretName }: Omit<GithubOrganizationSecretDTO, "value" | "visibility" | "selectedRepositoryIds">): Promise<boolean> {
         if (!orgName) {
-            throw new Error('Organization name is required')
+            throw new Error("Organization name is required")
         }
 
         try {
             const url = `https://api.github.com/orgs/${orgName}/actions/secrets/${encodeURIComponent(secretName)}`
 
             await axios.request({
-                method: 'GET',
+                method: "GET",
                 url,
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'MFE-Orchestrator'
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
                 }
             })
 
             return true
-        } catch (error: any) {
-            if (error.response && error.response.status === 404) {
-                return false
+        } catch (error: unknown) {
+            if (error && typeof error === "object" && "response" in error) {
+                const err = error as { response?: { status?: number } }
+                if (err.response?.status === 404) {
+                    return false
+                }
             }
             throw error
         }
@@ -413,9 +428,9 @@ class GithubClient {
         const response = await axios.request<GithubOrganization>({
             url: `https://api.github.com/orgs/${orgName}`,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
@@ -424,11 +439,11 @@ class GithubClient {
 
     async getUserOrganizations(accessToken: string): Promise<GithubOrganization[]> {
         const response = await axios.request<GithubOrganization[]>({
-            url: 'https://api.github.com/user/orgs',
+            url: "https://api.github.com/user/orgs",
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
@@ -436,17 +451,15 @@ class GithubClient {
     }
 
     async createRepository(repositoryData: CreateRepositoryRequest, accessToken: string, orgName?: string): Promise<GithubRepository> {
-        const url = orgName 
-            ? `https://api.github.com/orgs/${orgName}/repos`
-            : 'https://api.github.com/user/repos'
+        const url = orgName ? `https://api.github.com/orgs/${orgName}/repos` : "https://api.github.com/user/repos"
 
         const response = await axios.request<GithubRepository>({
-            method: 'POST',
+            method: "POST",
             url,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             },
             data: repositoryData
         })
@@ -458,9 +471,9 @@ class GithubClient {
         const response = await axios.request<GithubBranch[]>({
             url: `https://api.github.com/repos/${orgName || userName}/${repositoryName}/branches`,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
@@ -468,37 +481,35 @@ class GithubClient {
     }
 
     async getRepositories(accessToken: string, orgName?: string): Promise<GithubRepository[]> {
-        const url = orgName 
-            ? `https://api.github.com/orgs/${orgName}/repos`
-            : 'https://api.github.com/user/repos'
+        const url = orgName ? `https://api.github.com/orgs/${orgName}/repos` : "https://api.github.com/user/repos"
 
         const response = await axios.request<GithubRepository[]>({
             url,
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             }
         })
 
         return response.data
     }
 
-    async createBuild(buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse>{
-        const {workflowId = 'build-and-deploy.yml'} = buildData
+    async createBuild(buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> {
+        const { workflowId = "build-and-deploy.yml" } = buildData
 
         const response = await axios.request<GithubWorkflowDispatchResponse>({
             url: `https://api.github.com/repos/${buildData.owner}/${buildData.repositoryName}/actions/workflows/${workflowId}/dispatches`,
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'MFE-Orchestrator'
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
             },
             data: {
-                ref: buildData.ref || 'main',
+                ref: buildData.ref || "main",
                 inputs: {
-                    version: buildData.version || '${{github.ref_name}}',
+                    version: buildData.version || "${{github.ref_name}}",
                     ...buildData.inputs
                 }
             }

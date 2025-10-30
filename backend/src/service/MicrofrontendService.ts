@@ -1,11 +1,9 @@
-import { ClientSession, Document, ObjectId, Schema, Types } from "mongoose"
-import Microfrontend, { HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
-
 import { MultipartFile } from "@fastify/multipart"
 import axios from "axios"
 import fs from "fs-extra"
 import * as git from "isomorphic-git"
 import http from "isomorphic-git/http/node"
+import { ClientSession, Document, ObjectId, Schema, Types } from "mongoose"
 import os, { tmpdir } from "os"
 import path, { join } from "path"
 import unzipper from "unzipper"
@@ -17,21 +15,21 @@ import GitlabClient from "../client/GitlabClient"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
+import { IMarket } from "../models/MarketModel"
+import Microfrontend, { HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { runInTransaction } from "../utils/runInTransaction"
-import BaseAuthorizedService from "./BaseAuthorizedService"
-import MarketService from "./MarketService"
-import { IMarket } from "../models/MarketModel"
-import { deploySecretName } from "./CodeRepositoryService"
 import { ApiKeyService } from "./ApiKeyService"
-import { ApiKeyRole } from "../models/ApiKeyModel"
+import BaseAuthorizedService from "./BaseAuthorizedService"
+import { deploySecretName } from "./CodeRepositoryService"
+import MarketService from "./MarketService"
 
 export class MicrofrontendService extends BaseAuthorizedService {
-    
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
         const microfrontend = await Microfrontend.findById(idObj, {}, { session })
@@ -60,7 +58,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
             if (microfrontend?.codeRepository?.createData) {
                 const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
-                
+
                 if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
                     if (!codeRepository.azureData) {
                         throw new Error("Azure data is not set")
@@ -74,7 +72,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         microfrontend.codeRepository.createData.name
                     )
                     microfrontend.codeRepository.repositoryId = createdRepository.name
-                    if(template){
+                    if (template) {
                         await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, template)
                     }
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
@@ -102,9 +100,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     microfrontend.codeRepository.repositoryId = createdRepository.id + ""
                     microfrontend.codeRepository.name = createdRepository.name
                     // Now will inject api key
-                    await this.gitHubInjectApiKey(codeRepository, microfrontend);
+                    await this.gitHubInjectApiKey(codeRepository, microfrontend)
                     // Now will inject the template
-                    if(template){
+                    if (template) {
                         await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)
                     }
                 }
@@ -113,13 +111,16 @@ export class MicrofrontendService extends BaseAuthorizedService {
             }
         }
 
-        return await Microfrontend.create({ ...microfrontend, projectId: projectIdObj })
+        return await Microfrontend.create({
+            ...microfrontend,
+            projectId: projectIdObj
+        })
     }
     async gitHubInjectApiKey(codeRepository: ICodeRepository, microfrontend: MicrofrontendDTO) {
-        if(codeRepository.provider !== CodeRepositoryProvider.GITHUB) return;
-        if(codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return;
-        if(!microfrontend.codeRepository.name) return;
-        
+        if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
+        if (codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return
+        if (!microfrontend.codeRepository.name) return
+
         const githubClient = new GithubClient()
 
         const exists = await githubClient.checkRepositorySecretExists({
@@ -128,8 +129,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
             secretName: deploySecretName
         })
 
-        if(exists){
-            return;
+        if (exists) {
+            return
         }
 
         const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
@@ -138,29 +139,27 @@ export class MicrofrontendService extends BaseAuthorizedService {
             expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
         })
 
-
         await githubClient.upsertRepositorySecret({
             accessToken: codeRepository.accessToken,
             userName: codeRepository.githubData?.userName,
             repositoryName: microfrontend.codeRepository.name,
             secretName: deploySecretName,
-            value: apiKey.apiKey,
-        })  
+            value: apiKey.apiKey
+        })
     }
 
     async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, template: IMarket) {
         const templateUrl = template.zipUrl
-        if(!templateUrl){
+        if (!templateUrl) {
             throw new Error("Template url is not set")
         }
-        if(!codeRepository.azureData){
+        if (!codeRepository.azureData) {
             throw new Error("Azure data is not set")
         }
 
-
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
-        const repoUrl = "https://root:"+accessToken+"@dev.azure.com/"+codeRepository.azureData.organization+"/"+codeRepository.azureData.projectId+"/_git/"+repositoryName
+        const repoUrl = "https://root:" + accessToken + "@dev.azure.com/" + codeRepository.azureData.organization + "/" + codeRepository.azureData.projectId + "/_git/" + repositoryName
 
         try {
             // Try clone
@@ -193,7 +192,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 .on("error", reject)
         })
 
-
         let files = await fs.readdir(tempDir)
         files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
 
@@ -204,7 +202,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 const items = await fs.readdir(top)
                 for (const item of items) {
                     try {
-                        await fs.move(join(top, item), join(tempDir, item), { overwrite: true })
+                        await fs.move(join(top, item), join(tempDir, item), {
+                            overwrite: true
+                        })
                     } catch (err) {
                         console.error(`Error moving ${item}:`, err)
                     }
@@ -219,13 +219,22 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         // Stage + commit
         try {
-            await git.branch({ fs, dir: tempDir, ref: "main", checkout: true, force: true })
+            await git.branch({
+                fs,
+                dir: tempDir,
+                ref: "main",
+                checkout: true,
+                force: true
+            })
             await git.add({ fs, dir: tempDir, filepath: "." })
             await git.commit({
                 fs,
                 dir: tempDir,
                 message: "Initial commit",
-                author: { name: "MFE Orchestrator Bot", email: "bot@mfe-orchestrator.dev" }
+                author: {
+                    name: "MFE Orchestrator Bot",
+                    email: "bot@mfe-orchestrator.dev"
+                }
             })
 
             // Push creates "main" on remote if missing
@@ -258,7 +267,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
     async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {
         const templateUrl = template.zipUrl
-        if(!templateUrl){
+        if (!templateUrl) {
             throw new Error("Template url is not set")
         }
 
@@ -299,7 +308,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
 
         //Download piplines data
-        const responsePipelines = await axios.get(pipelinesUrl, { responseType: "stream" })
+        const responsePipelines = await axios.get(pipelinesUrl, {
+            responseType: "stream"
+        })
         if (responsePipelines.status !== 200) throw new Error(`Failed to download pipelines: ${responsePipelines.statusText}`)
 
         await new Promise((resolve, reject) => {
@@ -308,7 +319,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 .on("close", resolve)
                 .on("error", reject)
         })
-
 
         // Flatten GitHub zip (moves contents up)
         let files = await fs.readdir(tempDir)
@@ -321,7 +331,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 const items = await fs.readdir(top)
                 for (const item of items) {
                     try {
-                        await fs.move(join(top, item), join(tempDir, item), { overwrite: true })
+                        await fs.move(join(top, item), join(tempDir, item), {
+                            overwrite: true
+                        })
                     } catch (err) {
                         console.error(`Error moving ${item}:`, err)
                     }
@@ -358,16 +370,25 @@ export class MicrofrontendService extends BaseAuthorizedService {
         } else {
             fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
         }
-        
+
         // Stage + commit
         try {
-            await git.branch({ fs, dir: tempDir, ref: "main", checkout: true, force: true })
+            await git.branch({
+                fs,
+                dir: tempDir,
+                ref: "main",
+                checkout: true,
+                force: true
+            })
             await git.add({ fs, dir: tempDir, filepath: "." })
             await git.commit({
                 fs,
                 dir: tempDir,
                 message: "Initial commit",
-                author: { name: "MFE Orchestrator Bot", email: "bot@mfe-orchestrator.dev" }
+                author: {
+                    name: "MFE Orchestrator Bot",
+                    email: "bot@mfe-orchestrator.dev"
+                }
             })
 
             // Push creates "main" on remote if missing
@@ -458,7 +479,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
         // deploy microfrontend
         const slugToFind = microfrontend.slug
 
-        await Microfrontend.deleteMany({ slug: slugToFind, environmentId: { $in: targetEnvironmentsObj }, session })
+        await Microfrontend.deleteMany({
+            slug: slugToFind,
+            environmentId: { $in: targetEnvironmentsObj },
+            session
+        })
 
         await Promise.all(targetEnvironmentIds.map(async targetEnvironmentId => Microfrontend.create({ ...microfrontend, environmentId: targetEnvironmentId }, { session })))
     }
@@ -468,7 +493,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (!project) {
             throw new EntityNotFoundError(projectId)
         }
-        const microfrontend = await Microfrontend.findOne({ slug: microfrontendSlug, projectId })
+        const microfrontend = await Microfrontend.findOne({
+            slug: microfrontendSlug,
+            projectId
+        })
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendSlug)
         }
@@ -598,13 +626,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
     private async replacePlaceholdersInDirectory(directory: string, mfeSlug: string): Promise<void> {
         const processFile = async (filePath: string) => {
             try {
-                const content = await fs.readFile(filePath, 'utf8')
-                let updatedContent = content
-                    .replace(/%microfrontendSlug%/g, mfeSlug)
-                    .replace(/%domain%/g, process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev")
+                const content = await fs.readFile(filePath, "utf8")
+                const updatedContent = content.replace(/%microfrontendSlug%/g, mfeSlug).replace(/%domain%/g, process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev")
 
                 if (content !== updatedContent) {
-                    await fs.writeFile(filePath, updatedContent, 'utf8')
+                    await fs.writeFile(filePath, updatedContent, "utf8")
                     fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
                 }
             } catch (error) {
@@ -683,11 +709,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         await this.ensureAccessToMicrofrontend(host)
 
-        if(remote.parentIds){
-            if(!remote.parentIds.includes(host._id)){
-            remote.parentIds.push(host._id)
+        if (remote.parentIds) {
+            if (!remote.parentIds.includes(host._id)) {
+                remote.parentIds.push(host._id)
             }
-        }else{
+        } else {
             remote.parentIds = [host._id]
         }
 
@@ -706,37 +732,37 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         await this.ensureAccessToMicrofrontend(host)
 
-        if(remote.parentIds){
+        if (remote.parentIds) {
             remote.parentIds = remote.parentIds.filter(id => id.toString() !== host._id.toString())
         }
 
         return await remote.save()
     }
 
-    async setPosition(id: string, x : number, y : number): Promise<IMicrofrontend> {
+    async setPosition(id: string, x: number, y: number): Promise<IMicrofrontend> {
         const microfrontend = await this.getById(id)
         if (!microfrontend) {
             throw new EntityNotFoundError(id)
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
-        if(!microfrontend.position){
-            microfrontend.position = {x, y}
-        }else{
+        if (!microfrontend.position) {
+            microfrontend.position = { x, y }
+        } else {
             microfrontend.position.x = x
             microfrontend.position.y = y
         }
         return await microfrontend.save()
     }
 
-    async setDimension(id: string, width : number, height : number): Promise<IMicrofrontend> {
+    async setDimension(id: string, width: number, height: number): Promise<IMicrofrontend> {
         const microfrontend = await this.getById(id)
         if (!microfrontend) {
             throw new EntityNotFoundError(id)
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
-        if(!microfrontend.position){
-            microfrontend.position = {width, height}
-        }else{
+        if (!microfrontend.position) {
+            microfrontend.position = { width, height }
+        } else {
             microfrontend.position.width = width
             microfrontend.position.height = height
         }

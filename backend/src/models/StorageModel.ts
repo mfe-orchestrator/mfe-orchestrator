@@ -1,4 +1,4 @@
-import mongoose, { ObjectId, Document, Schema } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { AzureStorageConfig } from "../client/AzureStorageAccount"
 import { GoogleStorageConfig } from "../client/GoogleStorageAccount"
 import { S3ClientConfig } from "../client/S3Buckets"
@@ -51,34 +51,35 @@ const storageSchema = new Schema<IStorage>(
             type: Schema.Types.Mixed,
             required: true,
             validate: {
-                validator: function (value: any) {
+                validator: function (this: Document, value: Record<string, unknown>): boolean {
                     // In update context, 'this' might be the query, get type from the update data
                     const storageType = this.get("type")
                     //const storageType = (this as any)?.type || (this as any)?._update?.$set.type as StorageType
 
-                    if(!storageType){
-                        return false;
+                    if (!storageType) {
+                        return false
                     }
 
                     switch (storageType) {
                         case StorageType.GOOGLE:
                             if (!value.projectId || !value.authType) return false
                             if (value.authType === "serviceAccount") {
-                                return value.credentials?.client_email && value.credentials?.private_key
+                                const credentials = value.credentials as Record<string, unknown> | undefined
+                                return !!(credentials?.client_email && credentials?.private_key)
                             } else if (value.authType === "apiKey") {
-                                return value.apiKey
+                                return !!value.apiKey
                             }
                             return true // default auth
                         case StorageType.AZURE:
-                            return value.accountName && value.accountKey && value.containerName
+                            return !!(value.accountName && value.accountKey && value.containerName)
                         case StorageType.AWS:
-                            return value.region && value.accessKeyId && value.secretAccessKey && value.bucketName
+                            return !!(value.region && value.accessKeyId && value.secretAccessKey && value.bucketName)
                         default:
                             return false
                     }
                 },
-                message: function (props: any) {
-                    const storageType = (this as any)?.type || (this as any)?._update?.type as StorageType
+                message: function (props: { value?: unknown }) {
+                    const storageType = (this as unknown as { type?: StorageType })?.type
                     return `Invalid authConfig for ${storageType} storage: ${JSON.stringify(props.value)}`
                 }
             }

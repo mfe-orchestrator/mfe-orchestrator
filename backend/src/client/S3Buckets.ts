@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, PutObjectCommandInput } from "@aws-sdk/client-s3"
+import { PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Readable } from "stream"
 
@@ -48,9 +48,10 @@ export class S3BucketClient {
         try {
             await this.s3Client.send(command)
             return `https://${this.bucketName}.s3.amazonaws.com/${encodeURIComponent(filePath)}`
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error uploading file to S3:", error)
-            throw new Error(`Failed to upload file to S3: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to upload file to S3: ${errorMessage}`)
         }
     }
 
@@ -68,9 +69,10 @@ export class S3BucketClient {
 
         try {
             return await getSignedUrl(this.s3Client, command, { expiresIn })
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error generating pre-signed URL:", error)
-            throw new Error(`Failed to generate pre-signed URL: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to generate pre-signed URL: ${errorMessage}`)
         }
     }
 }

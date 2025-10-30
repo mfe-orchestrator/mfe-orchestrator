@@ -1,14 +1,15 @@
-import User, { IUser, UserStatus } from "../models/UserModel"
+import { randomBytes } from "crypto"
+import { ObjectId } from "mongoose"
+import AuthenticationError from "../errors/AuthenticationError"
+import { InvalidCredentialsError } from "../errors/InvalidCredentialsError"
 import { UserAlreadyExistsError } from "../errors/UserAlreadyExistsError"
 import { UserNotFoundError } from "../errors/UserNotFoundError"
-import { InvalidCredentialsError } from "../errors/InvalidCredentialsError"
-import UserLoginDTO from "../types/UserLoginDTO"
+import User, { IUser, UserStatus } from "../models/UserModel"
 import ResetPasswordDataDTO from "../types/ResetPasswordDataDTO"
-import { UserInvitationDTO } from "../types/UserInvitationDTO"
-import { randomBytes } from "crypto"
-import EmailService from "./EmailSenderService"
-import AuthenticationError from "../errors/AuthenticationError"
 import UserAccoutActivationDTO from "../types/UserAccoutActivationDTO"
+import { UserInvitationDTO } from "../types/UserInvitationDTO"
+import UserLoginDTO from "../types/UserLoginDTO"
+import EmailService from "./EmailSenderService"
 
 export class UserService {
     private emailService: EmailService
@@ -163,11 +164,11 @@ export class UserService {
         return user.toFrontendObject()
     }
 
-    async saveLanguage(language: string, _id: any): Promise<void> {
+    async saveLanguage(language: string, _id: string | ObjectId): Promise<void> {
         await User.updateOne({ _id }, { language })
     }
 
-    async saveTheme(theme: string, _id: any): Promise<void> {
+    async saveTheme(theme: string, _id: string | ObjectId): Promise<void> {
         await User.updateOne({ _id }, { theme })
     }
 }

@@ -1,4 +1,4 @@
-import { FastifyError, FastifyReply, FastifyRequest } from "fastify"
+import { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { BusinessException } from "../errors/BusinessException"
 
 export const errorHandler = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
@@ -42,6 +42,6 @@ export const errorHandler = (error: FastifyError, request: FastifyRequest, reply
     })
 }
 
-export const registerErrorHandler = (fastify: any) => {
+export const registerErrorHandler = (fastify: FastifyInstance) => {
     fastify.setErrorHandler(errorHandler)
 }

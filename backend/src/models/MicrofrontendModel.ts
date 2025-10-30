@@ -1,22 +1,22 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export enum MicrofrontendType {
     HOST = "HOST",
     REMOTE = "REMOTE"
 }
-export interface ICodeRepositoryMicrofrontend{
+export interface ICodeRepositoryMicrofrontend {
     enabled: boolean
     name: string
     codeRepositoryId: ObjectId
     repositoryId: string
-    repositoryData: any,
+    repositoryData: Record<string, unknown>
     gitlab?: {
-        groupId?: number,
-        path?: string,
+        groupId?: number
+        path?: string
     }
 }
 
-export interface ICanaryMicrofrontend{
+export interface ICanaryMicrofrontend {
     enabled: boolean
     percentage: number
     type: CanaryType
@@ -25,7 +25,7 @@ export interface ICanaryMicrofrontend{
     version?: string
 }
 
-export interface IHostMicrofrontend{
+export interface IHostMicrofrontend {
     type: HostedOn
     url?: string
     storageId?: ObjectId

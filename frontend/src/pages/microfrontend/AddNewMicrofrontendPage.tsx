@@ -1,33 +1,32 @@
-import { useTranslation } from "react-i18next"
-import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useQuery } from "@tanstack/react-query"
+import { FormProvider, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import useToastNotificationStore from "@/store/useToastNotificationStore"
-import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import TextField from "@/components/input/TextField.rhf"
-import TextareaField from "@/components/input/TextareaField.rhf"
+import * as z from "zod"
+import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import SelectField from "@/components/input/SelectField.rhf"
 import Switch from "@/components/input/Switch.rhf"
-import { useQuery } from "@tanstack/react-query"
-import useProjectStore from "@/store/useProjectStore"
-import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
-import SinglePageLayout from "@/components/SinglePageLayout"
+import TextareaField from "@/components/input/TextareaField.rhf"
+import TextField from "@/components/input/TextField.rhf"
 import { FetchDataMarketCard } from "@/components/market"
 import { CodeRepositorySection } from "@/components/microfrontend"
-import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import { Alert } from "@/components/ui/alert"
 import DangerZoneRemoveMicrofrontend from "@/components/microfrontend/DangerZoneRemoveMicrofrontend"
+import SinglePageLayout from "@/components/SinglePageLayout"
+import { Alert } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
+import useProjectStore from "@/store/useProjectStore"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 const logoMap: Record<string, string> = {
-    'AWS': '/img/aws.svg',
-    'GOOGLE': '/img/GoogleCloud.svg',
-    'AZURE': '/img/Azure.svg'
+    AWS: "/img/aws.svg",
+    GOOGLE: "/img/GoogleCloud.svg",
+    AZURE: "/img/Azure.svg"
 }
-
 
 // Define form schema with validation
 const formSchema = z
@@ -56,10 +55,12 @@ const formSchema = z
                 enabled: z.boolean().default(false),
                 codeRepositoryId: z.string().optional(),
                 repositoryId: z.string().optional(),
-                createData: z.object({
-                    name: z.string().min(3).max(100),
-                    private: z.boolean().default(false),
-                }).optional()
+                createData: z
+                    .object({
+                        name: z.string().min(3).max(100),
+                        private: z.boolean().default(false)
+                    })
+                    .optional()
             })
             .optional(),
 
@@ -101,10 +102,7 @@ interface AddNewMicrofrontendFormProps {
     versions?: string[]
 }
 
-const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
-    versions, repositories, frontend, storages
-}) => {
-
+const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versions, repositories, frontend, storages }) => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
@@ -124,22 +122,22 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
                 type: "MFE_ORCHESTRATOR_HUB",
                 entryPoint: "assets/remoteEntry.js"
             },
-            ...(repositories && repositories.length > 0 ? {
-                codeRepository: {
-                    enabled: Boolean(template),
-                    repositoryId: "create_new",
-                }
-            } : {}),
+            ...(repositories && repositories.length > 0
+                ? {
+                      codeRepository: {
+                          enabled: Boolean(template),
+                          repositoryId: "create_new"
+                      }
+                  }
+                : {}),
             canary: {
                 enabled: false,
                 percentage: 0,
                 type: "ON_SESSIONS",
-                deploymentType: "BASED_ON_VERSION",
+                deploymentType: "BASED_ON_VERSION"
             }
         }
     })
-
-
 
     const { watch } = form
     const canaryEnabled = watch("canary.enabled")
@@ -150,21 +148,19 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
         const dataToSend = {
             ...data,
             version: data.version === "custom" ? data.customVersion : data.version
-        } as Microfrontend
+        } as Microfrontend & { customVersion?: string }
 
-        delete (dataToSend as any).customVersion
+        delete dataToSend.customVersion
 
-        if(Boolean(template)){
-            if(!dataToSend.codeRepository?.createData){
+        if (template) {
+            if (!dataToSend.codeRepository?.createData) {
                 dataToSend.codeRepository.createData = {}
             }
             dataToSend.codeRepository.createData.template = template
-            if(!dataToSend.codeRepository.createData.name){
+            if (!dataToSend.codeRepository.createData.name) {
                 dataToSend.codeRepository.createData.name = data.slug
             }
         }
-
-        
 
         if (isEdit) {
             await microfrontendsApi.update(id, dataToSend)
@@ -172,8 +168,8 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
                 message: t("microfrontend.updated_success_message")
             })
         } else {
-            if(searchParams.get('parentId')){
-                dataToSend.parentIds = [searchParams.get('parentId')]
+            if (searchParams.get("parentId")) {
+                dataToSend.parentIds = [searchParams.get("parentId")]
             }
 
             await microfrontendsApi.create(dataToSend)
@@ -360,7 +356,9 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
                         <Button disabled={form.formState.isSubmitting} type="button" variant="secondary" onClick={() => navigate(-1)}>
                             {t("common.cancel")}
                         </Button>
-                        <Button disabled={form.formState.isSubmitting} type="submit">{t("common.save")}</Button>
+                        <Button disabled={form.formState.isSubmitting} type="submit">
+                            {t("common.save")}
+                        </Button>
                     </div>
                 </form>
             </FormProvider>
@@ -401,10 +399,9 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
 
     return (
         <ApiDataFetcher queries={[storagesQuery, repositoriesQuery, versionsQuery, frontendQuery]}>
-            <AddNewMicrofrontendForm storages={storagesQuery.data} repositories={repositoriesQuery.data} frontend={frontendQuery.data} versions={versionsQuery.data}/>
+            <AddNewMicrofrontendForm storages={storagesQuery.data} repositories={repositoriesQuery.data} frontend={frontendQuery.data} versions={versionsQuery.data} />
         </ApiDataFetcher>
     )
-    
 }
 
 export default AddNewMicrofrontendPage
