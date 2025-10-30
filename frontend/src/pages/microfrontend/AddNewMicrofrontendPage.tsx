@@ -164,12 +164,18 @@ const AddNewMicrofrontendForm : React.FC<AddNewMicrofrontendFormProps> = ({
             }
         }
 
+        
+
         if (isEdit) {
             await microfrontendsApi.update(id, dataToSend)
             notificationToast.showSuccessNotification({
                 message: t("microfrontend.updated_success_message")
             })
         } else {
+            if(searchParams.get('parentId')){
+                dataToSend.parentIds = [searchParams.get('parentId')]
+            }
+
             await microfrontendsApi.create(dataToSend)
             notificationToast.showSuccessNotification({
                 message: t("microfrontend.created_success_message")

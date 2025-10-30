@@ -1,3 +1,4 @@
+import MicrofrontendFlowLayout from "@/components/microfrontend/MicrofrontendFlowLayout"
 import MicrofrontendList from "@/components/microfrontend/MicrofrontendList"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Button } from "@/components/ui/button/button"
@@ -15,18 +16,26 @@ const MicrofrontendDashboard = () => {
     const codeRepositoriesApi = useCodeRepositoriesApi()
     const { t } = useTranslation()
 	const navigate = useNavigate()
-    const [tabsValue, setTabsValue] = useState<"grid" | "list">("grid")
+    const [tabsValue, setTabsValue] = useState<"flow" | "grid" | "list">("flow")
 
     const onResetFilters = () => {
         setSearchTerm("")
     }
 
-    const onAddNewMicrofrontend = async () => {
+    const onAddNewMicrofrontend = async (parentId?: string) => {
         const repositories = await codeRepositoriesApi.getRepositoriesByProjectId(projectStore.project?._id!)
         if(repositories && repositories.length > 0){
-            navigate(`/templates-library`)
+            if(parentId){
+                navigate(`/templates-library?parentId=${parentId}`)
+            }else{
+                navigate(`/templates-library`)
+            }
         }else{
-            navigate(`/microfrontend/new`)
+            if(parentId){
+                navigate(`/microfrontend/new?parentId=${parentId}`)
+            }else{
+                navigate(`/microfrontend/new`)
+            }
         }
     }
 
@@ -45,7 +54,7 @@ const MicrofrontendDashboard = () => {
             right={
                 tabsValue !== "grid" ? (
                     <div>
-                        <Button variant="secondary" onClick={onAddNewMicrofrontend} className="flex-[0_0_auto]">
+                        <Button variant="secondary" onClick={()=>onAddNewMicrofrontend()} className="flex-[0_0_auto]">
                             <CirclePlus />
                             {t("microfrontend.add_new")}
                         </Button>

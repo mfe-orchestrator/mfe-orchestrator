@@ -16,6 +16,24 @@ export enum HostedOn {
     BASED_ON_VERSION = 'BASED_ON_VERSION',
     BASED_ON_URL = 'BASED_ON_URL'
   }
+
+
+export interface PositionDTO {
+    id: string;
+    x: number;
+    y: number;
+}
+
+export interface DimensionsDTO {
+    id: string;
+    width: number;
+    height: number;
+}
+
+export interface RelationDTO {
+    remote: string;
+    host: string;
+}
   
 export interface Microfrontend {
     _id?: string
@@ -64,6 +82,13 @@ export interface Microfrontend {
     description?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    parentIds?: string[];
+    position?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }
 }
 
 const useMicrofrontendsApi = () => {
@@ -126,6 +151,44 @@ const useMicrofrontendsApi = () => {
         return response.data;
     };
 
+    const setPosition = async (data: PositionDTO) => {
+        const { id, ...position } = data
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/${id}/position`,
+            method: "PUT",
+            data: position
+        });
+        return response.data;
+    };
+
+    const setDimensions = async (data: DimensionsDTO) => {
+        const { id, ...dimensions } = data
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/${id}/dimensions`,
+            method: "PUT",
+            data: dimensions
+        });
+        return response.data;
+    };
+
+
+    const setRelation = async (data: RelationDTO) => {
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/relation`,
+            method: "PUT",
+            data
+        });
+        return response.data;
+    };
+
+    const removeRelation = async (data: RelationDTO) => {
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/relation`,
+            method: "DELETE",
+            data
+        });
+        return response.data;
+    };
 
     return {
         getByProjectId,
@@ -135,6 +198,10 @@ const useMicrofrontendsApi = () => {
         getSingle,
         build,
         getVersions,
+        setPosition,
+        setDimensions,
+        setRelation,
+        removeRelation
     }
 }
 

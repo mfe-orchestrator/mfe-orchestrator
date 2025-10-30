@@ -31,6 +31,13 @@ export interface IHostMicrofrontend{
     storageId?: ObjectId
     entryPoint?: string
 }
+
+export interface IPosition {
+    x?: number
+    y?: number
+    width?: number
+    height?: number
+}
 export interface IMicrofrontend extends Document<ObjectId> {
     type: MicrofrontendType
     template: string
@@ -45,6 +52,9 @@ export interface IMicrofrontend extends Document<ObjectId> {
     description?: string
     createdAt: Date
     updatedAt: Date
+
+    parentIds?: ObjectId[]
+    position?: IPosition
 }
 
 export enum HostedOn {
@@ -153,6 +163,25 @@ const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofronten
     }
 })
 
+const microfrontendPositionSchema = new Schema<IPosition>({
+    x: {
+        type: Number,
+        required: false
+    },
+    y: {
+        type: Number,
+        required: false
+    },
+    width: {
+        type: Number,
+        required: false
+    },
+    height: {
+        type: Number,
+        required: false
+    }
+})
+
 const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
     {
         slug: {
@@ -200,6 +229,15 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         },
         codeRepository: {
             type: microfrontendCodeRepositorySchema,
+            required: false
+        },
+        parentIds: {
+            type: [Schema.Types.ObjectId],
+            ref: "Microfrontend",
+            required: false
+        },
+        position: {
+            type: microfrontendPositionSchema,
             required: false
         }
     },

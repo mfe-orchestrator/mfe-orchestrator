@@ -31,6 +31,7 @@ import { ApiKeyService } from "./ApiKeyService"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 
 export class MicrofrontendService extends BaseAuthorizedService {
+    
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
         const microfrontend = await Microfrontend.findById(idObj, {}, { session })
@@ -668,6 +669,78 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(id)
         }
         return BuiltFrontend.find({ microfrontendId: microfrontend._id }).select("version").distinct("version")
+    }
+
+    async setRelation(hostId: string, remoteId: string): Promise<IMicrofrontend> {
+        const host = await this.getById(hostId)
+        if (!host) {
+            throw new EntityNotFoundError(hostId)
+        }
+        const remote = await this.getById(remoteId)
+        if (!remote) {
+            throw new EntityNotFoundError(remoteId)
+        }
+
+        await this.ensureAccessToMicrofrontend(host)
+
+        if(remote.parentIds){
+            if(!remote.parentIds.includes(host._id)){
+            remote.parentIds.push(host._id)
+            }
+        }else{
+            remote.parentIds = [host._id]
+        }
+
+        return await remote.save()
+    }
+
+    async deleteRelation(hostId: string, remoteId: string): Promise<IMicrofrontend> {
+        const host = await this.getById(hostId)
+        if (!host) {
+            throw new EntityNotFoundError(hostId)
+        }
+        const remote = await this.getById(remoteId)
+        if (!remote) {
+            throw new EntityNotFoundError(remoteId)
+        }
+
+        await this.ensureAccessToMicrofrontend(host)
+
+        if(remote.parentIds){
+            remote.parentIds = remote.parentIds.filter(id => id.toString() !== host._id.toString())
+        }
+
+        return await remote.save()
+    }
+
+    async setPosition(id: string, x : number, y : number): Promise<IMicrofrontend> {
+        const microfrontend = await this.getById(id)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(id)
+        }
+        await this.ensureAccessToMicrofrontend(microfrontend)
+        if(!microfrontend.position){
+            microfrontend.position = {x, y}
+        }else{
+            microfrontend.position.x = x
+            microfrontend.position.y = y
+        }
+        return await microfrontend.save()
+    }
+
+    async setDimension(id: string, width : number, height : number): Promise<IMicrofrontend> {
+        const microfrontend = await this.getById(id)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(id)
+        }
+        await this.ensureAccessToMicrofrontend(microfrontend)
+        if(!microfrontend.position){
+            microfrontend.position = {width, height}
+        }else{
+            microfrontend.position.width = width
+            microfrontend.position.height = height
+        }
+        return await microfrontend.save()
     }
 
     ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {

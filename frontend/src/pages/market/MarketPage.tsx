@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo } from 'react';
@@ -20,6 +20,7 @@ const MarketPage : React.FC = () => {
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [selectedCompiler, setSelectedCompiler] = useState<string>('all');
   const [hostType, setHostType] = useState<string>('all'); // 'all', 'remote', 'host'
+  const [getParams] = useSearchParams()
 
   const marketsQuery = useQuery({
     queryKey: ['markets'],
@@ -39,7 +40,11 @@ const MarketPage : React.FC = () => {
   }, [marketsQuery.data]);
 
   const handleCardClick = (slug: string) => {
-    navigate(`/microfrontend/new?template=${slug}`);
+    if(getParams.get('parentId')){
+      navigate(`/microfrontend/new?template=${slug}&parentId=${getParams.get('parentId')}`);
+    }else{
+      navigate(`/microfrontend/new?template=${slug}`);
+    }
   };
 
   const handleBlankCardClick = () => {

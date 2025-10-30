@@ -10,6 +10,7 @@ interface MicrofrontendDTO {
     status?: "active" | "inactive"
     createdAt?: Date
     updatedAt?: Date
+    parentIds?: string[]
     codeRepository: {
         enabled: boolean
         codeRepositoryId: string

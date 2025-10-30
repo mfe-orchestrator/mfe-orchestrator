@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { useQuery } from "@tanstack/react-query"
-import { LayoutGrid, StretchHorizontal } from "lucide-react"
+import { LayoutGrid, StretchHorizontal, Workflow } from "lucide-react"
 import React, { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -15,20 +15,21 @@ import { TabsTrigger } from "../ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "../ui/tabs/tabs"
 import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 import NoMicrofrontendPlaceholder from "./NoMicrofrontendPlaceholder"
+import MicrofrontendFlowLayout from "./MicrofrontendFlowLayout"
 
 interface MicrofrontendListProps {
     searchTerm?: string
     projectId?: string
     onResetFilters: () => void
     setTabsValue: (value: "grid" | "list") => void
-    onAddNewMicrofrontend: () => void
+    onAddNewMicrofrontend: (parentId?: string) => void
 }
 
 interface MicrofrontendListRealProps {
     microfrontends: Microfrontend[]
     onResetFilters: () => void
-    setTabsValue: (value: "grid" | "list") => void
-    onAddNewMicrofrontend: () => void
+    setTabsValue: (value: "grid" | "list" | "flow") => void
+    onAddNewMicrofrontend: (parentId?: string) => void
 }
 
 const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfrontends, onResetFilters, setTabsValue, onAddNewMicrofrontend }) => {
@@ -36,7 +37,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     const navigate = useNavigate()
 
     return (
-        <Tabs defaultValue="grid" className="space-y-4" iconButtons tabsListPosition="end">
+        <Tabs defaultValue="flow" className="space-y-4" iconButtons tabsListPosition="end">
             <div className="flex items-start justify-between gap-x-6 gap-y-2 flex-wrap">
                 <div className="flex-[1_1_280px] max-w-[600px]">
                     <h2 className="text-xl font-semibold text-foreground-secondary">
@@ -45,6 +46,9 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                     {microfrontends.length === 0 && <p className="text-foreground-secondary mt-1">{t("microfrontend.no_microfrontends_found_description")}</p>}
                 </div>
                 <TabsList>
+                    <TabsTrigger value="flow" onClick={() => setTabsValue("flow")}>
+                        <Workflow />
+                    </TabsTrigger>
                     <TabsTrigger value="grid" onClick={() => setTabsValue("grid")}>
                         <LayoutGrid />
                     </TabsTrigger>
@@ -54,6 +58,9 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                 </TabsList>
             </div>
 
+            <TabsContent value="flow">
+                <MicrofrontendFlowLayout microfrontends={microfrontends} onAddNewMicrofrontend={onAddNewMicrofrontend} />
+            </TabsContent>
             <TabsContent value="grid">
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(280px,_1fr))]">
                     <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} className={microfrontends.length === 0 && "col-span-4"} />

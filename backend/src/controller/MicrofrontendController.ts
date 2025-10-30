@@ -70,6 +70,24 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, projectId, data))
     })
 
+    fastify.put<{
+        Body: {
+            remote: string
+            host: string
+        }
+    }>("/microfrontends/relation", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).setRelation(request.body.host, request.body.remote))
+    })
+
+    fastify.delete<{
+        Body: {
+            remote: string
+            host: string
+        }
+    }>("/microfrontends/relation", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).deleteRelation(request.body.host, request.body.remote))
+    })
+
     fastify.post<{
         Params: {
             id: string
@@ -80,6 +98,30 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         }
     }>("/microfrontends/:id/build", async (request, reply) => {
         return reply.send(await new MicrofrontendService(request.databaseUser).build(request.params.id, request.body.version, request.body.branch))
+    })
+
+    fastify.put<{
+        Params: {
+            id: string
+        },
+        Body: {
+            x: number
+            y: number
+        }
+    }>("/microfrontends/:id/position", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).setPosition(request.params.id, request.body.x, request.body.y))
+    })
+
+    fastify.put<{
+        Params: {
+            id: string
+        },
+        Body: {
+            width: number
+            height: number
+        }
+    }>("/microfrontends/:id/dimension", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).setDimension(request.params.id, request.body.width, request.body.height))
     })
 
 
