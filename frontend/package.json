@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.3.0",
-    "@azure/msal-browser": "^4.13.2",
+    "@azure/msal-browser": "^4.26.0",
     "@azure/msal-react": "^3.0.13",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.10.0",
