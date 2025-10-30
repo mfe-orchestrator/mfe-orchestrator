@@ -37,7 +37,7 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
     const navigate = useNavigate()
 
     return (
-        <Tabs defaultValue="flow" className="space-y-4" iconButtons tabsListPosition="end">
+        <Tabs defaultValue="grid" className="space-y-4" iconButtons tabsListPosition="end">
             <div className="flex items-start justify-between gap-x-6 gap-y-2 flex-wrap">
                 <div className="flex-[1_1_280px] max-w-[600px]">
                     <h2 className="text-xl font-semibold text-foreground-secondary">
