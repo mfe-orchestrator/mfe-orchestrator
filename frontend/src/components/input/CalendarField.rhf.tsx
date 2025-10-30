@@ -26,12 +26,12 @@ const CalendarField = <T extends FieldValues>({ name, label, rules, id, classNam
         formState: { errors }
     } = useFormContext<T>()
 
-    const { language } = useThemeStore()
+    const { getLocale } = useThemeStore()
 
     const error = errors[name] as FieldError | undefined
     const inputId = id || name
 
-    const locale = language === "it" ? it : language === "fr" ? fr : language === "de" ? de : language === "es" ? es : enUS
+    const locale = getLocale()
 
     return (
         <div className={cn("w-full", className)}>

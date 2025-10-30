@@ -13,12 +13,14 @@ import useProjectStore from '@/store/useProjectStore';
 import CreateApiKeyDialog from '@/components/ApiKeys/CreateApiKeyDialog';
 import SinglePageLayout from '@/components/SinglePageLayout';
 import NoApiKeyPlaceholder from '@/components/ApiKeys/NoApiKeyPlaceholder';
+import useThemeStore from '@/store/useThemeStore';
 
 const ApiKeysPage = () => {
   const { t } = useTranslation();
   const apiKeysApi = useApiKeysApi();
   const queryClient = useQueryClient();
   const project = useProjectStore();
+  const themeStore = useThemeStore();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -41,7 +43,7 @@ const ApiKeysPage = () => {
 
   const formatExpirationDate = (dateString: string) => {
     if (!dateString) return ''
-    return format(new Date(dateString), 'PP');
+    return format(new Date(dateString), 'PPP', { locale: themeStore.getLocale() });
   };
 
   return (

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import React from 'react';
+import { Locale } from 'date-fns';
+import { it, fr, de, es, enUS } from 'date-fns/locale';
 
 export enum ThemeEnum {
     LIGHT = 'LIGHT',
@@ -18,6 +20,8 @@ interface ThemeState {
 
     language: string;
     setLanguage: (language: string) => void;
+
+    getLocale: () => Locale;
 }
 
 const useThemeStore = create<ThemeState>()(
@@ -32,6 +36,9 @@ const useThemeStore = create<ThemeState>()(
       setLanguage: (language: string) => {
         set({ language });
       },
+      getLocale: () => {
+        return get().language === 'it' ? it : get().language === 'fr' ? fr : get().language === 'de' ? de : get().language === 'es' ? es : enUS;
+      }
     }),
     {
       name: 'theme-storage',
