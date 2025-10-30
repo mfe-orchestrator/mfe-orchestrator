@@ -22,7 +22,9 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
 
     useEffect(() => {
         if (isCreateDialogOpen) {
-            form.reset()
+            const defaultExpiration = new Date()
+            defaultExpiration.setMonth(defaultExpiration.getMonth() + 6)
+            form.reset({ name: "", expirationDate: defaultExpiration })
             createApiKeyMutation.reset()
         }
     }, [isCreateDialogOpen])
@@ -60,9 +62,9 @@ const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreateDialogO
                             </DialogHeader>
                         )}
                         {showSuccess ? (
-                            <div className="mt-4 py-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+                            <div className="my-4 bg-gray-100 dark:bg-gray-700 rounded-md">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-mono bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm">{createApiKeyMutation.data.apiKey}</span>
+                                    <span className="font-mono px-3 rounded text-sm">{createApiKeyMutation.data.apiKey}</span>
                                     <button
                                         type="button"
                                         onClick={() => {

@@ -45,75 +45,77 @@ const ApiKeysPage = () => {
   };
 
   return (
-    <ApiDataFetcher queries={[apiKeysQuery]}>
-      <SinglePageLayout
-        title={t('apiKeys.api_keys')}
-        description={t('apiKeys.manage_api_keys')}
-        right={apiKeysQuery.data?.length === 0 ? null :
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('apiKeys.create_api_key')}
-          </Button>
-        }
-      >
-        <Card>
-          <CardContent>
-            {apiKeysQuery.data?.length === 0 ?
-              <NoApiKeyPlaceholder />
-              :
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('apiKeys.name')}</TableHead>
-                    <TableHead>{t('apiKeys.created')}</TableHead>
-                    <TableHead>{t('apiKeys.expires')}</TableHead>
-                    <TableHead className="text-right">{t('common.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {apiKeysQuery.data?.map((key) => (
-                    <TableRow key={key._id}>
-                      <TableCell className="font-medium">{key.name}</TableCell>
-                      <TableCell>{formatExpirationDate(key.createdAt)}</TableCell>
-                      <TableCell>{formatExpirationDate(key.expiresAt)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={deleteApiKeyMutation.isPending}
-                          onClick={() => {
-                            setKeyToDelete({ id: key._id, name: key.name });
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+    <>
+      <ApiDataFetcher queries={[apiKeysQuery]}>
+        <SinglePageLayout
+          title={t('apiKeys.api_keys')}
+          description={t('apiKeys.manage_api_keys')}
+          right={apiKeysQuery.data?.length === 0 ? null :
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('apiKeys.create_api_key')}
+            </Button>
+          }
+        >
+          <Card>
+            <CardContent>
+              {apiKeysQuery.data?.length === 0 ?
+                <NoApiKeyPlaceholder />
+                :
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('apiKeys.name')}</TableHead>
+                      <TableHead>{t('apiKeys.created')}</TableHead>
+                      <TableHead>{t('apiKeys.expires')}</TableHead>
+                      <TableHead className="text-right">{t('common.actions')}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            }
+                  </TableHeader>
+                  <TableBody>
+                    {apiKeysQuery.data?.map((key) => (
+                      <TableRow key={key._id}>
+                        <TableCell className="font-medium">{key.name}</TableCell>
+                        <TableCell>{formatExpirationDate(key.createdAt)}</TableCell>
+                        <TableCell>{formatExpirationDate(key.expiresAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={deleteApiKeyMutation.isPending}
+                            onClick={() => {
+                              setKeyToDelete({ id: key._id, name: key.name });
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              }
 
-          </CardContent>
-        </Card>
-        <CreateApiKeyDialog isCreateDialogOpen={isCreateDialogOpen} setIsCreateDialogOpen={setIsCreateDialogOpen} />
-        <DeleteConfirmationDialog
-          isOpen={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onDelete={async () => {
-            if (keyToDelete) {
-              await deleteApiKeyMutation.mutateAsync(keyToDelete.id);
-            }
-          }}
-          onDeleteSuccess={() => {
-            setKeyToDelete(null);
-          }}
-          title={t('apiKeys.key_deleted')}
-          description={keyToDelete ? t('apiKeys.confirm_delete', { name: keyToDelete.name }) : ''}
-        />
-      </SinglePageLayout>
-    </ApiDataFetcher>
+            </CardContent>
+          </Card>
+        </SinglePageLayout>
+      </ApiDataFetcher>
+      <CreateApiKeyDialog isCreateDialogOpen={isCreateDialogOpen} setIsCreateDialogOpen={setIsCreateDialogOpen} />
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onDelete={async () => {
+          if (keyToDelete) {
+            await deleteApiKeyMutation.mutateAsync(keyToDelete.id);
+          }
+        }}
+        onDeleteSuccess={() => {
+          setKeyToDelete(null);
+        }}
+        title={t('apiKeys.key_deleted')}
+        description={keyToDelete ? t('apiKeys.confirm_delete', { name: keyToDelete.name }) : ''}
+      />
+    </>
   );
 };
 

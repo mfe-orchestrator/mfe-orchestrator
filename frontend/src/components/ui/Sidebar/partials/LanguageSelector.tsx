@@ -6,6 +6,7 @@ import { Globe } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { NavItem } from "./NavItem/NavItem"
 import { Button } from "../../button/button"
+import useThemeStore from "@/store/useThemeStore"
 
 interface LanguageSelectorProps {
     isSidebarCollapsed?: boolean
@@ -18,12 +19,14 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isSidebarCollapsed,
     const { t, i18n } = useTranslation()
     const userApi = useUserApi()
     const userStore = useUserStore()
+    const themeStore = useThemeStore()
 
     const changeLanguage = (lng: string) => {
         i18n.changeLanguage(lng)
         setLanguageInLocalStorage(lng)
         if (userStore.user) {
             userApi.saveLanguage(lng)
+            themeStore.setLanguage(lng)
         }
     }
 

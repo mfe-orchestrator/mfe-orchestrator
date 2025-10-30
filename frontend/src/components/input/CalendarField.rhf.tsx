@@ -1,4 +1,5 @@
 import { format } from "date-fns"
+import { enUS, it, fr, de, es } from "date-fns/locale"
 import { Controller, FieldError, FieldValues, Path, useFormContext } from "react-hook-form"
 import { DayPicker } from "react-day-picker"
 import "react-day-picker/dist/style.css"
@@ -6,6 +7,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Button } from "../ui/button/button"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/utils/styleUtils"
+import useUserStore from "@/store/useUserStore"
+import useThemeStore from "@/store/useThemeStore"
 
 type CalendarFieldProps<T extends FieldValues> = {
     name: Path<T>
@@ -23,8 +26,12 @@ const CalendarField = <T extends FieldValues>({ name, label, rules, id, classNam
         formState: { errors }
     } = useFormContext<T>()
 
+    const { language } = useThemeStore()
+
     const error = errors[name] as FieldError | undefined
     const inputId = id || name
+
+    const locale = language === "it" ? it : language === "fr" ? fr : language === "de" ? de : language === "es" ? es : enUS
 
     return (
         <div className={cn("w-full", className)}>
@@ -42,11 +49,11 @@ const CalendarField = <T extends FieldValues>({ name, label, rules, id, classNam
                         <PopoverTrigger asChild>
                             <Button variant="secondary" className={cn("w-full justify-start text-left font-normal", !value && "text-muted-foreground")} disabled={disabled}>
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {value ? format(new Date(value), "PPP") : <span>{placeholder}</span>}
+                                {value ? format(new Date(value), "PPP", { locale }) : <span>{placeholder}</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                            <DayPicker mode="single" selected={value ? new Date(value) : undefined} onSelect={date => onChange(date)} disabled={disabled} initialFocus {...field} />
+                            <DayPicker animate={true} locale={locale} mode="single" selected={value ? new Date(value) : undefined} onSelect={date => onChange(date)} disabled={disabled} initialFocus {...field} />
                         </PopoverContent>
                     </Popover>
                 )}

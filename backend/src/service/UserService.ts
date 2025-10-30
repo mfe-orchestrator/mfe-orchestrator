@@ -160,11 +160,7 @@ export class UserService {
             throw new UserNotFoundError(id)
         }
 
-        return {
-            email: user.email,
-            name: user.name,
-            surname: user.surname
-        }
+        return user.toFrontendObject()
     }
 
     async saveLanguage(language: string, _id: any): Promise<void> {

@@ -15,21 +15,7 @@ interface ThemeToggleProps {
     dropdownContentAlign?: "start" | "center" | "end"
 }
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose = "sidebar", dropdownContentSide, dropdownContentAlign }: ThemeToggleProps) => {
-    const { t } = useTranslation()
-    const { theme, setTheme } = useThemeStore()
-    const { user } = useUserStore()
-    const userApi = useUserApi()
-
-    const onSetTheme = (theme: ThemeEnum) => {
-        setTheme(theme)
-        setThemeInLocalStorage(theme)
-        if (user) {
-            userApi.saveTheme(theme)
-        }
-    }
-
-    const getThemeIcon = () => {
+const ThemeIcon : React.FC<{theme : ThemeEnum}>  = ({theme}) => {
         switch (theme) {
             case ThemeEnum.DARK:
                 return <Moon />
@@ -39,17 +25,34 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose =
             default:
                 return <Monitor />
         }
+}
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ isSidebarCollapsed, purpose = "sidebar", dropdownContentSide, dropdownContentAlign }: ThemeToggleProps) => {
+    const { t } = useTranslation()
+    const { theme, setTheme } = useThemeStore()
+    const { user, ...userStore } = useUserStore()
+    const userApi = useUserApi()
+
+    const onSetTheme = (theme: ThemeEnum) => {
+        setTheme(theme)
+        setThemeInLocalStorage(theme)
+        if (user) {
+            userApi.saveTheme(theme)
+            userStore.setTheme(theme)
+        }
     }
+
+    
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 {purpose === "page" ? (
                     <Button variant="ghost" size="icon" aria-label="Language selector">
-                        {getThemeIcon()}
+                        <ThemeIcon theme={theme} />
                     </Button>
                 ) : (
-                    <NavItem type="secondary" icon={getThemeIcon()} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
+                    <NavItem type="secondary" icon={<ThemeIcon theme={theme} />} name={t("theme.toggle_theme")} aria-label="Theme toggle" isSidebarCollapsed={isSidebarCollapsed} />
                 )}
             </DropdownMenuTrigger>
             <DropdownMenuContent side={dropdownContentSide || purpose === "page" ? "bottom" : "right"} align={dropdownContentAlign || purpose === "page" ? "end" : "start"}>
