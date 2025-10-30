@@ -49,7 +49,7 @@ const UserCard: React.FC<{ user: any; handleDeleteUser: (userId: string, userNam
                         {user.role}
                     </Badge>
                     <div className="flex flex-col items-center">
-                        <CardTitle className="text-lg font-medium mb-0">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}</CardTitle>
+                        <CardTitle className="text-lg font-medium mb-0">{user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : <div></div>}</CardTitle>
                         <address className="text-sm text-foreground-secondary not-italic">{user.email}</address>
                     </div>
                     {!isOwner && (
@@ -155,7 +155,7 @@ const ProjectUsersList: React.FC = () => {
                                                         </Avatar>
                                                         <div>
                                                             <div className="font-medium">
-                                                                {user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : t("project_users.no_name")}
+                                                                {user.name || user.surname ? `${user.name || ""} ${user.surname || ""}`.trim() : <div></div>}
                                                             </div>
                                                             <div className="text-sm text-muted-foreground">{user.email}</div>
                                                         </div>
