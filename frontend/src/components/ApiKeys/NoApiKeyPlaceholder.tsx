@@ -73,8 +73,8 @@ const NoApiKeyPlaceholder: React.FC = () => {
     }
     
     return (
-        <div className="flex flex-col items-center justify-center">
-            <p className="text-center py-8 text-muted-foreground">{t('apiKeys.no_api_keys')}</p>
+        <div className="flex flex-col items-center justify-center py-4">
+            <p className="text-center pb-4 text-muted-foreground">{t('apiKeys.no_api_keys')}</p>
             <CreateApiKeyForm
                 buttons={
                     <div className="flex justify-center mt-4">

@@ -30,7 +30,14 @@ interface CreateApiKeyFormProps{
 }
 const CreateApiKeyForm = ({ onSubmit: onSubmitCallback, buttons }: CreateApiKeyFormProps) => {
 
-    const form = useForm<ApiKeyFormData>()
+    const defaultExpiration = new Date()
+    defaultExpiration.setMonth(defaultExpiration.getMonth() + 6)
+
+    const form = useForm<ApiKeyFormData>({
+        defaultValues: {
+            expirationDate: defaultExpiration
+        }
+    })
 
     const onSubmit = (data: ApiKeyFormData) => {
         if (onSubmitCallback) return onSubmitCallback(data)
