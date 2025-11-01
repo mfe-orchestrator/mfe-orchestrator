@@ -177,7 +177,7 @@ export default defineConfig({
         )
 
         return {
-            code: this.getConfig(framework, childs as any, microfrontend.slug)
+            code: this.getConfig(framework, childs, microfrontend.slug)
         }
     }
     /**
