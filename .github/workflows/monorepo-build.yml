@@ -1,4 +1,4 @@
-name: 🏗️ Backend Build
+name: 🏗️ Monorepo Build & Test
 
 permissions:
   contents: read
@@ -11,7 +11,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,30 +20,36 @@ jobs:
 
       - name: ⬇️ Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.19.0
 
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "25.1.0"
-          cache-dependency-path: "./backend/pnpm-lock.yaml"
+          node-version: "23.11.1"
+          cache-dependency-path: "./pnpm-lock.yaml"
           cache: "pnpm"
 
       - name: 📦 Install Dependencies
         run: pnpm install
-        working-directory: backend
 
-      - name: 🔨 Build
+      - name: 🔍 Lint & Format Check
+        run: |
+          pnpm lint
+          pnpm typecheck
+
+      - name: 🔨 Build All Packages
         run: pnpm build
-        working-directory: backend
 
       # - name: 🧪 Run Tests
       #   run: pnpm test
-      #   working-directory: backend
 
       - name: 📤 Upload Backend Build
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
           path: backend/dist
+
+      - name: 📤 Upload Frontend Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
