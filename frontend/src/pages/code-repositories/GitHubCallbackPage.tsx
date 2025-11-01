@@ -54,7 +54,7 @@ const GitHubCallbackPage = () => {
 
     useEffect(() => {
         handleCallback()
-    }, [handleCallback])
+    }, [])
 
     const handleRetry = () => {
         navigate("/code-repositories")

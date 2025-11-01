@@ -1,0 +1,49 @@
+name: 🏗️ Backend Build
+
+permissions:
+    contents: read
+
+on:
+    workflow_call:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: 🔄 Checkout
+              uses: actions/checkout@v4
+
+            - name: ⬇️ Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10
+
+            - name: ⚙️ Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "23.11.1"
+                  cache-dependency-path: "./backend/pnpm-lock.yaml"
+                  cache: "pnpm"
+
+            - name: 📦 Install Dependencies
+              run: pnpm install
+              working-directory: backend
+
+            - name: 🔨 Build
+              run: pnpm build
+              working-directory: backend
+
+            # - name: 🧪 Run Tests
+            #   run: pnpm test
+            #   working-directory: backend
+
+            - name: 📤 Upload Backend Build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: backend-build
+                  path: backend/dist

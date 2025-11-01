@@ -9,12 +9,16 @@ on:
     tags: ["*"]
 
 jobs:
-  monorepo-build:
-    uses: ./.github/workflows/monorepo-build.yml
+  backend-build:
+    uses: ./.github/workflows/backend-build.yml
+    secrets: inherit
+
+  frontend-build:
+    uses: ./.github/workflows/frontend-build.yml
     secrets: inherit
 
   docker-build:
-    needs: [monorepo-build]
+    needs: [backend-build, frontend-build]
     runs-on: ubuntu-latest
 
     steps:
