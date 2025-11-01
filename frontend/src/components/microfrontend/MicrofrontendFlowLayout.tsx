@@ -67,9 +67,13 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
             return
         }
 
-        // Trova gli edge collegati al nodo in hover
-        const connectedEdges = edges.filter(edge => edge.source === hoveredNodeId)
-        const connectedNodeIds = new Set(connectedEdges.map(edge => edge.target))
+        // Trova gli edge collegati al nodo in hover (sia come sorgente che come target)
+        const childEdges = edges.filter(edge => edge.source === hoveredNodeId)
+        const parentEdges = edges.filter(edge => edge.target === hoveredNodeId)
+
+        const childNodeIds = new Set(childEdges.map(edge => edge.target))
+        const parentNodeIds = new Set(parentEdges.map(edge => edge.source))
+        const connectedNodeIds = new Set([...childNodeIds, ...parentNodeIds])
 
         // Applica stili ai nodi
         setNodes(nodes =>
@@ -88,7 +92,10 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
         // Applica stili agli edge
         setEdges(edges =>
             edges.map(edge => {
-                const isConnected = edge.source === hoveredNodeId
+                const isConnectedAsChild = edge.source === hoveredNodeId
+                const isConnectedAsParent = edge.target === hoveredNodeId
+                const isConnected = isConnectedAsChild || isConnectedAsParent
+
                 return {
                     ...edge,
                     style: isConnected ? { stroke: "#a855f7", strokeWidth: 2 } : { opacity: 0.3, strokeWidth: 2 },
@@ -143,7 +150,6 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
     )
     const onConnect = useCallback(
         async (params: Connection) => {
-            console.log("onConnect", params)
             const newEdge : Edge = {
                 ...params,
                 id: params.source + "-" + params.target,
