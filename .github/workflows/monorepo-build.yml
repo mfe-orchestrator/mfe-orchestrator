@@ -28,16 +28,16 @@ jobs:
           cache-dependency-path: "./pnpm-lock.yaml"
           cache: "pnpm"
 
-      - name: 💾 Cache node_modules
-        id: cache-node-modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            **/node_modules
-            **/.pnpm-store
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+      # - name: 💾 Cache node_modules
+      #   id: cache-node-modules
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       **/node_modules
+      #       **/.pnpm-store
+      #     key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-modules-
 
       - name: 📦 Install Dependencies
         run: pnpm install
