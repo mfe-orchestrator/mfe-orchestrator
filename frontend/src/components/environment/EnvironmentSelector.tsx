@@ -24,16 +24,18 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                     onEnvironmentChange(environments.find(env => env._id === value))
                 }}
             >
-                {selectedEnvironment && (
-                    <SelectTrigger>
-                        <SelectValue>
+                <SelectTrigger>
+                    <SelectValue>
+                        {selectedEnvironment ? (
                             <div className="flex items-center gap-2">
                                 <span className="w-4 h-4 rounded-full border-2 border-border" style={{ backgroundColor: selectedEnvironment.color }} />
                                 <span>{selectedEnvironment.slug}</span>
                             </div>
-                        </SelectValue>
-                    </SelectTrigger>
-                )}
+                        ) : (
+                            <span>{t("deployments.select_environment")}</span>
+                        )}
+                    </SelectValue>
+                </SelectTrigger>
                 {environments && (
                     <SelectContent>
                         {environments.map(environment => (

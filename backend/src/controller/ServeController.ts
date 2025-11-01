@@ -1,9 +1,19 @@
-import {  FastifyInstance, FastifyReply } from "fastify"
+import { FastifyInstance, FastifyReply } from "fastify"
 import ServeService from "../service/ServeService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export default async function serveController(fastify: FastifyInstance) {
     const serveService = new ServeService()
+
+    fastify.get<{
+        Querystring: {
+            framework: string,
+            microfrontendId: string,
+            deploymentId: string
+        }
+    }>('/serve/code', async (request, reply) => {
+        return reply.send(await serveService.getCodeIntegration(request.query))
+    })
 
     fastify.get<{
         Params: {
@@ -126,18 +136,18 @@ export default async function serveController(fastify: FastifyInstance) {
         return reply.send(data.stream)
     })
 
-    function addHeadersFromFilePath(filePath: string, headers: Record<string, string>, reply: FastifyReply){
+    function addHeadersFromFilePath(filePath: string, headers: Record<string, string>, reply: FastifyReply) {
         if (filePath.endsWith('.js')) {
             reply.header('Content-Type', 'application/javascript');
         }
-        if(headers){
+        if (headers) {
             Object.entries(headers).forEach(([key, value]) => {
                 reply.header(key, value)
             })
         }
     }
 
-    
 
-    
+
+
 }

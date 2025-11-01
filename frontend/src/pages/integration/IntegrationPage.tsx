@@ -6,25 +6,30 @@ import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsConte
 import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "@/components/ui/tabs/tabs"
-import useServeApi from "@/hooks/apiClients/useServeApi"
+import useServeApi, { IServeMicrofrontend } from "@/hooks/apiClients/useServeApi"
 import useProjectStore from "@/store/useProjectStore"
 import EnvironmentsGate from "@/theme/EnvironmentsGate"
 import { useQuery } from "@tanstack/react-query"
 import React, { useState } from "react"
 import EnvironmentVariablesIntegration from "./partials/EnvironmentVariablesIntegration"
 import FrontendIntegration from "./partials/FrontendIntegration"
+import MicrofrontendSelector from "@/components/environment/MicrofrontendSelector"
+import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
 
 const IntegrationPage: React.FC = () => {
     const projectStore = useProjectStore()
-    const serveApi = useServeApi()
+    const deploymentApi = useDeploymentsApi()
     const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0
     const [activeSection, setActiveSection] = useState("frontend")
 
-    const microfrontendQuery = useQuery({
-        queryKey: ["all-data-serve", projectStore.environment?._id],
-        queryFn: () => serveApi.getAll(projectStore.environment?._id),
+    const deploymentQuery = useQuery({
+        queryKey: ["deployment", projectStore.environment?._id],
+        queryFn: () => deploymentApi.getLastDeployment(projectStore.environment?._id),
         enabled: !!projectStore.environment?._id
     })
+
+    console.log("Midsf", deploymentQuery.data?.microfrontends)
 
     return (
         <SinglePageLayout
@@ -38,25 +43,28 @@ const IntegrationPage: React.FC = () => {
         >
             <EnvironmentsGate>
                 <DeploymentGate environmentId={projectStore.environment?._id}>
-                    <ApiDataFetcher queries={[microfrontendQuery]}>
-                        <Tabs value={activeSection} onValueChange={setActiveSection} tabsListPosition="fullWidth">
-                            <TabsList>
-                                <TabsTrigger value="frontend" className="flex-1">
-                                    Frontend Integration
-                                </TabsTrigger>
-                                <TabsTrigger value="env-vars" className="flex-1">
-                                    Environment Variables
-                                </TabsTrigger>
-                            </TabsList>
+                    <ApiDataFetcher queries={[deploymentQuery]}>
+                        {!deploymentQuery.data ?
+                            <p>No deployment found</p> :
+                            <Tabs value={activeSection} onValueChange={setActiveSection} tabsListPosition="fullWidth">
+                                <TabsList>
+                                    <TabsTrigger value="frontend" className="flex-1">
+                                        Frontend Integration
+                                    </TabsTrigger>
+                                    <TabsTrigger value="env-vars" className="flex-1">
+                                        Environment Variables
+                                    </TabsTrigger>
+                                </TabsList>
 
-                            <TabsContent value="frontend">
-                                <FrontendIntegration microfrontends={microfrontendQuery.data?.microfrontends || []} environmentId={projectStore.environment?._id} />
-                            </TabsContent>
+                                <TabsContent value="frontend">
+                                    <FrontendIntegration deployment={deploymentQuery.data} />
+                                </TabsContent>
 
-                            <TabsContent value="env-vars">
-                                <EnvironmentVariablesIntegration environmentId={projectStore.environment?._id} />
-                            </TabsContent>
-                        </Tabs>
+                                <TabsContent value="env-vars">
+                                    <EnvironmentVariablesIntegration environmentId={projectStore.environment?._id} />
+                                </TabsContent>
+                            </Tabs>
+                        }
                     </ApiDataFetcher>
                 </DeploymentGate>
             </EnvironmentsGate>

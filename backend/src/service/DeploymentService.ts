@@ -13,12 +13,17 @@ class DeploymentService extends BaseAuthorizedService {
         return Deployment.find({ environmentId }).sort({ deployedAt: -1 })
     }
 
+    async getLastByEnvironmentId(environmentId: string | ObjectId) {
+        await this.ensureAccessToEnvironment(environmentId)
+        return Deployment.findOne({ environmentId }).sort({ deployedAt: -1 })
+    }
+
     private async getDeploymentId(environmentId: Schema.Types.ObjectId | Types.ObjectId, session?: ClientSession) {
-        
+
         const deployments = await Deployment.find({ environmentId }).session(session || null)
-        if(!deployments || deployments.length === 0){
+        if (!deployments || deployments.length === 0) {
             return "#1"
-        }else{
+        } else {
             return `#${deployments.length + 1}`
         }
     }
@@ -37,7 +42,7 @@ class DeploymentService extends BaseAuthorizedService {
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
 
 
-        const deployment =  await new Deployment({
+        const deployment = await new Deployment({
             environmentId: environment._id,
             microfrontends: microfrontend,
             variables: variables,

@@ -58,6 +58,14 @@ const useDeploymentsApi = () => {
         return response.data
     }
 
+    const getLastDeployment = async (environmentId: string) => {
+        const response = await apiClient.doRequest<DeploymentDTO>({
+            url: `/api/environments/${environmentId}/deployments/last`,
+            method: "GET"
+        })
+        return response.data
+    }
+
     const redeploy = async (deploymentId: string) => {
         const response = await apiClient.doRequest<DeploymentDTO>({
             url: `/api/deployment/${deploymentId}/redeployment`,
@@ -79,7 +87,8 @@ const useDeploymentsApi = () => {
         createDeployment,
         getDeployment,
         redeploy,
-        getCanaryUsers
+        getCanaryUsers,
+        getLastDeployment
     }
 }
 

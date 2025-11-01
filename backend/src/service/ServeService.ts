@@ -8,13 +8,15 @@ import Project, { IProject } from "../models/ProjectModel"
 import path from "path"
 import fs from "fs"
 import { fastify } from ".."
-import { ObjectId } from "mongoose"
+import { Schema, ObjectId } from "mongoose"
 import Stream from "stream"
 
 export interface MicrofrontendAdaptedToServe {
     url: string
     slug: string
     continuousDeployment?: boolean
+    version: string
+    name: string
 }
 
 export interface GetAllDataDTO {
@@ -22,7 +24,7 @@ export interface GetAllDataDTO {
     microfrontends?: MicrofrontendAdaptedToServe[]
 }
 
-export interface StreamWithHeader{
+export interface StreamWithHeader {
     stream: Stream
     headers: Record<string, string>
 }
@@ -39,7 +41,145 @@ const HEADERS_CACHE = {
     'Cross-Origin-Resource-Policy': 'cross-origin'
 }
 
+interface CodeIntegrationRequestDTO {
+    framework: string,
+    microfrontendId: string,
+    deploymentId: string
+}
+
+interface CodeIntegrationResponseDTO {
+    code: string,
+}
+
 export default class ServeService {
+
+    getWebpackConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string) {
+        // Generate remotes string with proper formatting
+        const remotesString = microfrontends
+            .map((mfe, index) => {
+                const name = mfe?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${index + 1}`
+                const url = mfe.url
+                return `        '${name}': '${name}@${url}'`
+            })
+            .join(",\n")
+
+        const remotesBlock = microfrontends.length > 0 ? `
+      remotes: {
+${remotesString}
+      },` : ''
+
+        return `// webpack.config.js
+const { ModuleFederationPlugin } = require('webpack').container;
+
+module.exports = {
+  // ... other webpack config
+  plugins: [
+    new ModuleFederationPlugin({
+      name: '${microfrontendSlug}',
+      filename: 'remoteEntry.js',${remotesBlock}
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: '^18.2.0',
+          eager: true
+        },
+        'react-dom': {
+          singleton: true,
+          requiredVersion: '^18.2.0',
+          eager: true
+        },
+        'react-router-dom': {
+          singleton: true,
+          requiredVersion: '^6.15.0',
+          eager: true
+        }
+      },
+    }),
+  ],
+};`
+    }
+
+    getViteConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string): string {
+        const remotes = microfrontends?.reduce((acc, mfe, index) => {
+            const name = mfe?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${index + 1}`
+            acc[name] = mfe.url
+            return acc
+        }, {} as Record<string, string>) || {}
+
+        // Generate remotes string with proper indentation
+        const remotesString = Object.entries(remotes)
+            .map(([key, value]) => `        '${key}': '${value}'`)
+            .join(",\n")
+
+        const remotesBlock = microfrontends.length > 0 ? `
+      remotes: {
+${remotesString}
+      },` : ''
+
+        const viteConfig = `// vite.config.js
+import { defineConfig } from 'vite';
+import federation from '@originjs/vite-plugin-federation';
+
+export default defineConfig({
+  plugins: [
+    federation({
+      name: '${microfrontendSlug}',
+      filename: 'remoteEntry.js',${remotesBlock}
+      shared: ['react', 'react-dom', 'react-router-dom']
+    })
+  ],
+  build: {
+    target: 'esnext',
+    minify: false,
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: {
+        minifyInternalExports: false
+      }
+    }
+  }
+});`
+
+        return viteConfig
+    }
+
+    getConfig(framework: string, microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string): string {
+        switch (framework) {
+            case "vite":
+                return this.getViteConfig(microfrontends, microfrontendSlug)
+            case "webpack":
+                return this.getWebpackConfig(microfrontends, microfrontendSlug)
+            default:
+                return ""
+        }
+    }
+
+    async getCodeIntegration({ framework, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
+        const deployment = await Deployment.findById(deploymentId);
+        if (!deployment) {
+            throw new EntityNotFoundError(deploymentId);
+        }
+        const microfrontend = deployment.microfrontends?.find(mfe => mfe._id.toString() === microfrontendId);
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendId);
+        }
+
+        const environment = await Environment.findById(deployment.environmentId);
+        if (!environment) {
+            throw new EntityNotFoundError(deployment.environmentId?.toString());
+        }
+
+        const filteredMicrofrontends = deployment.microfrontends
+            ?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId)) || []
+
+        const childs = await Promise.all(
+            filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, environment.slug))
+        )
+
+        return {
+            code: this.getConfig(framework, childs as any, microfrontend.slug)
+        }
+    }
     /**
      * Get all microfrontends by environment ID
      * @param environmentId The ID of the environment
@@ -238,8 +378,8 @@ export default class ServeService {
         //Adesso tiro fuori il MFE
         const mfeEntryPoint = microfrontend.host.entryPoint || "index.js"
 
-        return { 
-            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE, 
+        return {
+            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
             stream: await this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
         }
     }
@@ -272,8 +412,8 @@ export default class ServeService {
 
         const mfeEntryPoint = deployedMFE.host.entryPoint || "index.js"
 
-        return { 
-            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE, 
+        return {
+            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
             stream: await this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
         }
     }
@@ -388,6 +528,8 @@ const getMicrofrontendUrl = async (microfrontend: IMicrofrontend, environmentSlu
 async function adaptMicrofrontendToServe(microfrontend: IMicrofrontend, environmentSlug?: string): Promise<MicrofrontendAdaptedToServe> {
     return {
         url: await getMicrofrontendUrl(microfrontend, environmentSlug),
+        version: microfrontend.version,
+        name: microfrontend.name,
         slug: microfrontend.slug,
         continuousDeployment: microfrontend.continuousDeployment
     }

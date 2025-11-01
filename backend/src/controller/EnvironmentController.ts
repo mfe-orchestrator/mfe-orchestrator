@@ -20,6 +20,10 @@ export default async function environmentController(fastify: FastifyInstance) {
         return reply.send(await new DeploymentService(request.databaseUser).getByEnvironmentId(request.params.id))
     })
 
+    fastify.get<{ Params: { id: string } }>("/environments/:id/deployments/last", async (request, reply) => {
+        return reply.send(await new DeploymentService(request.databaseUser).getLastByEnvironmentId(request.params.id))
+    })
+
     fastify.post<{ Body: EnvironmentDTO }>("/environments", async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
