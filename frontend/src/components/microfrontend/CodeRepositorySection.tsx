@@ -67,7 +67,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
     })
 
     // Function to fetch repositories when code repository is selected
-    const fetchRepository = useCallback(async () => {
+    const fetchRepository = async () => {
         if (forceCreation) {
             setValue("codeRepository.repositoryId", "create_new")
             return
@@ -82,7 +82,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
         } else {
             setFetchedRepositories([])
         }
-    }, [forceCreation, selectedCodeRepositoryId, codeRepositoryEnabled, selectedRepositoryId, setValue, fetchRepositoriesMutation])
+    }
 
     // Effect to fetch repositories when a repository is selected
     useEffect(() => {
