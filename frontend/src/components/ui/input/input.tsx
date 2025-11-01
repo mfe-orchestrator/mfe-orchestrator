@@ -19,7 +19,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type,
         }, debounceTime)
 
         return () => clearTimeout(timeoutId)
-    }, [props.value, debounceTime, onDebounce])
+    }, [props.value, debounceTime])
 
     return <input type={type} className={cn(inputVariants({ layoutSize, fullWidth }), className)} ref={ref} {...props} />
 })

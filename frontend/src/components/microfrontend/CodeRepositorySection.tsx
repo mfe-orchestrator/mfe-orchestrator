@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { useCallback, useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import useCodeRepositoriesApi, { Repository } from "../../hooks/apiClients/useCodeRepositoriesApi"
+import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../hooks/apiClients/useCodeRepositoriesApi"
 import SelectField from "../input/SelectField.rhf"
 import Switch from "../input/Switch.rhf"
 import TextField from "../input/TextField.rhf"
@@ -19,7 +19,7 @@ const logoMap: Record<string, string> = {
 }
 
 interface CodeRepositorySectionProps {
-    repositoriesData: Repository[]
+    repositoriesData: ICodeRepository[]
     isEdit?: boolean
     forceCreation?: boolean
 }
