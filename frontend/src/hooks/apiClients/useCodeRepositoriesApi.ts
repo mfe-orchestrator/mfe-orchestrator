@@ -1,4 +1,4 @@
-import useApiClient, { IClientRequestDataExtended } from "../useApiClient"
+import useApiClient, { IClientRequestDataExtended, IClientRequestMetadataExtended } from "../useApiClient"
 
 export interface AddRepositoryGithubDTO {
     code: string
@@ -165,6 +165,18 @@ export interface UnifiedBranch {
     authorAvatar: string | null
 }
 
+export interface Repository {
+    id?: string | number
+    name: string
+    _id: string
+    provider: string
+    [key: string]: unknown
+}
+
+interface IGetRepositories extends IClientRequestMetadataExtended {
+    repositoryId: string
+}
+
 const useCodeRepositoriesApi = () => {
     const apiClient = useApiClient()
 
@@ -183,9 +195,10 @@ const useCodeRepositoriesApi = () => {
         return data.data
     }
 
-    const getRepositories = async (repositoryId: string): Promise<unknown> => {
-        const data = await apiClient.doRequest<unknown>({
-            url: `/api/repositories/${repositoryId}/repositories`
+    const getRepositories = async ({ repositoryId, ...config }: IGetRepositories): Promise<Repository[]> => {
+        const data = await apiClient.doRequest<Repository[]>({
+            url: `/api/repositories/${repositoryId}/repositories`,
+            ...config
         })
         return data.data
     }

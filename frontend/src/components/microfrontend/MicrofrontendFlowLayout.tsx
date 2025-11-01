@@ -1,5 +1,6 @@
 import { addEdge, applyEdgeChanges, applyNodeChanges, Connection, Edge, EdgeChange, Node, NodeChange, OnConnectEnd, ReactFlow } from "@xyflow/react"
 import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import "@xyflow/react/dist/style.css"
 
@@ -13,6 +14,7 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
     const [nodes, setNodes] = useState<Node[]>([])
     const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
+    const navigate = useNavigate()
     const microfrontendApi = useMicrofrontendsApi()
 
     useEffect(() => {
@@ -183,6 +185,10 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
         setHoveredNodeId(null)
     }, [])
 
+    const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
+        navigate(`/microfrontend/${node.id}`)
+    }, [navigate])
+
     return (
         <div className="h-screen">
             <ReactFlow
@@ -194,6 +200,7 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
                 onConnectEnd={onConnectEnd}
                 onNodeMouseEnter={onNodeMouseEnter}
                 onNodeMouseLeave={onNodeMouseLeave}
+                onNodeDoubleClick={onNodeDoubleClick}
                 fitView
             />
         </div>

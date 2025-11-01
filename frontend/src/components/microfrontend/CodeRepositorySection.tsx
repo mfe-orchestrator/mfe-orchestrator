@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { useCallback, useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import useCodeRepositoriesApi from "../../hooks/apiClients/useCodeRepositoriesApi"
+import useCodeRepositoriesApi, { Repository } from "../../hooks/apiClients/useCodeRepositoriesApi"
 import SelectField from "../input/SelectField.rhf"
 import Switch from "../input/Switch.rhf"
 import TextField from "../input/TextField.rhf"
@@ -16,14 +16,6 @@ const logoMap: Record<string, string> = {
     AWS: "/img/aws.svg",
     GOOGLE: "/img/GoogleCloud.svg",
     AZURE: "/img/Azure.svg"
-}
-
-interface Repository {
-    id?: string | number
-    name: string
-    _id: string
-    provider: string
-    [key: string]: unknown
 }
 
 interface CodeRepositorySectionProps {
@@ -66,7 +58,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
     // Fetch repositories mutation
     const fetchRepositoriesMutation = useMutation({
         mutationFn: async (codeRepositoryId: string) => {
-            const response = await codeRepositoriesApi.getRepositories(codeRepositoryId)
+            const response = await codeRepositoriesApi.getRepositories({ repositoryId: codeRepositoryId, silent: true })
             return response
         },
         onSuccess: data => {
@@ -95,7 +87,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
     // Effect to fetch repositories when a repository is selected
     useEffect(() => {
         fetchRepository()
-    }, [fetchRepository])
+    }, [])
 
     // Repository name availability check
     const onDebounceRepository = async (repositoryName: string) => {
