@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import "@xyflow/react/dist/style.css"
+import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 
 interface MicrofrontendFlowLayoutProps {
     microfrontends: Microfrontend[]
@@ -104,11 +105,11 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
                     animated: isConnected,
                     markerStart: isConnected
                         ? {
-                              type: "arrowclosed" as const,
-                              width: 20,
-                              height: 20,
-                              color: "#a855f7"
-                          }
+                            type: "arrowclosed" as const,
+                            width: 20,
+                            height: 20,
+                            color: "#a855f7"
+                        }
                         : edge.markerStart
                 }
             })
@@ -152,7 +153,7 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
     )
     const onConnect = useCallback(
         async (params: Connection) => {
-            const newEdge : Edge = {
+            const newEdge: Edge = {
                 ...params,
                 id: params.source + "-" + params.target,
                 markerStart: {
@@ -188,6 +189,12 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
     const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
         navigate(`/microfrontend/${node.id}`)
     }, [navigate])
+
+    if (!microfrontends || microfrontends.length === 0) {
+        return <div className="flex">
+            <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} className={"flex-1"} />
+        </div>
+    }
 
     return (
         <div className="h-screen">
