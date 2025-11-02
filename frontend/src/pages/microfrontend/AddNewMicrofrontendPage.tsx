@@ -53,7 +53,7 @@ const formSchema = z
         codeRepository: z
             .object({
                 enabled: z.boolean().default(false),
-                codeRepositoryId: z.string().optional(),
+                codeRepositoryId: z.string(),
                 repositoryId: z.string().optional(),
                 createData: z
                     .object({
@@ -124,11 +124,11 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             },
             ...(repositories && repositories.length > 0
                 ? {
-                      codeRepository: {
-                          enabled: Boolean(template),
-                          repositoryId: "create_new"
-                      }
-                  }
+                    codeRepository: {
+                        enabled: Boolean(template),
+                        repositoryId: "create_new"
+                    }
+                }
                 : {}),
             canary: {
                 enabled: false,
@@ -168,8 +168,9 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                 message: t("microfrontend.updated_success_message")
             })
         } else {
-            if (searchParams.get("parentId")) {
-                dataToSend.parentIds = [searchParams.get("parentId")]
+            const parentId = searchParams.get("parentId")
+            if (parentId) {
+                dataToSend.parentIds = [parentId]
             }
 
             await microfrontendsApi.create(dataToSend)
@@ -309,10 +310,10 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                         name="canary.percentage"
                                         label={t("microfrontend.canary_percentage")}
                                         placeholder="38%"
-                                        // type="number"
-                                        // required
-                                        // min={0}
-                                        // max={100}
+                                    // type="number"
+                                    // required
+                                    // min={0}
+                                    // max={100}
                                     />
                                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                                         <SelectField

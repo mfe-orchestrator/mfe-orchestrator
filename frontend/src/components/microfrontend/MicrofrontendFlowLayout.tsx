@@ -7,7 +7,7 @@ import AddNewMicrofrontendCard from "./AddNewMicrofrontendCard"
 
 interface MicrofrontendFlowLayoutProps {
     microfrontends: Microfrontend[]
-    onAddNewMicrofrontend: (parentId: string) => void
+    onAddNewMicrofrontend: (parentId?: string) => void
 }
 
 const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ microfrontends, onAddNewMicrofrontend }) => {
@@ -192,7 +192,7 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
 
     if (!microfrontends || microfrontends.length === 0) {
         return <div className="flex">
-            <AddNewMicrofrontendCard onAddNewMicrofrontend={onAddNewMicrofrontend} className={"flex-1"} />
+            <AddNewMicrofrontendCard onAddNewMicrofrontend={() => onAddNewMicrofrontend()} className={"flex-1"} />
         </div>
     }
 

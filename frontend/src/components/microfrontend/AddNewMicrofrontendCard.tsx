@@ -4,7 +4,7 @@ import { Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 interface AddNewMicrofrontendCardProps {
-    onAddNewMicrofrontend: (parentId?: string) => void
+    onAddNewMicrofrontend: () => void
     className?: string
 }
 
