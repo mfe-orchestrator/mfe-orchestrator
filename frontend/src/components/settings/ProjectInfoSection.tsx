@@ -32,11 +32,11 @@ const InfoItem: React.FC<InfoItemProps> = ({ label, value, isMonospace = false, 
                                 }}
                             >
                                 <Copy />
-                                <span className="sr-only">{t("settings.settingsPage.projectInfo.copy")}</span>
+                                <span className="sr-only">{t("common.copy")}</span>
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>{t("settings.settingsPage.projectInfo.copy")}</p>
+                            <p>{t("common.copy")}</p>
                         </TooltipContent>
                     </Tooltip>
                 )}
@@ -55,15 +55,15 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({ name, sl
     return (
         <Card className="pt-4 @container/settings-card">
             <CardHeader>
-                <h2 className="text-lg font-semibold">{t("settings.settingsPage.projectInfo.title")}</h2>
+                <h2 className="text-lg font-semibold">{t("settings.projectInfo.title")}</h2>
             </CardHeader>
             <CardContent className="pt-4">
                 <div className="flex flex-wrap gap-4">
-                    <InfoItem label={t("settings.settingsPage.projectInfo.name")} value={name} copyable={false} />
+                    <InfoItem label={t("settings.projectInfo.name")} value={name} copyable={false} />
 
-                    <InfoItem label={t("settings.settingsPage.projectInfo.slug")} value={slug} />
+                    <InfoItem label={t("settings.projectInfo.slug")} value={slug} />
 
-                    <InfoItem label={t("settings.settingsPage.projectInfo.id")} value={_id} />
+                    <InfoItem label={t("settings.projectInfo.id")} value={_id} />
                 </div>
             </CardContent>
         </Card>

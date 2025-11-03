@@ -33,7 +33,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             icon: <RocketIcon />
         },
         {
-            name: t("integration.title"),
+            name: t("integration.sidebar_title"),
             path: "/integration",
             icon: <LinkIcon />
         },

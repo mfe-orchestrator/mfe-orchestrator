@@ -31,7 +31,7 @@ const CreateFirstProjectForm  = () =>{
       projectStore.setProjects([project])
       projectStore.setProject(project)
     } catch (error) {
-      console.error(t('common.error_occurred'), error);
+      console.error(t('common.error'), error);
     }
   };
 
@@ -83,7 +83,7 @@ const SelectProjectForm: React.FC = () => {
         setProjectIdInLocalStorage(selectedProject._id);
       }
     } catch (error) {
-      console.error(t('common.error_occurred'), error);
+      console.error(t('common.error'), error);
     }
   };
 

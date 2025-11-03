@@ -6,18 +6,17 @@ import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsConte
 import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
 import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
 import { Tabs } from "@/components/ui/tabs/tabs"
-import useServeApi, { IServeMicrofrontend } from "@/hooks/apiClients/useServeApi"
+import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
 import useProjectStore from "@/store/useProjectStore"
 import EnvironmentsGate from "@/theme/EnvironmentsGate"
 import { useQuery } from "@tanstack/react-query"
 import React, { useState } from "react"
 import EnvironmentVariablesIntegration from "./partials/EnvironmentVariablesIntegration"
 import FrontendIntegration from "./partials/FrontendIntegration"
-import MicrofrontendSelector from "@/components/environment/MicrofrontendSelector"
-import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
+import { useTranslation } from "react-i18next"
 
 const IntegrationPage: React.FC = () => {
+    const { t } = useTranslation()
     const projectStore = useProjectStore()
     const deploymentApi = useDeploymentsApi()
     const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0
@@ -33,8 +32,8 @@ const IntegrationPage: React.FC = () => {
 
     return (
         <SinglePageLayout
-            title="Integration Guide"
-            description="Follow the instructions below to integrate with our platform."
+            title={t("integration.title")}
+            description={t("integration.subtitle")}
             left={
                 isThereAtLeastOneEnvironment && (
                     <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
