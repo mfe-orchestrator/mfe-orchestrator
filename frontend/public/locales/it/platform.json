@@ -145,7 +145,7 @@
         "profile": "Profilo",
         "account": "Account",
         "stats": {
-            "title": "Statistiche",
+            "title": "Configurazione",
             "viewAll": "Visualizza Tutto",
             "teamMembers": "Membri",
             "microFrontends": "Microfrontends",

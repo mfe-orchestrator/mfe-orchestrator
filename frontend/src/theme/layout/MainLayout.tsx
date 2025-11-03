@@ -45,11 +45,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     ]
 
     return (
-        <div className="w-screen h-screen overflow-y-auto p-2 max-w-screen-2xl mx-auto md:flex md:flex-row md:gap-2 md:overflow-hidden">
+        <div className="w-screen h-screen overflow-y-auto max-w-screen-2xl mx-auto md:flex md:flex-row md:gap-2 md:overflow-hidden">
             <Sidebar isCollapsed={isSidebarCollapsed} mainNavItems={mainNavItems} toggleCollapsed={toggleSidebar} />
 
             {/* Main content */}
-            <div id="main_content" className="mt-2 flex-1 flex flex-col gap-2 transition-all duration-300 md:h-[calc(100vh-1rem)] md:overflow-y-auto md:mt-0">
+            <div id="main_content" className="py-2 px-1 mt-2 flex-1 flex flex-col gap-2 transition-all duration-300 md:h-full md:overflow-y-auto md:mt-0">
                 {/* Header */}
                 <Header />
                 {/* Page Content */}

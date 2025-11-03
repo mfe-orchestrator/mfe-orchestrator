@@ -75,12 +75,6 @@ const SettingsPage: React.FC = () => {
                             href: "/project-users"
                         },
                         {
-                            icon: <Box />,
-                            title: t("settings.stats.microFrontends"),
-                            value: projectQuery.data?.count?.microfrontends,
-                            href: "/microfrontends"
-                        },
-                        {
                             icon: <HardDrive />,
                             title: t("settings.stats.storages"),
                             value: projectQuery.data?.count?.storages,

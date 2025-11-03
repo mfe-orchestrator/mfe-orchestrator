@@ -161,7 +161,7 @@
             }
         },
         "stats": {
-            "title": "Statistics",
+            "title": "Configuration",
             "viewAll": "View All",
             "teamMembers": "Team Members",
             "microFrontends": "Microfrontends",

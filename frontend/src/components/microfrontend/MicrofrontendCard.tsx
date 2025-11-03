@@ -82,7 +82,7 @@ const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
                     </div>
                 )}
             </CardContent>
-            <CardFooter className="flex gap-2">
+            <CardFooter className="flex gap-2 flex-wrap">
                 <Button variant="primary" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="flex-1">
                     <Cog />
                     {t("common.configuration")}

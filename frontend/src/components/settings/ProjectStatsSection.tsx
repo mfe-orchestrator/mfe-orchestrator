@@ -26,7 +26,7 @@ const StatCard = ({ icon, title, value, buttonText, onAction, href }: StatCardPr
                     </div>
                     <p className="text-5xl text-foreground-secondary text-center mt-3">{value}</p>
                 </div>
-                <Button variant="link" onClick={onAction} asChild={!!href} className="self-end -me-2 -mb-1">
+                <Button variant="link" onClick={onAction} asChild={!!href} className="self-end -me-2 -mb-1 min-w-[unset]">
                     {href ? <Link to={href}>{buttonTestReal}</Link> : buttonTestReal}
                 </Button>
             </div>
