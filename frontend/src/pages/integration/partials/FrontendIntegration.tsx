@@ -8,8 +8,10 @@ import { Tabs } from "@/components/ui/tabs/tabs"
 import { DeploymentDTO } from "@/hooks/apiClients/useDeploymentsApi"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState("vite")
   const activeDeployment = deployment instanceof Array ? deployment.find(d => d.active) : deployment
 
@@ -21,8 +23,8 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
   return (
     <Card>
       <CardHeader className="border-none">
-        <h2 className="text-xl font-semibold">Frontend Integration</h2>
-        <p>Follow the instructions below to integrate microfrontends using your preferred method.</p>
+        <h2 className="text-xl font-semibold">{t("integration.fe_integration_tab.title")}</h2>
+        <p>{t("integration.fe_integration_tab.description")}</p>
       </CardHeader>
 
       <CardContent>
@@ -43,12 +45,12 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
             </TabsList>
 
             <TabsContent value="vite">
-              <h3 className="text-lg font-semibold">Vite Module Federation Setup</h3>
-              <p className="mb-4">To integrate using Vite Module Federation, first install the required plugin:</p>
+              <h3 className="text-lg font-semibold">{t("integration.fe_integration_tab.vite.title")}</h3>
+              <p className="mb-4">{t("integration.fe_integration_tab.vite.description")}</p>
               <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                 <code>npm install @originjs/vite-plugin-federation --save-dev</code>
               </pre>
-              <p className="mb-4">Then, update your Vite configuration:</p>
+              <p className="mb-4">{t("integration.fe_integration_tab.vite.step2")}</p>
               <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
                 <CodeIntegration
                   framework="vite"
@@ -59,8 +61,8 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
             </TabsContent>
 
             <TabsContent value="webpack">
-              <h3 className="text-lg font-semibold">Webpack Module Federation Setup</h3>
-              <p className="mb-4">For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:</p>
+              <h3 className="text-lg font-semibold">{t("integration.fe_integration_tab.webpack.title")}</h3>
+              <p className="mb-4">{t("integration.fe_integration_tab.webpack.description")}</p>
               <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
                 <CodeIntegration
                   framework="webpack"
@@ -71,12 +73,12 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
             </TabsContent>
 
             <TabsContent value="curl">
-              <h3 className="text-lg font-semibold">Direct API Access via CURL</h3>
-              <p className="mb-4">You can also interact with our API directly using CURL:</p>
+              <h3 className="text-lg font-semibold">{t("integration.fe_integration_tab.curl.title")}</h3>
+              <p className="mb-4">{t("integration.fe_integration_tab.curl.description")}</p>
               <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                 <code>{curlExample}</code>
               </pre>
-              <p className="mb-4">Here is the preview:</p>
+              <p className="mb-4">{t("integration.fe_integration_tab.curl.step2")}</p>
               <div className="border-2 border-border rounded-md overflow-hidden">
                 <iframe src={`https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`} className="w-full h-[500px] border-0" title="API Response Preview" />
               </div>

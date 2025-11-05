@@ -1,24 +1,26 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { useTranslation } from "react-i18next"
 
 const EnvironmentVariablesIntegration = ({ environmentId }: { environmentId?: string }) => {
+    const { t } = useTranslation()
     const envVarsUrl = environmentId ? `https://${window.location.host}/api/serve/global-variables/${environmentId}` : ""
 
     return (
         <Card>
             <CardHeader>
-                <h2 className="text-xl font-semibold">Environment Variables Integration</h2>
-                <p>Access your environment variables in your microfrontends using the following methods:</p>
+                <h2 className="text-xl font-semibold">{t("integration.env_vars_integration_tab.title")}</h2>
+                <p>{t("integration.env_vars_integration_tab.description")}</p>
             </CardHeader>
 
             <CardContent className="pt-4">
-                <h3 className="text-lg font-semibold">JavaScript Integration</h3>
+                <h3 className="text-lg font-semibold">{t("integration.env_vars_integration_tab.javascript_title")}</h3>
                 <p className="mb-4">
-                    Include this script in your HTML to make environment variables available as <code>window.globalConfig</code>:
+                    {t("integration.env_vars_integration_tab.javascript_description")} <code>window.globalConfig</code>:
                 </p>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                     <code>{`<script src="${envVarsUrl}/index.js"></script>`}</code>
                 </pre>
-                <h4 className="text-md font-semibold mb-3">Usage Example</h4>
+                <h4 className="text-md font-semibold mb-3">{t("integration.env_vars_integration_tab.javascript_example")}</h4>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                     <code>
                         {`// Access environment variables like this:
@@ -33,8 +35,8 @@ if (featureFlag) {
                     </code>
                 </pre>
 
-                <h3 className="text-lg font-semibold">Direct API Access</h3>
-                <p className="mb-4">Fetch variables directly from the API:</p>
+                <h3 className="text-lg font-semibold">{t("integration.env_vars_integration_tab.javascript_direct_api_access")}</h3>
+                <p className="mb-4">{t("integration.env_vars_integration_tab.javascript_direct_api_access_description")}</p>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
                     <code>
                         {`fetch('${envVarsUrl}')

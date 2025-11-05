@@ -15,6 +15,34 @@
         "sidebar_title": "Integration",
         "title": "Integration guide",
         "subtitle": "Follow the instructions below to integrate with our platform.",
+        "fe_integration_tab": {
+            "title": "Frontend Integration",
+            "description": "Follow the instructions below to integrate with our platform.",
+            "vite": {
+                "title": "Vite Module Federation Setup",
+                "description": "To integrate using Vite Module Federation, first install the required plugin:",
+                "step2": "Then, update your Vite configuration:"
+            },
+            "webpack": {
+                "title": "Webpack Module Federation Setup",
+                "description": "For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:"
+            },
+            "curl": {
+                "title": "Direct API Access via CURL",
+                "description": "You can also interact with our API directly using CURL:",
+                "step2": "Here is the preview:"
+            }
+        },
+        "env_vars_integration_tab": {
+            "title" : "Environment Variables",
+            "description": "Access your environment variables in your microfrontends using the following methods.",
+            "javascript_title": "JavaScript Integration",
+            "javascript_description": "Include this script in your HTML to make environment variables available as",
+            "javascript_example": "Usage example",
+            "javascript_direct_api_access": "Direct API Access",
+            "javascript_direct_api_access_description": "Fetch variables directly from the API"
+
+        },
         "microfrontend_select_label": "Microfrontend",
         "microfrontend_select_placeholder": "Select a microfrontend"
     },

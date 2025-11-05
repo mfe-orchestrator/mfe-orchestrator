@@ -15,6 +15,33 @@
         "sidebar_title": "Integrazione",
         "title": "Guida per l'integrazione",
         "subtitle": "Segui le istruzioni riportate di seguito per integrare il tuo microfrontend con la nostra piattaforma.",
+        "fe_integration_tab": {
+            "title": "Integrazione frontend",
+            "description": "Segui le istruzioni riportate di seguito per integrare il tuo microfrontend con la nostra piattaforma.",
+            "vite": {
+                "title": "Integrazione Vite Module Federation",
+                "description": "Per integrare il tuo microfrontend con la nostra piattaforma, segui le istruzioni riportate di seguito.",
+                "step2": "Poi, aggiorna la tua configurazione vite:"
+            },
+            "webpack": {
+                "title": "Integrazione Webpack Module Federation",
+                "description": "Per Webpack Module Federation, assicurati di avere Webpack 5 installato. Poi configura il tuo webpack config:"
+            },
+            "curl": {
+                "title": "Accesso diretto API via CURL",
+                "description": "Puoi anche interagire con la nostra API direttamente utilizzando CURL:",
+                "step2": "Ecco un esempio:"
+            }
+        },
+        "env_vars_integration_tab": {
+            "title" : "Variabili d'ambiente",
+            "description": "Accedi alle variabili d'ambiente in microfrontends utilizzando i seguenti metodi.",
+            "javascript_title": "Integrazione JavaScript",
+            "javascript_description": "Aggiungi questo script al tuo HTML per rendere le variabili d'ambiente disponibili come",
+            "javascript_example": "Esempio di utilizzo",
+            "javascript_direct_api_access": "Accesso diretto API",
+            "javascript_direct_api_access_description": "Recupera le variabili d'ambiente direttamente dall'API"
+        },
         "microfrontend_select_label": "Microfrontend",
         "microfrontend_select_placeholder": "Seleziona un microfrontend"
     },

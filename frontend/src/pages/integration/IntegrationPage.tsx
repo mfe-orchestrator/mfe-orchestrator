@@ -42,14 +42,14 @@ const IntegrationPage: React.FC = () => {
                 <DeploymentGate environmentId={projectStore.environment?._id}>
                     <ApiDataFetcher queries={[deploymentQuery]}>
                         {!deploymentQuery.data ?
-                            <p>No deployment found</p> :
+                            <p>{t("deployments.no_deployments")}</p> :
                             <Tabs value={activeSection} onValueChange={setActiveSection} tabsListPosition="fullWidth">
                                 <TabsList>
                                     <TabsTrigger value="frontend" className="flex-1">
-                                        Frontend Integration
+                                        {t("integration.fe_integration_tab.title")}
                                     </TabsTrigger>
                                     <TabsTrigger value="env-vars" className="flex-1">
-                                        Environment Variables
+                                        {t("integration.env_vars_integration_tab.title")}
                                     </TabsTrigger>
                                 </TabsList>
 
