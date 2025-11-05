@@ -14,7 +14,9 @@
     "integration": {
         "sidebar_title": "Integration",
         "title": "Integration guide",
-        "subtitle": "Follow the instructions below to integrate with our platform."
+        "subtitle": "Follow the instructions below to integrate with our platform.",
+        "microfrontend_select_label": "Microfrontend",
+        "microfrontend_select_placeholder": "Select a microfrontend"
     },
     "auth": {
         "registration_success": "Registration completed successfully, log in to access your account",
@@ -193,8 +195,6 @@
         "subtitle": "Manage your project deployments",
         "environment_select": "Environment",
         "select_environment": "Select an environment",
-        "microfrontend_select": "Microfrontend",
-        "select_microfrontend": "Select a microfrontend",
         "deploy_button": "Deploy",
         "active_deployments": "Active deployment",
         "history": "History",

@@ -6,6 +6,7 @@ import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
 import { SelectTrigger } from "../ui/select/partials/selectTrigger/selectTrigger"
 import { Select, SelectValue } from "../ui/select/select"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { cn } from "@/utils/styleUtils"
 
 interface MicrofrontendSelectorProps {
     microfrontends: Microfrontend[]
@@ -17,10 +18,9 @@ interface MicrofrontendSelectorProps {
 const MicrofrontendSelector: React.FC<MicrofrontendSelectorProps> = ({ microfrontends, selectedMicrofrontend, onSelect, className = "" }) => {
     const { t } = useTranslation()
 
-    console.log("Microfrontends", microfrontends)
     return (
-        <div className={className + " flex flex-col gap-1 w-full flex-shrink-0"}>
-            <span className="text-sm font-medium text-foreground-secondary">{t("deployments.microfrontend_select")}:</span>
+        <div className={cn("flex flex-col gap-1 w-full max-w-80 mb-4", className)}>
+            <span className="text-sm font-medium text-foreground-secondary">{t("integration.microfrontend_select_label")}:</span>
             <Select
                 value={selectedMicrofrontend?.slug}
                 id="microfrontend-select"
@@ -28,14 +28,14 @@ const MicrofrontendSelector: React.FC<MicrofrontendSelectorProps> = ({ microfron
                     onSelect(microfrontends.find(mfe => mfe.slug === value))
                 }}
             >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                     <SelectValue>
                         {selectedMicrofrontend ? (
                             <div className="flex items-center gap-2">
                                 <span>{selectedMicrofrontend.name}</span>
                             </div>
                         ) : (
-                            <span>{t("deployments.select_microfrontend")}</span>
+                                <span>{t("integration.microfrontend_select_placeholder")}</span>
                         )}
                     </SelectValue>
                 </SelectTrigger>

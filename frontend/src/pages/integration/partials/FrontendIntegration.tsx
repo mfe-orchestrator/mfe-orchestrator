@@ -11,21 +11,24 @@ import { useState } from "react"
 
 const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
   const [activeTab, setActiveTab] = useState("vite")
-  const curlExample = `# Example CURL request to fetch a remote module
-  curl -X GET https://${window.location.host}/api/serve/all/${deployment.environmentId}`
+  const activeDeployment = deployment instanceof Array ? deployment.find(d => d.active) : deployment
 
-  const [selectedMicrofrontend, setSelectedMicrofrontend] = useState<Microfrontend>();
+  const curlExample = `# Example CURL request to fetch a remote module
+  curl -X GET https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`
+
+  const [selectedMicrofrontend, setSelectedMicrofrontend] = useState<Microfrontend>(activeDeployment.microfrontends[0]);
+
   return (
-    <Card className="flex flex-col gap-6">
+    <Card>
       <CardHeader className="border-none">
         <h2 className="text-xl font-semibold">Frontend Integration</h2>
         <p>Follow the instructions below to integrate microfrontends using your preferred method.</p>
       </CardHeader>
 
-      <MicrofrontendSelector microfrontends={deployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
+      <CardContent>
+        <MicrofrontendSelector microfrontends={activeDeployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
 
-      {selectedMicrofrontend ? (
-        <CardContent>
+        {selectedMicrofrontend ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
             <TabsList>
               <TabsTrigger className="flex-[1_1_120px]" value="vite">
@@ -50,7 +53,7 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
                 <CodeIntegration
                   framework="vite"
                   microfrontendId={selectedMicrofrontend._id}
-                  deploymentId={deployment._id}
+                  deploymentId={activeDeployment._id}
                 />
               </pre>
             </TabsContent>
@@ -62,7 +65,7 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
                 <CodeIntegration
                   framework="webpack"
                   microfrontendId={selectedMicrofrontend._id}
-                  deploymentId={deployment._id}
+                  deploymentId={activeDeployment._id}
                 />
               </pre>
             </TabsContent>
@@ -75,14 +78,14 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
               </pre>
               <p className="mb-4">Here is the preview:</p>
               <div className="border-2 border-border rounded-md overflow-hidden">
-                <iframe src={`https://${window.location.host}/api/serve/all/${deployment.environmentId}`} className="w-full h-[500px] border-0" title="API Response Preview" />
+                <iframe src={`https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`} className="w-full h-[500px] border-0" title="API Response Preview" />
               </div>
             </TabsContent>
           </Tabs>
-        </CardContent>
       ) : (
         <p>No microfrontend selected</p>
       )}
+      </CardContent>
     </Card >
   )
 }

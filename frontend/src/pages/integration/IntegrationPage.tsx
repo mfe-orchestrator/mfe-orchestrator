@@ -25,10 +25,8 @@ const IntegrationPage: React.FC = () => {
     const deploymentQuery = useQuery({
         queryKey: ["deployment", projectStore.environment?._id],
         queryFn: () => deploymentApi.getLastDeployment(projectStore.environment?._id),
-        enabled: !!projectStore.environment?._id
+        enabled: !!projectStore.environment?._id,
     })
-
-    console.log("Midsf", deploymentQuery.data?.microfrontends)
 
     return (
         <SinglePageLayout
