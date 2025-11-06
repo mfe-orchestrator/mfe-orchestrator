@@ -6,6 +6,7 @@ import UserProject from "../models/UserProjectModel"
 import Environment from "../models/EnvironmentModel"
 import Deployment from "../models/DeploymentModel"
 import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
+import { IMicrofrontend } from "../models/MicrofrontendModel"
 
 export default abstract class BaseAuthorizedService {
     protected user?: IUser
@@ -106,6 +107,10 @@ export default abstract class BaseAuthorizedService {
         }
         // Check if user has access to the environment that owns this deployment
         return this.hasAccessToEnvironment(deployment.environmentId, session)
+    }
+
+    protected async ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
+        return this.ensureAccessToProject(microfrontend.projectId)
     }
 
     /**

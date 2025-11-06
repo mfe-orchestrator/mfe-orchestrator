@@ -87,7 +87,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
     // Effect to fetch repositories when a repository is selected
     useEffect(() => {
         fetchRepository()
-    }, [])
+    }, [selectedCodeRepositoryId])
 
     // Repository name availability check
     const onDebounceRepository = async (repositoryName: string) => {
@@ -162,7 +162,7 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
                                             label: t("microfrontend.create_new_repository")
                                         },
                                         ...fetchedRepositories.map(repo => ({
-                                            value: repo.id + "",
+                                            value: repo.name + "",
                                             label: repo.name
                                         }))
                                     ].filter(Boolean)}

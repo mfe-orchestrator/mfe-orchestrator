@@ -8,14 +8,24 @@ import { ClientSession, ObjectId, Schema, Types } from "mongoose"
 import { runInTransaction } from "../utils/runInTransaction"
 
 class DeploymentService extends BaseAuthorizedService {
-    async getByEnvironmentId(environmentId: string | ObjectId) {
+
+    async getById(deploymentId: string | ObjectId): Promise<IDeployment | null> {
+        return Deployment.findById(deploymentId)
+    }
+
+    async getByEnvironmentId(environmentId: string | ObjectId): Promise<IDeployment[]> {
         await this.ensureAccessToEnvironment(environmentId)
         return Deployment.find({ environmentId }).sort({ deployedAt: -1 })
     }
 
-    async getLastByEnvironmentId(environmentId: string | ObjectId) {
+    async getLastByEnvironmentId(environmentId: string | ObjectId): Promise<IDeployment | null> {
         await this.ensureAccessToEnvironment(environmentId)
         return Deployment.findOne({ environmentId }).sort({ deployedAt: -1 })
+    }
+
+    async getLastByEnvironmentIdNoAccessCheck(environmentId: string | ObjectId): Promise<IDeployment | null> {
+        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
+        return Deployment.findOne({ environmentId: environmentIdObj }).sort({ deployedAt: -1 })
     }
 
     private async getDeploymentId(environmentId: Schema.Types.ObjectId | Types.ObjectId, session?: ClientSession) {

@@ -28,6 +28,7 @@ import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
+import CodeManagementService from "./CodeManagementService"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -159,27 +160,18 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
+        const codeManagementService = new CodeManagementService(
+            CodeRepositoryProvider.AZURE_DEV_OPS,
+            accessToken,
+            tempDir
+        )
+
         const repoUrl = "https://root:" + accessToken + "@dev.azure.com/" + codeRepository.azureData.organization + "/" + codeRepository.azureData.projectId + "/_git/" + repositoryName
 
-        try {
-            // Try clone
-            await git.clone({
-                fs,
-                http,
-                dir: tempDir,
-                url: repoUrl,
-                singleBranch: true,
-                depth: 1,
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: accessToken, password: "x-oauth-basic" })
-            })
-            fastify.log.info("✅ Repo cloned successfully")
-        } catch (e) {
-            fastify.log.info("⚠️ Repo might be empty → initializing...")
-            fastify.log.error(e)
-            await git.init({ fs, dir: tempDir, defaultBranch: "main" })
-            await git.addRemote({ fs, dir: tempDir, remote: "origin", url: repoUrl })
-        }
+        await codeManagementService.cloneRepository({
+            repositoryUrl: repoUrl,
+            initializeInCaseOfEmptyRepo: true
+        })
 
         // Download + unzip template
         const response = await axios.get(templateUrl, { responseType: "stream" })
@@ -276,25 +268,15 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
-        try {
-            // Try clone
-            await git.clone({
-                fs,
-                http,
-                dir: tempDir,
-                url: repoUrl,
-                singleBranch: true,
-                depth: 1,
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: githubToken, password: "x-oauth-basic" })
-            })
-            fastify.log.info("✅ Repo cloned successfully")
-        } catch (e) {
-            fastify.log.info("⚠️ Repo might be empty → initializing...")
-            fastify.log.error(e)
-            await git.init({ fs, dir: tempDir, defaultBranch: "main" })
-            await git.addRemote({ fs, dir: tempDir, remote: "origin", url: repoUrl })
-        }
+        const codeManagementService = new CodeManagementService(
+            CodeRepositoryProvider.GITHUB,
+            githubToken,
+            tempDir
+        )
+        await codeManagementService.cloneRepository({
+            repositoryUrl: repoUrl,
+            initializeInCaseOfEmptyRepo: true,
+        })
 
         // Download + unzip template
         const response = await axios.get(templateUrl, { responseType: "stream" })
@@ -391,17 +373,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 }
             })
 
-            // Push creates "main" on remote if missing
-            await git.push({
-                fs,
-                http,
-                dir: tempDir,
-                remote: "origin",
-                ref: "main",
-                remoteRef: "main",
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: githubToken, password: "x-oauth-basic" }),
-                force: true
+            await codeManagementService.pushRepository({
+                branch: "main"
             })
 
             console.log("✅ Repo is ready and pushed!")

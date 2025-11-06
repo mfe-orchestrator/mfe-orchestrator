@@ -1,5 +1,6 @@
 import MicrofrontendSelector from "@/components/environment/MicrofrontendSelector"
 import CodeIntegration from "@/components/integration/CodeIntegration"
+import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
 import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
@@ -9,16 +10,36 @@ import { DeploymentDTO } from "@/hooks/apiClients/useDeploymentsApi"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import useIntegrationApi from "@/hooks/apiClients/useIntegrationApi"
+import { useMutation } from "@tanstack/react-query"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState("vite")
+  const integrationApi = useIntegrationApi()
+  const notification = useToastNotificationStore();
   const activeDeployment = deployment instanceof Array ? deployment.find(d => d.active) : deployment
 
   const curlExample = `# Example CURL request to fetch a remote module
   curl -X GET https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`
 
   const [selectedMicrofrontend, setSelectedMicrofrontend] = useState<Microfrontend>(activeDeployment.microfrontends[0]);
+
+  const injectInRepositoryMutation = useMutation({
+    mutationFn: integrationApi.injectRemotesInHost
+  })
+
+  const injectInRepository = async () => {
+    await injectInRepositoryMutation.mutateAsync({
+      microfrontendId: selectedMicrofrontend._id,
+      environmentId: activeDeployment.environmentId,
+    })
+
+    notification.showSuccessNotification({
+      message: "Remotes injected successfully",
+    })
+  }
 
   return (
     <Card>
@@ -28,7 +49,12 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
       </CardHeader>
 
       <CardContent>
-        <MicrofrontendSelector microfrontends={activeDeployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
+        <div className="flex gap-4 flex-row items-end mb-4">
+          <MicrofrontendSelector microfrontends={activeDeployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
+          <Button onClick={injectInRepository} disabled={!selectedMicrofrontend || injectInRepositoryMutation.isPending}>
+            Inject in Repository
+          </Button>
+        </div>
 
         {selectedMicrofrontend ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
@@ -84,9 +110,9 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
               </div>
             </TabsContent>
           </Tabs>
-      ) : (
-        <p>No microfrontend selected</p>
-      )}
+        ) : (
+          <p>No microfrontend selected</p>
+        )}
       </CardContent>
     </Card >
   )

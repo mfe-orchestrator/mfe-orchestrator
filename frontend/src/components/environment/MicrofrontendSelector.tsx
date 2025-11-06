@@ -19,7 +19,7 @@ const MicrofrontendSelector: React.FC<MicrofrontendSelectorProps> = ({ microfron
     const { t } = useTranslation()
 
     return (
-        <div className={cn("flex flex-col gap-1 w-full max-w-80 mb-4", className)}>
+        <div className={cn("flex flex-col gap-1 w-full max-w-80", className)}>
             <span className="text-sm font-medium text-foreground-secondary">{t("integration.microfrontend_select_label")}:</span>
             <Select
                 value={selectedMicrofrontend?.slug}
@@ -35,7 +35,7 @@ const MicrofrontendSelector: React.FC<MicrofrontendSelectorProps> = ({ microfron
                                 <span>{selectedMicrofrontend.name}</span>
                             </div>
                         ) : (
-                                <span>{t("integration.microfrontend_select_placeholder")}</span>
+                            <span>{t("integration.microfrontend_select_placeholder")}</span>
                         )}
                     </SelectValue>
                 </SelectTrigger>

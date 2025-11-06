@@ -2,7 +2,7 @@ import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofronte
 import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
-import Environment from "../models/EnvironmentModel"
+import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Project, { IProject } from "../models/ProjectModel"
 import path from "path"
@@ -10,13 +10,32 @@ import fs from "fs"
 import { fastify } from ".."
 import { Schema, ObjectId } from "mongoose"
 import Stream from "stream"
+import DeploymentService from "./DeploymentService"
+
+interface GetRemotesRequestDTO {
+    microfrontendId: string | ObjectId,
+    deploymentId?: string | ObjectId,
+    environmentId?: string | ObjectId
+}
+
+export interface GetRemotesResponseDTO {
+    filteredMicrofrontends: IMicrofrontend[]
+    environment: IEnvironment
+    microfrontend: IMicrofrontend
+    deployment: IDeployment
+}
+
+export interface GetMicrofrontendAdaptedDataDTO extends GetRemotesResponseDTO {
+    microfrotnedUrls: MicrofrontendAdaptedToServe[]
+}
 
 export interface MicrofrontendAdaptedToServe {
     url: string
     slug: string
     continuousDeployment?: boolean
     version: string
-    name: string
+    name: string,
+    nameToIntegrate: string
 }
 
 export interface GetAllDataDTO {
@@ -41,10 +60,8 @@ const HEADERS_CACHE = {
     'Cross-Origin-Resource-Policy': 'cross-origin'
 }
 
-interface CodeIntegrationRequestDTO {
+interface CodeIntegrationRequestDTO extends GetRemotesRequestDTO {
     framework: string,
-    microfrontendId: string,
-    deploymentId: string
 }
 
 interface CodeIntegrationResponseDTO {
@@ -154,14 +171,19 @@ export default defineConfig({
         }
     }
 
-    async getCodeIntegration({ framework, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
-        const deployment = await Deployment.findById(deploymentId);
-        if (!deployment) {
-            throw new EntityNotFoundError(deploymentId);
+    async getRemotes({ microfrontendId, environmentId, deploymentId }: GetRemotesRequestDTO): Promise<GetRemotesResponseDTO> {
+        let deployment: IDeployment | null = null;
+        if (deploymentId) {
+            deployment = await new DeploymentService().getById(deploymentId)
+        } else if (environmentId) {
+            deployment = await new DeploymentService().getLastByEnvironmentIdNoAccessCheck(environmentId)
         }
-        const microfrontend = deployment.microfrontends?.find(mfe => mfe._id.toString() === microfrontendId);
+        if (!deployment) {
+            throw new EntityNotFoundError(deploymentId?.toString() || "");
+        }
+        const microfrontend = deployment.microfrontends?.find(mfe => mfe._id.toString() === microfrontendId?.toString());
         if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendId);
+            throw new EntityNotFoundError(microfrontendId?.toString());
         }
 
         const environment = await Environment.findById(deployment.environmentId);
@@ -170,14 +192,37 @@ export default defineConfig({
         }
 
         const filteredMicrofrontends = deployment.microfrontends
-            ?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId)) || []
+            ?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId?.toString())) || []
 
+        return {
+            filteredMicrofrontends,
+            environment,
+            microfrontend,
+            deployment
+        }
+    }
+
+    async getMicrofrontendAdaptedData({ microfrontendId, environmentId, deploymentId }: GetRemotesRequestDTO): Promise<GetMicrofrontendAdaptedDataDTO> {
+        const data = await this.getRemotes({ microfrontendId, environmentId, deploymentId })
         const childs = await Promise.all(
-            filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, environment.slug))
+            data.filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, data.environment.slug))
         )
 
         return {
-            code: this.getConfig(framework, childs, microfrontend.slug)
+            ...data,
+            microfrotnedUrls: childs
+        }
+    }
+
+    async getCodeIntegration({ framework, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
+        const allData = await this.getRemotes({ microfrontendId, deploymentId })
+
+        const childs = await Promise.all(
+            allData.filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, allData.environment.slug))
+        )
+
+        return {
+            code: this.getConfig(framework, childs, allData.microfrontend.slug)
         }
     }
     /**
@@ -531,6 +576,7 @@ async function adaptMicrofrontendToServe(microfrontend: IMicrofrontend, environm
         version: microfrontend.version,
         name: microfrontend.name,
         slug: microfrontend.slug,
-        continuousDeployment: microfrontend.continuousDeployment
+        continuousDeployment: microfrontend.continuousDeployment,
+        nameToIntegrate: microfrontend?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${microfrontend._id}`
     }
 }
