@@ -49,7 +49,7 @@ const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
       </CardHeader>
 
       <CardContent>
-        <div className="flex gap-4 flex-row items-end mb-4">
+        <div className="flex gap-2 flex-wrap items-end mb-4">
           <MicrofrontendSelector microfrontends={activeDeployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
           <Button onClick={injectInRepository} disabled={!selectedMicrofrontend || injectInRepositoryMutation.isPending}>
             Inject in Repository

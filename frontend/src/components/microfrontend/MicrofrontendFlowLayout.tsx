@@ -1,4 +1,4 @@
-import { addEdge, applyEdgeChanges, applyNodeChanges, Connection, Edge, EdgeChange, Node, NodeChange, OnConnectEnd, ReactFlow } from "@xyflow/react"
+import { addEdge, applyEdgeChanges, applyNodeChanges, Background, Connection, Controls, Edge, EdgeChange, Node, NodeChange, OnConnectEnd, ReactFlow } from "@xyflow/react"
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -197,7 +197,7 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
     }
 
     return (
-        <div className="h-screen">
+        <div className="h-[calc(100vh-96px)] border-2 border-border rounded-md">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -209,7 +209,12 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
                 onNodeMouseLeave={onNodeMouseLeave}
                 onNodeDoubleClick={onNodeDoubleClick}
                 fitView
-            />
+                preventScrolling={false}
+                snapToGrid
+            >
+                <Background gap={16} />
+                <Controls />
+            </ReactFlow>
         </div>
     )
 }
