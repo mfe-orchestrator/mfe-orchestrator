@@ -35,7 +35,7 @@
         "@redis/client": "^5.8.2",
         "@sentry/node": "^10.20.0",
         "axios": "^1.12.1",
-        "bcryptjs": "^3.0.2",
+        "bcryptjs": "^3.0.3",
         "dotenv": "^17.2.2",
         "fastify": "^5.6.0",
         "fastify-auth0-verify": "^3.0.0",
