@@ -136,27 +136,30 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                     ) : null
                 }
             >
-                <Card>
-                    <CardContent className="p-0">
-                        {!variables || Object.keys(variables).length === 0 ? (
+                {!variables || Object.keys(variables).length === 0 ? (
+                    <Card>
+                        <CardContent className="p-0">
                             <div className="flex flex-col items-center justify-center p-8 text-center">
-                                <p className="text-muted-foreground mb-4">{t("environmentVariables.noVariables")}</p>
+                                <p className="text-foreground mb-2">{t("environmentVariables.noVariables")}</p>
                                 <Button onClick={handleAddNew}>
                                     <CirclePlus />
                                     {t("environmentVariables.addVariable")}
                                 </Button>
                             </div>
-                        ) : (
+                        </CardContent>
+                    </Card>
+                ) : (
+                        <div className="rounded-md border-2 border-border overflow-hidden">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-64">{t("environmentVariables.variable")}</TableHead>
+                                    <TableRow className="bg-primary/25">
+                                        <TableHead className="text-foreground">{t("environmentVariables.variable")}</TableHead>
                                         {environments.map(env => (
-                                            <TableHead key={env.slug} className="text-center">
+                                            <TableHead key={env.slug} className="text-foreground">
                                                 {env.name}
                                             </TableHead>
                                         ))}
-                                        <TableHead className="w-32">{t("common.actions")}</TableHead>
+                                        <TableHead />
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -164,25 +167,21 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                                         const variable = variables[variableKey]
                                         return (
                                             <TableRow key={variable.key}>
-                                                <TableCell className="font-mono">{variableKey}</TableCell>
+                                                <TableCell>{variableKey}</TableCell>
                                                 {environments.map(env => {
                                                     const value = variables[variableKey].values.find(v => v.environmentId === env._id)
-                                                    const valueKey = `${variable.key}-${env.slug}`
-
                                                     return (
-                                                        <TableCell key={env.slug} className="text-center">
+                                                        <TableCell key={env.slug}>
                                                             {value ? (
-                                                                <div className="flex items-center justify-center space-x-2">
-                                                                    <span className="font-mono">{value.value}</span>
-                                                                </div>
+                                                                <span>{value.value}</span>
                                                             ) : (
-                                                                <span className="text-muted-foreground">-</span>
+                                                                    <span className="text-foreground/50">-</span>
                                                             )}
                                                         </TableCell>
                                                     )
                                                 })}
-                                                <TableCell className="w-32">
-                                                    <div className="flex gap-1">
+                                                <TableCell>
+                                                    <div className="flex justify-end gap-1">
                                                         <Button variant="ghost" size="icon" onClick={() => handleEdit(variable)} title={t("common.edit")}>
                                                             <Pencil />
                                                         </Button>
@@ -202,9 +201,9 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                                     })}
                                 </TableBody>
                             </Table>
-                        )}
-                    </CardContent>
-                </Card>
+                        </div>
+                )}
+
             </SinglePageLayout>
             <DeleteConfirmationDialog
                 isOpen={!!variableToDelete}

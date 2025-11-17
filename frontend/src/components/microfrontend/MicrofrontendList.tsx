@@ -76,11 +76,11 @@ const MicrofrontendListReal: React.FC<MicrofrontendListRealProps> = ({ microfron
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-primary/25">
-                                <TableHead className="text-foreground">{t("common.name")}</TableHead>
-                                <TableHead className="text-foreground">{t("microfrontend.slug")}</TableHead>
-                                <TableHead className="text-foreground">{t("microfrontend.version")}</TableHead>
-                                <TableHead className="text-foreground">{t("microfrontend.canary_release")}</TableHead>
-                                <TableHead className="text-foreground"></TableHead>
+                                <TableHead>{t("common.name")}</TableHead>
+                                <TableHead>{t("microfrontend.slug")}</TableHead>
+                                <TableHead>{t("microfrontend.version")}</TableHead>
+                                <TableHead>{t("microfrontend.canary_release")}</TableHead>
+                                <TableHead />
                             </TableRow>
                         </TableHeader>
                         <TableBody>

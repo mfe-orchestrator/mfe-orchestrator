@@ -1,18 +1,18 @@
+import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
+import SinglePageLayout from '@/components/SinglePageLayout';
+import { Badge } from "@/components/ui/badge/badge";
+import { Button } from "@/components/ui/button/button";
+import { Card, CardContent } from '@/components/ui/card';
+import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import useCodeRepositoriesApi, { CodeRepositoryProvider } from '@/hooks/apiClients/useCodeRepositoriesApi';
+import useProjectStore from '@/store/useProjectStore';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Edit, PlusCircle, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from "@/components/ui/button/button"
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
-import { Plus, Trash2, GitBranch, Edit, Star } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
-import useProjectStore from '@/store/useProjectStore';
-import SinglePageLayout from '@/components/SinglePageLayout';
-import { Badge } from "@/components/ui/badge/badge"
-import AddRepositoryDialog from './AddRepositoryDialog';
-import useCodeRepositoriesApi, { CodeRepositoryProvider } from '@/hooks/apiClients/useCodeRepositoriesApi';
 import { useNavigate } from 'react-router-dom';
+import AddRepositoryDialog from './AddRepositoryDialog';
 
 const CodeRepositoryPage = () => {
   const { t } = useTranslation();
@@ -63,96 +63,99 @@ const CodeRepositoryPage = () => {
         description={t('codeRepositories.description')}
         right={repositoriesQuery.data?.length === 0 ? null :
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <PlusCircle />
             {t('codeRepositories.addRepository')}
           </Button>
         }
       >
-        <Card>
-          <CardContent>
-            {repositoriesQuery.data?.length === 0 ?
+
+        {repositoriesQuery.data?.length === 0 ?
+          <Card>
+            <CardContent>
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="text-center py-8 text-muted-foreground">
                   {t('codeRepositories.noRepositoriesFound')}
                 </div>
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <PlusCircle />
                   {t('codeRepositories.addRepository')}
                 </Button>
               </div>
-              :
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('codeRepositories.columns.name')}</TableHead>
-                    <TableHead>{t('codeRepositories.columns.provider')}</TableHead>
-                    <TableHead>Default</TableHead>
-                    <TableHead className="text-right">{t('common.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {repositoriesQuery.data?.map((repository) => (
-                    <TableRow key={repository._id}>
-                      <TableCell className="font-medium">{repository.name}</TableCell>
-                      <TableCell>
-                        <Badge className={getProviderColor(repository.provider)}>
-                          {repository.provider}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
+            </CardContent>
+          </Card>
+          :
+          <div className="rounded-md border-2 border-border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-primary/25">
+                  <TableHead>{t('codeRepositories.columns.name')}</TableHead>
+                  <TableHead>{t('codeRepositories.columns.provider')}</TableHead>
+                  <TableHead>Default</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {repositoriesQuery.data?.map((repository) => (
+                  <TableRow key={repository._id}>
+                    <TableCell className="font-medium">{repository.name}</TableCell>
+                    <TableCell>
+                      <Badge className={getProviderColor(repository.provider)}>
+                        {repository.provider}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={setDefaultMutation.isPending}
+                        onClick={() => setDefaultMutation.mutate(repository._id)}
+                      >
+                        <Star
+                          className={`${repository.default
+                            ? "fill-primary/50"
+                            : ""
+                            }`}
+                        />
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 justify-end">
                         <Button
                           variant="ghost"
                           size="icon"
-                          disabled={setDefaultMutation.isPending}
-                          onClick={() => setDefaultMutation.mutate(repository._id)}
-                          className="h-8 w-8"
+                          onClick={() => {
+                            if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+                              navigate(`/code-repositories/azure/${repository._id}`);
+                            } else if (repository.provider === CodeRepositoryProvider.GITHUB) {
+                              navigate(`/code-repositories/github/${repository._id}`);
+                            } else if (repository.provider === CodeRepositoryProvider.GITLAB) {
+                              navigate(`/code-repositories/gitlab/${repository._id}`);
+                            }
+                          }}
                         >
-                          <Star
-                            className={`h-4 w-4 ${
-                              repository.default
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300 hover:text-yellow-400'
-                            }`}
-                          />
+                          <Edit />
                         </Button>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                                navigate(`/code-repositories/azure/${repository._id}`);
-                              } else if (repository.provider === CodeRepositoryProvider.GITHUB) {
-                                navigate(`/code-repositories/github/${repository._id}`);
-                              } else if (repository.provider === CodeRepositoryProvider.GITLAB) {
-                                navigate(`/code-repositories/gitlab/${repository._id}`);
-                              }
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={deleteRepositoryMutation.isPending}
-                            onClick={() => {
-                              setRepositoryToDelete({ id: repository._id, name: repository.name });
-                              setIsDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            }
-          </CardContent>
-        </Card>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
+                          disabled={deleteRepositoryMutation.isPending}
+                          onClick={() => {
+                            setRepositoryToDelete({ id: repository._id, name: repository.name });
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        }
+
 
         <AddRepositoryDialog
           isOpen={isCreateDialogOpen}

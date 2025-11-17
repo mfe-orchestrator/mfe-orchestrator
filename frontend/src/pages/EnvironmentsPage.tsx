@@ -1,8 +1,3 @@
-import { useQuery } from "@tanstack/react-query"
-import { Pencil, Plus, Trash2 } from "lucide-react"
-import { useEffect, useState } from "react"
-import { FormProvider, useForm } from "react-hook-form"
-import { useTranslation } from "react-i18next"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import ColorPicker from "@/components/input/ColorPicker.rhf"
 import Switch from "@/components/input/Switch.rhf"
@@ -10,7 +5,6 @@ import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Button } from "@/components/ui/button/button"
-import { Card } from "@/components/ui/card"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -19,6 +13,11 @@ import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import EnvironmentsGate from "@/theme/EnvironmentsGate"
+import { useQuery } from "@tanstack/react-query"
+import { Pencil, PlusCircle, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { FormProvider, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 
 interface EnvironmentDialogFormData {
     name: string
@@ -183,27 +182,27 @@ export default function EnvironmentsPage() {
             right={
                 !environmentQuery.isLoading && environmentQuery.data?.length != 0 ? (
                     <Button onClick={openCreateDialog}>
-                        <Plus className="mr-2 h-4 w-4" />
+                        <PlusCircle />
                         {t("environment.page.new_environment")}
                     </Button>
                 ) : null
             }
         >
-            <Card>
                 <EnvironmentsGate
                     onSaveSuccess={() => {
                         environmentQuery.refetch()
                     }}
                 >
                     <ApiDataFetcher queries={[environmentQuery]}>
+                    <div className="rounded-md border-2 border-border overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow>
+                                <TableRow className="bg-primary/25">
                                     <TableHead>{t("environment.form.name")}</TableHead>
                                     <TableHead>{t("environment.form.slug")}</TableHead>
                                     <TableHead>{t("environment.production")}</TableHead>
                                     <TableHead>{t("environment.page.color")}</TableHead>
-                                    <TableHead className="text-right">{t("environment.page.actions")}</TableHead>
+                                    <TableHead />
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -213,27 +212,31 @@ export default function EnvironmentsPage() {
                                         <TableCell>{env.slug}</TableCell>
                                         <TableCell>{env.isProduction ? "Yes" : "No"}</TableCell>
                                         <TableCell>
-                                            <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: env.color }} />
+                                            <div className="w-6 h-6 rounded-full border-2 border-border" style={{ backgroundColor: env.color }} />
                                         </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(env)} className="mr-2">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setCurrentEnvironment(env)
-                                                    setIsDeleteDialogOpen(true)
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-red-500" />
-                                            </Button>
+                                        <TableCell>
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(env)}>
+                                                    <Pencil />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
+                                                    onClick={() => {
+                                                        setCurrentEnvironment(env)
+                                                        setIsDeleteDialogOpen(true)
+                                                    }}
+                                                >
+                                                    <Trash2 />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
+                    </div>
                     </ApiDataFetcher>
                 </EnvironmentsGate>
 
@@ -247,8 +250,7 @@ export default function EnvironmentsPage() {
                     onDelete={handleDelete}
                     title={t("environment.page.delete.title")}
                     description={t("environment.page.delete.confirmation", { name: currentEnvironment?.name || "" })}
-                />
-            </Card>
+            />
         </SinglePageLayout>
     )
 }

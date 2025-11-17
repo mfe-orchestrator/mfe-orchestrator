@@ -110,7 +110,7 @@ const MarketPage : React.FC = () => {
 
                 {compilers.length > 2 && (
                   <Select value={selectedCompiler} onValueChange={setSelectedCompiler}>
-                    <SelectTrigger>
+                    <SelectTrigger className='min-w-40'>
                       <SelectValue placeholder={t('market.filters.selectCompiler')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -124,7 +124,7 @@ const MarketPage : React.FC = () => {
                 )}
 
                   <Select value={hostType} onValueChange={setHostType}>
-                    <SelectTrigger>
+                  <SelectTrigger className='min-w-28'>
                       <SelectValue placeholder={t('market.filters.hostType')} />
                     </SelectTrigger>
                     <SelectContent>

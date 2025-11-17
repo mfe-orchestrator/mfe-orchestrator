@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import useStorageApi from "@/hooks/apiClients/useStorageApi"
 import useProjectStore from "@/store/useProjectStore"
 import { useQuery } from "@tanstack/react-query"
-import { Pencil, Plus, Trash2 } from "lucide-react"
+import { Pencil, Plus, PlusCircle, Trash2 } from "lucide-react"
 import React, { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -47,63 +47,67 @@ const StoragesPage: React.FC = () => {
                 description={t("storage.storagesDescription")}
                 right={storagesQuery.data?.length > 0 ? (
                     <Button onClick={handleCreate}>
-                        <Plus className="mr-2 h-4 w-4" />
+                        <PlusCircle />
                         {t("storage.newStorage")}
                     </Button>
                 ) : null}
             >
 
-                <Card>
-                    <CardContent>
-                        {storagesQuery.data && storagesQuery.data?.length > 0 ? (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>{t('storage.name')}</TableHead>
-                                        <TableHead>{t('storage.type')}</TableHead>
-                                        <TableHead className="text-right">{t('common.actions')}</TableHead>
+
+                {storagesQuery.data && storagesQuery.data?.length > 0 ? (
+                    <div className="rounded-md border-2 border-border overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-primary/25">
+                                    <TableHead>{t('storage.name')}</TableHead>
+                                    <TableHead>{t('storage.type')}</TableHead>
+                                    <TableHead />
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {storagesQuery.data?.map((storage) => (
+                                    <TableRow key={storage._id}>
+                                        <TableCell className="font-medium">{storage.name}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {storage.type === 'AWS' && <img src="/img/aws.svg" alt="AWS" className="h-5 w-5" />}
+                                                {storage.type === 'AZURE' && <img src="/img/Azure.svg" alt="Azure" className="h-5 w-5" />}
+                                                {storage.type === 'GOOGLE' && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-5 w-5" />}
+                                                <Badge>{storage.type}</Badge>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)}>
+                                                    <Pencil />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/15 hover:text-destructive-active" onClick={() => {
+                                                    setStorageToDelete({ id: storage._id, name: storage.name })
+                                                    setIsDeleteDialogOpen(true)
+                                                }}>
+                                                    <Trash2 />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {storagesQuery.data?.map((storage) => (
-                                        <TableRow key={storage._id}>
-                                            <TableCell className="font-medium">{storage.name}</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    {storage.type === 'AWS' && <img src="/img/aws.svg" alt="AWS" className="h-5 w-5" />}
-                                                    {storage.type === 'AZURE' && <img src="/img/Azure.svg" alt="Azure" className="h-5 w-5" />}
-                                                    {storage.type === 'GOOGLE' && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-5 w-5" />}
-                                                    <Badge>{storage.type}</Badge>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end space-x-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => {
-                                                        setStorageToDelete({ id: storage._id, name: storage.name })
-                                                        setIsDeleteDialogOpen(true)
-                                                    }}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full">
-                                <div className="text-center py-8 text-muted-foreground">{t("storage.noStoragesFound")}</div>
-                                <Button onClick={handleCreate}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    {t("storage.newStorage")}
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : (
+                        <Card>
+                            <CardContent>
+                                <div className="flex flex-col items-center justify-center h-full">
+                                    <div className="text-center py-4 text-foreground">{t("storage.noStoragesFound")}</div>
+                                    <Button onClick={handleCreate}>
+                                        <PlusCircle />
+                                        {t("storage.newStorage")}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                )}
+
 
                 <DeleteConfirmationDialog
                     isOpen={isDeleteDialogOpen}

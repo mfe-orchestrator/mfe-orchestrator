@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import { setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
+import { cn } from "@/utils/styleUtils"
 import { Repeat } from "lucide-react"
 import { useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
@@ -96,14 +97,14 @@ const SwitchProjectButton = () => {
                 <DialogHeader>
                     <DialogTitle>{projects && projects.length > 1 ? t("project.switch") : t("project.create_new")}</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="pt-4">
                     {projects && projects.length > 1 && (
-                        <div className="space-y-2">
+                        <div className="mb-4 flex flex-col gap-2">
                             {projects?.map(proj => (
                                 <div
                                     key={proj._id}
                                     onClick={() => handleProjectSelect(proj)}
-                                    className={`flex items-center p-3 rounded-md cursor-pointer hover:bg-accent ${project?._id === proj._id ? "bg-accent" : ""}`}
+                                    className={cn(`flex items-center px-3 py-2 rounded-md cursor-pointer border-2 border-transparent hover:border-accent/25`, { "border-accent hover:border-accent": project?._id === proj._id })}
                                 >
                                     <span className="truncate">{proj.name}</span>
                                 </div>
