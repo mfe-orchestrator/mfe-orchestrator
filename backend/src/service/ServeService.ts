@@ -388,7 +388,7 @@ export default defineConfig({
             throw new EntityNotFoundError(projectId)
         }
 
-        const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
+        const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ deployedAt: -1 })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
