@@ -302,7 +302,7 @@
             "loadingBranches": "Loading branches...",
             "defaultBranch": "default",
             "version": "Version",
-            "version_placeholder": "Enter version (e.g., 1.0.0)",
+            "versionPlaceholder": "Enter version (e.g., 1.0.0)",
             "custom_version": "Custom version",
             "building": "Building...",
             "startBuild": "Start Build",

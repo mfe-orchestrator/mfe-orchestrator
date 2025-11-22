@@ -55,6 +55,7 @@ const formSchema = z
                 enabled: z.boolean().default(false),
                 codeRepositoryId: z.string(),
                 repositoryId: z.string().optional(),
+                name: z.string().optional(),
                 createData: z
                     .object({
                         name: z.string().min(3).max(100),

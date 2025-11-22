@@ -152,9 +152,9 @@ const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositor
                                 <Alert>
                                     <AlertDescription>{t("common.loading")}...</AlertDescription>
                                 </Alert>
-                            ) : (
+                            ) : ( 
                                 <SelectField
-                                    name="codeRepository.repositoryId"
+                                    name="codeRepository.name" // codeRepository.name - Really good for github, do not know if it is good for other providers
                                     label={t("microfrontend.select_repository")}
                                     options={[
                                         !isEdit && {
