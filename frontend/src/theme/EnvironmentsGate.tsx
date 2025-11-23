@@ -2,7 +2,7 @@ import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi";
 import useProjectStore from "@/store/useProjectStore";
 import { useQuery } from "@tanstack/react-query";
 import useProjectApi from "@/hooks/apiClients/useProjectApi";
-import NoEnvironmentPlaceholder from "@/components/environment/NoEnvironmentPlaceholder";
+import NoEnvironmentPlaceholder from "@/pages/environments/partials/NoEnvironmentPlaceholder";
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
 
 interface EnvironmentsGateProps extends React.PropsWithChildren {
@@ -24,9 +24,9 @@ const EnvironmentsGate: React.FC<EnvironmentsGateProps> = ({ children, onSaveSuc
         queryKey: ['environments', projectStore?.project?._id],
         queryFn: async () => {
             const environments = await projectsApi.getEnvironmentsByProjectId(projectStore.project?._id)
-            onSaveEnvironmentsSucess(environments)            
+            onSaveEnvironmentsSucess(environments)
             return environments;
-            
+
         },
         enabled: !!projectStore.project?._id
     });

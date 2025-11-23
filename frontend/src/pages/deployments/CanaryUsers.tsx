@@ -10,7 +10,7 @@ import useCanaryUsersApi from '@/hooks/apiClients/useCanaryUsersApi';
 import SinglePageLayout from '@/components/SinglePageLayout';
 import { DotLottieReact } from "@lottiefiles/dotlottie-react"
 
-const CanaryUsers: React.FC = () => {
+export const CanaryUsers: React.FC = () => {
     const { t } = useTranslation()
     const { deploymentId } = useParams<{ deploymentId: string }>()
     const canaryUsersApi = useCanaryUsersApi()

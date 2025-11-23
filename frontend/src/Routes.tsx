@@ -11,22 +11,26 @@ import MainLayout from "./theme/layout/MainLayout";
 
 
 // Lazy load all page components
-const IntegrationPage = lazy(() => import("./pages/integration/IntegrationPage"))
+const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"));
+const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"));
+
+const Deployments = lazy(() => import("./pages/deployments/Deployments"));
+const CanaryUsers = lazy(() => import("./pages/deployments/CanaryUsers"));
+
+const Integration = lazy(() => import("./pages/integration/Integration"))
+
+const Environments = lazy(() => import("./pages/environments/Environments"));
+
 const ProjectUsersListPage = lazy(() => import("./pages/project-users/ProjectUsersListPage"));
 const StoragesPage = lazy(() => import("./pages/storages/StoragesPage"));
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
 const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
-const DashboardPage = lazy(() => import("./pages/microfrontend/MicrofrontendDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRequestPage"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
-const AddNewMicrofrontendPage = lazy(() => import("./pages/microfrontend/AddNewMicrofrontendPage"));
-const DeploymentsPage = lazy(() => import("./pages/deployments/DeploymentDashboard"));
-const CanaryUsersPage = lazy(() => import("./pages/deployments/CanaryUsers"));
 const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
 const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStoragePage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
-const EnvironmentsPage = lazy(() => import("./pages/EnvironmentsPage"));
 const EnvironmentVariablesPage = lazy(() => import("./pages/environment-variables/EnvironmentVariablesPage"));
 const CodeRepositoryPage = lazy(() => import("./pages/code-repositories/CodeRepositoryPage"));
 const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCallbackPage"));
@@ -42,7 +46,7 @@ const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) 
       <MicrosoftAuthWrapper>
         <Auth0Wrapper>
           <AuthWrapper>
-            <SelectProjectWrapper> 
+            <SelectProjectWrapper>
               {children}
             </SelectProjectWrapper>
           </AuthWrapper>
@@ -67,39 +71,39 @@ const PrivateRoutes: React.FC = () => {
           <Route
             path="/microfrontends"
             element={
-              <RouteWithSuspense element={<DashboardPage />} />
+              <RouteWithSuspense element={<Microfrontends />} />
             }
           />
           <Route
             path="/microfrontend/new"
             element={
-              <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
+              <RouteWithSuspense element={<AddMicrofrontend />} />
             }
           />
           <Route
             path="/microfrontend/:id"
             element={
-              <RouteWithSuspense element={<AddNewMicrofrontendPage />} />
+              <RouteWithSuspense element={<AddMicrofrontend />} />
             }
           />
           <Route path="/deployments">
             <Route
               index
               element={
-                <RouteWithSuspense element={<DeploymentsPage />} />
+                <RouteWithSuspense element={<Deployments />} />
               }
             />
             <Route
               path=":deploymentId/canary-users"
               element={
-                <RouteWithSuspense element={<CanaryUsersPage />} />
+                <RouteWithSuspense element={<CanaryUsers />} />
               }
             />
           </Route>
           <Route
             path="/integration"
             element={
-              <RouteWithSuspense element={<IntegrationPage />} />
+              <RouteWithSuspense element={<Integration />} />
             }
           />
           <Route
@@ -141,7 +145,7 @@ const PrivateRoutes: React.FC = () => {
           <Route
             path="/environments"
             element={
-              <RouteWithSuspense element={<EnvironmentsPage />} />
+              <RouteWithSuspense element={<Environments />} />
             }
           />
           <Route
