@@ -1,5 +1,5 @@
 import MicrofrontendSelector from "@/pages/integration/partials/components/MicrofrontendSelector"
-import CodeIntegration from "@/components/integration/CodeIntegration"
+import { CodeIntegration } from "../index"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"

@@ -1,18 +1,17 @@
 import useEnvironmentsApi, { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
-import EnvironmentSet from "@/pages/environments/partials/EnvironmentSet"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import presetEnvironmentGroups, { EnvironmentPreset } from "@/utils/EnviromentsPresets"
 import { useMutation } from "@tanstack/react-query"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader } from "../../../components/ui/card"
-import EnvironmentList from "./EnvironmentList"
+import { EnvironmentList, EnvironmentSet } from "./index"
 
 interface NoEnvironmentPlaceholderProps {
     onSaveSuccess: (environments: EnvironmentDTO[]) => void
 }
 
-const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> = ({ onSaveSuccess }) => {
+export const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> = ({ onSaveSuccess }) => {
     const [customEnvironments, setCustomEnvironments] = useState<EnvironmentPreset[]>()
     const environmentsApi = useEnvironmentsApi()
     const notificationToast = useToastNotificationStore()

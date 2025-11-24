@@ -13,31 +13,28 @@ import MainLayout from "./theme/layout/MainLayout";
 // Lazy load all page components
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"));
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"));
-
 const Deployments = lazy(() => import("./pages/deployments/Deployments"));
 const CanaryUsers = lazy(() => import("./pages/deployments/CanaryUsers"));
-
 const Integration = lazy(() => import("./pages/integration/Integration"))
-
 const Environments = lazy(() => import("./pages/environments/Environments"));
-
-const ProjectUsersListPage = lazy(() => import("./pages/project-users/ProjectUsersListPage"));
-const StoragesPage = lazy(() => import("./pages/storages/StoragesPage"));
-const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
-const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const ResetPasswordRequestPage = lazy(() => import("./pages/auth/ResetPasswordRequestPage"));
-const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
-const ApiKeysPage = lazy(() => import("./pages/api-keys/ApiKeysPage"));
-const NewOrEditStoragePage = lazy(() => import("./pages/storages/NewOrEditStoragePage"));
-const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
-const EnvironmentVariablesPage = lazy(() => import("./pages/environment-variables/EnvironmentVariablesPage"));
-const CodeRepositoryPage = lazy(() => import("./pages/code-repositories/CodeRepositoryPage"));
+const ProjectUsers = lazy(() => import("./pages/project-users/ProjectUsers"));
+const Storages = lazy(() => import("./pages/storages/Storages"));
+const AddStorage = lazy(() => import("./pages/storages/AddStorage"));
+const ApiKeys = lazy(() => import("./pages/api-keys/ApiKeys"));
+const EnvironmentVariables = lazy(() => import("./pages/environment-variables/EnvironmentVariables"));
+const CodeRepositories = lazy(() => import("./pages/code-repositories/CodeRepositories"));
+const AddAzure = lazy(() => import("./pages/code-repositories/AddAzure"));
+const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlab"));
+const AddGithub = lazy(() => import("./pages/code-repositories/AddGitHub"));
 const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCallbackPage"));
-const AddAzure = lazy(() => import("./pages/code-repositories/AddAzureRepositoryPage"));
-const AddGitlab = lazy(() => import("./pages/code-repositories/AddGitlabRepositoryPage"));
-const AddGithub = lazy(() => import("./pages/code-repositories/AddGitHubRepositoryPage"));
-const MarketPage = lazy(() => import("./pages/market/MarketPage"));
+const TemplatesLibrary = lazy(() => import("./pages/templates-library/TemplatesLibrary"));
+const NotFound = lazy(() => import("./pages/error/NotFound"));
+const Settings = lazy(() => import("./pages/settings/Settings"));
+
+const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"));
+const SignUp = lazy(() => import("./pages/auth/SignUp"));
+const ResetPasswordRequest = lazy(() => import("./pages/auth/ResetPasswordRequest"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 
 const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
@@ -109,37 +106,37 @@ const PrivateRoutes: React.FC = () => {
           <Route
             path="/project-users"
             element={
-              <RouteWithSuspense element={<ProjectUsersListPage />} />
+              <RouteWithSuspense element={<ProjectUsers />} />
             }
           />
           <Route
             path="/storages"
             element={
-              <RouteWithSuspense element={<StoragesPage />} />
+              <RouteWithSuspense element={<Storages />} />
             }
           />
           <Route
             path="/storages/new"
             element={
-              <RouteWithSuspense element={<NewOrEditStoragePage />} />
+              <RouteWithSuspense element={<AddStorage />} />
             }
           />
           <Route
             path="/storages/:id"
             element={
-              <RouteWithSuspense element={<NewOrEditStoragePage />} />
+              <RouteWithSuspense element={<AddStorage />} />
             }
           />
           <Route
             path="/api-keys"
             element={
-              <RouteWithSuspense element={<ApiKeysPage />} />
+              <RouteWithSuspense element={<ApiKeys />} />
             }
           />
           <Route
             path="/settings"
             element={
-              <RouteWithSuspense element={<SettingsPage />} />
+              <RouteWithSuspense element={<Settings />} />
             }
           />
           <Route
@@ -151,13 +148,13 @@ const PrivateRoutes: React.FC = () => {
           <Route
             path="/environment-variables"
             element={
-              <RouteWithSuspense element={<EnvironmentVariablesPage />} />
+              <RouteWithSuspense element={<EnvironmentVariables />} />
             }
           />
           <Route
             path="/code-repositories"
             element={
-              <RouteWithSuspense element={<CodeRepositoryPage />} />
+              <RouteWithSuspense element={<CodeRepositories />} />
             }
           />
           <Route
@@ -199,7 +196,7 @@ const PrivateRoutes: React.FC = () => {
           <Route
             path="/templates-library"
             element={
-              <RouteWithSuspense element={<MarketPage />} />
+              <RouteWithSuspense element={<TemplatesLibrary />} />
             }
           />
           <Route
@@ -221,19 +218,19 @@ const Routes: React.FC = () => {
         <Route
           path="/register"
           element={
-            <RouteWithSuspense element={<RegisterPage />} />
+            <RouteWithSuspense element={<SignUp />} />
           }
         />
         <Route
           path="/reset-password-request"
           element={
-            <RouteWithSuspense element={<ResetPasswordRequestPage />} />
+            <RouteWithSuspense element={<ResetPasswordRequest />} />
           }
         />
         <Route
           path="/reset-password/:token"
           element={
-            <RouteWithSuspense element={<ResetPasswordPage />} />
+            <RouteWithSuspense element={<ResetPassword />} />
           }
         />
         <Route

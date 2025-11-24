@@ -126,7 +126,7 @@ const SingleEnviromentEdit: React.FC<SingleEnviromentEditProps> = ({ environment
     )
 }
 
-const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveEnvironments }) => {
+export const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, onSaveEnvironments }) => {
     const { t } = useTranslation()
     const [editingId, setEditingId] = useState<string | number>()
     const [loading, setLoading] = useState(false)

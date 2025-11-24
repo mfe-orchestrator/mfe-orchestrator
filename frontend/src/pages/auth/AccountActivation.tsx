@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
 import useToastNotificationStore from "@/store/useToastNotificationStore";
 
-const AccountActivation = () => {
+export const AccountActivation = () => {
   const { t } = useTranslation();
   const { activateAccount } = useUserApi();
   const { token } = useParams<{ token: string }>();
@@ -17,22 +17,22 @@ const AccountActivation = () => {
   const accountActivatonQuery = useQuery({
     queryKey: ['account-activation', token],
     queryFn: async () => {
-        await activateAccount(token)
-        notifications.showSuccessNotification({
-            message: t('auth.account_activation.success')
-        })
-        navigate("/")
+      await activateAccount(token)
+      notifications.showSuccessNotification({
+        message: t('auth.account_activation.success')
+      })
+      navigate("/")
     }
   })
 
   return (
-    <AuthenticationLayout 
+    <AuthenticationLayout
       title={t('auth.account_activation.title')}
       description={t('auth.account_activation.description')}
     >
-        <ApiDataFetcher queries={[accountActivatonQuery]}>
-            <h1>{t('auth.account_activation.success')}</h1>
-        </ApiDataFetcher>
+      <ApiDataFetcher queries={[accountActivatonQuery]}>
+        <h1>{t('auth.account_activation.success')}</h1>
+      </ApiDataFetcher>
     </AuthenticationLayout>
   );
 };

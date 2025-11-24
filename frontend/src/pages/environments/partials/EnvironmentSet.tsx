@@ -9,7 +9,7 @@ interface EnvironmentSetProps {
     onClick: (environment: EnvironmentPreset[]) => void
 }
 
-const EnvironmentSet: React.FC<EnvironmentSetProps> = ({ name, environments, onClick }) => {
+export const EnvironmentSet: React.FC<EnvironmentSetProps> = ({ name, environments, onClick }) => {
     return (
         <Card onClick={() => onClick(environments)} className="relative flex-[1_1_240px] cursor-pointer flex gap-4 items-center flex-wrap hover:bg-primary/15">
             <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">

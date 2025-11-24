@@ -1,5 +1,5 @@
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
-import DeploymentGate from "@/components/DeploymentGate"
+import DeploymentGate from "@/pages/integration/partials/DeploymentGate"
 import EnvironmentSelector from "@/components/molecules/EnvironmentSelector"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
@@ -12,7 +12,7 @@ import EnvironmentsGate from "@/theme/EnvironmentsGate"
 import { useQuery } from "@tanstack/react-query"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { EnvironmentVariablesIntegration, FrontendIntegration } from "./partials/views"
+import { EnvironmentVariablesIntegration, FrontendIntegration } from "./partials"
 
 export const Integration: React.FC = () => {
     const { t } = useTranslation()
