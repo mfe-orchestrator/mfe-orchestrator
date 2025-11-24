@@ -33,7 +33,7 @@
         "@getbrevo/brevo": "^3.0.1",
         "@google-cloud/storage": "^7.17.0",
         "@redis/client": "^5.8.2",
-        "@sentry/node": "^10.20.0",
+        "@sentry/node": "^10.27.0",
         "axios": "^1.12.1",
         "bcryptjs": "^3.0.2",
         "dotenv": "^17.2.2",
