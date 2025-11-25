@@ -125,11 +125,12 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             },
             ...(repositories && repositories.length > 0
                 ? {
-                    codeRepository: {
-                        enabled: Boolean(template),
-                        repositoryId: "create_new"
-                    }
-                }
+                      codeRepository: {
+                          enabled: Boolean(template),
+                          repositoryId: "create_new",
+                          codeRepositoryId: repositories.length === 1 ? repositories[0]._id : repositories.find(repo => repo.default)?._id
+                      }
+                  }
                 : {}),
             canary: {
                 enabled: false,
@@ -311,10 +312,10 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                         name="canary.percentage"
                                         label={t("microfrontend.canary_percentage")}
                                         placeholder="38%"
-                                    // type="number"
-                                    // required
-                                    // min={0}
-                                    // max={100}
+                                        // type="number"
+                                        // required
+                                        // min={0}
+                                        // max={100}
                                     />
                                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                                         <SelectField

@@ -26,9 +26,9 @@ import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { runInTransaction } from "../utils/runInTransaction"
 import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import CodeManagementService from "./CodeManagementService"
 import { deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
-import CodeManagementService from "./CodeManagementService"
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -72,7 +72,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         codeRepository.azureData.projectId,
                         microfrontend.codeRepository.createData.name
                     )
-                    microfrontend.codeRepository.repositoryId = createdRepository.name
+                    microfrontend.codeRepository.repositoryId = createdRepository.id
+                    microfrontend.codeRepository.name = createdRepository.name
                     if (template) {
                         await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, template)
                     }
@@ -160,11 +161,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
-        const codeManagementService = new CodeManagementService(
-            CodeRepositoryProvider.AZURE_DEV_OPS,
-            accessToken,
-            tempDir
-        )
+        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.AZURE_DEV_OPS, accessToken, tempDir)
 
         const repoUrl = "https://root:" + accessToken + "@dev.azure.com/" + codeRepository.azureData.organization + "/" + codeRepository.azureData.projectId + "/_git/" + repositoryName
 
@@ -268,14 +265,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         const tempDir = join(tmpdir(), `template-${Date.now()}`)
 
-        const codeManagementService = new CodeManagementService(
-            CodeRepositoryProvider.GITHUB,
-            githubToken,
-            tempDir
-        )
+        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITHUB, githubToken, tempDir)
         await codeManagementService.cloneRepository({
             repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true,
+            initializeInCaseOfEmptyRepo: true
         })
 
         // Download + unzip template

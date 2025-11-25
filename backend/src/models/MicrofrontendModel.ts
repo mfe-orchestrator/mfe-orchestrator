@@ -187,7 +187,6 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         slug: {
             type: String,
             required: true,
-            unique: true,
             trim: true,
             lowercase: true
         },
@@ -245,6 +244,8 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         timestamps: true
     }
 )
+
+microfrontendSchema.index({ slug: 1, projectId: 1 }, { unique: true })
 
 const Microfrontend = mongoose.model<IMicrofrontend>("Microfrontend", microfrontendSchema)
 export default Microfrontend

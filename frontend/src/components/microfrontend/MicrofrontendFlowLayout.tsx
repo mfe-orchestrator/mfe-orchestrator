@@ -85,9 +85,10 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
                 const isHovered = node.id === hoveredNodeId
                 return {
                     ...node,
-                    className: isHovered || isConnected
-                        ? "!bg-white dark:!bg-gray-800 !border-2 !border-purple-500 dark:!border-purple-500 !text-gray-900 dark:!text-gray-100 rounded-lg"
-                        : "!bg-white dark:!bg-gray-800 !border-2 !border-gray-200 dark:!border-white !text-gray-900 dark:!text-gray-100 rounded-lg opacity-50"
+                    className:
+                        isHovered || isConnected
+                            ? "!bg-white dark:!bg-gray-800 !border-2 !border-purple-500 dark:!border-purple-500 !text-gray-900 dark:!text-gray-100 rounded-lg"
+                            : "!bg-white dark:!bg-gray-800 !border-2 !border-gray-200 dark:!border-white !text-gray-900 dark:!text-gray-100 rounded-lg opacity-50"
                 }
             })
         )
@@ -105,11 +106,11 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
                     animated: isConnected,
                     markerStart: isConnected
                         ? {
-                            type: "arrowclosed" as const,
-                            width: 20,
-                            height: 20,
-                            color: "#a855f7"
-                        }
+                              type: "arrowclosed" as const,
+                              width: 20,
+                              height: 20,
+                              color: "#a855f7"
+                          }
                         : edge.markerStart
                 }
             })
@@ -133,8 +134,6 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
 
     const onEdgesChange = useCallback(
         async (changes: EdgeChange[]) => {
-            console.log(changes)
-
             for (const change of changes) {
                 if (change.type === "remove") {
                     const edgeToRemove = edges.find(e => e.id === change.id)
@@ -186,14 +185,19 @@ const MicrofrontendFlowLayout: React.FC<MicrofrontendFlowLayoutProps> = ({ micro
         setHoveredNodeId(null)
     }, [])
 
-    const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
-        navigate(`/microfrontend/${node.id}`)
-    }, [navigate])
+    const onNodeDoubleClick = useCallback(
+        (_event: React.MouseEvent, node: Node) => {
+            navigate(`/microfrontend/${node.id}`)
+        },
+        [navigate]
+    )
 
     if (!microfrontends || microfrontends.length === 0) {
-        return <div className="flex">
-            <AddNewMicrofrontendCard onAddNewMicrofrontend={() => onAddNewMicrofrontend()} className={"flex-1"} />
-        </div>
+        return (
+            <div className="flex">
+                <AddNewMicrofrontendCard onAddNewMicrofrontend={() => onAddNewMicrofrontend()} className={"flex-1"} />
+            </div>
+        )
     }
 
     return (
