@@ -30,6 +30,7 @@ import CodeManagementService from "./CodeManagementService"
 import { deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
 
+const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
@@ -75,7 +76,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     microfrontend.codeRepository.repositoryId = createdRepository.id
                     microfrontend.codeRepository.name = createdRepository.name
                     if (template) {
-                        await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, template)
+                        await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template)
+                        await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
                     }
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
                     if (!codeRepository.gitlabData?.url) {
@@ -150,7 +152,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
     }
 
-    async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, template: IMarket) {
+    async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
             throw new Error("Template url is not set")
@@ -159,7 +161,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new Error("Azure data is not set")
         }
 
-        const tempDir = join(tmpdir(), `template-${Date.now()}`)
+        // Download + unzip template
+        const tempDir = await this.downloadZip("template", templateUrl)
 
         const codeManagementService = new CodeManagementService(CodeRepositoryProvider.AZURE_DEV_OPS, accessToken, tempDir)
 
@@ -204,6 +207,30 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     console.error(`Error removing top-level folder:`, err)
                 }
             }
+        }
+
+        // Copy pipelines
+        if (template.type && template.compiler) {
+            //Download piplines data
+            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
+
+            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, "azure-pipelines.yml")
+
+            // Check if the pipeline path exists
+            if (await fs.pathExists(pipelinePath)) {
+                // Copy all contents from pipeline path to .github directory
+                await fs.copyFile(pipelinePath, join(tempDir, "azure-pipelines.yml"))
+
+                // Replace placeholders in all copied files
+                //await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
+                // Da fare!!
+
+                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
+            } else {
+                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
+            }
+        } else {
+            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
         }
 
         // Stage + commit
@@ -254,45 +281,52 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
     }
 
+    async createPipelineAzureDevOps(repositoryName: string, codeRepository: ICodeRepository) {
+        if (!codeRepository.azureData) {
+            throw new Error("Azure data is not set")
+        }
+
+        const accessToken = codeRepository.accessToken
+        const azureDevOpsClient = new AzureDevOpsClient()
+
+        try {
+            // Get repository details to obtain the repository ID
+            const repository = await azureDevOpsClient.getRepository(accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryName)
+
+            // Create the pipeline
+            const pipeline = await azureDevOpsClient.createPipeline(
+                accessToken,
+                codeRepository.azureData.organization,
+                codeRepository.azureData.projectId,
+                repository.id,
+                `${repositoryName}-pipeline`,
+                "azure-pipelines.yml",
+                "/"
+            )
+
+            fastify.log.info(`✅ Pipeline created successfully: ${pipeline.name} (ID: ${pipeline.id})`)
+            fastify.log.info(`🔗 Pipeline URL: ${pipeline._links.web.href}`)
+
+            return pipeline
+        } catch (error: unknown) {
+            fastify.log.error(`❌ Failed to create pipeline for repository ${repositoryName}:` + error)
+            throw new Error(`Failed to create Azure DevOps pipeline: ${error}`)
+        }
+    }
+
     async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
             throw new Error("Template url is not set")
         }
 
-        const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
-        const tempDirPipelines = join(tmpdir(), `template-pipelines-${Date.now()}`)
-
-        const tempDir = join(tmpdir(), `template-${Date.now()}`)
+        // Download + unzip template
+        const tempDir = await this.downloadZip("template", templateUrl)
 
         const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITHUB, githubToken, tempDir)
         await codeManagementService.cloneRepository({
             repositoryUrl: repoUrl,
             initializeInCaseOfEmptyRepo: true
-        })
-
-        // Download + unzip template
-        const response = await axios.get(templateUrl, { responseType: "stream" })
-        if (response.status !== 200) throw new Error(`Failed to download template: ${response.statusText}`)
-
-        await new Promise((resolve, reject) => {
-            response.data
-                .pipe(unzipper.Extract({ path: tempDir }))
-                .on("close", resolve)
-                .on("error", reject)
-        })
-
-        //Download piplines data
-        const responsePipelines = await axios.get(pipelinesUrl, {
-            responseType: "stream"
-        })
-        if (responsePipelines.status !== 200) throw new Error(`Failed to download pipelines: ${responsePipelines.statusText}`)
-
-        await new Promise((resolve, reject) => {
-            responsePipelines.data
-                .pipe(unzipper.Extract({ path: tempDirPipelines }))
-                .on("close", resolve)
-                .on("error", reject)
         })
 
         // Flatten GitHub zip (moves contents up)
@@ -323,6 +357,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         // Copy pipelines
         if (template.type && template.compiler) {
+            //Download piplines data
+            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
+
             const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType)
 
             // Check if the pipeline path exists
@@ -383,6 +420,23 @@ export class MicrofrontendService extends BaseAuthorizedService {
             const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
             console.log("🔍 Remote branches:", remoteBranches)
         }
+    }
+
+    async downloadZip(prefixDirectory: string, urlToDownload: string): Promise<string> {
+        const temporaryDirectory = join(tmpdir(), `${prefixDirectory}-${Date.now()}`)
+        const responseDownload = await axios.get(urlToDownload, {
+            responseType: "stream"
+        })
+        if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
+
+        await new Promise((resolve, reject) => {
+            responseDownload.data
+                .pipe(unzipper.Extract({ path: temporaryDirectory, verbose: true }))
+                .on("close", resolve)
+                .on("error", reject)
+        })
+
+        return temporaryDirectory
     }
 
     async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {

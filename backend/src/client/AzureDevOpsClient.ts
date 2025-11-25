@@ -105,6 +105,31 @@ export interface AzureDevOpsBranchDTO {
     value: AzureDevOpsBranch[]
 }
 
+export interface AzureDevOpsPipeline {
+    id: number
+    name: string
+    folder: string
+    revision: number
+    _links: {
+        self: { href: string }
+        web: { href: string }
+    }
+    url: string
+}
+
+export interface CreatePipelineRequest {
+    name: string
+    folder?: string
+    configuration: {
+        type: "yaml"
+        path: string
+        repository: {
+            id: string
+            type: "azureReposGit"
+        }
+    }
+}
+
 class AzureDevOpsClient {
     // Ottieni l'ID utente dal profilo
     async getUserId(token: string) {
@@ -202,6 +227,43 @@ class AzureDevOpsClient {
                 "Content-Type": "application/json"
             }
         })
+        return response.data
+    }
+
+    async createPipeline(
+        token: string,
+        organization: string,
+        project: string,
+        repositoryId: string,
+        pipelineName: string,
+        yamlPath: string = "azure-pipelines.yml",
+        folder: string = "/"
+    ): Promise<AzureDevOpsPipeline> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/pipelines?api-version=7.1-preview.1`
+
+        const body: CreatePipelineRequest = {
+            name: pipelineName,
+            folder: folder,
+            configuration: {
+                type: "yaml",
+                path: yamlPath,
+                repository: {
+                    id: repositoryId,
+                    type: "azureReposGit"
+                }
+            }
+        }
+
+        const response = await axios.request<AzureDevOpsPipeline>({
+            method: "POST",
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: body
+        })
+
         return response.data
     }
 }
