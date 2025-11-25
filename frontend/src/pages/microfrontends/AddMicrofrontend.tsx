@@ -1,9 +1,14 @@
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
+import { FormProvider, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
+import * as z from "zod"
 import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher"
 import SelectField from "@/components/input/SelectField.rhf"
 import Switch from "@/components/input/Switch.rhf"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
-import { FetchDataMarketCard } from "@/components/market"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button/button"
@@ -14,12 +19,7 @@ import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
 import { CodeRepositorySection, DangerZoneRemoveMicrofrontend } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useQuery } from "@tanstack/react-query"
-import { FormProvider, useForm } from "react-hook-form"
-import { useTranslation } from "react-i18next"
-import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import * as z from "zod"
+import { FetchDataTemplateCard } from "../templates-library/partials/"
 
 const logoMap: Record<string, string> = {
     AWS: "/img/aws.svg",
@@ -124,11 +124,12 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             },
             ...(repositories && repositories.length > 0
                 ? {
-                    codeRepository: {
-                        enabled: Boolean(template),
-                        repositoryId: "create_new"
-                    }
-                }
+                      codeRepository: {
+                          enabled: Boolean(template),
+                          repositoryId: "create_new",
+                          codeRepositoryId: repositories.length === 1 ? repositories[0]._id : repositories.find(repo => repo.default)?._id
+                      }
+                  }
                 : {}),
             canary: {
                 enabled: false,
@@ -186,7 +187,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         <SinglePageLayout title={isEdit ? t("microfrontend.edit") : t("microfrontend.add_new")} description={isEdit ? t("microfrontend.edit_description") : t("microfrontend.add_new_description")}>
             <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FetchDataMarketCard slug={template} />
+                    <FetchDataTemplateCard slug={template} />
 
                     {/* General Information Section */}
                     <Card>
@@ -310,10 +311,10 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                         name="canary.percentage"
                                         label={t("microfrontend.canary_percentage")}
                                         placeholder="38%"
-                                    // type="number"
-                                    // required
-                                    // min={0}
-                                    // max={100}
+                                        // type="number"
+                                        // required
+                                        // min={0}
+                                        // max={100}
                                     />
                                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                                         <SelectField

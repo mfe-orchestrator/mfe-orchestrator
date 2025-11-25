@@ -6,7 +6,7 @@ pre-commit:
   commands:
     lint-and-format:
       glob: "{backend,frontend}/**/*.{js,ts,tsx,json}"
-      run: "biome check --write --staged {staged_files}"
+      run: "pnpm exec biome check --write --staged {staged_files}"
       stage_fixed: true
 
     typecheck-backend:
