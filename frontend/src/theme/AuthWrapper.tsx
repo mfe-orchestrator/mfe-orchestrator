@@ -1,5 +1,4 @@
-
-import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
+import { ApiStatusHandler } from "@/components/organisms";
 import useUserApi, { User } from "@/hooks/apiClients/useUserApi";
 import { useQuery } from "@tanstack/react-query";
 import LoginPage from "../authentication/components/LoginPage";
@@ -10,52 +9,51 @@ import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
 
 const AuthWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
-
-  const userStore = useUserStore()
+  const userStore = useUserStore();
   const userApi = useUserApi();
   const themeStore = useThemeStore();
-  const { i18n } = useTranslation()
+  const { i18n } = useTranslation();
 
   const profileQuery = useQuery({
     queryKey: ["profile"],
-    queryFn: async () =>{
-      try{
-        const profile = await userApi.getProfile()
+    queryFn: async () => {
+      try {
+        const profile = await userApi.getProfile();
         userStore.setUser(profile);
-        if(profile.language){
+        if (profile.language) {
           themeStore.setLanguage(profile.language);
           setLanguageInLocalStorage(profile.language);
           i18n.changeLanguage(profile.language);
         }
-        if(profile.theme){
+        if (profile.theme) {
           themeStore.setTheme(profile.theme);
           setThemeInLocalStorage(profile.theme);
         }
 
-        if(Sentry.isEnabled()){
+        if (Sentry.isEnabled()) {
           Sentry.setUser({
             id: profile.id,
             email: profile.email,
-            username: profile.email
-          })
+            username: profile.email,
+          });
         }
         return profile;
-      }catch(e){
-        console.log(e)
+      } catch (e) {
+        console.log(e);
         return null;
       }
-    }
+    },
   });
 
   const onSuccessLogin = () => {
-    profileQuery.refetch()
-  }
+    profileQuery.refetch();
+  };
 
   return (
-    <ApiDataFetcher queries={[profileQuery]}>
-        {userStore.user ? <>{children}</> : <LoginPage onSuccessLogin={onSuccessLogin} />}
-    </ApiDataFetcher>
+    <ApiStatusHandler queries={[profileQuery]}>
+      {userStore.user ? <>{children}</> : <LoginPage onSuccessLogin={onSuccessLogin} />}
+    </ApiStatusHandler>
   );
 };
 
-export default AuthWrapper
+export default AuthWrapper;

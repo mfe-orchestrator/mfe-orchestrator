@@ -3,46 +3,43 @@ import useProjectStore from "@/store/useProjectStore";
 import { useQuery } from "@tanstack/react-query";
 import useProjectApi from "@/hooks/apiClients/useProjectApi";
 import NoEnvironmentPlaceholder from "@/pages/environments/partials/NoEnvironmentPlaceholder";
-import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
+import { ApiStatusHandler } from "@/components/organisms";
 
 interface EnvironmentsGateProps extends React.PropsWithChildren {
-    onSaveSuccess?: () => Promise<void> | void
+  onSaveSuccess?: () => Promise<void> | void;
 }
 
 const EnvironmentsGate: React.FC<EnvironmentsGateProps> = ({ children, onSaveSuccess }) => {
+  const projectStore = useProjectStore();
+  const projectsApi = useProjectApi();
 
-    const projectStore = useProjectStore();
-    const projectsApi = useProjectApi()
+  const onSaveEnvironmentsSucess = (environments: EnvironmentDTO[]) => {
+    projectStore.setEnvironments(environments);
+    projectStore.setEnvironment(environments[0]);
+    onSaveSuccess?.();
+  };
 
-    const onSaveEnvironmentsSucess = (environments: EnvironmentDTO[]) => {
-        projectStore.setEnvironments(environments)
-        projectStore.setEnvironment(environments[0])
-        onSaveSuccess?.()
-    }
+  const environmentsQuery = useQuery({
+    queryKey: ["environments", projectStore?.project?._id],
+    queryFn: async () => {
+      const environments = await projectsApi.getEnvironmentsByProjectId(projectStore.project?._id);
+      onSaveEnvironmentsSucess(environments);
+      return environments;
+    },
+    enabled: !!projectStore.project?._id,
+  });
 
-    const environmentsQuery = useQuery({
-        queryKey: ['environments', projectStore?.project?._id],
-        queryFn: async () => {
-            const environments = await projectsApi.getEnvironmentsByProjectId(projectStore.project?._id)
-            onSaveEnvironmentsSucess(environments)
-            return environments;
+  const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0;
 
-        },
-        enabled: !!projectStore.project?._id
-    });
+  return (
+    <ApiStatusHandler queries={[environmentsQuery]}>
+      {isThereAtLeastOneEnvironment ? (
+        <>{children}</>
+      ) : (
+        <NoEnvironmentPlaceholder onSaveSuccess={onSaveEnvironmentsSucess} />
+      )}
+    </ApiStatusHandler>
+  );
+};
 
-    const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0;
-
-    return (
-        <ApiDataFetcher queries={[environmentsQuery]}>
-            {isThereAtLeastOneEnvironment ?
-                <>
-                    {children}
-                </>
-                :
-                <NoEnvironmentPlaceholder onSaveSuccess={onSaveEnvironmentsSucess} />}
-        </ApiDataFetcher>
-    );
-}
-
-export default EnvironmentsGate
+export default EnvironmentsGate;

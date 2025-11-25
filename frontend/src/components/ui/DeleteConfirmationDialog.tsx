@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from "./button/button";
+import { Button } from "../atoms/button/Button";
 import {
   Dialog,
   DialogContent,

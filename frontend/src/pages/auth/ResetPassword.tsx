@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/atoms";
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import TextField from "@/components/input/TextField.rhf";
 import { FormProvider } from "react-hook-form";
@@ -20,65 +20,67 @@ const ResetPassword = () => {
   const { resetPassword } = useUserApi();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const notifications = useToastNotificationStore()
+  const notifications = useToastNotificationStore();
 
   const form = useForm<FormValues>({});
 
   const registerMutation = useMutation({
-    mutationFn: resetPassword
-  })
+    mutationFn: resetPassword,
+  });
 
   const handleRegister = async (values: FormValues) => {
     await registerMutation.mutateAsync({
       password: values.password,
-      token
-    })
+      token,
+    });
     notifications.showSuccessNotification({
-      message: t('auth.reset_password_success')
-    })
-    navigate('/')
+      message: t("auth.reset_password_success"),
+    });
+    navigate("/");
   };
 
   return (
     <AuthenticationLayout
-      title={t('auth.reset_password')}
-      description={t('auth.reset_password_description')}
-    >
+      title={t("auth.reset_password")}
+      description={t("auth.reset_password_description")}>
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(handleRegister)}>
           <div className="grid gap-4">
             <TextField
               name="password"
-              label={t('auth.password')}
+              label={t("auth.password")}
               type="password"
               placeholder="••••••••"
               rules={{
-                required: t('common.required_field') as string,
+                required: t("common.required_field") as string,
                 minLength: {
                   value: 8,
-                  message: t('auth.password_min_length')
-                }
+                  message: t("auth.password_min_length"),
+                },
               }}
             />
 
             <TextField
               name="confirmPassword"
-              label={t('auth.confirm_password')}
+              label={t("auth.confirm_password")}
               type="password"
               placeholder="••••••••"
               rules={{
-                required: t('common.required_field') as string,
-                validate: (value: string) => value === form.getValues('password') || t('auth.passwords_dont_match')
+                required: t("common.required_field") as string,
+                validate: (value: string) =>
+                  value === form.getValues("password") || t("auth.passwords_dont_match"),
               }}
             />
 
-            {registerMutation.isPending ?
+            {registerMutation.isPending ? (
               <Spinner />
-              :
-              <Button type="submit" className="w-full">
-                {t('auth.reset_password')}
+            ) : (
+              <Button
+                type="submit"
+                className="w-full">
+                {t("auth.reset_password")}
               </Button>
-            }
+            )}
           </div>
         </form>
       </FormProvider>

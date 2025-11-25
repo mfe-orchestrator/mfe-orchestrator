@@ -1,6 +1,5 @@
-
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/atoms";
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import TextField from "@/components/input/TextField.rhf";
 import { FormProvider } from "react-hook-form";
@@ -19,52 +18,53 @@ export const ResetPasswordRequest = () => {
   const { t } = useTranslation();
   const { resetPasswordRequest } = useUserApi();
   const navigate = useNavigate();
-  const notifications = useToastNotificationStore()
+  const notifications = useToastNotificationStore();
 
   const form = useForm<FormValues>({});
 
   const resetPasswordMutation = useMutation({
-    mutationFn: resetPasswordRequest
-  })
+    mutationFn: resetPasswordRequest,
+  });
 
   const handleRegister = async (values: FormValues) => {
     await resetPasswordMutation.mutate({
-      email: values.email
-    })
+      email: values.email,
+    });
     notifications.showSuccessNotification({
-      message: t('auth.recover_password_success')
-    })
-    navigate('/')
+      message: t("auth.recover_password_success"),
+    });
+    navigate("/");
   };
 
   return (
     <AuthenticationLayout
-      title={t('auth.recover_password')}
-      description={t('auth.recover_password_description')}
-    >
+      title={t("auth.recover_password")}
+      description={t("auth.recover_password_description")}>
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(handleRegister)}>
           <div className="grid gap-4">
             <TextField
               name="email"
-              label={t('auth.email')}
+              label={t("auth.email")}
               type="email"
-              placeholder={t('auth.email_placeholder')}
+              placeholder={t("auth.email_placeholder")}
               rules={{
-                required: t('common.required_field') as string,
+                required: t("common.required_field") as string,
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: t('auth.invalid_email')
-                }
+                  message: t("auth.invalid_email"),
+                },
               }}
             />
-            {resetPasswordMutation.isPending ?
+            {resetPasswordMutation.isPending ? (
               <Spinner />
-              :
-              <Button type="submit" className="w-full">
-                {t('auth.recover_password_button')}
+            ) : (
+              <Button
+                type="submit"
+                className="w-full">
+                {t("auth.recover_password_button")}
               </Button>
-            }
+            )}
           </div>
         </form>
       </FormProvider>

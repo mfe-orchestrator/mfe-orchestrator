@@ -69,7 +69,7 @@ This is a **monorepo** microfrontend orchestrator project with:
 ### API Calls & Data Fetching
 
 - For API calls on page load, use `import { useQuery } from '@tanstack/react-query'`
-- Wrap the component with `<ApiDataFetcher queries={[dataQuery]}>`
+- Wrap the component with `<ApiStatusHandler queries={[dataQuery]}>`
 - Example:
 
 ```tsx
@@ -78,9 +78,9 @@ const dataQuery = useQuery({
   queryFn: () => apiFunction(param),
 });
 return (
-  <ApiDataFetcher queries={[dataQuery]}>
+  <ApiStatusHandler queries={[dataQuery]}>
     {/* Your component content */}
-  </ApiDataFetcher>
+  </ApiStatusHandler>
 );
 ```
 
@@ -517,7 +517,7 @@ Closes: #123
 - [ ] Added navigation link
 - [ ] Added i18n strings
 - [ ] Added API hooks
-- [ ] Used ApiDataFetcher for data loading
+- [ ] Used ApiStatusHandler for data loading
 - [ ] Added toast notifications for user feedback
 
 ---
@@ -563,7 +563,7 @@ const dataQuery = useQuery({
 });
 
 return (
-  <ApiDataFetcher queries={[dataQuery]}>{/* Render data */}</ApiDataFetcher>
+  <ApiStatusHandler queries={[dataQuery]}>{/* Render data */}</ApiStatusHandler>
 );
 ```
 
@@ -593,7 +593,7 @@ notifications.showSuccessNotification({ message: "Success!" });
 4. ✅ Use i18n for all user-facing text
 5. ✅ Always use react-hook-form for forms
 6. ✅ Use lucide-react for icons
-7. ✅ Wrap page components with ApiDataFetcher for data loading
+7. ✅ Wrap page components with ApiStatusHandler for data loading
 8. ✅ Add routes and navigation when creating new pages
 9. ✅ Services extend BaseAuthorizedService for authorization
 10. ✅ Controllers use services for business logic

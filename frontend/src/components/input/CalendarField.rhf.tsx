@@ -5,7 +5,7 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 import "react-day-picker/dist/style.css"
 import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
-import { Button } from "../ui/button/button"
+import { Button } from "../atoms/button/Button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 
 type CalendarFieldProps<T extends FieldValues> = {

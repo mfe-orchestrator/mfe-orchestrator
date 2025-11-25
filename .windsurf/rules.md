@@ -46,7 +46,7 @@ pnpm typecheck        # TypeScript check all packages
 
 ### API Calls
 
-- Quando hai una api call da fare onLoad della pagina usa `import { useQuery } from '@tanstack/react-query';` e racchiudi tutto il componente in `<ApiDataFetcher queries={[dataQuery]}>...</ApiDataFetcher>`
+- Quando hai una api call da fare onLoad della pagina usa `import { useQuery } from '@tanstack/react-query';` e racchiudi tutto il componente in `<ApiStatusHandler queries={[dataQuery]}>...</ApiStatusHandler>`
 - Quando usi useQuery non usare onError
 
 ### Git Workflow

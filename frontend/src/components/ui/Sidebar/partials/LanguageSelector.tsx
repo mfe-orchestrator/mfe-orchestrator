@@ -1,52 +1,77 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import useUserApi from "@/hooks/apiClients/useUserApi"
-import useUserStore from "@/store/useUserStore"
-import { setLanguageInLocalStorage } from "@/utils/localStorageUtils"
-import { Globe } from "lucide-react"
-import { useTranslation } from "react-i18next"
-import { NavItem } from "./NavItem/NavItem"
-import { Button } from "../../button/button"
-import useThemeStore from "@/store/useThemeStore"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import useUserApi from "@/hooks/apiClients/useUserApi";
+import useUserStore from "@/store/useUserStore";
+import { setLanguageInLocalStorage } from "@/utils/localStorageUtils";
+import { Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { NavItem } from "./NavItem/NavItem";
+import { Button } from "@/components/atoms";
+import useThemeStore from "@/store/useThemeStore";
 
 interface LanguageSelectorProps {
-    isSidebarCollapsed?: boolean
-    purpose?: "sidebar" | "page"
-    dropdownContentSide?: "top" | "right" | "bottom" | "left"
-    dropdownContentAlign?: "start" | "center" | "end"
+  isSidebarCollapsed?: boolean;
+  purpose?: "sidebar" | "page";
+  dropdownContentSide?: "top" | "right" | "bottom" | "left";
+  dropdownContentAlign?: "start" | "center" | "end";
 }
 
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isSidebarCollapsed, purpose = "sidebar", dropdownContentSide, dropdownContentAlign }: LanguageSelectorProps) => {
-    const { t, i18n } = useTranslation()
-    const userApi = useUserApi()
-    const userStore = useUserStore()
-    const themeStore = useThemeStore()
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({
+  isSidebarCollapsed,
+  purpose = "sidebar",
+  dropdownContentSide,
+  dropdownContentAlign,
+}: LanguageSelectorProps) => {
+  const { t, i18n } = useTranslation();
+  const userApi = useUserApi();
+  const userStore = useUserStore();
+  const themeStore = useThemeStore();
 
-    const changeLanguage = (lng: string) => {
-        i18n.changeLanguage(lng)
-        setLanguageInLocalStorage(lng)
-        if (userStore.user) {
-            userApi.saveLanguage(lng)
-            themeStore.setLanguage(lng)
-        }
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    setLanguageInLocalStorage(lng);
+    if (userStore.user) {
+      userApi.saveLanguage(lng);
+      themeStore.setLanguage(lng);
     }
+  };
 
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                {purpose === "page" ? (
-                    <Button variant="ghost" size="icon" aria-label="Language selector">
-                        {<Globe />}
-                    </Button>
-                ) : (
-                    <NavItem type="secondary" icon={<Globe />} name={t("language.change")} aria-label="Language selector" isSidebarCollapsed={isSidebarCollapsed} />
-                )}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side={dropdownContentSide || purpose === "page" ? "bottom" : "right"} align={dropdownContentAlign || purpose === "page" ? "end" : "start"}>
-                <DropdownMenuItem onClick={() => changeLanguage("en")}>{t("language.english")}</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage("it")}>{t("language.italian")}</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    )
-}
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {purpose === "page" ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Language selector">
+            {<Globe />}
+          </Button>
+        ) : (
+          <NavItem
+            type="secondary"
+            icon={<Globe />}
+            name={t("language.change")}
+            aria-label="Language selector"
+            isSidebarCollapsed={isSidebarCollapsed}
+          />
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        side={dropdownContentSide || purpose === "page" ? "bottom" : "right"}
+        align={dropdownContentAlign || purpose === "page" ? "end" : "start"}>
+        <DropdownMenuItem onClick={() => changeLanguage("en")}>
+          {t("language.english")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage("it")}>
+          {t("language.italian")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
-export default LanguageSelector
+export default LanguageSelector;

@@ -1,18 +1,25 @@
-import ApiDataFetcher from '@/components/ApiDataFetcher/ApiDataFetcher';
-import SinglePageLayout from '@/components/SinglePageLayout';
-import { Button } from "@/components/ui/button/button";
-import { Card, CardContent } from '@/components/ui/card';
-import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import useApiKeysApi from '@/hooks/apiClients/useApiKeysApi';
-import useProjectStore from '@/store/useProjectStore';
-import useThemeStore from '@/store/useThemeStore';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { CreateApiKeyDialog, NoApiKeyPlaceholder } from './partials';
+import { ApiStatusHandler } from "@/components/organisms";
+import SinglePageLayout from "@/components/SinglePageLayout";
+import { Button } from "@/components/atoms";
+import { Card, CardContent } from "@/components/ui/card";
+import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import useApiKeysApi from "@/hooks/apiClients/useApiKeysApi";
+import useProjectStore from "@/store/useProjectStore";
+import useThemeStore from "@/store/useThemeStore";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { CreateApiKeyDialog, NoApiKeyPlaceholder } from "./partials";
 
 export const ApiKeys = () => {
   const { t } = useTranslation();
@@ -23,53 +30,52 @@ export const ApiKeys = () => {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [keyToDelete, setKeyToDelete] = useState<{ id: string, name: string } | null>(null);
-
+  const [keyToDelete, setKeyToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const apiKeysQuery = useQuery({
-    queryKey: ['api-keys', project.project?._id],
-    queryFn: () => apiKeysApi.getApiKeys(project.project?._id || ''),
+    queryKey: ["api-keys", project.project?._id],
+    queryFn: () => apiKeysApi.getApiKeys(project.project?._id || ""),
   });
-
 
   // Delete API key mutation
   const deleteApiKeyMutation = useMutation({
     mutationFn: apiKeysApi.deleteApiKey,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['api-keys', project.project?._id] });
+      queryClient.invalidateQueries({ queryKey: ["api-keys", project.project?._id] });
     },
   });
 
   const formatExpirationDate = (dateString: string) => {
-    if (!dateString) return ''
-    return format(new Date(dateString), 'PPP', { locale: themeStore.getLocale() });
+    if (!dateString) return "";
+    return format(new Date(dateString), "PPP", { locale: themeStore.getLocale() });
   };
 
   return (
     <>
-      <ApiDataFetcher queries={[apiKeysQuery]}>
+      <ApiStatusHandler queries={[apiKeysQuery]}>
         <SinglePageLayout
-          title={t('apiKeys.api_keys')}
-          description={t('apiKeys.manage_api_keys')}
-          right={apiKeysQuery.data?.length === 0 ? null :
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('apiKeys.create_api_key')}
-            </Button>
-          }
-        >
+          title={t("apiKeys.api_keys")}
+          description={t("apiKeys.manage_api_keys")}
+          right={
+            apiKeysQuery.data?.length === 0 ? null : (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("apiKeys.create_api_key")}
+              </Button>
+            )
+          }>
           <Card>
             <CardContent>
-              {apiKeysQuery.data?.length === 0 ?
+              {apiKeysQuery.data?.length === 0 ? (
                 <NoApiKeyPlaceholder />
-                :
+              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t('apiKeys.name')}</TableHead>
-                      <TableHead>{t('apiKeys.created')}</TableHead>
-                      <TableHead>{t('apiKeys.expires')}</TableHead>
-                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                      <TableHead>{t("apiKeys.name")}</TableHead>
+                      <TableHead>{t("apiKeys.created")}</TableHead>
+                      <TableHead>{t("apiKeys.expires")}</TableHead>
+                      <TableHead className="text-right">{t("common.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -86,8 +92,7 @@ export const ApiKeys = () => {
                             onClick={() => {
                               setKeyToDelete({ id: key._id, name: key.name });
                               setIsDeleteDialogOpen(true);
-                            }}
-                          >
+                            }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </TableCell>
@@ -95,13 +100,15 @@ export const ApiKeys = () => {
                     ))}
                   </TableBody>
                 </Table>
-              }
-
+              )}
             </CardContent>
           </Card>
         </SinglePageLayout>
-      </ApiDataFetcher>
-      <CreateApiKeyDialog isCreateDialogOpen={isCreateDialogOpen} setIsCreateDialogOpen={setIsCreateDialogOpen} />
+      </ApiStatusHandler>
+      <CreateApiKeyDialog
+        isCreateDialogOpen={isCreateDialogOpen}
+        setIsCreateDialogOpen={setIsCreateDialogOpen}
+      />
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
@@ -113,8 +120,8 @@ export const ApiKeys = () => {
         onDeleteSuccess={() => {
           setKeyToDelete(null);
         }}
-        title={t('apiKeys.key_deleted')}
-        description={keyToDelete ? t('apiKeys.confirm_delete', { name: keyToDelete.name }) : ''}
+        title={t("apiKeys.key_deleted")}
+        description={keyToDelete ? t("apiKeys.confirm_delete", { name: keyToDelete.name }) : ""}
       />
     </>
   );

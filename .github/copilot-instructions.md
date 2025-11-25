@@ -54,7 +54,7 @@ export default async function projectController(fastify: FastifyInstance) {
 ```
 
 ### Frontend Data Fetching Pattern
-Always wrap page components with `ApiDataFetcher` for loading/error states:
+Always wrap page components with `ApiStatusHandler` for loading/error states:
 ```tsx
 const dataQuery = useQuery({
   queryKey: ['projects'],
@@ -62,9 +62,9 @@ const dataQuery = useQuery({
 });
 
 return (
-  <ApiDataFetcher queries={[dataQuery]}>
+  <ApiStatusHandler queries={[dataQuery]}>
     {/* Your component content */}
-  </ApiDataFetcher>
+  </ApiStatusHandler>
 );
 ```
 

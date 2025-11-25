@@ -1,10 +1,9 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import useUserApi from "@/hooks/apiClients/useUserApi";
 import { useQuery } from "@tanstack/react-query";
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout";
 import { useTranslation } from "react-i18next";
-import ApiDataFetcher from "@/components/ApiDataFetcher/ApiDataFetcher";
+import { ApiStatusHandler } from "@/components/organisms";
 import useToastNotificationStore from "@/store/useToastNotificationStore";
 
 export const AccountActivation = () => {
@@ -12,27 +11,26 @@ export const AccountActivation = () => {
   const { activateAccount } = useUserApi();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const notifications = useToastNotificationStore()
+  const notifications = useToastNotificationStore();
 
   const accountActivatonQuery = useQuery({
-    queryKey: ['account-activation', token],
+    queryKey: ["account-activation", token],
     queryFn: async () => {
-      await activateAccount(token)
+      await activateAccount(token);
       notifications.showSuccessNotification({
-        message: t('auth.account_activation.success')
-      })
-      navigate("/")
-    }
-  })
+        message: t("auth.account_activation.success"),
+      });
+      navigate("/");
+    },
+  });
 
   return (
     <AuthenticationLayout
-      title={t('auth.account_activation.title')}
-      description={t('auth.account_activation.description')}
-    >
-      <ApiDataFetcher queries={[accountActivatonQuery]}>
-        <h1>{t('auth.account_activation.success')}</h1>
-      </ApiDataFetcher>
+      title={t("auth.account_activation.title")}
+      description={t("auth.account_activation.description")}>
+      <ApiStatusHandler queries={[accountActivatonQuery]}>
+        <h1>{t("auth.account_activation.success")}</h1>
+      </ApiStatusHandler>
     </AuthenticationLayout>
   );
 };

@@ -7,6 +7,9 @@
     "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true,
     "[typescriptreact]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features"
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }
