@@ -1,4 +1,5 @@
 import { MultipartFile } from "@fastify/multipart"
+import AdmZip from "adm-zip"
 import axios from "axios"
 import fs from "fs-extra"
 import * as git from "isomorphic-git"
@@ -6,7 +7,6 @@ import http from "isomorphic-git/http/node"
 import { ClientSession, Document, ObjectId, Schema, Types } from "mongoose"
 import os, { tmpdir } from "os"
 import path, { join } from "path"
-import unzipper from "unzipper"
 import { fastify } from ".."
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import AzureStorageClient from "../client/AzureStorageAccount"
@@ -171,17 +171,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await codeManagementService.cloneRepository({
             repositoryUrl: repoUrl,
             initializeInCaseOfEmptyRepo: true
-        })
-
-        // Download + unzip template
-        const response = await axios.get(templateUrl, { responseType: "stream" })
-        if (response.status !== 200) throw new Error(`Failed to download template: ${response.statusText}`)
-
-        await new Promise((resolve, reject) => {
-            response.data
-                .pipe(unzipper.Extract({ path: tempDir }))
-                .on("close", resolve)
-                .on("error", reject)
         })
 
         let files = await fs.readdir(tempDir)
@@ -425,16 +414,12 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async downloadZip(prefixDirectory: string, urlToDownload: string): Promise<string> {
         const temporaryDirectory = join(tmpdir(), `${prefixDirectory}-${Date.now()}`)
         const responseDownload = await axios.get(urlToDownload, {
-            responseType: "stream"
+            responseType: "arraybuffer"
         })
         if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
 
-        await new Promise((resolve, reject) => {
-            responseDownload.data
-                .pipe(unzipper.Extract({ path: temporaryDirectory, verbose: true }))
-                .on("close", resolve)
-                .on("error", reject)
-        })
+        const zip = new AdmZip(Buffer.from(responseDownload.data))
+        zip.extractAllTo(temporaryDirectory, true)
 
         return temporaryDirectory
     }
@@ -584,13 +569,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     private async extractZipToDirectory(file: MultipartFile, extractDir: string): Promise<void> {
-        // Stream dal client → unzipper → cartella
-        return new Promise((resolve, reject) => {
-            file.file
-                .pipe(unzipper.Extract({ path: extractDir }))
-                .on("close", resolve)
-                .on("error", reject)
-        })
+        // Convert stream to buffer
+        const buffer = await file.toBuffer()
+        const zip = new AdmZip(buffer)
+        zip.extractAllTo(extractDir, true)
     }
 
     private async uploadDirectoryToS3(localDir: string, s3BasePath: string, s3Client: S3BucketClient): Promise<void> {
