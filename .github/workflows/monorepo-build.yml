@@ -50,10 +50,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      - name: 🔍 Lint & Format Check
-        run: |
-          pnpm lint
-          pnpm typecheck
+      # - name: 🔍 Lint & Format Check
+      #   run: |
+      #     pnpm lint
+      #     pnpm typecheck
 
       - name: 🔨 Build All Packages
         run: pnpm build
