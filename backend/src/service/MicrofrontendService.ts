@@ -299,7 +299,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 codeRepository.azureData.organization,
                 codeRepository.azureData.projectId,
                 repository.id,
-                `${repositoryName}-pipeline`,
+                `${repositoryName}`,
                 "azure-pipelines.yml",
                 "/"
             )
