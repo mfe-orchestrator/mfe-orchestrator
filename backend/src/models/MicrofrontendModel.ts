@@ -45,6 +45,7 @@ export interface IMicrofrontend extends Document<ObjectId> {
     name: string
     version: string
     continuousDeployment?: boolean
+    path?: string
     projectId: ObjectId
     canary?: ICanaryMicrofrontend
     host: IHostMicrofrontend
@@ -233,6 +234,10 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         parentIds: {
             type: [Schema.Types.ObjectId],
             ref: "Microfrontend",
+            required: false
+        },
+        path: {
+            type: String,
             required: false
         },
         position: {
