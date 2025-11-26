@@ -1,11 +1,12 @@
-import { UseQueryResult } from "@tanstack/react-query";
-import { ReactNode } from "react";
+import { UseQueryResult } from "@tanstack/react-query"
+import { ReactNode } from "react"
 
 export interface IApiStatusHandlerProps {
-  queries: UseQueryResult<unknown, unknown>[];
-  loadingComponent?: ReactNode;
-  errorComponent?: (error: unknown) => ReactNode;
-  emptyComponent?: ReactNode;
-  children: ReactNode;
-  interceptError?: boolean;
+    queries: UseQueryResult<unknown, unknown>[]
+    loadingComponent?: ReactNode
+    errorComponent?: (error: unknown) => ReactNode
+    emptyComponent?: ReactNode
+    children: ReactNode
+    interceptError?: boolean
+    interceptEmpty?: boolean
 }
