@@ -1,11 +1,13 @@
-import { model, Schema, ObjectId, Document } from "mongoose"
+import { Document, model, ObjectId, Schema } from "mongoose"
 import { IGlobalVariable } from "./GlobalVariableModel"
 import { IMicrofrontend } from "./MicrofrontendModel"
+import { IStorage } from "./StorageModel"
 
 export interface IDeployment extends Document<ObjectId> {
     environmentId: ObjectId
     variables?: IGlobalVariable[]
     microfrontends?: IMicrofrontend[]
+    storages?: IStorage[]
     deploymentId: string
     active: boolean
     deployedAt: Date
@@ -31,6 +33,10 @@ const deploymentSchema = new Schema<IDeployment>(
             type: Array,
             required: false
         },
+        storages: {
+            type: Array,
+            required: false
+        },
         active: {
             type: Boolean,
             required: true,
@@ -47,7 +53,7 @@ const deploymentSchema = new Schema<IDeployment>(
 )
 
 // Aggiungo un indice composto per garantire l'unicità della coppia environmentId e deploymentId
-deploymentSchema.index({ environmentId: 1, deploymentId: 1 }, { unique: true });
+deploymentSchema.index({ environmentId: 1, deploymentId: 1 }, { unique: true })
 
 const Deployment = model<IDeployment>("Deployment", deploymentSchema)
 export default Deployment

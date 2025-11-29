@@ -101,6 +101,28 @@ export class AzureStorageClient {
             throw new Error(`Failed to delete file from Azure: ${errorMessage}`)
         }
     }
+
+    /**
+     * Downloads a blob as a readable stream
+     * @param filePath The path to the blob to download
+     * @returns A readable stream of the blob content
+     */
+    public async downloadFileStream(filePath: string): Promise<Readable> {
+        const containerClient = this.blobServiceClient.getContainerClient(this.containerName)
+        const blockBlobClient = containerClient.getBlockBlobClient(filePath)
+
+        try {
+            const downloadResponse = await blockBlobClient.download()
+            if (!downloadResponse.readableStreamBody) {
+                throw new Error("No readable stream in download response")
+            }
+            return downloadResponse.readableStreamBody as Readable
+        } catch (error: unknown) {
+            console.error("Error downloading file from Azure Blob Storage:", error)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to download file from Azure: ${errorMessage}`)
+        }
+    }
 }
 
 export default AzureStorageClient

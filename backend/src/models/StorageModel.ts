@@ -29,6 +29,7 @@ export type IStorage = Document<ObjectId> &
         name: string
         projectId: ObjectId
         default?: boolean
+        path?: string
     }
 // Main storage schema
 const storageSchema = new Schema<IStorage>(

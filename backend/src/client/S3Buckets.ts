@@ -1,4 +1,4 @@
-import { PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3"
+import { GetObjectCommand, PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Readable } from "stream"
 
@@ -73,6 +73,30 @@ export class S3BucketClient {
             console.error("Error generating pre-signed URL:", error)
             const errorMessage = error instanceof Error ? error.message : String(error)
             throw new Error(`Failed to generate pre-signed URL: ${errorMessage}`)
+        }
+    }
+
+    /**
+     * Downloads a file as a readable stream
+     * @param filePath The path to the file to download
+     * @returns A readable stream of the file content
+     */
+    public async downloadFileStream(filePath: string): Promise<Readable> {
+        const command = new GetObjectCommand({
+            Bucket: this.bucketName,
+            Key: filePath
+        })
+
+        try {
+            const response = await this.s3Client.send(command)
+            if (!response.Body) {
+                throw new Error("No body in S3 response")
+            }
+            return response.Body as Readable
+        } catch (error: unknown) {
+            console.error("Error downloading file from S3:", error)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to download file from S3: ${errorMessage}`)
         }
     }
 }

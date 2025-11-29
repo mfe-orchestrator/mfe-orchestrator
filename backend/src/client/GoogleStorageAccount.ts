@@ -153,6 +153,16 @@ export class GoogleStorageClient {
             throw new Error(`Failed to delete file: ${errorMessage}`)
         }
     }
+
+    /**
+     * Downloads a file as a readable stream
+     * @param filePath The path to the file to download
+     * @returns A readable stream of the file content
+     */
+    public downloadFileStream(filePath: string): Readable {
+        const file = this.bucket.file(filePath)
+        return file.createReadStream()
+    }
 }
 
 export default GoogleStorageClient

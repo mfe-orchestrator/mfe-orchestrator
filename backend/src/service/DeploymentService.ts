@@ -1,14 +1,14 @@
+import { ClientSession, ObjectId, Schema, Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend from "../models/MicrofrontendModel"
-import BaseAuthorizedService from "./BaseAuthorizedService"
-import { ClientSession, ObjectId, Schema, Types } from "mongoose"
+import Storage from "../models/StorageModel"
 import { runInTransaction } from "../utils/runInTransaction"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 
 class DeploymentService extends BaseAuthorizedService {
-
     async getById(deploymentId: string | ObjectId): Promise<IDeployment | null> {
         return Deployment.findById(deploymentId)
     }
@@ -29,7 +29,6 @@ class DeploymentService extends BaseAuthorizedService {
     }
 
     private async getDeploymentId(environmentId: Schema.Types.ObjectId | Types.ObjectId, session?: ClientSession) {
-
         const deployments = await Deployment.find({ environmentId }).session(session || null)
         if (!deployments || deployments.length === 0) {
             return "#1"
@@ -48,14 +47,15 @@ class DeploymentService extends BaseAuthorizedService {
 
         const microfrontend = await Microfrontend.find({ projectId: environment.projectId }).session(session || null)
         const variables = await GlobalVariable.find({ environmentId }).session(session || null)
+        const storages = await Storage.find({ projectId: environment.projectId }).session(session || null)
 
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
-
 
         const deployment = await new Deployment({
             environmentId: environment._id,
             microfrontends: microfrontend,
             variables: variables,
+            storages: storages,
             deploymentId,
             active: true
         }).save({ session })

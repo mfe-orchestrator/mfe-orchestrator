@@ -1,20 +1,25 @@
-import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
-import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
-import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
-import Deployment, { IDeployment } from "../models/DeploymentModel"
-import Environment, { IEnvironment } from "../models/EnvironmentModel"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import Project, { IProject } from "../models/ProjectModel"
-import path from "path"
+import axios from "axios"
 import fs from "fs"
-import { fastify } from ".."
-import { Schema, ObjectId } from "mongoose"
+import { ObjectId, Schema } from "mongoose"
+import path from "path"
 import Stream from "stream"
+import { fastify } from ".."
+import AzureStorageClient from "../client/AzureStorageAccount"
+import GoogleStorageClient from "../client/GoogleStorageAccount"
+import S3BucketClient from "../client/S3Buckets"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import Deployment, { IDeployment } from "../models/DeploymentModel"
+import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
+import Environment, { IEnvironment } from "../models/EnvironmentModel"
+import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
+import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
+import Project, { IProject } from "../models/ProjectModel"
+import { IStorage, StorageType } from "../models/StorageModel"
 import DeploymentService from "./DeploymentService"
 
 interface GetRemotesRequestDTO {
-    microfrontendId: string | ObjectId,
-    deploymentId?: string | ObjectId,
+    microfrontendId: string | ObjectId
+    deploymentId?: string | ObjectId
     environmentId?: string | ObjectId
 }
 
@@ -34,7 +39,7 @@ export interface MicrofrontendAdaptedToServe {
     slug: string
     continuousDeployment?: boolean
     version: string
-    name: string,
+    name: string
     nameToIntegrate: string
 }
 
@@ -50,26 +55,25 @@ export interface StreamWithHeader {
 //NOTE: Here we need speed so please do not use any third party service
 
 const HEADERS_NO_CACHE = {
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'cross-origin-resource-policy': 'cross-origin'
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+    "cross-origin-resource-policy": "cross-origin"
 }
 
 const HEADERS_CACHE = {
-    'Cross-Origin-Resource-Policy': 'cross-origin'
+    "Cross-Origin-Resource-Policy": "cross-origin"
 }
 
 interface CodeIntegrationRequestDTO extends GetRemotesRequestDTO {
-    framework: string,
+    framework: string
 }
 
 interface CodeIntegrationResponseDTO {
-    code: string,
+    code: string
 }
 
 export default class ServeService {
-
     getWebpackConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string) {
         // Generate remotes string with proper formatting
         const remotesString = microfrontends
@@ -80,10 +84,13 @@ export default class ServeService {
             })
             .join(",\n")
 
-        const remotesBlock = microfrontends.length > 0 ? `
+        const remotesBlock =
+            microfrontends.length > 0
+                ? `
       remotes: {
 ${remotesString}
-      },` : ''
+      },`
+                : ""
 
         return `// webpack.config.js
 const { ModuleFederationPlugin } = require('webpack').container;
@@ -117,21 +124,28 @@ module.exports = {
     }
 
     getViteConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string): string {
-        const remotes = microfrontends?.reduce((acc, mfe, index) => {
-            const name = mfe?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${index + 1}`
-            acc[name] = mfe.url
-            return acc
-        }, {} as Record<string, string>) || {}
+        const remotes =
+            microfrontends?.reduce(
+                (acc, mfe, index) => {
+                    const name = mfe?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${index + 1}`
+                    acc[name] = mfe.url
+                    return acc
+                },
+                {} as Record<string, string>
+            ) || {}
 
         // Generate remotes string with proper indentation
         const remotesString = Object.entries(remotes)
             .map(([key, value]) => `        '${key}': '${value}'`)
             .join(",\n")
 
-        const remotesBlock = microfrontends.length > 0 ? `
+        const remotesBlock =
+            microfrontends.length > 0
+                ? `
       remotes: {
 ${remotesString}
-      },` : ''
+      },`
+                : ""
 
         const viteConfig = `// vite.config.js
 import { defineConfig } from 'vite';
@@ -172,27 +186,26 @@ export default defineConfig({
     }
 
     async getRemotes({ microfrontendId, environmentId, deploymentId }: GetRemotesRequestDTO): Promise<GetRemotesResponseDTO> {
-        let deployment: IDeployment | null = null;
+        let deployment: IDeployment | null = null
         if (deploymentId) {
             deployment = await new DeploymentService().getById(deploymentId)
         } else if (environmentId) {
             deployment = await new DeploymentService().getLastByEnvironmentIdNoAccessCheck(environmentId)
         }
         if (!deployment) {
-            throw new EntityNotFoundError(deploymentId?.toString() || "");
+            throw new EntityNotFoundError(deploymentId?.toString() || "")
         }
-        const microfrontend = deployment.microfrontends?.find(mfe => mfe._id.toString() === microfrontendId?.toString());
+        const microfrontend = deployment.microfrontends?.find(mfe => mfe._id.toString() === microfrontendId?.toString())
         if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendId?.toString());
+            throw new EntityNotFoundError(microfrontendId?.toString())
         }
 
-        const environment = await Environment.findById(deployment.environmentId);
+        const environment = await Environment.findById(deployment.environmentId)
         if (!environment) {
-            throw new EntityNotFoundError(deployment.environmentId?.toString());
+            throw new EntityNotFoundError(deployment.environmentId?.toString())
         }
 
-        const filteredMicrofrontends = deployment.microfrontends
-            ?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId?.toString())) || []
+        const filteredMicrofrontends = deployment.microfrontends?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId?.toString())) || []
 
         return {
             filteredMicrofrontends,
@@ -204,9 +217,7 @@ export default defineConfig({
 
     async getMicrofrontendAdaptedData({ microfrontendId, environmentId, deploymentId }: GetRemotesRequestDTO): Promise<GetMicrofrontendAdaptedDataDTO> {
         const data = await this.getRemotes({ microfrontendId, environmentId, deploymentId })
-        const childs = await Promise.all(
-            data.filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, data.environment.slug))
-        )
+        const childs = await Promise.all(data.filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, data.environment.slug)))
 
         return {
             ...data,
@@ -217,9 +228,7 @@ export default defineConfig({
     async getCodeIntegration({ framework, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
         const allData = await this.getRemotes({ microfrontendId, deploymentId })
 
-        const childs = await Promise.all(
-            allData.filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, allData.environment.slug))
-        )
+        const childs = await Promise.all(allData.filteredMicrofrontends.map(child => adaptMicrofrontendToServe(child, allData.environment.slug)))
 
         return {
             code: this.getConfig(framework, childs, allData.microfrontend.slug)
@@ -231,7 +240,7 @@ export default defineConfig({
      * @returns Promise with array of Microfrontend objects
      */
     async getAllByEnvironmentId(environmentId: string | ObjectId): Promise<GetAllDataDTO> {
-        const deployment = await Deployment.findOne({ environmentId, active: true });
+        const deployment = await Deployment.findOne({ environmentId, active: true })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
@@ -240,7 +249,9 @@ export default defineConfig({
             throw new EntityNotFoundError("Environment")
         }
 
-        const microFrontendsAdapted = deployment.microfrontends ? await Promise.all(deployment.microfrontends.map((microfrontend) => adaptMicrofrontendToServe(microfrontend, environment.slug))) : undefined
+        const microFrontendsAdapted = deployment.microfrontends
+            ? await Promise.all(deployment.microfrontends.map(microfrontend => adaptMicrofrontendToServe(microfrontend, environment.slug)))
+            : undefined
 
         return {
             globalVariables: deployment.variables,
@@ -273,7 +284,7 @@ export default defineConfig({
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
         }
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId);
+        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId)
 
         if (!environment) {
             throw new EntityNotFoundError("Environment")
@@ -316,7 +327,7 @@ export default defineConfig({
     }
 
     async getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(environmentId: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
-        const deployment = await Deployment.findOne({ environmentId, active: true });
+        const deployment = await Deployment.findOne({ environmentId, active: true })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
@@ -336,8 +347,8 @@ export default defineConfig({
      * @param environmentId The ID of the environment
      * @returns Promise with global variables object
      */
-    async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<{ key: string, value: string }[]> {
-        const deployment = await Deployment.findOne({ environmentId, active: true });
+    async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<{ key: string; value: string }[]> {
+        const deployment = await Deployment.findOne({ environmentId, active: true })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
@@ -392,7 +403,7 @@ export default defineConfig({
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
-        return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
+        return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath)
     }
 
     async getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId: string, microfrontendSlug: string, filePath: string, referer: string): Promise<StreamWithHeader> {
@@ -410,7 +421,7 @@ export default defineConfig({
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
-        return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath);
+        return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath)
     }
 
     async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string): Promise<StreamWithHeader> {
@@ -423,10 +434,42 @@ export default defineConfig({
         //Adesso tiro fuori il MFE
         const mfeEntryPoint = microfrontend.host.entryPoint || "index.js"
 
-        return {
-            headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
-            stream: await this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+        switch (microfrontend.host.type) {
+            case HostedOn.CUSTOM_SOURCE: {
+                const storage = this.getStorage(microfrontend, deployment)
+                if (!storage) {
+                    throw new Error("Storage not found for microfrontend " + microfrontend.slug)
+                }
+                return {
+                    headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
+                    stream: await this.getMicrofrontendStreamStorage(project, microfrontendSlug, version, filePath, storage)
+                }
+                break
+            }
+            case HostedOn.CUSTOM_URL:
+                if (!microfrontend.host.url) {
+                    throw new Error("Microfrontend url is not defined from microfrontend " + microfrontend.slug)
+                }
+                return {
+                    headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
+                    stream: await this.getMicrofrontendStreamCustomUrl(project, microfrontendSlug, version, filePath, microfrontend.host.url)
+                }
+                break
+            case HostedOn.MFE_ORCHESTRATOR_HUB:
+                return {
+                    headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
+                    stream: await this.getMicrofrontendStreamLocal(project, microfrontendSlug, version, filePath)
+                }
         }
+    }
+
+    getStorage(microfrontend: IMicrofrontend, deployment: IDeployment): IStorage | undefined {
+        if (!microfrontend.host) return undefined
+        if (microfrontend.host.type === HostedOn.CUSTOM_SOURCE && microfrontend.host.storageId) {
+            const storageId = microfrontend.host.storageId.toString()
+            return deployment.storages?.find(s => storageId === s._id.toString())
+        }
+        return undefined
     }
 
     async getMicrofrontendFilesByMicrofrontendId(mfeId: string, filePath: string, referer: string): Promise<StreamWithHeader> {
@@ -434,7 +477,7 @@ export default defineConfig({
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
         }
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId);
+        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId)
         if (!environment) {
             throw new EntityNotFoundError("Environment")
         }
@@ -459,17 +502,17 @@ export default defineConfig({
 
         return {
             headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
-            stream: await this.getMicrofrontendStream(project, microfrontendSlug, version, filePath)
+            stream: await this.getMicrofrontendStreamLocal(project, microfrontendSlug, version, filePath)
         }
     }
 
-    getMicrofrontendStream(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream {
+    getMicrofrontendStreamLocal(project: IProject, microfrontendSlug: string, version: string, filePath: string): Stream {
         const basePath = path.join(fastify.config.MICROFRONTEND_HOST_FOLDER, project.slug + "-" + project._id.toString(), microfrontendSlug, version)
         if (!fs.existsSync(basePath)) {
             throw new Error("Microfrontend file not found in path " + basePath)
         }
 
-        const finalPath = path.join(basePath, filePath);
+        const finalPath = path.join(basePath, filePath)
 
         if (!fs.existsSync(finalPath)) {
             throw new Error("File not found for path: " + finalPath)
@@ -478,13 +521,46 @@ export default defineConfig({
         return fs.createReadStream(finalPath)
     }
 
+    async getMicrofrontendStreamCustomUrl(project: IProject, microfrontendSlug: string, version: string, filePath: string, baseUrl: string): Promise<Stream> {
+        let finalPath = path.join(baseUrl, filePath)
+
+        finalPath = finalPath.replace("$version", version)
+        finalPath = finalPath.replace("$microfrontendSlug", microfrontendSlug)
+        finalPath = finalPath.replace("$projectId", project._id.toString())
+        finalPath = finalPath.replace("$projectSlug", project.slug)
+
+        const response = await axios.get(finalPath, { responseType: "stream" })
+        return response.data
+    }
+
+    async getMicrofrontendStreamStorage(project: IProject, microfrontendSlug: string, version: string, filePath: string, storage: IStorage): Promise<Stream> {
+        const storagePath = storage.path || ""
+        const basePathInStorage = path.join(storagePath, `${project.slug}-${project._id.toString()}`, microfrontendSlug, version)
+        let finalPath = path.join(basePathInStorage, filePath)
+        if (finalPath.startsWith("/")) {
+            finalPath = finalPath.substring(1)
+        }
+
+        switch (storage.type) {
+            case StorageType.AZURE: {
+                const client = new AzureStorageClient(storage.authConfig)
+                return (await client.downloadFileStream(finalPath)) as unknown as Stream
+            }
+            case StorageType.AWS: {
+                const client = new S3BucketClient(storage.authConfig)
+                return (await client.downloadFileStream(finalPath)) as unknown as Stream
+            }
+            case StorageType.GOOGLE: {
+                const client = new GoogleStorageClient(storage.authConfig)
+                return client.downloadFileStream(finalPath) as unknown as Stream
+            }
+        }
+    }
+
     getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | ObjectId) {
         return Environment.findOne({
             projectId,
-            $or: [
-                { url: { $regex: new RegExp(referer, 'i') } },
-                { url: { $regex: new RegExp(new URL(referer).origin, 'i') } }
-            ]
+            $or: [{ url: { $regex: new RegExp(referer, "i") } }, { url: { $regex: new RegExp(new URL(referer).origin, "i") } }]
         })
     }
 }
@@ -498,13 +574,12 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
         throw new Error("Microfrontend host is not defined from microfrontend " + microfrontend.slug)
     }
     if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB) {
-        const backendUrl = getBackendUrl();
+        const backendUrl = getBackendUrl()
         if (environmentSlug) {
             return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
         } else {
             return `${backendUrl}/serve/mfe/files/${microfrontend._id}/${microfrontend.host.entryPoint || "index.js"}`
         }
-
     } else if (microfrontend.host.type === HostedOn.CUSTOM_URL) {
         if (!microfrontend.host.url) {
             throw new Error("Microfrontend URL is not defined")
