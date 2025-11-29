@@ -34,14 +34,13 @@
             }
         },
         "env_vars_integration_tab": {
-            "title" : "Environment Variables",
+            "title": "Environment Variables",
             "description": "Access your environment variables in your microfrontends using the following methods.",
             "javascript_title": "JavaScript Integration",
             "javascript_description": "Include this script in your HTML to make environment variables available as",
             "javascript_example": "Usage example",
             "javascript_direct_api_access": "Direct API Access",
             "javascript_direct_api_access_description": "Fetch variables directly from the API"
-
         },
         "microfrontend_select_label": "Microfrontend",
         "microfrontend_select_placeholder": "Select a microfrontend"
@@ -141,11 +140,11 @@
             "codeRepositories": "Code Repositories"
         },
         "projectInfo": {
-                "title": "Project Information",
-                "name": "Name",
-                "slug": "Slug",
-                "id": "ID"
-            },
+            "title": "Project Information",
+            "name": "Name",
+            "slug": "Slug",
+            "id": "ID"
+        },
         "dangerZone": {
             "title": "Danger Zone",
             "subtitle": "These actions are irreversible. Please be certain.",
@@ -522,8 +521,8 @@
             },
             "azure": {
                 "connectionString": "Connection String",
-                "sharedKey": "Shared Key",
-                "aad": "Azure AD"
+                "sharedKey": "Api Key",
+                "aad": "Azure AD - Enterprise Application"
             }
         },
         "fields": {

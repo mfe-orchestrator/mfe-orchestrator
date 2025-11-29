@@ -526,6 +526,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 throw new EntityNotFoundError("Storage id is not set")
             }
             await this.uploadToCloudSource(microfrontend.host.storageId, project, microfrontendSlug, version, file)
+        } else {
+            throw new Error("Microfrontend host type is not supported")
         }
 
         await BuiltFrontend.create({
@@ -559,7 +561,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
             } else if (storage.type === StorageType.AWS) {
                 await this.uploadDirectoryToS3(extractDir, pathToWrite, new S3BucketClient(storage.authConfig))
             } else if (storage.type === StorageType.AZURE) {
-                const pathToWriteAzure = storage.path ? path.join(storage.path, pathToWrite) : pathToWrite
+                let pathToWriteAzure = storage.path ? path.join(storage.path, pathToWrite) : pathToWrite
+                if (pathToWriteAzure.startsWith("/")) {
+                    pathToWriteAzure = pathToWriteAzure.substring(1)
+                }
                 await this.uploadDirectoryToAzure(extractDir, pathToWriteAzure, new AzureStorageClient(storage.authConfig))
             }
         } finally {

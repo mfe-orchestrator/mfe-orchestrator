@@ -34,7 +34,7 @@
             }
         },
         "env_vars_integration_tab": {
-            "title" : "Variabili d'ambiente",
+            "title": "Variabili d'ambiente",
             "description": "Accedi alle variabili d'ambiente in microfrontends utilizzando i seguenti metodi.",
             "javascript_title": "Integrazione JavaScript",
             "javascript_description": "Aggiungi questo script al tuo HTML per rendere le variabili d'ambiente disponibili come",
@@ -139,12 +139,12 @@
             "codeRepositories": "Repository Codice"
         },
         "projectInfo": {
-                "title": "Informazioni Progetto",
-                "name": "Nome",
-                "slug": "Slug",
-                "id": "ID",
-                "copy": "Copia"
-            },
+            "title": "Informazioni Progetto",
+            "name": "Nome",
+            "slug": "Slug",
+            "id": "ID",
+            "copy": "Copia"
+        },
         "dangerZone": {
             "title": "Zona Pericolosa",
             "subtitle": "Queste azioni sono irreversibili. Sii certo di quello che fai.",
@@ -540,8 +540,8 @@
             },
             "azure": {
                 "connectionString": "Stringa di Connessione",
-                "sharedKey": "Chiave Condivisa",
-                "aad": "Azure AD"
+                "sharedKey": "Api Key",
+                "aad": "Azure AD - Enterprise Application"
             }
         },
         "fields": {
@@ -558,9 +558,9 @@
             "connectionString": "Stringa di Connessione",
             "accountName": "Nome Account",
             "accountKey": "Chiave Account",
-            "tenantId": "ID Tenant",
-            "clientId": "ID Cliente",
-            "clientSecret": "Segreto Cliente",
+            "tenantId": "Tenant ID",
+            "clientId": "Cliente ID",
+            "clientSecret": "Secret",
             "path": "Percorso"
         },
         "s3": {

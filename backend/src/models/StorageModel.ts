@@ -28,6 +28,7 @@ export type IStorage = Document<ObjectId> &
     IStorageAuth & {
         name: string
         projectId: ObjectId
+        default?: boolean
     }
 // Main storage schema
 const storageSchema = new Schema<IStorage>(
@@ -46,6 +47,15 @@ const storageSchema = new Schema<IStorage>(
             ref: "Project",
             required: true,
             index: true
+        },
+        default: {
+            type: Boolean,
+            default: false,
+            required: false
+        },
+        path: {
+            type: String,
+            required: false
         },
         authConfig: {
             type: Schema.Types.Mixed,
