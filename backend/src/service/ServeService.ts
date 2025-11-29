@@ -573,7 +573,7 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
     if (!microfrontend.host) {
         throw new Error("Microfrontend host is not defined from microfrontend " + microfrontend.slug)
     }
-    if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB) {
+    if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB || microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
         const backendUrl = getBackendUrl()
         if (environmentSlug) {
             return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
@@ -585,8 +585,6 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
             throw new Error("Microfrontend URL is not defined")
         }
         return microfrontend.host.url?.replace("$version", microfrontend.version)
-    } else if (microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
-        return "This is custom source => will come soon :)"
     } else {
         throw new Error("Microfrontend host type is not defined")
     }
