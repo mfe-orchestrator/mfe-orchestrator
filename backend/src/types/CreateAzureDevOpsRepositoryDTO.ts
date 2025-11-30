@@ -3,19 +3,21 @@ export default interface CreateAzureDevOpsRepositoryDTO {
      * Personal Access Token for GitLab API authentication
      * @example "glpat-xxxxxxxxxxxxxxxxxxxx"
      */
-    pat: string;
+    pat: string
 
     /**
      * Display name for the repository
      * @example "My Awesome Project"
      */
-    name: string;
+    name: string
 
-    organization: string;
+    organization: string
 
     /**
      * Project identifier this repository belongs to
      * @example "project-123"
      */
-    project: string;
+    projectId: string
+
+    projectName: string
 }

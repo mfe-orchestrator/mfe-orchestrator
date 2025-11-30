@@ -10,7 +10,8 @@ export interface AddRepositoryAzureDTO {
     pat: string
     organization: string
     name: string
-    project: string
+    projectId: string
+    projectName: string
 }
 
 export interface TestConnectionAzureRepositoryAzureDTO {
@@ -113,6 +114,11 @@ export interface ICodeRepository {
     githubData?: {
         organizationId: string
         type: CodeRepositoryType
+    }
+    azureData?: {
+        organization: string
+        projectId: string
+        projectName: string
     }
     isActive: boolean
     projectId: string

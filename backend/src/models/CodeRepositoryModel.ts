@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, ObjectId } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
@@ -12,18 +12,19 @@ export enum CodeRepositoryType {
 }
 
 export interface IGithubData {
-    organizationId?: string,
-    userName?: string,
+    organizationId?: string
+    userName?: string
     type: CodeRepositoryType
 }
 
 export interface IAzureData {
-    projectId: string,
+    projectId: string
+    projectName: string
     organization: string
 }
 
 export interface IGitlabData {
-    url: string,
+    url: string
     project: string
 }
 
@@ -32,62 +33,60 @@ export interface ICodeRepository extends Document<ObjectId> {
     provider: CodeRepositoryProvider
     accessToken: string
     refreshToken?: string
-    githubData?: IGithubData,
-    azureData?: IAzureData,
-    gitlabData?: IGitlabData,
-    default?: boolean,
+    githubData?: IGithubData
+    azureData?: IAzureData
+    gitlabData?: IGitlabData
+    default?: boolean
     isActive?: boolean
     projectId: ObjectId
     createdAt: Date
     updatedAt: Date
 }
 
-const githubDataSchema = new Schema<IGithubData>(
-    {
-        organizationId: {
-            type: String,
-            required: false
-        },
-        userName: {
-            type: String,
-            required: false
-        },
-        type: {
-            type: String,
-            enum: Object.values(CodeRepositoryType),
-            required: true,
-            default: CodeRepositoryType.PERSONAL
-        }
+const githubDataSchema = new Schema<IGithubData>({
+    organizationId: {
+        type: String,
+        required: false
+    },
+    userName: {
+        type: String,
+        required: false
+    },
+    type: {
+        type: String,
+        enum: Object.values(CodeRepositoryType),
+        required: true,
+        default: CodeRepositoryType.PERSONAL
     }
-)
+})
 
-const azureDataSchema = new Schema<IAzureData>(
-    {
-        projectId: {
-            type: String,
-            required: true
-        },
-        organization: {
-            type: String,
-            required: false,
-        }
+const azureDataSchema = new Schema<IAzureData>({
+    projectId: {
+        type: String,
+        required: true
+    },
+    projectName: {
+        type: String,
+        required: true
+    },
+    organization: {
+        type: String,
+        required: false
     }
-)
+})
 
-const gitlabDataSchema = new Schema<IGitlabData>(
-    {
-        url: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        project: {
-            type: String,
-            required: false,
-            trim: true
-        }
+const gitlabDataSchema = new Schema<IGitlabData>({
+    url: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    project: {
+        type: String,
+        required: false,
+        trim: true
     }
-)
+})
 
 const codeRepositorySchema = new Schema<ICodeRepository>(
     {
@@ -145,7 +144,6 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
         timestamps: true
     }
 )
-
 
 const CodeRepository = mongoose.model<ICodeRepository>("CodeRepository", codeRepositorySchema)
 export default CodeRepository

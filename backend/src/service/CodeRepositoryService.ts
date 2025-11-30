@@ -1,4 +1,4 @@
-import { DeleteResult, Types } from "mongoose"
+import { ClientSession, DeleteResult, Types } from "mongoose"
 import { fastify } from ".."
 import AzureDevOpsClient, { AzureDevOpsBranch, RepositoryData } from "../client/AzureDevOpsClient"
 import GithubClient, { GithubBranch } from "../client/GithubClient"
@@ -10,10 +10,12 @@ import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeReposi
 import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
+import { runInTransaction } from "../utils/runInTransaction"
 import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export const deploySecretName = "MICROFRONTEND_ORCHESTRATOR_API_KEY"
+export const azureDevOpsVariableGroupName = "MFE_ORCHESTRATOR_SECRETS"
 
 export interface CodeRepositoryCreateInput {
     name: string
@@ -113,10 +115,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         })
     }
 
-    async findById(repositoryId: string): Promise<ICodeRepository | null> {
-        const repository = await CodeRepository.findOne({
-            _id: repositoryId
-        })
+    async findById(repositoryId: string, session?: ClientSession): Promise<ICodeRepository | null> {
+        const repository = await CodeRepository.findOne(
+            {
+                _id: repositoryId
+            },
+            {},
+            { session }
+        )
 
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
@@ -141,7 +147,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         await CodeRepository.updateMany({ _id: { $ne: repositoryId } }, { default: false })
     }
 
-    async injectSecretsToDeployOnGithub(repository: ICodeRepository) {
+    async injectSecretsToDeployOnGithubRaw(repository: ICodeRepository, session?: ClientSession) {
         if (repository.provider !== CodeRepositoryProvider.GITHUB) return
         if (!repository.githubData?.organizationId) return
 
@@ -155,11 +161,15 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
         if (exists) return
 
-        const apiKey = await new ApiKeyService(this.user).create(repository.projectId.toString(), {
-            name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + repository.name,
-            role: ApiKeyRole.MANAGER,
-            expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
-        })
+        const apiKey = await new ApiKeyService(this.user).createRaw(
+            repository.projectId.toString(),
+            {
+                name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + repository.name,
+                role: ApiKeyRole.MANAGER,
+                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+            },
+            session
+        )
 
         await githubClient.upsertOrganizationSecret({
             accessToken: repository.accessToken,
@@ -167,6 +177,44 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             secretName: deploySecretName,
             visibility: "all",
             value: apiKey.apiKey
+        })
+    }
+
+    async injectSecretsToDeployOnAzureDevOpsRaw(repository: ICodeRepository, session?: ClientSession) {
+        if (repository.provider !== CodeRepositoryProvider.AZURE_DEV_OPS) return
+        if (!repository.azureData?.organization || !repository.azureData?.projectId) return
+
+        const azureDevOpsClient = new AzureDevOpsClient()
+
+        const exists = await azureDevOpsClient.checkOrganizationSecretExists({
+            accessToken: repository.accessToken,
+            organization: repository.azureData.organization,
+            projectId: repository.azureData.projectId,
+            variableGroupName: azureDevOpsVariableGroupName,
+            secretName: deploySecretName
+        })
+
+        if (exists) return
+
+        const apiKey = await new ApiKeyService(this.user).createRaw(
+            repository.projectId.toString(),
+            {
+                name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Azure DevOps - " + repository.name,
+                role: ApiKeyRole.MANAGER,
+                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+            },
+            session
+        )
+
+        await azureDevOpsClient.upsertOrganizationSecret({
+            accessToken: repository.accessToken,
+            organization: repository.azureData.organization,
+            projectId: repository.azureData.projectId,
+            projectName: repository.azureData.projectName,
+            secretName: deploySecretName,
+            value: apiKey.apiKey,
+            variableGroupName: azureDevOpsVariableGroupName,
+            variableGroupDescription: "MFE Orchestrator Deploy Secret"
         })
     }
 
@@ -231,7 +279,11 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async updateGithub(repositoryId: string, body: UpdateGithubDTO): Promise<ICodeRepository | null> {
-        const repository = await this.findById(repositoryId)
+        return runInTransaction(async session => this.updateGithubRaw(repositoryId, body, session))
+    }
+
+    async updateGithubRaw(repositoryId: string, body: UpdateGithubDTO, session?: ClientSession): Promise<ICodeRepository | null> {
+        const repository = await this.findById(repositoryId, session)
 
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
@@ -252,9 +304,9 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             userName: body.userName
         }
 
-        const repositoryFromDb = await repository.save()
+        const repositoryFromDb = await repository.save({ session })
 
-        await this.injectSecretsToDeployOnGithub(repositoryFromDb)
+        await this.injectSecretsToDeployOnGithubRaw(repositoryFromDb, session)
 
         return repositoryFromDb
     }
@@ -308,6 +360,10 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async addRepositoryAzure(body: CreateAzureDevOpsRepositoryDTO, projectId: string) {
+        return runInTransaction(async session => this.addRepositoryAzureRaw(body, projectId, session))
+    }
+
+    async addRepositoryAzureRaw(body: CreateAzureDevOpsRepositoryDTO, projectId: string, session?: ClientSession) {
         await this.ensureAccessToProject(projectId)
 
         const repository = new CodeRepository({
@@ -317,17 +373,24 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             projectId: new Types.ObjectId(projectId),
             azureData: {
                 organization: body.organization,
-                projectId: body.project
+                projectId: body.projectId,
+                projectName: body.projectName
             },
             githubData: undefined,
             gitlabData: undefined,
             isActive: true
         })
 
-        return await repository.save()
+        const out = await repository.save({ session })
+        await this.injectSecretsToDeployOnAzureDevOpsRaw(out, session)
+        return out
     }
 
     async editRepositoryAzureDevOps(body: CreateAzureDevOpsRepositoryDTO, repositoryId: string) {
+        return runInTransaction(async session => this.editRepositoryAzureDevOpsRaw(body, repositoryId, session))
+    }
+
+    async editRepositoryAzureDevOpsRaw(body: CreateAzureDevOpsRepositoryDTO, repositoryId: string, session?: ClientSession) {
         const repository = await this.findById(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
@@ -346,9 +409,12 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         repository.githubData = undefined
         repository.azureData = {
             organization: body.organization,
-            projectId: body.project
+            projectId: body.projectId,
+            projectName: body.projectName
         }
-        return await repository.save()
+        const out = await repository.save({ session })
+        await this.injectSecretsToDeployOnAzureDevOpsRaw(out, session)
+        return out
     }
 
     async testConnectionAzure(organization: string, pat: string) {

@@ -130,6 +130,38 @@ export interface CreatePipelineRequest {
     }
 }
 
+export interface AzureVariableGroup {
+    id: number
+    name: string
+    description?: string
+    type: string
+    variables: Record<string, { value: string; isSecret?: boolean }>
+}
+
+export interface AzureVariableGroupsResponse {
+    count: number
+    value: AzureVariableGroup[]
+}
+
+export interface CheckOrganizationSecretExistsParams {
+    accessToken: string
+    organization: string
+    projectId: string
+    secretName: string
+    variableGroupName: string
+}
+
+export interface UpsertOrganizationSecretParams {
+    accessToken: string
+    organization: string
+    projectId: string
+    projectName: string
+    secretName: string
+    value: string
+    variableGroupName: string
+    variableGroupDescription: string
+}
+
 class AzureDevOpsClient {
     // Ottieni l'ID utente dal profilo
     async getUserId(token: string) {
@@ -264,6 +296,120 @@ class AzureDevOpsClient {
         })
 
         return response.data
+    }
+
+    /**
+     * Get all variable groups for a project
+     */
+    private async getVariableGroups(token: string, organization: string, projectId: string): Promise<AzureVariableGroupsResponse> {
+        const url = `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups?api-version=7.1-preview.2`
+        const response = await axios.request<AzureVariableGroupsResponse>({
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        })
+        return response.data
+    }
+
+    /**
+     * Check if a secret exists in the organization's variable group
+     */
+    async checkOrganizationSecretExists({ accessToken, organization, projectId, secretName, variableGroupName }: CheckOrganizationSecretExistsParams): Promise<boolean> {
+        try {
+            const variableGroup = await this.getVariableGroups(accessToken, organization, projectId)
+            const existingGroup = variableGroup.value.find(g => g.name === variableGroupName)
+
+            if (existingGroup) {
+                return secretName in existingGroup.variables
+            }
+
+            return false
+        } catch (error) {
+            console.error("Error checking Azure DevOps secret:", error)
+            return false
+        }
+    }
+
+    /**
+     * Create or update a secret in the organization's variable group
+     */
+    async upsertOrganizationSecret({
+        accessToken,
+        organization,
+        projectId,
+        projectName,
+        secretName,
+        value,
+        variableGroupName,
+        variableGroupDescription
+    }: UpsertOrganizationSecretParams): Promise<void> {
+        // Get or create the variable group
+        const groups = await this.getVariableGroups(accessToken, organization, projectId)
+        const variableGroup = groups.value.find(g => g.name === variableGroupName)
+
+        if (!variableGroup) {
+            // Create new variable group with the secret
+            await axios.request<AzureVariableGroup>({
+                method: "POST",
+                url: `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups?api-version=7.1`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json"
+                },
+                data: {
+                    name: variableGroupName,
+                    description: variableGroupDescription,
+                    type: "Vsts",
+                    variables: {
+                        [secretName]: {
+                            value,
+                            isSecret: true
+                        }
+                    },
+                    variableGroupProjectReferences: [
+                        {
+                            name: variableGroupName,
+                            projectReference: {
+                                id: projectId,
+                                name: projectName
+                            }
+                        }
+                    ]
+                }
+            })
+            return
+        }
+
+        // Update the existing variable group with the new secret
+        await axios.request({
+            method: "PUT",
+            url: `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups/${variableGroup.id}?api-version=7.1-preview.2`,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            data: {
+                ...variableGroup,
+                variables: {
+                    ...variableGroup.variables,
+                    [secretName]: {
+                        value: value,
+                        isSecret: true
+                    }
+                },
+                variableGroupProjectReferences: [
+                    {
+                        name: variableGroupName,
+                        projectReference: {
+                            id: projectId,
+                            name: projectName
+                        }
+                    }
+                ]
+            }
+        })
     }
 }
 

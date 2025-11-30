@@ -17,7 +17,7 @@ interface AddAzureFormValues {
     organization: string
     pat: string
     name: string
-    project: string
+    projectId: string
 }
 
 const AddAzureRepositoryPage = () => {
@@ -35,7 +35,7 @@ const AddAzureRepositoryPage = () => {
             form.setValue("organization", data.azureData?.organization)
             form.setValue("pat", data.accessToken)
             form.setValue("name", data.name)
-            form.setValue("project", data.azureData?.projectId)
+            form.setValue("projectId", data.azureData?.projectId)
             if (data.azureData?.projectId) {
                 testConnectionMutation.mutateAsync({
                     organization: data.azureData.organization,
@@ -51,13 +51,17 @@ const AddAzureRepositoryPage = () => {
     })
 
     const handleSubmit = async (values: AddAzureFormValues) => {
+        const realValues = {
+            ...values,
+            projectName: testConnectionMutation.data?.value.find(project => project.id === values.projectId)?.name
+        }
         if (params.id) {
-            await repositoryApi.editRepositoryAzure(params.id, values)
+            await repositoryApi.editRepositoryAzure(params.id, realValues)
             notificationStore.showSuccessNotification({
                 message: t("codeRepositories.azure.successEdit")
             })
         } else {
-            await repositoryApi.addRepositoryAzure(values)
+            await repositoryApi.addRepositoryAzure(realValues)
             notificationStore.showSuccessNotification({
                 message: t("codeRepositories.azure.successAdd")
             })
@@ -147,7 +151,7 @@ const AddAzureRepositoryPage = () => {
                                             </p>
                                             <div className="mt-3">
                                                 <SelectField
-                                                    name="project"
+                                                    name="projectId"
                                                     label={t("codeRepositories.gitlab.selectProject")}
                                                     placeholder={t("codeRepositories.gitlab.selectProjectPlaceholder")}
                                                     options={testConnectionMutation.data.value.map(project => ({
