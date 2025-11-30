@@ -673,6 +673,10 @@
                 "release": {
                     "name": "Release (lettura, scrittura e manage)",
                     "description": "Accesso a pipeline di release e informazioni di deployment"
+                },
+                "variableGroups": {
+                    "name": "Variable Groups (lettura, creazione e gestione)",
+                    "description": "Accesso per creare e gestire variable groups per memorizzare segreti e configurazioni"
                 }
             },
             "successEdit": "Repository Azure DevOps aggiornato con successo",

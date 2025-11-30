@@ -654,6 +654,10 @@
                 "release": {
                     "name": "Release (read, write and manage)",
                     "description": "Access to release pipelines and deployment information"
+                },
+                "variableGroups": {
+                    "name": "Variable Groups (Read, create, & manage)",
+                    "description": "Access to create and manage variable groups for storing secrets and configuration"
                 }
             },
             "successEdit": "Azure DevOps repository updated successfully",

@@ -81,6 +81,10 @@ const AddAzureRepositoryPage = () => {
         {
             scope: t("codeRepositories.azure.scopes.release.name"),
             description: t("codeRepositories.azure.scopes.release.description")
+        },
+        {
+            scope: t("codeRepositories.azure.scopes.variableGroups.name"),
+            description: t("codeRepositories.azure.scopes.variableGroups.description")
         }
     ]
 
