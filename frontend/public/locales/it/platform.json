@@ -300,6 +300,8 @@
             "color_required": "Il colore è obbligatorio",
             "is_production": "Ambiente di produzione",
             "is_production_description": "Indica se questo è un ambiente di produzione",
+            "domains": "Domini Consentiti",
+            "domains_placeholder": "Inserisci un dominio e premi Invio o virgola per aggiungere (es. esempio.com)",
             "source": "Sorgente",
             "submit": "Salva",
             "cancel": "Annulla",

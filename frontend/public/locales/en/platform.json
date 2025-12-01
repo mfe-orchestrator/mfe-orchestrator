@@ -495,7 +495,9 @@
             "description_placeholder": "Short description of the environment",
             "is_production": "Production",
             "color": "Color",
-            "color_required": "Color is required"
+            "color_required": "Color is required",
+            "domains": "Allowed Domains",
+            "domains_placeholder": "Enter a domain and press Enter or comma to add (e.g., example.com)"
         }
     },
     "storage": {

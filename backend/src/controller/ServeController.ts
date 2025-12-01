@@ -7,11 +7,11 @@ export default async function serveController(fastify: FastifyInstance) {
 
     fastify.get<{
         Querystring: {
-            framework: string,
-            microfrontendId: string,
+            framework: string
+            microfrontendId: string
             deploymentId: string
         }
-    }>('/serve/code', async (request, reply) => {
+    }>("/serve/code", async (request, reply) => {
         return reply.send(await serveService.getCodeIntegration(request.query))
     })
 
@@ -45,7 +45,7 @@ export default async function serveController(fastify: FastifyInstance) {
             environmentId: string
         }
     }>("/serve/global-variables/:environmentId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        reply.header('Content-Type', 'application/javascript');
+        reply.header("Content-Type", "application/javascript")
         return reply.send(await serveService.getGlobalVariablesByEnvironmentIdFile(request.params.environmentId))
     })
 
@@ -63,7 +63,7 @@ export default async function serveController(fastify: FastifyInstance) {
             mfeId: string
         }
     }>("/serve/mfe/config/:mfeId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        const referer = request.headers.referer;
+        const referer = request.headers.referer
         if (!referer) {
             throw new Error("Referer not found")
         }
@@ -94,10 +94,10 @@ export default async function serveController(fastify: FastifyInstance) {
             projectId: string
             environmentSlug: string
             mfeSlug: string
-            '*': string
+            "*": string
         }
     }>("/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        const filePath = request.params['*'] || ''
+        const filePath = request.params["*"] || ""
         const data = await serveService.getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(request.params.environmentSlug, request.params.projectId, request.params.mfeSlug, filePath)
         addHeadersFromFilePath(filePath, data.headers, reply)
         return reply.send(data.stream)
@@ -106,15 +106,15 @@ export default async function serveController(fastify: FastifyInstance) {
     fastify.get<{
         Params: {
             mfeId: string
-            '*': string
+            "*": string
         }
     }>("/serve/mfe/files/:mfeId/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        const referer = request.headers.referer;
+        const referer = request.headers.referer
         if (!referer) {
             throw new Error("Referer not found")
         }
-        const filePath = request.params['*'] || ''
-        const data = await serveService.getMicrofrontendFilesByMicrofrontendId(request.params.mfeId, filePath, referer);
+        const filePath = request.params["*"] || ""
+        const data = await serveService.getMicrofrontendFilesByMicrofrontendId(request.params.mfeId, filePath, referer)
         addHeadersFromFilePath(filePath, data.headers, reply)
         return reply.send(data.stream)
     })
@@ -123,22 +123,31 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             projectId: string
             mfeSlug: string
-            '*': string
+            "*": string
         }
-    }>("/serve/mfe/files/:projectId/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
-        const referer = request.headers.referer;
+    }>("/serve/mfe/files/auto/:projectId/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        const referer = request.headers.referer || request.host || request.hostname
         if (!referer) {
             throw new Error("Referer not found")
         }
-        const filePath = request.params['*'] || ''
+        const filePath = request.params["*"] || ""
         const data = await serveService.getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(request.params.projectId, request.params.mfeSlug, filePath, referer)
         addHeadersFromFilePath(filePath, data.headers, reply)
         return reply.send(data.stream)
     })
 
     function addHeadersFromFilePath(filePath: string, headers: Record<string, string>, reply: FastifyReply) {
-        if (filePath.endsWith('.js')) {
-            reply.header('Content-Type', 'application/javascript');
+        if (filePath.endsWith(".js")) {
+            reply.header("Content-Type", "application/javascript")
+        }
+        if (filePath.endsWith(".css")) {
+            reply.header("Content-Type", "text/css")
+        }
+        if (filePath.endsWith(".html")) {
+            reply.header("Content-Type", "text/html")
+        }
+        if (filePath.endsWith(".xml")) {
+            reply.header("Content-Type", "text/xml")
         }
         if (headers) {
             Object.entries(headers).forEach(([key, value]) => {
@@ -146,8 +155,4 @@ export default async function serveController(fastify: FastifyInstance) {
             })
         }
     }
-
-
-
-
 }

@@ -3,4 +3,7 @@ export interface EnvironmentDTO {
     description: string
     slug: string
     order: number
+    color: string
+    isProduction: boolean
+    domains: string[]
 }

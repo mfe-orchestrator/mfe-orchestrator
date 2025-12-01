@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, ObjectId, Types } from "mongoose"
+import mongoose, { Document, ObjectId, Schema, Types } from "mongoose"
 
 export interface IEnvironment extends Document<ObjectId> {
     name: string
@@ -9,6 +9,7 @@ export interface IEnvironment extends Document<ObjectId> {
     isProduction: boolean
     url?: string
     order: number
+    domains?: string[]
 }
 
 const environmentSchema = new Schema<IEnvironment>(
@@ -32,15 +33,15 @@ const environmentSchema = new Schema<IEnvironment>(
             type: Boolean,
             default: false
         },
+        domains: {
+            type: [String],
+            required: false
+        },
         projectId: {
             type: Schema.Types.ObjectId,
             ref: "Project",
             required: true,
             index: true
-        },
-        url:{
-            type: String,
-            required: false
         },
         order: {
             type: Number,

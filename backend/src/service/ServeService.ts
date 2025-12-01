@@ -560,7 +560,7 @@ export default defineConfig({
     getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | ObjectId) {
         return Environment.findOne({
             projectId,
-            $or: [{ url: { $regex: new RegExp(referer, "i") } }, { url: { $regex: new RegExp(new URL(referer).origin, "i") } }]
+            $or: [{ domains: { $regex: new RegExp(referer, "i") } }, { domains: { $regex: new RegExp(new URL(referer).origin, "i") } }]
         })
     }
 }
@@ -576,7 +576,8 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
     if (microfrontend.host.type === HostedOn.MFE_ORCHESTRATOR_HUB || microfrontend.host.type === HostedOn.CUSTOM_SOURCE) {
         const backendUrl = getBackendUrl()
         if (environmentSlug) {
-            return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
+            return `${backendUrl}/serve/mfe/files/auto/${microfrontend.projectId}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
+            //return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${microfrontend.host.entryPoint || "index.js"}`
         } else {
             return `${backendUrl}/serve/mfe/files/${microfrontend._id}/${microfrontend.host.entryPoint || "index.js"}`
         }
