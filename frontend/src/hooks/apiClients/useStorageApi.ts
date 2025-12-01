@@ -1,12 +1,13 @@
-import useApiClient from '../useApiClient';
+import useApiClient from "../useApiClient"
 
 export interface Storage {
-  _id: string;
-  name: string;
-  type: string;
-  config: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
+    _id: string
+    name: string
+    type: string
+    default: boolean
+    config: Record<string, unknown>
+    createdAt: string
+    updatedAt: string
 }
 
 export type GoogleAuthConfig =
@@ -55,85 +56,94 @@ export type AzureStorageConfig = AzureAuthConfig & {
 }
 
 export interface S3ClientConfig {
-  region: string
-  accessKeyId: string
-  secretAccessKey: string
-  bucketName: string
+    region: string
+    accessKeyId: string
+    secretAccessKey: string
+    bucketName: string
 }
 
 export enum StorageType {
-  AZURE = "AZURE",
-  AWS = "AWS",
-  GOOGLE = "GOOGLE"
+    AZURE = "AZURE",
+    AWS = "AWS",
+    GOOGLE = "GOOGLE"
 }
 
 export type IStorageAuth =
-  | {
-        type: StorageType.GOOGLE
-        authConfig: GoogleStorageConfig
-    }
-  | {
-        type: StorageType.AZURE
-        authConfig: AzureStorageConfig
-    }
-  | {
-        type: StorageType.AWS
-        authConfig: S3ClientConfig
-    }
+    | {
+          type: StorageType.GOOGLE
+          authConfig: GoogleStorageConfig
+      }
+    | {
+          type: StorageType.AZURE
+          authConfig: AzureStorageConfig
+      }
+    | {
+          type: StorageType.AWS
+          authConfig: S3ClientConfig
+      }
 
 export type CreateStorageDTO = IStorageAuth & {
-  name: string;
+    name: string
 }
 
 const useStorageApi = () => {
-  const apiClient = useApiClient();
+    const apiClient = useApiClient()
 
-  const getMultiple = async (projectId: string): Promise<Storage[]> => {
-    const response = await apiClient.doRequest<Storage[]>({
-      url: `/api/projects/${projectId}/storages`,
-    });
-    return response.data;
-  };
+    const getMultiple = async (projectId: string): Promise<Storage[]> => {
+        const response = await apiClient.doRequest<Storage[]>({
+            url: `/api/projects/${projectId}/storages`
+        })
+        return response.data
+    }
 
-  const getSingle = async (id: string): Promise<Storage> => {
-    const response = await apiClient.doRequest<Storage>({
-      url: `/api/storages/${id}`,
-    });
-    return response.data;
-  };
+    const getSingle = async (id: string): Promise<Storage> => {
+        const response = await apiClient.doRequest<Storage>({
+            url: `/api/storages/${id}`
+        })
+        return response.data
+    }
 
-  const create = async (data: CreateStorageDTO): Promise<Storage> => {
-    const response = await apiClient.doRequest<Storage>({
-      url: '/api/storages',
-      method: 'POST',
-      data,
-    });
-    return response.data;
-  };
+    const create = async (data: CreateStorageDTO): Promise<Storage> => {
+        const response = await apiClient.doRequest<Storage>({
+            url: "/api/storages",
+            method: "POST",
+            data
+        })
+        return response.data
+    }
 
-  const update = async (id: string, data: CreateStorageDTO): Promise<Storage> => {
-    const response = await apiClient.doRequest<Storage>({
-      url: `/api/storages/${id}`,
-      method: 'PUT',
-      data,
-    });
-    return response.data;
-  };
+    const update = async (id: string, data: CreateStorageDTO): Promise<Storage> => {
+        const response = await apiClient.doRequest<Storage>({
+            url: `/api/storages/${id}`,
+            method: "PUT",
+            data
+        })
+        return response.data
+    }
 
-  const deleteSingle = async (id: string): Promise<void> => {
-    await apiClient.doRequest({
-      url: `/api/storages/${id}`,
-      method: 'DELETE',
-    });
-  };
+    const deleteSingle = async (id: string): Promise<void> => {
+        await apiClient.doRequest({
+            url: `/api/storages/${id}`,
+            method: "DELETE"
+        })
+    }
 
-  return {
-    getMultiple,
-    getSingle,
-    create,
-    update,
-    deleteSingle,
-  };
-};
+    const setStorageAsDefault = async (storageId: string): Promise<Storage> => {
+        const response = await apiClient.doRequest<Storage>({
+            url: `/api/storages/${storageId}/default`,
+            method: "PUT"
+        })
+        return response.data
+    }
 
-export default useStorageApi;
+    return {
+        getMultiple,
+        getSingle,
+        create,
+        update,
+        deleteSingle,
+        setStorageAsDefault
+    }
+}
+
+export default useStorageApi

@@ -39,4 +39,10 @@ export default async function storageController(fastify: FastifyInstance) {
         await new StorageService(request.databaseUser).delete(request.params.storageId)
         return reply.status(204).send()
     })
+
+    // Set storage as default
+    fastify.put<{ Params: { storageId: string } }>("/storages/:storageId/default", async (request, reply) => {
+        const storage = await new StorageService(request.databaseUser).makeDefault(request.params.storageId)
+        return reply.send(storage)
+    })
 }
