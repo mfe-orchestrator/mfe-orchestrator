@@ -1,11 +1,11 @@
-import { Label } from "@/components/ui/label"
+import { X } from "lucide-react"
 import { InputHTMLAttributes } from "react"
 import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
+import { Label } from "@/components/ui/label"
 import { SelectContent } from "../ui/select/partials/selectContent/selectContent"
 import { SelectItem } from "../ui/select/partials/selectItem/selectItem"
 import { SelectTrigger } from "../ui/select/partials/selectTrigger/selectTrigger"
 import { Select, SelectValue } from "../ui/select/select"
-import { X } from "lucide-react"
 
 type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElement> & {
     name: Path<T>
@@ -14,9 +14,10 @@ type SelectFieldProps<T extends FieldValues> = InputHTMLAttributes<HTMLInputElem
     options: { value: string; label: string; icon?: string }[]
     containerClassName?: string
     addClearButton?: boolean
+    onValueChange?: (value: string) => void
 }
 
-const SelectField = <T extends FieldValues>({ name, label, rules, className, containerClassName, id, options = [], placeholder, addClearButton, ...props }: SelectFieldProps<T>) => {
+const SelectField = <T extends FieldValues>({ name, label, rules, className, containerClassName, id, options = [], placeholder, addClearButton, onValueChange, ...props }: SelectFieldProps<T>) => {
     const {
         control,
         formState: { errors }
@@ -38,7 +39,14 @@ const SelectField = <T extends FieldValues>({ name, label, rules, className, con
                             {props.required && <span className="text-destructive ml-1">*</span>}
                         </Label>
                     )}
-                    <Select value={field.value || ""} onValueChange={field.onChange} disabled={formState.isSubmitting}>
+                    <Select
+                        value={field.value || ""}
+                        onValueChange={value => {
+                            field.onChange(value)
+                            onValueChange?.(value)
+                        }}
+                        disabled={formState.isSubmitting}
+                    >
                         <SelectTrigger className="relative">
                             <SelectValue placeholder={placeholder}>
                                 {field.value ? (

@@ -120,6 +120,10 @@ export interface ICodeRepository {
         projectId: string
         projectName: string
     }
+    gitlabData?: {
+        url: string
+        project: string
+    }
     isActive: boolean
     projectId: string
     createdAt: Date
@@ -159,6 +163,8 @@ export interface GitlabProject {
     web_url: string
     created_at: string
     last_activity_at: string
+    full_path: string
+    full_name: string
 }
 
 export interface UnifiedBranch {
@@ -324,11 +330,11 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
-    const checkRepositoryNameAvailability = async (repositoryId: string, repositoryName: string): Promise<boolean> => {
+    const checkRepositoryNameAvailability = async (repositoryId: string, repositoryName: string, groupPath?: string): Promise<boolean> => {
         const response = await apiClient.doRequest<boolean>({
             url: `/api/repositories/${repositoryId}/repositories/check-name`,
             method: "GET",
-            params: { name: repositoryName }
+            params: { name: repositoryName, groupPath }
         })
         return response.data
     }
@@ -349,8 +355,8 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
-    const getGitlabGroups = async (repositoryId: string): Promise<unknown[]> => {
-        const response = await apiClient.doRequest<unknown[]>({
+    const getGitlabGroups = async (repositoryId: string): Promise<GitlabProject[]> => {
+        const response = await apiClient.doRequest<GitlabProject[]>({
             url: `/api/repositories/${repositoryId}/gitlab/groups`,
             method: "GET"
         })

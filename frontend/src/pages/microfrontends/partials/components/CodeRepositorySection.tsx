@@ -2,12 +2,12 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { useCallback, useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../../../hooks/apiClients/useCodeRepositoriesApi"
 import SelectField from "../../../../components/input/SelectField.rhf"
 import Switch from "../../../../components/input/Switch.rhf"
 import TextField from "../../../../components/input/TextField.rhf"
 import { Alert, AlertDescription } from "../../../../components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../components/ui/card"
+import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../../../hooks/apiClients/useCodeRepositoriesApi"
 
 const logoMap: Record<string, string> = {
     GITHUB: "/img/GitHub.svg",
@@ -39,6 +39,8 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
     const codeRepositoryEnabled = watch("codeRepository.enabled")
     const selectedCodeRepositoryId = watch("codeRepository.codeRepositoryId")
     const selectedRepositoryId = watch("codeRepository.repositoryId")
+    const selectedGroupPath = watch("codeRepository.gitlab.groupId")
+    const selectedRepositoryName = watch("codeRepository.createData.name")
 
     // Local state
     const [repositoryNameAvailability, setRepositoryNameAvailability] = useState<RepositoryNameAvailability>({
@@ -51,7 +53,13 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
     // GitLab groups query
     const gitlabGroupsQuery = useQuery({
         queryKey: ["gitlabGroups", selectedCodeRepositoryId],
-        queryFn: () => codeRepositoriesApi.getGitlabGroups(selectedCodeRepositoryId!),
+        queryFn: async () => {
+            const out = await codeRepositoriesApi.getGitlabGroups(selectedCodeRepositoryId!)
+            if (out.length > 1) {
+                setValue("codeRepository.gitlab.groupId", out?.[0].full_path)
+            }
+            return out
+        },
         enabled: !!selectedCodeRepositoryId && repositoriesData?.find(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB"
     })
 
@@ -91,6 +99,10 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
 
     // Repository name availability check
     const onDebounceRepository = async (repositoryName: string) => {
+        checkAvailability(repositoryName, selectedGroupPath)
+    }
+
+    const checkAvailability = async (repositoryName: string, selectedGroupPath: string) => {
         if (!selectedCodeRepositoryId) return
         if (!repositoryName || !selectedRepositoryId || repositoryName.length < 3) {
             setRepositoryNameAvailability({ checking: false, available: null, error: null })
@@ -99,7 +111,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
         setRepositoryNameAvailability({ checking: true, available: null, error: null })
 
         try {
-            const result = await codeRepositoriesApi.checkRepositoryNameAvailability(selectedCodeRepositoryId, repositoryName)
+            const result = await codeRepositoriesApi.checkRepositoryNameAvailability(selectedCodeRepositoryId, repositoryName, selectedGroupPath)
             setRepositoryNameAvailability({
                 checking: false,
                 available: result,
@@ -172,6 +184,20 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                         </>
                     )}
 
+                    {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && gitlabGroupsQuery.data?.length > 1 && (
+                        <SelectField
+                            name="codeRepository.gitlab.groupId"
+                            label={t("microfrontend.gitlab_group")}
+                            options={gitlabGroupsQuery.data?.map(group => ({
+                                value: group.full_path,
+                                label: group.full_name
+                            }))}
+                            onValueChange={selectedGroup => {
+                                checkAvailability(selectedRepositoryName, selectedGroup)
+                            }}
+                        />
+                    )}
+
                     {(selectedRepositoryId === "create_new" || forceCreation) && (
                         <>
                             <div className="flex flex-col gap-2">
@@ -214,18 +240,6 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                                 <Switch name="codeRepository.createData.private" label={t("microfrontend.github_private")} />
                             )}
                         </>
-                    )}
-
-                    {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && (
-                        <SelectField
-                            name="codeRepository.gitlab.groupId"
-                            label={t("microfrontend.gitlab_group")}
-                            addClearButton
-                            options={gitlabGroupsQuery.data?.map(group => ({
-                                value: group.id.toString(),
-                                label: group.name || group.full_name
-                            }))}
-                        />
                     )}
                 </CardContent>
             )}

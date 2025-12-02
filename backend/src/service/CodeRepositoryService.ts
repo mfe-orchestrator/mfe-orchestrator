@@ -100,8 +100,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return []
     }
 
-    async isRepositoryNameAvailable(repositoryId: string, name: string): Promise<boolean> {
-        const repositories = await this.getRepositories(repositoryId)
+    async isRepositoryNameAvailable(repositoryId: string, name: string, groupPath?: string): Promise<boolean> {
+        const repositories = await this.getRepositories(repositoryId, groupPath)
         if (!repositories) {
             return false
         }
@@ -530,10 +530,10 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return new GithubClient().getUser(repository.accessToken)
     }
 
-    async getGitlabGroups(repositoryId: string): Promise<unknown> {
-        const repository = await this.findById(repositoryId)
+    async getGitlabGroups(codeRepositoryId: string, selectOnlyChilds: boolean = true): Promise<unknown> {
+        const repository = await this.findById(codeRepositoryId)
         if (!repository) {
-            throw new EntityNotFoundError(repositoryId)
+            throw new EntityNotFoundError(codeRepositoryId)
         }
         if (repository.provider !== CodeRepositoryProvider.GITLAB || !repository.gitlabData?.url) {
             throw new BusinessException({
@@ -542,7 +542,12 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                 statusCode: 400
             })
         }
-        return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getGroups()
+        const groups = await new GitLabClient(repository.gitlabData?.url, repository.accessToken).getGroups()
+        if (selectOnlyChilds && repository.gitlabData?.project) {
+            const startsWith = repository.gitlabData?.project
+            return groups.filter(group => group.full_path.startsWith(startsWith))
+        }
+        return groups
     }
 
     async getGitlabPaths(repositoryId: string, groupId: number): Promise<unknown> {
@@ -575,7 +580,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(groupId)
     }
 
-    async getRepositories(repositoryId: string) {
+    async getRepositories(repositoryId: string, groupPath?: string) {
         const repository = await this.findById(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
@@ -598,7 +603,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
                     statusCode: 400
                 })
             }
-            return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(repository.gitlabData?.project)
+            return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(groupPath || repository.gitlabData?.project)
         }
         if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
             if (!repository.azureData?.organization || !repository.azureData?.projectId) {

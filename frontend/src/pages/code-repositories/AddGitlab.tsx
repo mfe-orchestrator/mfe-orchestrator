@@ -69,7 +69,10 @@ const AddGitlabRepositoryPage = () => {
     })
 
     const testConnectionMutation = useMutation({
-        mutationFn: repositoryApi.testConnectionGitlab,
+        mutationFn: async (data: AddGitlabFormValues) => {
+            const out = await repositoryApi.testConnectionGitlab(data)
+            return out.sort((a, b) => a.full_name.localeCompare(b.full_name))
+        },
         onError: (error: unknown) => {
             setError((error as Error)?.message || t("codeRepositories.gitlab.error.connectionFailed"))
         }
@@ -170,8 +173,8 @@ const AddGitlabRepositoryPage = () => {
                                                     label={t("codeRepositories.gitlab.selectProject")}
                                                     placeholder={t("codeRepositories.gitlab.selectProjectPlaceholder")}
                                                     options={testConnectionMutation.data.map((project: GitlabProject) => ({
-                                                        value: project.id.toString(),
-                                                        label: project.name
+                                                        value: project.full_path,
+                                                        label: project.full_name
                                                     }))}
                                                     required
                                                 />

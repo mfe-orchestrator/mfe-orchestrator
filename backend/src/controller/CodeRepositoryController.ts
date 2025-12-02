@@ -51,9 +51,10 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
         Querystring: {
             name: string
+            groupPath?: string
         }
     }>("/repositories/:repositoryId/repositories/check-name", async (request, reply) => {
-        return reply.send(await new CodeRepositoryService(request.databaseUser).isRepositoryNameAvailable(request.params.repositoryId, request.query.name))
+        return reply.send(await new CodeRepositoryService(request.databaseUser).isRepositoryNameAvailable(request.params.repositoryId, request.query.name, request.query.groupPath))
     })
 
     fastify.delete<{
@@ -183,8 +184,8 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(request.params.repositoryId, request.params.projectId))
     })
 
-    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/gitlab/groups", async (request, reply) => {
-        reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabGroups(request.params.repositoryId))
+    fastify.get<{ Params: { codeRepositoryId: string } }>("/repositories/:codeRepositoryId/gitlab/groups", async (request, reply) => {
+        reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabGroups(request.params.codeRepositoryId))
     })
 
     fastify.get<{ Params: { repositoryId: string; groupId: string } }>("/repositories/:repositoryId/gitlab/groups/:groupId/paths", async (request, reply) => {

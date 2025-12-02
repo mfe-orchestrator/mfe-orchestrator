@@ -1,4 +1,4 @@
-# Microfrontend Orchestrator Hub 🏗️
+# Microfrontend Orchestrator
 
 A centralized service for managing and orchestrating microfrontends across multiple environments. 🚀 This project provides a JSON-based configuration system that describes microfrontends, including their versions, and enables independent deployment and management without requiring a complete frontend rebuild.
 
