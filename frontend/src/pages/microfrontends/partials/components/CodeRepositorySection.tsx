@@ -186,7 +186,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
 
                     {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && gitlabGroupsQuery.data?.length > 1 && (
                         <SelectField
-                            name="codeRepository.gitlab.groupId"
+                            name="codeRepository.gitlab.groupPath"
                             label={t("microfrontend.gitlab_group")}
                             options={gitlabGroupsQuery.data?.map(group => ({
                                 value: group.full_path,

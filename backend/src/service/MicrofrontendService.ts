@@ -86,10 +86,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
                     const createdRepository = await gitlabClient.createRepository({
                         name: microfrontend.codeRepository.createData.name,
-                        path: microfrontend.codeRepository.createData.path,
+                        path: microfrontend.codeRepository.gitlab?.groupPath || codeRepository.gitlabData?.project || "",
                         visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
                     })
                     microfrontend.codeRepository.repositoryId = createdRepository.name
+                    if (template) {
+                        //await this.injectTemplateGitlab(codeRepository.accessToken, createdRepository.name, codeRepository, "gitlab", template)
+                        //await this.createPipelineGitlab(createdRepository.name, codeRepository)
+                    }
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
                     const githubClient = new GithubClient()
                     const createdRepository = await githubClient.createRepository(

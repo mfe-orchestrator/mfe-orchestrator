@@ -57,6 +57,11 @@ const formSchema = z
                 codeRepositoryId: z.string(),
                 repositoryId: z.string().optional(),
                 name: z.string().optional(),
+                gitlab: z
+                    .object({
+                        groupPath: z.string().optional()
+                    })
+                    .optional(),
                 createData: z
                     .object({
                         name: z.string().min(3).max(100),

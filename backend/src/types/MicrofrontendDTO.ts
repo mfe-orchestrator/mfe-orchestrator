@@ -14,12 +14,15 @@ interface MicrofrontendDTO {
     codeRepository: {
         enabled: boolean
         codeRepositoryId: string
-        repositoryId: string,
-        name?: string,
-        createData?:{
-            name: string,
+        repositoryId: string
+        name?: string
+        gitlab?: {
+            groupPath?: string
+        }
+        createData?: {
+            name: string
             private?: boolean
-            path?: string,
+            groupPath?: string
             template?: string
         }
     }
