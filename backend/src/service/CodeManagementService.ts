@@ -8,6 +8,7 @@ import { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositor
 interface CloneRepositoryParams {
     repositoryUrl: string
     initializeInCaseOfEmptyRepo?: boolean
+    onAuth?: () => { username: string; password: string }
 }
 
 interface PushRepositoryParams {
@@ -15,7 +16,6 @@ interface PushRepositoryParams {
 }
 
 class CodeManagementService {
-
     provider: CodeRepositoryProvider
     accessToken: string
     workingDirectory: string
@@ -42,7 +42,8 @@ class CodeManagementService {
         }
     }
 
-    async cloneRepository({ repositoryUrl, initializeInCaseOfEmptyRepo = true }: CloneRepositoryParams) {
+    async cloneRepository({ repositoryUrl, initializeInCaseOfEmptyRepo = true, onAuth: onAuthFromProps }: CloneRepositoryParams) {
+        const onAuth = onAuthFromProps || (() => ({ username: this.accessToken, password: "x-oauth-basic" }))
         try {
             // Try clone
             await git.clone({
@@ -53,7 +54,7 @@ class CodeManagementService {
                 singleBranch: true,
                 depth: 1,
                 headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: this.accessToken, password: "x-oauth-basic" })
+                onAuth
             })
             fastify.log.info("✅ Repo cloned successfully")
         } catch (e) {
@@ -77,7 +78,6 @@ class CodeManagementService {
             onAuth: () => ({ username: this.accessToken, password: "x-oauth-basic" })
         })
     }
-
 }
 
 export default CodeManagementService

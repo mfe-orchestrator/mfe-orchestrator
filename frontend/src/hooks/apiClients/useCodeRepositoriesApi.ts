@@ -330,11 +330,11 @@ const useCodeRepositoriesApi = () => {
         return response.data
     }
 
-    const checkRepositoryNameAvailability = async (repositoryId: string, repositoryName: string, groupPath?: string): Promise<boolean> => {
+    const checkRepositoryNameAvailability = async (repositoryId: string, repositoryName: string, groupPath?: string, groupId?: number): Promise<boolean> => {
         const response = await apiClient.doRequest<boolean>({
             url: `/api/repositories/${repositoryId}/repositories/check-name`,
             method: "GET",
-            params: { name: repositoryName, groupPath }
+            params: { name: repositoryName, groupPath, groupId }
         })
         return response.data
     }

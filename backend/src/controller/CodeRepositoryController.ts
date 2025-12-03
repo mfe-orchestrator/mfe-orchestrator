@@ -52,9 +52,12 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Querystring: {
             name: string
             groupPath?: string
+            groupId?: number
         }
     }>("/repositories/:repositoryId/repositories/check-name", async (request, reply) => {
-        return reply.send(await new CodeRepositoryService(request.databaseUser).isRepositoryNameAvailable(request.params.repositoryId, request.query.name, request.query.groupPath))
+        return reply.send(
+            await new CodeRepositoryService(request.databaseUser).isRepositoryNameAvailable(request.params.repositoryId, request.query.name, request.query.groupPath, request.query.groupId)
+        )
     })
 
     fastify.delete<{

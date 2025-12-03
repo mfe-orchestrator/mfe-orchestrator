@@ -39,7 +39,8 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
     const codeRepositoryEnabled = watch("codeRepository.enabled")
     const selectedCodeRepositoryId = watch("codeRepository.codeRepositoryId")
     const selectedRepositoryId = watch("codeRepository.repositoryId")
-    const selectedGroupPath = watch("codeRepository.gitlab.groupId")
+    const selectedGroupPath = watch("codeRepository.gitlab.groupPath")
+    const selectedGroupId = watch("codeRepository.gitlab.groupId")
     const selectedRepositoryName = watch("codeRepository.createData.name")
 
     // Local state
@@ -99,10 +100,10 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
 
     // Repository name availability check
     const onDebounceRepository = async (repositoryName: string) => {
-        checkAvailability(repositoryName, selectedGroupPath)
+        checkAvailability(repositoryName, selectedGroupPath, selectedGroupId)
     }
 
-    const checkAvailability = async (repositoryName: string, selectedGroupPath: string) => {
+    const checkAvailability = async (repositoryName: string, selectedGroupPath?: string, selectedGroupId?: number) => {
         if (!selectedCodeRepositoryId) return
         if (!repositoryName || !selectedRepositoryId || repositoryName.length < 3) {
             setRepositoryNameAvailability({ checking: false, available: null, error: null })
@@ -111,7 +112,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
         setRepositoryNameAvailability({ checking: true, available: null, error: null })
 
         try {
-            const result = await codeRepositoriesApi.checkRepositoryNameAvailability(selectedCodeRepositoryId, repositoryName, selectedGroupPath)
+            const result = await codeRepositoriesApi.checkRepositoryNameAvailability(selectedCodeRepositoryId, repositoryName, selectedGroupPath, selectedGroupId)
             setRepositoryNameAvailability({
                 checking: false,
                 available: result,
@@ -193,7 +194,9 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                                 label: group.full_name
                             }))}
                             onValueChange={selectedGroup => {
-                                checkAvailability(selectedRepositoryName, selectedGroup)
+                                const groupId = gitlabGroupsQuery.data?.find(group => group.full_path === selectedGroup)?.id
+                                setValue("codeRepository.gitlab.groupId", groupId)
+                                checkAvailability(selectedRepositoryName, selectedGroup, groupId)
                             }}
                         />
                     )}

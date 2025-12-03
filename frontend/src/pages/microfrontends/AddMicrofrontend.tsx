@@ -59,7 +59,8 @@ const formSchema = z
                 name: z.string().optional(),
                 gitlab: z
                     .object({
-                        groupPath: z.string().optional()
+                        groupPath: z.string().optional(),
+                        groupId: z.number().optional()
                     })
                     .optional(),
                 createData: z

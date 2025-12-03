@@ -69,6 +69,7 @@ export interface Microfrontend {
         }
         gitlab?: {
             groupPath?: string
+            groupId?: number
         }
         createData?: {
             template?: string

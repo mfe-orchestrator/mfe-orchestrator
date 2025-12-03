@@ -18,6 +18,7 @@ interface MicrofrontendDTO {
         name?: string
         gitlab?: {
             groupPath?: string
+            groupId?: number
         }
         createData?: {
             name: string
