@@ -741,6 +741,10 @@
                     "description": "Accesso in lettura ai repository"
                 }
             },
+            "success": {
+                "added": "Repository GitLab aggiunto con successo",
+                "edited": "Repository GitLab aggiornato con successo"
+            },
             "error": {
                 "failedToAdd": "Impossibile aggiungere il repository GitLab",
                 "failedToEdit": "Impossibile modificare il repository GitLab",

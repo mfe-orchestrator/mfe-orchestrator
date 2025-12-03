@@ -147,6 +147,36 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         await CodeRepository.updateMany({ _id: { $ne: repositoryId } }, { default: false })
     }
 
+    async injectSecretsToDeployOnGitlabRaw(repository: ICodeRepository, session?: ClientSession) {
+        if (repository.provider !== CodeRepositoryProvider.GITLAB) return
+        if (!repository.gitlabData?.groupId) return
+
+        const gitlabClient = new GitLabClient(repository.gitlabData.url, repository.accessToken)
+
+        const exists = await gitlabClient.checkGroupSecretExists({
+            groupId: repository.gitlabData.groupId,
+            secretName: deploySecretName
+        })
+
+        if (exists) return
+
+        const apiKey = await new ApiKeyService(this.user).createRaw(
+            repository.projectId.toString(),
+            {
+                name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - GitLab - " + repository.name,
+                role: ApiKeyRole.MANAGER,
+                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+            },
+            session
+        )
+
+        await gitlabClient.addGroupSecret({
+            groupId: repository.gitlabData.groupId,
+            secretName: deploySecretName,
+            secretValue: apiKey.apiKey
+        })
+    }
+
     async injectSecretsToDeployOnGithubRaw(repository: ICodeRepository, session?: ClientSession) {
         if (repository.provider !== CodeRepositoryProvider.GITHUB) return
         if (!repository.githubData?.organizationId) return
@@ -422,6 +452,10 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async addRepositoryGitlab(body: CreateGitlabRepositoryDto, projectId: string) {
+        return runInTransaction(async session => this.addRepositoryGitlabRaw(body, projectId, session))
+    }
+
+    async addRepositoryGitlabRaw(body: CreateGitlabRepositoryDto, projectId: string, session?: ClientSession) {
         await this.ensureAccessToProject(projectId)
 
         const repository = new CodeRepository({
@@ -432,16 +466,23 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             isActive: true,
             gitlabData: {
                 url: body.url,
-                project: body.project
+                groupId: body.groupId,
+                groupPath: body.groupPath
             },
             githubData: undefined,
             azureData: undefined
         })
 
-        return await repository.save()
+        const out = await repository.save({ session })
+        await this.injectSecretsToDeployOnGitlabRaw(out, session)
+        return out
     }
 
     async editRepositoryGitlab(body: CreateGitlabRepositoryDto, repositoryId: string) {
+        return runInTransaction(async session => this.editRepositoryGitlabRaw(body, repositoryId, session))
+    }
+
+    async editRepositoryGitlabRaw(body: CreateGitlabRepositoryDto, repositoryId: string, session?: ClientSession) {
         const repository = await this.findById(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
@@ -458,11 +499,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         repository.accessToken = body.pat
         repository.gitlabData = {
             url: body.url,
-            project: body.project
+            groupId: body.groupId,
+            groupPath: body.groupPath
         }
         repository.githubData = undefined
         repository.azureData = undefined
-        return await repository.save()
+        const out = await repository.save({ session })
+        await this.injectSecretsToDeployOnGitlabRaw(out, session)
+        return out
     }
 
     async testConnectionGitlab(url: string, pat: string) {
@@ -543,8 +587,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             })
         }
         const groups = await new GitLabClient(repository.gitlabData?.url, repository.accessToken).getGroups()
-        if (selectOnlyChilds && repository.gitlabData?.project) {
-            const startsWith = repository.gitlabData?.project
+        if (selectOnlyChilds && repository.gitlabData?.groupPath) {
+            const startsWith = repository.gitlabData?.groupPath
             return groups.filter(group => group.full_path.startsWith(startsWith))
         }
         return groups
@@ -555,14 +599,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }
-        if (repository.provider !== CodeRepositoryProvider.GITLAB || !repository.gitlabData?.url || !repository.gitlabData?.project) {
+        if (repository.provider !== CodeRepositoryProvider.GITLAB || !repository.gitlabData?.url || !repository.gitlabData?.groupPath) {
             throw new BusinessException({
                 code: "INVALID_PROVIDER",
                 message: "Repository provider is not GitLab",
                 statusCode: 400
             })
         }
-        return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoryPathsByGroupId(repository.gitlabData?.project)
+        return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoryPathsByGroupId(repository.gitlabData?.groupPath)
     }
 
     async getGitlabRepositories(repositoryId: string, groupId: number): Promise<unknown> {
@@ -596,14 +640,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             return new GithubClient().getRepositories(repository.accessToken, repository.githubData?.type === CodeRepositoryType.ORGANIZATION ? repository.githubData.organizationId : undefined)
         }
         if (repository.provider === CodeRepositoryProvider.GITLAB) {
-            if (!repository.gitlabData?.project) {
+            if (!repository.gitlabData?.groupPath) {
                 throw new BusinessException({
                     code: "INVALID_PROVIDER",
                     message: "Repository provider is not GitLab",
                     statusCode: 400
                 })
             }
-            return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(groupId || groupPath || repository.gitlabData?.project)
+            return new GitLabClient(repository.gitlabData?.url, repository.accessToken).getRepositoriesByGroupId(groupId || repository.gitlabData?.groupId)
         }
         if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
             if (!repository.azureData?.organization || !repository.azureData?.projectId) {

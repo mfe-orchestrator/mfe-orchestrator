@@ -45,6 +45,17 @@ interface CreateRepositoryRequest {
     initialize_with_readme?: boolean
 }
 
+interface CheckGroupSecretExistsRequest {
+    groupId: number | string
+    secretName: string
+}
+
+interface AddGroupSecretRequest {
+    groupId: number | string
+    secretName: string
+    secretValue: string
+}
+
 class GitLabClient {
     private api: AxiosInstance
 
@@ -80,6 +91,29 @@ class GitLabClient {
     async createRepository(repositoryData: CreateRepositoryRequest): Promise<GitLabProject> {
         const res = await this.api.post<GitLabProject>("/projects", repositoryData)
         return res.data
+    }
+
+    async checkGroupSecretExists(request: CheckGroupSecretExistsRequest): Promise<boolean> {
+        try {
+            await this.api.get(`/groups/${request.groupId}/variables/${request.secretName}`)
+            return true
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                return false
+            }
+            throw error
+        }
+    }
+
+    async addGroupSecret(request: AddGroupSecretRequest): Promise<void> {
+        await this.api.post(`/groups/${request.groupId}/variables`, {
+            key: request.secretName,
+            value: request.secretValue,
+            protected: false,
+            masked: true,
+            hidden: true,
+            raw: false
+        })
     }
 }
 

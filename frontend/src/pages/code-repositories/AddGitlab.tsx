@@ -1,23 +1,31 @@
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { CheckCircle2, ExternalLink, Eye, EyeOff, Info } from "lucide-react"
 import { useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
+import { z } from "zod"
 import { Button } from "@/components/atoms"
 import SelectField from "@/components/input/SelectField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import useCodeRepositoriesApi, { GitlabProject } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useCodeRepositoriesApi, { AddRepositoryGitlabDTO, GitlabProject } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 
-interface AddGitlabFormValues {
-    name: string
-    url: string
-    pat: string
-    project?: string
-}
+const addGitlabFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    url: z.string().url("Must be a valid URL"),
+    pat: z.string().min(1, "Personal Access Token is required"),
+    groupPath: z.string().min(1, "Group path is required"),
+    groupId: z.number().min(1, "Group Id is required")
+})
+
+type AddGitlabFormValues = z.infer<typeof addGitlabFormSchema>
+
+type TestConnectionData = Pick<AddRepositoryGitlabDTO, "name" | "url" | "pat">
 
 const AddGitlabRepositoryPage = () => {
     const { t } = useTranslation()
@@ -26,10 +34,12 @@ const AddGitlabRepositoryPage = () => {
     const [error, setError] = useState("")
     const repositoryApi = useCodeRepositoriesApi()
     const params = useParams<{ id: string }>()
+    const toast = useToastNotificationStore()
 
     const addRepositoryMutation = useMutation({
         mutationFn: repositoryApi.addRepositoryGitlab,
         onSuccess: () => {
+            toast.showSuccessNotification({ message: t("codeRepositories.gitlab.success.added") })
             navigate("/code-repositories")
         },
         onError: (error: unknown) => {
@@ -38,8 +48,9 @@ const AddGitlabRepositoryPage = () => {
     })
 
     const editRepositoryMutation = useMutation({
-        mutationFn: (data: AddGitlabFormValues) => repositoryApi.editRepositoryGitlab(params.id, data),
+        mutationFn: (data: AddRepositoryGitlabDTO) => repositoryApi.editRepositoryGitlab(params.id, data),
         onSuccess: () => {
+            toast.showSuccessNotification({ message: t("codeRepositories.gitlab.success.edited") })
             navigate("/code-repositories")
         },
         onError: (error: unknown) => {
@@ -54,8 +65,9 @@ const AddGitlabRepositoryPage = () => {
             form.setValue("name", data.name)
             form.setValue("url", data.gitlabData?.url)
             form.setValue("pat", data.accessToken)
-            if (data.gitlabData?.project) {
-                form.setValue("project", data.gitlabData.project)
+            if (data.gitlabData?.groupPath) {
+                form.setValue("groupPath", data.gitlabData.groupPath)
+                form.setValue("groupId", data.gitlabData.groupId)
                 testConnectionMutation.mutateAsync({
                     name: data.name,
                     url: data.gitlabData.url,
@@ -69,8 +81,14 @@ const AddGitlabRepositoryPage = () => {
     })
 
     const testConnectionMutation = useMutation({
-        mutationFn: async (data: AddGitlabFormValues) => {
-            const out = await repositoryApi.testConnectionGitlab(data)
+        mutationFn: async (data: TestConnectionData) => {
+            // Cast to full DTO with empty groupPath and groupId for test connection
+            const testPayload: AddRepositoryGitlabDTO = {
+                ...data,
+                groupPath: "",
+                groupId: ""
+            }
+            const out = await repositoryApi.testConnectionGitlab(testPayload)
             return out.sort((a, b) => a.full_name.localeCompare(b.full_name))
         },
         onError: (error: unknown) => {
@@ -80,9 +98,9 @@ const AddGitlabRepositoryPage = () => {
 
     const handleSubmit = async (values: AddGitlabFormValues) => {
         if (params.id) {
-            await editRepositoryMutation.mutateAsync(values)
+            await editRepositoryMutation.mutateAsync(values as AddRepositoryGitlabDTO)
         } else {
-            await addRepositoryMutation.mutateAsync(values)
+            await addRepositoryMutation.mutateAsync(values as AddRepositoryGitlabDTO)
         }
     }
 
@@ -102,10 +120,18 @@ const AddGitlabRepositoryPage = () => {
     ]
 
     const form = useForm<AddGitlabFormValues>({
+        resolver: zodResolver(addGitlabFormSchema),
         defaultValues: {
-            url: "https://gitlab.com"
+            url: "https://gitlab.com",
+            name: "",
+            pat: "",
+            groupPath: "",
+            groupId: ""
         }
     })
+
+    console.log(form.getValues())
+    console.log(form.formState.errors)
 
     return (
         <SinglePageLayout title={t("codeRepositories.gitlab.title")} description={t("codeRepositories.gitlab.description")}>
@@ -157,7 +183,10 @@ const AddGitlabRepositoryPage = () => {
                                         variant="secondary"
                                         className="w-full"
                                         disabled={addRepositoryMutation.isPending || testConnectionMutation.isPending || editRepositoryMutation.isPending}
-                                        onClick={() => testConnectionMutation.mutateAsync(form.getValues())}
+                                        onClick={() => {
+                                            const { name, url, pat } = form.getValues()
+                                            testConnectionMutation.mutateAsync({ name, url, pat })
+                                        }}
                                     >
                                         {t("codeRepositories.gitlab.testConnection")}
                                     </Button>
@@ -169,7 +198,7 @@ const AddGitlabRepositoryPage = () => {
                                             </div>
                                             <div className="mt-3">
                                                 <SelectField
-                                                    name="project"
+                                                    name="groupPath"
                                                     label={t("codeRepositories.gitlab.selectProject")}
                                                     placeholder={t("codeRepositories.gitlab.selectProjectPlaceholder")}
                                                     options={testConnectionMutation.data.map((project: GitlabProject) => ({
@@ -177,6 +206,11 @@ const AddGitlabRepositoryPage = () => {
                                                         label: project.full_name
                                                     }))}
                                                     required
+                                                    onValueChange={value => {
+                                                        const groupId = testConnectionMutation.data.find((project: GitlabProject) => project.full_path === value)?.id
+                                                        if (!groupId) return
+                                                        form.setValue("groupId", groupId.toString())
+                                                    }}
                                                 />
                                             </div>
                                         </CardContent>
@@ -186,7 +220,7 @@ const AddGitlabRepositoryPage = () => {
                                         className="w-full"
                                         disabled={
                                             !testConnectionMutation.data ||
-                                            !form.watch("project") ||
+                                            !form.watch("groupPath") ||
                                             addRepositoryMutation.isPending ||
                                             testConnectionMutation.isPending ||
                                             editRepositoryMutation.isPending

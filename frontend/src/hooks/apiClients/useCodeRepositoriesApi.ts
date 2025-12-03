@@ -23,6 +23,8 @@ export interface AddRepositoryGitlabDTO {
     name: string
     pat: string
     url: string
+    groupPath: string
+    groupId: string
 }
 
 export enum CodeRepositoryProvider {
@@ -122,7 +124,8 @@ export interface ICodeRepository {
     }
     gitlabData?: {
         url: string
-        project: string
+        groupPath: string
+        groupId: number
     }
     isActive: boolean
     projectId: string

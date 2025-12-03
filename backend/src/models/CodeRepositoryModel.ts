@@ -25,7 +25,8 @@ export interface IAzureData {
 
 export interface IGitlabData {
     url: string
-    project: string
+    groupId: number
+    groupPath: string
 }
 
 export interface ICodeRepository extends Document<ObjectId> {
@@ -81,9 +82,14 @@ const gitlabDataSchema = new Schema<IGitlabData>({
         required: true,
         trim: true
     },
-    project: {
+    groupId: {
+        type: Number,
+        required: true,
+        trim: true
+    },
+    groupPath: {
         type: String,
-        required: false,
+        required: true,
         trim: true
     }
 })

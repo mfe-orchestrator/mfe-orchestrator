@@ -84,7 +84,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         throw new Error("Gitlab url is not set")
                     }
                     const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
-                    const path = microfrontend.codeRepository.gitlab?.groupPath || codeRepository.gitlabData?.project || ""
+                    const path = microfrontend.codeRepository.gitlab?.groupPath || codeRepository.gitlabData?.groupPath || ""
                     const createdRepository = await gitlabClient.createRepository({
                         name: microfrontend.codeRepository.createData.name,
                         namespace_id: microfrontend.codeRepository.gitlab?.groupId,
@@ -92,8 +92,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     })
                     microfrontend.codeRepository.repositoryId = createdRepository.name
                     if (template) {
-                        await this.injectTemplateGitlab(codeRepository.accessToken, createdRepository.name, path, codeRepository, "gitlab", template)
-                        //await this.createPipelineGitlab(createdRepository.name, codeRepository)
+                        await this.injectTemplateGitlab(codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template)
                     }
                 } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
                     const githubClient = new GithubClient()
@@ -157,7 +156,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
     }
 
-    async injectTemplateGitlab(accessToken: string, repositoryName: string, repositoryGroup: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
+    async injectTemplateGitlab(accessToken: string, baseUrl: string, repositoryName: string, repositoryGroup: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
             throw new Error("Template url is not set")
@@ -172,10 +171,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITLAB, accessToken, tempDir)
 
-        const path = repositoryGroup || codeRepository.gitlabData.project
+        const path = repositoryGroup || codeRepository.gitlabData.groupPath
 
-        //TODO gitlab.com è errato!!
-        const repoUrl = "https://oauth2:" + accessToken + "@gitlab.com/" + path + "/" + repositoryName + ".git"
+        const baseUrlReal = baseUrl.replaceAll("https://", "").replaceAll("http://", "")
+        const repoUrl = "https://oauth2:" + accessToken + "@" + baseUrlReal + "/" + path + "/" + repositoryName + ".git"
 
         await codeManagementService.cloneRepository({
             repositoryUrl: repoUrl,

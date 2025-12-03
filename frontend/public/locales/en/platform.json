@@ -722,6 +722,10 @@
                     "description": "Read access to repositories"
                 }
             },
+            "success": {
+                "added": "GitLab repository added successfully",
+                "edited": "GitLab repository updated successfully"
+            },
             "error": {
                 "failedToAdd": "Failed to add GitLab repository",
                 "failedToEdit": "Failed to edit GitLab repository",
