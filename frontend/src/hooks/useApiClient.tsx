@@ -115,7 +115,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
                                 expires_in: number
                                 refresh_token?: string
                             }>({
-                                url: "/auth/google/refresh",
+                                url: "/api/auth/google/refresh",
                                 method: "POST",
                                 authenticated: AuthenticationType.NONE,
                                 data: {
