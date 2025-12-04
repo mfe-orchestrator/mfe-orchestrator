@@ -100,7 +100,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
     }
 
     const getToken = async (token?: string): Promise<IToken | undefined> => {
-        if (token) return { token, issuer: "", expiresAt: "" }
+        if (token) return { token, issuer: "" }
         const tokenLocal = getTokenFromStorage()
         if (tokenLocal) {
             if (tokenLocal.issuer === "google") {
@@ -137,7 +137,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
                         } catch (error) {
                             console.error("Failed to refresh Google token:", error)
                             // Se il refresh fallisce, ritorna il token esistente
-                            return tokenLocal
+                            return undefined
                         }
                     }
                 }
