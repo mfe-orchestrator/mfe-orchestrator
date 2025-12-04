@@ -16,7 +16,7 @@ export const ApiStatusHandler: React.FC<IApiStatusHandlerProps> = ({
 }) => {
     const isLoading = queries.some(query => (query.isLoading || query.isFetching || query.isPending) && query.isEnabled)
     const error = interceptError ? queries.find(query => query.isError)?.error : undefined
-    const isEmpty = interceptEmpty ? queries.some(query => !query.data) : false
+    const isEmpty = interceptEmpty ? queries.some(query => query.data === undefined) : false
 
     if (isLoading) {
         return <>{loadingComponent}</>
