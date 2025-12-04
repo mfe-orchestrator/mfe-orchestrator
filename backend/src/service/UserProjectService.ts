@@ -68,13 +68,13 @@ class UserProjectService extends BaseAuthorizedService {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
 
         // Verify project exists
-        const project = await Project.findById(projectIdObj, { session })
+        const project = await Project.findById(projectIdObj, {}, { session })
         if (!project) {
             throw new EntityNotFoundError(projectIdObj.toString())
         }
 
         // Verify user exists
-        const user = await User.findById(userIdObj, { session })
+        const user = await User.findById(userIdObj, {}, { session })
         if (!user) {
             throw new EntityNotFoundError(`User with ID ${userIdObj} not found`)
         }
