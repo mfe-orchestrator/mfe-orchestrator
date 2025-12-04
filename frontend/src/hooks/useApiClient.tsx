@@ -2,7 +2,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import { AccountEntity, AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { AxiosError, AxiosResponse } from "axios"
-import { getToken as getTokenFromStorage, IToken } from "@/authentication/tokenUtils"
+import { getToken as getTokenFromStorage, IToken, setToken } from "@/authentication/tokenUtils"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import ApiClient, { AuthenticationType, IClientRequestData, IClientRequestMetadata } from "../api/apiClient"
@@ -102,7 +102,48 @@ export const useApiClient = (options?: IApiClientOptions) => {
     const getToken = async (token?: string): Promise<IToken | undefined> => {
         if (token) return { token, issuer: "" }
         const tokenLocal = getTokenFromStorage()
-        if (tokenLocal) return tokenLocal
+        if (tokenLocal) {
+            if (tokenLocal.issuer === "google") {
+                if (tokenLocal.expiresAt && Date.now() < Number(tokenLocal.expiresAt)) {
+                    return tokenLocal
+                } else {
+                    // Token scaduto, fai il refresh
+                    if (tokenLocal.refreshToken) {
+                        try {
+                            const response = await ApiClient.doRequest<{
+                                access_token: string
+                                expires_in: number
+                                refresh_token?: string
+                            }>({
+                                url: "/api/auth/google/refresh",
+                                method: "POST",
+                                authenticated: AuthenticationType.NONE,
+                                data: {
+                                    refresh_token: tokenLocal.refreshToken
+                                }
+                            })
+
+                            const newExpiresAt = String(Date.now() + response.data.expires_in * 1000)
+                            const newRefreshToken = response.data.refresh_token || tokenLocal.refreshToken
+
+                            setToken(response.data.access_token, "google", newExpiresAt, newRefreshToken)
+
+                            return {
+                                token: response.data.access_token,
+                                issuer: "google",
+                                expiresAt: newExpiresAt,
+                                refreshToken: newRefreshToken
+                            }
+                        } catch (error) {
+                            console.error("Failed to refresh Google token:", error)
+                            // Se il refresh fallisce, ritorna il token esistente
+                            return undefined
+                        }
+                    }
+                }
+            }
+            return tokenLocal
+        }
         if (auth0Auth.isAuthenticated) {
             return {
                 token: await auth0Auth.getAccessTokenSilently(),
