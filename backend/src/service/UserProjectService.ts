@@ -85,6 +85,7 @@ class UserProjectService extends BaseAuthorizedService {
                 userId: userIdObj,
                 projectId: projectIdObj
             },
+            {},
             { session }
         )
 
