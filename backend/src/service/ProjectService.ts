@@ -1,4 +1,5 @@
 import { ClientSession, DeleteResult, ObjectId, Types } from "mongoose"
+import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
@@ -120,6 +121,8 @@ export class ProjectService extends BaseAuthorizedService {
             })
 
             const savedProject = await project.save({ session })
+
+            fastify.log.info("Project created with ID:" + savedProject._id)
 
             await this.userProjectService.addUserToProject(creatorUserId, savedProject._id, RoleInProject.OWNER, session)
 

@@ -421,7 +421,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async editRepositoryAzureDevOpsRaw(body: CreateAzureDevOpsRepositoryDTO, repositoryId: string, session?: ClientSession) {
-        const repository = await this.findById(repositoryId)
+        const repository = await this.findById(repositoryId, session)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }
@@ -483,7 +483,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async editRepositoryGitlabRaw(body: CreateGitlabRepositoryDto, repositoryId: string, session?: ClientSession) {
-        const repository = await this.findById(repositoryId)
+        const repository = await this.findById(repositoryId, session)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }

@@ -1,21 +1,18 @@
+import { randomBytes } from "crypto"
 import { ClientSession, ObjectId, Types } from "mongoose"
-import UserProject, { IUserProject } from "../models/UserProjectModel"
-import { RoleInProject } from "../models/UserProjectModel"
+import { fastify } from ".."
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Project from "../models/ProjectModel"
-import BaseAuthorizedService from "./BaseAuthorizedService"
-import { IUser, UserStatus } from "../models/UserModel"
-import User from "../models/UserModel"
-
+import User, { IUser, UserStatus } from "../models/UserModel"
+import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserService from "../service/UserService"
-import { randomBytes } from "crypto"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
-import { fastify } from ".."
 
 // Get all user-project relationships for this project
 interface IUserInProject extends Partial<IUser> {
     joinedAt: Date
-    role: RoleInProject,
+    role: RoleInProject
     invitationToken?: string
 }
 class UserProjectService extends BaseAuthorizedService {
@@ -40,7 +37,7 @@ class UserProjectService extends BaseAuthorizedService {
         const registeredUser = await this.userService.register(
             {
                 email,
-                status: UserStatus.INVITED,
+                status: UserStatus.INVITED
             },
             false
         )
@@ -48,7 +45,7 @@ class UserProjectService extends BaseAuthorizedService {
         const canSendEmail = this.emailSenderService.canSendEmails()
 
         fastify.log.info(`User ${email} registered with ID ${registeredUser._id}`)
-        
+
         // Add user to project
         const userProject = new UserProject({
             userId: registeredUser._id,
@@ -71,22 +68,25 @@ class UserProjectService extends BaseAuthorizedService {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
 
         // Verify project exists
-        const project = await Project.findById(projectIdObj)
+        const project = await Project.findById(projectIdObj, { session })
         if (!project) {
             throw new EntityNotFoundError(projectIdObj.toString())
         }
 
         // Verify user exists
-        const user = await User.findById(userIdObj)
+        const user = await User.findById(userIdObj, { session })
         if (!user) {
             throw new EntityNotFoundError(`User with ID ${userIdObj} not found`)
         }
 
         // Check if user is already in the project
-        const existingUserProject = await UserProject.findOne({
-            userId: userIdObj,
-            projectId: projectIdObj
-        })
+        const existingUserProject = await UserProject.findOne(
+            {
+                userId: userIdObj,
+                projectId: projectIdObj
+            },
+            { session }
+        )
 
         if (existingUserProject) {
             return {
@@ -128,7 +128,7 @@ class UserProjectService extends BaseAuthorizedService {
                 ...up,
                 ...up.userId,
                 joinedAt: up.createdAt,
-                userId: undefined,
+                userId: undefined
             }
         })
     }
