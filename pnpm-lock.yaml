@@ -77,9 +77,6 @@ importers:
       '@sentry/node':
         specifier: ^10.29.0
         version: 10.29.0
-      '@types/adm-zip':
-        specifier: ^0.5.7
-        version: 0.5.7
       adm-zip:
         specifier: ^0.5.16
         version: 0.5.16
@@ -138,6 +135,9 @@ importers:
         specifier: ^13.0.0
         version: 13.0.0
     devDependencies:
+      '@types/adm-zip':
+        specifier: ^0.5.7
+        version: 0.5.7
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
