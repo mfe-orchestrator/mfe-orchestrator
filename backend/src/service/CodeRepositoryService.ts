@@ -10,6 +10,7 @@ import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeReposi
 import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
@@ -110,7 +111,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async getByProjectId(projectId: string): Promise<ICodeRepository[]> {
         await this.ensureAccessToProject(projectId)
-        return await CodeRepository.find({ projectId, isActive: true }).sort({
+        return await CodeRepository.find({ projectId: toObjectId(projectId), isActive: true }).sort({
             name: 1
         })
     }
@@ -118,7 +119,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     async findById(repositoryId: string, session?: ClientSession): Promise<ICodeRepository | null> {
         const repository = await CodeRepository.findOne(
             {
-                _id: repositoryId
+                _id: toObjectId(repositoryId)
             },
             {},
             { session }
@@ -144,7 +145,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         repository.default = true
         await repository.save()
 
-        await CodeRepository.updateMany({ _id: { $ne: repositoryId } }, { default: false })
+        await CodeRepository.updateMany({ _id: { $ne: toObjectId(repositoryId) } }, { default: false })
     }
 
     async injectSecretsToDeployOnGitlabRaw(repository: ICodeRepository, session?: ClientSession) {
@@ -285,7 +286,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         await this.findById(repositoryId)
 
         try {
-            const updated = await CodeRepository.findOneAndUpdate({ _id: repositoryId }, repositoryData, { new: true, runValidators: true })
+            const updated = await CodeRepository.findOneAndUpdate({ _id: toObjectId(repositoryId) }, repositoryData, { new: true, runValidators: true })
 
             if (!updated) {
                 throw new EntityNotFoundError(repositoryId)
@@ -347,7 +348,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             throw new EntityNotFoundError(repositoryId)
         }
 
-        return await CodeRepository.deleteOne({ _id: repositoryId })
+        return await CodeRepository.deleteOne({ _id: toObjectId(repositoryId) })
     }
 
     async activate(repositoryId: string): Promise<ICodeRepository | null> {

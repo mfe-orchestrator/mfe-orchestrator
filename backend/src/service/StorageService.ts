@@ -1,14 +1,15 @@
-import { ClientSession, DeleteResult, ObjectId, Types } from "mongoose"
+import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Storage, { IStorage } from "../models/StorageModel"
 import { StorageDTO } from "../types/StorageDTO"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export class StorageService extends BaseAuthorizedService {
-    async getByProjectId(projectId: string | ObjectId): Promise<IStorage[]> {
+    async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IStorage[]> {
         await this.ensureAccessToProject(projectId)
-        return Storage.find({ projectId })
+        return Storage.find({ projectId: toObjectId(projectId) })
     }
 
     async getById(storageId: string | ObjectId): Promise<IStorage> {
@@ -57,27 +58,28 @@ export class StorageService extends BaseAuthorizedService {
         return runInTransaction(async session => this.updateRaw(storageId, storageData, session))
     }
 
-    async delete(storageId: string): Promise<DeleteResult> {
+    async delete(storageId: string | Schema.Types.ObjectId): Promise<DeleteResult> {
         const storage = await Storage.findById(storageId)
 
         if (!storage) {
-            throw new EntityNotFoundError(storageId)
+            throw new EntityNotFoundError(storageId.toString())
         }
 
         await this.ensureAccessToProject(storage.projectId)
 
-        return await Storage.deleteOne({ _id: storageId })
+        return await Storage.deleteOne({ _id: toObjectId(storageId) })
     }
 
-    async makeDefault(storageId: string): Promise<IStorage> {
-        const storage = await this.getById(storageId)
+    async makeDefault(storageId: string | Schema.Types.ObjectId): Promise<IStorage> {
+        const storageIdObj = toObjectId(storageId)
+        const storage = await this.getById(storageIdObj)
 
         if (storage.default) return storage
 
         storage.default = true
         await storage.save()
 
-        await Storage.updateMany({ _id: { $ne: storageId }, projectId: storage.projectId }, { default: false })
+        await Storage.updateMany({ _id: { $ne: storageIdObj }, projectId: storage.projectId }, { default: false })
 
         return storage
     }

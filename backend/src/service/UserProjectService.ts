@@ -1,11 +1,12 @@
 import { randomBytes } from "crypto"
-import { ClientSession, ObjectId, Types } from "mongoose"
+import { ClientSession, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Project from "../models/ProjectModel"
 import User, { IUser, UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserService from "../service/UserService"
+import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
 
@@ -19,7 +20,7 @@ class UserProjectService extends BaseAuthorizedService {
     emailSenderService = new EmailSenderService()
     userService = new UserService()
 
-    async addUserToProjectByEmail(projectId: string | ObjectId, email: string, role: RoleInProject): Promise<IUserProject | undefined> {
+    async addUserToProjectByEmail(projectId: string | Schema.Types.ObjectId, email: string, role: RoleInProject): Promise<IUserProject | undefined> {
         const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
         const project = await Project.findById(projectIdObj)
         if (!project) {
@@ -64,8 +65,8 @@ class UserProjectService extends BaseAuthorizedService {
 
     async addUserToProject(userId: string | ObjectId, projectId: string | ObjectId, role: RoleInProject, session?: ClientSession) {
         // Convert string IDs to ObjectId if needed
-        const userIdObj = typeof userId === "string" ? new Types.ObjectId(userId) : userId
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+        const userIdObj = toObjectId(userId)
+        const projectIdObj = toObjectId(projectId)
 
         // Verify project exists
         const project = await Project.findById(projectIdObj, {}, { session })
@@ -110,7 +111,7 @@ class UserProjectService extends BaseAuthorizedService {
         }
     }
 
-    async getProjectUsers(projectId: string | ObjectId): Promise<IUserInProject[] | undefined> {
+    async getProjectUsers(projectId: string | Schema.Types.ObjectId): Promise<IUserInProject[] | undefined> {
         // Verify project exists
         const project = await Project.findById(projectId)
         if (!project) {
@@ -121,7 +122,9 @@ class UserProjectService extends BaseAuthorizedService {
             user: IUser
         }
 
-        const userProjects = await UserProject.find({ projectId }).populate<{ user: IUser }>("userId", "email name surname").lean<PopulatedUserProject[]>()
+        const userProjects = await UserProject.find({ projectId: toObjectId(projectId) })
+            .populate<{ user: IUser }>("userId", "email name surname")
+            .lean<PopulatedUserProject[]>()
 
         // Format the response
         return userProjects.map<IUserInProject>(up => {

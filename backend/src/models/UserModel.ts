@@ -1,6 +1,6 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { AuthTokenDataDTO } from "../dto/AuthTokenData.dto"
 export const ISSUER = "microfrontend.orchestrator.hub"
 
@@ -114,13 +114,12 @@ const userSchema = new Schema<IUserDocument>(
     }
 )
 
-userSchema.pre<IUserDocument>("save", async function (next) {
+userSchema.pre<IUserDocument>("save", async function () {
     if (this.isModified("password") && this.password) {
         const salt = await bcrypt.genSalt(10)
         this.salt = salt
         this.password = await bcrypt.hash(this.password, salt)
     }
-    next()
 })
 
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {

@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs"
-import mongoose, { Document, ObjectId, Schema, Types } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export enum ApiKeyRole {
     VIEWER = "VIEWER",
@@ -13,7 +13,7 @@ export enum ApiKeyStatus {
 
 export interface IApiKey {
     name: string
-    projectId: Types.ObjectId
+    projectId: Schema.Types.ObjectId
     apiKey: string
     role: ApiKeyRole
     expiresAt: Date
@@ -64,11 +64,10 @@ const apiKeySchema = new Schema<IApiKeyDocument>(
     }
 )
 
-apiKeySchema.pre<IApiKeyDocument>("save", async function (next) {
+apiKeySchema.pre<IApiKeyDocument>("save", async function () {
     if (this.isModified("apiKey")) {
         this.apiKey = await bcrypt.hash(this.apiKey, 10)
     }
-    next()
 })
 
 apiKeySchema.methods.compareApiKey = async function (candidateApiKey: string): Promise<boolean> {

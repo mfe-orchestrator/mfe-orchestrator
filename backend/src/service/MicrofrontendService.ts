@@ -23,6 +23,7 @@ import Microfrontend, { HostedOn, IMicrofrontend } from "../models/Microfrontend
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
@@ -42,14 +43,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return microfrontend
     }
 
-    async getByProjectId(projectId: string | ObjectId): Promise<IMicrofrontend[]> {
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+    async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend[]> {
+        const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
         return await Microfrontend.find({ projectId: projectIdObj })
     }
 
-    async create(microfrontend: MicrofrontendDTO, projectId: string | ObjectId): Promise<IMicrofrontend> {
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+    async create(microfrontend: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
+        const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
@@ -122,7 +123,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await Microfrontend.create({
             ...microfrontend,
             projectId: projectIdObj
-        })
+        } as unknown as IMicrofrontend)
     }
     async gitHubInjectApiKey(codeRepository: ICodeRepository, microfrontend: MicrofrontendDTO) {
         if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
@@ -581,42 +582,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
             await this.ensureAccessToMicrofrontend(microfrontend)
         }
 
-        const result = await Microfrontend.deleteMany({ _id: { $in: ids } })
+        const result = await Microfrontend.deleteMany({ _id: { $in: ids.map(toObjectId) } })
         return result.deletedCount
-    }
-
-    async deploySingle(microfrontendId: string | ObjectId, targetEnvironmentIds: (string | ObjectId)[]): Promise<void> {
-        return runInTransaction(async session => this.deploySingleRaw(microfrontendId, targetEnvironmentIds, session))
-    }
-
-    async deploySingleRaw(microfrontendId: string | ObjectId, targetEnvironmentIds: (string | ObjectId)[], session?: ClientSession): Promise<void> {
-        // Check if microfrontend exists
-        const microfrontend = await this.getById(microfrontendId, session)
-        if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendId.toString())
-        }
-        // can i access to this microfrontend?
-        await this.ensureAccessToMicrofrontend(microfrontend)
-
-        // Check if target environment exists
-        const targetEnvironmentsObj = await Promise.all(
-            targetEnvironmentIds.map(async targetEnvironment => {
-                const targetEnvironmentObjId = typeof targetEnvironment === "string" ? new Types.ObjectId(targetEnvironment) : targetEnvironment
-                await this.ensureAccessToEnvironment(targetEnvironment, session)
-                return targetEnvironmentObjId
-            })
-        )
-
-        // deploy microfrontend
-        const slugToFind = microfrontend.slug
-
-        await Microfrontend.deleteMany({
-            slug: slugToFind,
-            environmentId: { $in: targetEnvironmentsObj },
-            session
-        })
-
-        await Promise.all(targetEnvironmentIds.map(async targetEnvironmentId => Microfrontend.create({ ...microfrontend, environmentId: targetEnvironmentId }, { session })))
     }
 
     async uploadWithPermissionCheck(microfrontendSlug: string, version: string, projectId: string, file: MultipartFile): Promise<void> {
@@ -626,7 +593,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         const microfrontend = await Microfrontend.findOne({
             slug: microfrontendSlug,
-            projectId
+            projectId: toObjectId(projectId)
         })
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendSlug)

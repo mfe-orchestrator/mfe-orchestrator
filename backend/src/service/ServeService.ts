@@ -15,6 +15,7 @@ import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
 import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import { IStorage, StorageType } from "../models/StorageModel"
+import { toObjectId } from "../utils/mongooseUtils"
 import DeploymentService from "./DeploymentService"
 
 interface GetRemotesRequestDTO {
@@ -239,8 +240,8 @@ export default defineConfig({
      * @param environmentId The ID of the environment
      * @returns Promise with array of Microfrontend objects
      */
-    async getAllByEnvironmentId(environmentId: string | ObjectId): Promise<GetAllDataDTO> {
-        const deployment = await Deployment.findOne({ environmentId, active: true })
+    async getAllByEnvironmentId(environmentId: string | Schema.Types.ObjectId): Promise<GetAllDataDTO> {
+        const deployment = await Deployment.findOne({ environmentId: toObjectId(environmentId), active: true })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
@@ -266,7 +267,7 @@ export default defineConfig({
      * @returns Promise with array of Microfrontend objects
      */
     async getAllByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<GetAllDataDTO> {
-        const environment = await Environment.findOne({ slug: environmentSlug, projectId })
+        const environment = await Environment.findOne({ slug: environmentSlug, projectId: toObjectId(projectId) })
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
         }
@@ -309,7 +310,7 @@ export default defineConfig({
      */
     async getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(projectId: string, environmentSlug: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
         const environment = await Environment.findOne({
-            projectId,
+            projectId: toObjectId(projectId),
             slug: environmentSlug
         })
         if (!environment) {
@@ -327,7 +328,7 @@ export default defineConfig({
     }
 
     async getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(environmentId: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
-        const deployment = await Deployment.findOne({ environmentId, active: true })
+        const deployment = await Deployment.findOne({ environmentId: toObjectId(environmentId), active: true })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
@@ -348,7 +349,7 @@ export default defineConfig({
      * @returns Promise with global variables object
      */
     async getGlobalVariablesByEnvironmentId(environmentId: string): Promise<{ key: string; value: string }[]> {
-        const deployment = await Deployment.findOne({ environmentId, active: true })
+        const deployment = await Deployment.findOne({ environmentId: toObjectId(environmentId), active: true })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
         }
@@ -370,7 +371,7 @@ export default defineConfig({
      * @returns Promise with global variables object
      */
     async getGlobalVariablesByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<IGlobalVariable[]> {
-        const environment = await Environment.findOne({ slug: environmentSlug, projectId })
+        const environment = await Environment.findOne({ slug: environmentSlug, projectId: toObjectId(projectId) })
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
         }
@@ -389,12 +390,13 @@ export default defineConfig({
      * @returns Promise with Microfrontend object or null if not found
      */
     async getByEnvironmentSlugAndProjectIdAndMicrofrontendSlug(environmentSlug: string, projectId: string, microfrontendSlug: string, filePath: string): Promise<StreamWithHeader> {
-        const environment = await Environment.findOne({ slug: environmentSlug, projectId })
+        const projectIdObj = toObjectId(projectId)
+        const environment = await Environment.findOne({ slug: environmentSlug, projectId: projectIdObj })
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
         }
 
-        const project = await Project.findOne({ _id: projectId })
+        const project = await Project.findOne({ _id: projectIdObj })
         if (!project) {
             throw new EntityNotFoundError(projectId)
         }
@@ -557,9 +559,9 @@ export default defineConfig({
         }
     }
 
-    getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | ObjectId) {
+    getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | Schema.Types.ObjectId) {
         return Environment.findOne({
-            projectId,
+            projectId: toObjectId(projectId),
             $or: [{ domains: { $regex: new RegExp(referer, "i") } }, { domains: { $regex: new RegExp(new URL(referer).origin, "i") } }]
         })
     }

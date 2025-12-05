@@ -1,12 +1,13 @@
-import { ClientSession, ObjectId, Types } from "mongoose"
+import { ClientSession, ObjectId, Schema } from "mongoose"
+import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
 import UserCannotAccessThisEnvironmentError from "../errors/UserCannotAccessThisEnvironmentError"
 import UserCannotAccessThisProjectError from "../errors/UserCannotAccessThisProjectError"
+import Deployment from "../models/DeploymentModel"
+import Environment from "../models/EnvironmentModel"
+import { IMicrofrontend } from "../models/MicrofrontendModel"
 import { IUser } from "../models/UserModel"
 import UserProject from "../models/UserProjectModel"
-import Environment from "../models/EnvironmentModel"
-import Deployment from "../models/DeploymentModel"
-import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
-import { IMicrofrontend } from "../models/MicrofrontendModel"
+import { toObjectId } from "../utils/mongooseUtils"
 
 export default abstract class BaseAuthorizedService {
     protected user?: IUser
@@ -20,7 +21,7 @@ export default abstract class BaseAuthorizedService {
      * @param environmentId The ID of the environment to check access for
      * @throws {UserCannotAccessThisEnvironmentError} If user doesn't have access
      */
-    protected async ensureAccessToEnvironment(environmentId: string | ObjectId | Types.ObjectId, session?: ClientSession): Promise<void> {
+    protected async ensureAccessToEnvironment(environmentId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<void> {
         if (!(await this.hasAccessToEnvironment(environmentId, session))) {
             throw new UserCannotAccessThisEnvironmentError(this.getUser())
         }
@@ -31,7 +32,7 @@ export default abstract class BaseAuthorizedService {
      * @param projectId The ID of the project to check access for
      * @throws {UserCannotAccessThisProjectError} If user doesn't have access
      */
-    protected async ensureAccessToProject(projectId: string | ObjectId | Types.ObjectId, session?: ClientSession): Promise<void> {
+    protected async ensureAccessToProject(projectId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<void> {
         if (!(await this.hasAccessToProject(projectId, session))) {
             throw new UserCannotAccessThisProjectError(this.getUser())
         }
@@ -42,7 +43,7 @@ export default abstract class BaseAuthorizedService {
      * @param deploymentId The ID of the environment to check access for
      * @throws {UserCannotAccessThisDeploymentError} If user doesn't have access
      */
-    protected async ensureAccessToDeployment(deploymentId: string | ObjectId | Types.ObjectId, session?: ClientSession): Promise<void> {
+    protected async ensureAccessToDeployment(deploymentId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<void> {
         if (!(await this.hasAccessToDeployment(deploymentId, session))) {
             throw new UserCannotAccessThisDeploymentError(this.getUser())
         }
@@ -53,14 +54,13 @@ export default abstract class BaseAuthorizedService {
      * @param environmentId The ID of the environment to check access for
      * @returns Promise<boolean> True if user has access, false otherwise
      */
-    protected async hasAccessToEnvironment(environmentId: string | ObjectId | Types.ObjectId, session?: ClientSession): Promise<boolean> {
+    protected async hasAccessToEnvironment(environmentId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<boolean> {
         if (!this.user) {
             return false
         }
-        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
 
         // Check if environment exists and get its project ID
-        const environment = await Environment.findOne({ _id: environmentIdObj }).session(session ?? null)
+        const environment = await Environment.findOne({ _id: toObjectId(environmentId) }).session(session ?? null)
         if (!environment) {
             return false
         }
@@ -73,16 +73,15 @@ export default abstract class BaseAuthorizedService {
      * @param projectId The ID of the project to check access for
      * @returns Promise<boolean> True if user has access, false otherwise
      */
-    protected async hasAccessToProject(projectId: string | ObjectId | Types.ObjectId, session?: ClientSession): Promise<boolean> {
+    protected async hasAccessToProject(projectId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<boolean> {
         if (!this.user) {
             return false
         }
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
 
         // Check if user is directly associated with the project
         const userProject = await UserProject.findOne({
             userId: this.user._id,
-            projectId: projectIdObj
+            projectId: toObjectId(projectId)
         }).session(session ?? null)
 
         // If user has any role in the project, they have access
@@ -94,14 +93,13 @@ export default abstract class BaseAuthorizedService {
      * @param deploymentId The ID of the environment to check access for
      * @returns Promise<boolean> True if user has access, false otherwise
      */
-    protected async hasAccessToDeployment(deploymentId: string | ObjectId | Types.ObjectId, session?: ClientSession): Promise<boolean> {
+    protected async hasAccessToDeployment(deploymentId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<boolean> {
         if (!this.user) {
             return false
         }
-        const deploymentIdObj = typeof deploymentId === "string" ? new Types.ObjectId(deploymentId) : deploymentId
 
         // Check if deployment exists and get its project ID
-        const deployment = await Deployment.findOne({ _id: deploymentIdObj }).session(session ?? null)
+        const deployment = await Deployment.findOne({ _id: toObjectId(deploymentId) }).session(session ?? null)
         if (!deployment) {
             return false
         }

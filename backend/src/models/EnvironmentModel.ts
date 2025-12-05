@@ -4,7 +4,7 @@ export interface IEnvironment extends Document<ObjectId> {
     name: string
     description: string
     slug: string
-    projectId: Types.ObjectId
+    projectId: Schema.Types.ObjectId
     color: string
     isProduction: boolean
     url?: string

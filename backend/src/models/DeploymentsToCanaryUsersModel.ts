@@ -1,8 +1,8 @@
-import { model, Schema, ObjectId, Document } from "mongoose"
+import { Document, model, Schema } from "mongoose"
 
-export interface IDeploymentToCanaryUsers extends Document<ObjectId> {
-    deploymentId: ObjectId
-    microfrontendId: ObjectId
+export interface IDeploymentToCanaryUsers extends Document<Schema.Types.ObjectId> {
+    deploymentId: Schema.Types.ObjectId
+    microfrontendId?: Schema.Types.ObjectId
     userId: string
     enabled: boolean
 }

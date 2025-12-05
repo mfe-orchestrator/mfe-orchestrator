@@ -62,9 +62,9 @@ const storageSchema = new Schema<IStorage>(
             type: Schema.Types.Mixed,
             required: true,
             validate: {
-                validator: function (this: Document, value: Record<string, unknown>): boolean {
+                validator: function (value: Record<string, unknown>): boolean {
                     // In update context, 'this' might be the query, get type from the update data
-                    const storageType = this.get("type")
+                    const storageType = this.get("type") as StorageType
                     //const storageType = (this as any)?.type || (this as any)?._update?.$set.type as StorageType
 
                     if (!storageType) {

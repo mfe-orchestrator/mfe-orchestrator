@@ -1,35 +1,35 @@
-import { ClientSession, ObjectId, Schema, Types } from "mongoose"
+import { ClientSession, Schema, Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Storage from "../models/StorageModel"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 class DeploymentService extends BaseAuthorizedService {
-    async getById(deploymentId: string | ObjectId): Promise<IDeployment | null> {
-        return Deployment.findById(deploymentId)
+    async getById(deploymentId: string | Schema.Types.ObjectId): Promise<IDeployment | null> {
+        return Deployment.findById(toObjectId(deploymentId))
     }
 
-    async getByEnvironmentId(environmentId: string | ObjectId): Promise<IDeployment[]> {
+    async getByEnvironmentId(environmentId: string | Schema.Types.ObjectId): Promise<IDeployment[]> {
         await this.ensureAccessToEnvironment(environmentId)
-        return Deployment.find({ environmentId }).sort({ deployedAt: -1 })
+        return Deployment.find({ environmentId: toObjectId(environmentId) }).sort({ deployedAt: -1 })
     }
 
-    async getLastByEnvironmentId(environmentId: string | ObjectId): Promise<IDeployment | null> {
+    async getLastByEnvironmentId(environmentId: string | Schema.Types.ObjectId): Promise<IDeployment | null> {
         await this.ensureAccessToEnvironment(environmentId)
-        return Deployment.findOne({ environmentId }).sort({ deployedAt: -1 })
+        return Deployment.findOne({ environmentId: toObjectId(environmentId) }).sort({ deployedAt: -1 })
     }
 
-    async getLastByEnvironmentIdNoAccessCheck(environmentId: string | ObjectId): Promise<IDeployment | null> {
-        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
-        return Deployment.findOne({ environmentId: environmentIdObj }).sort({ deployedAt: -1 })
+    async getLastByEnvironmentIdNoAccessCheck(environmentId: string | Schema.Types.ObjectId): Promise<IDeployment | null> {
+        return Deployment.findOne({ environmentId: toObjectId(environmentId) }).sort({ deployedAt: -1 })
     }
 
-    private async getDeploymentId(environmentId: Schema.Types.ObjectId | Types.ObjectId, session?: ClientSession) {
-        const deployments = await Deployment.find({ environmentId }).session(session || null)
+    private async getDeploymentId(environmentId: string | Schema.Types.ObjectId, session?: ClientSession) {
+        const deployments = await Deployment.find({ environmentId: toObjectId(environmentId) }).session(session || null)
         if (!deployments || deployments.length === 0) {
             return "#1"
         } else {
@@ -37,16 +37,16 @@ class DeploymentService extends BaseAuthorizedService {
         }
     }
 
-    async createRaw(environmentId: string | ObjectId, session?: ClientSession) {
+    async createRaw(environmentId: string | Schema.Types.ObjectId, session?: ClientSession) {
         await this.ensureAccessToEnvironment(environmentId, session)
-        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
+        const environmentIdObj = toObjectId(environmentId)
         const environment = await Environment.findById(environmentIdObj).session(session || null)
         if (!environment) {
             throw new EntityNotFoundError(environmentId.toString())
         }
 
         const microfrontend = await Microfrontend.find({ projectId: environment.projectId }).session(session || null)
-        const variables = await GlobalVariable.find({ environmentId }).session(session || null)
+        const variables = await GlobalVariable.find({ environmentId: environmentIdObj }).session(session || null)
         const storages = await Storage.find({ projectId: environment.projectId }).session(session || null)
 
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
@@ -60,12 +60,12 @@ class DeploymentService extends BaseAuthorizedService {
             active: true
         }).save({ session })
 
-        await Deployment.updateMany({ environmentId, _id: { $ne: deployment._id } }, { active: false }, { session })
+        await Deployment.updateMany({ environmentId: environmentIdObj, _id: { $ne: deployment._id } }, { active: false }, { session })
 
         return deployment
     }
 
-    async createMultipleRaw(environmentIds: (string | ObjectId)[], session?: ClientSession) {
+    async createMultipleRaw(environmentIds: (string | Schema.Types.ObjectId)[], session?: ClientSession) {
         const promises = []
 
         for (const environmentId of environmentIds) {
@@ -75,15 +75,15 @@ class DeploymentService extends BaseAuthorizedService {
         return Promise.all(promises)
     }
 
-    async create(environmentId: string | ObjectId) {
+    async create(environmentId: string | Schema.Types.ObjectId) {
         return runInTransaction(async session => this.createRaw(environmentId, session))
     }
 
-    async createMultiple(environmentIds: (string | ObjectId)[]) {
+    async createMultiple(environmentIds: (string | Schema.Types.ObjectId)[]) {
         return runInTransaction(async session => this.createMultipleRaw(environmentIds, session))
     }
 
-    async redeploy(deploymentId: string | ObjectId) {
+    async redeploy(deploymentId: string | Schema.Types.ObjectId) {
         const deployment = await Deployment.findById(deploymentId)
 
         if (!deployment) {

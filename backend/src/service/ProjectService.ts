@@ -3,14 +3,19 @@ import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
+import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository from "../models/CodeRepositoryModel"
+import Deployment from "../models/DeploymentModel"
+import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import DeploymentCanaryUsersService from "./DeploymentCanaryUsersService"
 import UserProjectService from "./UserProjectService"
 
 export interface ProjectCreateInput {
@@ -70,11 +75,11 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
-    async findById(id: string | ObjectId): Promise<IProject | null> {
-        const projectIdObj = typeof id === "string" ? new Types.ObjectId(id) : id
-        await this.ensureAccessToProject(projectIdObj)
+    async findById(id: string | ObjectId, session?: ClientSession): Promise<IProject | null> {
+        const projectIdObj = toObjectId(id)
+        await this.ensureAccessToProject(projectIdObj, session)
         try {
-            return await Project.findById(projectIdObj)
+            return await Project.findById(projectIdObj, {}, session)
         } catch (error) {
             if (error instanceof BusinessException) throw error
 
@@ -90,19 +95,20 @@ export class ProjectService extends BaseAuthorizedService {
     }
 
     async getSummary(projectId: string): Promise<ProjectSummaryDTO> {
-        const project = await this.findById(projectId)
+        const projectIdObj = toObjectId(projectId)
+        const project = await this.findById(projectIdObj)
         if (!project) {
             throw new EntityNotFoundError(projectId)
         }
         return {
             project,
             count: {
-                environments: await Environment.countDocuments({ projectId }),
-                users: await UserProject.countDocuments({ projectId }),
-                microfrontends: await Microfrontend.countDocuments({ projectId }),
-                apiKeys: await ApiKey.countDocuments({ projectId }),
-                storages: await Storage.countDocuments({ projectId }),
-                codeRepositories: await CodeRepository.countDocuments({ projectId })
+                environments: await Environment.countDocuments({ projectId: projectIdObj }),
+                users: await UserProject.countDocuments({ projectId: projectIdObj }),
+                microfrontends: await Microfrontend.countDocuments({ projectId: projectIdObj }),
+                apiKeys: await ApiKey.countDocuments({ projectId: projectIdObj }),
+                storages: await Storage.countDocuments({ projectId: projectIdObj }),
+                codeRepositories: await CodeRepository.countDocuments({ projectId: projectIdObj })
             }
         }
     }
@@ -194,9 +200,34 @@ export class ProjectService extends BaseAuthorizedService {
     }
 
     async delete(projectId: string): Promise<DeleteResult> {
-        await this.ensureAccessToProject(projectId)
+        return runInTransaction(session => this.deleteRaw(projectId, session))
+    }
 
-        return await Project.deleteOne({ _id: projectId })
+    async deleteRaw(projectId: string, session?: ClientSession): Promise<DeleteResult> {
+        const projectIdObj = toObjectId(projectId)
+        await this.ensureAccessToProject(projectIdObj, session)
+        await UserProject.deleteMany({ projectId: projectIdObj }, session)
+        await ApiKey.deleteMany({ projectId: projectIdObj }, session)
+        await Storage.deleteMany({ projectId: projectIdObj }, session)
+        await CodeRepository.deleteMany({ projectId: projectIdObj }, session)
+
+        const microfrontends = await Microfrontend.find({ projectId: projectIdObj }, {}, { session })
+        const mfeIds = microfrontends.map(mfe => mfe._id)
+        await BuiltFrontend.deleteMany({ microfrontendId: { $in: mfeIds } }, session)
+
+        const deployments = await Deployment.find({ projectId: projectIdObj }, {}, { session })
+        const deploymentsIds = deployments.map(deployment => deployment._id)
+        await DeploymentToCanaryUsers.deleteMany({ deploymentId: { $in: deploymentsIds } }, session)
+
+        const environments = await Environment.find({ projectId: projectIdObj }, {}, { session })
+        const environmentIds = environments.map(environment => environment._id)
+        await Deployment.deleteMany({ environmentId: { $in: environmentIds } }, session)
+
+        await Deployment.deleteMany({ projectId: projectIdObj }, session)
+        await Microfrontend.deleteMany({ projectId: projectIdObj }, session)
+        await Environment.deleteMany({ projectId: projectIdObj }, session)
+
+        return await Project.deleteOne({ _id: projectIdObj }, session)
     }
 }
 

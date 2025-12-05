@@ -1,7 +1,8 @@
-import { ClientSession, ObjectId } from "mongoose"
-import BaseAuthorizedService from "./BaseAuthorizedService"
-import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
+import { ClientSession, ObjectId, Schema } from "mongoose"
+import DeploymentToCanaryUsers, { IDeploymentToCanaryUsers } from "../models/DeploymentsToCanaryUsersModel"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 
 class DeploymentCanaryUsersService extends BaseAuthorizedService {
     async getCanaryUsersByDeployment(deploymentId: string | ObjectId) {
@@ -19,16 +20,15 @@ class DeploymentCanaryUsersService extends BaseAuthorizedService {
         return this.getCanaryUsersByDeployment(deploymentId)
     }
 
-    async setCanaryUserRaw(deploymentId: string | ObjectId, userId: string, enabled: boolean, session?: ClientSession) {
-        const deploymentToCanaryUser = await DeploymentToCanaryUsers.findOne({ deploymentId, userId }).session(session || null)
+    async setCanaryUserRaw(deploymentId: string | Schema.Types.ObjectId, userId: string, enabled: boolean, session?: ClientSession) {
+        const deploymentToCanaryUser = await DeploymentToCanaryUsers.findOne({ deploymentId: toObjectId(deploymentId), userId }).session(session || null)
 
         if (deploymentToCanaryUser) {
             deploymentToCanaryUser.enabled = enabled
             await deploymentToCanaryUser.save({ session })
             return deploymentToCanaryUser
         } else {
-            const newDeploymentToCanaryUser = await DeploymentToCanaryUsers.create({ deploymentId, userId, enabled }, { session })
-            return newDeploymentToCanaryUser
+            return await new DeploymentToCanaryUsers({ deploymentId: toObjectId(deploymentId), userId, enabled }).save({ session })
         }
     }
 
@@ -59,8 +59,8 @@ class DeploymentCanaryUsersService extends BaseAuthorizedService {
         return this.setCanaryUserMultiple(deploymentId, userIds, enabled)
     }
 
-    async deleteCanaryUsers(deploymentId: string | ObjectId, userIds: string[]) {
-        await DeploymentToCanaryUsers.deleteMany({ deploymentId, userId: { $in: userIds } })
+    async deleteCanaryUsers(deploymentId: string | Schema.Types.ObjectId, userIds: string[]) {
+        await DeploymentToCanaryUsers.deleteMany({ deploymentId: toObjectId(deploymentId), userId: { $in: userIds } })
     }
 
     async deleteCanaryUsersWithPermissionCheck(deploymentId: string | ObjectId, userIds: string[]) {

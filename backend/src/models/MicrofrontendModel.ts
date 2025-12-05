@@ -46,7 +46,7 @@ export interface IMicrofrontend extends Document<ObjectId> {
     version: string
     continuousDeployment?: boolean
     path?: string
-    projectId: ObjectId
+    projectId: Schema.Types.ObjectId
     canary?: ICanaryMicrofrontend
     host: IHostMicrofrontend
     codeRepository?: ICodeRepositoryMicrofrontend

@@ -1,31 +1,31 @@
+import { ClientSession, ObjectId, Schema, Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
+import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import { ClientSession, ObjectId, Types } from "mongoose"
 
 class EnvironmentService extends BaseAuthorizedService {
     async getByProjectId(projectId: string) {
         await this.ensureAccessToProject(projectId)
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+        const projectIdObj = toObjectId(projectId)
         return Environment.find({ projectId: projectIdObj }).sort({ order: 1 })
     }
 
-    async getById(id: string | ObjectId, session?: ClientSession) {
+    async getById(id: string | Schema.Types.ObjectId, session?: ClientSession) {
         await this.ensureAccessToEnvironment(id, session)
-        const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
-        return await Environment.findOne({ _id: idObj }).session(session ?? null)
+        return await Environment.findOne({ _id: toObjectId(id) }).session(session ?? null)
     }
 
-    async getMaxOrderByProjectId(projectId: Types.ObjectId) : Promise<number> {
-        return (await Environment.findOne({ projectId }).sort({ order: -1 }))?.order ?? 0
+    async getMaxOrderByProjectId(projectId: Schema.Types.ObjectId): Promise<number> {
+        return (await Environment.findOne({ projectId: toObjectId(projectId) }).sort({ order: -1 }))?.order ?? 0
     }
 
-    async create(environmentData: EnvironmentDTO, projectId: string) : Promise<IEnvironment> {
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+    async create(environmentData: EnvironmentDTO, projectId: string): Promise<IEnvironment> {
+        const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
         const environment = new Environment(environmentData)
         environment.projectId = projectIdObj
@@ -36,7 +36,7 @@ class EnvironmentService extends BaseAuthorizedService {
     }
 
     async createBulk(body: EnvironmentDTO[], projectId: string) {
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+        const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
         const environments = body.map(env => new Environment(env))
         let maxOrder = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
@@ -52,7 +52,7 @@ class EnvironmentService extends BaseAuthorizedService {
 
     async update(environmentId: string | ObjectId, updateData: EnvironmentDTO) {
         await this.ensureAccessToEnvironment(environmentId)
-        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
+        const environmentIdObj = toObjectId(environmentId)
         const updatedEnvironment = await Environment.findOneAndUpdate({ _id: environmentIdObj }, updateData, { new: true })
 
         if (!updatedEnvironment) {
@@ -64,7 +64,7 @@ class EnvironmentService extends BaseAuthorizedService {
 
     async deleteSingle(environmentId: string | ObjectId) {
         await this.ensureAccessToEnvironment(environmentId)
-        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
+        const environmentIdObj = toObjectId(environmentId)
         const deletedEnvironment = await Environment.findOneAndDelete({ _id: environmentIdObj })
         if (!deletedEnvironment) {
             throw new EntityNotFoundError(environmentIdObj.toString())
@@ -80,46 +80,11 @@ class EnvironmentService extends BaseAuthorizedService {
         const idsObj = await Promise.all(
             ids.map(async id => {
                 await this.ensureAccessToEnvironment(id)
-                return typeof id === "string" ? new Types.ObjectId(id) : id
+                return toObjectId(id)
             })
         )
 
         return await Environment.deleteMany({ _id: { $in: idsObj } })
-    }
-
-    async deploy(environmentId: string | ObjectId, environmentIds: (string | ObjectId)[]) {
-        return runInTransaction(async session => this.deployRaw(environmentId, environmentIds, session))
-    }
-
-    async deployRaw(environmentId: string | ObjectId, environmentIds: (string | ObjectId)[], session?: ClientSession) {
-        // Check if microfrontend exists
-        const environmentIdObj = typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
-
-        // can i access to this environment?
-        await this.ensureAccessToEnvironment(environmentId, session)
-
-        // can i access to target environment?
-        const environmentIdsObj = await Promise.all(
-            environmentIds.map(async environmentId => {
-                await this.ensureAccessToEnvironment(environmentId, session)
-                return typeof environmentId === "string" ? new Types.ObjectId(environmentId) : environmentId
-            })
-        )
-
-        // Deploy
-        const microfrontendsToDeploy = await Microfrontend.find({ environmentId: environmentIdObj }, { session })
-        const globalVariablesToDeploy = await GlobalVariable.find({ environmentId: environmentIdObj }, { session })
-        for (const environmentId of environmentIdsObj) {
-            await Microfrontend.deleteMany({ environmentId }, { session })
-            await GlobalVariable.deleteMany({ environmentId }, { session })
-            for (const microfrontend of microfrontendsToDeploy) {
-                await Microfrontend.create({ ...microfrontend, environmentId }, { session })
-            }
-
-            for (const globalVariable of globalVariablesToDeploy) {
-                await GlobalVariable.create({ ...globalVariable, environmentId }, { session })
-            }
-        }
     }
 }
 
