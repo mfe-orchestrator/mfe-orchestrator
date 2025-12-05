@@ -1,7 +1,7 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { cn } from "@/utils/styleUtils"
 import { Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/utils/styleUtils"
 
 interface AddNewMicrofrontendCardProps {
     onAddNewMicrofrontend: () => void
@@ -20,7 +20,7 @@ export const AddNewMicrofrontendCard: React.FC<AddNewMicrofrontendCardProps> = (
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 className
             )}
-            onClick={onAddNewMicrofrontend}
+            onClick={() => onAddNewMicrofrontend()}
             role="button"
             tabIndex={0}
             onKeyDown={e => {

@@ -1,24 +1,10 @@
 import { Bucket, Storage } from "@google-cloud/storage"
 import { Readable } from "stream"
 
-export type AuthConfig =
-    | {
-          authType: "serviceAccount"
-          projectId: string
-          credentials: {
-              client_email: string
-              private_key: string
-          }
-      }
-    | {
-          authType: "apiKey"
-          projectId: string
-          apiKey: string
-      }
-    | {
-          authType: "default"
-          projectId: string
-      }
+export type AuthConfig = {
+    authType: "serviceAccount"
+    jsonKey: string
+}
 
 export type GoogleStorageConfig = AuthConfig & {
     bucketName: string
@@ -27,36 +13,22 @@ export type GoogleStorageConfig = AuthConfig & {
 export class GoogleStorageClient {
     private readonly storage: Storage
     private readonly bucket: Bucket
-    private readonly projectId: string
     private readonly bucketName: string
 
     constructor(config: GoogleStorageConfig) {
         this.bucketName = config.bucketName
-        this.projectId = config.projectId
 
         switch (config.authType) {
-            case "serviceAccount":
+            case "serviceAccount": {
+                const jsonParsed = JSON.parse(config.jsonKey)
                 this.storage = new Storage({
-                    projectId: config.projectId,
                     credentials: {
-                        client_email: config.credentials.client_email,
-                        private_key: config.credentials.private_key
+                        client_email: jsonParsed.client_email,
+                        private_key: jsonParsed.private_key
                     }
                 })
                 break
-
-            case "apiKey":
-                this.storage = new Storage({
-                    projectId: config.projectId,
-                    keyFilename: config.apiKey
-                })
-                break
-
-            case "default":
-                this.storage = new Storage({
-                    projectId: config.projectId
-                })
-                break
+            }
 
             default:
                 throw new Error("Invalid authentication configuration")
@@ -103,7 +75,7 @@ export class GoogleStorageClient {
             })
 
             // Make the file public (optional)
-            await file.makePublic()
+            //await file.makePublic()
 
             return `https://storage.googleapis.com/${this.bucketName}/${encodeURIComponent(filePath)}`
         } catch (error: unknown) {

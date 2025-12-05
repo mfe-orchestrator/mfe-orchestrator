@@ -649,16 +649,17 @@ export class MicrofrontendService extends BaseAuthorizedService {
             // Estrai direttamente dal stream del file
             await this.extractZipToDirectory(file, extractDir)
 
+            let pathToWriteEnriched = storage.path ? path.join(storage.path, pathToWrite) : pathToWrite
+            if (pathToWriteEnriched.startsWith("/")) {
+                pathToWriteEnriched = pathToWriteEnriched.substring(1)
+            }
+
             if (storage.type === StorageType.GOOGLE) {
-                await this.uploadDirectoryToGoogle(extractDir, pathToWrite, new GoogleStorageClient(storage.authConfig))
+                await this.uploadDirectoryToGoogle(extractDir, pathToWriteEnriched, new GoogleStorageClient(storage.authConfig))
             } else if (storage.type === StorageType.AWS) {
-                await this.uploadDirectoryToS3(extractDir, pathToWrite, new S3BucketClient(storage.authConfig))
+                await this.uploadDirectoryToS3(extractDir, pathToWriteEnriched, new S3BucketClient(storage.authConfig))
             } else if (storage.type === StorageType.AZURE) {
-                let pathToWriteAzure = storage.path ? path.join(storage.path, pathToWrite) : pathToWrite
-                if (pathToWriteAzure.startsWith("/")) {
-                    pathToWriteAzure = pathToWriteAzure.substring(1)
-                }
-                await this.uploadDirectoryToAzure(extractDir, pathToWriteAzure, new AzureStorageClient(storage.authConfig))
+                await this.uploadDirectoryToAzure(extractDir, pathToWriteEnriched, new AzureStorageClient(storage.authConfig))
             }
         } finally {
             // Pulisci i file temporanei

@@ -10,24 +10,10 @@ export interface Storage {
     updatedAt: string
 }
 
-export type GoogleAuthConfig =
-    | {
-          authType: "serviceAccount"
-          projectId: string
-          credentials: {
-              client_email: string
-              private_key: string
-          }
-      }
-    | {
-          authType: "apiKey"
-          projectId: string
-          apiKey: string
-      }
-    | {
-          authType: "default"
-          projectId: string
-      }
+export type GoogleAuthConfig = {
+    authType: "serviceAccount"
+    jsonKey: string
+}
 
 export type GoogleStorageConfig = GoogleAuthConfig & {
     bucketName: string

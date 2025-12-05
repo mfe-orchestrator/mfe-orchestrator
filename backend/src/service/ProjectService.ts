@@ -120,7 +120,7 @@ export class ProjectService extends BaseAuthorizedService {
         try {
             const project = new Project({
                 name: projectData.name,
-                slug: projectData.slug || projectData.name.toLowerCase().replace(" ", "-").replace("_", "-").replace(".", "-"),
+                slug: projectData.slug || projectData.name.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-").replaceAll(".", "-"),
                 description: projectData.description,
                 isActive: projectData.isActive ?? true
             })

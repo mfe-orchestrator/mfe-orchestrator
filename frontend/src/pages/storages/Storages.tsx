@@ -68,7 +68,7 @@ export const Storages: React.FC = () => {
                                 <TableRow className="bg-primary/25">
                                     <TableHead>{t("storage.name")}</TableHead>
                                     <TableHead>{t("storage.type")}</TableHead>
-                                    <TableHead>Default</TableHead>
+                                    <TableHead>{t("common.default")}</TableHead>
                                     <TableHead />
                                 </TableRow>
                             </TableHeader>

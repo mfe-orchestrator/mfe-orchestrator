@@ -592,7 +592,8 @@
         "providerConfigurationDescription": "Configura le impostazioni di autenticazione e accesso per il tuo storage {{storageType}}",
         "securityNotice": "Avviso di Sicurezza:",
         "securityNoticeDescription": "Tutte le credenziali sono criptate e memorizzate in modo sicuro. Vengono utilizzate solo per accedere alle tue risorse di storage e non vengono mai condivise con terze parti.",
-        "path": "Percorso"
+        "path": "Percorso",
+        "serviceAccountJsonKey": "Chiave JSON Account di Servizio"
     },
     "codeRepositories": {
         "title": "Repository di Codice",

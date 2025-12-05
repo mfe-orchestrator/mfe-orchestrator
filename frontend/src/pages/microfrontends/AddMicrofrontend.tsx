@@ -54,7 +54,7 @@ const formSchema = z
         codeRepository: z
             .object({
                 enabled: z.boolean().default(false),
-                codeRepositoryId: z.string(),
+                codeRepositoryId: z.string().optional(),
                 repositoryId: z.string().optional(),
                 name: z.string().optional(),
                 gitlab: z
@@ -138,7 +138,11 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                           codeRepositoryId: repositories.length === 1 ? repositories[0]._id : repositories.find(repo => repo.default)?._id
                       }
                   }
-                : {}),
+                : {
+                      codeRepository: {
+                          enabled: false
+                      }
+                  }),
             canary: {
                 enabled: false,
                 percentage: 0,
@@ -152,6 +156,8 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const canaryEnabled = watch("canary.enabled")
     const hostType = watch("host.type")
     const notificationToast = useToastNotificationStore()
+
+    console.log(form.getValues(), form.formState, form.formState.errors)
 
     const onSubmit = async (data: FormValues) => {
         const dataToSend = {

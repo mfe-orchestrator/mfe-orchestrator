@@ -73,14 +73,12 @@ const storageSchema = new Schema<IStorage>(
 
                     switch (storageType) {
                         case StorageType.GOOGLE:
-                            if (!value.projectId || !value.authType) return false
+                            if (!value.authType) return false
                             if (value.authType === "serviceAccount") {
-                                const credentials = value.credentials as Record<string, unknown> | undefined
-                                return !!(credentials?.client_email && credentials?.private_key)
-                            } else if (value.authType === "apiKey") {
-                                return !!value.apiKey
+                                if (!value.jsonKey) return false
+                                return true
                             }
-                            return true // default auth
+                            return false // default auth
                         case StorageType.AZURE:
                             return !!(value.accountName && value.accountKey && value.containerName)
                         case StorageType.AWS:

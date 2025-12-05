@@ -2,7 +2,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import { AccountEntity, AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { AxiosError, AxiosResponse } from "axios"
-import { getToken as getTokenFromStorage, IToken, setToken } from "@/authentication/tokenUtils"
+import { deleteToken, getToken as getTokenFromStorage, IToken, setToken } from "@/authentication/tokenUtils"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import ApiClient, { AuthenticationType, IClientRequestData, IClientRequestMetadata } from "../api/apiClient"
@@ -37,6 +37,10 @@ export const useApiClient = (options?: IApiClientOptions) => {
     const notifications = useToastNotificationStore()
     const projectStore = useProjectStore()
 
+    const logout = () => {
+        deleteToken()
+    }
+
     async function doRequest<R, D = unknown>(config?: IClientRequestDataExtended<D>): Promise<AxiosResponse<R>> {
         const realConfig = {
             ...(options || {}),
@@ -53,6 +57,9 @@ export const useApiClient = (options?: IApiClientOptions) => {
             try {
                 if (authenticated == AuthenticationType.REQUIRED) {
                     tokenReal = await getToken(token)
+                    if (!tokenReal) {
+                        logout()
+                    }
                 } else if (authenticated == AuthenticationType.OPTIONAL) {
                     if (isAuthenticated() || token) {
                         tokenReal = await getToken(token)
@@ -139,6 +146,8 @@ export const useApiClient = (options?: IApiClientOptions) => {
                             // Se il refresh fallisce, ritorna il token esistente
                             return undefined
                         }
+                    } else {
+                        return undefined
                     }
                 }
             }

@@ -573,7 +573,8 @@
         "providerConfigurationDescription": "Configure authentication and access settings for your {{storageType}} storage",
         "securityNotice": "Security Notice:",
         "securityNoticeDescription": "All credentials are encrypted and stored securely. They are only used to access your storage resources and are never shared with third parties.",
-        "path": "Path"
+        "path": "Path",
+        "serviceAccountJsonKey": "Service Account JSON Key"
     },
     "codeRepositories": {
         "title": "Code Repositories",

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import SelectField from "@/components/input/SelectField.rhf"
+import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
@@ -52,12 +53,6 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
     const { watch } = useFormContext()
     const providerInfo = getProviderInfo(storageType)
 
-    const googleAuthTypes = [
-        { value: "serviceAccount", label: t("storage.authTypes.google.serviceAccount") },
-        { value: "apiKey", label: t("storage.authTypes.google.apiKey") },
-        { value: "default", label: t("common.default") }
-    ]
-
     const azureAuthTypes = [
         { value: "connectionString", label: t("storage.authTypes.azure.connectionString") },
         { value: "sharedKey", label: t("storage.authTypes.azure.sharedKey") },
@@ -69,51 +64,22 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
             case StorageType.AWS:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <TextField name="authConfig.bucketName" label={t("storage.fields.bucketName")} placeholder="my-bucket-name" rules={{ required: t("validation.required") }} />
+                        <TextField name="path" label={t("storage.fields.path")} placeholder="/" />
                         <TextField name="authConfig.accessKeyId" label={t("storage.fields.accessKeyId")} rules={{ required: t("validation.required") }} />
                         <TextField name="authConfig.secretAccessKey" label={t("storage.fields.secretAccessKey")} type="password" rules={{ required: t("validation.required") }} />
                         <TextField name="authConfig.region" label={t("storage.fields.region")} placeholder="us-east-1" rules={{ required: t("validation.required") }} />
-                        <TextField name="authConfig.bucketName" label={t("storage.fields.bucketName")} placeholder="my-bucket-name" rules={{ required: t("validation.required") }} />
                     </div>
                 )
 
             case StorageType.GOOGLE: {
-                const googleAuthType = watch("authConfig.authType")
                 return (
                     <div className="space-y-4">
-                        <SelectField name="authConfig.authType" label={t("storage.fields.authType")} options={googleAuthTypes} rules={{ required: t("validation.required") }} />
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <TextField name="authConfig.projectId" label={t("storage.fields.projectId")} placeholder="my-gcp-project" rules={{ required: t("validation.required") }} />
                             <TextField name="authConfig.bucketName" label={t("storage.fields.bucketName")} placeholder="my-gcs-bucket" rules={{ required: t("validation.required") }} />
+                            <TextField name="path" label={t("storage.fields.path")} placeholder="/" />
                         </div>
-
-                        {googleAuthType === "serviceAccount" && (
-                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
-                                <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">{t("storage.serviceAccountCredentials")}</h4>
-                                </div>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <TextField
-                                        name="authConfig.credentials.client_email"
-                                        label={t("storage.fields.clientEmail")}
-                                        placeholder="service-account@project.iam.gserviceaccount.com"
-                                        rules={{ required: true }}
-                                    />
-                                    <TextField name="authConfig.credentials.private_key" label={t("storage.fields.privateKey")} type="password" rules={{ required: true }} />
-                                </div>
-                            </div>
-                        )}
-
-                        {googleAuthType === "apiKey" && (
-                            <div className="space-y-4 p-4 bg-muted border rounded-lg">
-                                <div className="flex items-center gap-2">
-                                    <Key className="h-4 w-4 text-primary" />
-                                    <h4 className="text-sm font-medium text-foreground">{t("storage.apiKeyAuthentication")}</h4>
-                                </div>
-                                <TextField name="authConfig.apiKey" label={t("storage.fields.apiKey")} type="password" rules={{ required: true }} />
-                            </div>
-                        )}
+                        <TextareaField rows={10} label={t("storage.serviceAccountJsonKey")} name="authConfig.jsonKey" rules={{ required: true }} />
                     </div>
                 )
             }
@@ -205,18 +171,19 @@ const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCancel, on
 
     const form = useForm<CreateStorageDTO>({
         defaultValues: (initialData as unknown as CreateStorageDTO) || {
-            name: "",
             type: StorageType.AWS,
             authConfig: {
-                accessKeyId: "",
-                secretAccessKey: "",
-                bucketName: "",
                 region: "us-east-1"
             }
         }
     })
 
-    const onSubmit = async (data: CreateStorageDTO) => {
+    const onSubmit = async (dataInput: CreateStorageDTO) => {
+        const data = { ...dataInput }
+        if (data.type === StorageType.GOOGLE) {
+            data.authConfig.authType = "serviceAccount"
+        }
+
         if (isEditMode && id) {
             await storageApi.update(id, data)
             notifications.showSuccessNotification({ message: t("storage.updateSuccess") })

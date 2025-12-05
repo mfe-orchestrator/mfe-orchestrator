@@ -49,8 +49,10 @@ const AuthWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
         profileQuery.refetch()
     }
 
+    const loginPage = <LoginPage onSuccessLogin={onSuccessLogin} />
+
     return (
-        <ApiStatusHandler queries={[profileQuery]} emptyComponent={<LoginPage onSuccessLogin={onSuccessLogin} />}>
+        <ApiStatusHandler queries={[profileQuery]} emptyComponent={loginPage}>
             {children}
         </ApiStatusHandler>
     )
