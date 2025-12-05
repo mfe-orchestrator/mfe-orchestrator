@@ -376,7 +376,11 @@ class AzureDevOpsClient {
                                 name: projectName
                             }
                         }
-                    ]
+                    ],
+                    providerData: {
+                        isShared: false,
+                        isAuthorizationRequired: false
+                    }
                 }
             })
             return
@@ -407,7 +411,11 @@ class AzureDevOpsClient {
                             name: projectName
                         }
                     }
-                ]
+                ],
+                providerData: {
+                    isShared: false,
+                    isAuthorizationRequired: false
+                }
             }
         })
     }
