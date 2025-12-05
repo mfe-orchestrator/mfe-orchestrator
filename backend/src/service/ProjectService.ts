@@ -1,4 +1,4 @@
-import { ClientSession, DeleteResult, ObjectId, Types } from "mongoose"
+import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
@@ -15,7 +15,6 @@ import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import DeploymentCanaryUsersService from "./DeploymentCanaryUsersService"
 import UserProjectService from "./UserProjectService"
 
 export interface ProjectCreateInput {
@@ -75,7 +74,7 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
-    async findById(id: string | ObjectId, session?: ClientSession): Promise<IProject | null> {
+    async findById(id: string | Schema.Types.ObjectId, session?: ClientSession): Promise<IProject | null> {
         const projectIdObj = toObjectId(id)
         await this.ensureAccessToProject(projectIdObj, session)
         try {

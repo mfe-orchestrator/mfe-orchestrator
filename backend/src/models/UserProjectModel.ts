@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export enum RoleInProject {
     OWNER = "OWNER",
@@ -7,8 +7,8 @@ export enum RoleInProject {
 }
 
 export interface IUserProject extends Document<ObjectId> {
-    userId: ObjectId
-    projectId: ObjectId
+    userId: Schema.Types.ObjectId
+    projectId: Schema.Types.ObjectId
     role: RoleInProject
     invitationToken: string
     inviationTokenExpiresAt: Date
