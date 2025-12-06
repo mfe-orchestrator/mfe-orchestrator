@@ -152,7 +152,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                         options={repositoriesData?.map(repo => {
                             return {
                                 value: repo._id,
-                                label: `${repo.name} (${repo.provider})`,
+                                label: `${repo.name}`,
                                 icon: logoMap[repo.provider as keyof typeof logoMap]
                             }
                         })}

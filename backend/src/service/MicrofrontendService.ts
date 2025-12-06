@@ -91,7 +91,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                         namespace_id: microfrontend.codeRepository.gitlab?.groupId,
                         visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
                     })
-                    microfrontend.codeRepository.repositoryId = createdRepository.name
+                    microfrontend.codeRepository.name = createdRepository.name
+                    microfrontend.codeRepository.repositoryId = createdRepository.id + ""
                     if (template) {
                         await this.injectTemplateGitlab(codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template)
                     }

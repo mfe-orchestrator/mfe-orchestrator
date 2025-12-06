@@ -56,6 +56,29 @@ interface AddGroupSecretRequest {
     secretValue: string
 }
 
+export interface GitLabBranch {
+    name: string
+    commit: {
+        id: string
+        short_id: string
+        title: string
+        author_name: string
+        author_email: string
+        committer_name: string
+        committer_email: string
+        created_at: string
+        message: string
+        web_url: string
+    }
+    merged: boolean
+    protected: boolean
+    developers_can_push: boolean
+    developers_can_merge: boolean
+    can_push: boolean
+    default: boolean
+    web_url: string
+}
+
 class GitLabClient {
     private api: AxiosInstance
 
@@ -114,6 +137,11 @@ class GitLabClient {
             hidden: true,
             raw: false
         })
+    }
+
+    async getBranches(projectId: string | number): Promise<GitLabBranch[]> {
+        const res = await this.api.get<GitLabBranch[]>(`/projects/${projectId}/repository/branches`)
+        return res.data
     }
 }
 

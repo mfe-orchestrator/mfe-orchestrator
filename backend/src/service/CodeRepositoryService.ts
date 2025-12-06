@@ -2,7 +2,7 @@ import { ClientSession, DeleteResult, Types } from "mongoose"
 import { fastify } from ".."
 import AzureDevOpsClient, { AzureDevOpsBranch, RepositoryData } from "../client/AzureDevOpsClient"
 import GithubClient, { GithubBranch } from "../client/GithubClient"
-import GitLabClient from "../client/GitlabClient"
+import GitLabClient, { GitLabBranch } from "../client/GitlabClient"
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ApiKeyRole } from "../models/ApiKeyModel"
@@ -68,6 +68,18 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         }
     }
 
+    mapGitlabBranch(gitlabBranch: GitLabBranch): UnifiedBranch {
+        return {
+            default: gitlabBranch.default,
+            branch: gitlabBranch.name,
+            commitSha: gitlabBranch.commit?.id,
+            commitUrl: gitlabBranch.commit?.web_url,
+            author: gitlabBranch.commit?.author_name,
+            authorEmail: gitlabBranch.commit?.author_email,
+            authorAvatar: null // GitLab branches API non fornisce avatar direttamente
+        }
+    }
+
     async getBranches(codeRepositoryId: string, repositoryId: string): Promise<UnifiedBranch[]> {
         const repository = await this.findById(codeRepositoryId)
         if (!repository) {
@@ -78,8 +90,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             return new GithubClient()
                 .getBranches(repository.accessToken, repositoryId, repository.githubData?.organizationId, repository.githubData?.userName)
                 .then(branches => branches.map(this.mapGithubBranch))
-        }
-        if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+        } else if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
             if (!repository.azureData) {
                 throw new BusinessException({
                     code: "INVALID_PROVIDER",
@@ -91,11 +102,16 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             return new AzureDevOpsClient()
                 .getBranches(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, repositoryId)
                 .then(dto => dto.value.map(this.mapAzureBranch))
-        }
-        if (repository.provider === CodeRepositoryProvider.GITLAB) {
-            //TODO da fare!!!
-            //return new GitLabClient().getBranches(repository.accessToken, repositoryId)
-            return []
+        } else if (repository.provider === CodeRepositoryProvider.GITLAB) {
+            if (!repository.gitlabData) {
+                throw new BusinessException({
+                    code: "INVALID_PROVIDER",
+                    message: "Repository provider is not GitLab",
+                    statusCode: 400
+                })
+            }
+
+            return new GitLabClient(repository.gitlabData.url, repository.accessToken).getBranches(encodeURI(repositoryId)).then(branches => branches.map(this.mapGitlabBranch.bind(this)))
         }
 
         return []
