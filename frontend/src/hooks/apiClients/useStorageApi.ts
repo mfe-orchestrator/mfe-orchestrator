@@ -1,13 +1,13 @@
 import useApiClient from "../useApiClient"
 
-export interface Storage {
+export type Storage = IStorageAuth & {
     _id: string
     name: string
-    type: string
     default: boolean
     config: Record<string, unknown>
     createdAt: string
     updatedAt: string
+    path: string
 }
 
 export type GoogleAuthConfig = {

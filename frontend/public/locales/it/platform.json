@@ -546,9 +546,10 @@
                 "aad": "Azure AD - Enterprise Application"
             }
         },
+        "bucketName": "Nome Bucket",
         "fields": {
-            "accessKeyId": "ID Chiave di Accesso",
-            "secretAccessKey": "Chiave Segreta di Accesso",
+            "accessKeyId": "Access Key",
+            "secretAccessKey": "Secret Key",
             "region": "Regione",
             "bucketName": "Nome Bucket",
             "authType": "Tipo di Autenticazione",

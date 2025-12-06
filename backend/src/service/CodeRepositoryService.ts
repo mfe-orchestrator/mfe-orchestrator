@@ -111,6 +111,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async getByProjectId(projectId: string): Promise<ICodeRepository[]> {
         await this.ensureAccessToProject(projectId)
+        console.log(projectId, toObjectId(projectId))
         return await CodeRepository.find({ projectId: toObjectId(projectId), isActive: true }).sort({
             name: 1
         })

@@ -16,16 +16,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import { CodeRepositorySection, DangerZoneRemoveMicrofrontend } from "@/pages/microfrontends/partials/components"
+import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { FetchDataTemplateCard } from "../templates-library/partials/"
-
-const logoMap: Record<string, string> = {
-    AWS: "/img/aws.svg",
-    GOOGLE: "/img/GoogleCloud.svg",
-    AZURE: "/img/Azure.svg"
-}
 
 // Define form schema with validation
 const formSchema = z
@@ -154,10 +148,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
 
     const { watch } = form
     const canaryEnabled = watch("canary.enabled")
-    const hostType = watch("host.type")
     const notificationToast = useToastNotificationStore()
-
-    console.log(form.getValues(), form.formState, form.formState.errors)
 
     const onSubmit = async (data: FormValues) => {
         const dataToSend = {
@@ -266,47 +257,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                         </CardContent>
                     </Card>
 
-                    {/* Hosting Information Section */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="mb-0">{t("microfrontend.hosting_information")}</CardTitle>
-                            <CardDescription>{t("microfrontend.hosting_information_description")}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-2 pt-3">
-                            <SelectField
-                                name="host.type"
-                                label={t("microfrontend.hosting_type")}
-                                options={[
-                                    { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
-                                    { value: "CUSTOM_URL", label: t("microfrontend.custom_url") },
-                                    storages?.length > 0 && {
-                                        value: "CUSTOM_SOURCE",
-                                        label: t("microfrontend.custom_source")
-                                    }
-                                ].filter(Boolean)}
-                                required
-                            />
-
-                            <TextField name="host.entryPoint" label={t("microfrontend.entry_point")} placeholder="index.js" />
-
-                            {hostType === "CUSTOM_URL" && <TextField name="host.url" label={t("microfrontend.custom_url")} placeholder="https://example.com" required />}
-
-                            {hostType === "CUSTOM_SOURCE" && (
-                                <SelectField
-                                    name="host.storageId"
-                                    label={t("microfrontend.source")}
-                                    required
-                                    options={storages?.map(storage => {
-                                        return {
-                                            value: storage._id,
-                                            label: `${storage.name}`,
-                                            icon: logoMap[storage.type]
-                                        }
-                                    })}
-                                />
-                            )}
-                        </CardContent>
-                    </Card>
+                    <HostingSection storages={storages} />
 
                     <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
 

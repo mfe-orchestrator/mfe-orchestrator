@@ -15,6 +15,7 @@ export interface DeploymentDTO {
     environmentId: string
     microfrontends: Microfrontend[]
     variables: GlobalVariable[]
+    storages: Storage[]
     deploymentId: string
     active: boolean
     createdAt: string

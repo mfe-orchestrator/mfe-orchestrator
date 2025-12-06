@@ -9,7 +9,7 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import { Card, CardContent } from "@/components/ui/card"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import useStorageApi from "@/hooks/apiClients/useStorageApi"
+import useStorageApi, { StorageType } from "@/hooks/apiClients/useStorageApi"
 import useProjectStore from "@/store/useProjectStore"
 
 export const Storages: React.FC = () => {
@@ -68,6 +68,8 @@ export const Storages: React.FC = () => {
                                 <TableRow className="bg-primary/25">
                                     <TableHead>{t("storage.name")}</TableHead>
                                     <TableHead>{t("storage.type")}</TableHead>
+                                    <TableHead>{t("storage.bucketName")}</TableHead>
+                                    <TableHead>{t("storage.path")}</TableHead>
                                     <TableHead>{t("common.default")}</TableHead>
                                     <TableHead />
                                 </TableRow>
@@ -78,12 +80,17 @@ export const Storages: React.FC = () => {
                                         <TableCell className="font-medium">{storage.name}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                {storage.type === "AWS" && <img src="/img/aws.svg" alt="AWS" className="h-5 w-5" />}
-                                                {storage.type === "AZURE" && <img src="/img/Azure.svg" alt="Azure" className="h-5 w-5" />}
-                                                {storage.type === "GOOGLE" && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-5 w-5" />}
-                                                <Badge>{storage.type}</Badge>
+                                                {storage.type === StorageType.AWS && <img src="/img/aws.svg" alt="AWS" className="h-8 w-8" />}
+                                                {storage.type === StorageType.AZURE && <img src="/img/Azure.svg" alt="Azure" className="h-8 w-8" />}
+                                                {storage.type === StorageType.GOOGLE && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-8 w-8" />}
                                             </div>
                                         </TableCell>
+                                        <TableCell>
+                                            {storage.type === StorageType.AWS && <>{storage.authConfig.bucketName}</>}
+                                            {storage.type === StorageType.AZURE && <>{storage.authConfig.containerName}</>}
+                                            {storage.type === StorageType.GOOGLE && <>{storage.authConfig.bucketName}</>}
+                                        </TableCell>
+                                        <TableCell>{storage.path}</TableCell>
                                         <TableCell>
                                             <Button variant="ghost" size="icon" disabled={setDefaultMutation.isPending} onClick={() => setDefaultMutation.mutate(storage._id)}>
                                                 <Star className={`${storage.default ? "fill-primary/50" : ""}`} />

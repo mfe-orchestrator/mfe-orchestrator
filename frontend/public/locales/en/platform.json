@@ -527,6 +527,7 @@
                 "aad": "Azure AD - Enterprise Application"
             }
         },
+        "bucketName": "Bucket Name",
         "fields": {
             "accessKeyId": "Access Key ID",
             "secretAccessKey": "Secret Access Key",
