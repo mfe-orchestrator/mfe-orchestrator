@@ -143,6 +143,18 @@ class GitLabClient {
         const res = await this.api.get<GitLabBranch[]>(`/projects/${projectId}/repository/branches`)
         return res.data
     }
+
+    async getBranchCommitSha(projectId: string | number, branchName: string): Promise<string> {
+        const res = await this.api.get<GitLabBranch>(`/projects/${projectId}/repository/branches/${branchName}`)
+        return res.data.commit.id
+    }
+
+    async createTag(projectId: string | number, tagName: string, ref: string): Promise<void> {
+        await this.api.post(`/projects/${projectId}/repository/tags`, {
+            tag_name: tagName,
+            ref: ref
+        })
+    }
 }
 
 export default GitLabClient

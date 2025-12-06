@@ -389,7 +389,7 @@
             "versionPlaceholder": "Inserisci versione (es. 1.0.0)",
             "building": "Building in corso...",
             "startBuild": "Avvia Build",
-            "buildSuccess": "Build completata con successo per {{name}}"
+            "buildSuccess": "Build iniziata per {{name}}"
         },
         "card": {
             "canary": "Canary",

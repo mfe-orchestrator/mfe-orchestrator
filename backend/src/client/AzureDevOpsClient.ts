@@ -261,6 +261,23 @@ class AzureDevOpsClient {
         return response.data
     }
 
+    async getBranchCommitId(token: string, organization: string, project: string, repositoryName: string, branchName: string): Promise<string> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/refs?filter=heads/${branchName}&api-version=7.1-preview.1`
+        const response = await axios.request<AzureDevOpsBranchDTO>({
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        })
+
+        if (response.data.count === 0) {
+            throw new Error(`Branch ${branchName} not found`)
+        }
+
+        return response.data.value[0].objectId
+    }
+
     async createPipeline(
         token: string,
         organization: string,
@@ -418,6 +435,28 @@ class AzureDevOpsClient {
                 }
             }
         })
+    }
+
+    async createTag(token: string, organization: string, project: string, repositoryId: string, tagName: string, objectId: string): Promise<void> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}/refs?api-version=7.1-preview.1`
+
+        const response = await axios.request({
+            method: "POST",
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: [
+                {
+                    name: `refs/tags/${tagName}`,
+                    oldObjectId: "0000000000000000000000000000000000000000",
+                    newObjectId: objectId
+                }
+            ]
+        })
+
+        return response.data
     }
 }
 

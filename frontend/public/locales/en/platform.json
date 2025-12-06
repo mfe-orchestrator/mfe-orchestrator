@@ -305,7 +305,7 @@
             "custom_version": "Custom version",
             "building": "Building...",
             "startBuild": "Start Build",
-            "buildSuccess": "Build completed successfully for {{name}}"
+            "buildSuccess": "Build started for {{name}}"
         },
         "card": {
             "canary": "Canary",

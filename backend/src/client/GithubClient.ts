@@ -269,6 +269,10 @@ class GithubClient {
         return orgName ? `https://api.github.com/orgs/${orgName}/repos/${repositoryName}` : `https://api.github.com/repos/${userName}/${repositoryName}`
     }
 
+    private getRepositoryBaseUrlBase(repositoryName: string, orgName?: string, userName?: string) {
+        return `https://api.github.com/repos/${orgName || userName}/${repositoryName}`
+    }
+
     async getRepositoryPublicKey({ accessToken, orgName, userName, repositoryName }: GithubRepositoryBaseDTO): Promise<GithubPublicKey> {
         const url = `${this.getRepositoryBaseUrl(repositoryName, orgName, userName)}/actions/secrets/public-key`
 
@@ -516,6 +520,37 @@ class GithubClient {
         })
 
         return response.data || {}
+    }
+
+    async getBranchCommitSha(accessToken: string, repositoryName: string, branchName: string, orgName?: string, userName?: string): Promise<string> {
+        const response = await axios.request<GithubBranch>({
+            url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/branches/${branchName}`,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            }
+        })
+
+        return response.data.commit.sha
+    }
+
+    async createTag(accessToken: string, repositoryName: string, tag: string, sha: string, orgName?: string, userName?: string): Promise<void> {
+        const response = await axios.request({
+            method: "POST",
+            url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/git/refs`,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            },
+            data: {
+                ref: `refs/tags/${tag}`,
+                sha: sha
+            }
+        })
+
+        return response.data
     }
 }
 

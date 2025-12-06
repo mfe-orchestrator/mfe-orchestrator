@@ -773,21 +773,39 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontend.codeRepository.codeRepositoryId.toString())
         }
 
+        const repositoryId = microfrontend.codeRepository.repositoryId
+        const branchName = ref || "main"
+
         if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
             const githubClient = new GithubClient()
-            if (!codeRepository.githubData) {
-                throw new Error("Github data not set")
-            }
-            await githubClient.createBuild(
-                {
-                    version: version,
-                    type: codeRepository.githubData.type,
-                    owner: codeRepository.githubData.type === CodeRepositoryType.ORGANIZATION ? codeRepository.githubData.organizationId! : codeRepository.githubData.userName!,
-                    repositoryName: microfrontend.codeRepository.name,
-                    ref
-                },
-                codeRepository.accessToken
+            const commitSha = await githubClient.getBranchCommitSha(
+                codeRepository.accessToken,
+                microfrontend.codeRepository.name,
+                branchName,
+                codeRepository.githubData?.organizationId,
+                codeRepository.githubData?.userName
             )
+            return await githubClient.createTag(
+                codeRepository.accessToken,
+                microfrontend.codeRepository.name,
+                version,
+                commitSha,
+                codeRepository.githubData?.organizationId,
+                codeRepository.githubData?.userName
+            )
+        } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+            const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url || "", codeRepository.accessToken)
+
+            const commitSha = await gitlabClient.getBranchCommitSha(repositoryId, branchName)
+            return await gitlabClient.createTag(repositoryId, version, commitSha)
+        } else if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+            const azureClient = new AzureDevOpsClient()
+            if (!codeRepository.azureData) {
+                throw new Error("Azure DevOps data not found")
+            }
+
+            const commitId = await azureClient.getBranchCommitId(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, branchName)
+            return await azureClient.createTag(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, version, commitId)
         }
     }
 
