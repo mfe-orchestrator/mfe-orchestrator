@@ -80,7 +80,14 @@ const storageSchema = new Schema<IStorage>(
                             }
                             return false // default auth
                         case StorageType.AZURE:
-                            return !!(value.accountName && value.accountKey && value.containerName)
+                            if (value.authType === "connectionString") {
+                                return !!(value.connectionString && value.containerName)
+                            } else if (value.authType === "sharedKey") {
+                                return !!(value.accountKey && value.accountName && value.containerName)
+                            } else if (value.authType === "aad") {
+                                return !!(value.clientId && value.clientSecret && value.tenantId && value.containerName && value.accountName)
+                            }
+                            return false
                         case StorageType.AWS:
                             return !!(value.region && value.accessKeyId && value.secretAccessKey && value.bucketName)
                         default:

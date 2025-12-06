@@ -113,6 +113,23 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const navigate = useNavigate()
     const template = searchParams.get("template")
 
+    const getStandardHost = () => {
+        const standardHost = {
+            type: "MFE_ORCHESTRATOR_HUB",
+            entryPoint: "assets/remoteEntry.js"
+        }
+        if (!storages || storages.length == 0) return standardHost
+
+        const storageId = storages.find(storage => storage.default)?._id
+        if (!storageId) return standardHost
+
+        return {
+            type: "CUSTOM_SOURCE",
+            storageId,
+            entryPoint: "assets/remoteEntry.js"
+        }
+    }
+
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: frontend || {
@@ -120,10 +137,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             name: "",
             description: "",
             version: "1.0.0",
-            host: {
-                type: "MFE_ORCHESTRATOR_HUB",
-                entryPoint: "assets/remoteEntry.js"
-            },
+            host: getStandardHost(),
             ...(repositories && repositories.length > 0
                 ? {
                       codeRepository: {

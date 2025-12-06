@@ -27,34 +27,38 @@ export const HostingSection: React.FC<HostingSectionProps> = ({ storages }) => {
                 <CardDescription>{t("microfrontend.hosting_information_description")}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 pt-3">
-                <SelectField
-                    name="host.type"
-                    label={t("microfrontend.hosting_type")}
-                    options={[
-                        { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
-                        { value: "CUSTOM_URL", label: t("microfrontend.custom_url") },
-                        storages?.length > 0 && {
-                            value: "CUSTOM_SOURCE",
-                            label: t("microfrontend.custom_source")
-                        }
-                    ].filter(Boolean)}
-                    required
-                />
-
-                {hostType === "CUSTOM_SOURCE" && (
+                <div className="flex gap-2 flex-1">
                     <SelectField
-                        name="host.storageId"
-                        label={t("microfrontend.source")}
-                        required
-                        options={storages?.map(storage => {
-                            return {
-                                value: storage._id,
-                                label: `${storage.name}`,
-                                icon: logoMap[storage.type]
+                        name="host.type"
+                        containerClassName="flex-1"
+                        label={t("microfrontend.hosting_type")}
+                        options={[
+                            { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
+                            { value: "CUSTOM_URL", label: t("microfrontend.custom_url") },
+                            storages?.length > 0 && {
+                                value: "CUSTOM_SOURCE",
+                                label: t("microfrontend.custom_source")
                             }
-                        })}
+                        ].filter(Boolean)}
+                        required
                     />
-                )}
+
+                    {hostType === "CUSTOM_SOURCE" && (
+                        <SelectField
+                            name="host.storageId"
+                            containerClassName="flex-1"
+                            label={t("microfrontend.source")}
+                            required
+                            options={storages?.map(storage => {
+                                return {
+                                    value: storage._id,
+                                    label: `${storage.name}`,
+                                    icon: logoMap[storage.type]
+                                }
+                            })}
+                        />
+                    )}
+                </div>
 
                 {hostType === "CUSTOM_URL" && <TextField name="host.url" label={t("microfrontend.custom_url")} placeholder="https://example.com" required />}
 

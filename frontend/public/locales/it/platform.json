@@ -562,7 +562,7 @@
             "accountName": "Nome Account",
             "accountKey": "Chiave Account",
             "tenantId": "Tenant ID",
-            "clientId": "Cliente ID",
+            "clientId": "Client ID",
             "clientSecret": "Secret",
             "path": "Percorso"
         },

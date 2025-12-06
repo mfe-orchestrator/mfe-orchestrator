@@ -23,8 +23,8 @@ export interface AddRepositoryGitlabDTO {
     name: string
     pat: string
     url: string
-    groupPath: string
-    groupId: string
+    groupPath?: string
+    groupId?: string
 }
 
 export enum CodeRepositoryProvider {

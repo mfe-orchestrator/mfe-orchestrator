@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import useCodeRepositoriesApi, { AddRepositoryGitlabDTO, GitlabProject } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
-const addGitlabFormSchema = z.object({
+const gitlabFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
     url: z.string().url("Must be a valid URL"),
     pat: z.string().min(1, "Personal Access Token is required"),
@@ -23,7 +23,7 @@ const addGitlabFormSchema = z.object({
     groupId: z.number().min(1, "Group Id is required")
 })
 
-type AddGitlabFormValues = z.infer<typeof addGitlabFormSchema>
+type AddGitlabFormValues = z.infer<typeof gitlabFormSchema>
 
 type TestConnectionData = Pick<AddRepositoryGitlabDTO, "name" | "url" | "pat">
 
@@ -84,9 +84,7 @@ const AddGitlabRepositoryPage = () => {
         mutationFn: async (data: TestConnectionData) => {
             // Cast to full DTO with empty groupPath and groupId for test connection
             const testPayload: AddRepositoryGitlabDTO = {
-                ...data,
-                groupPath: "",
-                groupId: ""
+                ...data
             }
             const out = await repositoryApi.testConnectionGitlab(testPayload)
             return out.sort((a, b) => a.full_name.localeCompare(b.full_name))
@@ -98,9 +96,9 @@ const AddGitlabRepositoryPage = () => {
 
     const handleSubmit = async (values: AddGitlabFormValues) => {
         if (params.id) {
-            await editRepositoryMutation.mutateAsync(values as AddRepositoryGitlabDTO)
+            await editRepositoryMutation.mutateAsync(values as unknown as AddRepositoryGitlabDTO)
         } else {
-            await addRepositoryMutation.mutateAsync(values as AddRepositoryGitlabDTO)
+            await addRepositoryMutation.mutateAsync(values as unknown as AddRepositoryGitlabDTO)
         }
     }
 
@@ -120,18 +118,11 @@ const AddGitlabRepositoryPage = () => {
     ]
 
     const form = useForm<AddGitlabFormValues>({
-        resolver: zodResolver(addGitlabFormSchema),
+        resolver: zodResolver(gitlabFormSchema),
         defaultValues: {
-            url: "https://gitlab.com",
-            name: "",
-            pat: "",
-            groupPath: "",
-            groupId: ""
+            url: "https://gitlab.com"
         }
     })
-
-    console.log(form.getValues())
-    console.log(form.formState.errors)
 
     return (
         <SinglePageLayout title={t("codeRepositories.gitlab.title")} description={t("codeRepositories.gitlab.description")}>
@@ -209,7 +200,7 @@ const AddGitlabRepositoryPage = () => {
                                                     onValueChange={value => {
                                                         const groupId = testConnectionMutation.data.find((project: GitlabProject) => project.full_path === value)?.id
                                                         if (!groupId) return
-                                                        form.setValue("groupId", groupId.toString())
+                                                        form.setValue("groupId", groupId)
                                                     }}
                                                 />
                                             </div>

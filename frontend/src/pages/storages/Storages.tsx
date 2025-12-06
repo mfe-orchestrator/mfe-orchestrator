@@ -67,7 +67,6 @@ export const Storages: React.FC = () => {
                             <TableHeader>
                                 <TableRow className="bg-primary/25">
                                     <TableHead>{t("storage.name")}</TableHead>
-                                    <TableHead>{t("storage.type")}</TableHead>
                                     <TableHead>{t("storage.bucketName")}</TableHead>
                                     <TableHead>{t("storage.path")}</TableHead>
                                     <TableHead>{t("common.default")}</TableHead>
@@ -77,13 +76,11 @@ export const Storages: React.FC = () => {
                             <TableBody>
                                 {storagesQuery.data?.map(storage => (
                                     <TableRow key={storage._id}>
-                                        <TableCell className="font-medium">{storage.name}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                {storage.type === StorageType.AWS && <img src="/img/aws.svg" alt="AWS" className="h-8 w-8" />}
-                                                {storage.type === StorageType.AZURE && <img src="/img/Azure.svg" alt="Azure" className="h-8 w-8" />}
-                                                {storage.type === StorageType.GOOGLE && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-8 w-8" />}
-                                            </div>
+                                        <TableCell className="font-medium flex items-center gap-4">
+                                            {storage.type === StorageType.AWS && <img src="/img/aws.svg" alt="AWS" className="h-8 w-8" />}
+                                            {storage.type === StorageType.AZURE && <img src="/img/Azure.svg" alt="Azure" className="h-8 w-8" />}
+                                            {storage.type === StorageType.GOOGLE && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-8 w-8" />}
+                                            {storage.name}
                                         </TableCell>
                                         <TableCell>
                                             {storage.type === StorageType.AWS && <>{storage.authConfig.bucketName}</>}

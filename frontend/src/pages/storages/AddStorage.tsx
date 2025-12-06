@@ -107,10 +107,10 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                                     <h4 className="text-sm font-medium text-foreground">{t("storage.azureAdAuthentication")}</h4>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <TextField name="authConfig.tenantId" label={t("storage.fields.tenantId")} rules={{ required: true }} />
-                                    <TextField name="authConfig.clientId" label={t("storage.fields.clientId")} rules={{ required: true }} />
+                                    <TextField name="authConfig.tenantId" label={t("storage.fields.tenantId")} required rules={{ required: true }} />
+                                    <TextField name="authConfig.clientId" label={t("storage.fields.clientId")} required rules={{ required: true }} />
                                 </div>
-                                <TextField name="authConfig.clientSecret" label={t("storage.fields.clientSecret")} type="password" rules={{ required: true }} />
+                                <TextField name="authConfig.clientSecret" label={t("storage.fields.clientSecret")} required type="password" rules={{ required: true }} />
                             </div>
                         )}
 
