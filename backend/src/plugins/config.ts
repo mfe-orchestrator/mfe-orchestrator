@@ -1,8 +1,8 @@
-import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyEnv from "@fastify/env"
+import dotenv from "dotenv"
+import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 
-import dotenv from "dotenv"
 dotenv.config()
 
 const NODE_ENVS = Object.freeze<string[]>(["development", "prod", "test", "local"])
@@ -144,15 +144,6 @@ export default fastifyPlugin(
                 MICROFRONTEND_HOST_FOLDER: {
                     type: "string",
                     default: "/upload-microfrontends"
-                },
-                RECAPTCHA_SECRET_KEY: {
-                    type: "string"
-                },
-                BREVO_API_KEY: {
-                    type: "string"
-                },
-                BREVO_LIST_ID: {
-                    type: "string"
                 },
                 CODE_REPOSITORY_GITHUB_CLIENT_ID: {
                     type: "string"
