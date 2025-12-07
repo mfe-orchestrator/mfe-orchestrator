@@ -44,3 +44,9 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest -f Dockerfile .
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest
+
+          # Pusha anche con il tag git se presente
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.ref_name }}
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.ref_name }}
+          fi
