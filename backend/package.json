@@ -42,17 +42,15 @@
         "fastify-auth0-verify": "^3.0.0",
         "fastify-plugin": "^5.1.0",
         "fs-extra": "^11.3.2",
-        "google-auth-library": "^10.5.0",
         "isomorphic-git": "^1.35.1",
         "jsonwebtoken": "^9.0.3",
         "libsodium-wrappers": "^0.7.15",
-        "mongoose": "^9.0.0",
+        "mongoose": "^9.0.1",
         "nodemailer": "^7.0.11",
         "nodemon": "^3.1.11",
         "pug": "^3.0.3",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.48.1",
-        "uuid": "^13.0.0"
+        "typescript-eslint": "^8.48.1"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
@@ -62,10 +60,6 @@
         "@types/adm-zip": "^0.5.7",
         "@types/nodemailer": "^7.0.4",
         "@types/pug": "^2.0.10",
-        "eslint": "^9.39.1",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-config-standard-with-typescript": "^43.0.1",
-        "eslint-plugin-prettier": "^5.5.4",
         "ts-node": "^10.9.2"
     }
 }

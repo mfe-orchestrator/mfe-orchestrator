@@ -1,5 +1,4 @@
-import { ClientSession, DeleteResult, Types } from "mongoose"
-import { v4 as uuidv4 } from "uuid"
+import { ClientSession, DeleteResult } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ApiKey, { ApiKeyRole, ApiKeyStatus, IApiKey, IApiKeyDocument } from "../models/ApiKeyModel"
 import { ApiKeyDTO } from "../types/ApiKeyDTO"
@@ -21,7 +20,7 @@ export class ApiKeyService extends BaseAuthorizedService {
             ...apiKeyData,
             status: ApiKeyStatus.ACTIVE,
             role: apiKeyData.role || ApiKeyRole.MANAGER,
-            apiKey: uuidv4(),
+            apiKey: crypto.randomUUID(),
             projectId: projectIdObj
         }
 
