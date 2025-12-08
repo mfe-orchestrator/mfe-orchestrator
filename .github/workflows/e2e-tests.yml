@@ -1,0 +1,67 @@
+name: E2E Tests
+
+on:
+  # Trigger manuale tramite UI di GitHub
+  workflow_dispatch:
+
+  push:
+    branches: [e2e]
+
+  # Esecuzione automatica ogni settimana (Lunedì alle 6:00 UTC)
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  test-e2e:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @mfe-orchestrator/e2e exec playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          CI: true
+          BASE_URL: "https://console-dev.mfe-orchestrator.dev"
+
+      - name: Create test summary
+        if: always()
+        uses: daun/playwright-report-summary@v3
+        with:
+          report-file: e2e/test-results/results.json
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/test-results/
+          retention-days: 30

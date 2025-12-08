@@ -6,6 +6,12 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "test": "turbo test",
+    "test:e2e": "turbo test --filter=@mfe-orchestrator/e2e",
+    "test:e2e:ui": "pnpm --filter @mfe-orchestrator/e2e test:ui",
+    "test:e2e:headed": "pnpm --filter @mfe-orchestrator/e2e test:headed",
+    "test:e2e:debug": "pnpm --filter @mfe-orchestrator/e2e test:debug",
+    "test:e2e:codegen": "pnpm --filter @mfe-orchestrator/e2e test:codegen",
+    "test:e2e:report": "pnpm --filter @mfe-orchestrator/e2e test:report",
     "typecheck": "turbo typecheck",
     "prepare": "lefthook install"
   },
