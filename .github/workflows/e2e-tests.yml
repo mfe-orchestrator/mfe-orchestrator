@@ -1,5 +1,8 @@
 name: E2E Tests
 
+permissions:
+  contents: read
+  
 on:
   # Trigger manuale tramite UI di GitHub
   workflow_dispatch:
