@@ -2,7 +2,7 @@ name: E2E Tests
 
 permissions:
   contents: read
-  
+
 on:
   # Trigger manuale tramite UI di GitHub
   workflow_dispatch:
@@ -27,12 +27,12 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.19.0
+          version: 10.24.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '21'
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install dependencies

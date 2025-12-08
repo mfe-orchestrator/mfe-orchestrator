@@ -36,14 +36,14 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Collect trace - always on locally for UI mode, on retry in CI */
+    trace: process.env.CI ? 'on-first-retry' : 'on',
 
-    /* Screenshot on failure */
-    screenshot: 'only-on-failure',
+    /* Screenshot - capture all steps locally for UI mode, only failures in CI */
+    screenshot: process.env.CI ? 'only-on-failure' : 'on',
 
-    /* Video on failure */
-    video: 'retain-on-failure',
+    /* Video - always on locally for UI mode, only on failure in CI */
+    video: process.env.CI ? 'retain-on-failure' : 'on'
   },
 
   /* Configure projects for major browsers */
@@ -56,10 +56,15 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm --filter @mfe-orchestrator/frontend dev',
+    command: 'pnpm dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     cwd: '..',
+    env: {
+      TURBO_UI: 'true',
+      FORCE_COLOR: '1',
+      CI: 'true',
+    },
   },
 });

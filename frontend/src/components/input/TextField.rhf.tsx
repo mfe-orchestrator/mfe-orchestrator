@@ -1,8 +1,8 @@
-import { InputHTMLAttributes } from 'react';
-import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
-import { Label } from "@/components/ui/label"
-import { Input, InputProps } from "@/components/ui/input/input"
 import clsx from "clsx"
+import { InputHTMLAttributes } from "react"
+import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
+import { Input, InputProps } from "@/components/ui/input/input"
+import { Label } from "@/components/ui/label"
 
 type TextFieldProps<T extends FieldValues> = InputProps & {
     name: Path<T>
@@ -10,16 +10,17 @@ type TextFieldProps<T extends FieldValues> = InputProps & {
     rules?: Omit<RegisterOptions<T, string & Path<T>>, "disabled" | "valueAsNumber" | "valueAsDate" | "setValueAs">
     textTransform?: (value: string) => string
     containerClassName?: string
+    dataTestId?: string
 }
 
-const TextField = <T extends FieldValues>({ name, label, rules, className, id, containerClassName, textTransform, disabled, ...props }: TextFieldProps<T>) => {
+const TextField = <T extends FieldValues>({ name, label, rules, className, id, containerClassName, textTransform, disabled, dataTestId, ...props }: TextFieldProps<T>) => {
     const {
         control,
         formState: { errors }
     } = useFormContext<T>()
 
     const error = errors[name] as FieldError | undefined
-    const inputId = name || id
+    const inputId = id || name
 
     return (
         <Controller
@@ -34,7 +35,11 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
                     </Label>
                     <Input
                         disabled={disabled || formState.isSubmitting}
+                        aria-label={label}
+                        aria-invalid={!!error}
+                        aria-disabled={disabled}
                         id={inputId}
+                        data-testid={dataTestId || inputId}
                         className={`${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         {...field}
                         {...props}
@@ -51,4 +56,4 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
     )
 }
 
-export default TextField;
+export default TextField
