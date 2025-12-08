@@ -1,8 +1,7 @@
 import { test } from '@playwright/test';
 import { getEmailLinks } from '../fixtures/mailinatorClient';
-import { describe } from 'node:test';
 
-describe('as a new user', () => {
+test.describe.serial('as a new user', () => {
     const sampleEmail = "test+"+Math.floor(Math.random()*1000)+"@mailinator.com"
     const password = "Astr0ngPassword!£%£$"
 
