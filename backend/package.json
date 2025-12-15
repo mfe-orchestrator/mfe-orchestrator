@@ -41,7 +41,7 @@
         "fastify-auth0-verify": "^3.0.0",
         "fastify-plugin": "^5.1.0",
         "fs-extra": "^11.3.2",
-        "isomorphic-git": "^1.35.1",
+        "isomorphic-git": "^1.36.1",
         "jsonwebtoken": "^9.0.3",
         "libsodium-wrappers": "^0.7.15",
         "mongoose": "^9.0.1",
