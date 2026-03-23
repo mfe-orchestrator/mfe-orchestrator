@@ -28,7 +28,6 @@ export interface IClientRequestDataExtended<D> extends IClientRequestData<D>, IC
 export interface IApiClientOptions {
     baseURL?: string
     customErrorMessage?: string | ((error: Error) => string)
-    country?: string
 }
 
 export const useApiClient = (options?: IApiClientOptions) => {
@@ -85,7 +84,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
             //console.log("[doRequest] Ho fatto la richiesta", realConfig.url, result.data)
             return result
         } catch (e: unknown) {
-            console.error("[doRequest] Erro in request ", realConfig.url, e)
+            console.error("[doRequest] Error in request ", realConfig.url, e)
             console.error(e)
             if (!silent) {
                 notifications.showErrorNotification({

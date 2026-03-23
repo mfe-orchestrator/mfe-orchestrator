@@ -7,7 +7,19 @@ export default async function projectStateWizardController(fastify: FastifyInsta
         return reply.send(await new ProjectWizardService().createNew(request.body, request.databaseUser._id))
     })
 
-    fastify.put("/projects/wizard/:projectId/next", async (request, reply) => {})
+    fastify.put<{
+        Params: {
+            projectId: string
+        }
+    }>("/projects/wizard/:projectId/next", async (request, reply) => {
+        return reply.send(await new ProjectWizardService().next(request.params.projectId))
+    })
 
-    fastify.put("/projects/wizard/:projectId/prev", async (request, reply) => {})
+    fastify.put<{
+        Params: {
+            projectId: string
+        }
+    }>("/projects/wizard/:projectId/prev", async (request, reply) => {
+        return reply.send(await new ProjectWizardService().prev(request.params.projectId))
+    })
 }
