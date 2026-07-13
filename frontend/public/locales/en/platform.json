@@ -91,7 +91,12 @@
         "create_new_project": "Create a new project now",
         "or_ask_admin": "Or ask an admin to assign you to a project",
         "select_project": "Select a Project",
-        "select_project_placeholder": "Select a project..."
+        "select_project_placeholder": "Select a project...",
+        "switch_desc": "Select a project to work on or create a new one.",
+        "search_placeholder": "Search projects...",
+        "no_results": "No projects match your search.",
+        "no_projects": "No projects yet",
+        "no_projects_desc": "Create your first project to get started."
     },
     "common": {
         "close": "Close",
@@ -174,6 +179,12 @@
     "apiKeys": {
         "api_keys": "API Keys",
         "no_api_keys": "No API keys found",
+        "no_api_keys_desc": "API keys let external services authenticate with your project. Create one to get started.",
+        "status": "Status",
+        "status_active": "Active",
+        "status_expiring": "Expiring soon",
+        "status_expired": "Expired",
+        "status_unknown": "Unknown",
         "expiresAt": "Expiration Date",
         "created_api_key": "API Key created",
         "expiresAt_placeholder": "Pick a date",

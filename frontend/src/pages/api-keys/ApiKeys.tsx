@@ -3,7 +3,7 @@ import { format } from "date-fns"
 import { Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Button } from "@/components/atoms"
+import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -43,20 +43,20 @@ export const ApiKeys = () => {
         return format(new Date(dateString), "PPP", { locale: themeStore.getLocale() })
     }
 
-    const getKeyStatus = (expiresAt: string) => {
-        if (!expiresAt) return { emoji: "❓", status: "unknown" }
+    const getKeyStatus = (expiresAt: string): { variant: "default" | "accent" | "destructive" | "outline"; label: string; dot: string } => {
+        if (!expiresAt) return { variant: "outline", label: t("apiKeys.status_unknown", { defaultValue: "Unknown" }), dot: "bg-muted-foreground" }
 
         const now = new Date()
         const expirationDate = new Date(expiresAt)
         const daysUntilExpiration = Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
         if (daysUntilExpiration < 0) {
-            return { emoji: "❌", status: "expired", color: "text-destructive" }
-        } else if (daysUntilExpiration <= 30) {
-            return { emoji: "⚠️", status: "expiring", color: "text-yellow-600 dark:text-yellow-500" }
-        } else {
-            return { emoji: "✅", status: "ok", color: "text-green-600 dark:text-green-500" }
+            return { variant: "destructive", label: t("apiKeys.status_expired", { defaultValue: "Expired" }), dot: "bg-destructive" }
         }
+        if (daysUntilExpiration <= 30) {
+            return { variant: "default", label: t("apiKeys.status_expiring", { defaultValue: "Expiring soon" }), dot: "bg-yellow-500" }
+        }
+        return { variant: "accent", label: t("apiKeys.status_active", { defaultValue: "Active" }), dot: "bg-green-500" }
     }
 
     return (
@@ -77,7 +77,7 @@ export const ApiKeys = () => {
                     <Card>
                         <CardContent>
                             {apiKeysQuery.data?.length === 0 ? (
-                                <NoApiKeyPlaceholder />
+                                <NoApiKeyPlaceholder onCreate={() => setIsCreateDialogOpen(true)} />
                             ) : (
                                 <Table>
                                     <TableHeader>
@@ -85,6 +85,7 @@ export const ApiKeys = () => {
                                             <TableHead>{t("apiKeys.name")}</TableHead>
                                             <TableHead>{t("apiKeys.created")}</TableHead>
                                             <TableHead>{t("apiKeys.expires")}</TableHead>
+                                            <TableHead>{t("apiKeys.status", { defaultValue: "Status" })}</TableHead>
                                             <TableHead className="text-right">{t("common.actions")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -94,12 +95,13 @@ export const ApiKeys = () => {
                                             return (
                                                 <TableRow key={key._id}>
                                                     <TableCell className="font-medium">{key.name}</TableCell>
-                                                    <TableCell>{formatExpirationDate(key.createdAt)}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{formatExpirationDate(key.createdAt)}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{formatExpirationDate(key.expiresAt)}</TableCell>
                                                     <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className={keyStatus.color}>{keyStatus.emoji}</span>
-                                                            <span className={keyStatus.color}>{formatExpirationDate(key.expiresAt)}</span>
-                                                        </div>
+                                                        <Badge variant={keyStatus.variant} className="gap-1.5">
+                                                            <span className={`h-1.5 w-1.5 rounded-full ${keyStatus.dot}`} />
+                                                            {keyStatus.label}
+                                                        </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <Button
