@@ -236,7 +236,24 @@
         },
         "invited": "Invitato",
         "accepted": "Accettato",
-        "invite_state": "Stato"
+        "invite_state": "Stato",
+        "invite_resent": "Invito inviato di nuovo",
+        "invite_revoked": "Invito revocato",
+        "pending_invites": "{{count}} inviti in sospeso",
+        "pending_invites_one": "Un invito in sospeso",
+        "invite_expires": "Scade il",
+        "resend_invite": "Rinvia",
+        "revoke_invite": "Revoca invito",
+        "confirm_revoke_title": "Revoca invito",
+        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
+    },
+    "project_invitation": {
+        "title": "Invito al progetto",
+        "description": "Sei stato invitato a unirti a {{project}} con il ruolo di {{role}}.",
+        "accept": "Accetta invito",
+        "accepted": "Invito accettato",
+        "name_label": "Nome",
+        "surname_label": "Cognome"
     },
     "environmentVariables": {
         "title": "Variabili d'Ambiente",

@@ -33,6 +33,7 @@ const Settings = lazy(() => import("./pages/settings/Settings"))
 const NewProjectWizard = lazy(() => import("./pages/new-project-wizard/NewProjectWizard"))
 
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"))
+const ProjectInvitation = lazy(() => import("./pages/auth/ProjectInvitation"))
 const SignUp = lazy(() => import("./pages/auth/SignUp"))
 const ResetPasswordRequest = lazy(() => import("./pages/auth/ResetPasswordRequest"))
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"))
@@ -104,6 +105,7 @@ const Routes: React.FC = () => {
                 <Route path="/reset-password-request" element={<RouteWithSuspense element={<ResetPasswordRequest />} />} />
                 <Route path="/reset-password/:token" element={<RouteWithSuspense element={<ResetPassword />} />} />
                 <Route path="/account-activation/:token" element={<RouteWithSuspense element={<AccountActivation />} />} />
+                <Route path="/project-invitation/:token" element={<RouteWithSuspense element={<ProjectInvitation />} />} />
                 <Route path="/" element={<Navigate to="/microfrontends" replace />} />
                 <Route path="*" element={<PrivateRoutes />} />
             </RRDRoutes>

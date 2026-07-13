@@ -287,7 +287,24 @@
         },
         "invited": "Invited",
         "accepted": "Accepted",
-        "invite_state": "Status"
+        "invite_state": "Status",
+        "invite_resent": "Invitation resent",
+        "invite_revoked": "Invitation revoked",
+        "pending_invites": "{{count}} pending invitations",
+        "pending_invites_one": "One pending invitation",
+        "invite_expires": "Expires on",
+        "resend_invite": "Resend",
+        "revoke_invite": "Revoke invitation",
+        "confirm_revoke_title": "Revoke invitation",
+        "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?"
+    },
+    "project_invitation": {
+        "title": "Project invitation",
+        "description": "You've been invited to join {{project}} as {{role}}.",
+        "accept": "Accept invitation",
+        "accepted": "Invitation accepted",
+        "name_label": "First name",
+        "surname_label": "Last name"
     },
     "microfrontend": {
         "host": "Host",
