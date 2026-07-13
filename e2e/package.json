@@ -13,9 +13,9 @@
         "test:report": "playwright show-report"
     },
     "devDependencies": {
-        "mailinator-client": "^1.0.6",
-        "@playwright/test": "^1.57.0",
-        "@types/node": "^24.10.1",
-        "typescript": "^5.9.3"
+        "@playwright/test": "^1.61.1",
+        "@types/node": "^26.1.1",
+        "mailinator-client": "^1.1.1",
+        "typescript": "^7.0.2"
     }
 }
