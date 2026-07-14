@@ -91,7 +91,12 @@
         "create_new_project": "Crea un nuovo progetto ora",
         "or_ask_admin": "Oppure chiedi all'amministratore di assegnarti un progetto",
         "select_project": "Seleziona un Progetto",
-        "select_project_placeholder": "Seleziona un progetto..."
+        "select_project_placeholder": "Seleziona un progetto...",
+        "switch_desc": "Seleziona un progetto su cui lavorare o creane uno nuovo.",
+        "search_placeholder": "Cerca progetti...",
+        "no_results": "Nessun progetto corrisponde alla ricerca.",
+        "no_projects": "Nessun progetto",
+        "no_projects_desc": "Crea il tuo primo progetto per iniziare."
     },
     "common": {
         "close": "Chiudi",
@@ -231,7 +236,24 @@
         },
         "invited": "Invitato",
         "accepted": "Accettato",
-        "invite_state": "Stato"
+        "invite_state": "Stato",
+        "invite_resent": "Invito inviato di nuovo",
+        "invite_revoked": "Invito revocato",
+        "pending_invites": "{{count}} inviti in sospeso",
+        "pending_invites_one": "Un invito in sospeso",
+        "invite_expires": "Scade il",
+        "resend_invite": "Rinvia",
+        "revoke_invite": "Revoca invito",
+        "confirm_revoke_title": "Revoca invito",
+        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
+    },
+    "project_invitation": {
+        "title": "Invito al progetto",
+        "description": "Sei stato invitato a unirti a {{project}} con il ruolo di {{role}}.",
+        "accept": "Accetta invito",
+        "accepted": "Invito accettato",
+        "name_label": "Nome",
+        "surname_label": "Cognome"
     },
     "environmentVariables": {
         "title": "Variabili d'Ambiente",
@@ -323,6 +345,12 @@
     "apiKeys": {
         "api_keys": "Chiavi API",
         "no_api_keys": "Nessuna chiave API trovata",
+        "no_api_keys_desc": "Le chiavi API permettono ai servizi esterni di autenticarsi con il tuo progetto. Creane una per iniziare.",
+        "status": "Stato",
+        "status_active": "Attiva",
+        "status_expiring": "In scadenza",
+        "status_expired": "Scaduta",
+        "status_unknown": "Sconosciuto",
         "expiresAt": "Data di scadenza",
         "created_api_key": "Chiave API creata",
         "expiresAt_placeholder": "Seleziona una data",

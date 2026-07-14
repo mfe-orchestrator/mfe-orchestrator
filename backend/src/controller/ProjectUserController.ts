@@ -3,9 +3,10 @@ import { Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import Project from "../models/ProjectModel"
-import User from "../models/UserModel"
+import User, { UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserProjectService from "../service/UserProjectService"
+import AuthenticationMethod from "../types/AuthenticationMethod"
 import { toObjectId } from "../utils/mongooseUtils"
 
 interface PopulatedProject {
@@ -27,6 +28,12 @@ interface AddUserToProjectDTO {
 
 interface UpdateUserRoleDTO {
     role: RoleInProject
+}
+
+interface AcceptInvitationDTO {
+    password?: string
+    name?: string
+    surname?: string
 }
 
 export default async function projectUserController(fastify: FastifyInstance) {
@@ -52,6 +59,28 @@ export default async function projectUserController(fastify: FastifyInstance) {
         const { email, role } = request.body
 
         reply.send(await new UserProjectService(request.databaseUser).addUserToProjectByEmail(projectId, email, role))
+    })
+
+    // Resend a pending invitation email
+    fastify.post<{ Params: { projectId: string; userId: string } }>("/projects/:projectId/users/:userId/resend-invitation", async (request, reply) => {
+        const { projectId, userId } = request.params
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+        return reply.send(await new UserProjectService(request.databaseUser).resendInvitation(projectId, userId))
+    })
+
+    // Public: read invitation details by token (used by the acceptance page)
+    fastify.get<{ Params: { token: string } }>("/projects/invitations/:token", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await new UserProjectService().getInvitationByToken(request.params.token))
+    })
+
+    // Public: accept an invitation by token
+    fastify.post<{
+        Params: { token: string }
+        Body: AcceptInvitationDTO
+    }>("/projects/invitations/:token/accept", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await new UserProjectService().acceptInvitation(request.params.token, request.body || {}))
     })
 
     // Update a user's role in a project
@@ -139,6 +168,14 @@ export default async function projectUserController(fastify: FastifyInstance) {
 
         if (!result) {
             throw new EntityNotFoundError("User is not a member of this project")
+        }
+
+        // Clean up users that were only created to be invited and never accepted
+        if (user.status === UserStatus.INVITED) {
+            const remaining = await UserProject.countDocuments({ userId: toObjectId(userId) })
+            if (remaining === 0) {
+                await User.findByIdAndDelete(toObjectId(userId))
+            }
         }
 
         return reply.status(204).send()

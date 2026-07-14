@@ -10,8 +10,8 @@ export interface IUserProject extends Document<ObjectId> {
     userId: Schema.Types.ObjectId
     projectId: Schema.Types.ObjectId
     role: RoleInProject
-    invitationToken: string
-    inviationTokenExpiresAt: Date
+    invitationToken?: string
+    inviationTokenExpiresAt?: Date
     createdAt: Date
     updatedAt: Date
 }

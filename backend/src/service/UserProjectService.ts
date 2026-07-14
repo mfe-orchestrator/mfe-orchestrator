@@ -1,66 +1,204 @@
 import { randomBytes } from "crypto"
 import { ClientSession, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
+import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import Project from "../models/ProjectModel"
-import User, { IUser, UserStatus } from "../models/UserModel"
+import Project, { IProject } from "../models/ProjectModel"
+import User, { IUser, IUserDocument, UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserService from "../service/UserService"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
 
+const INVITATION_TTL_DAYS = 5
+const INVITATION_TTL_MS = INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000
+
 // Get all user-project relationships for this project
 interface IUserInProject extends Partial<IUser> {
     joinedAt: Date
     role: RoleInProject
-    invitationToken?: string
+    invitationPending: boolean
+    invitationExpiresAt?: Date
+}
+
+interface IInvitationInfo {
+    projectName: string
+    role: RoleInProject
+    email: string
+    needsPassword: boolean
+}
+
+interface IAcceptInvitationData {
+    password?: string
+    name?: string
+    surname?: string
 }
 class UserProjectService extends BaseAuthorizedService {
     emailSenderService = new EmailSenderService()
     userService = new UserService()
 
     async addUserToProjectByEmail(projectId: string | Schema.Types.ObjectId, email: string, role: RoleInProject): Promise<IUserProject | undefined> {
-        const projectIdObj = typeof projectId === "string" ? new Types.ObjectId(projectId) : projectId
+        const projectIdObj = toObjectId(projectId)
         const project = await Project.findById(projectIdObj)
         if (!project) {
             throw new EntityNotFoundError(projectIdObj.toString())
         }
 
-        // Find user by email
-        const user = await User.findOne({ email })
-        if (user) {
-            return (await this.addUserToProject(user._id, projectId, role)).userProject
-        }
-
-        // qui devo assolutamente inviatre l'utente
-        fastify.log.info(`Inviting user ${email} to project ${projectIdObj.toString()}`)
-        const registeredUser = await this.userService.register(
-            {
-                email,
-                status: UserStatus.INVITED
-            },
-            false
-        )
-
         const canSendEmail = this.emailSenderService.canSendEmails()
 
-        fastify.log.info(`User ${email} registered with ID ${registeredUser._id}`)
+        // Find or create the target user
+        let user = await User.findOne({ email })
+        if (!user) {
+            fastify.log.info(`Inviting new user ${email} to project ${projectIdObj.toString()}`)
+            user = await this.userService.register(
+                {
+                    email,
+                    // Without an email channel we cannot deliver a confirmation link,
+                    // so the account is created as ACTIVE and joins the project directly.
+                    status: canSendEmail ? UserStatus.INVITED : UserStatus.ACTIVE
+                },
+                false
+            )
+        }
 
-        // Add user to project
+        // A user can only have one relationship per project
+        const existing = await UserProject.findOne({ userId: toObjectId(user._id), projectId: projectIdObj })
+
+        if (existing) {
+            if (!existing.invitationToken) {
+                throw createBusinessException({
+                    code: "USER_ALREADY_IN_PROJECT",
+                    message: "This user is already a member of the project"
+                })
+            }
+            // Pending invite already exists: refresh it (acts as a re-invite)
+            return this.regenerateInvitation(existing, user, project, role, canSendEmail)
+        }
+
+        // Without email delivery the invite cannot be confirmed, so join immediately
+        if (!canSendEmail) {
+            const userProject = new UserProject({ userId: user._id, projectId: projectIdObj, role })
+            return userProject.save()
+        }
+
         const userProject = new UserProject({
-            userId: registeredUser._id,
+            userId: user._id,
             projectId: projectIdObj,
             role,
-            invitationToken: canSendEmail ? randomBytes(32).toString("hex") : undefined,
-            inviationTokenExpiresAt: canSendEmail ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : undefined
+            invitationToken: randomBytes(32).toString("hex"),
+            inviationTokenExpiresAt: new Date(Date.now() + INVITATION_TTL_MS)
         })
 
         const out = await userProject.save()
-
-        if (canSendEmail) await this.emailSenderService.sendUserInvitationEmail(registeredUser, project, role, userProject.invitationToken)
-
+        await this.emailSenderService.sendUserInvitationEmail(user, project, role, userProject.invitationToken as string)
         return out
+    }
+
+    private async regenerateInvitation(userProject: IUserProject, user: IUser, project: IProject, role: RoleInProject, canSendEmail: boolean): Promise<IUserProject> {
+        userProject.role = role
+        if (canSendEmail) {
+            userProject.invitationToken = randomBytes(32).toString("hex")
+            userProject.inviationTokenExpiresAt = new Date(Date.now() + INVITATION_TTL_MS)
+        }
+        const out = await userProject.save()
+        if (canSendEmail) {
+            await this.emailSenderService.sendUserInvitationEmail(user, project, role, userProject.invitationToken as string)
+        }
+        return out
+    }
+
+    async getInvitationByToken(token: string): Promise<IInvitationInfo> {
+        const userProject = await this.findValidInvitation(token)
+        const project = await Project.findById(userProject.projectId)
+        if (!project) {
+            throw new EntityNotFoundError(userProject.projectId.toString())
+        }
+        const user = await User.findById(userProject.userId)
+        if (!user) {
+            throw new EntityNotFoundError(userProject.userId.toString())
+        }
+        return {
+            projectName: project.name,
+            role: userProject.role,
+            email: user.email,
+            needsPassword: !user.password
+        }
+    }
+
+    async acceptInvitation(token: string, data: IAcceptInvitationData) {
+        const userProject = await this.findValidInvitation(token)
+        const user = (await User.findById(userProject.userId)) as IUserDocument | null
+        if (!user) {
+            throw new EntityNotFoundError(userProject.userId.toString())
+        }
+
+        // New users must set a password to be able to sign in later
+        if (!user.password) {
+            if (!data.password || data.password.length < 8) {
+                throw createBusinessException({
+                    code: "PASSWORD_REQUIRED",
+                    message: "A password of at least 8 characters is required to accept this invitation"
+                })
+            }
+            user.password = data.password
+            if (data.name) user.name = data.name
+            if (data.surname) user.surname = data.surname
+        }
+        user.status = UserStatus.ACTIVE
+        user.isInvited = false
+        await user.save()
+
+        userProject.invitationToken = undefined
+        userProject.inviationTokenExpiresAt = undefined
+        await userProject.save()
+
+        return {
+            user: user.toFrontendObject(),
+            ...user.generateAuthToken()
+        }
+    }
+
+    async resendInvitation(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId): Promise<IUserProject> {
+        const project = await Project.findById(projectId)
+        if (!project) {
+            throw new EntityNotFoundError(projectId.toString())
+        }
+        const userProject = await UserProject.findOne({ userId: toObjectId(userId), projectId: toObjectId(projectId) })
+        if (!userProject) {
+            throw new EntityNotFoundError("User is not a member of this project")
+        }
+        if (!userProject.invitationToken) {
+            throw createBusinessException({
+                code: "INVITATION_ALREADY_ACCEPTED",
+                message: "This user has already accepted the invitation"
+            })
+        }
+        const user = await User.findById(userProject.userId)
+        if (!user) {
+            throw new EntityNotFoundError(userProject.userId.toString())
+        }
+        if (!this.emailSenderService.canSendEmails()) {
+            throw createBusinessException({
+                code: "EMAIL_NOT_CONFIGURED",
+                message: "Email delivery is not configured, invitations cannot be sent"
+            })
+        }
+        return this.regenerateInvitation(userProject, user, project, userProject.role, true)
+    }
+
+    private async findValidInvitation(token: string): Promise<IUserProject> {
+        if (!token) {
+            throw createBusinessException({ code: "INVALID_INVITATION", message: "Invalid invitation token", statusCode: 404 })
+        }
+        const userProject = await UserProject.findOne({ invitationToken: token })
+        if (!userProject) {
+            throw createBusinessException({ code: "INVALID_INVITATION", message: "Invalid invitation token", statusCode: 404 })
+        }
+        if (userProject.inviationTokenExpiresAt && userProject.inviationTokenExpiresAt < new Date()) {
+            throw createBusinessException({ code: "INVITATION_EXPIRED", message: "This invitation has expired", statusCode: 410 })
+        }
+        return userProject
     }
 
     async addUserToProject(userId: string | ObjectId, projectId: string | ObjectId, role: RoleInProject, session?: ClientSession) {
@@ -123,16 +261,18 @@ class UserProjectService extends BaseAuthorizedService {
         }
 
         const userProjects = await UserProject.find({ projectId: toObjectId(projectId) })
-            .populate<{ user: IUser }>("userId", "email name surname")
+            .populate<{ user: IUser }>("userId", "email name surname status")
             .lean<PopulatedUserProject[]>()
 
-        // Format the response
+        // Format the response. The raw invitation token is never exposed to clients.
         return userProjects.map<IUserInProject>(up => {
+            const populatedUser = up.userId as unknown as IUser
             return {
-                ...up,
-                ...up.userId,
+                ...populatedUser,
+                role: up.role,
                 joinedAt: up.createdAt,
-                userId: undefined
+                invitationPending: Boolean(up.invitationToken),
+                invitationExpiresAt: up.inviationTokenExpiresAt
             }
         })
     }

@@ -46,7 +46,7 @@ class EmailSenderService {
             acceptUrl,
             header: "You're Invited!",
             headerIcon: "👋",
-            footerText: "This invitation link will expire in 7 days."
+            footerText: "This invitation link will expire in 5 days."
         })
 
         const mailOptions = {
