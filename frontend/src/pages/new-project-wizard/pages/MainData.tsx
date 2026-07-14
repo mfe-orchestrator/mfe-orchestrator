@@ -55,6 +55,7 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
                             label="Nome progetto"
                             placeholder="Es. Portale Clienti"
                             required
+                            dataTestId="wizard-project-name"
                             rules={{ required: "Il nome è obbligatorio", minLength: { value: 3, message: "Minimo 3 caratteri" } }}
                         />
                         <TextareaField<MainDataForm> name="description" label="Descrizione (opzionale)" placeholder="A cosa serve questo progetto?" />

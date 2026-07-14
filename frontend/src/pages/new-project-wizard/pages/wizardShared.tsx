@@ -68,7 +68,9 @@ export const StepShell: React.FC<StepShellProps> = ({ title, description, childr
     <div className="bg-card border border-border rounded-xl shadow-card mt-8 flex flex-col">
         <div className="p-6 md:p-8 flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+                <h2 data-testid="wizard-step-title" className="text-2xl font-semibold text-foreground">
+                    {title}
+                </h2>
                 {description && <p className="text-foreground-secondary">{description}</p>}
             </div>
             {children}
@@ -99,18 +101,18 @@ export const WizardFooter: React.FC<WizardFooterProps> = ({ onBack, onSkip, skip
     <>
         <div>
             {onBack && (
-                <Button type="button" variant="ghost" onClick={onBack} disabled={loading}>
+                <Button dataTestId="wizard-back" type="button" variant="ghost" onClick={onBack} disabled={loading}>
                     Indietro
                 </Button>
             )}
         </div>
         <div className="flex items-center gap-2">
             {onSkip && (
-                <Button type="button" variant="ghost" onClick={onSkip} disabled={loading}>
+                <Button dataTestId="wizard-skip" type="button" variant="ghost" onClick={onSkip} disabled={loading}>
                     {skipLabel}
                 </Button>
             )}
-            <Button type={onNext ? "button" : "submit"} variant="primary" onClick={onNext} disabled={loading}>
+            <Button dataTestId="wizard-next" type={onNext ? "button" : "submit"} variant="primary" onClick={onNext} disabled={loading}>
                 {loading ? "Attendere…" : nextLabel}
             </Button>
         </div>

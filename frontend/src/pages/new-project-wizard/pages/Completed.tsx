@@ -7,7 +7,7 @@ const Completed: React.FC<WizardStepProps & { onDone?: () => void }> = ({ projec
     const navigate = useNavigate()
 
     return (
-        <div className="bg-card border border-border rounded-xl shadow-card mt-8 p-10 flex flex-col items-center text-center gap-5">
+        <div data-testid="wizard-completed" className="bg-card border border-border rounded-xl shadow-card mt-8 p-10 flex flex-col items-center text-center gap-5">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <PartyPopper className="size-8 text-primary" />
             </div>

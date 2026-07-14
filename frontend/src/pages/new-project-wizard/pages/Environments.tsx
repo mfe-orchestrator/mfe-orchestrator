@@ -88,6 +88,7 @@ const Environments: React.FC<WizardStepProps> = ({ onNext, onBack }) => {
                         <button
                             key={p.key}
                             type="button"
+                            data-testid={`wizard-preset-${p.key}`}
                             onClick={() => applyPreset(p.key)}
                             className={cn("rounded-lg border-2 p-4 text-left transition-colors", preset === p.key ? "border-primary bg-accent" : "border-border hover:border-primary/40")}
                         >

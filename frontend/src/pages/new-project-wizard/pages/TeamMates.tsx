@@ -66,7 +66,14 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
             <div className="flex flex-col gap-3">
                 {rows.map((row, i) => (
                     <div key={i} className="flex items-center gap-2">
-                        <Input type="email" value={row.email} onChange={e => update(i, { email: e.target.value })} placeholder="collega@azienda.com" className="flex-1" />
+                        <Input
+                            type="email"
+                            data-testid={`wizard-collaborator-email-${i}`}
+                            value={row.email}
+                            onChange={e => update(i, { email: e.target.value })}
+                            placeholder="collega@azienda.com"
+                            className="flex-1"
+                        />
                         <select
                             value={row.role}
                             onChange={e => update(i, { role: e.target.value as RoleInProject })}
