@@ -161,9 +161,13 @@ interface StorageFormProps {
     id?: string
     onCancel: () => void | Promise<void>
     onSubmitSuccess?: () => void | Promise<void>
+    /** Optional overrides so the form can be reused inside the project wizard */
+    submitLabel?: string
+    cancelLabel?: string
+    onBack?: () => void | Promise<void>
 }
 
-const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCancel, onSubmitSuccess }) => {
+export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCancel, onSubmitSuccess, submitLabel, cancelLabel, onBack }) => {
     const { t } = useTranslation()
     const storageApi = useStorageApi()
     const notifications = useToastNotificationStore()
@@ -255,11 +259,20 @@ const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCancel, on
                 </Alert>
 
                 {/* Actions */}
-                <div className="flex justify-end space-x-4 pt-4">
-                    <Button type="button" variant="secondary" onClick={onCancel}>
-                        {t("common.cancel")}
-                    </Button>
-                    <Button type="submit">{isEditMode ? t("common.update") : t("common.create")}</Button>
+                <div className="flex justify-between items-center pt-4">
+                    <div>
+                        {onBack && (
+                            <Button type="button" variant="ghost" onClick={onBack}>
+                                {t("common.back", { defaultValue: "Indietro" })}
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex space-x-4">
+                        <Button type="button" variant="secondary" onClick={onCancel}>
+                            {cancelLabel ?? t("common.cancel")}
+                        </Button>
+                        <Button type="submit">{submitLabel ?? (isEditMode ? t("common.update") : t("common.create"))}</Button>
+                    </div>
                 </div>
             </form>
         </FormProvider>

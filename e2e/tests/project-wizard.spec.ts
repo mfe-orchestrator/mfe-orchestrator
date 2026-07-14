@@ -6,6 +6,10 @@ import { loginViaApi } from "./fixtures/auth"
  *
  * Prerequisites: a verified user must exist (defaults to the local seed user
  * demo@mfe.local / Password123!, overridable via E2E_EMAIL / E2E_PASSWORD).
+ *
+ * The Ambienti and Storage steps reuse the real feature components
+ * (NoEnvironmentPlaceholder / StorageForm), so those steps are driven by their
+ * own controls ("Ambienti Base" preset + "Salva", storage "Salta").
  */
 test.describe("Project Wizard", () => {
     test.beforeEach(async ({ page, request }) => {
@@ -14,20 +18,27 @@ test.describe("Project Wizard", () => {
         await expect(page.getByTestId("wizard-step-title")).toBeVisible()
     })
 
-    test("walks through all 5 steps and reaches the success screen", async ({ page }) => {
-        // Step 1 — Nome
+    const fillNameAndContinue = async (page: import("@playwright/test").Page, name: string) => {
         await expect(page.getByTestId("wizard-step-title")).toHaveText(/nome al progetto/i)
-        await page.getByTestId("wizard-project-name").fill(`E2E Wizard ${Date.now()}`)
+        await page.getByTestId("wizard-project-name").fill(name)
         await page.getByTestId("wizard-next").click()
+    }
 
-        // Step 2 — Ambienti (default "Standard" preset, or pick "Base")
+    const chooseEnvironmentPresetAndSave = async (page: import("@playwright/test").Page, presetName: string) => {
         await expect(page.getByTestId("wizard-step-title")).toHaveText(/configura gli ambienti/i)
-        await page.getByTestId("wizard-preset-base").click()
-        await page.getByTestId("wizard-next").click()
+        await page.getByText(presetName, { exact: true }).click()
+        await page.getByRole("button", { name: "Salva" }).click()
+    }
 
-        // Step 3 — Storage (skip)
+    test("walks through all 5 steps and reaches the success screen", async ({ page }) => {
+        await fillNameAndContinue(page, `E2E Wizard ${Date.now()}`)
+
+        // Step 2 — Ambienti (reused NoEnvironmentPlaceholder)
+        await chooseEnvironmentPresetAndSave(page, "Ambienti Base")
+
+        // Step 3 — Storage (reused StorageForm, skip via "Salta")
         await expect(page.getByTestId("wizard-step-title")).toHaveText(/ospitiamo/i)
-        await page.getByTestId("wizard-skip").click()
+        await page.getByRole("button", { name: "Salta" }).click()
 
         // Step 4 — Repository (skip)
         await expect(page.getByTestId("wizard-step-title")).toHaveText(/codice sorgente/i)
@@ -48,8 +59,7 @@ test.describe("Project Wizard", () => {
     })
 
     test("supports going back to a previous step", async ({ page }) => {
-        await page.getByTestId("wizard-project-name").fill(`E2E Back ${Date.now()}`)
-        await page.getByTestId("wizard-next").click()
+        await fillNameAndContinue(page, `E2E Back ${Date.now()}`)
         await expect(page.getByTestId("wizard-step-title")).toHaveText(/configura gli ambienti/i)
 
         await page.getByTestId("wizard-back").click()
@@ -57,10 +67,9 @@ test.describe("Project Wizard", () => {
     })
 
     test("lets the user add/remove collaborator rows before completing", async ({ page }) => {
-        await page.getByTestId("wizard-project-name").fill(`E2E Collab ${Date.now()}`)
-        await page.getByTestId("wizard-next").click()
-        await page.getByTestId("wizard-next").click() // ambienti (default Standard)
-        await page.getByTestId("wizard-skip").click() // storage
+        await fillNameAndContinue(page, `E2E Collab ${Date.now()}`)
+        await chooseEnvironmentPresetAndSave(page, "Ambienti Standard")
+        await page.getByRole("button", { name: "Salta" }).click() // storage
         await page.getByTestId("wizard-skip").click() // repository
 
         await expect(page.getByTestId("wizard-step-title")).toHaveText(/invita i collaboratori/i)
