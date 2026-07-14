@@ -1,3 +1,5 @@
+import containerQueries from "@tailwindcss/container-queries"
+import tailwindcssAnimate from "tailwindcss-animate"
 import type { Config } from "tailwindcss"
 
 export default {
@@ -93,7 +95,9 @@ export default {
                 "button-lg": "var(--button-lg-inner-shadow)",
                 "button-lg-active": "var(--button-lg-active-inner-shadow)",
                 input: "var(--input-inner-shadow)",
-                "input-lg": "var(--input-lg-inner-shadow)"
+                "input-lg": "var(--input-lg-inner-shadow)",
+                card: "0 1px 4px rgba(21, 39, 60, 0.06), 0 1px 2px rgba(21, 39, 60, 0.04)",
+                "card-hover": "0 12px 24px -12px rgba(21, 39, 60, 0.18), 0 0 12px rgba(21, 39, 60, 0.05)"
             },
             keyframes: {
                 "accordion-down": {
@@ -124,5 +128,5 @@ export default {
             }
         }
     },
-    plugins: [require("tailwindcss-animate"), require("@tailwindcss/container-queries")]
+    plugins: [tailwindcssAnimate, containerQueries]
 } satisfies Config
