@@ -168,7 +168,11 @@
                 }
             }
         },
-        "notifications": "Notifiche"
+        "notifications": {
+            "projectDeleted": "Progetto eliminato",
+            "projectNameUpdated": "Nome del progetto aggiornato",
+            "projectNameUpdateFailed": "Impossibile aggiornare il nome del progetto"
+        }
     },
     "theme": {
         "light": "Chiaro",

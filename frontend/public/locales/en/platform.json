@@ -168,7 +168,11 @@
                 }
             }
         },
-        "notifications": "Notifications"
+        "notifications": {
+            "projectDeleted": "Project deleted",
+            "projectNameUpdated": "Project name updated",
+            "projectNameUpdateFailed": "Failed to update project name"
+        }
     },
     "theme": {
         "light": "Light",

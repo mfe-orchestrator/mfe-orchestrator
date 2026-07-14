@@ -32,7 +32,6 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
                 slug: slugify(data.name),
                 description: data.description
             })
-            notifications.showSuccessNotification({ message: `Progetto "${created.name}" creato` })
             onCreated?.(created)
         } catch {
             notifications.showErrorNotification({ message: "Impossibile creare il progetto" })

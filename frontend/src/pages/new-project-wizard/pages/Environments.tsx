@@ -25,7 +25,7 @@ const Environments: React.FC<WizardStepProps> = ({ onNext, onBack }) => (
             )}
         </div>
 
-        <NoEnvironmentPlaceholder onSaveSuccess={() => onNext()} />
+        <NoEnvironmentPlaceholder onSaveSuccess={() => onNext()} notifyOnSuccess={false} />
     </div>
 )
 

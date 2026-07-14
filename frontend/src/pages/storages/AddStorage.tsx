@@ -165,9 +165,11 @@ interface StorageFormProps {
     submitLabel?: string
     cancelLabel?: string
     onBack?: () => void | Promise<void>
+    /** Set false to suppress the success toast (e.g. inside the wizard) */
+    notifyOnSuccess?: boolean
 }
 
-export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCancel, onSubmitSuccess, submitLabel, cancelLabel, onBack }) => {
+export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCancel, onSubmitSuccess, submitLabel, cancelLabel, onBack, notifyOnSuccess = true }) => {
     const { t } = useTranslation()
     const storageApi = useStorageApi()
     const notifications = useToastNotificationStore()
@@ -190,10 +192,10 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
 
         if (isEditMode && id) {
             await storageApi.update(id, data)
-            notifications.showSuccessNotification({ message: t("storage.updateSuccess") })
+            if (notifyOnSuccess) notifications.showSuccessNotification({ message: t("storage.updateSuccess") })
         } else {
             await storageApi.create(data)
-            notifications.showSuccessNotification({ message: t("storage.createSuccess") })
+            if (notifyOnSuccess) notifications.showSuccessNotification({ message: t("storage.createSuccess") })
         }
         await onSubmitSuccess?.()
     }

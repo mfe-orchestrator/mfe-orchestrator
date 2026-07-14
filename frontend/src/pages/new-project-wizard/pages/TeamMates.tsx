@@ -1,5 +1,6 @@
 import { Plus, Trash2, Users } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { Input } from "@/components/ui/input/input"
 import useProjectApi, { RoleInProject } from "@/hooks/apiClients/useProjectApi"
@@ -11,22 +12,24 @@ interface Row {
     role: RoleInProject
 }
 
-const ROLES = [
-    { value: RoleInProject.MEMBER, label: "Membro" },
-    { value: RoleInProject.VIEWER, label: "Visualizzatore" },
-    { value: RoleInProject.OWNER, label: "Proprietario" }
-]
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip }) => {
+    const { t } = useTranslation()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
     const [loading, setLoading] = useState(false)
-    const [rows, setRows] = useState<Row[]>([{ email: "", role: RoleInProject.MEMBER }])
+    const [rows, setRows] = useState<Row[]>([{ email: "", role: RoleInProject.VIEWER }])
+
+    // Same role values/labels as the real invite form (AddUserButton)
+    const ROLES = [
+        { value: RoleInProject.OWNER, label: t("project_users.roles.admin") },
+        { value: RoleInProject.MEMBER, label: t("project_users.roles.editor") },
+        { value: RoleInProject.VIEWER, label: t("project_users.roles.viewer") }
+    ]
 
     const update = (i: number, patch: Partial<Row>) => setRows(prev => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
-    const addRow = () => setRows(prev => [...prev, { email: "", role: RoleInProject.MEMBER }])
+    const addRow = () => setRows(prev => [...prev, { email: "", role: RoleInProject.VIEWER }])
     const removeRow = (i: number) => setRows(prev => prev.filter((_, idx) => idx !== i))
 
     const onFinish = async () => {
@@ -47,7 +50,6 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
         setLoading(true)
         try {
             await Promise.all(valid.map(r => projectApi.inviteUser({ projectId: project._id, email: r.email.trim(), role: r.role })))
-            notifications.showSuccessNotification({ message: `${valid.length} inviti inviati` })
             onNext()
         } catch {
             notifications.showErrorNotification({ message: "Alcuni inviti non sono stati inviati" })

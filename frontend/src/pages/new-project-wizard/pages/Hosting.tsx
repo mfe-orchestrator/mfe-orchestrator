@@ -23,7 +23,7 @@ const Hosting: React.FC<WizardStepProps> = ({ onNext, onBack, onSkip }) => (
             Nessuna fretta: puoi aggiungere o modificare gli storage in qualsiasi momento dalle impostazioni del progetto.
         </p>
 
-        <StorageForm onSubmitSuccess={() => onNext()} onCancel={() => onSkip?.()} onBack={onBack} submitLabel="Salva e continua" cancelLabel="Salta" />
+        <StorageForm onSubmitSuccess={() => onNext()} onCancel={() => onSkip?.()} onBack={onBack} submitLabel="Salva e continua" cancelLabel="Salta" notifyOnSuccess={false} />
     </div>
 )
 
