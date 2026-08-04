@@ -14,7 +14,7 @@
     },
     "keywords": [],
     "author": "",
-    "license": "ISC",
+    "license": "Apache-2.0",
     "packageManager": "pnpm@10.19.0",
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1086.0",
