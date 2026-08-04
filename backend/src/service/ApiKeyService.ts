@@ -8,12 +8,12 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export class ApiKeyService extends BaseAuthorizedService {
     async getByProjectId(projectId: string): Promise<IApiKeyDocument[]> {
-        await this.ensureAccessToProject(projectId)
+        await this.ensureProjectIsUsable(projectId)
         return await ApiKey.find({ projectId: toObjectId(projectId) })
     }
 
     async createRaw(projectId: string, apiKeyData: ApiKeyDTO, session?: ClientSession): Promise<IApiKey> {
-        await this.ensureAccessToProject(projectId, session)
+        await this.ensureProjectIsUsable(projectId, session)
         const projectIdObj = toObjectId(projectId)
 
         const apiKeyRawData: IApiKey = {

@@ -45,13 +45,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend[]> {
         const projectIdObj = toObjectId(projectId)
-        await this.ensureAccessToProject(projectIdObj)
+        await this.ensureProjectIsUsable(projectIdObj)
         return await Microfrontend.find({ projectId: projectIdObj })
     }
 
     async create(microfrontend: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = toObjectId(projectId)
-        await this.ensureAccessToProject(projectIdObj)
+        await this.ensureProjectIsUsable(projectIdObj)
 
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)

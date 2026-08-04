@@ -1,10 +1,34 @@
-import { PartyPopper } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
+import { Database, GitBranch, Layers, PartyPopper, Users } from "lucide-react"
 import { Button } from "@/components/atoms"
-import { WizardStepProps } from "./wizardShared"
+import { Project } from "@/hooks/apiClients/useProjectApi"
+import useProjectWizardClient from "@/hooks/apiClients/useProjectWizardClient"
 
-const Completed: React.FC<WizardStepProps & { onDone?: () => void }> = ({ project, onDone }) => {
-    const navigate = useNavigate()
+interface CompletedProps {
+    project?: Project
+    /** Leaves the wizard: the project is unlocked and can finally be used */
+    onDone: () => void
+    onAddMicrofrontend: () => void
+}
+
+const RecapTile: React.FC<{ icon: React.ReactNode; label: string; value: number }> = ({ icon, label, value }) => (
+    <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-muted/30 px-3 py-4">
+        <span className="text-primary">{icon}</span>
+        <span className="text-lg font-semibold text-foreground">{value}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+)
+
+const Completed: React.FC<CompletedProps> = ({ project, onDone, onAddMicrofrontend }) => {
+    const wizardClient = useProjectWizardClient()
+
+    const recapQuery = useQuery({
+        queryKey: ["project-wizard-recap", project?._id],
+        queryFn: () => wizardClient.getRecap(project!._id),
+        enabled: Boolean(project?._id)
+    })
+
+    const recap = recapQuery.data
 
     return (
         <div data-testid="wizard-completed" className="bg-card border border-border rounded-xl shadow-card mt-8 p-10 flex flex-col items-center text-center gap-5">
@@ -24,21 +48,23 @@ const Completed: React.FC<WizardStepProps & { onDone?: () => void }> = ({ projec
                     Puoi iniziare ad aggiungere microfrontend.
                 </p>
             </div>
+
+            {recap && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full mt-2">
+                    <RecapTile icon={<Layers className="size-4" />} label="Ambienti" value={recap.environments} />
+                    <RecapTile icon={<Database className="size-4" />} label="Storage" value={recap.storages} />
+                    <RecapTile icon={<GitBranch className="size-4" />} label="Repository" value={recap.codeRepositories} />
+                    <RecapTile icon={<Users className="size-4" />} label="Membri" value={recap.users} />
+                </div>
+            )}
+
             <div className="flex items-center gap-3 mt-2">
-                {onDone ? (
-                    <Button variant="primary" onClick={onDone}>
-                        Inizia a usare il progetto
-                    </Button>
-                ) : (
-                    <>
-                        <Button variant="ghost" onClick={() => navigate("/microfrontends")}>
-                            Vai alla dashboard
-                        </Button>
-                        <Button variant="primary" onClick={() => navigate("/microfrontend/new")}>
-                            Aggiungi microfrontend
-                        </Button>
-                    </>
-                )}
+                <Button dataTestId="wizard-go-to-dashboard" variant="ghost" onClick={onDone}>
+                    Vai alla dashboard
+                </Button>
+                <Button variant="primary" onClick={onAddMicrofrontend}>
+                    Aggiungi microfrontend
+                </Button>
             </div>
         </div>
     )

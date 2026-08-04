@@ -10,7 +10,7 @@ import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
  * navigate-away / OAuth flow, so it can't be inlined; we delegate to the
  * existing component instead of duplicating its logic.
  */
-const CodeRepositories: React.FC<WizardStepProps> = ({ onNext, onBack, onSkip }) => {
+const CodeRepositories: React.FC<WizardStepProps> = ({ onNext, onBack, onSkip, loading }) => {
     const [dialogOpen, setDialogOpen] = useState(false)
 
     return (
@@ -18,7 +18,7 @@ const CodeRepositories: React.FC<WizardStepProps> = ({ onNext, onBack, onSkip })
             title="Collega il codice sorgente"
             description="Collega un provider Git (GitHub, GitLab o Azure DevOps) per abilitare build e deploy automatici dei microfrontend."
             skippableNote="Nessuna fretta: puoi collegare o cambiare i repository in qualsiasi momento dalla sezione Repository del progetto."
-            footer={<WizardFooter onBack={onBack} onSkip={onSkip} onNext={onNext} nextLabel="Continua" />}
+            footer={<WizardFooter onBack={onBack} onSkip={onSkip} onNext={onNext} loading={loading} nextLabel="Continua" />}
         >
             <div className="flex flex-col items-start gap-3">
                 <Button type="button" variant="secondary" onClick={() => setDialogOpen(true)}>

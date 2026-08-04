@@ -30,7 +30,9 @@ export async function loginViaApi(page: Page, request: APIRequestContext): Promi
     })
     if (projectsRes.ok()) {
         const projects = await projectsRes.json()
-        projectId = projects?.[0]?._id ?? ""
+        // A project whose creation wizard is still running cannot be opened
+        const usableProject = projects?.find((project: { wizard?: { status?: string } }) => project?.wizard?.status !== "IN_PROGRESS")
+        projectId = usableProject?._id ?? ""
     }
 
     await page.addInitScript(

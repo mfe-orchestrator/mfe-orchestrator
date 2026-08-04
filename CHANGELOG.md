@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Backend Orchestrated Project Wizard**: The new project wizard is driven by the XState machine persisted on the backend (`/api/projects/wizard/*`): steps, order, skippable steps and legal transitions are decided server side
+- **Project Wizard Routes**: One route per step (`/project-wizard/:projectId/:step`), plus `/project-wizard/new` to start and `/project-wizard` to resume an interrupted setup
+- **Project Lock**: A project whose wizard is not completed cannot be used - microfrontends, deployments, api keys, variables and the project summary answer `423 PROJECT_WIZARD_NOT_COMPLETED`, and the console redirects to the pending step
 - **Monorepo Architecture**: Migrated to pnpm workspace with centralized dependency management
 - **Turbo Build System**: Added Turborepo for optimized build and task orchestration
 - **Biome Integration**: Replaced ESLint + Prettier with Biome for unified linting and formatting

@@ -15,12 +15,12 @@ class DeploymentService extends BaseAuthorizedService {
     }
 
     async getByEnvironmentId(environmentId: string | Schema.Types.ObjectId): Promise<IDeployment[]> {
-        await this.ensureAccessToEnvironment(environmentId)
+        await this.ensureEnvironmentIsUsable(environmentId)
         return Deployment.find({ environmentId: toObjectId(environmentId) }).sort({ deployedAt: -1 })
     }
 
     async getLastByEnvironmentId(environmentId: string | Schema.Types.ObjectId): Promise<IDeployment | null> {
-        await this.ensureAccessToEnvironment(environmentId)
+        await this.ensureEnvironmentIsUsable(environmentId)
         return Deployment.findOne({ environmentId: toObjectId(environmentId) }).sort({ deployedAt: -1 })
     }
 
@@ -38,7 +38,7 @@ class DeploymentService extends BaseAuthorizedService {
     }
 
     async createRaw(environmentId: string | Schema.Types.ObjectId, session?: ClientSession) {
-        await this.ensureAccessToEnvironment(environmentId, session)
+        await this.ensureEnvironmentIsUsable(environmentId, session)
         const environmentIdObj = toObjectId(environmentId)
         const environment = await Environment.findById(environmentIdObj).session(session || null)
         if (!environment) {
@@ -90,7 +90,7 @@ class DeploymentService extends BaseAuthorizedService {
             throw new EntityNotFoundError(deploymentId.toString())
         }
 
-        await this.ensureAccessToEnvironment(deployment.environmentId)
+        await this.ensureEnvironmentIsUsable(deployment.environmentId)
 
         deployment.active = true
         deployment.deployedAt = new Date()

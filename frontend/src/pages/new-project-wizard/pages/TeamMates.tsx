@@ -14,7 +14,7 @@ interface Row {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip }) => {
+const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip, loading: transitionLoading }) => {
     const { t } = useTranslation()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
@@ -63,7 +63,7 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
             title="Invita i collaboratori"
             description="Aggiungi le persone che lavoreranno al progetto. Riceveranno un invito via email. Puoi saltare e invitarle più tardi."
             skippableNote="Nessuna fretta: puoi invitare o rimuovere collaboratori in qualsiasi momento dalle impostazioni del progetto."
-            footer={<WizardFooter onBack={onBack} onSkip={onSkip} skipLabel="Salta e completa" onNext={onFinish} loading={loading} nextLabel="Completa" />}
+            footer={<WizardFooter onBack={onBack} onSkip={onSkip} skipLabel="Salta e completa" onNext={onFinish} loading={loading || transitionLoading} nextLabel="Completa" />}
         >
             <div className="flex flex-col gap-3">
                 {rows.map((row, i) => (

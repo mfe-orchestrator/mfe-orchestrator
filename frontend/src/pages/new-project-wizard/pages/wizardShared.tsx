@@ -1,58 +1,78 @@
-import { Check, Info } from "lucide-react"
+import { Check, Database, FolderPlus, GitBranch, Info, Layers, PartyPopper, Users } from "lucide-react"
 import { Button } from "@/components/atoms"
 import { Project } from "@/hooks/apiClients/useProjectApi"
+import { WizardStep, WizardStepDTO } from "@/types/ProjectWizardDTO"
 import { cn } from "@/utils/styleUtils"
 
-export interface WizardStepMeta {
-    key: string
-    label: string
-    icon: React.ReactNode
+/** Labels and icons of the steps; the steps themselves come from the backend. */
+export const STEP_META: Record<WizardStep, { label: string; icon: React.ReactNode }> = {
+    [WizardStep.MAIN_DATA]: { label: "Nome", icon: <FolderPlus className="size-5" /> },
+    [WizardStep.ENVIRONMENTS]: { label: "Ambienti", icon: <Layers className="size-5" /> },
+    [WizardStep.STORAGES]: { label: "Storage", icon: <Database className="size-5" /> },
+    [WizardStep.REPOSITORIES]: { label: "Repository", icon: <GitBranch className="size-5" /> },
+    [WizardStep.TEAM_MATES]: { label: "Collaboratori", icon: <Users className="size-5" /> },
+    [WizardStep.COMPLETED]: { label: "Fine", icon: <PartyPopper className="size-5" /> }
 }
 
 /** Props shared by every wizard step */
 export interface WizardStepProps {
     project?: Project
-    /** step 1 only: notify the orchestrator that the project has been created */
-    onCreated?: (project: Project) => void
+    /** Moves to the step the backend decides comes next */
     onNext: () => void
     onBack?: () => void
     onSkip?: () => void
-    isFirst?: boolean
+    /** A transition is in flight: the step must not accept other commands */
+    loading?: boolean
 }
 
 /* -------------------------------------------------------------------------- */
 
 interface WizardStepperProps {
-    steps: WizardStepMeta[]
-    current: number
+    /** Steps as returned by the backend; the final one is not shown */
+    steps: WizardStepDTO[]
+    /** Only the steps flagged reachable by the backend can be clicked */
+    onStepClick?: (step: WizardStepDTO) => void
 }
 
-export const WizardStepper: React.FC<WizardStepperProps> = ({ steps, current }) => (
-    <ol className="flex items-center w-full">
-        {steps.map((step, index) => {
-            const isDone = index < current
-            const isActive = index === current
-            return (
-                <li key={step.key} className={cn("flex items-center", index < steps.length - 1 && "flex-1")}>
-                    <div className="flex flex-col items-center gap-2 shrink-0">
-                        <div
-                            className={cn(
-                                "h-11 w-11 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-                                isActive && "border-primary bg-primary text-primary-foreground shadow-[0_0_0_4px_hsl(var(--ring))]",
-                                isDone && "border-primary bg-primary text-primary-foreground",
-                                !isActive && !isDone && "border-border bg-card text-muted-foreground"
-                            )}
-                        >
-                            {isDone ? <Check className="size-5" /> : step.icon}
+export const WizardStepper: React.FC<WizardStepperProps> = ({ steps, onStepClick }) => {
+    const visibleSteps = steps.filter(step => step.step !== WizardStep.COMPLETED)
+
+    return (
+        <ol className="flex items-center w-full">
+            {visibleSteps.map((step, index) => {
+                const isDone = step.completed && !step.current
+                const isActive = step.current
+                const isClickable = Boolean(onStepClick) && step.reachable && !step.current
+                const meta = STEP_META[step.step]
+
+                return (
+                    <li key={step.step} className={cn("flex items-center", index < visibleSteps.length - 1 && "flex-1")}>
+                        <div className="flex flex-col items-center gap-2 shrink-0">
+                            <button
+                                type="button"
+                                data-testid={`wizard-stepper-${step.slug}`}
+                                disabled={!isClickable}
+                                onClick={() => onStepClick?.(step)}
+                                aria-current={isActive ? "step" : undefined}
+                                className={cn(
+                                    "h-11 w-11 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                                    isActive && "border-primary bg-primary text-primary-foreground shadow-[0_0_0_4px_hsl(var(--ring))]",
+                                    isDone && "border-primary bg-primary text-primary-foreground",
+                                    !isActive && !isDone && "border-border bg-card text-muted-foreground",
+                                    isClickable ? "cursor-pointer hover:opacity-80" : "cursor-default"
+                                )}
+                            >
+                                {isDone ? <Check className="size-5" /> : meta.icon}
+                            </button>
+                            <span className={cn("text-xs font-medium text-center whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>{meta.label}</span>
                         </div>
-                        <span className={cn("text-xs font-medium text-center whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>{step.label}</span>
-                    </div>
-                    {index < steps.length - 1 && <div className={cn("flex-1 h-0.5 mx-2 -mt-6 rounded transition-colors duration-300", isDone ? "bg-primary" : "bg-border")} />}
-                </li>
-            )
-        })}
-    </ol>
-)
+                        {index < visibleSteps.length - 1 && <div className={cn("flex-1 h-0.5 mx-2 -mt-6 rounded transition-colors duration-300", isDone ? "bg-primary" : "bg-border")} />}
+                    </li>
+                )
+            })}
+        </ol>
+    )
+}
 
 /* -------------------------------------------------------------------------- */
 

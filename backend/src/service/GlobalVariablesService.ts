@@ -9,7 +9,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 
 export default class GlobalVariablesService extends BaseAuthorizedService {
     async getAllByProjectId(projectId: string): Promise<IGlobalVariable[]> {
-        await this.ensureAccessToProject(projectId)
+        await this.ensureProjectIsUsable(projectId)
         const environmentIds = (await Environment.find({ projectId: toObjectId(projectId) }).select("_id")).map(env => env._id)
         return GlobalVariable.find({ environmentId: { $in: environmentIds } }).sort({ key: 1 })
     }
@@ -24,7 +24,7 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
     }
 
     async createForProject(variableData: GlobalVariableCreateDTO, projectId: string): Promise<IGlobalVariable[]> {
-        await this.ensureAccessToProject(projectId)
+        await this.ensureProjectIsUsable(projectId)
 
         const environments = await Environment.find({ projectId: toObjectId(projectId) }).select("_id")
 
@@ -88,7 +88,7 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
     }
 
     async updateByProjectId(body: GlobalVariableUpdateDTO, projectId: string): Promise<(IGlobalVariable | null)[]> {
-        await this.ensureAccessToProject(projectId)
+        await this.ensureProjectIsUsable(projectId)
         const envIds = (await Environment.find({ projectId: toObjectId(projectId) }).select("_id")).map(env => env._id.toString())
 
         return Promise.all(
@@ -105,7 +105,7 @@ export default class GlobalVariablesService extends BaseAuthorizedService {
     }
 
     async deleteByProjectId(key: string, projectId: string): Promise<DeleteResult> {
-        await this.ensureAccessToProject(projectId)
+        await this.ensureProjectIsUsable(projectId)
         const envIds = (await Environment.find({ projectId: toObjectId(projectId) }).select("_id")).map(env => env._id)
 
         return GlobalVariable.deleteMany({ key, environmentId: { $in: envIds } })

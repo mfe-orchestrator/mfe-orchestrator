@@ -1,4 +1,10 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import { WIZARD_MACHINE_VERSION, WizardStep } from "../utils/projectWizardStateMachine"
+
+export enum WizardStatus {
+    IN_PROGRESS = "IN_PROGRESS",
+    COMPLETED = "COMPLETED"
+}
 
 export interface IWizardProjectState extends Document<ObjectId> {
     projectId: Schema.Types.ObjectId
@@ -7,12 +13,25 @@ export interface IWizardProjectState extends Document<ObjectId> {
      * Stato corrente XState
      * es: "step1" | "step2" | ...
      */
-    stateValue: string
+    stateValue: WizardStep
 
     /**
      * Context XState serializzato
      */
+    // biome-ignore lint/suspicious/noExplicitAny: the xstate context is free form by design
     context: Record<string, any>
+
+    /**
+     * Steps the user already went through. Drives the stepper and tells which
+     * steps can be re-opened without breaking the machine order.
+     */
+    completedSteps: WizardStep[]
+
+    /**
+     * While the wizard is IN_PROGRESS the project is locked: it cannot be used
+     * from the console, only configured through the wizard endpoints.
+     */
+    status: WizardStatus
 
     /**
      * Versione della macchina (utile se la FSM evolve)
@@ -37,6 +56,7 @@ const WizardProjectStateSchema = new Schema<IWizardProjectState>(
 
         stateValue: {
             type: String,
+            enum: Object.values(WizardStep),
             required: true
         },
 
@@ -46,10 +66,25 @@ const WizardProjectStateSchema = new Schema<IWizardProjectState>(
             default: {}
         },
 
+        completedSteps: {
+            type: [String],
+            enum: Object.values(WizardStep),
+            required: true,
+            default: []
+        },
+
+        status: {
+            type: String,
+            enum: Object.values(WizardStatus),
+            required: true,
+            default: WizardStatus.IN_PROGRESS,
+            index: true
+        },
+
         machineVersion: {
             type: Number,
             required: true,
-            default: 1
+            default: WIZARD_MACHINE_VERSION
         }
     },
     {

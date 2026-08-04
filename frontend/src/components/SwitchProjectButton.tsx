@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input/input"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
+import { getWizardStepPath, isProjectLockedByWizard } from "@/types/ProjectWizardDTO"
 import { setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
 import { cn } from "@/utils/styleUtils"
 
@@ -27,9 +28,15 @@ const SwitchProjectButton = () => {
     }, [projects, search])
 
     const handleProjectSelect = (selectedProject: Project) => {
+        setIsOpen(false)
+        // A project whose setup wizard is still running cannot be opened: the
+        // user is taken back to the step the backend stopped at.
+        if (isProjectLockedByWizard(selectedProject.wizard) && selectedProject.wizard) {
+            navigate(getWizardStepPath(selectedProject._id, selectedProject.wizard.currentStepSlug))
+            return
+        }
         setProject(selectedProject)
         setProjectIdInLocalStorage(selectedProject._id)
-        setIsOpen(false)
     }
 
     const loadProjects = async () => {
@@ -101,7 +108,13 @@ const SwitchProjectButton = () => {
                                                 </span>
                                                 <span className="flex min-w-0 flex-col">
                                                     <span className="truncate text-sm font-medium text-foreground">{proj.name}</span>
-                                                    {proj.description && <span className="truncate text-xs text-muted-foreground">{proj.description}</span>}
+                                                    {isProjectLockedByWizard(proj.wizard) ? (
+                                                        <span className="truncate text-xs text-muted-foreground">
+                                                            {t("project.setup_incomplete", { defaultValue: "Configurazione da completare" })}
+                                                        </span>
+                                                    ) : (
+                                                        proj.description && <span className="truncate text-xs text-muted-foreground">{proj.description}</span>
+                                                    )}
                                                 </span>
                                                 {isActive && <Check className="ml-auto h-4 w-4 shrink-0 text-accent" />}
                                             </button>
@@ -122,7 +135,7 @@ const SwitchProjectButton = () => {
                         </div>
                     )}
                     <div className="border-t border-border pt-4">
-                        <Button variant="primary" size="sm" className="w-full" onClick={() => navigate("/project-wizard")}>
+                        <Button variant="primary" size="sm" className="w-full" onClick={() => navigate("/project-wizard/new")}>
                             <Plus />
                             <span>{t("project.create_new")}</span>
                         </Button>

@@ -12,7 +12,9 @@ import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
+import WizardProjectState, { WizardStatus } from "../models/WizardProjectState"
 import { toObjectId } from "../utils/mongooseUtils"
+import { getStepDefinition, resolveStep, WizardStep } from "../utils/projectWizardStateMachine"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import UserProjectService from "./UserProjectService"
@@ -30,6 +32,21 @@ export interface ProjectUpdateInput {
     isActive?: boolean
 }
 
+/**
+ * Wizard status attached to every project returned by {@link ProjectService.findMine}
+ * so the client knows, without an extra roundtrip, which projects are still
+ * locked behind their creation wizard and where to resume them.
+ */
+export interface ProjectWizardSummaryDTO {
+    status: WizardStatus
+    currentStep: WizardStep
+    currentStepSlug: string
+}
+
+export interface ProjectListItemDTO extends IProject {
+    wizard?: ProjectWizardSummaryDTO
+}
+
 export interface ProjectSummaryDTO {
     project: IProject
     count: {
@@ -45,7 +62,7 @@ export interface ProjectSummaryDTO {
 export class ProjectService extends BaseAuthorizedService {
     userProjectService = new UserProjectService()
 
-    async findMine(userId: ObjectId): Promise<IProject[]> {
+    async findMine(userId: ObjectId): Promise<ProjectListItemDTO[]> {
         try {
             const projects: IProject[] = await UserProject.aggregate([
                 { $match: { userId } },
@@ -61,7 +78,7 @@ export class ProjectService extends BaseAuthorizedService {
                 { $replaceRoot: { newRoot: "$project" } },
                 { $sort: { name: 1 } }
             ])
-            return projects
+            return this.withWizardState(projects)
         } catch (error) {
             throw createBusinessException({
                 code: "PROJECT_FETCH_ERROR",
@@ -72,6 +89,40 @@ export class ProjectService extends BaseAuthorizedService {
                 statusCode: 500
             })
         }
+    }
+
+    /**
+     * Decorates the projects with the state of their creation wizard. Projects
+     * created before the wizard existed have no state and stay undecorated,
+     * which the clients read as "usable".
+     */
+    private async withWizardState(projects: IProject[]): Promise<ProjectListItemDTO[]> {
+        if (projects.length === 0) {
+            return []
+        }
+
+        const wizardStates = await WizardProjectState.find({
+            projectId: { $in: projects.map(project => project._id) }
+        })
+        const wizardByProjectId = new Map(wizardStates.map(state => [state.projectId.toString(), state]))
+
+        return projects.map(project => {
+            const wizardState = wizardByProjectId.get(project._id.toString())
+            // A step persisted by an older machine is realigned when the wizard
+            // is opened: here it is enough not to advertise an unknown route.
+            const currentStep = wizardState ? resolveStep(wizardState.stateValue) : undefined
+            if (!wizardState || !currentStep) {
+                return project as ProjectListItemDTO
+            }
+            return {
+                ...project,
+                wizard: {
+                    status: wizardState.status,
+                    currentStep,
+                    currentStepSlug: getStepDefinition(currentStep).slug
+                }
+            } as ProjectListItemDTO
+        })
     }
 
     async findById(id: string | Schema.Types.ObjectId, session?: ClientSession): Promise<IProject | null> {
@@ -95,6 +146,7 @@ export class ProjectService extends BaseAuthorizedService {
 
     async getSummary(projectId: string): Promise<ProjectSummaryDTO> {
         const projectIdObj = toObjectId(projectId)
+        await this.ensureProjectIsUsable(projectIdObj)
         const project = await this.findById(projectIdObj)
         if (!project) {
             throw new EntityNotFoundError(projectId)

@@ -1,21 +1,23 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { Navigate } from "react-router-dom"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
 import { Button } from "@/components/atoms"
 import SelectField from "@/components/input/SelectField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
-import NewProjectWizard from "@/pages/new-project-wizard/NewProjectWizard"
 import useProjectStore from "@/store/useProjectStore"
+import { getWizardStepPath, isProjectLockedByWizard } from "@/types/ProjectWizardDTO"
 import { getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
 
 interface SelectProjectFormData {
     projectId: string
 }
 
-const SelectProjectForm: React.FC = () => {
+const isUsable = (project: Project) => !isProjectLockedByWizard(project.wizard)
+
+const SelectProjectForm: React.FC<{ projects: Project[] }> = ({ projects }) => {
     const { t } = useTranslation()
     const form = useForm<SelectProjectFormData>()
     const projectStore = useProjectStore()
@@ -23,7 +25,7 @@ const SelectProjectForm: React.FC = () => {
     const onSubmit = async (data: SelectProjectFormData) => {
         try {
             // Handle project selection
-            const selectedProject = projectStore.projects?.find(p => p._id === data.projectId)
+            const selectedProject = projects.find(p => p._id === data.projectId)
             if (selectedProject) {
                 projectStore.setProject(selectedProject)
                 setProjectIdInLocalStorage(selectedProject._id)
@@ -42,7 +44,7 @@ const SelectProjectForm: React.FC = () => {
                             name="projectId"
                             className="p-2 border rounded-md w-full"
                             rules={{ required: t("validation.required") }}
-                            options={projectStore.projects?.map((project: Project) => ({
+                            options={projects.map((project: Project) => ({
                                 value: project._id,
                                 label: project.name
                             }))}
@@ -57,33 +59,38 @@ const SelectProjectForm: React.FC = () => {
     )
 }
 
+/**
+ * Gate of the console: a project whose creation wizard is still running cannot
+ * be opened, the user is sent (back) to the wizard instead. The lock is decided
+ * by the backend, this only follows it.
+ */
 const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children }) => {
     const projectStore = useProjectStore()
-    const queryClient = useQueryClient()
-    const [firstRunComplete, setFirstRunComplete] = useState(false)
 
-    const hasProjects = Boolean(projectStore.projects && projectStore.projects.length > 0)
+    const projects = projectStore.projects ?? []
+    const usableProjects = projects.filter(isUsable)
+    const lockedProject = projects.find(project => !isUsable(project))
 
-    // First run: no projects yet → guide the user through the full project wizard.
-    // Gated on a local flag so the wizard stays mounted for every step even though
-    // step 1 already sets the active project in the store.
-    if (!hasProjects && !firstRunComplete) {
-        return (
-            <NewProjectWizard
-                mountPoint="/project-wizard"
-                onComplete={() => {
-                    setFirstRunComplete(true)
-                    queryClient.invalidateQueries({ queryKey: ["projects-mine"] })
-                }}
-            />
-        )
+    // Nothing usable yet: either resume the wizard left running or start one.
+    if (usableProjects.length === 0) {
+        if (lockedProject?.wizard) {
+            return <Navigate to={getWizardStepPath(lockedProject._id, lockedProject.wizard.currentStepSlug)} replace />
+        }
+        return <Navigate to="/project-wizard/new" replace />
+    }
+
+    // The wizard status always comes from the list: the project kept in the
+    // store may have been stored before the wizard was completed.
+    const activeProject = projects.find(project => project._id === projectStore.project?._id)
+    if (activeProject && !isUsable(activeProject) && activeProject.wizard) {
+        return <Navigate to={getWizardStepPath(activeProject._id, activeProject.wizard.currentStepSlug)} replace />
     }
 
     if (projectStore.project) {
         return <>{children}</>
     }
 
-    return <SelectProjectForm />
+    return <SelectProjectForm projects={usableProjects} />
 }
 
 const SelectProjectWrapper: React.FC<React.PropsWithChildren> = props => {
@@ -96,14 +103,20 @@ const SelectProjectWrapper: React.FC<React.PropsWithChildren> = props => {
             try {
                 const projects = await projectApi.getMineProjects()
                 projectStore.setProjects(projects)
-                if (projects.length === 1) {
-                    projectStore.setProject(projects[0])
-                    setProjectIdInLocalStorage(projects[0]._id)
+
+                // Projects still locked by their wizard cannot be selected
+                const usableProjects = projects.filter(isUsable)
+                if (usableProjects.length === 1) {
+                    projectStore.setProject(usableProjects[0])
+                    setProjectIdInLocalStorage(usableProjects[0]._id)
                 }
                 //Here we have several projects
                 const projectId = getProjectIdFromLocalStorage()
                 if (projectId) {
-                    projectStore.setProject(projects.find(p => p._id === projectId))
+                    const storedProject = usableProjects.find(p => p._id === projectId)
+                    if (storedProject) {
+                        projectStore.setProject(storedProject)
+                    }
                 }
 
                 return projects

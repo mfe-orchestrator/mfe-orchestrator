@@ -30,7 +30,7 @@ const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCa
 const TemplatesLibrary = lazy(() => import("./pages/templates-library/TemplatesLibrary"))
 const NotFound = lazy(() => import("./pages/error/NotFound"))
 const Settings = lazy(() => import("./pages/settings/Settings"))
-const NewProjectWizard = lazy(() => import("./pages/new-project-wizard/NewProjectWizard"))
+const ProjectWizardRoutes = lazy(() => import("./pages/new-project-wizard/ProjectWizardRoutes"))
 
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"))
 const ProjectInvitation = lazy(() => import("./pages/auth/ProjectInvitation"))
@@ -43,21 +43,31 @@ const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) 
         <GoogleAuthWrapper>
             <MicrosoftAuthWrapper>
                 <Auth0Wrapper>
-                    <AuthWrapper>
-                        <SelectProjectWrapper>{children}</SelectProjectWrapper>
-                    </AuthWrapper>
+                    <AuthWrapper>{children}</AuthWrapper>
                 </Auth0Wrapper>
             </MicrosoftAuthWrapper>
         </GoogleAuthWrapper>
     )
 }
 
+/**
+ * The project wizard has its own routes and runs outside the console: until the
+ * backend declares it completed the project it configures cannot be opened,
+ * so the wizard is mounted before (and without) SelectProjectWrapper.
+ */
 const PrivateRoutes: React.FC = () => {
     return (
         <AuthenticationWrapper>
             <RRDRoutes>
-                <Route path="/project-wizard/:projectId?/*" element={<RouteWithSuspense element={<NewProjectWizard mountPoint="/project-wizard" />} />} />
-                <Route path="*" element={<RouteWithSuspense element={<PrivateProjectRoutes />} />} />
+                <Route path="/project-wizard/*" element={<RouteWithSuspense element={<ProjectWizardRoutes />} />} />
+                <Route
+                    path="*"
+                    element={
+                        <SelectProjectWrapper>
+                            <RouteWithSuspense element={<PrivateProjectRoutes />} />
+                        </SelectProjectWrapper>
+                    }
+                />
             </RRDRoutes>
         </AuthenticationWrapper>
     )

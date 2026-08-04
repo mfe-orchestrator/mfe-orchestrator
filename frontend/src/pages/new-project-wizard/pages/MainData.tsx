@@ -2,43 +2,35 @@ import { useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
-import useProjectApi from "@/hooks/apiClients/useProjectApi"
-import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
+import { Project } from "@/hooks/apiClients/useProjectApi"
+import { WizardMainDataDTO } from "@/hooks/apiClients/useProjectWizardClient"
+import { StepShell, WizardFooter } from "./wizardShared"
 
-interface MainDataForm {
-    name: string
-    description?: string
+interface MainDataProps {
+    project?: Project
+    /**
+     * Creates the project (wizard start) or updates it and moves on: in both
+     * cases it is the backend that decides which step follows.
+     */
+    onSubmitMainData: (data: WizardMainDataDTO) => Promise<void>
+    loading?: boolean
+    submitLabel?: string
 }
 
-const slugify = (value: string) =>
-    value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
+const MainData: React.FC<MainDataProps> = ({ project, onSubmitMainData, loading, submitLabel }) => {
+    const [submitting, setSubmitting] = useState(false)
+    const form = useForm<WizardMainDataDTO>({ defaultValues: { name: project?.name ?? "", description: project?.description ?? "" } })
 
-const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
-    const projectApi = useProjectApi()
-    const notifications = useToastNotificationStore()
-    const [loading, setLoading] = useState(false)
-    const form = useForm<MainDataForm>({ defaultValues: { name: project?.name ?? "", description: project?.description ?? "" } })
-
-    const onSubmit = async (data: MainDataForm) => {
-        setLoading(true)
+    const onSubmit = async (data: WizardMainDataDTO) => {
+        setSubmitting(true)
         try {
-            const created = await projectApi.createProject({
-                name: data.name,
-                slug: slugify(data.name),
-                description: data.description
-            })
-            onCreated?.(created)
-        } catch {
-            notifications.showErrorNotification({ message: "Impossibile creare il progetto" })
+            await onSubmitMainData(data)
         } finally {
-            setLoading(false)
+            setSubmitting(false)
         }
     }
+
+    const busy = loading || submitting
 
     return (
         <FormProvider {...form}>
@@ -46,10 +38,10 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
                 <StepShell
                     title="Diamo un nome al progetto"
                     description="Il nome identifica il progetto nella console. Potrai modificarlo in seguito dalle impostazioni."
-                    footer={<WizardFooter loading={loading} nextLabel="Crea progetto" />}
+                    footer={<WizardFooter loading={busy} nextLabel={submitLabel ?? (project ? "Salva e continua" : "Crea progetto")} />}
                 >
                     <div className="flex flex-col gap-4">
-                        <TextField<MainDataForm>
+                        <TextField<WizardMainDataDTO>
                             name="name"
                             label="Nome progetto"
                             placeholder="Es. Portale Clienti"
@@ -57,7 +49,7 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
                             dataTestId="wizard-project-name"
                             rules={{ required: "Il nome è obbligatorio", minLength: { value: 3, message: "Minimo 3 caratteri" } }}
                         />
-                        <TextareaField<MainDataForm> name="description" label="Descrizione (opzionale)" placeholder="A cosa serve questo progetto?" />
+                        <TextareaField<WizardMainDataDTO> name="description" label="Descrizione (opzionale)" placeholder="A cosa serve questo progetto?" />
                     </div>
                 </StepShell>
             </form>
