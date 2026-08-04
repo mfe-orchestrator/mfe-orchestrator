@@ -12,7 +12,7 @@ class EnvironmentService extends BaseAuthorizedService {
     async getByProjectId(projectId: string) {
         await this.ensureAccessToProject(projectId)
         const projectIdObj = toObjectId(projectId)
-        return Environment.find({ projectId: projectIdObj }).sort({ order: 1 })
+        return Environment.find({ projectId: projectIdObj }).sort({ order: 1, createdAt: 1 })
     }
 
     async getById(id: string | Schema.Types.ObjectId, session?: ClientSession) {
@@ -29,7 +29,7 @@ class EnvironmentService extends BaseAuthorizedService {
         await this.ensureAccessToProject(projectIdObj)
         const environment = new Environment(environmentData)
         environment.projectId = projectIdObj
-        if (!environment.order) {
+        if (environment.order === undefined || environment.order === null) {
             environment.order = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
         }
         return await environment.save()
@@ -42,7 +42,7 @@ class EnvironmentService extends BaseAuthorizedService {
         let maxOrder = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
         environments.forEach(env => {
             env.projectId = projectIdObj
-            if (!env.order) {
+            if (env.order === undefined || env.order === null) {
                 env.order = maxOrder
                 maxOrder++
             }
@@ -60,6 +60,45 @@ class EnvironmentService extends BaseAuthorizedService {
         }
 
         return updatedEnvironment
+    }
+
+    /**
+     * Persists a new ordering for the environments of a project.
+     * The position of each id inside the array becomes the environment order.
+     * @param projectId The project owning the environments
+     * @param ids The environment ids, already sorted as they have to be displayed
+     */
+    async updateOrder(projectId: string, ids: (string | ObjectId)[]): Promise<IEnvironment[]> {
+        await this.ensureAccessToProject(projectId)
+        const projectIdObj = toObjectId(projectId)
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            throw new Error("Ids array is required")
+        }
+
+        const idsObj = ids.map(id => toObjectId(id))
+        const uniqueIds = new Set(idsObj.map(id => id.toString()))
+        if (uniqueIds.size !== idsObj.length) {
+            throw new Error("Ids array cannot contain duplicates")
+        }
+
+        const environments = await Environment.find({ projectId: projectIdObj }).select("_id")
+        const projectEnvironmentIds = new Set(environments.map(environment => environment._id.toString()))
+        const notInProject = idsObj.find(id => !projectEnvironmentIds.has(id.toString()))
+        if (notInProject) {
+            throw new EntityNotFoundError(notInProject.toString())
+        }
+
+        await Environment.bulkWrite(
+            idsObj.map((id, index) => ({
+                updateOne: {
+                    filter: { _id: id, projectId: projectIdObj },
+                    update: { $set: { order: index } }
+                }
+            }))
+        )
+
+        return this.getByProjectId(projectId)
     }
 
     async deleteSingle(environmentId: string | ObjectId) {

@@ -302,6 +302,11 @@
                 "success": "Ambiente eliminato con successo",
                 "error": "Errore durante l'eliminazione dell'ambiente"
             },
+            "reorder": {
+                "hint": "Trascina gli ambienti per cambiare l'ordine usato in tutta l'applicazione",
+                "handle": "Trascina per riordinare {{name}}",
+                "success": "Ordine degli ambienti aggiornato"
+            },
             "form": {
                 "create_title": "Nuovo Ambiente",
                 "edit_title": "Modifica {{name}}",

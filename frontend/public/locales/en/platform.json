@@ -520,6 +520,11 @@
                 "confirmation": "Are you sure you want to delete the {{name}} environment",
                 "success": "Environment \"{{name}}\" has been deleted"
             },
+            "reorder": {
+                "hint": "Drag the environments to change the order used across the application",
+                "handle": "Drag to reorder {{name}}",
+                "success": "Environments order updated"
+            },
             "form": {
                 "create_title": "Create New Environment",
                 "edit_title": "Edit {{name}}",
