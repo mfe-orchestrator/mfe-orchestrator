@@ -1,9 +1,15 @@
 # Production Image with Nginx
 FROM nginx:alpine
 
-# Install Node.js and pnpm for the backend
+# Install Node.js and pnpm for the backend.
+# pnpm must be pinned to the same version as the "packageManager" field of the
+# workspace: an unpinned install now resolves to pnpm 11, which tries to
+# self-switch to the pinned 10.x release and fails on Alpine, because
+# @pnpm/exe@10.x publishes no musl platform binary ("Cannot verify the identity
+# of the @pnpm/exe.linux-x64 native binary: it is missing from pnpm-lock.yaml").
+ARG PNPM_VERSION=10.19.0
 RUN apk add --update nodejs npm && \
-    npm install -g pnpm
+    npm install -g pnpm@${PNPM_VERSION}
 
 # Create application directories
 RUN mkdir -p /var/www/frontend /var/www/backend
