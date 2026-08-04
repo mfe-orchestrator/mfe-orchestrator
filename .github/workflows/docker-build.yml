@@ -19,22 +19,22 @@ jobs:
 
     steps:
       - name: 🔄 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 📥 Download Backend Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: backend-build
           path: backend/dist
 
       - name: 📥 Download Frontend Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: frontend-build
           path: frontend/dist
 
       - name: 🔑 Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
