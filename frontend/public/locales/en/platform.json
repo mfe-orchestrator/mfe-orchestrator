@@ -123,7 +123,9 @@
         "configuration": "Configuration",
         "add": "Add",
         "remove": "Remove",
-        "copy": "Copy"
+        "copy": "Copy",
+        "back": "Back",
+        "saving": "Saving..."
     },
     "setup": {
         "title": "Initial Setup",
@@ -454,6 +456,19 @@
         "select_repository_placeholder": "Choose a repository...",
         "sourceCodeProvider": "Source Code Provider",
         "create_new_repository": "Create new...",
+        "clone_urls_description": "Clone urls are filled in automatically when the repository is created, and can be edited at any time.",
+        "clone_url_https": "HTTPS clone URL",
+        "clone_url_https_placeholder": "https://github.com/org/repository.git",
+        "clone_url_ssh": "SSH clone URL",
+        "clone_url_ssh_placeholder": "git@github.com:org/repository.git",
+        "clone": {
+            "button": "Clone repo",
+            "title": "Clone repository",
+            "description": "Copy the clone command or open the repository directly in VS Code.",
+            "https": "Clone via HTTPS",
+            "ssh": "Clone via SSH",
+            "vscode": "Clone with VS Code"
+        },
         "dangerZone": {
             "title": "Danger Zone",
             "subtitle": "These actions are irreversible. Please be certain.",
@@ -489,6 +504,11 @@
         "actions": "Actions",
         "confirmDeleteTitle": "Delete Variable",
         "confirmDeleteDescription": "Are you sure you want to delete the variable '{{key}}'? This action cannot be undone.",
+        "form": {
+            "key": "Key",
+            "environment_values": "Values per environment",
+            "value_placeholder": "Value for {{env}}"
+        },
         "deleted_success": "Environment variable deleted successfully",
         "updated_success": "Environment variable updated successfully",
         "created_success": "Environment variable created successfully"
@@ -501,6 +521,7 @@
         "created_success_message": "Environments created successfully",
         "update_success": "Environment updated successfully",
         "color_tooltip": "Environment color: {{name}}",
+        "color": "Color",
         "name": "Name",
         "slug": "Slug",
         "description": "Description",
@@ -519,6 +540,11 @@
                 "title": "Delete Environment",
                 "confirmation": "Are you sure you want to delete the {{name}} environment",
                 "success": "Environment \"{{name}}\" has been deleted"
+            },
+            "reorder": {
+                "hint": "Drag the environments to change the order used across the application",
+                "handle": "Drag to reorder {{name}}",
+                "success": "Environments order updated"
             },
             "form": {
                 "create_title": "Create New Environment",

@@ -7,3 +7,8 @@ export interface EnvironmentDTO {
     isProduction: boolean
     domains: string[]
 }
+
+export interface EnvironmentOrderDTO {
+    /** Environment ids sorted as they have to be displayed */
+    ids: string[]
+}

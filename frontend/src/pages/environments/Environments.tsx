@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query"
-import { Check, Pencil, PlusCircle, Trash2, X } from "lucide-react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Check, GripVertical, Pencil, PlusCircle, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -16,9 +16,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import useEnvironmentsApi, { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
+import useDragAndDropOrder from "@/hooks/useDragAndDropOrder"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import EnvironmentsGate from "@/theme/EnvironmentsGate"
+import { cn } from "@/utils/styleUtils"
 
 interface EnvironmentDialogFormData {
     name: string
@@ -127,17 +129,51 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
 export default function EnvironmentsPage() {
     const { t } = useTranslation()
 
-    const { deleteEnvironment } = useEnvironmentsApi()
+    const { deleteEnvironment, updateEnvironmentsOrder } = useEnvironmentsApi()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
+    const queryClient = useQueryClient()
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [currentEnvironment, setCurrentEnvironment] = useState<EnvironmentDTO>()
-    const { project } = useProjectStore()
+    const [orderedEnvironments, setOrderedEnvironments] = useState<EnvironmentDTO[]>([])
+    const { project, setEnvironments } = useProjectStore()
 
     const environmentQuery = useQuery({
         queryKey: ["environments", project._id],
         queryFn: () => projectApi.getEnvironmentsByProjectId(project._id)
+    })
+
+    useEffect(() => {
+        setOrderedEnvironments(environmentQuery.data ?? [])
+    }, [environmentQuery.data])
+
+    const updateOrderMutation = useMutation({
+        mutationFn: (environments: EnvironmentDTO[]) => updateEnvironmentsOrder(environments.map(env => env._id)),
+        onSuccess: async (environments: EnvironmentDTO[]) => {
+            // Apply the new order everywhere: project store (used by all the other pages) and environments query
+            setEnvironments(environments)
+            await queryClient.invalidateQueries({ queryKey: ["environments", project._id] })
+            notifications.showSuccessNotification({
+                message: t("environment.page.reorder.success")
+            })
+        },
+        onError: () => {
+            // Restore the persisted order
+            setOrderedEnvironments(environmentQuery.data ?? [])
+        }
+    })
+
+    const onReorder = (environments: EnvironmentDTO[]) => {
+        setOrderedEnvironments(environments)
+        updateOrderMutation.mutate(environments)
+    }
+
+    const { draggingId, dragOverId, getHandleProps, getItemProps } = useDragAndDropOrder({
+        items: orderedEnvironments,
+        getId: env => env._id,
+        onReorder,
+        disabled: updateOrderMutation.isPending
     })
 
     const onSubmitSuccess = async () => {
@@ -199,10 +235,12 @@ export default function EnvironmentsPage() {
                 }}
             >
                 <ApiStatusHandler queries={[environmentQuery]}>
+                    <p className="mb-2 text-sm text-foreground-secondary">{t("environment.page.reorder.hint")}</p>
                     <div className="rounded-md border-2 border-border overflow-hidden">
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-primary/25">
+                                    <TableHead className="w-10" />
                                     <TableHead>{t("environment.form.name")}</TableHead>
                                     <TableHead>{t("environment.form.slug")}</TableHead>
                                     <TableHead>{t("environment.production")}</TableHead>
@@ -212,8 +250,24 @@ export default function EnvironmentsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {environmentQuery.data?.map(env => (
-                                    <TableRow key={env._id}>
+                                {orderedEnvironments.map(env => (
+                                    <TableRow
+                                        key={env._id}
+                                        {...getItemProps(env._id)}
+                                        className={cn(draggingId === env._id && "opacity-50", dragOverId === env._id && "outline-2 -outline-offset-2 outline-dashed outline-primary")}
+                                    >
+                                        <TableCell className="px-2">
+                                            <span
+                                                {...getHandleProps(env._id)}
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label={t("environment.page.reorder.handle", { name: env.name })}
+                                                title={t("environment.page.reorder.handle", { name: env.name })}
+                                                className="flex cursor-grab items-center justify-center rounded-md p-1 text-foreground-secondary hover:bg-primary/15 focus-visible:outline-2 focus-visible:outline-primary active:cursor-grabbing"
+                                            >
+                                                <GripVertical className="size-4" />
+                                            </span>
+                                        </TableCell>
                                         <TableCell className="font-medium">{env.name}</TableCell>
                                         <TableCell>{env.slug}</TableCell>
                                         <TableCell>{env.isProduction ? <Check /> : <X />}</TableCell>

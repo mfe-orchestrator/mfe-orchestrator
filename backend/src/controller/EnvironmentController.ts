@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify"
-import EnvironmentService from "../service/EnvironmentService"
-import { EnvironmentDTO } from "../types/EnvironmentDTO"
-import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import DeploymentService from "../service/DeploymentService"
+import EnvironmentService from "../service/EnvironmentService"
+import { EnvironmentDTO, EnvironmentOrderDTO } from "../types/EnvironmentDTO"
+import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function environmentController(fastify: FastifyInstance) {
     fastify.get("/environments", async (request, reply) => {
@@ -40,6 +40,16 @@ export default async function environmentController(fastify: FastifyInstance) {
             throw new ProjectHeaderNotFoundError()
         }
         return reply.send(await new EnvironmentService(request.databaseUser).createBulk(request.body, projectId))
+    })
+
+    fastify.put<{ Body: EnvironmentOrderDTO }>("/environments/order", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+
+        const environments = await new EnvironmentService(request.databaseUser).updateOrder(projectId, request.body?.ids)
+        return reply.send(environments)
     })
 
     fastify.put<{ Body: EnvironmentDTO; Params: { id: string } }>("/environments/:id", async (request, reply) => {

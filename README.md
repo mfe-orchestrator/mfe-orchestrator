@@ -266,7 +266,7 @@ This project uses automated tools to maintain code quality:
 
 ## License
 
-ISC
+Licensed under the [Apache License, Version 2.0](LICENSE).
 
 ## Planned Integrations 🔍
 

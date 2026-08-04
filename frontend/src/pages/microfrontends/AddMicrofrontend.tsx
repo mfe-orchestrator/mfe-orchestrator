@@ -51,6 +51,8 @@ const formSchema = z
                 codeRepositoryId: z.string().optional(),
                 repositoryId: z.string().optional(),
                 name: z.string().optional(),
+                cloneUrlHttps: z.string().optional(),
+                cloneUrlSsh: z.string().optional(),
                 gitlab: z
                     .object({
                         groupPath: z.string().optional(),

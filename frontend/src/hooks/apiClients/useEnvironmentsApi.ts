@@ -57,6 +57,18 @@ const useEnvironmentsApi = () => {
         return response.data
     }
 
+    /**
+     * Persists the environments order: the position of each id inside the array becomes its order
+     */
+    const updateEnvironmentsOrder = async (ids: string[]) => {
+        const response = await apiClient.doRequest<EnvironmentDTO[]>({
+            url: `/api/environments/order`,
+            method: "PUT",
+            data: { ids }
+        })
+        return response.data
+    }
+
     const editEnvironment = async (id: string, data: CreateEnvironmentDTO) => {
         const response = await apiClient.doRequest<EnvironmentDTO>({
             url: `/api/environments/${id}`,
@@ -71,7 +83,8 @@ const useEnvironmentsApi = () => {
         createEnvironmentsBulk,
         deleteEnvironment,
         editEnvironment,
-        getEnvironment
+        getEnvironment,
+        updateEnvironmentsOrder
     }
 }
 
