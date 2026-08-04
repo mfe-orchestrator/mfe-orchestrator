@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { CirclePlus, LayoutGrid, Search, StretchHorizontal, Workflow } from "lucide-react"
+import { CirclePlus, LayoutGrid, Search, StretchHorizontal, Workflow, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -14,7 +14,16 @@ import { Tabs } from "@/components/ui/tabs/tabs"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useProjectStore from "@/store/useProjectStore"
+import { MicrofrontendsEmptyState } from "./partials/components"
 import { MicrofrontendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
+
+const VIEWS = [
+    { value: "flow", icon: Workflow, labelKey: "microfrontend.dashboard.viewFlow" },
+    { value: "grid", icon: LayoutGrid, labelKey: "microfrontend.dashboard.viewGrid" },
+    { value: "table", icon: StretchHorizontal, labelKey: "microfrontend.dashboard.viewTable" }
+] as const
+
+type View = (typeof VIEWS)[number]["value"]
 
 const Microfrontends = () => {
     const { t } = useTranslation()
@@ -27,7 +36,7 @@ const Microfrontends = () => {
     const microfrontendsApi = useMicrofrontendsApi()
 
     const [searchTerm, setSearchTerm] = useState("")
-    const [tabsValue, setTabsValue] = useState<"flow" | "grid" | "table">("flow")
+    const [view, setView] = useState<View>("flow")
 
     const onResetFilters = () => {
         setSearchTerm("")
@@ -56,6 +65,11 @@ const Microfrontends = () => {
         return filteredData
     }, [microfrontendListQuery?.data, searchTerm])
 
+    const totalCount = microfrontendListQuery.data?.length ?? 0
+    const filteredCount = microfrontendsList?.length ?? 0
+    // The toolbar is only useful once the project actually has something to search through or switch views on.
+    const hasMicrofrontends = totalCount > 0
+
     const onAddNewMicrofrontend = async (parentId?: string) => {
         const repositories = await codeRepositoriesApi.getRepositoriesByProjectId(projectStore.project?._id!)
         if (repositories && repositories.length > 0) {
@@ -74,67 +88,84 @@ const Microfrontends = () => {
     }
 
     return (
-        <SinglePageLayout
-            title={t("microfrontend.dashboard.title")}
-            description={t("microfrontend.dashboard.description")}
-            left={
-                <div className="flex-[1_1_280px] flex items-center justify-end gap-2 @[509px]:max-w-xs">
-                    <div className="relative w-full flex-grow">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-secondary" />
-                        <Input placeholder={t("microfrontend.dashboard.searchPlaceholder")} className="pl-8 w-full" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                    </div>
-                </div>
-            }
-            right={
-                tabsValue === "table" ? (
-                    <div>
-                        <Button variant="secondary" onClick={() => onAddNewMicrofrontend()} className="flex-[0_0_auto]">
+        // The Tabs root wraps the whole layout so the view switcher can live in the page header, next to the primary action.
+        <Tabs value={view} onValueChange={value => setView(value as View)} className="flex min-h-full flex-col" iconButtons tabsListPosition="end">
+            <SinglePageLayout
+                title={t("microfrontend.dashboard.title")}
+                description={t("microfrontend.dashboard.description")}
+                lrContainerClassname="items-end"
+                left={
+                    hasMicrofrontends ? (
+                        <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
+                            <div className="relative w-full max-w-sm">
+                                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground-secondary" aria-hidden="true" />
+                                <Input placeholder={t("microfrontend.dashboard.searchPlaceholder")} className="pl-9 pr-9" fullWidth value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={onResetFilters}
+                                        aria-label={t("microfrontend.dashboard.clearSearch")}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-foreground-secondary transition-colors hover:bg-primary/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    >
+                                        <X className="size-4" />
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-sm text-foreground-secondary" aria-live="polite">
+                                {searchTerm ? t("microfrontend.dashboard.filteredCount", { count: filteredCount, total: totalCount }) : t("microfrontend.dashboard.totalCount", { count: totalCount })}
+                            </p>
+                        </div>
+                    ) : null
+                }
+                right={
+                    <div className="flex flex-[0_0_auto] items-center gap-2">
+                        {hasMicrofrontends && (
+                            <TabsList>
+                                {VIEWS.map(({ value, icon: Icon, labelKey }) => (
+                                    // Labelled via aria-label/title rather than a Radix Tooltip: TooltipTrigger would
+                                    // overwrite the trigger's own `data-state`, which is what drives the active styling.
+                                    // The shared `accent` active state is a pale wash on this theme, so the selected
+                                    // view gets the stronger primary fill.
+                                    <TabsTrigger
+                                        key={value}
+                                        value={value}
+                                        aria-label={t(labelKey)}
+                                        title={t(labelKey)}
+                                        className="data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:data-[state=active]:bg-primary/85 focus-visible:data-[state=active]:bg-primary/85"
+                                    >
+                                        <Icon />
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        )}
+                        <Button variant="primary" onClick={() => onAddNewMicrofrontend()}>
                             <CirclePlus />
                             {t("microfrontend.add_new")}
                         </Button>
                     </div>
-                ) : null
-            }
-        >
-            <ApiStatusHandler queries={[microfrontendListQuery]}>
-                <Tabs defaultValue="flow" className="space-y-4" iconButtons tabsListPosition="end">
-                    <div className="flex items-start justify-between gap-x-6 gap-y-2 flex-wrap">
-                        <div className="flex-[1_1_280px] max-w-[600px]">
-                            <h2 className="text-xl font-semibold text-foreground-secondary">
-                                {microfrontendListQuery.isSuccess && microfrontendsList.length > 0
-                                    ? `${microfrontendsList.length} ${t("microfrontend.dashboard.title")}`
-                                    : t("microfrontend.no_microfrontends_found")}
-                            </h2>
-                            {microfrontendListQuery.isSuccess && microfrontendsList.length === 0 && (
-                                <p className="text-foreground-secondary mt-1">{t("microfrontend.no_microfrontends_found_description")}</p>
-                            )}
-                        </div>
-                        <TabsList>
-                            <TabsTrigger value="flow" onClick={() => setTabsValue("flow")}>
-                                <Workflow />
-                            </TabsTrigger>
-                            <TabsTrigger value="grid" onClick={() => setTabsValue("grid")}>
-                                <LayoutGrid />
-                            </TabsTrigger>
-                            <TabsTrigger value="table" onClick={() => setTabsValue("table")}>
-                                <StretchHorizontal />
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-
-                    <TabsContent value="flow">
-                        <MicrofrontendFlow microfrontends={microfrontendsList} onAddNewMicrofrontend={onAddNewMicrofrontend} />
-                    </TabsContent>
-                    <TabsContent value="grid">
-                        <MicrofrontendsGrid microfrontendsList={microfrontendsList} onAddNewMicrofrontend={onAddNewMicrofrontend} />
-                    </TabsContent>
-
-                    <TabsContent value="table">
-                        <MicrofrontendsTable microfrontends={microfrontendsList} />
-                    </TabsContent>
-                </Tabs>
-            </ApiStatusHandler>
-        </SinglePageLayout>
+                }
+            >
+                <ApiStatusHandler queries={[microfrontendListQuery]}>
+                    {!hasMicrofrontends ? (
+                        <MicrofrontendsEmptyState variant="empty" onAddNewMicrofrontend={() => onAddNewMicrofrontend()} />
+                    ) : filteredCount === 0 ? (
+                        <MicrofrontendsEmptyState variant="no-results" searchTerm={searchTerm} onResetFilters={onResetFilters} />
+                    ) : (
+                        <>
+                            <TabsContent value="flow" className="mt-0">
+                                <MicrofrontendFlow microfrontends={microfrontendsList} onAddNewMicrofrontend={onAddNewMicrofrontend} />
+                            </TabsContent>
+                            <TabsContent value="grid" className="mt-0">
+                                <MicrofrontendsGrid microfrontends={microfrontendsList} onAddNewMicrofrontend={onAddNewMicrofrontend} />
+                            </TabsContent>
+                            <TabsContent value="table" className="mt-0">
+                                <MicrofrontendsTable microfrontends={microfrontendsList} />
+                            </TabsContent>
+                        </>
+                    )}
+                </ApiStatusHandler>
+            </SinglePageLayout>
+        </Tabs>
     )
 }
 

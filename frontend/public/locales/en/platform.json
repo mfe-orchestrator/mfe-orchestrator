@@ -86,12 +86,18 @@
         "description_placeholder": "Enter project description",
         "create": "Create project",
         "switch": "Switch project",
+        "switch_or_create": "Switch or create project",
         "create_new": "Create new project",
         "no_projects_found": "No projects found",
         "create_new_project": "Create a new project now",
         "or_ask_admin": "Or ask an admin to assign you to a project",
         "select_project": "Select a Project",
-        "select_project_placeholder": "Select a project..."
+        "select_project_placeholder": "Select a project...",
+        "switch_desc": "Select a project to work on or create a new one.",
+        "search_placeholder": "Search projects...",
+        "no_results": "No projects match your search.",
+        "no_projects": "No projects yet",
+        "no_projects_desc": "Create your first project to get started."
     },
     "common": {
         "close": "Close",
@@ -163,7 +169,11 @@
                 }
             }
         },
-        "notifications": "Notifications"
+        "notifications": {
+            "projectDeleted": "Project deleted",
+            "projectNameUpdated": "Project name updated",
+            "projectNameUpdateFailed": "Failed to update project name"
+        }
     },
     "theme": {
         "light": "Light",
@@ -174,6 +184,12 @@
     "apiKeys": {
         "api_keys": "API Keys",
         "no_api_keys": "No API keys found",
+        "no_api_keys_desc": "API keys let external services authenticate with your project. Create one to get started.",
+        "status": "Status",
+        "status_active": "Active",
+        "status_expiring": "Expiring soon",
+        "status_expired": "Expired",
+        "status_unknown": "Unknown",
         "expiresAt": "Expiration Date",
         "created_api_key": "API Key created",
         "expiresAt_placeholder": "Pick a date",
@@ -276,7 +292,24 @@
         },
         "invited": "Invited",
         "accepted": "Accepted",
-        "invite_state": "Status"
+        "invite_state": "Status",
+        "invite_resent": "Invitation resent",
+        "invite_revoked": "Invitation revoked",
+        "pending_invites": "{{count}} pending invitations",
+        "pending_invites_one": "One pending invitation",
+        "invite_expires": "Expires on",
+        "resend_invite": "Resend",
+        "revoke_invite": "Revoke invitation",
+        "confirm_revoke_title": "Revoke invitation",
+        "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?"
+    },
+    "project_invitation": {
+        "title": "Project invitation",
+        "description": "You've been invited to join {{project}} as {{role}}.",
+        "accept": "Accept invitation",
+        "accepted": "Invitation accepted",
+        "name_label": "First name",
+        "surname_label": "Last name"
     },
     "microfrontend": {
         "host": "Host",
@@ -292,7 +325,18 @@
             "filterStatus": "Filter by status",
             "statusAll": "All",
             "statusActive": "Active",
-            "statusDisabled": "Disabled"
+            "statusDisabled": "Disabled",
+            "viewFlow": "Diagram view",
+            "viewGrid": "Grid view",
+            "viewTable": "Table view",
+            "clearSearch": "Clear search",
+            "noResultsTitle": "No results",
+            "noResultsDescription": "No microfrontend matches “{{searchTerm}}”. Try a different search term.",
+            "resetFilters": "Clear search",
+            "totalCount_one": "{{count}} microfrontend",
+            "totalCount_other": "{{count}} microfrontends",
+            "filteredCount_one": "{{count}} of {{total}} microfrontends",
+            "filteredCount_other": "{{count}} of {{total}} microfrontends"
         },
         "build": {
             "title": "Build {{name}}",
@@ -428,7 +472,8 @@
                     "confirmButton": "Delete Microfrontend"
                 }
             }
-        }
+        },
+        "ofUsers": "of users"
     },
     "environmentVariables": {
         "title": "Environment Variables",

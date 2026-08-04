@@ -1,4 +1,4 @@
-import { ArrowLeftFromLine, ArrowRightFromLine, BookOpen, Github, Menu } from "lucide-react";
+import { ArrowLeftFromLine, ArrowRightFromLine, BookOpen, GitBranch, Menu } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { NavItem } from "@/components/ui/Sidebar/partials/NavItem/NavItem";
@@ -128,7 +128,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
             />
             <NavItem
               type="secondary"
-              icon={<Github />}
+              icon={<GitBranch />}
               name="Contribute"
               href="https://github.com/mfe-orchestrator"
               isSidebarCollapsed={isCollapsed}

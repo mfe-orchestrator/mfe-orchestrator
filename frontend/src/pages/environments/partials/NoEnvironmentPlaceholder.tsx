@@ -1,17 +1,19 @@
-import useEnvironmentsApi, { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
-import useToastNotificationStore from "@/store/useToastNotificationStore"
-import presetEnvironmentGroups, { EnvironmentPreset } from "@/utils/EnviromentsPresets"
 import { useMutation } from "@tanstack/react-query"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
+import useEnvironmentsApi, { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
+import presetEnvironmentGroups, { EnvironmentPreset } from "@/utils/EnviromentsPresets"
 import { Card, CardContent, CardHeader } from "../../../components/ui/card"
 import { EnvironmentList, EnvironmentSet } from "./index"
 
 interface NoEnvironmentPlaceholderProps {
     onSaveSuccess: (environments: EnvironmentDTO[]) => void
+    /** Set false to suppress the success toast (e.g. inside the wizard) */
+    notifyOnSuccess?: boolean
 }
 
-export const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> = ({ onSaveSuccess }) => {
+export const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> = ({ onSaveSuccess, notifyOnSuccess = true }) => {
     const [customEnvironments, setCustomEnvironments] = useState<EnvironmentPreset[]>()
     const environmentsApi = useEnvironmentsApi()
     const notificationToast = useToastNotificationStore()
@@ -24,9 +26,11 @@ export const NoEnvironmentPlaceholder: React.FC<NoEnvironmentPlaceholderProps> =
     const saveEnvironmentsMutation = useMutation({
         mutationFn: async (environments: EnvironmentDTO[]) => {
             const newEnvironments = await environmentsApi.createEnvironmentsBulk(environments)
-            notificationToast.showSuccessNotification({
-                message: t("environment.created_success_message")
-            })
+            if (notifyOnSuccess) {
+                notificationToast.showSuccessNotification({
+                    message: t("environment.created_success_message")
+                })
+            }
             onSaveSuccess(newEnvironments)
         }
     })

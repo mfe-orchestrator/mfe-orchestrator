@@ -1,20 +1,21 @@
 {
-  "name": "@mfe-orchestrator/e2e",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@10.19.0",
-  "scripts": {
-    "test": "playwright test",
-    "test:ui": "playwright test --ui",
-    "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug",
-    "test:codegen": "playwright codegen",
-    "test:report": "playwright show-report"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.49.1",
-    "@types/node": "^24.10.1",
-    "typescript": "^5.9.3"
-  }
+    "name": "@mfe-orchestrator/e2e",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "packageManager": "pnpm@10.19.0",
+    "scripts": {
+        "test": "playwright test",
+        "test:ui": "playwright test --ui",
+        "test:headed": "playwright test --headed",
+        "test:debug": "playwright test --debug",
+        "test:codegen": "playwright codegen http://localhost:5173",
+        "test:report": "playwright show-report"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.61.1",
+        "@types/node": "^26.1.1",
+        "mailinator-client": "^1.1.1",
+        "typescript": "^7.0.2"
+    }
 }
