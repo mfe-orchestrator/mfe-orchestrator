@@ -122,7 +122,10 @@
         "creating": "Creazione in corso",
         "configuration": "Configurazione",
         "add": "Aggiungi",
-        "remove": "Rimuovi"
+        "remove": "Rimuovi",
+        "back": "Indietro",
+        "saving": "Salvataggio...",
+        "copy": "Copia"
     },
     "setup": {
         "title": "Configurazione Iniziale",
@@ -274,7 +277,12 @@
         "created_success": "Variabile d'ambiente creata con successo",
         "key": "Chiave",
         "value": "Valore",
-        "actions": "Azioni"
+        "actions": "Azioni",
+        "form": {
+            "key": "Chiave",
+            "environment_values": "Valori per ambiente",
+            "value_placeholder": "Valore per {{env}}"
+        }
     },
     "environment": {
         "production": "Produzione",
@@ -302,6 +310,7 @@
                 "success": "Ambiente eliminato con successo",
                 "error": "Errore durante l'eliminazione dell'ambiente"
             },
+            "color": "Colore",
             "reorder": {
                 "hint": "Trascina gli ambienti per cambiare l'ordine usato in tutta l'applicazione",
                 "handle": "Trascina per riordinare {{name}}",

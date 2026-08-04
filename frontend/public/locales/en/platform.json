@@ -123,7 +123,9 @@
         "configuration": "Configuration",
         "add": "Add",
         "remove": "Remove",
-        "copy": "Copy"
+        "copy": "Copy",
+        "back": "Back",
+        "saving": "Saving..."
     },
     "setup": {
         "title": "Initial Setup",
@@ -489,6 +491,11 @@
         "actions": "Actions",
         "confirmDeleteTitle": "Delete Variable",
         "confirmDeleteDescription": "Are you sure you want to delete the variable '{{key}}'? This action cannot be undone.",
+        "form": {
+            "key": "Key",
+            "environment_values": "Values per environment",
+            "value_placeholder": "Value for {{env}}"
+        },
         "deleted_success": "Environment variable deleted successfully",
         "updated_success": "Environment variable updated successfully",
         "created_success": "Environment variable created successfully"
@@ -501,6 +508,7 @@
         "created_success_message": "Environments created successfully",
         "update_success": "Environment updated successfully",
         "color_tooltip": "Environment color: {{name}}",
+        "color": "Color",
         "name": "Name",
         "slug": "Slug",
         "description": "Description",
