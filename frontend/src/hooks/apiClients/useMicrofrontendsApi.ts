@@ -60,6 +60,8 @@ export interface Microfrontend {
         codeRepositoryId: string
         repositoryId: string
         name: string
+        cloneUrlHttps?: string
+        cloneUrlSsh?: string
         azure?: {
             projectId?: string
         }

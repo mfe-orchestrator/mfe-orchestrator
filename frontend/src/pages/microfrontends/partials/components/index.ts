@@ -1,5 +1,6 @@
 export * from "./AddNewMicrofrontendCard"
 export * from "./BuildDialog"
+export * from "./CloneRepositoryPopover"
 export * from "./CodeRepositorySection"
 export * from "./DangerZoneRemoveMicrofrontend"
 export * from "./HostingSection"

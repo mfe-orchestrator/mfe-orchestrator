@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CloneRepositoryPopover } from "@/pages/microfrontends/partials/components"
 import { HOST_TYPE_LABEL_KEYS } from "../labels"
 
 interface MicrofrontendsTableProps {
@@ -63,10 +64,13 @@ export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microf
                                         )}
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap text-right">
-                                        <Button variant="secondary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)}>
-                                            <Cog />
-                                            {t("common.configuration")}
-                                        </Button>
+                                        <div className="flex justify-end gap-2">
+                                            <CloneRepositoryPopover microfrontend={mfe} />
+                                            <Button variant="secondary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)}>
+                                                <Cog />
+                                                {t("common.configuration")}
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )

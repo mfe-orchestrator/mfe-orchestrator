@@ -8,6 +8,7 @@ import TextField from "../../../../components/input/TextField.rhf"
 import { Alert, AlertDescription } from "../../../../components/ui/alert"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../components/ui/card"
 import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../../../hooks/apiClients/useCodeRepositoriesApi"
+import { extractCloneUrls } from "../../../../utils/repositoryCloneUrls"
 
 const logoMap: Record<string, string> = {
     GITHUB: "/img/GitHub.svg",
@@ -98,6 +99,20 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
         fetchRepository()
     }, [selectedCodeRepositoryId])
 
+    // Prefill the clone urls with the ones exposed by the provider for the selected repository
+    const onRepositorySelected = (repositoryName: string) => {
+        if (repositoryName === "create_new") {
+            setValue("codeRepository.cloneUrlHttps", "")
+            setValue("codeRepository.cloneUrlSsh", "")
+            return
+        }
+
+        const repository = fetchedRepositories.find(repo => repo.name === repositoryName)
+        const cloneUrls = extractCloneUrls(repository)
+        setValue("codeRepository.cloneUrlHttps", cloneUrls.https || "")
+        setValue("codeRepository.cloneUrlSsh", cloneUrls.ssh || "")
+    }
+
     // Repository name availability check
     const onDebounceRepository = async (repositoryName: string) => {
         checkAvailability(repositoryName, selectedGroupPath, selectedGroupId)
@@ -180,6 +195,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                                         }))
                                     ].filter(Boolean)}
                                     placeholder={t("microfrontend.select_repository_placeholder")}
+                                    onValueChange={onRepositorySelected}
                                 />
                             )}
                         </>
@@ -243,6 +259,26 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                                 <Switch name="codeRepository.createData.private" label={t("microfrontend.github_private")} />
                             )}
                         </>
+                    )}
+
+                    {selectedCodeRepositoryId && (
+                        <div className="flex flex-col gap-2">
+                            <p className="text-sm text-foreground-secondary">{t("microfrontend.clone_urls_description")}</p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                <TextField
+                                    name="codeRepository.cloneUrlHttps"
+                                    label={t("microfrontend.clone_url_https")}
+                                    placeholder={t("microfrontend.clone_url_https_placeholder")}
+                                    containerClassName="flex-[1_1_240px]"
+                                />
+                                <TextField
+                                    name="codeRepository.cloneUrlSsh"
+                                    label={t("microfrontend.clone_url_ssh")}
+                                    placeholder={t("microfrontend.clone_url_ssh_placeholder")}
+                                    containerClassName="flex-[1_1_240px]"
+                                />
+                            </div>
+                        </div>
                     )}
                 </CardContent>
             )}

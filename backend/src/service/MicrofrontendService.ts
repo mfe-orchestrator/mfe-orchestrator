@@ -76,6 +76,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     )
                     microfrontend.codeRepository.repositoryId = createdRepository.id
                     microfrontend.codeRepository.name = createdRepository.name
+                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.remoteUrl
+                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.sshUrl
                     if (template) {
                         await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template)
                         await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
@@ -93,6 +95,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     })
                     microfrontend.codeRepository.name = createdRepository.name
                     microfrontend.codeRepository.repositoryId = createdRepository.id + ""
+                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.http_url_to_repo
+                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.ssh_url_to_repo
                     if (template) {
                         await this.injectTemplateGitlab(codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template)
                     }
@@ -109,6 +113,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     )
                     microfrontend.codeRepository.repositoryId = createdRepository.id + ""
                     microfrontend.codeRepository.name = createdRepository.name
+                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.clone_url
+                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.ssh_url
                     // Now will inject api key
                     await this.gitHubInjectApiKey(codeRepository, microfrontend)
                     // Now will inject the template

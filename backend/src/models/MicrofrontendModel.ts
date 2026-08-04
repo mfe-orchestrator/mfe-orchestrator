@@ -10,6 +10,8 @@ export interface ICodeRepositoryMicrofrontend {
     codeRepositoryId: ObjectId
     repositoryId: string
     repositoryData: Record<string, unknown>
+    cloneUrlHttps?: string
+    cloneUrlSsh?: string
     gitlab?: {
         groupId?: number
         path?: string
@@ -151,6 +153,16 @@ const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofronten
     repositoryData: {
         type: Object,
         required: false
+    },
+    cloneUrlHttps: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    cloneUrlSsh: {
+        type: String,
+        required: false,
+        trim: true
     },
     gitlab: {
         groupId: {

@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS, HOST_TYPE_LABEL_KEYS } from "../labels"
 import BuildDialog from "./BuildDialog"
+import CloneRepositoryPopover from "./CloneRepositoryPopover"
 
 interface MicrofrontendCardProps {
     mfe: Microfrontend
@@ -106,6 +107,7 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                         {t("microfrontend.card.build")}
                     </Button>
                 )}
+                <CloneRepositoryPopover microfrontend={mfe} className="flex-1" />
             </CardFooter>
 
             <BuildDialog open={isBuildDialogOpen} onOpenChange={setIsBuildDialogOpen} microfrontendId={mfe._id} microfrontendName={mfe.name} />

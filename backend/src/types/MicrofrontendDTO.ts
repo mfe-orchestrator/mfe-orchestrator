@@ -16,6 +16,8 @@ interface MicrofrontendDTO {
         codeRepositoryId: string
         repositoryId: string
         name?: string
+        cloneUrlHttps?: string
+        cloneUrlSsh?: string
         gitlab?: {
             groupPath?: string
             groupId?: number

@@ -214,7 +214,7 @@ class AzureDevOpsClient {
         return response.data
     }
 
-    async createRepository(token: string, organization: string, project: string, repositoryName: string) {
+    async createRepository(token: string, organization: string, project: string, repositoryName: string): Promise<RepositoryData> {
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`
         const body = {
             name: repositoryName,
@@ -223,7 +223,7 @@ class AzureDevOpsClient {
             }
         }
 
-        const response = await axios.request({
+        const response = await axios.request<RepositoryData>({
             method: "POST",
             url,
             headers: {
