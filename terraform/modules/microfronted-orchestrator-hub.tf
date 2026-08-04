@@ -28,5 +28,8 @@ resource "docker_container" "microfrontend_orchestrator_hub" {
     "REGISTRATION_ALLOWED=true",
     "ALLOW_EMBEDDED_LOGIN=true",
     "MICROFRONTEND_HOST_FOLDER=/var/microfrontends",
+    # Anonymous daily ping with aggregate counters only, see docs/TELEMETRY.md.
+    # Uncomment to turn it off.
+    # "TELEMETRY_DISABLED=true",
   ]
 }

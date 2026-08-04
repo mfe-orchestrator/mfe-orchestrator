@@ -1,9 +1,15 @@
-import { Authenticate } from "fastify-auth0-verify"
-import { FastifyRequest, FastifyReply } from "fastify"
 import { FastifyMultipartFile } from "@fastify/multipart"
-import { FastifyInstance } from "fastify"
-import { FastifyInstanceWithConfig } from "./index"
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
+import { Authenticate } from "fastify-auth0-verify"
 import UserModel from "../models/UserModel"
+import { FastifyInstanceWithConfig } from "./index"
+import { TelemetryDecisionDTO } from "./TelemetryDTO"
+
+/** Telemetry state resolved once at boot and shared with the controller. */
+export interface TelemetryRuntimeConfiguration extends TelemetryDecisionDTO {
+    endpoint: string
+    intervalHours: number
+}
 
 export interface FastifyRequestWithConfig extends FastifyRequest {
     config: FastifyInstanceWithConfig["config"]
@@ -60,7 +66,13 @@ declare module "fastify" {
             MICROFRONTEND_HOST_FOLDER: string
             CODE_REPOSITORY_GITHUB_CLIENT_ID: string
             CODE_REPOSITORY_GITHUB_CLIENT_SECRET: string
+            TELEMETRY_ENABLED?: string
+            TELEMETRY_DISABLED?: string
+            DO_NOT_TRACK?: string
+            TELEMETRY_ENDPOINT: string
+            TELEMETRY_INTERVAL_HOURS: number
         }
+        telemetry: TelemetryRuntimeConfiguration
     }
 
     interface FastifyRequest {
