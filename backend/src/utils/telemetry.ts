@@ -1,6 +1,6 @@
 import { TelemetryDecisionDTO, TelemetryPayloadDTO } from "../types/TelemetryDTO"
 
-export const TELEMETRY_DEFAULT_ENDPOINT = "https://telemetry.mfe-orchestrator.dev/v1/ping"
+export const TELEMETRY_DEFAULT_ENDPOINT = "https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted"
 export const TELEMETRY_DEFAULT_INTERVAL_HOURS = 24
 export const TELEMETRY_DISABLE_VARIABLE = "TELEMETRY_DISABLED=true"
 export const TELEMETRY_DOCUMENTATION_URL = "https://github.com/mfe-orchestrator/mfe-orchestrator/blob/main/docs/TELEMETRY.md"

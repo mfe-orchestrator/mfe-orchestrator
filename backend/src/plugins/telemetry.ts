@@ -26,7 +26,7 @@ const logTelemetryNotice = (fastify: FastifyInstance, endpoint: string, interval
     fastify.log.info(`Anonymous telemetry is ENABLED (every ${intervalHours}h to ${endpoint})`)
     fastify.log.info(`What we send, and nothing else: ${TELEMETRY_PAYLOAD_FIELDS.join(", ")}`)
     fastify.log.info("No names, no emails, no URLs, no hostnames, no IPs, no project or microfrontend content")
-    fastify.log.info("Inspect the exact payload of this installation: GET /api/telemetry")
+    fastify.log.info("Inspect the exact payload of this installation: GET /api/telemetry/status")
     fastify.log.info(`Turn it off: ${TELEMETRY_DISABLE_VARIABLE}`)
     fastify.log.info(`Full policy: ${TELEMETRY_DOCUMENTATION_URL}`)
     fastify.log.info("──────────────────────────────────────────────────────────────")

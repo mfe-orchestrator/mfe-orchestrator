@@ -35,7 +35,7 @@ export interface TelemetryDecisionDTO {
     reason: string
 }
 
-/** Response of `GET /telemetry`: lets an operator see the exact ping before it is sent. */
+/** Response of `GET /telemetry/status`: lets an operator see the exact ping before it is sent. */
 export interface TelemetryStatusDTO extends TelemetryDecisionDTO {
     endpoint: string
     intervalHours: number

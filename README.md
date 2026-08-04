@@ -132,7 +132,7 @@ terraform apply
 | `TELEMETRY_DISABLED`                   | _(empty)_                                                                                         | If `true`, turns off the anonymous telemetry ping.              |
 | `TELEMETRY_ENABLED`                    | _(empty)_                                                                                         | Explicit telemetry override, wins over every other switch.      |
 | `DO_NOT_TRACK`                         | _(empty)_                                                                                         | If `1`, turns off the anonymous telemetry ping.                 |
-| `TELEMETRY_ENDPOINT`                   | `https://telemetry.mfe-orchestrator.dev/v1/ping`                                                  | Where the anonymous telemetry ping is sent.                     |
+| `TELEMETRY_ENDPOINT`                   | `https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted`                               | Where the anonymous telemetry ping is sent.                     |
 | `TELEMETRY_INTERVAL_HOURS`             | `24`                                                                                              | Hours between two telemetry pings (minimum `1`).                |
 
 ## Anonymous telemetry 📡
@@ -160,7 +160,7 @@ To turn it off:
 TELEMETRY_DISABLED: "true"
 ```
 
-Every start logs what is sent and how to disable it, and `GET /api/telemetry` shows the exact payload of your installation before it leaves. Full details, field by field, in **[docs/TELEMETRY.md](docs/TELEMETRY.md)**.
+Every start logs what is sent and how to disable it, and `GET /api/telemetry/status` shows the exact payload of your installation before it leaves. Full details, field by field, in **[docs/TELEMETRY.md](docs/TELEMETRY.md)**.
 
 ## Local Installation for development 🛠️
 

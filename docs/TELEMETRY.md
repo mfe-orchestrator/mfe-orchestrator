@@ -60,7 +60,7 @@ Not "we do not currently send", but "the code has no way to send":
 - No logs, no stack traces, no error messages
 - No page views, no clicks, no session tracking — there is no client-side tracker, no cookie and no third-party analytics in the product
 
-The receiving endpoint is an ordinary HTTP service, so it sees the source IP of the request, exactly like any outbound HTTP call your server makes. The IP is not part of the payload, it is not stored with the ping and it is not used to identify or locate an installation.
+The backoffice that receives the ping is an ordinary HTTP service, so it sees the source IP of the request, exactly like any outbound HTTP call your server makes. The IP is not part of the payload, it is not stored with the ping and it is not used to identify or locate an installation.
 
 ---
 
@@ -72,7 +72,9 @@ The receiving endpoint is an ordinary HTTP service, so it sees the source IP of 
 
 ## Where it is sent
 
-`https://telemetry.mfe-orchestrator.dev/v1/ping`, overridable with `TELEMETRY_ENDPOINT` if you want to point the pings at your own collector instead.
+`https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted`, overridable with `TELEMETRY_ENDPOINT` if you want to point the pings at your own collector instead.
+
+Telemetry only ever travels **outwards**: your installation sends, our backoffice receives. The orchestrator itself exposes no endpoint that accepts pings, neither from your own instances nor from anybody else, and it never fetches anything back from the backoffice — no configuration, no feature flags, no license check. `GET /api/telemetry/status` is read-only and answers with what *this* installation would send.
 
 ---
 
@@ -105,13 +107,13 @@ The first rule that matches wins:
 
 ### Environment variables
 
-| Variable                   | Default                                          | Description                                                             |
-| -------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------- |
-| `TELEMETRY_DISABLED`       | _(unset)_                                        | `true` turns telemetry off.                                             |
-| `TELEMETRY_ENABLED`        | _(unset)_                                        | Explicit override in both directions, wins over everything else.        |
-| `DO_NOT_TRACK`             | _(unset)_                                        | `1` turns telemetry off.                                                |
-| `TELEMETRY_ENDPOINT`       | `https://telemetry.mfe-orchestrator.dev/v1/ping` | Where the ping goes. Point it at your own collector if you prefer.      |
-| `TELEMETRY_INTERVAL_HOURS` | `24`                                             | Hours between pings, minimum `1`.                                       |
+| Variable                   | Default                                                             | Description                                                        |
+| -------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `TELEMETRY_DISABLED`       | _(unset)_                                                           | `true` turns telemetry off.                                        |
+| `TELEMETRY_ENABLED`        | _(unset)_                                                           | Explicit override in both directions, wins over everything else.   |
+| `DO_NOT_TRACK`             | _(unset)_                                                           | `1` turns telemetry off.                                           |
+| `TELEMETRY_ENDPOINT`       | `https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted` | Where the ping goes. Point it at your own collector if you prefer. |
+| `TELEMETRY_INTERVAL_HOURS` | `24`                                                                | Hours between pings, minimum `1`.                                  |
 
 ---
 
@@ -120,10 +122,10 @@ The first rule that matches wins:
 **1. Read the startup log.** Every start prints the whole disclosure, no docs required:
 
 ```
-Anonymous telemetry is ENABLED (every 24h to https://telemetry.mfe-orchestrator.dev/v1/ping)
+Anonymous telemetry is ENABLED (every 24h to https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted)
 What we send, and nothing else: installationId, version, nodeVersion, projects, microfrontends, environments, users, deploymentsLastWeek
 No names, no emails, no URLs, no hostnames, no IPs, no project or microfrontend content
-Inspect the exact payload of this installation: GET /api/telemetry
+Inspect the exact payload of this installation: GET /api/telemetry/status
 Turn it off: TELEMETRY_DISABLED=true
 Full policy: https://github.com/mfe-orchestrator/mfe-orchestrator/blob/main/docs/TELEMETRY.md
 ```
@@ -136,13 +138,13 @@ Anonymous telemetry is disabled (TELEMETRY_DISABLED is set)
 
 The first ping of each process is also logged in full, so the real bytes that left your server are in your own logs.
 
-**2. Ask the running installation.** `GET /api/telemetry`, with the token of any logged-in user, returns the current configuration and the payload as it would be sent right now:
+**2. Ask the running installation.** `GET /api/telemetry/status`, with the token of any logged-in user, returns the current configuration and the payload as it would be sent right now:
 
 ```json
 {
   "enabled": true,
   "reason": "enabled by default (opt-out)",
-  "endpoint": "https://telemetry.mfe-orchestrator.dev/v1/ping",
+  "endpoint": "https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted",
   "intervalHours": 24,
   "payload": { "installationId": "3f2b9c14-...", "version": "1.0.0", "...": "..." },
   "disableWith": "TELEMETRY_DISABLED=true",
