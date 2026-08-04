@@ -410,7 +410,18 @@
             "filterStatus": "Filtra per stato",
             "statusAll": "Tutti",
             "statusActive": "Attivi",
-            "statusDisabled": "Disabilitati"
+            "statusDisabled": "Disabilitati",
+            "viewFlow": "Vista diagramma",
+            "viewGrid": "Vista griglia",
+            "viewTable": "Vista tabella",
+            "clearSearch": "Cancella la ricerca",
+            "noResultsTitle": "Nessun risultato",
+            "noResultsDescription": "Nessun microfrontend corrisponde a «{{searchTerm}}». Prova con un altro termine di ricerca.",
+            "resetFilters": "Azzera la ricerca",
+            "totalCount_one": "{{count}} microfrontend",
+            "totalCount_other": "{{count}} microfrontend",
+            "filteredCount_one": "{{count}} di {{total}} microfrontend",
+            "filteredCount_other": "{{count}} di {{total}} microfrontend"
         },
         "build": {
             "title": "Build {{name}}",

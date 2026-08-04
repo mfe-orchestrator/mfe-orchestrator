@@ -1,122 +1,116 @@
-import { Badge, Button } from "@/components/atoms";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi";
-import { Cog, Hammer, UsersRound } from "lucide-react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import BuildDialog from "./BuildDialog";
+import { Cog, GitBranch, Globe, Hammer, UsersRound } from "lucide-react"
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
+import { Badge, Button } from "@/components/atoms"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS, HOST_TYPE_LABEL_KEYS } from "../labels"
+import BuildDialog from "./BuildDialog"
 
 interface MicrofrontendCardProps {
-  mfe: Microfrontend;
+    mfe: Microfrontend
 }
 
 export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => {
-  const { t } = useTranslation("platform");
-  const navigate = useNavigate();
+    const { t } = useTranslation("platform")
+    const navigate = useNavigate()
 
-  const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false);
+    const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false)
 
-  const isCanary = mfe?.canary?.enabled;
+    const canary = mfe.canary?.enabled ? mfe.canary : undefined
+    const canaryPercentage = Math.min(100, Math.max(0, canary?.percentage ?? 0))
+    const hasRepository = Boolean(mfe.codeRepository?.enabled)
 
-  return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex-row items-end justify-between flex-wrap-reverse">
-        <div>
-          <CardTitle className="mb-0">{mfe.name}</CardTitle>
-          <div className="text-sm text-foreground-secondary">{mfe.slug}</div>
-        </div>
-        <Badge>{mfe.version}</Badge>
-      </CardHeader>
-      <CardContent className="flex-grow py-3 flex flex-col gap-2">
-        <div className="text-foreground-secondary flex flex-row">
-          <div className="font-medium mr-1">{t("microfrontend.host")}:</div>
-          <div>
-            {mfe.host.type === "CUSTOM_URL" && t("microfrontend.hostTypes.customUrl")}
-            {mfe.host.type === "MFE_ORCHESTRATOR_HUB" &&
-              t("microfrontend.hostTypes.mfeOrchestratorHub")}
-            {mfe.host.type === "CUSTOM_SOURCE" && t("microfrontend.hostTypes.customSource")}
-          </div>
-        </div>
-        {isCanary && (
-          <div className="mt-2 p-3 bg-muted/30 rounded-md border border-muted-foreground/20">
-            <div className="flex items-center gap-2 text-primary font-semibold mb-2">
-              <UsersRound size="1.1rem" />
-              <span>{t("microfrontend.canaryReleaseActive")}</span>
-            </div>
-            <div className="grid gap-1.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-foreground-secondary">{t("microfrontend.distribution")}</span>
-                <span className="font-medium">
-                  {t("microfrontend.usersPercentage", { percentage: mfe.canary.percentage })}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-foreground-secondary">{t("microfrontend.type")}</span>
-                <span className="font-medium">
-                  {mfe.canary.type === "ON_SESSIONS" && t("microfrontend.sessionType")}
-                  {mfe.canary.type === "ON_USER" && t("microfrontend.userType")}
-                  {mfe.canary.type === "COOKIE_BASED" && t("microfrontend.cookieBasedType")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-foreground-secondary">{t("microfrontend.deployment")}:</span>
-                <span className="font-medium">
-                  {mfe.canary.deploymentType === "BASED_ON_VERSION" &&
-                    t("microfrontend.deploymentTypes.basedOnVersion")}
-                  {mfe.canary.deploymentType === "BASED_ON_URL" &&
-                    t("microfrontend.deploymentTypes.basedOnUrl")}
-                </span>
-              </div>
-              {mfe.canary.url && (
-                <div className="flex justify-between">
-                  <span className="text-foreground-secondary">{t("microfrontend.canaryUrl")}:</span>
-                  <span
-                    className="font-medium truncate max-w-[200px]"
-                    title={mfe.canary.url}>
-                    {mfe.canary.url}
-                  </span>
+    return (
+        <Card className="flex h-full flex-col transition-colors duration-200 hover:border-primary">
+            <CardHeader className="flex-row items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                    <CardTitle className="mb-0 truncate" title={mfe.name}>
+                        {mfe.name}
+                    </CardTitle>
+                    <p className="truncate text-sm text-foreground-secondary" title={mfe.slug}>
+                        {mfe.slug}
+                    </p>
                 </div>
-              )}
-              {mfe.canary.version && (
-                <div className="flex justify-between">
-                  <span className="text-foreground-secondary">
-                    {t("microfrontend.canaryVersion")}:
-                  </span>
-                  <span className="font-medium">{mfe.canary.version}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="flex gap-2 flex-wrap">
-        <Button
-          variant="primary"
-          onClick={() => navigate(`/microfrontend/${mfe._id}`)}
-          className="flex-1">
-          <Cog />
-          {t("common.configuration")}
-        </Button>
-        {mfe.codeRepository?.enabled && (
-          <Button
-            variant="secondary"
-            onClick={() => setIsBuildDialogOpen(true)}
-            className="flex-1">
-            <Hammer />
-            {t("microfrontend.card.build")}
-          </Button>
-        )}
-      </CardFooter>
+                <Badge className="shrink-0">{mfe.version}</Badge>
+            </CardHeader>
 
-      <BuildDialog
-        open={isBuildDialogOpen}
-        onOpenChange={setIsBuildDialogOpen}
-        microfrontendId={mfe._id}
-        microfrontendName={mfe.name}
-      />
-    </Card>
-  );
-};
+            <CardContent className="flex flex-grow flex-col gap-3 py-3">
+                <dl className="flex flex-col gap-1.5 text-sm">
+                    <div className="flex items-center gap-2">
+                        <dt className="flex items-center gap-2 text-foreground-secondary">
+                            <Globe className="size-4 shrink-0" aria-hidden="true" />
+                            <span className="sr-only">{t("microfrontend.host")}</span>
+                        </dt>
+                        <dd className="min-w-0 truncate">{t(HOST_TYPE_LABEL_KEYS[mfe.host.type])}</dd>
+                    </div>
+                    {hasRepository && (
+                        <div className="flex items-center gap-2">
+                            <dt className="flex items-center gap-2 text-foreground-secondary">
+                                <GitBranch className="size-4 shrink-0" aria-hidden="true" />
+                                <span className="sr-only">{t("microfrontend.card.repository")}</span>
+                            </dt>
+                            <dd className="min-w-0 truncate" title={mfe.codeRepository?.name}>
+                                {mfe.codeRepository?.name || t("microfrontend.card.repository")}
+                            </dd>
+                        </div>
+                    )}
+                </dl>
 
-export default MicrofrontendCard;
+                {canary && (
+                    <div className="rounded-md border border-divider bg-primary/5 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-primary">
+                                <UsersRound className="size-4 shrink-0" aria-hidden="true" />
+                                <span className="truncate">{t("microfrontend.card.canary")}</span>
+                            </span>
+                            <span className="shrink-0 text-sm font-semibold tabular-nums">{canaryPercentage}%</span>
+                        </div>
+                        <div
+                            className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/20"
+                            role="progressbar"
+                            aria-valuenow={canaryPercentage}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={t("microfrontend.canaryReleaseActive")}
+                        >
+                            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${canaryPercentage}%` }} />
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {canary.type && <Badge variant="outline">{t(CANARY_TYPE_LABEL_KEYS[canary.type])}</Badge>}
+                            {canary.deploymentType && <Badge variant="outline">{t(CANARY_DEPLOYMENT_TYPE_LABEL_KEYS[canary.deploymentType])}</Badge>}
+                        </div>
+                        {canary.version && (
+                            <p className="mt-2 truncate text-xs text-foreground-secondary">
+                                {t("microfrontend.canaryVersion")}: {canary.version}
+                            </p>
+                        )}
+                        {canary.url && (
+                            <p className="mt-1 truncate text-xs text-foreground-secondary" title={canary.url}>
+                                {canary.url}
+                            </p>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+
+            <CardFooter className="flex-wrap gap-2 border-t border-divider pt-3">
+                <Button variant="primary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="flex-1">
+                    <Cog />
+                    {t("common.configuration")}
+                </Button>
+                {hasRepository && (
+                    <Button variant="secondary" size="sm" onClick={() => setIsBuildDialogOpen(true)} className="flex-1">
+                        <Hammer />
+                        {t("microfrontend.card.build")}
+                    </Button>
+                )}
+            </CardFooter>
+
+            <BuildDialog open={isBuildDialogOpen} onOpenChange={setIsBuildDialogOpen} microfrontendId={mfe._id} microfrontendName={mfe.name} />
+        </Card>
+    )
+}
+
+export default MicrofrontendCard

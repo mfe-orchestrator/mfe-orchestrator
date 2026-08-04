@@ -2,13 +2,27 @@ import { addEdge, applyEdgeChanges, applyNodeChanges, Background, Connection, Co
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
 import "@xyflow/react/dist/style.css"
-import AddNewMicrofrontendCard from "../components/AddNewMicrofrontendCard"
 
 interface MicrofrontendFlowProps {
     microfrontends: Microfrontend[]
     onAddNewMicrofrontend: (parentId?: string) => void
 }
+
+/** React Flow ships its own node styling, so the theme tokens have to be forced in. */
+const NODE_BASE_CLASS = "!rounded-md !border-2 !bg-card !px-3 !py-2 !text-sm !font-medium !text-card-foreground !shadow-none"
+const NODE_CLASS = `${NODE_BASE_CLASS} !border-border`
+const NODE_HIGHLIGHTED_CLASS = `${NODE_BASE_CLASS} !border-primary`
+const NODE_DIMMED_CLASS = `${NODE_CLASS} opacity-40`
+
+const EDGE_COLOR = "hsl(var(--primary))"
+
+const THEME_TO_COLOR_MODE = {
+    [ThemeEnum.LIGHT]: "light",
+    [ThemeEnum.DARK]: "dark",
+    [ThemeEnum.SYSTEM]: "system"
+} as const
 
 export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfrontends, onAddNewMicrofrontend }) => {
     const [edges, setEdges] = useState<Edge[]>([])
@@ -17,6 +31,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
 
     const navigate = useNavigate()
     const microfrontendApi = useMicrofrontendsApi()
+    const { theme } = useThemeStore()
 
     useEffect(() => {
         const edgesList: Edge[] = []
@@ -44,7 +59,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 data: { label: mfe.name },
                 position: { x: mfe?.position?.x || col * 250, y: mfe?.position?.y || row * 150 },
                 dimensions: { width: mfe?.position?.width, height: mfe?.position?.height },
-                className: "!bg-white dark:!bg-gray-800 !border-2 !border-gray-200 dark:!border-white !text-gray-900 dark:!text-gray-100 rounded-lg"
+                className: NODE_CLASS
             }
         })
         setNodes(nodes)
@@ -57,7 +72,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
             setNodes(nodes =>
                 nodes.map(node => ({
                     ...node,
-                    className: "!bg-white dark:!bg-gray-800 !border-2 !border-gray-200 dark:!border-white !text-gray-900 dark:!text-gray-100 rounded-lg"
+                    className: NODE_CLASS
                 }))
             )
             setEdges(edges =>
@@ -85,10 +100,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 const isHovered = node.id === hoveredNodeId
                 return {
                     ...node,
-                    className:
-                        isHovered || isConnected
-                            ? "!bg-white dark:!bg-gray-800 !border-2 !border-purple-500 dark:!border-purple-500 !text-gray-900 dark:!text-gray-100 rounded-lg"
-                            : "!bg-white dark:!bg-gray-800 !border-2 !border-gray-200 dark:!border-white !text-gray-900 dark:!text-gray-100 rounded-lg opacity-50"
+                    className: isHovered || isConnected ? NODE_HIGHLIGHTED_CLASS : NODE_DIMMED_CLASS
                 }
             })
         )
@@ -102,14 +114,14 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
 
                 return {
                     ...edge,
-                    style: isConnected ? { stroke: "#a855f7", strokeWidth: 2 } : { opacity: 0.3, strokeWidth: 2 },
+                    style: isConnected ? { stroke: EDGE_COLOR, strokeWidth: 2 } : { opacity: 0.3, strokeWidth: 2 },
                     animated: isConnected,
                     markerStart: isConnected
                         ? {
                               type: "arrowclosed" as const,
                               width: 20,
                               height: 20,
-                              color: "#a855f7"
+                              color: EDGE_COLOR
                           }
                         : edge.markerStart
                 }
@@ -192,16 +204,9 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
         [navigate]
     )
 
-    if (!microfrontends || microfrontends.length === 0) {
-        return (
-            <div className="flex">
-                <AddNewMicrofrontendCard onAddNewMicrofrontend={() => onAddNewMicrofrontend()} className={"flex-1"} />
-            </div>
-        )
-    }
-
     return (
-        <div className="h-[calc(100vh-96px)] border-2 border-border rounded-md">
+        // Sized against the viewport minus the app chrome and the page header, so the canvas never pushes the page into a scroll.
+        <div className="h-[calc(100vh-300px)] min-h-[420px] overflow-hidden rounded-lg border-2 border-border bg-card">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -212,11 +217,12 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 onNodeMouseEnter={onNodeMouseEnter}
                 onNodeMouseLeave={onNodeMouseLeave}
                 onNodeDoubleClick={onNodeDoubleClick}
+                colorMode={THEME_TO_COLOR_MODE[theme]}
                 fitView
                 preventScrolling={false}
                 snapToGrid
             >
-                <Background gap={16} />
+                <Background gap={16} color="hsl(var(--divider))" />
                 <Controls />
             </ReactFlow>
         </div>

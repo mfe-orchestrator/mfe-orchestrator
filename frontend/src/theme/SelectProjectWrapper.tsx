@@ -1,58 +1,42 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Plus } from "lucide-react"
 import { useState } from "react"
-import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
 import { Button } from "@/components/atoms"
-import SelectField from "@/components/input/SelectField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
+import ProjectPickerList from "@/components/ProjectPickerList"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import NewProjectWizard from "@/pages/new-project-wizard/NewProjectWizard"
 import useProjectStore from "@/store/useProjectStore"
 import { getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
 
-interface SelectProjectFormData {
-    projectId: string
+interface SelectProjectFormProps {
+    onCreateNewProject: () => void
 }
 
-const SelectProjectForm: React.FC = () => {
+const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ onCreateNewProject }) => {
     const { t } = useTranslation()
-    const form = useForm<SelectProjectFormData>()
     const projectStore = useProjectStore()
 
-    const onSubmit = async (data: SelectProjectFormData) => {
-        try {
-            // Handle project selection
-            const selectedProject = projectStore.projects?.find(p => p._id === data.projectId)
-            if (selectedProject) {
-                projectStore.setProject(selectedProject)
-                setProjectIdInLocalStorage(selectedProject._id)
-            }
-        } catch (error) {
-            console.error(t("common.error"), error)
-        }
+    // Picking a row is the whole action, so it commits straight away instead of
+    // making the user confirm a dropdown choice with a second click.
+    const onSelectProject = (project: Project) => {
+        projectStore.setProject(project)
+        setProjectIdInLocalStorage(project._id)
     }
 
     return (
-        <AuthenticationLayout title={t("project.select_project")}>
-            <FormProvider {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="flex flex-col gap-4">
-                        <SelectField
-                            name="projectId"
-                            className="p-2 border rounded-md w-full"
-                            rules={{ required: t("validation.required") }}
-                            options={projectStore.projects?.map((project: Project) => ({
-                                value: project._id,
-                                label: project.name
-                            }))}
-                        />
-                        <div className="flex justify-end">
-                            <Button type="submit">{t("common.select")}</Button>
-                        </div>
-                    </div>
-                </form>
-            </FormProvider>
+        <AuthenticationLayout title={t("project.select_project")} description={t("project.switch_desc")}>
+            <div className="flex flex-col gap-4">
+                <ProjectPickerList projects={projectStore.projects ?? []} onSelect={onSelectProject} autoFocusSearch />
+                <div className="border-t border-divider pt-4">
+                    <Button variant="secondary" className="w-full" onClick={onCreateNewProject}>
+                        <Plus />
+                        {t("project.create_new")}
+                    </Button>
+                </div>
+            </div>
         </AuthenticationLayout>
     )
 }
@@ -61,18 +45,24 @@ const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children
     const projectStore = useProjectStore()
     const queryClient = useQueryClient()
     const [firstRunComplete, setFirstRunComplete] = useState(false)
+    const [isCreatingProject, setIsCreatingProject] = useState(false)
 
     const hasProjects = Boolean(projectStore.projects && projectStore.projects.length > 0)
 
     // First run: no projects yet → guide the user through the full project wizard.
     // Gated on a local flag so the wizard stays mounted for every step even though
     // step 1 already sets the active project in the store.
-    if (!hasProjects && !firstRunComplete) {
+    const isFirstRun = !hasProjects && !firstRunComplete
+
+    // The picker can also reach the wizard, which this component has to render itself:
+    // until a project is active it shadows the routed pages, so navigating there would show nothing.
+    if (isFirstRun || isCreatingProject) {
         return (
             <NewProjectWizard
                 mountPoint="/project-wizard"
                 onComplete={() => {
                     setFirstRunComplete(true)
+                    setIsCreatingProject(false)
                     queryClient.invalidateQueries({ queryKey: ["projects-mine"] })
                 }}
             />
@@ -83,7 +73,7 @@ const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children
         return <>{children}</>
     }
 
-    return <SelectProjectForm />
+    return <SelectProjectForm onCreateNewProject={() => setIsCreatingProject(true)} />
 }
 
 const SelectProjectWrapper: React.FC<React.PropsWithChildren> = props => {

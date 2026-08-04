@@ -14,9 +14,8 @@ export const AddNewMicrofrontendCard: React.FC<AddNewMicrofrontendCardProps> = (
     return (
         <Card
             className={cn(
-                "h-full flex flex-col transition-all duration-200 cursor-pointer",
-                "border-2 border-dashed border-border/50 hover:border-primary",
-                "hover:shadow-lg hover:scale-[1.01]",
+                "h-full min-h-[180px] flex flex-col transition-colors duration-200 cursor-pointer",
+                "border-2 border-dashed border-divider hover:border-primary hover:bg-primary/5",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 className
             )}

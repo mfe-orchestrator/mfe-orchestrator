@@ -325,7 +325,18 @@
             "filterStatus": "Filter by status",
             "statusAll": "All",
             "statusActive": "Active",
-            "statusDisabled": "Disabled"
+            "statusDisabled": "Disabled",
+            "viewFlow": "Diagram view",
+            "viewGrid": "Grid view",
+            "viewTable": "Table view",
+            "clearSearch": "Clear search",
+            "noResultsTitle": "No results",
+            "noResultsDescription": "No microfrontend matches “{{searchTerm}}”. Try a different search term.",
+            "resetFilters": "Clear search",
+            "totalCount_one": "{{count}} microfrontend",
+            "totalCount_other": "{{count}} microfrontends",
+            "filteredCount_one": "{{count}} of {{total}} microfrontends",
+            "filteredCount_other": "{{count}} of {{total}} microfrontends"
         },
         "build": {
             "title": "Build {{name}}",
@@ -461,7 +472,8 @@
                     "confirmButton": "Delete Microfrontend"
                 }
             }
-        }
+        },
+        "ofUsers": "of users"
     },
     "environmentVariables": {
         "title": "Environment Variables",
