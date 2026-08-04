@@ -53,14 +53,15 @@ const SwitchProjectButton = () => {
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="secondary" size="sm">
+                <Button variant="primary" size="sm">
                     <Repeat />
-                    <span>{t("project.switch")}</span>
+                    <span>{t("project.switch_or_create", { defaultValue: "Switch or create project" })}</span>
+                    <Plus />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[440px]">
                 <DialogHeader>
-                    <DialogTitle>{t("project.switch")}</DialogTitle>
+                    <DialogTitle>{t("project.switch_or_create", { defaultValue: "Switch or create project" })}</DialogTitle>
                     <DialogDescription>{t("project.switch_desc", { defaultValue: "Select a project to work on or create a new one." })}</DialogDescription>
                 </DialogHeader>
                 <div className="pt-2">

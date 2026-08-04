@@ -86,6 +86,7 @@
         "description_placeholder": "Inserisci la descrizione del progetto",
         "create": "Crea progetto",
         "switch": "Cambia progetto",
+        "switch_or_create": "Cambia o crea progetto",
         "create_new": "Crea nuovo progetto",
         "no_projects_found": "Nessun progetto trovato",
         "create_new_project": "Crea un nuovo progetto ora",

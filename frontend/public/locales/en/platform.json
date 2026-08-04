@@ -86,6 +86,7 @@
         "description_placeholder": "Enter project description",
         "create": "Create project",
         "switch": "Switch project",
+        "switch_or_create": "Switch or create project",
         "create_new": "Create new project",
         "no_projects_found": "No projects found",
         "create_new_project": "Create a new project now",
