@@ -1,9 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
-import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import ProjectPickerList from "@/components/ProjectPickerList"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
@@ -27,16 +25,8 @@ const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ onCreateNewProjec
     }
 
     return (
-        <AuthenticationLayout title={t("project.select_project")} description={t("project.switch_desc")}>
-            <div className="flex flex-col gap-4">
-                <ProjectPickerList projects={projectStore.projects ?? []} onSelect={onSelectProject} autoFocusSearch />
-                <div className="border-t border-divider pt-4">
-                    <Button variant="secondary" className="w-full" onClick={onCreateNewProject}>
-                        <Plus />
-                        {t("project.create_new")}
-                    </Button>
-                </div>
-            </div>
+        <AuthenticationLayout title={t("project.select_project")} description={t("project.switch_desc")} size="lg">
+            <ProjectPickerList projects={projectStore.projects ?? []} onSelect={onSelectProject} onCreateNew={onCreateNewProject} variant="grid" autoFocusSearch />
         </AuthenticationLayout>
     )
 }
