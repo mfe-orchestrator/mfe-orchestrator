@@ -244,6 +244,7 @@ CODE_REPOSITORY_GITHUB_CLIENT_SECRET=your_github_client_secret
 - `NODE_ENV` - Node.js environment mode (development/production/test)
 - `CODE_REPOSITORY_GITHUB_CLIENT_ID` - GitHub OAuth client ID for repository integration
 - `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` - GitHub OAuth client secret for repository integration
+- `TELEMETRY_DISABLED` / `TELEMETRY_ENABLED` / `DO_NOT_TRACK` / `TELEMETRY_ENDPOINT` / `TELEMETRY_INTERVAL_HOURS` - Anonymous telemetry, see `docs/TELEMETRY.md`. The payload must stay aggregate-only: never add a name, an email, a URL, an id or any free text to it
 
 ### Fastify Plugins
 

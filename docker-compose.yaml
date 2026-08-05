@@ -41,6 +41,12 @@ services:
       NOSQL_DATABASE_URL: mongodb://root:example@mongodb:27017
       REDIS_URL: redis://redis:6379
       MICROFRONTEND_HOST_FOLDER: /upload-microfrontends
+      # Once a day this installation sends an anonymous ping with aggregate
+      # counters only (version, number of projects/microfrontends/environments/
+      # users, deployments of the last week). No names, no URLs, no personal
+      # data: see docs/TELEMETRY.md for the exact payload.
+      # Uncomment the line below to turn it off.
+      # TELEMETRY_DISABLED: "true"
     volumes:
       - upload_microfrontends:/upload-microfrontends
     depends_on:

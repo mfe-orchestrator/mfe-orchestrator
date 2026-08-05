@@ -2,6 +2,7 @@ import fastifyEnv from "@fastify/env"
 import dotenv from "dotenv"
 import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyPlugin from "fastify-plugin"
+import { TELEMETRY_DEFAULT_ENDPOINT, TELEMETRY_DEFAULT_INTERVAL_HOURS } from "../utils/telemetry"
 
 dotenv.config()
 
@@ -150,6 +151,26 @@ export default fastifyPlugin(
                 },
                 CODE_REPOSITORY_GITHUB_CLIENT_SECRET: {
                     type: "string"
+                },
+                // Telemetry switches are strings and not booleans on purpose: they
+                // have three states (unset, on, off) and a malformed value must
+                // never keep the application from starting. See docs/TELEMETRY.md.
+                TELEMETRY_ENABLED: {
+                    type: "string"
+                },
+                TELEMETRY_DISABLED: {
+                    type: "string"
+                },
+                DO_NOT_TRACK: {
+                    type: "string"
+                },
+                TELEMETRY_ENDPOINT: {
+                    type: "string",
+                    default: TELEMETRY_DEFAULT_ENDPOINT
+                },
+                TELEMETRY_INTERVAL_HOURS: {
+                    type: "number",
+                    default: TELEMETRY_DEFAULT_INTERVAL_HOURS
                 }
             }
         }

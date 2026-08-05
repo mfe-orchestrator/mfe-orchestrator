@@ -42,6 +42,7 @@ This project uses a **monorepo architecture** with the following structure:
   - [Run with Docker](#run-with-docker)
   - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
   - [Environment variables 🔧](#environment-variables-)
+  - [Anonymous telemetry 📡](#anonymous-telemetry-)
   - [Local Installation for development 🛠️](#local-installation-for-development-️)
     - [Prerequisites](#prerequisites)
     - [Quick Start](#quick-start)
@@ -68,6 +69,7 @@ This project uses a **monorepo architecture** with the following structure:
 - **[Commit Conventions](COMMIT_CONVENTIONS.md)** - Conventional Commits specification
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
+- **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
 
 ## Run with Docker
 
@@ -127,6 +129,38 @@ terraform apply
 | `LOG_LEVEL`                            | `info` _(debug/info/warn/error)_                                                                  | Logging level.                                                  |
 | `CODE_REPOSITORY_GITHUB_CLIENT_ID`     | _(empty)_                                                                                         | Client ID for GitHub OAuth authentication.                      |
 | `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | _(empty)_                                                                                         | Client secret for GitHub OAuth authentication.                  |
+| `TELEMETRY_DISABLED`                   | _(empty)_                                                                                         | If `true`, turns off the anonymous telemetry ping.              |
+| `TELEMETRY_ENABLED`                    | _(empty)_                                                                                         | Explicit telemetry override, wins over every other switch.      |
+| `DO_NOT_TRACK`                         | _(empty)_                                                                                         | If `1`, turns off the anonymous telemetry ping.                 |
+| `TELEMETRY_ENDPOINT`                   | `https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted`                               | Where the anonymous telemetry ping is sent.                     |
+| `TELEMETRY_INTERVAL_HOURS`             | `24`                                                                                              | Hours between two telemetry pings (minimum `1`).                |
+
+## Anonymous telemetry 📡
+
+Self-hosted installations send **one anonymous ping per day**, so that we know how many installations are alive and on which version. It is **on by default** and contains only aggregate counters:
+
+```json
+{
+  "installationId": "3f2b9c14-6d8e-4a17-9f0b-2c5d7e81a4b6",
+  "version": "1.0.0",
+  "nodeVersion": "24.4",
+  "projects": 2,
+  "microfrontends": 12,
+  "environments": 3,
+  "users": 4,
+  "deploymentsLastWeek": 5
+}
+```
+
+That is the whole payload: no names, no emails, no URLs, no hostnames, no project or microfrontend content. It is never sent when `NODE_ENV` is not `prod`, so development and CI runs are not counted.
+
+To turn it off:
+
+```yaml
+TELEMETRY_DISABLED: "true"
+```
+
+Every start logs what is sent and how to disable it, and `GET /api/telemetry/status` shows the exact payload of your installation before it leaves. Full details, field by field, in **[docs/TELEMETRY.md](docs/TELEMETRY.md)**.
 
 ## Local Installation for development 🛠️
 
