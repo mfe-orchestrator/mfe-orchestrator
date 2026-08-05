@@ -53,6 +53,8 @@ one-click rollback.
   Azure DevOps, plus an API for everything else.
 - **Canary releases** *(experimental)* — serve a new version to a share of your
   users and stop the rollout by changing one setting.
+- **Cross-repository dependency analysis** — scan your micro frontend
+  repositories and align peer dependencies across them.
 
 ## How it works
 
@@ -90,6 +92,7 @@ Project reference:
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
+- **[Dependency analysis](docs/DEPENDENCIES.md)** - How microfrontend dependencies are scanned and peer dependencies aligned
 
 ## Run with Docker
 

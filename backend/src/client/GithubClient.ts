@@ -217,6 +217,36 @@ export interface GithubOrganizationSecretDTO extends GithubBaseDTO {
     selectedRepositoryIds?: number[]
 }
 
+export interface GithubFileDTO extends GithubRepositoryBaseDTO {
+    path: string
+    ref?: string
+}
+
+export interface GithubCreateBranchDTO extends GithubRepositoryBaseDTO {
+    branchName: string
+    sha: string
+}
+
+export interface GithubUpdateFileDTO extends GithubRepositoryBaseDTO {
+    path: string
+    content: string
+    message: string
+    branch: string
+    sha: string
+}
+
+export interface GithubFileContent {
+    content: string
+    sha: string
+}
+
+interface GithubContentsResponse {
+    type?: string
+    encoding?: string
+    content?: string
+    sha: string
+}
+
 class GithubClient {
     async encryptValueForSecret(key: string, secret: string): Promise<string> {
         await sodium.ready
@@ -585,6 +615,97 @@ class GithubClient {
         })
 
         return response.data
+    }
+
+    async getRepository({ accessToken, orgName, userName, repositoryName }: GithubRepositoryBaseDTO): Promise<GithubRepository> {
+        const response = await axios.request<GithubRepository>({
+            url: this.getRepositoryBaseUrlBase(repositoryName, orgName, userName),
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            }
+        })
+
+        return response.data
+    }
+
+    /**
+     * Reads a text file from a repository. Returns null when the file does not exist on the
+     * given ref, so callers can treat a missing package.json as "nothing to analyse".
+     */
+    async getFileContent({ accessToken, orgName, userName, repositoryName, path, ref }: GithubFileDTO): Promise<GithubFileContent | null> {
+        try {
+            const response = await axios.request<GithubContentsResponse>({
+                url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/contents/${encodeURI(path)}`,
+                params: ref ? { ref } : undefined,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                }
+            })
+
+            if (Array.isArray(response.data) || response.data.type !== "file" || response.data.content === undefined) {
+                return null
+            }
+
+            return {
+                content: Buffer.from(response.data.content, (response.data.encoding as BufferEncoding) || "base64").toString("utf8"),
+                sha: response.data.sha
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                return null
+            }
+            throw error
+        }
+    }
+
+    /**
+     * Creates a branch pointing at `sha`. Returns false when the branch already exists.
+     */
+    async createBranch({ accessToken, orgName, userName, repositoryName, branchName, sha }: GithubCreateBranchDTO): Promise<boolean> {
+        try {
+            await axios.request({
+                method: "POST",
+                url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/git/refs`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                },
+                data: {
+                    ref: `refs/heads/${branchName}`,
+                    sha
+                }
+            })
+
+            return true
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 422) {
+                return false
+            }
+            throw error
+        }
+    }
+
+    async updateFileContent({ accessToken, orgName, userName, repositoryName, path, content, message, branch, sha }: GithubUpdateFileDTO): Promise<void> {
+        await axios.request({
+            method: "PUT",
+            url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/contents/${encodeURI(path)}`,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            },
+            data: {
+                message,
+                content: Buffer.from(content, "utf8").toString("base64"),
+                branch,
+                sha
+            }
+        })
     }
 }
 

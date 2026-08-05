@@ -12,6 +12,7 @@ import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 // Lazy load all page components
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"))
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"))
+const Dependencies = lazy(() => import("./pages/dependencies/Dependencies"))
 const Deployments = lazy(() => import("./pages/deployments/Deployments"))
 const CanaryUsers = lazy(() => import("./pages/deployments/CanaryUsers"))
 const Integration = lazy(() => import("./pages/integration/Integration"))
@@ -69,6 +70,7 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/microfrontends" element={<RouteWithSuspense element={<Microfrontends />} />} />
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
+                <Route path="/dependencies" element={<RouteWithSuspense element={<Dependencies />} />} />
                 <Route path="/deployments">
                     <Route index element={<RouteWithSuspense element={<Deployments />} />} />
                     <Route path=":deploymentId/canary-users" element={<RouteWithSuspense element={<CanaryUsers />} />} />

@@ -87,6 +87,20 @@ export interface GetRepositoryDTO {
     value: RepositoryData[]
 }
 
+export interface AzureDevOpsItem {
+    objectId: string
+    path: string
+    content?: string
+}
+
+export interface AzurePushFileEditRequest {
+    branchName: string
+    baseCommitId: string
+    filePath: string
+    content: string
+    comment: string
+}
+
 export interface AzureDevOpsBranch {
     name: string
     objectId: string
@@ -457,6 +471,79 @@ class AzureDevOpsClient {
         })
 
         return response.data
+    }
+
+    /**
+     * Reads a text file from a repository. Returns null when the file does not exist on the branch.
+     */
+    async getFileContent(token: string, organization: string, project: string, repositoryId: string, filePath: string, branchName: string): Promise<string | null> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}/items?api-version=7.1-preview.1`
+
+        try {
+            const response = await axios.request<AzureDevOpsItem>({
+                url,
+                params: {
+                    path: filePath.startsWith("/") ? filePath : `/${filePath}`,
+                    includeContent: true,
+                    "versionDescriptor.version": branchName,
+                    "versionDescriptor.versionType": "branch",
+                    $format: "json"
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json"
+                }
+            })
+
+            return response.data?.content ?? null
+        } catch (error) {
+            if (axios.isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+                return null
+            }
+            throw error
+        }
+    }
+
+    /**
+     * Pushes an edit of a single file. When `branchName` does not exist yet, Azure DevOps
+     * creates it from `baseCommitId` as part of the push.
+     */
+    async pushFileEdit(token: string, organization: string, project: string, repositoryId: string, request: AzurePushFileEditRequest): Promise<void> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}/pushes?api-version=7.1-preview.2`
+
+        await axios.request({
+            method: "POST",
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: {
+                refUpdates: [
+                    {
+                        name: `refs/heads/${request.branchName}`,
+                        oldObjectId: request.baseCommitId
+                    }
+                ],
+                commits: [
+                    {
+                        comment: request.comment,
+                        changes: [
+                            {
+                                changeType: "edit",
+                                item: {
+                                    path: request.filePath.startsWith("/") ? request.filePath : `/${request.filePath}`
+                                },
+                                newContent: {
+                                    content: request.content,
+                                    contentType: "rawtext"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        })
     }
 }
 
