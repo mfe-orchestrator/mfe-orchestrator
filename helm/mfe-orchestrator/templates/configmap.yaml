@@ -1,0 +1,22 @@
+{{- $env := deepCopy (.Values.env | default dict) -}}
+{{- if .Values.persistence.enabled -}}
+{{- /* Keep the application in sync with where the volume is actually mounted. */ -}}
+{{- $_ := set $env "MICROFRONTEND_HOST_FOLDER" (include "mfe-orchestrator.microfrontendFolder" .) -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mfe-orchestrator.fullname" . }}-env
+  labels:
+    {{- include "mfe-orchestrator.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- $entries := include "mfe-orchestrator.envEntries" $env | trim }}
+{{- if $entries }}
+data:
+  {{- $entries | nindent 2 }}
+{{- else }}
+data: {}
+{{- end }}

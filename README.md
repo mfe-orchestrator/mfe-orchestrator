@@ -42,6 +42,7 @@ This project uses a **monorepo architecture** with the following structure:
   - [Run with Docker](#run-with-docker)
   - [Run everything in a single container 📦](#run-everything-in-a-single-container-)
   - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
+  - [Run on Kubernetes with Helm ⎈](#run-on-kubernetes-with-helm-)
   - [Environment variables 🔧](#environment-variables-)
   - [Anonymous telemetry 📡](#anonymous-telemetry-)
   - [Local Installation for development 🛠️](#local-installation-for-development-️)
@@ -154,6 +155,46 @@ cd terraform
 terraform init
 terraform apply
 ```
+
+## Run on Kubernetes with Helm ⎈
+
+The chart lives in [`helm/mfe-orchestrator`](helm/mfe-orchestrator/README.md).
+
+```bash
+helm install mfe-orchestrator ./helm/mfe-orchestrator \
+  --namespace mfe-orchestrator --create-namespace \
+  --set env.NOSQL_DATABASE_URL="mongodb://root:example@mongodb:27017" \
+  --set env.REDIS_URL="redis://redis:6379" \
+  --set envSecrets.JWT_SECRET="$(openssl rand -hex 32)"
+```
+
+To distribute it as a package:
+
+```bash
+helm package helm/mfe-orchestrator      # -> mfe-orchestrator-<version>.tgz
+helm install mfe-orchestrator mfe-orchestrator-0.1.0.tgz -f my-values.yaml
+```
+
+Every [environment variable](#environment-variables-) of the table below is
+configurable from `values.yaml`: plain ones under `env` (rendered into a
+ConfigMap), sensitive ones under `envSecrets` (rendered into a Secret), and both
+maps accept any additional variable you need.
+
+```yaml
+env:
+  FRONTEND_URL: https://console.example.com
+  REGISTRATION_ALLOWED: false
+  NOSQL_DATABASE_URL: mongodb://root:example@mongodb:27017
+  REDIS_URL: redis://redis:6379
+envSecrets:
+  JWT_SECRET: a-random-32-bytes-string
+```
+
+The chart also handles ingress, persistence of the uploaded microfrontends,
+probes on `/api/echo`, autoscaling and secrets kept outside of `values.yaml`
+(`existingSecret`, `extraEnv`). MongoDB and Redis are not deployed by the chart:
+point it at your own instances. See the
+[chart README](helm/mfe-orchestrator/README.md) for the full reference.
 
 ## Environment variables 🔧
 

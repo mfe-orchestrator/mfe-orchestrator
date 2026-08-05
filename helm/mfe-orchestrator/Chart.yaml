@@ -1,0 +1,28 @@
+apiVersion: v2
+name: mfe-orchestrator
+description: Microfrontend Orchestrator - JSON based configuration, versioning and multi-environment delivery of microfrontends
+type: application
+
+# Chart version: bumped on every change to the chart itself.
+version: 0.1.0
+# Version of the mfe-orchestrator image shipped by default (see values.yaml image.tag).
+appVersion: "latest"
+
+home: https://github.com/mfe-orchestrator/mfe-orchestrator
+sources:
+  - https://github.com/mfe-orchestrator/mfe-orchestrator
+icon: https://raw.githubusercontent.com/mfe-orchestrator/mfe-orchestrator/main/frontend/public/favicon.ico
+
+keywords:
+  - microfrontend
+  - orchestrator
+  - module-federation
+  - frontend
+
+maintainers:
+  - name: mfe-orchestrator
+    url: https://github.com/mfe-orchestrator
+
+annotations:
+  category: DeveloperTools
+  licenses: Apache-2.0
