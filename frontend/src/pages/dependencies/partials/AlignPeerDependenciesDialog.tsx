@@ -13,6 +13,8 @@ const DEFAULT_BRANCH_NAME = "chore/align-peer-dependencies"
 export interface AlignPeerDependenciesDialogProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
+    /** Branch compared for each microfrontend: the alignment branch is created from it */
+    branches: Record<string, string>
     onApplied?: () => void | Promise<void>
 }
 
@@ -26,7 +28,7 @@ const ChangeList: React.FC<{ changes: MicrofrontendAlignmentChange[] }> = ({ cha
     </ul>
 )
 
-export const AlignPeerDependenciesDialog: React.FC<AlignPeerDependenciesDialogProps> = ({ isOpen, onOpenChange, onApplied }) => {
+export const AlignPeerDependenciesDialog: React.FC<AlignPeerDependenciesDialogProps> = ({ isOpen, onOpenChange, branches, onApplied }) => {
     const { t } = useTranslation()
     const dependenciesApi = useDependenciesApi()
     const notifications = useToastNotificationStore()
@@ -35,13 +37,13 @@ export const AlignPeerDependenciesDialog: React.FC<AlignPeerDependenciesDialogPr
     const [result, setResult] = useState<AlignmentApplyResult | undefined>()
 
     const planQuery = useQuery({
-        queryKey: ["peer-dependencies-alignment-plan"],
-        queryFn: () => dependenciesApi.getPeerAlignmentPlan(),
+        queryKey: ["peer-dependencies-alignment-plan", branches],
+        queryFn: () => dependenciesApi.getPeerAlignmentPlan({ branches }),
         enabled: isOpen
     })
 
     const applyMutation = useMutation({
-        mutationFn: () => dependenciesApi.alignPeerDependencies({ branchName }),
+        mutationFn: () => dependenciesApi.alignPeerDependencies({ branchName, branches }),
         onSuccess: async applyResult => {
             setResult(applyResult)
 

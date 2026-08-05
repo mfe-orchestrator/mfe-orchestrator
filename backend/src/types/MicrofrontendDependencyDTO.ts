@@ -28,13 +28,35 @@ export interface DependencyDTO {
     deprecated?: boolean
 }
 
+/**
+ * Branch to compare for each microfrontend, keyed by microfrontend id.
+ * Microfrontends left out fall back to the default branch of their repository.
+ */
+export interface DependencyScanRequestDTO {
+    branches?: Record<string, string>
+}
+
+export interface MicrofrontendScanTargetDTO {
+    microfrontendId: string
+    slug: string
+    name: string
+    provider?: CodeRepositoryProvider
+    repositoryName?: string
+    defaultBranch?: string
+    branches: string[]
+    /** Set when the branch list could not be read (revoked token, deleted repository, ...) */
+    error?: string
+}
+
 export interface MicrofrontendDependenciesDTO {
     microfrontendId: string
     slug: string
     name: string
     provider?: CodeRepositoryProvider
     repositoryName?: string
+    /** Branch the dependencies were actually read from */
     branch?: string
+    defaultBranch?: string
     packageName?: string
     packageVersion?: string
     dependencies: DependencyDTO[]
@@ -86,7 +108,7 @@ export interface MicrofrontendAlignmentPlanDTO {
     name: string
     provider: CodeRepositoryProvider
     repositoryName: string
-    /** Branch the changes are computed from */
+    /** Branch the changes are computed from, and the alignment branch is created from */
     baseBranch: string
     changes: MicrofrontendAlignmentChangeDTO[]
 }
@@ -97,7 +119,7 @@ export interface AlignmentPlanDTO {
     microfrontends: MicrofrontendAlignmentPlanDTO[]
 }
 
-export interface AlignmentApplyRequestDTO {
+export interface AlignmentApplyRequestDTO extends DependencyScanRequestDTO {
     /** Restricts the alignment to these microfrontends. Defaults to all of them. */
     microfrontendIds?: string[]
     /** Restricts the alignment to these package names. Defaults to every misaligned package. */

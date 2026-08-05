@@ -9,14 +9,26 @@ behind the npm registry, and can rewrite the misaligned `peerDependencies` for y
 
 1. Lists the microfrontends of the current project that have a code repository connected
    (`codeRepository.enabled`).
-2. Reads the `package.json` at the root of each repository, on its **default branch**, through
-   the provider API (GitHub, GitLab or Azure DevOps — no clone involved).
+2. Reads the `package.json` at the root of each repository, on the branch chosen for that
+   microfrontend, through the provider API (GitHub, GitLab or Azure DevOps — no clone involved).
 3. Resolves every distinct package name against the npm registry and compares the declared
    range with the version published as `latest`.
 4. Groups the declarations across microfrontends to find the ones that disagree.
 
 The scan is read-only and is never cached in the database: it always reflects the current state
 of the repositories. Registry answers are cached in memory for one hour.
+
+### Choosing the branch
+
+Each microfrontend is compared on its own branch, picked independently of the others. The
+default is the **default branch of its repository**, so the scan works out of the box; the UI
+lists the available branches per microfrontend and lets you point one at `develop`, a release
+branch, or anything else before rescanning.
+
+`GET /dependencies/targets` returns what the scan would walk — one entry per microfrontend with
+its `defaultBranch` and the `branches` available — and every other endpoint accepts a `branches`
+map keyed by microfrontend id. Microfrontends left out of the map fall back to their default
+branch.
 
 ### Update status
 
@@ -44,10 +56,14 @@ Mismatches are computed both for `peerDependencies` and for `dependencies`. The 
 ## Applying the alignment
 
 The alignment commits the updated `package.json` on a dedicated branch of every repository —
-`chore/align-peer-dependencies` by default. **The default branch is never modified**: if the
-target branch resolves to the repository default branch, that repository is skipped with an
-error. Existing branches are reused, and the manifest is re-read from the target branch before
-the change is applied, so re-running the alignment is idempotent.
+`chore/align-peer-dependencies` by default — created from the branch that was compared.
+**That base branch is never modified**: if the target branch resolves to the branch being
+compared, that repository is skipped with an error. Existing branches are reused, and the
+manifest is re-read from the target branch before the change is applied, so re-running the
+alignment is idempotent.
+
+Pass the same `branches` map used for the scan, otherwise the alignment is computed — and
+branched — from the default branches instead of the ones you compared.
 
 Only the `peerDependencies` section is rewritten. The indentation and the key order of the
 original file are preserved.
@@ -59,17 +75,21 @@ Every repository is processed independently: a failure on one of them (revoked t
 
 All the endpoints below are scoped to the project carried by the `Project-Id` header.
 
-| Method | Path                                     | Description                                                     |
-| ------ | ---------------------------------------- | --------------------------------------------------------------- |
-| `GET`  | `/dependencies`                          | Full report: dependencies per microfrontend and alignment issues |
-| `GET`  | `/projects/:projectId/dependencies`      | Same report, with the project in the path                        |
-| `POST` | `/dependencies/peer/alignment-plan`      | Dry run: what would change, repository by repository             |
-| `POST` | `/dependencies/peer/align`               | Applies the alignment and returns the outcome per repository     |
+| Method | Path                                | Description                                                       |
+| ------ | ----------------------------------- | ----------------------------------------------------------------- |
+| `GET`  | `/dependencies/targets`             | Microfrontends the scan would walk, with default and available branches |
+| `GET`  | `/dependencies`                     | Full report on the default branches                                |
+| `GET`  | `/projects/:projectId/dependencies` | Same report, with the project in the path                          |
+| `POST` | `/dependencies/report`              | Full report on the branches given in the body                      |
+| `POST` | `/dependencies/peer/alignment-plan` | Dry run: what would change, repository by repository               |
+| `POST` | `/dependencies/peer/align`          | Applies the alignment and returns the outcome per repository       |
 
-The body of the two `POST` endpoints is optional and accepts:
+The body of the `POST` endpoints is optional. `/dependencies/report` accepts `branches` only,
+the two alignment endpoints accept every field:
 
 ```jsonc
 {
+  "branches": { "<microfrontendId>": "develop" }, // branch to compare, defaults to the repository default
   "microfrontendIds": ["..."], // restrict to these microfrontends, defaults to all
   "packages": ["react"],       // restrict to these packages, defaults to every misaligned one
   "branchName": "chore/align-peer-dependencies",

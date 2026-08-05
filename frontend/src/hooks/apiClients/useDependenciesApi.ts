@@ -31,6 +31,22 @@ export interface Dependency {
     deprecated?: boolean
 }
 
+/** Branch to compare for each microfrontend, keyed by microfrontend id */
+export interface DependencyScanRequest {
+    branches?: Record<string, string>
+}
+
+export interface MicrofrontendScanTarget {
+    microfrontendId: string
+    slug: string
+    name: string
+    provider?: CodeRepositoryProvider
+    repositoryName?: string
+    defaultBranch?: string
+    branches: string[]
+    error?: string
+}
+
 export interface MicrofrontendDependencies {
     microfrontendId: string
     slug: string
@@ -38,6 +54,7 @@ export interface MicrofrontendDependencies {
     provider?: CodeRepositoryProvider
     repositoryName?: string
     branch?: string
+    defaultBranch?: string
     packageName?: string
     packageVersion?: string
     dependencies: Dependency[]
@@ -93,7 +110,7 @@ export interface AlignmentPlan {
     microfrontends: MicrofrontendAlignmentPlan[]
 }
 
-export interface AlignmentApplyRequest {
+export interface AlignmentApplyRequest extends DependencyScanRequest {
     microfrontendIds?: string[]
     packages?: string[]
     branchName?: string
@@ -122,9 +139,18 @@ export interface AlignmentApplyResult {
 const useDependenciesApi = () => {
     const apiClient = useApiClient()
 
-    const getReport = async (): Promise<ProjectDependenciesReport> => {
+    const getScanTargets = async (): Promise<MicrofrontendScanTarget[]> => {
+        const response = await apiClient.doRequest<MicrofrontendScanTarget[]>({
+            url: "/api/dependencies/targets"
+        })
+        return response.data
+    }
+
+    const getReport = async (request: DependencyScanRequest = {}): Promise<ProjectDependenciesReport> => {
         const response = await apiClient.doRequest<ProjectDependenciesReport>({
-            url: "/api/dependencies"
+            url: "/api/dependencies/report",
+            method: "POST",
+            data: request
         })
         return response.data
     }
@@ -148,6 +174,7 @@ const useDependenciesApi = () => {
     }
 
     return {
+        getScanTargets,
         getReport,
         getPeerAlignmentPlan,
         alignPeerDependencies

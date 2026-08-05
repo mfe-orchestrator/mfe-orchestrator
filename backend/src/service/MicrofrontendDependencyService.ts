@@ -15,15 +15,18 @@ import {
     DependencyAlignmentIssueDTO,
     DependencyDTO,
     DependencyKind,
+    DependencyScanRequestDTO,
     DependencyUpdateStatus,
     MicrofrontendAlignmentChangeDTO,
     MicrofrontendAlignmentPlanDTO,
     MicrofrontendDependenciesDTO,
+    MicrofrontendScanTargetDTO,
     ProjectDependenciesReportDTO
 } from "../types/MicrofrontendDependencyDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { diffVersions, minVersionOfRange, parseVersion, pickHighestRange } from "../utils/semverUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import CodeRepositoryService from "./CodeRepositoryService"
 
 const PACKAGE_JSON_PATH = "package.json"
 const DEFAULT_ALIGNMENT_BRANCH = "chore/align-peer-dependencies"
@@ -66,7 +69,9 @@ interface ManifestFile {
 
 interface ManifestSnapshot {
     target: RepositoryTarget
+    /** Branch the manifest was read from: the requested one, or the repository default */
     branch: string
+    defaultBranch: string
     file?: ManifestFile
     error?: string
 }
@@ -93,12 +98,44 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
     private readonly npmRegistryClient = new NpmRegistryClient()
 
     /**
-     * Walks every microfrontend of the project that is backed by a code repository, reads its
-     * package.json and reports, for each dependency, whether it is up to date with the registry
-     * and whether it is aligned with the other microfrontends.
+     * Lists what the scan would walk: one entry per microfrontend backed by a code repository,
+     * with its default branch and the branches available to compare.
      */
-    async getReport(projectId: string | Schema.Types.ObjectId): Promise<ProjectDependenciesReportDTO> {
-        const snapshots = await this.collectSnapshots(projectId)
+    async getScanTargets(projectId: string | Schema.Types.ObjectId): Promise<MicrofrontendScanTargetDTO[]> {
+        const targets = await this.resolveTargets(projectId)
+
+        return mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, async target => {
+            const base: MicrofrontendScanTargetDTO = {
+                microfrontendId: target.microfrontend._id.toString(),
+                slug: target.microfrontend.slug,
+                name: target.microfrontend.name,
+                provider: target.codeRepository?.provider,
+                repositoryName: target.repositoryName,
+                branches: []
+            }
+
+            if (!target.codeRepository) {
+                return { ...base, error: "Code repository connection not found" }
+            }
+
+            try {
+                const [defaultBranch, branches] = await Promise.all([this.getDefaultBranch(target), this.listBranches(target)])
+                return { ...base, defaultBranch, branches: branches.length > 0 ? branches : [defaultBranch] }
+            } catch (error) {
+                fastify.log.error(error, `Unable to list the branches of ${target.microfrontend.slug}`)
+                return { ...base, error: toErrorMessage(error) }
+            }
+        })
+    }
+
+    /**
+     * Walks every microfrontend of the project that is backed by a code repository, reads its
+     * package.json on the requested branch (the repository default when none is requested) and
+     * reports, for each dependency, whether it is up to date with the registry and whether it is
+     * aligned with the other microfrontends.
+     */
+    async getReport(projectId: string | Schema.Types.ObjectId, request: DependencyScanRequestDTO = {}): Promise<ProjectDependenciesReportDTO> {
+        const snapshots = await this.collectSnapshots(projectId, request)
 
         const packageNames = snapshots.flatMap(snapshot => (snapshot.file ? this.getDependencyEntries(snapshot.file.manifest).map(entry => entry.name) : []))
         const registry = await this.npmRegistryClient.getPackagesInfo(packageNames)
@@ -119,7 +156,7 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
      * Dry run of the peer dependency alignment: what would change, repository by repository.
      */
     async getAlignmentPlan(projectId: string | Schema.Types.ObjectId, request: AlignmentApplyRequestDTO = {}): Promise<AlignmentPlanDTO> {
-        const snapshots = await this.collectSnapshots(projectId)
+        const snapshots = await this.collectSnapshots(projectId, request)
         const targetBranch = this.resolveBranchName(request.branchName)
 
         return {
@@ -131,10 +168,11 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
 
     /**
      * Applies the peer dependency alignment by committing the updated package.json on a
-     * dedicated branch of every repository. The default branch is never touched.
+     * dedicated branch of every repository, created from the branch that was compared.
+     * That base branch is never committed on.
      */
     async applyAlignment(projectId: string | Schema.Types.ObjectId, request: AlignmentApplyRequestDTO = {}): Promise<AlignmentApplyResultDTO> {
-        const snapshots = await this.collectSnapshots(projectId)
+        const snapshots = await this.collectSnapshots(projectId, request)
         const targetBranch = this.resolveBranchName(request.branchName)
         const plan = this.buildPlan(snapshots, request)
         const snapshotsById = new Map(snapshots.map(snapshot => [snapshot.target.microfrontend._id.toString(), snapshot]))
@@ -159,7 +197,7 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
             }
 
             if (planItem.baseBranch === targetBranch) {
-                result.error = `Refusing to commit on the default branch "${targetBranch}"`
+                result.error = `Refusing to commit on "${targetBranch}", the branch being compared`
                 return result
             }
 
@@ -194,10 +232,11 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
     }
 
     /**
-     * Loads the package.json of every microfrontend backed by a repository.
-     * Failures are captured per microfrontend so one broken repository does not hide the others.
+     * Every microfrontend of the project backed by a code repository, paired with the
+     * connection it belongs to. `codeRepository` is left undefined when the connection
+     * referenced by the microfrontend no longer exists.
      */
-    private async collectSnapshots(projectId: string | Schema.Types.ObjectId): Promise<ManifestSnapshot[]> {
+    private async resolveTargets(projectId: string | Schema.Types.ObjectId): Promise<RepositoryTarget[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
@@ -212,42 +251,58 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
         const codeRepositories = await CodeRepository.find({ _id: { $in: codeRepositoryIds.map(id => toObjectId(id)) } })
         const codeRepositoryById = new Map(codeRepositories.map(codeRepository => [codeRepository._id.toString(), codeRepository]))
 
-        return mapWithConcurrency(withRepository, REPOSITORY_CONCURRENCY, async microfrontend => {
+        return withRepository.map(microfrontend => {
             const codeRepository = codeRepositoryById.get(microfrontend.codeRepository!.codeRepositoryId.toString())
 
-            if (!codeRepository) {
-                const orphan: ManifestSnapshot = {
-                    target: {
-                        microfrontend,
-                        codeRepository: undefined as unknown as ICodeRepository,
-                        repositoryName: microfrontend.codeRepository?.name || ""
-                    },
-                    branch: "",
-                    error: "Code repository connection not found"
-                }
-                return orphan
-            }
-
-            const target: RepositoryTarget = {
+            return {
                 microfrontend,
-                codeRepository,
-                repositoryName: this.resolveRepositoryName(microfrontend, codeRepository)
+                codeRepository: codeRepository as ICodeRepository,
+                repositoryName: codeRepository ? this.resolveRepositoryName(microfrontend, codeRepository) : microfrontend.codeRepository?.name || ""
+            }
+        })
+    }
+
+    /**
+     * Loads the package.json of every microfrontend backed by a repository, on the branch
+     * requested for it or on the repository default branch.
+     * Failures are captured per microfrontend so one broken repository does not hide the others.
+     */
+    private async collectSnapshots(projectId: string | Schema.Types.ObjectId, request: DependencyScanRequestDTO = {}): Promise<ManifestSnapshot[]> {
+        const targets = await this.resolveTargets(projectId)
+
+        return mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, async target => {
+            const microfrontendId = target.microfrontend._id.toString()
+
+            if (!target.codeRepository) {
+                return { target, branch: "", defaultBranch: "", error: "Code repository connection not found" }
             }
 
             try {
-                const branch = await this.getDefaultBranch(target)
+                const defaultBranch = await this.getDefaultBranch(target)
+                const requestedBranch = request.branches?.[microfrontendId]?.trim()
+                const branch = requestedBranch ? this.resolveBranchName(requestedBranch) : defaultBranch
+
                 const file = await this.readManifest(target, branch)
 
                 if (!file) {
-                    return { target, branch, error: `${PACKAGE_JSON_PATH} not found on branch "${branch}"` }
+                    return { target, branch, defaultBranch, error: `${PACKAGE_JSON_PATH} not found on branch "${branch}"` }
                 }
 
-                return { target, branch, file }
+                return { target, branch, defaultBranch, file }
             } catch (error) {
-                fastify.log.error(error, `Unable to read ${PACKAGE_JSON_PATH} for ${microfrontend.slug}`)
-                return { target, branch: "", error: toErrorMessage(error) }
+                fastify.log.error(error, `Unable to read ${PACKAGE_JSON_PATH} for ${target.microfrontend.slug}`)
+                return { target, branch: "", defaultBranch: "", error: toErrorMessage(error) }
             }
         })
+    }
+
+    /**
+     * Branch names available for comparison, through the same unified mapping used by the
+     * repository settings screen.
+     */
+    private async listBranches(target: RepositoryTarget): Promise<string[]> {
+        const branches = await new CodeRepositoryService(this.user).getBranches(target.codeRepository._id.toString(), target.repositoryName)
+        return [...new Set(branches.map(branch => branch.branch).filter(Boolean))]
     }
 
     private resolveRepositoryName(microfrontend: IMicrofrontend, codeRepository: ICodeRepository): string {
@@ -374,6 +429,7 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
             provider: codeRepository?.provider,
             repositoryName,
             branch: snapshot.branch || undefined,
+            defaultBranch: snapshot.defaultBranch || undefined,
             dependencies: []
         }
 

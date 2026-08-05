@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, GitBranch } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -50,6 +50,12 @@ export const MicrofrontendDependencyList: React.FC<MicrofrontendDependencyListPr
                                     {microfrontend.repositoryName}
                                     {microfrontend.branch ? ` @ ${microfrontend.branch}` : ""}
                                 </span>
+                                {microfrontend.branch && microfrontend.branch !== microfrontend.defaultBranch && (
+                                    <Badge variant="accent">
+                                        <GitBranch className="w-3 h-3" />
+                                        {t("dependencies.branch_not_default")}
+                                    </Badge>
+                                )}
                                 {microfrontend.error ? (
                                     <Badge variant="destructive">
                                         <AlertTriangle className="w-3 h-3" />
