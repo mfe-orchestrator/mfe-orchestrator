@@ -1,0 +1,133 @@
+# syntax=docker/dockerfile:1
+
+# All-in-one image: MFE Orchestrator, MongoDB, Redis and Nginx inside a single
+# container. `docker run` it and you are done: no sidecar containers, no
+# compose file, no external database to provision.
+#
+# The image expects the frontend and the backend to be already built, exactly
+# like the standard `Dockerfile` used by the CI:
+#
+#   pnpm install && pnpm build
+#   docker build -f Dockerfile.all-in-one -t mfe-orchestrator:all-in-one .
+#   docker run -d -p 8080:80 -v mfe-data:/data mfe-orchestrator:all-in-one
+#
+# MongoDB and Redis only listen on 127.0.0.1 inside the container: they are
+# reachable by the backend and by nobody else, so nothing to secure from the
+# outside. Everything that must survive a `docker rm` lives under /data.
+
+# ---------------------------------------------------------------------------
+# Stage 1 - production dependencies of the backend
+# ---------------------------------------------------------------------------
+# The dependencies are resolved from the workspace lockfile (instead of `pnpm i`
+# without a lockfile) so that the image always ships the very same versions the
+# monorepo was built and tested with.
+FROM node:24-bookworm-slim AS backend-deps
+
+# pnpm is pinned to the "packageManager" version of the workspace so that it
+# never has to self-switch to another release at image build time.
+ARG PNPM_VERSION=10.19.0
+RUN npm install -g pnpm@${PNPM_VERSION}
+
+WORKDIR /var/www
+
+# Only the manifests are copied, so this layer is rebuilt just when a
+# dependency changes and not at every source change.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY backend/package.json backend/
+COPY frontend/package.json frontend/
+COPY e2e/package.json e2e/
+
+RUN pnpm install --filter @mfe-orchestrator/backend --prod --frozen-lockfile --ignore-scripts
+
+# ---------------------------------------------------------------------------
+# Stage 2 - runtime with every service inside
+# ---------------------------------------------------------------------------
+FROM debian:bookworm-slim AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG MONGODB_VERSION=8.0
+
+# nginx        -> serves the frontend and proxies /api to the backend
+# redis-server -> cache used by the backend (ships redis-cli too)
+# mongodb      -> database, from the official MongoDB repository
+# supervisor   -> keeps the four processes alive and pipes their logs to stdout
+# libstdc++6   -> required by the node binary copied from the official image
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        libstdc++6 \
+        nginx \
+        redis-server \
+        supervisor \
+        tzdata \
+    && curl -fsSL "https://www.mongodb.org/static/pgp/server-${MONGODB_VERSION}.asc" \
+        | gpg --dearmor -o /usr/share/keyrings/mongodb-server.gpg \
+    && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server.gpg ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/${MONGODB_VERSION} main" \
+        > /etc/apt/sources.list.d/mongodb-org.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        mongodb-mongosh \
+        mongodb-org-server \
+    && apt-get purge -y --auto-remove gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Node.js is taken from the official image instead of a third party apt
+# repository: same Debian release, so the binary is compatible as is.
+COPY --from=node:24-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+
+# Unprivileged user running the backend
+RUN useradd --system --create-home --home-dir /home/mfe --shell /usr/sbin/nologin mfe
+
+# Nginx: the Debian package ships its own server block on port 80, which would
+# clash with ours.
+RUN rm -f /etc/nginx/sites-enabled/default \
+    && ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Service configuration and process supervision
+COPY docker/all-in-one/mongod.conf /etc/mongod.conf
+COPY docker/all-in-one/redis.conf /etc/redis/redis.conf
+COPY docker/all-in-one/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/all-in-one/quit-on-fatal.py /usr/local/bin/quit-on-fatal.py
+COPY docker/all-in-one/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/all-in-one/start-mongod.sh /usr/local/bin/start-mongod.sh
+COPY docker/all-in-one/start-redis.sh /usr/local/bin/start-redis.sh
+COPY docker/all-in-one/start-backend.sh /usr/local/bin/start-backend.sh
+RUN chmod +x /usr/local/bin/quit-on-fatal.py \
+    /usr/local/bin/entrypoint.sh \
+    /usr/local/bin/start-mongod.sh \
+    /usr/local/bin/start-redis.sh \
+    /usr/local/bin/start-backend.sh
+
+# Application: built frontend and backend, plus the production node_modules of
+# stage 1. The two node_modules directories are copied keeping the same layout
+# they had in the builder, because pnpm links them with relative symlinks.
+COPY --from=backend-deps /var/www/node_modules /var/www/node_modules
+COPY --from=backend-deps /var/www/backend/node_modules /var/www/backend/node_modules
+COPY frontend/dist/ /var/www/frontend/
+COPY backend/dist/ /var/www/backend/
+
+# The backend runs in production mode: the controllers are mounted without the
+# /api prefix, which nginx strips while proxying.
+ENV NODE_ENV=prod \
+    PORT=3000 \
+    NOSQL_DATABASE_URL=mongodb://127.0.0.1:27017/microfrontend-orchestrator \
+    NOSQL_DATABASE_NAME=microfrontend-orchestrator \
+    REDIS_URL=redis://127.0.0.1:6379 \
+    MICROFRONTEND_HOST_FOLDER=/data/microfrontends \
+    MONGO_REPLICA_SET=rs0
+
+# Single volume with everything that must survive the container: database,
+# Redis dump, uploaded microfrontends and the generated JWT secret.
+VOLUME ["/data"]
+
+# Only the web interface is published: MongoDB and Redis stay on the loopback.
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+    CMD curl -fsS http://127.0.0.1/api/echo > /dev/null || exit 1
+
+WORKDIR /var/www
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

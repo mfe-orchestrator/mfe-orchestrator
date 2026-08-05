@@ -40,6 +40,7 @@ This project uses a **monorepo architecture** with the following structure:
   - [Features 🎯](#features-)
   - [Documentation 📚](#documentation-)
   - [Run with Docker](#run-with-docker)
+  - [Run everything in a single container 📦](#run-everything-in-a-single-container-)
   - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
   - [Environment variables 🔧](#environment-variables-)
   - [Anonymous telemetry 📡](#anonymous-telemetry-)
@@ -78,6 +79,71 @@ Simply run the `docker-compose.yaml`
 ```bash
 docker compose up -d
 ```
+
+## Run everything in a single container 📦
+
+If you do not want to run MongoDB and Redis yourself, use the **all-in-one**
+image: it contains the orchestrator, MongoDB, Redis and Nginx. One container,
+one volume, nothing else to start.
+
+```bash
+docker run -d --name mfe-orchestrator --restart unless-stopped \
+  -p 8080:80 -v mfe-data:/data lory1990/mfe-orchestrator:all-in-one
+```
+
+Open http://localhost:8080 and create the first user. That is all.
+
+What you should know about it:
+
+- **Everything persistent lives in `/data`**: database (`/data/db`), Redis dump
+  (`/data/redis`), uploaded microfrontends (`/data/microfrontends`) and the JWT
+  secret (`/data/secrets`). Mount that single volume and the installation
+  survives an image upgrade.
+- **The JWT secret is generated on the first start** and kept in the volume, so
+  tokens are not signed with a well known key. Pass `JWT_SECRET` yourself if you
+  prefer to manage it.
+- **MongoDB and Redis only listen on the loopback of the container**: they are
+  reachable by the backend and by nobody else, so there is no database port to
+  firewall and no default password to change. Only port 80 is published.
+- **MongoDB runs as a single node replica set** (`MONGO_REPLICA_SET=rs0`), which
+  is what makes transactions available to the backend. Set the variable to an
+  empty string to run a plain standalone MongoDB instead.
+- Every [environment variable](#environment-variables-) of the table below works
+  here too, for example
+  `-e REGISTRATION_ALLOWED=true -e FRONTEND_URL=https://mfe.example.com`.
+- The four processes are supervised: they are restarted when they crash and, if
+  one of them cannot start at all, the container exits instead of pretending to
+  be healthy. Logs of all of them are in `docker logs mfe-orchestrator`, and
+  `docker exec mfe-orchestrator supervisorctl status` shows their state.
+
+Prefer a compose file? A single service is enough:
+
+```yaml
+services:
+  mfe-orchestrator:
+    image: lory1990/mfe-orchestrator:all-in-one
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - mfe-data:/data
+
+volumes:
+  mfe-data:
+```
+
+To build the image yourself, compile the workspace first, exactly like the
+standard image does:
+
+```bash
+pnpm install && pnpm build
+docker build -f Dockerfile.all-in-one -t mfe-orchestrator:all-in-one .
+```
+
+> The all-in-one image trades isolation for simplicity: a single container means
+> a single failure domain and no way to scale a service on its own. For
+> production installations, or whenever you already run a managed MongoDB or
+> Redis, use the `docker-compose.yaml` above.
 
 ## Run with Terraform (OpenTofu)
 
