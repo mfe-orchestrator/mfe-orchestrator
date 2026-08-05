@@ -2,6 +2,7 @@ name: 🐳 Docker Build
 
 permissions:
   contents: read
+  packages: read
 on:
   workflow_call:
   push:

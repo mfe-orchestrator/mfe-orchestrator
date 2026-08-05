@@ -2,6 +2,7 @@ name: 🏗️ Monorepo Build & Test
 
 permissions:
   contents: read
+  packages: read
 
 on:
   workflow_call:
@@ -27,6 +28,8 @@ jobs:
           node-version: "24"
           cache-dependency-path: "./pnpm-lock.yaml"
           cache: "pnpm"
+          registry-url: https://npm.pkg.github.com
+          scope: "@mfe-orchestrator"
 
       # - name: 💾 Cache node_modules
       #   id: cache-node-modules
@@ -41,6 +44,8 @@ jobs:
 
       - name: 📦 Install Dependencies
         run: pnpm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 💾 Turbo Cache
         uses: actions/cache@v5
