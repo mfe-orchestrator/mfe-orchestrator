@@ -72,7 +72,7 @@ The backoffice that receives the ping is an ordinary HTTP service, so it sees th
 
 ## Where it is sent
 
-`https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted`, overridable with `TELEMETRY_ENDPOINT` if you want to point the pings at your own collector instead.
+`https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted`, overridable with `TELEMETRY_ENDPOINT` if you want to point the pings at your own collector instead.
 
 Telemetry only ever travels **outwards**: your installation sends, our backoffice receives. The orchestrator itself exposes no endpoint that accepts pings, neither from your own instances nor from anybody else, and it never fetches anything back from the backoffice — no configuration, no feature flags, no license check. `GET /api/telemetry/status` is read-only and answers with what *this* installation would send.
 
@@ -112,7 +112,7 @@ The first rule that matches wins:
 | `TELEMETRY_DISABLED`       | _(unset)_                                                           | `true` turns telemetry off.                                        |
 | `TELEMETRY_ENABLED`        | _(unset)_                                                           | Explicit override in both directions, wins over everything else.   |
 | `DO_NOT_TRACK`             | _(unset)_                                                           | `1` turns telemetry off.                                           |
-| `TELEMETRY_ENDPOINT`       | `https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted` | Where the ping goes. Point it at your own collector if you prefer. |
+| `TELEMETRY_ENDPOINT`       | `https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted` | Where the ping goes. Point it at your own collector if you prefer. |
 | `TELEMETRY_INTERVAL_HOURS` | `24`                                                                | Hours between pings, minimum `1`.                                  |
 
 ---
@@ -122,7 +122,7 @@ The first rule that matches wins:
 **1. Read the startup log.** Every start prints the whole disclosure, no docs required:
 
 ```
-Anonymous telemetry is ENABLED (every 24h to https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted)
+Anonymous telemetry is ENABLED (every 24h to https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted)
 What we send, and nothing else: installationId, version, nodeVersion, projects, microfrontends, environments, users, deploymentsLastWeek
 No names, no emails, no URLs, no hostnames, no IPs, no project or microfrontend content
 Inspect the exact payload of this installation: GET /api/telemetry/status
@@ -144,7 +144,7 @@ The first ping of each process is also logged in full, so the real bytes that le
 {
   "enabled": true,
   "reason": "enabled by default (opt-out)",
-  "endpoint": "https://backoffice.mfe-orchestrator.dev/api/telemetry/self-hosted",
+  "endpoint": "https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted",
   "intervalHours": 24,
   "payload": { "installationId": "3f2b9c14-...", "version": "1.0.0", "...": "..." },
   "disableWith": "TELEMETRY_DISABLED=true",
