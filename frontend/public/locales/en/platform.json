@@ -353,6 +353,26 @@
             "startBuild": "Start Build",
             "buildSuccess": "Build started for {{name}}"
         },
+        "import": {
+            "action": "Import from repository",
+            "title": "Import repositories",
+            "description": "Create one microfrontend for each repository of the selected connection. Repositories already linked to a microfrontend are skipped.",
+            "loading": "Loading repositories...",
+            "loadError": "Unable to load the repositories of this connection.",
+            "noRepositories": "This connection does not expose any repository.",
+            "noSearchResults": "No repository matches your search.",
+            "searchPlaceholder": "Search repository...",
+            "selectAll": "Select all",
+            "selectedCount": "{{count}} of {{total}} selected",
+            "alreadyImported": "Already imported",
+            "import_one": "Import {{count}} repository",
+            "import_other": "Import {{count}} repositories",
+            "importedCount_one": "{{count}} microfrontend imported",
+            "importedCount_other": "{{count}} microfrontends imported",
+            "failedCount_one": "{{count}} repository could not be imported: {{names}}",
+            "failedCount_other": "{{count}} repositories could not be imported: {{names}}",
+            "nothingImported": "No repository was imported."
+        },
         "card": {
             "canary": "Canary",
             "repository": "Repository",

@@ -1,5 +1,8 @@
 import axios, { AxiosInstance } from "axios"
 
+/** Safety net so a misbehaving pagination cursor cannot turn a repository listing into an endless loop. */
+const maxRepositoryPages = 50
+
 interface GitLabGroup {
     id: number
     name: string
@@ -99,8 +102,21 @@ class GitLabClient {
     }
 
     async getRepositoriesByGroupId(groupId: string | number): Promise<GitLabProject[]> {
-        const res = await this.api.get<GitLabProject[]>(`/groups/${groupId}/projects`)
-        return res.data
+        const perPage = 100
+        const projects: GitLabProject[] = []
+
+        // GitLab returns 20 projects per page by default, so every page is walked to get the complete list.
+        for (let page = 1; page <= maxRepositoryPages; page++) {
+            const res = await this.api.get<GitLabProject[]>(`/groups/${groupId}/projects`, {
+                params: { per_page: perPage, page }
+            })
+
+            projects.push(...res.data)
+
+            if (res.data.length < perPage) break
+        }
+
+        return projects
     }
 
     async getRepositoryPathsByGroupId(groupId: string | number): Promise<string[]> {
