@@ -5,6 +5,7 @@ permissions:
   packages: read
 
 on:
+  workflow_call:
   push:
     branches: [development]
 
