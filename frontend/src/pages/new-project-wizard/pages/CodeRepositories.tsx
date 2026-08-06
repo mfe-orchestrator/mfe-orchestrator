@@ -1,5 +1,6 @@
 import { GitBranch } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { AddRepositoryDialog } from "@/pages/code-repositories/partials/AddRepositoryDialog"
 import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
@@ -11,18 +12,19 @@ import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
  * existing component instead of duplicating its logic.
  */
 const CodeRepositories: React.FC<WizardStepProps> = ({ onNext, onBack, onSkip }) => {
+    const { t } = useTranslation()
     const [dialogOpen, setDialogOpen] = useState(false)
 
     return (
         <StepShell
-            title="Collega il codice sorgente"
-            description="Collega un provider Git (GitHub, GitLab o Azure DevOps) per abilitare build e deploy automatici dei microfrontend."
-            skippableNote="Nessuna fretta: puoi collegare o cambiare i repository in qualsiasi momento dalla sezione Repository del progetto."
-            footer={<WizardFooter onBack={onBack} onSkip={onSkip} onNext={onNext} nextLabel="Continua" />}
+            title={t("newProjectWizard.code_repositories.title")}
+            description={t("newProjectWizard.code_repositories.description")}
+            skippableNote={t("newProjectWizard.code_repositories.skippable_note")}
+            footer={<WizardFooter onBack={onBack} onSkip={onSkip} onNext={onNext} />}
         >
             <div className="flex flex-col items-start gap-3">
                 <Button type="button" variant="secondary" onClick={() => setDialogOpen(true)}>
-                    <GitBranch className="size-4" /> Collega un repository
+                    <GitBranch className="size-4" /> {t("newProjectWizard.code_repositories.connect_repository")}
                 </Button>
             </div>
             <AddRepositoryDialog isOpen={dialogOpen} onOpenChange={setDialogOpen} />

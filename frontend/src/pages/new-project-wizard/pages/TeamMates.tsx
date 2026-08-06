@@ -5,6 +5,7 @@ import { Button } from "@/components/atoms"
 import { Input } from "@/components/ui/input/input"
 import useProjectApi, { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import useUserStore from "@/store/useUserStore"
 import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
 
 interface Row {
@@ -18,6 +19,7 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
     const { t } = useTranslation()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
+    const currentUserEmail = useUserStore(state => state.user?.email?.toLowerCase())
     const [loading, setLoading] = useState(false)
     const [rows, setRows] = useState<Row[]>([{ email: "", role: RoleInProject.VIEWER }])
 
@@ -40,7 +42,17 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
         }
         const invalid = valid.find(r => !EMAIL_RE.test(r.email.trim()))
         if (invalid) {
-            notifications.showWarningNotification({ message: `Email non valida: ${invalid.email}` })
+            notifications.showWarningNotification({ message: t("newProjectWizard.team_mates.invalid_email", { email: invalid.email }) })
+            return
+        }
+        const emails = valid.map(r => r.email.trim().toLowerCase())
+        const duplicate = emails.find((email, idx) => emails.indexOf(email) !== idx)
+        if (duplicate) {
+            notifications.showWarningNotification({ message: t("newProjectWizard.team_mates.duplicate_email", { email: duplicate }) })
+            return
+        }
+        if (currentUserEmail && emails.includes(currentUserEmail)) {
+            notifications.showWarningNotification({ message: t("newProjectWizard.team_mates.cannot_invite_self") })
             return
         }
         if (!project?._id) {
@@ -52,7 +64,7 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
             await Promise.all(valid.map(r => projectApi.inviteUser({ projectId: project._id, email: r.email.trim(), role: r.role })))
             onNext()
         } catch {
-            notifications.showErrorNotification({ message: "Alcuni inviti non sono stati inviati" })
+            notifications.showErrorNotification({ message: t("newProjectWizard.team_mates.invite_error") })
         } finally {
             setLoading(false)
         }
@@ -60,10 +72,19 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
 
     return (
         <StepShell
-            title="Invita i collaboratori"
-            description="Aggiungi le persone che lavoreranno al progetto. Riceveranno un invito via email. Puoi saltare e invitarle più tardi."
-            skippableNote="Nessuna fretta: puoi invitare o rimuovere collaboratori in qualsiasi momento dalle impostazioni del progetto."
-            footer={<WizardFooter onBack={onBack} onSkip={onSkip} skipLabel="Salta e completa" onNext={onFinish} loading={loading} nextLabel="Completa" />}
+            title={t("newProjectWizard.team_mates.title")}
+            description={t("newProjectWizard.team_mates.description")}
+            skippableNote={t("newProjectWizard.team_mates.skippable_note")}
+            footer={
+                <WizardFooter
+                    onBack={onBack}
+                    onSkip={onSkip}
+                    skipLabel={t("newProjectWizard.team_mates.skip_and_complete")}
+                    onNext={onFinish}
+                    loading={loading}
+                    nextLabel={t("newProjectWizard.team_mates.complete")}
+                />
+            }
         >
             <div className="flex flex-col gap-3">
                 {rows.map((row, i) => (
@@ -73,7 +94,7 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
                             data-testid={`wizard-collaborator-email-${i}`}
                             value={row.email}
                             onChange={e => update(i, { email: e.target.value })}
-                            placeholder="collega@azienda.com"
+                            placeholder={t("newProjectWizard.team_mates.email_placeholder")}
                             className="flex-1"
                         />
                         <select
@@ -87,7 +108,7 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
                                 </option>
                             ))}
                         </select>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(i)} disabled={rows.length === 1} aria-label="Rimuovi collaboratore">
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(i)} disabled={rows.length === 1} aria-label={t("newProjectWizard.team_mates.remove_collaborator")}>
                             <Trash2 className="size-4" />
                         </Button>
                     </div>
@@ -95,13 +116,13 @@ const TeamMates: React.FC<WizardStepProps> = ({ project, onNext, onBack, onSkip 
 
                 <div>
                     <Button type="button" variant="ghost" size="sm" onClick={addRow}>
-                        <Plus className="size-4" /> Aggiungi collaboratore
+                        <Plus className="size-4" /> {t("newProjectWizard.team_mates.add_collaborator")}
                     </Button>
                 </div>
 
                 <div className="flex items-start gap-3 rounded-lg border border-border bg-accent/60 p-4 text-sm text-foreground-secondary mt-2">
                     <Users className="size-5 text-primary shrink-0 mt-0.5" />
-                    <span>I collaboratori invitati potranno accedere al progetto in base al ruolo assegnato.</span>
+                    <span>{t("newProjectWizard.team_mates.role_note")}</span>
                 </div>
             </div>
         </StepShell>

@@ -311,7 +311,12 @@
         "accept": "Accept invitation",
         "accepted": "Invitation accepted",
         "name_label": "First name",
-        "surname_label": "Last name"
+        "surname_label": "Last name",
+        "not_found_title": "Invitation not found",
+        "not_found_description": "The link you followed doesn't match any invitation: it may have expired, been used already, or be invalid. Ask the person who invited you to send you a new one.",
+        "error_title": "Something went wrong",
+        "error_description": "We couldn't load the invitation. Please try again in a moment.",
+        "go_to_login": "Go to login"
     },
     "microfrontend": {
         "host": "Host",
@@ -644,7 +649,7 @@
         "providerConfiguration": "Provider Configuration",
         "providerConfigurationDescription": "Configure authentication and access settings for your {{storageType}} storage",
         "securityNotice": "Security Notice:",
-        "securityNoticeDescription": "All credentials are encrypted and stored securely. They are only used to access your storage resources and are never shared with third parties.",
+        "securityNoticeDescription": "All credentials are stored securely. They are only used to access your storage resources and are never shared with third parties.",
         "path": "Path",
         "serviceAccountJsonKey": "Service Account JSON Key"
     },
@@ -867,6 +872,76 @@
             "description": "Start from scratch without any template",
             "framework": "Any Framework",
             "tag": "Blank"
+        }
+    },
+    "newProjectWizard": {
+        "subtitle": "Create a new project",
+        "close": "Close wizard",
+        "steps": {
+            "name": "Name",
+            "environments": "Environments",
+            "storages": "Storage",
+            "repositories": "Repositories",
+            "collaborators": "Collaborators"
+        },
+        "footer": {
+            "back": "Back",
+            "skip": "Skip",
+            "next": "Continue",
+            "loading": "Please wait…"
+        },
+        "main_data": {
+            "title": "Let's name your project",
+            "description": "The name identifies the project in the console. You can change it later from the settings.",
+            "name_label": "Project name",
+            "name_placeholder": "E.g. Customer Portal",
+            "name_required": "Name is required",
+            "name_min_length": "Minimum 3 characters",
+            "description_label": "Description (optional)",
+            "description_placeholder": "What is this project for?",
+            "submit": "Create project",
+            "create_error": "Unable to create the project"
+        },
+        "environments": {
+            "title": "Configure environments",
+            "description": "Environments (e.g. development, production) let you manage different versions of your microfrontends. Choose a preset or customize them, then save."
+        },
+        "hosting": {
+            "title": "Where do we host your microfrontends?",
+            "description": "Connect a storage bucket to deploy your bundles. You can skip this step and configure it later.",
+            "alert_title": "This step is not essential",
+            "alert_description": "If you skip it and don't connect any cloud, microfrontend bundles will still be hosted directly by MFE Orchestrator. You can connect an external storage at any time from the project settings.",
+            "submit": "Save and continue"
+        },
+        "code_repositories": {
+            "title": "Connect your source code",
+            "description": "Connect a Git provider (GitHub, GitLab or Azure DevOps) to enable automatic builds and deployments of your microfrontends.",
+            "skippable_note": "No rush: you can connect or change repositories at any time from the project's Repositories section.",
+            "connect_repository": "Connect a repository"
+        },
+        "team_mates": {
+            "title": "Invite collaborators",
+            "description": "Add the people who will work on the project. They will receive an email invitation. You can skip and invite them later.",
+            "skippable_note": "No rush: you can invite or remove collaborators at any time from the project settings.",
+            "email_placeholder": "colleague@company.com",
+            "invalid_email": "Invalid email: {{email}}",
+            "duplicate_email": "Duplicate email: {{email}}",
+            "cannot_invite_self": "You cannot invite yourself: you are already part of the project",
+            "invite_error": "Some invitations could not be sent",
+            "remove_collaborator": "Remove collaborator",
+            "add_collaborator": "Add collaborator",
+            "role_note": "Invited collaborators will be able to access the project based on their assigned role.",
+            "skip_and_complete": "Skip and complete",
+            "complete": "Complete"
+        },
+        "completed": {
+            "title": "Project ready!",
+            "configured_with_name": "has been configured successfully.",
+            "configured_generic": "The project has been configured successfully.",
+            "start_adding": "You can start adding microfrontends.",
+            "start_deploying": "Start deploying your microfrontends",
+            "go_to_dashboard": "Go to dashboard",
+            "add_microfrontend": "Add microfrontend"
         }
     }
 }

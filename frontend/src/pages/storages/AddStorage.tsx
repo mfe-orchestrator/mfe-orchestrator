@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { Cloud, Info, Key, Settings } from "lucide-react"
+import { Info, Key, Settings } from "lucide-react"
 import React, { useMemo } from "react"
 import { FormProvider, useForm, useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -19,39 +19,9 @@ interface StorageAuthFieldsProps {
     storageType: StorageType
 }
 
-const getProviderInfo = (storageType: StorageType) => {
-    switch (storageType) {
-        case StorageType.AWS:
-            return {
-                icon: <img src="/img/aws.svg" alt="AWS" className="h-5 w-5" />,
-                name: "Amazon S3",
-                description: "Configure AWS S3 bucket access credentials"
-            }
-        case StorageType.GOOGLE:
-            return {
-                icon: <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-5 w-5" />,
-                name: "Google Cloud Storage",
-                description: "Configure Google Cloud Storage bucket access"
-            }
-        case StorageType.AZURE:
-            return {
-                icon: <img src="/img/Azure.svg" alt="Azure" className="h-5 w-5" />,
-                name: "Azure Blob Storage",
-                description: "Configure Azure Blob Storage container access"
-            }
-        default:
-            return {
-                icon: <Cloud className="h-5 w-5" />,
-                name: "Storage Provider",
-                description: "Configure storage provider settings"
-            }
-    }
-}
-
 const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) => {
     const { t } = useTranslation()
     const { watch } = useFormContext()
-    const providerInfo = getProviderInfo(storageType)
 
     const azureAuthTypes = [
         { value: "connectionString", label: t("storage.authTypes.azure.connectionString") },
@@ -142,18 +112,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
         }
     }
 
-    return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
-                {providerInfo.icon}
-                <div>
-                    <h3 className="font-medium text-foreground">{providerInfo.name}</h3>
-                    <p className="text-sm text-muted-foreground">{providerInfo.description}</p>
-                </div>
-            </div>
-            {renderStorageConfig()}
-        </div>
-    )
+    return <div className="space-y-4">{renderStorageConfig()}</div>
 }
 
 interface StorageFormProps {

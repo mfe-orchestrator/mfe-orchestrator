@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
@@ -19,6 +20,7 @@ const slugify = (value: string) =>
         .replace(/^-+|-+$/g, "")
 
 const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
+    const { t } = useTranslation()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
     const [loading, setLoading] = useState(false)
@@ -34,7 +36,7 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
             })
             onCreated?.(created)
         } catch {
-            notifications.showErrorNotification({ message: "Impossibile creare il progetto" })
+            notifications.showErrorNotification({ message: t("newProjectWizard.main_data.create_error") })
         } finally {
             setLoading(false)
         }
@@ -44,20 +46,27 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
         <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <StepShell
-                    title="Diamo un nome al progetto"
-                    description="Il nome identifica il progetto nella console. Potrai modificarlo in seguito dalle impostazioni."
-                    footer={<WizardFooter loading={loading} nextLabel="Crea progetto" />}
+                    title={t("newProjectWizard.main_data.title")}
+                    description={t("newProjectWizard.main_data.description")}
+                    footer={<WizardFooter loading={loading} nextLabel={t("newProjectWizard.main_data.submit")} />}
                 >
                     <div className="flex flex-col gap-4">
                         <TextField<MainDataForm>
                             name="name"
-                            label="Nome progetto"
-                            placeholder="Es. Portale Clienti"
+                            label={t("newProjectWizard.main_data.name_label")}
+                            placeholder={t("newProjectWizard.main_data.name_placeholder")}
                             required
                             dataTestId="wizard-project-name"
-                            rules={{ required: "Il nome è obbligatorio", minLength: { value: 3, message: "Minimo 3 caratteri" } }}
+                            rules={{
+                                required: t("newProjectWizard.main_data.name_required"),
+                                minLength: { value: 3, message: t("newProjectWizard.main_data.name_min_length") }
+                            }}
                         />
-                        <TextareaField<MainDataForm> name="description" label="Descrizione (opzionale)" placeholder="A cosa serve questo progetto?" />
+                        <TextareaField<MainDataForm>
+                            name="description"
+                            label={t("newProjectWizard.main_data.description_label")}
+                            placeholder={t("newProjectWizard.main_data.description_placeholder")}
+                        />
                     </div>
                 </StepShell>
             </form>

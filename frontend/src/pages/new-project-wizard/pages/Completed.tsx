@@ -1,9 +1,11 @@
 import { PartyPopper } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import { WizardStepProps } from "./wizardShared"
 
 const Completed: React.FC<WizardStepProps & { onDone?: () => void }> = ({ project, onDone }) => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
 
     return (
@@ -12,30 +14,30 @@ const Completed: React.FC<WizardStepProps & { onDone?: () => void }> = ({ projec
                 <PartyPopper className="size-8 text-primary" />
             </div>
             <div className="flex flex-col gap-2">
-                <h2 className="text-2xl font-semibold text-foreground">Progetto pronto!</h2>
+                <h2 className="text-2xl font-semibold text-foreground">{t("newProjectWizard.completed.title")}</h2>
                 <p className="text-foreground-secondary max-w-md">
                     {project?.name ? (
                         <>
-                            <span className="font-medium text-foreground">{project.name}</span> è stato configurato con successo.
+                            <span className="font-medium text-foreground">{project.name}</span> {t("newProjectWizard.completed.configured_with_name")}
                         </>
                     ) : (
-                        "Il progetto è stato configurato con successo."
+                        t("newProjectWizard.completed.configured_generic")
                     )}{" "}
-                    Puoi iniziare ad aggiungere microfrontend.
+                    {t("newProjectWizard.completed.start_adding")}
                 </p>
             </div>
             <div className="flex items-center gap-3 mt-2">
                 {onDone ? (
                     <Button variant="primary" onClick={onDone}>
-                        Inizia a usare il progetto
+                        {t("newProjectWizard.completed.start_deploying")}
                     </Button>
                 ) : (
                     <>
                         <Button variant="ghost" onClick={() => navigate("/microfrontends")}>
-                            Vai alla dashboard
+                            {t("newProjectWizard.completed.go_to_dashboard")}
                         </Button>
                         <Button variant="primary" onClick={() => navigate("/microfrontend/new")}>
-                            Aggiungi microfrontend
+                            {t("newProjectWizard.completed.add_microfrontend")}
                         </Button>
                     </>
                 )}

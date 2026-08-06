@@ -700,14 +700,14 @@
     "semantic_hash": "2dcf3574b7d437202b0a3f27f0b985e2"
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1785912357.586558,
-    "ast_hash": "90e4e3f498d34bdb09dad2b197ef9f5b",
-    "semantic_hash": "90e4e3f498d34bdb09dad2b197ef9f5b"
+    "mtime": 1786049403.3424773,
+    "ast_hash": "8aace87a70412a18419565f3f097da3b",
+    "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1785912357.5870228,
-    "ast_hash": "631eb08dbc74fb731fbcd0933bf1673e",
-    "semantic_hash": "631eb08dbc74fb731fbcd0933bf1673e"
+    "mtime": 1786049403.3410392,
+    "ast_hash": "9c2c07d16009bcc299d500e58e23a7f6",
+    "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
     "mtime": 1785880209.9986005,
@@ -1285,9 +1285,9 @@
     "semantic_hash": "958cb96f41b27336c7b2ff002f3b9b9c"
   },
   "frontend/src/pages/auth/ProjectInvitation.tsx": {
-    "mtime": 1785880210.010484,
-    "ast_hash": "7f05a0d6339fa875a622f8d5798ad1f0",
-    "semantic_hash": "7f05a0d6339fa875a622f8d5798ad1f0"
+    "mtime": 1786048970.359891,
+    "ast_hash": "55558e5202484fc59a59445f558d415f",
+    "semantic_hash": ""
   },
   "frontend/src/pages/auth/ResetPassword.tsx": {
     "mtime": 1785880210.0105433,
@@ -1535,39 +1535,39 @@
     "semantic_hash": "66c798fed6de2b3327454207f17a6247"
   },
   "frontend/src/pages/new-project-wizard/NewProjectWizard.tsx": {
-    "mtime": 1785880210.016507,
-    "ast_hash": "309aa0884741b1dfbc1a5c438811d32d",
-    "semantic_hash": "309aa0884741b1dfbc1a5c438811d32d"
+    "mtime": 1786049383.4145422,
+    "ast_hash": "8349611c7306ab43190b99a1c9220f92",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/CodeRepositories.tsx": {
-    "mtime": 1785880210.016636,
-    "ast_hash": "574ea28fdb213e6f36172a6d4214c0b7",
-    "semantic_hash": "574ea28fdb213e6f36172a6d4214c0b7"
+    "mtime": 1786049199.9448695,
+    "ast_hash": "2d86125113a2fa550105ac7e25b31d81",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/Completed.tsx": {
-    "mtime": 1785880210.0167167,
-    "ast_hash": "a38c797d1579735ba9cbcc9016a8e6b0",
-    "semantic_hash": "a38c797d1579735ba9cbcc9016a8e6b0"
+    "mtime": 1786049366.4644215,
+    "ast_hash": "7fc1afcd5c7fe94f89c01c5c2441ea64",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/Environments.tsx": {
-    "mtime": 1785880210.016785,
-    "ast_hash": "5a0906535562c9e117a0bc66b157ea5d",
-    "semantic_hash": "5a0906535562c9e117a0bc66b157ea5d"
+    "mtime": 1786049165.5596664,
+    "ast_hash": "a511df14441d85174660c363037afb13",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/Hosting.tsx": {
-    "mtime": 1785880210.0168586,
-    "ast_hash": "36279a6a29b3887502787ea14e7bf003",
-    "semantic_hash": "36279a6a29b3887502787ea14e7bf003"
+    "mtime": 1786049184.4934497,
+    "ast_hash": "1a2a22bd7d3ebf1cec1df6e96d3a19b7",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/MainData.tsx": {
-    "mtime": 1785880210.016928,
-    "ast_hash": "fd3b0138867b9143d3dd2db649b6749f",
-    "semantic_hash": "fd3b0138867b9143d3dd2db649b6749f"
+    "mtime": 1786049150.5897207,
+    "ast_hash": "737920cacf8171356406a72dcf8a4da2",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/TeamMates.tsx": {
-    "mtime": 1785880210.0170858,
-    "ast_hash": "8147a97e219faf22501c54993add2e07",
-    "semantic_hash": "8147a97e219faf22501c54993add2e07"
+    "mtime": 1786049277.2259414,
+    "ast_hash": "68840bc0c438059d869ee9cc329454fc",
+    "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/WizardBasicProps.ts": {
     "mtime": 1785880210.0171554,
@@ -1575,9 +1575,9 @@
     "semantic_hash": "6bd074c97d6151218266f4d1aaf6b174"
   },
   "frontend/src/pages/new-project-wizard/pages/wizardShared.tsx": {
-    "mtime": 1785880210.0173137,
-    "ast_hash": "255f051cfffeee92513a024cfa607995",
-    "semantic_hash": "255f051cfffeee92513a024cfa607995"
+    "mtime": 1786049130.1898992,
+    "ast_hash": "cc56e7ccc3fd10c8bb61f43c75d95173",
+    "semantic_hash": ""
   },
   "frontend/src/pages/project-users/ProjectUsers.tsx": {
     "mtime": 1785880210.0174716,
@@ -1625,9 +1625,9 @@
     "semantic_hash": "7f3a913a70375fea6ac2ac1019694628"
   },
   "frontend/src/pages/storages/AddStorage.tsx": {
-    "mtime": 1785880210.0186195,
-    "ast_hash": "3e90f39ac2ccd8be117af5f7444d01bf",
-    "semantic_hash": "3e90f39ac2ccd8be117af5f7444d01bf"
+    "mtime": 1786048650.5154808,
+    "ast_hash": "1dc89c6ca4df2e53f877440c80853089",
+    "semantic_hash": ""
   },
   "frontend/src/pages/storages/Storages.tsx": {
     "mtime": 1785880210.018791,
@@ -2010,8 +2010,8 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1785953165.1778078,
-    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "mtime": 1786049142.9580932,
+    "ast_hash": "5f7d555b54895302c5f2d1175daacfd9",
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/Chart.yaml": {

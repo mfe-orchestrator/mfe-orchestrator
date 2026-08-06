@@ -1,4 +1,5 @@
 import { Check, Info } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { Project } from "@/hooks/apiClients/useProjectApi"
 import { cn } from "@/utils/styleUtils"
@@ -97,24 +98,28 @@ interface WizardFooterProps {
     onNext?: () => void
 }
 
-export const WizardFooter: React.FC<WizardFooterProps> = ({ onBack, onSkip, skipLabel = "Salta", nextLabel = "Continua", loading, onNext }) => (
-    <>
-        <div>
-            {onBack && (
-                <Button dataTestId="wizard-back" type="button" variant="ghost" onClick={onBack} disabled={loading}>
-                    Indietro
+export const WizardFooter: React.FC<WizardFooterProps> = ({ onBack, onSkip, skipLabel, nextLabel, loading, onNext }) => {
+    const { t } = useTranslation()
+
+    return (
+        <>
+            <div>
+                {onBack && (
+                    <Button dataTestId="wizard-back" type="button" variant="ghost" onClick={onBack} disabled={loading}>
+                        {t("newProjectWizard.footer.back")}
+                    </Button>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+                {onSkip && (
+                    <Button dataTestId="wizard-skip" type="button" variant="ghost" onClick={onSkip} disabled={loading}>
+                        {skipLabel ?? t("newProjectWizard.footer.skip")}
+                    </Button>
+                )}
+                <Button dataTestId="wizard-next" type={onNext ? "button" : "submit"} variant="primary" onClick={onNext} disabled={loading}>
+                    {loading ? t("newProjectWizard.footer.loading") : (nextLabel ?? t("newProjectWizard.footer.next"))}
                 </Button>
-            )}
-        </div>
-        <div className="flex items-center gap-2">
-            {onSkip && (
-                <Button dataTestId="wizard-skip" type="button" variant="ghost" onClick={onSkip} disabled={loading}>
-                    {skipLabel}
-                </Button>
-            )}
-            <Button dataTestId="wizard-next" type={onNext ? "button" : "submit"} variant="primary" onClick={onNext} disabled={loading}>
-                {loading ? "Attendere…" : nextLabel}
-            </Button>
-        </div>
-    </>
-)
+            </div>
+        </>
+    )
+}

@@ -1,3 +1,9 @@
+## i18n
+
+Tutte le stringhe visibili all'utente nel frontend vanno SEMPRE tradotte in tutte le lingue supportate (italiano e inglese). Mai hardcodare testo UI nei componenti:
+- Usa `t("...")` di react-i18next e aggiungi le chiavi sia in `frontend/public/locales/it/platform.json` che in `frontend/public/locales/en/platform.json`.
+- Vale anche per messaggi di validazione, toast/notifiche, banner, placeholder, aria-label e testi di errore.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
