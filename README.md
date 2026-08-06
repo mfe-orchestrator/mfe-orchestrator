@@ -1,73 +1,91 @@
-# Microfrontend Orchestrator
+# MFE Orchestrator
 
-A centralized service for managing and orchestrating microfrontends across multiple environments. 🚀 This project provides a JSON-based configuration system that describes microfrontends, including their versions, and enables independent deployment and management without requiring a complete frontend rebuild.
+[![License](https://img.shields.io/github/license/mfe-orchestrator/mfe-orchestrator)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/mfe-orchestrator/mfe-orchestrator)](https://github.com/mfe-orchestrator/mfe-orchestrator/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/lory1990/mfe-orchestrator)](https://hub.docker.com/r/lory1990/mfe-orchestrator)
+[![Documentation](https://img.shields.io/badge/docs-mfe--orchestrator.dev-8b5cf6)](https://mfe-orchestrator.dev/documentation/)
 
-The service supports multiple environments (DEV, UAT, PROD, etc.) and maintains separate configurations for each environment, allowing for different versions of microfrontends to be deployed in different stages of development. 📦
+**The open-source control plane for micro frontends.** It stores every build you
+publish, decides which version each environment serves, and hands your host
+application the runtime configuration it needs — so releasing one micro
+frontend never means rebuilding the shell.
 
-## 🏗️ Architecture
+![The MFE Orchestrator console assigning micro frontend versions to environments](docs/assets/promo-video.gif)
 
-This project uses a **monorepo architecture** with the following structure:
+## Try it in 60 seconds
 
-- **📦 Monorepo**: Managed with pnpm workspaces for centralized dependency management
-- **⚡ Turbo**: Build system for optimized task orchestration and caching
-- **🎨 Biome**: Unified linting and formatting across all packages
-- **🪝 Lefthook**: Git hooks for automated code quality checks
-- **📋 Commitlint**: Enforced conventional commit messages
+**Hosted console — nothing to install.** Sign up free at
+[console.mfe-orchestrator.dev](https://console.mfe-orchestrator.dev) and create
+your first micro frontend from a template.
 
-### Backend (Fastify + TypeScript)
+**Self-hosted — one container.** The all-in-one image bundles the orchestrator,
+MongoDB, Redis and Nginx:
 
-- **Layered Architecture**: Models → Services → Controllers → Plugins
-- **Auto-loading**: Controllers and plugins auto-loaded from their directories
-- **Authorization**: Project-scoped access control via `BaseAuthorizedService`
-- **Multi-auth**: Supports local JWT, Auth0, Google OAuth, Azure EntraID
-- **Database**: MongoDB with Mongoose, Redis for caching
+```bash
+docker run -d --name mfe-orchestrator --restart unless-stopped \
+  -p 8080:80 -v mfe-data:/data lory1990/mfe-orchestrator:all-in-one
+```
 
-### Frontend (React + TypeScript)
+Open http://localhost:8080 and create the first user.
 
-- **UI**: shadcn/ui components with Tailwind CSS
-- **State**: React Query for server state, Zustand for client state
-- **Routing**: React Router with lazy-loaded pages
-- **Forms**: react-hook-form with TypeScript validation
-- **i18n**: Complete internationalization with react-i18next
+Either way, the
+[**10-minute quick start**](https://mfe-orchestrator.dev/documentation/docs/quick-start)
+takes you from an empty project to a deployed micro frontend — and back with a
+one-click rollback.
 
-## Table of Contents 📑
+## What it does
 
-- [Microfrontend Orchestrator Hub 🏗️](#microfrontend-orchestrator-hub-️)
-  - [🏗️ Architecture](#️-architecture)
-    - [Backend (Fastify + TypeScript)](#backend-fastify--typescript)
-    - [Frontend (React + TypeScript)](#frontend-react--typescript)
-  - [Table of Contents 📑](#table-of-contents-)
-  - [Features 🎯](#features-)
-  - [Documentation 📚](#documentation-)
-  - [Run with Docker](#run-with-docker)
-  - [Run everything in a single container 📦](#run-everything-in-a-single-container-)
-  - [Run with Terraform (OpenTofu)](#run-with-terraform-opentofu)
-  - [Run on Kubernetes with Helm ⎈](#run-on-kubernetes-with-helm-)
-  - [Environment variables 🔧](#environment-variables-)
-  - [Anonymous telemetry 📡](#anonymous-telemetry-)
-  - [Local Installation for development 🛠️](#local-installation-for-development-️)
-    - [Prerequisites](#prerequisites)
-    - [Quick Start](#quick-start)
-    - [Available Commands](#available-commands)
-    - [Development URLs](#development-urls)
-  - [Contributing 🤝](#contributing-)
-    - [Development Workflow](#development-workflow)
-    - [Code Quality](#code-quality)
-    - [Development Guidelines](#development-guidelines)
-  - [License](#license)
-  - [Planned Integrations 🔍](#planned-integrations-)
+- **Independent deployments** — publish a micro frontend and assign it to an
+  environment; the host application is untouched.
+- **Immutable deployments, one-click rollback** — every deploy is a snapshot of
+  versions, variables and storage settings. Rolling back is re-activating the
+  previous snapshot: no rebuild, no revert commit, no pipeline wait.
+- **One build, every environment** — allowed domains resolve the environment
+  per request, and per-environment variables reach the browser at boot, so the
+  same artifact serves DEV, UAT and PROD.
+- **Module Federation, configured for you** — the console generates the Vite or
+  Webpack configuration your host needs, with entry URLs pointing at what is
+  actually deployed.
+- **Your storage, your rules** — artifacts live on the hub, in your own AWS S3,
+  Azure Blob or Google Cloud Storage bucket, on your CDN, or entirely
+  on-premise when they cannot leave your network.
+- **CI/CD included** — ready-made pipelines for GitHub Actions, GitLab CI and
+  Azure DevOps, plus an API for everything else.
+- **Canary releases** *(experimental)* — serve a new version to a share of your
+  users and stop the rollout by changing one setting.
 
-## Features 🎯
+## How it works
 
-- 📝 JSON-based configuration of microfrontends with version management
-- 🌐 Multi-environment support (DEV, UAT, PROD, etc.)
-- 🚀 Independent deployment of microfrontends
-- 📋 Environment-specific configurations
-- 🔌 Integration with various microfrontend technologies (coming soon)
+```mermaid
+flowchart LR
+    subgraph teams [One repo and pipeline per micro frontend]
+        MFE1[header repo] --> CI1[pipeline]
+        MFE2[checkout repo] --> CI2[pipeline]
+    end
+    CI1 -- "upload 2.1.0" --> ORCH
+    CI2 -- "upload 4.2.0" --> ORCH
+    subgraph ORCH [MFE Orchestrator]
+        REG[(version registry)] --> DEP[deployment snapshots per environment]
+    end
+    DEP -- "runtime configuration" --> HOST[Host application]
+    HOST -- "loads assigned versions via Module Federation" --> USERS((Users))
+```
+
+Releasing is assigning a version to an environment and pressing **Deploy**.
+Rolling back is re-activating the snapshot that was live before. The host reads
+the configuration at startup and never needs to be rebuilt.
 
 ## Documentation 📚
 
-- **[Cursor Rules](.cursorrules)** - Development guidelines and coding standards
+The full documentation lives at
+**[mfe-orchestrator.dev/documentation](https://mfe-orchestrator.dev/documentation/)**:
+
+- **[Quick start](https://mfe-orchestrator.dev/documentation/docs/quick-start)** - zero to rollback in 10 minutes
+- **[Core concepts](https://mfe-orchestrator.dev/documentation/docs/core-concepts)** - projects, environments, deployments and how they relate
+- **[Self-hosting](https://mfe-orchestrator.dev/documentation/docs/self-hosting/docker-compose)** - Docker, Docker Compose, Terraform
+
+Project reference:
+
 - **[Commit Conventions](COMMIT_CONVENTIONS.md)** - Conventional Commits specification
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
@@ -271,6 +289,14 @@ Every start logs what is sent and how to disable it, and `GET /api/telemetry/sta
 
 ## Local Installation for development 🛠️
 
+The project is a **pnpm workspaces monorepo** built with Turbo, linted and
+formatted with Biome, with Lefthook git hooks and commitlint-enforced
+conventional commits. The **backend** is Fastify + TypeScript (layered
+models → services → controllers → plugins, MongoDB with Mongoose, Redis for
+caching, multi-auth: local JWT, Auth0, Google OAuth, Azure Entra ID). The
+**frontend** is React + TypeScript (shadcn/ui with Tailwind CSS, React Query +
+Zustand, React Router, react-hook-form, react-i18next).
+
 ### Prerequisites
 
 - Node.js 18+ and pnpm installed
@@ -291,7 +317,7 @@ cd mfe-orchestrator
 pnpm install
 ```
 
-3. **Start Docker services** �
+3. **Start Docker services** 🐳
 
 ```bash
 cd docker-local
@@ -409,7 +435,8 @@ This project uses automated tools to maintain code quality:
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
 
-## Planned Integrations 🔍
+---
 
-- [ ] Module Federation
-- [ ] micro-lc
+If MFE Orchestrator is useful to you, a
+[⭐ on GitHub](https://github.com/mfe-orchestrator/mfe-orchestrator) helps the
+project get found.
