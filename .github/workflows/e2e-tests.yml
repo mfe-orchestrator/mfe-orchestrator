@@ -2,6 +2,7 @@ name: E2E Tests
 
 permissions:
   contents: read
+  packages: read
 
 on:
   # Trigger manuale tramite UI di GitHub
@@ -34,9 +35,13 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          registry-url: https://npm.pkg.github.com
+          scope: '@mfe-orchestrator'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Playwright browsers
         run: pnpm --filter @mfe-orchestrator/e2e exec playwright install chromium --with-deps

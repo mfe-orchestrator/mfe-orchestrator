@@ -58,7 +58,5 @@ const WizardProjectStateSchema = new Schema<IWizardProjectState>(
     }
 )
 
-WizardProjectStateSchema.index({ projectId: 1 }, { unique: true })
-
 const WizardProjectState = mongoose.model<IWizardProjectState>("WizardProjectState", WizardProjectStateSchema)
 export default WizardProjectState

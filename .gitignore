@@ -29,6 +29,10 @@ upload-microfrontends
 
 .turbo
 
+# Helm packaged charts and vendored subcharts
+helm/**/*.tgz
+helm/**/charts/
+
 # Playwright
 test-results/
 playwright-report/

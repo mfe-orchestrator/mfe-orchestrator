@@ -2,6 +2,7 @@ name: 🐳 Docker Build
 
 permissions:
   contents: read
+  packages: read
 on:
   workflow_call:
   push:
@@ -42,10 +43,23 @@ jobs:
       - name: 🚀 Build and Push Docker Image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest -f Dockerfile .
-          
+
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             docker tag ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.ref_name }}
             docker push ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.ref_name }}
           else
             docker push ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:latest
           fi
+
+      # Self contained image: orchestrator + MongoDB + Redis + Nginx, so that a
+      # `docker run` is enough to get a working installation.
+      - name: 📦 Build and Push All-in-One Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:all-in-one -f Dockerfile.all-in-one .
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            docker tag ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:all-in-one ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.ref_name }}-all-in-one
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:${{ github.ref_name }}-all-in-one
+          fi
+
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mfe-orchestrator:all-in-one

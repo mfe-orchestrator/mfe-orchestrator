@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "mfe-orchestrator.fullname" . }}-test-connection"
+  labels:
+    {{- include "mfe-orchestrator.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: echo
+      image: busybox:1.37
+      command:
+        - wget
+      args:
+        - "--spider"
+        - "--timeout=10"
+        - "http://{{ include "mfe-orchestrator.fullname" . }}:{{ .Values.service.port }}/api/echo"

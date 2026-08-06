@@ -1,0 +1,293 @@
+# Default values for mfe-orchestrator.
+# Every environment variable understood by the application can be set from this
+# file: plain ones under `env`, sensitive ones under `envSecrets`.
+
+replicaCount: 1
+
+image:
+  repository: lory1990/mfe-orchestrator
+  pullPolicy: IfNotPresent
+  # Overrides the image tag, which defaults to the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+## ---------------------------------------------------------------------------
+## Environment variables
+## ---------------------------------------------------------------------------
+## `env` is rendered into a ConfigMap and injected with envFrom, so any key you
+## add here reaches the container - the list below is only the set of variables
+## the application documents. Leave a value empty (or null) to not set the
+## variable at all and let the application fall back to its own default; the
+## commented "default:" notes are those application defaults.
+##
+## Values are quoted automatically, so numbers and booleans can be written
+## natively (EMAIL_SMTP_PORT: 587, REGISTRATION_ALLOWED: true).
+env:
+  ## --- Core ------------------------------------------------------------------
+  # Node environment: development | prod | test | local. default: prod
+  NODE_ENV: prod
+  # Port the backend listens on, behind the in-container nginx. default: 3000
+  PORT: 3000
+  # Address the backend binds to.
+  HOST: ""
+  # Logging level: debug | info | warn | error. default: info
+  LOG_LEVEL: ""
+  # Public URL of the frontend. default: http://localhost:3000
+  FRONTEND_URL: ""
+  # Public URL of the API. default: <FRONTEND_URL>/api
+  BACKEND_URL: ""
+  # Comma separated list of origins allowed for cross-origin requests.
+  ALLOWED_ORIGINS: ""
+  # Folder the uploaded microfrontends are served from. Kept in sync with
+  # persistence.mountPath below. default: /upload-microfrontends
+  MICROFRONTEND_HOST_FOLDER: /upload-microfrontends
+  # Allow new users to sign up. default: true
+  REGISTRATION_ALLOWED: false
+  # Enable the built-in email/password login. default: true
+  ALLOW_EMBEDDED_LOGIN: true
+
+  ## --- MongoDB ---------------------------------------------------------------
+  ## The chart does not deploy MongoDB: point these at your own instance or at
+  ## a MongoDB deployed by another chart (see the chart README for an example).
+  # default: mongodb://localhost:27017/microfrontend-orchestrator
+  NOSQL_DATABASE_URL: ""
+  NOSQL_DATABASE_NAME: microfrontend-orchestrator
+  NOSQL_DATABASE_USERNAME: ""
+  # NOSQL_DATABASE_PASSWORD -> envSecrets
+
+  ## Legacy aliases, still read by the backend configuration schema.
+  NOSQL_DB_URL: ""
+  NOSQL_DB_DATABASE: ""
+  # NOSQL_DB_PASSWORD -> envSecrets
+
+  ## --- Redis -----------------------------------------------------------------
+  # default: redis://localhost:6379
+  REDIS_URL: ""
+  # REDIS_PASSWORD -> envSecrets
+
+  ## --- SMTP ------------------------------------------------------------------
+  EMAIL_SMTP_HOST: ""
+  # default: 587
+  EMAIL_SMTP_PORT: ""
+  # Use an SSL/TLS connection. default: false
+  EMAIL_SMTP_SECURE: ""
+  EMAIL_SMTP_USER: ""
+  EMAIL_SMTP_FROM: ""
+  # EMAIL_SMTP_PASSWORD -> envSecrets
+
+  ## --- Auth0 -----------------------------------------------------------------
+  AUTH0_DOMAIN: ""
+  AUTH0_CLIENT_ID: ""
+  AUTH0_AUDIENCE: ""
+  # default: openid profile email
+  AUTH0_SCOPE: ""
+
+  ## --- Azure Entra ID --------------------------------------------------------
+  AZURE_ENTRAID_TENANT_ID: ""
+  AZURE_ENTRAID_CLIENT_ID: ""
+  AZURE_ENTRAID_REDIRECT_URI: ""
+  # default: https://login.microsoftonline.com
+  AZURE_ENTRAID_AUTHORITY: ""
+  # default: openid profile email
+  AZURE_ENTRAID_SCOPES: ""
+  AZURE_ENTRAID_API_AUDIENCE: ""
+  # AZURE_ENTRAID_CLIENT_SECRET -> envSecrets
+
+  ## --- Google ----------------------------------------------------------------
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_REDIRECT_URI: ""
+  GOOGLE_API_AUDIENCE: ""
+  # Restrict the login to a single Google Workspace domain.
+  GOOGLE_AUTH_HOSTED_DOMAIN: ""
+  # default: https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile
+  GOOGLE_AUTH_SCOPE: ""
+  # GOOGLE_CLIENT_SECRET -> envSecrets
+
+  ## --- Code repositories -----------------------------------------------------
+  CODE_REPOSITORY_GITHUB_CLIENT_ID: ""
+  # CODE_REPOSITORY_GITHUB_CLIENT_SECRET -> envSecrets
+
+  ## --- Observability and telemetry -------------------------------------------
+  # Anonymous, opt-out telemetry of the self-hosted install. Set TELEMETRY_ENABLED
+  # to false (or DO_NOT_TRACK to 1) to turn it off. See docs/TELEMETRY.md.
+  TELEMETRY_ENABLED: ""
+  TELEMETRY_DISABLED: ""
+  TELEMETRY_ENDPOINT: ""
+  TELEMETRY_INTERVAL_HOURS: ""
+  DO_NOT_TRACK: ""
+  # Sentry DSN of the backend. Leave empty to disable error reporting.
+  SENTRY_DSN: ""
+
+## Sensitive environment variables. Rendered into a Secret owned by this
+## release and injected with envFrom, exactly like `env`. Any key can be added.
+## Empty values are skipped, so unset ones keep the application default.
+## For secrets you do not want in values.yaml, use `existingSecret` below.
+envSecrets:
+  # Signing key of the JWT tokens - ALWAYS override this in production.
+  JWT_SECRET: ""
+  NOSQL_DATABASE_PASSWORD: ""
+  NOSQL_DB_PASSWORD: ""
+  REDIS_PASSWORD: ""
+  EMAIL_SMTP_PASSWORD: ""
+  AZURE_ENTRAID_CLIENT_SECRET: ""
+  GOOGLE_CLIENT_SECRET: ""
+  CODE_REPOSITORY_GITHUB_CLIENT_SECRET: ""
+
+## Names of Secrets and ConfigMaps that already exist in the namespace and hold
+## further environment variables (all of their keys are injected as-is).
+existingSecret: []
+# - mfe-orchestrator-credentials
+existingConfigMap: []
+# - mfe-orchestrator-extra-config
+
+## Raw container env entries, for values that must come from somewhere else
+## (another Secret key, a field ref, ...). These win over `env`/`envSecrets`.
+extraEnv: []
+# - name: JWT_SECRET
+#   valueFrom:
+#     secretKeyRef:
+#       name: my-secret
+#       key: jwt-secret
+# - name: POD_IP
+#   valueFrom:
+#     fieldRef:
+#       fieldPath: status.podIP
+
+## ---------------------------------------------------------------------------
+## Storage of the uploaded microfrontends
+## ---------------------------------------------------------------------------
+persistence:
+  enabled: true
+  # Use an already existing PersistentVolumeClaim instead of creating one.
+  existingClaim: ""
+  # "" uses the cluster default StorageClass, "-" disables dynamic provisioning.
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  annotations: {}
+  # Defaults to env.MICROFRONTEND_HOST_FOLDER.
+  mountPath: ""
+  subPath: ""
+
+## ---------------------------------------------------------------------------
+## Service and ingress
+## ---------------------------------------------------------------------------
+service:
+  type: ClusterIP
+  port: 80
+  # Node port when type is NodePort.
+  nodePort: ""
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # nginx.ingress.kubernetes.io/proxy-body-size: 50m
+  hosts:
+    - host: mfe-orchestrator.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: mfe-orchestrator-tls
+  #   hosts:
+  #     - mfe-orchestrator.local
+
+## ---------------------------------------------------------------------------
+## Workload settings
+## ---------------------------------------------------------------------------
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  # Uses the generated name when empty.
+  name: ""
+
+resources: {}
+  # limits:
+  #   cpu: 1
+  #   memory: 1Gi
+  # requests:
+  #   cpu: 200m
+  #   memory: 512Mi
+
+## Probes hit /api/echo, the public health endpoint of the backend.
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+startupProbe:
+  enabled: false
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+  successThreshold: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: ""
+
+## Roll the pods when the rendered ConfigMap/Secret changes.
+restartOnConfigChange: true
+
+## Deployment strategy. With persistence enabled on a ReadWriteOnce volume,
+## Recreate avoids two pods fighting over the same PVC.
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+podAnnotations: {}
+podLabels: {}
+commonLabels: {}
+commonAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 101
+
+## The image runs nginx as root inside the container, so it cannot run as a
+## non-root user without a custom nginx configuration.
+securityContext: {}
+  # readOnlyRootFilesystem: false
+  # capabilities:
+  #   drop:
+  #     - ALL
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+terminationGracePeriodSeconds: 30
+
+extraVolumes: []
+# - name: extra-config
+#   configMap:
+#     name: my-config
+extraVolumeMounts: []
+# - name: extra-config
+#   mountPath: /etc/extra
+extraInitContainers: []
+extraContainers: []

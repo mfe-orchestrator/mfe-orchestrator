@@ -5,9 +5,9 @@ block content
   p Welcome to our platform! We're excited to have you on board. Please verify your email address by clicking the button below:
   div(style="text-align: center;")
     a.button(href=activationUrl) Activate Account
-  p(style="color: #64748b; font-size: 0.875rem;")
+  p.muted
     | Or copy and paste this link into your browser:
     br
-    a(href=activationUrl, style="color: #3b82f6; word-break: break-all; font-size: 0.875rem;")
+    a.link(href=activationUrl)
       | #{activationUrl}
   p If you didn't create an account, you can safely ignore this email.
