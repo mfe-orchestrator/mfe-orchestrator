@@ -237,6 +237,10 @@
         "select_role": "Seleziona un ruolo",
         "send_invitation": "Invia invito",
         "invite_success": "Invito inviato con successo",
+        "role_required": "Seleziona un ruolo per l'utente",
+        "cannot_invite_self": "Non puoi invitare te stesso: fai già parte del progetto",
+        "already_invited": "Questo utente ha già un invito in sospeso",
+        "already_member": "Questo utente fa già parte del progetto",
         "roles": {
             "admin": "Amministratore",
             "editor": "Editore",

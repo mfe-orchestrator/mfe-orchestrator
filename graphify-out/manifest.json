@@ -700,13 +700,13 @@
     "semantic_hash": "2dcf3574b7d437202b0a3f27f0b985e2"
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786049403.3424773,
-    "ast_hash": "8aace87a70412a18419565f3f097da3b",
+    "mtime": 1786049681.02915,
+    "ast_hash": "9380d07c17ef3a85f1c9411995f15c28",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786049403.3410392,
-    "ast_hash": "9c2c07d16009bcc299d500e58e23a7f6",
+    "mtime": 1786049678.8451397,
+    "ast_hash": "7de08cd7804b574c909a8747b4e3bfc1",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -1535,8 +1535,8 @@
     "semantic_hash": "66c798fed6de2b3327454207f17a6247"
   },
   "frontend/src/pages/new-project-wizard/NewProjectWizard.tsx": {
-    "mtime": 1786049383.4145422,
-    "ast_hash": "8349611c7306ab43190b99a1c9220f92",
+    "mtime": 1786049545.4043257,
+    "ast_hash": "6fb6a3705e0159019ae495f8a51f7d14",
     "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/CodeRepositories.tsx": {
@@ -1565,8 +1565,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/TeamMates.tsx": {
-    "mtime": 1786049277.2259414,
-    "ast_hash": "68840bc0c438059d869ee9cc329454fc",
+    "mtime": 1786049545.404466,
+    "ast_hash": "0cbdb514fee0f4bc8f23ab5a99900348",
     "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/WizardBasicProps.ts": {
@@ -1585,9 +1585,9 @@
     "semantic_hash": "e5f0b47cbfc72708ca9ba8dd95ae9da0"
   },
   "frontend/src/pages/project-users/partials/AddUserButton.tsx": {
-    "mtime": 1785880210.017702,
-    "ast_hash": "8e66e90254dc06e9780185fa2dc8756b",
-    "semantic_hash": "8e66e90254dc06e9780185fa2dc8756b"
+    "mtime": 1786049707.1078115,
+    "ast_hash": "a5905a36f408e26715e6ec7635d8d865",
+    "semantic_hash": ""
   },
   "frontend/src/pages/project-users/partials/UserPicture.tsx": {
     "mtime": 1785880210.01778,

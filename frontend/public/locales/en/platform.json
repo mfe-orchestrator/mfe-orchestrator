@@ -287,6 +287,10 @@
         "select_role": "Select a role",
         "send_invitation": "Send invitation",
         "invite_success": "Invitation sent successfully",
+        "role_required": "Select a role for the user",
+        "cannot_invite_self": "You can't invite yourself: you're already part of the project",
+        "already_invited": "This user already has a pending invitation",
+        "already_member": "This user is already a member of the project",
         "roles": {
             "admin": "Admin",
             "editor": "Editor",

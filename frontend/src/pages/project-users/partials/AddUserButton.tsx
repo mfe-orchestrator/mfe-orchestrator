@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus, UserRoundPlus } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -11,17 +11,15 @@ import TextField from "@/components/input/TextField.rhf"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
 import useProjectApi, { RoleInProject } from "@/hooks/apiClients/useProjectApi"
+import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import useUserStore from "@/store/useUserStore"
 
-const inviteUserSchema = z.object({
-    email: z.string().email("Inserisci un indirizzo email valido"),
-    role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
-        required_error: "Seleziona un ruolo per l'utente"
-    })
-})
-
-type InviteUserFormValues = z.infer<typeof inviteUserSchema>
+interface InviteUserFormValues {
+    email: string
+    role: RoleInProject
+}
 
 interface AddUserButtonProps {
     onSuccess?: () => void
@@ -32,8 +30,28 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
     const notifications = useToastNotificationStore()
     const projectApi = useProjectApi()
+    const projectUserApi = useProjectUserApi()
     const { project } = useProjectStore()
     const queryClient = useQueryClient()
+    const currentUserEmail = useUserStore(state => state.user?.email?.toLowerCase())
+
+    // Same key as the ProjectUsers page, so this reads from the already-fetched cache
+    const projectUsersQuery = useQuery({
+        queryKey: ["projectUsers", project?._id],
+        queryFn: () => projectUserApi.getProjectUsers(project?._id || ""),
+        enabled: !!project?._id
+    })
+
+    const inviteUserSchema = useMemo(
+        () =>
+            z.object({
+                email: z.string().email(t("auth.invalid_email")),
+                role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
+                    required_error: t("project_users.role_required")
+                })
+            }),
+        [t]
+    )
 
     const form = useForm<InviteUserFormValues>({
         resolver: zodResolver(inviteUserSchema),
@@ -48,6 +66,16 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     })
 
     const onSubmit = async (values: InviteUserFormValues) => {
+        const email = values.email.trim().toLowerCase()
+        if (currentUserEmail && email === currentUserEmail) {
+            form.setError("email", { message: t("project_users.cannot_invite_self") })
+            return
+        }
+        const existing = (projectUsersQuery.data ?? []).find(u => u.email.toLowerCase() === email)
+        if (existing) {
+            form.setError("email", { message: existing.invitationPending ? t("project_users.already_invited") : t("project_users.already_member") })
+            return
+        }
         await inviteUserMutation.mutateAsync({
             email: values.email!,
             role: values.role,
