@@ -15,8 +15,6 @@ import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useUserStore from "@/store/useUserStore"
 
 interface FormValues {
-    name?: string
-    surname?: string
     password?: string
     confirmPassword?: string
 }
@@ -75,7 +73,7 @@ const ProjectInvitation = () => {
     })
 
     const onAccept = (values: FormValues) => {
-        acceptMutation.mutate(invitation?.needsPassword ? { name: values.name, surname: values.surname, password: values.password } : {})
+        acceptMutation.mutate(invitation?.needsPassword ? { password: values.password } : {})
     }
 
     return (
@@ -89,8 +87,6 @@ const ProjectInvitation = () => {
                         <div className="grid gap-4">
                             {invitation?.needsPassword && (
                                 <>
-                                    <TextField name="name" label={t("project_invitation.name_label")} placeholder={t("project_invitation.name_label")} />
-                                    <TextField name="surname" label={t("project_invitation.surname_label")} placeholder={t("project_invitation.surname_label")} />
                                     <TextField
                                         name="password"
                                         label={t("auth.password")}

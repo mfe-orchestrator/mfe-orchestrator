@@ -253,6 +253,15 @@ const useCodeRepositoriesApi = () => {
         return request.data
     }
 
+    const revokeGithubGrant = async (repositoryId?: string, config: IClientRequestDataExtended<unknown> = {}): Promise<void> => {
+        await apiClient.doRequest({
+            url: `/api/repositories/github/revoke-grant`,
+            method: "POST",
+            data: { repositoryId },
+            ...config
+        })
+    }
+
     const addRepositoryAzure = async (data: AddRepositoryAzureDTO) => {
         await apiClient.doRequest({
             url: `/api/repositories/azure`,
@@ -386,6 +395,7 @@ const useCodeRepositoriesApi = () => {
         getRepositoriesByProjectId,
         getRepositoryById,
         addRepositoryGithub,
+        revokeGithubGrant,
         addRepositoryAzure,
         addRepositoryGitlab,
         deleteSingle,

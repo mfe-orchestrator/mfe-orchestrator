@@ -314,8 +314,6 @@
         "description": "You've been invited to join {{project}} as {{role}}.",
         "accept": "Accept invitation",
         "accepted": "Invitation accepted",
-        "name_label": "First name",
-        "surname_label": "Last name",
         "not_found_title": "Invitation not found",
         "not_found_description": "The link you followed doesn't match any invitation: it may have expired, been used already, or be invalid. Ask the person who invited you to send you a new one.",
         "error_title": "Something went wrong",

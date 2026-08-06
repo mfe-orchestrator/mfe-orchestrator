@@ -264,8 +264,6 @@
         "description": "Sei stato invitato a unirti a {{project}} con il ruolo di {{role}}.",
         "accept": "Accetta invito",
         "accepted": "Invito accettato",
-        "name_label": "Nome",
-        "surname_label": "Cognome",
         "not_found_title": "Invito non trovato",
         "not_found_description": "Il link che hai seguito non corrisponde a nessun invito: potrebbe essere scaduto, già utilizzato o non valido. Chiedi a chi ti ha invitato di inviartene uno nuovo.",
         "error_title": "Qualcosa è andato storto",

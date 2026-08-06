@@ -91,6 +91,19 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
 
     fastify.post<{
         Body: {
+            repositoryId?: string
+        }
+    }>("/repositories/github/revoke-grant", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+        await new CodeRepositoryService(request.databaseUser).revokeGithubGrant(projectId, request.body?.repositoryId)
+        return reply.status(204).send()
+    })
+
+    fastify.post<{
+        Body: {
             code: string
             state: string
             codeRepositoryId: string

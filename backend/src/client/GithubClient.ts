@@ -252,6 +252,40 @@ class GithubClient {
         return responseGithub.data
     }
 
+    /**
+     * Revoca il grant dell'OAuth App per l'utente proprietario del token.
+     * Dopo la revoca GitHub ripropone sempre la pagina di autorizzazione
+     * (inclusi i bottoni "Grant" per le organizzazioni) al prossimo authorize.
+     */
+    async revokeApplicationGrant(clientId: string, clientSecret: string, accessToken: string): Promise<void> {
+        try {
+            await axios.request({
+                method: "DELETE",
+                url: `https://api.github.com/applications/${clientId}/grant`,
+                auth: {
+                    username: clientId,
+                    password: clientSecret
+                },
+                headers: {
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                },
+                data: {
+                    access_token: accessToken
+                }
+            })
+        } catch (error: unknown) {
+            if (error && typeof error === "object" && "response" in error) {
+                const err = error as { response?: { status?: number } }
+                // 404/422: token già revocato o non più valido — il grant non esiste, che è l'obiettivo
+                if (err.response?.status === 404 || err.response?.status === 422) {
+                    return
+                }
+            }
+            throw error
+        }
+    }
+
     async getUser(accessToken: string): Promise<GithubUser> {
         const response = await axios.request<GithubUser>({
             url: "https://api.github.com/user",
