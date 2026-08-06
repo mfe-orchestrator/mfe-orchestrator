@@ -1,3 +1,14 @@
+//- Layout shared by every transactional email. Colors, font, radii and shadows
+//- come from the design system (design-system/src/styles/theme.css), converted
+//- to hex because email clients need literal values:
+//-   primary        hsl(262 83% 66%) -> #9560f0
+//-   primary-active hsl(262 83% 58%) -> #7c3bed
+//-   foreground     hsl(222 30% 16%) -> #1d2435
+//-   muted-fg       hsl(240 8% 46%)  -> #6c6c7f
+//-   border         hsl(262 20% 90%) -> #e4e0eb
+//-   dark surface   hsl(220 26% 14%) -> #1a212d
+//-   page bg        --color-orchestrator-light  #f1f0fb
+//-   radius         0.75rem (card: +2px)
 doctype html
 html(lang="en")
   head
@@ -5,11 +16,13 @@ html(lang="en")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
     title= subject
     style(type="text/css").
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
         line-height: 1.5;
-        color: #1e1b4b;
-        background-color: #f8fafc;
+        letter-spacing: 0.0125em;
+        color: #1d2435;
+        background-color: #f1f0fb;
         margin: 0;
         padding: 0;
       }
@@ -20,13 +33,13 @@ html(lang="en")
       }
       .card {
         background: white;
-        border-radius: 0.5rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-radius: 0.875rem;
+        box-shadow: 0 1px 4px rgba(21, 39, 60, 0.06), 0 1px 2px rgba(21, 39, 60, 0.04);
         overflow: hidden;
-        border: 1px solid #e2e8f0;
+        border: 1px solid #e4e0eb;
       }
       .header {
-        background-color: #3b82f6;
+        background-color: #1a212d;
         color: white;
         padding: 1.5rem;
         text-align: center;
@@ -36,23 +49,35 @@ html(lang="en")
       }
       .button {
         display: inline-block;
-        background-color: #3b82f6;
+        background-color: #9560f0;
         color: white !important;
         text-decoration: none;
         padding: 0.75rem 1.5rem;
-        border-radius: 0.375rem;
+        border-radius: 0.75rem;
         font-weight: 500;
         margin: 1.5rem 0;
       }
       .button:hover {
-        background-color: #2563eb;
+        background-color: #7c3bed;
+      }
+      .muted {
+        color: #6c6c7f;
+        font-size: 0.875rem;
+      }
+      a.link {
+        color: #9560f0;
+        word-break: break-all;
+        font-size: 0.875rem;
+      }
+      .accent {
+        color: #9560f0;
       }
       .footer {
         text-align: center;
         padding: 1.5rem;
-        color: #64748b;
+        color: #6c6c7f;
         font-size: 0.875rem;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid #e4e0eb;
       }
   body
     .container
@@ -70,4 +95,4 @@ html(lang="en")
             if footerText
               | #{footerText}
               br
-            | This is an automated message, please do not reply.
+            | MFE Orchestrator — this is an automated message, please do not reply.
