@@ -1,5 +1,5 @@
+import { randomUUID } from "node:crypto"
 import axios from "axios"
-import { randomUUID } from "crypto"
 import mongoose from "mongoose"
 import { version as applicationVersion } from "../../package.json"
 import Configuration from "../models/ConfigurationModel"
@@ -15,19 +15,26 @@ export const INSTALLATION_ID_CONFIGURATION_NAME = "TELEMETRY_INSTALLATION_ID"
 
 const SEND_TIMEOUT_MS = 5000
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
+const UUID_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
 class TelemetryService {
     /**
      * Returns the anonymous installation id, creating it on the first call.
      * The upsert keeps the id stable even when two instances of the same
-     * installation ask for it at the same time.
+     * installation ask for it at the same time. A stored id that is missing or
+     * not a UUID is replaced: the telemetry endpoint rejects anything else, so
+     * keeping it would make every future ping fail.
      */
     async getInstallationId(): Promise<string> {
         const configuration = await Configuration.findOneAndUpdate({ name: INSTALLATION_ID_CONFIGURATION_NAME }, { $setOnInsert: { value: randomUUID() } }, { new: true, upsert: true })
-        if (!configuration) {
+        if (configuration && UUID_PATTERN.test(configuration.value ?? "")) {
+            return configuration.value
+        }
+        const repaired = await Configuration.findOneAndUpdate({ name: INSTALLATION_ID_CONFIGURATION_NAME }, { value: randomUUID() }, { new: true, upsert: true })
+        if (!repaired || !UUID_PATTERN.test(repaired.value ?? "")) {
             throw new Error("Unable to read or create the anonymous telemetry installation id")
         }
-        return configuration.value
+        return repaired.value
     }
 
     /** Telemetry is skipped while the database is unreachable. */

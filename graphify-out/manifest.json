@@ -1,7 +1,7 @@
 {
   ".claude/settings.local.json": {
-    "mtime": 1785953163.4205008,
-    "ast_hash": "d59c6bc5f590167bd37ac623c2afe37e",
+    "mtime": 1786021231.7635877,
+    "ast_hash": "69eaca18c2cfc85269f680d76ac50366",
     "semantic_hash": ""
   },
   ".vscode/extensions.json": {
@@ -305,9 +305,9 @@
     "semantic_hash": "8a2fb5658b0259d69d8788958a5602e9"
   },
   "backend/src/models/WizardProjectState.ts": {
-    "mtime": 1785880209.9878552,
-    "ast_hash": "61c395b2f74f21a5404a890521de8188",
-    "semantic_hash": "61c395b2f74f21a5404a890521de8188"
+    "mtime": 1786023161.472127,
+    "ast_hash": "aa04cad2407a532171558fcc963e8aac",
+    "semantic_hash": ""
   },
   "backend/src/plugins/autorization.ts": {
     "mtime": 1785880209.988064,
@@ -365,9 +365,9 @@
     "semantic_hash": "87101a09b581243810f4982785112c56"
   },
   "backend/src/plugins/telemetry.ts": {
-    "mtime": 1785946360.3980381,
-    "ast_hash": "d0671509dc664e47e06002ccb93eb5e6",
-    "semantic_hash": "d0671509dc664e47e06002ccb93eb5e6"
+    "mtime": 1786023952.5916471,
+    "ast_hash": "388e23306bdb4b0f42805046bfebf3d1",
+    "semantic_hash": ""
   },
   "backend/src/service/ApiKeyService.ts": {
     "mtime": 1785880209.989121,
@@ -450,9 +450,9 @@
     "semantic_hash": "30f6ca66ee521168b70b3bec6a5394dc"
   },
   "backend/src/service/TelemetryService.ts": {
-    "mtime": 1785946360.3981404,
-    "ast_hash": "3d0ea59cc2c1e9d406184684a265d83b",
-    "semantic_hash": "3d0ea59cc2c1e9d406184684a265d83b"
+    "mtime": 1786023932.6713848,
+    "ast_hash": "ac313091c7c102f8e27c12816b49396a",
+    "semantic_hash": ""
   },
   "backend/src/service/UserProjectService.ts": {
     "mtime": 1785880209.9914925,

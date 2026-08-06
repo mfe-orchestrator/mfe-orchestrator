@@ -1,8 +1,8 @@
 {
   ".claude/settings.local.json": {
-    "mtime": 1785952447.8466172,
-    "ast_hash": "7a7aca7f690f7250b35ac017364ca689",
-    "semantic_hash": "7a7aca7f690f7250b35ac017364ca689"
+    "mtime": 1785953163.4205008,
+    "ast_hash": "d59c6bc5f590167bd37ac623c2afe37e",
+    "semantic_hash": ""
   },
   ".vscode/extensions.json": {
     "mtime": 1785880209.9795446,
@@ -1804,11 +1804,6 @@
     "ast_hash": "8a139cd3e81693ff9868b2f1dfdede86",
     "semantic_hash": "8a139cd3e81693ff9868b2f1dfdede86"
   },
-  "startComplete.sh": {
-    "mtime": 1785880210.022319,
-    "ast_hash": "341d7fa8da361a1c3d63436e5d613e11",
-    "semantic_hash": "341d7fa8da361a1c3d63436e5d613e11"
-  },
   "terraform/main.tf": {
     "mtime": 1785880210.0224195,
     "ast_hash": "729cee23093910da1adc7af3bda46e54",
@@ -1875,9 +1870,9 @@
     "semantic_hash": "c69b2228c811b9862e4642103f12f4d2"
   },
   ".github/workflows/docker-build.yml": {
-    "mtime": 1785946358.9332678,
-    "ast_hash": "1a28a34b73fde4f5bae1458a199de119",
-    "semantic_hash": "1a28a34b73fde4f5bae1458a199de119"
+    "mtime": 1785953165.16619,
+    "ast_hash": "6c13ab3a1c2f0cbd9509d61770b034bc",
+    "semantic_hash": ""
   },
   ".github/workflows/e2e-tests.yml": {
     "mtime": 1785946358.9335659,
@@ -1895,9 +1890,9 @@
     "semantic_hash": "5815ee1058824d6b173af65ed1fe6704"
   },
   "CHANGELOG.md": {
-    "mtime": 1785946360.3975332,
-    "ast_hash": "82ef7011591b0c45619ead7d789c85cf",
-    "semantic_hash": "82ef7011591b0c45619ead7d789c85cf"
+    "mtime": 1785953165.166794,
+    "ast_hash": "56809fe5c68c5fc93de71278d255771a",
+    "semantic_hash": ""
   },
   "COMMIT_CONVENTIONS.md": {
     "mtime": 1785880209.9802291,
@@ -1905,9 +1900,9 @@
     "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
   },
   "README.md": {
-    "mtime": 1785946360.3977056,
-    "ast_hash": "2282b8b5024c7867c4eb26a288b07c58",
-    "semantic_hash": "2282b8b5024c7867c4eb26a288b07c58"
+    "mtime": 1785996587.8689437,
+    "ast_hash": "c6f6bbe99ba0547a21aa84e3cf27c1c2",
+    "semantic_hash": ""
   },
   "SECURITY.md": {
     "mtime": 1785880209.9806273,
@@ -1983,5 +1978,105 @@
     "mtime": 1785880209.9980354,
     "ast_hash": "5e42e264f2604cb73ed383d94c29e766",
     "semantic_hash": "5e42e264f2604cb73ed383d94c29e766"
+  },
+  ".claude/settings.json": {
+    "mtime": 1785953165.1776838,
+    "ast_hash": "e51077b6a7f1f67afc748f1a32a1557d",
+    "semantic_hash": ""
+  },
+  "docker/all-in-one/entrypoint.sh": {
+    "mtime": 1785953165.167461,
+    "ast_hash": "396420791689638592c053928a613a4e",
+    "semantic_hash": ""
+  },
+  "docker/all-in-one/quit-on-fatal.py": {
+    "mtime": 1785953165.1676378,
+    "ast_hash": "0cbdd3cf28b26b2f256e619db81b6cba",
+    "semantic_hash": ""
+  },
+  "docker/all-in-one/start-backend.sh": {
+    "mtime": 1785953165.1677916,
+    "ast_hash": "dc6f4aa312401d61dba74480ec815d12",
+    "semantic_hash": ""
+  },
+  "docker/all-in-one/start-mongod.sh": {
+    "mtime": 1785953165.1678681,
+    "ast_hash": "109cc44dc47bff850c9295531bc132fc",
+    "semantic_hash": ""
+  },
+  "docker/all-in-one/start-redis.sh": {
+    "mtime": 1785953165.1679296,
+    "ast_hash": "bc2bc960834eb9b69e4381aa90801d64",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1785953165.1778078,
+    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/Chart.yaml": {
+    "mtime": 1785953165.1683316,
+    "ast_hash": "65e46c4be9398bc1b5c38563624f7b96",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/README.md": {
+    "mtime": 1785953165.168462,
+    "ast_hash": "bf64894e2770b3dc367059f574a03e91",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/NOTES.txt": {
+    "mtime": 1785953165.1685855,
+    "ast_hash": "ba9afbcf8991b65f67e1e9b31b97dfac",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/configmap.yaml": {
+    "mtime": 1785953165.1688044,
+    "ast_hash": "33e6c27fa8e1725cd4ad514d9395d1c4",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/deployment.yaml": {
+    "mtime": 1785953165.1689072,
+    "ast_hash": "3a64f740d76fcf8a9bfa9491d66f3ab0",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/hpa.yaml": {
+    "mtime": 1785953165.168997,
+    "ast_hash": "43bee009fc8050a7f3aafe848ca12597",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/ingress.yaml": {
+    "mtime": 1785953165.1690707,
+    "ast_hash": "f43a6a0d9634eefaa302efecbf2d6491",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/pvc.yaml": {
+    "mtime": 1785953165.1691358,
+    "ast_hash": "dc6a7a122c988ec55a345e9d7c8a8436",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/service.yaml": {
+    "mtime": 1785953165.1692834,
+    "ast_hash": "fd58dee1136e716a91ab8b9b82333998",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/serviceaccount.yaml": {
+    "mtime": 1785953165.1693487,
+    "ast_hash": "170cedd4644744931db14292a38c216f",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/templates/tests/test-connection.yaml": {
+    "mtime": 1785953165.169465,
+    "ast_hash": "b4bad7894cfb3a03fd7164c29ccc7017",
+    "semantic_hash": ""
+  },
+  "helm/mfe-orchestrator/values.yaml": {
+    "mtime": 1785953165.1696584,
+    "ast_hash": "4c3a8310e82b3dc09f37a86b6d2ba68b",
+    "semantic_hash": ""
+  },
+  "docs/assets/promo-video.gif": {
+    "mtime": 1785996534.1225603,
+    "ast_hash": "fd22ea7c70c098f8d433da67aad01b8b",
+    "semantic_hash": ""
   }
 }

@@ -1,3 +1,4 @@
+import axios from "axios"
 import { FastifyInstance } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 import TelemetryService from "../service/TelemetryService"
@@ -77,10 +78,11 @@ export default fastifyPlugin(
             } catch (error) {
                 // Telemetry is never allowed to affect the application: air gapped
                 // installations simply keep failing and that is fine.
+                const response = axios.isAxiosError(error) ? { status: error.response?.status, data: error.response?.data } : undefined
                 if (isFirstPing) {
-                    fastify.log.info({ error }, `Anonymous telemetry ping failed, the application is not affected. Set ${TELEMETRY_DISABLE_VARIABLE} to stop trying`)
+                    fastify.log.info({ error, response }, `Anonymous telemetry ping failed, the application is not affected. Set ${TELEMETRY_DISABLE_VARIABLE} to stop trying`)
                 } else {
-                    fastify.log.debug({ error }, "Anonymous telemetry ping failed")
+                    fastify.log.debug({ error, response }, "Anonymous telemetry ping failed")
                 }
             } finally {
                 isFirstPing = false
