@@ -48,7 +48,7 @@ const TextField = <T extends FieldValues>({ name, label, rules, className, id, c
                             id={inputId}
                             data-testid={dataTestId || inputId}
                             type={inputType}
-                            className={`${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""} ${isPassword ? "pr-10" : ""}`}
+                            className={`w-full ${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""} ${isPassword ? "pr-10" : ""}`}
                             {...field}
                             {...props}
                             onChange={e => {

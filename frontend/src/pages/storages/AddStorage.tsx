@@ -90,7 +90,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                                     <Key className="h-4 w-4 text-primary" />
                                     <h4 className="text-sm font-medium text-foreground">{t("storage.connectionString")}</h4>
                                 </div>
-                                <TextField name="authConfig.connectionString" label={t("storage.fields.connectionString")} required rules={{ required: true }} />
+                                <TextField name="authConfig.connectionString" label={t("storage.fields.connectionString")} required type="password" rules={{ required: true }} />
                             </div>
                         )}
 

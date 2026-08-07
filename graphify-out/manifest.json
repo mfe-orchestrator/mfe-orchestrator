@@ -700,13 +700,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786109994.3521957,
-    "ast_hash": "5ed25664ee22e00dd1c51d86f4c55bc4",
+    "mtime": 1786110773.3417127,
+    "ast_hash": "07dc993b37b3c646538f170ad7b3b645",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786109994.3524535,
-    "ast_hash": "0be5ccb614308359d2f689567f86620f",
+    "mtime": 1786110775.2139175,
+    "ast_hash": "f4a2376a6fe1c1bcd09340ae97adc5ea",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -875,8 +875,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/input/TextField.rhf.tsx": {
-    "mtime": 1786109863.4991114,
-    "ast_hash": "95159cd42c103f472abf3187e0f438e9",
+    "mtime": 1786111284.2147083,
+    "ast_hash": "4a8c3e398185f1a6dd6962308ec4ffd6",
     "semantic_hash": ""
   },
   "frontend/src/components/input/TextareaChipsField.rhf.tsx": {
@@ -885,8 +885,8 @@
     "semantic_hash": "56f45359decc699e31087311816c8da2"
   },
   "frontend/src/components/input/TextareaField.rhf.tsx": {
-    "mtime": 1786109863.499328,
-    "ast_hash": "c81fafb84fb85a50bc92431a0227f6a1",
+    "mtime": 1786111211.4793098,
+    "ast_hash": "6ed3c3ddf66fbeafeb85fdbc76a97144",
     "semantic_hash": ""
   },
   "frontend/src/components/molecules/EnvironmentSelector.tsx": {
@@ -1625,8 +1625,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/storages/AddStorage.tsx": {
-    "mtime": 1786109863.5259068,
-    "ast_hash": "1dc89c6ca4df2e53f877440c80853089",
+    "mtime": 1786111221.2545614,
+    "ast_hash": "c6112b4ba5e20edcf50a9b58fe185d53",
     "semantic_hash": ""
   },
   "frontend/src/pages/storages/Storages.tsx": {
