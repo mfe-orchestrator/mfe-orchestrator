@@ -1,1 +1,58 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh", "label": "entrypoint.sh", "file_type": "code", "source_file": "docker/all-in-one/entrypoint.sh", "source_location": "L1", "metadata": {"language": "bash", "kind": "file"}}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh__entry", "label": "entrypoint.sh script", "file_type": "code", "source_file": "docker/all-in-one/entrypoint.sh", "source_location": "L1", "metadata": {"language": "bash", "kind": "bash_entrypoint"}}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_log", "label": "log()", "file_type": "code", "source_file": "docker/all-in-one/entrypoint.sh", "source_location": "L7", "metadata": {"language": "bash", "kind": "bash_function"}}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh__entry", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/entrypoint.sh", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_log", "relation": "defines", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/entrypoint.sh", "source_location": "L7", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh__entry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_log", "relation": "calls", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/entrypoint.sh", "source_location": "L35", "weight": 1.0, "context": "call"}]}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh",
+            "label": "entrypoint.sh",
+            "file_type": "code",
+            "source_file": "docker/all-in-one/entrypoint.sh",
+            "source_location": "L1",
+            "metadata": { "language": "bash", "kind": "file" }
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh__entry",
+            "label": "entrypoint.sh script",
+            "file_type": "code",
+            "source_file": "docker/all-in-one/entrypoint.sh",
+            "source_location": "L1",
+            "metadata": { "language": "bash", "kind": "bash_entrypoint" }
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_log",
+            "label": "log()",
+            "file_type": "code",
+            "source_file": "docker/all-in-one/entrypoint.sh",
+            "source_location": "L7",
+            "metadata": { "language": "bash", "kind": "bash_function" }
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh__entry",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/entrypoint.sh",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_log",
+            "relation": "defines",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/entrypoint.sh",
+            "source_location": "L7",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_sh__entry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_entrypoint_log",
+            "relation": "calls",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/entrypoint.sh",
+            "source_location": "L35",
+            "weight": 1.0,
+            "context": "call"
+        }
+    ]
+}

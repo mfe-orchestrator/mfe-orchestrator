@@ -1,1 +1,111 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_md", "label": "SECURITY.md", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "label": "Security Policy", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_supported_versions", "label": "Supported Versions", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L3"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_reporting_a_vulnerability", "label": "Reporting a Vulnerability", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L10"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_updates", "label": "Security Updates", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L21"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_dependencies", "label": "Dependencies", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L25"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_secure_development", "label": "Secure Development", "file_type": "document", "source_file": "SECURITY.md", "source_location": "L33"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "relation": "contains", "confidence": "EXTRACTED", "source_file": "SECURITY.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_supported_versions", "relation": "contains", "confidence": "EXTRACTED", "source_file": "SECURITY.md", "source_location": "L3", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_reporting_a_vulnerability", "relation": "contains", "confidence": "EXTRACTED", "source_file": "SECURITY.md", "source_location": "L10", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_updates", "relation": "contains", "confidence": "EXTRACTED", "source_file": "SECURITY.md", "source_location": "L21", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_dependencies", "relation": "contains", "confidence": "EXTRACTED", "source_file": "SECURITY.md", "source_location": "L25", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_secure_development", "relation": "contains", "confidence": "EXTRACTED", "source_file": "SECURITY.md", "source_location": "L33", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_md",
+            "label": "SECURITY.md",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "label": "Security Policy",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_supported_versions",
+            "label": "Supported Versions",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L3"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_reporting_a_vulnerability",
+            "label": "Reporting a Vulnerability",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L10"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_updates",
+            "label": "Security Updates",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L21"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_dependencies",
+            "label": "Dependencies",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L25"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_secure_development",
+            "label": "Secure Development",
+            "file_type": "document",
+            "source_file": "SECURITY.md",
+            "source_location": "L33"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "SECURITY.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_supported_versions",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "SECURITY.md",
+            "source_location": "L3",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_reporting_a_vulnerability",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "SECURITY.md",
+            "source_location": "L10",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_updates",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "SECURITY.md",
+            "source_location": "L21",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_dependencies",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "SECURITY.md",
+            "source_location": "L25",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_security_policy",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_secure_development",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "SECURITY.md",
+            "source_location": "L33",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

@@ -127,7 +127,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 }
             })
         )
-    }, [hoveredNodeId])
+    }, [hoveredNodeId, edges.filter])
 
     const onNodesChange = useCallback(
         async (changes: NodeChange[]) => {

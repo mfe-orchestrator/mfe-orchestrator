@@ -14,11 +14,11 @@ import useProjectApi from "@/hooks/apiClients/useProjectApi"
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" ")
 
 // Temporary type definitions for typography components
-const TypographyH3 = ({ className, children }: { className?: string; children: React.ReactNode }) => <h3 className={`scroll-m-20 text-2xl font-semibold tracking-tight ${className}`}>{children}</h3>
+const _TypographyH3 = ({ className, children }: { className?: string; children: React.ReactNode }) => <h3 className={`scroll-m-20 text-2xl font-semibold tracking-tight ${className}`}>{children}</h3>
 
-const TypographyP = ({ className, children }: { className?: string; children: React.ReactNode }) => <p className={`leading-7 [&:not(:first-child)]:mt-6 ${className}`}>{children}</p>
+const _TypographyP = ({ className, children }: { className?: string; children: React.ReactNode }) => <p className={`leading-7 [&:not(:first-child)]:mt-6 ${className}`}>{children}</p>
 
-const TypographySmall = ({ className, children }: { className?: string; children: React.ReactNode }) => <small className={`text-sm font-medium leading-none ${className}`}>{children}</small>
+const _TypographySmall = ({ className, children }: { className?: string; children: React.ReactNode }) => <small className={`text-sm font-medium leading-none ${className}`}>{children}</small>
 
 interface DangerZoneProps {
     projectName: string

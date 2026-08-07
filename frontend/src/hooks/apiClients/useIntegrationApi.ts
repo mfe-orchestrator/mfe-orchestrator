@@ -1,14 +1,12 @@
 import useApiClient from "../useApiClient"
 
-
 interface InjectRemotesInHostParams {
     microfrontendId: string
     deploymentId?: string
     environmentId?: string
 }
 function useIntegrationApi() {
-
-    const apiClient = useApiClient();
+    const apiClient = useApiClient()
 
     const injectRemotesInHost = async (params: InjectRemotesInHostParams) => {
         return apiClient.doRequest({

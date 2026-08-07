@@ -1,3 +1,3 @@
-export * from "./ApiStatusHandler";
+export * from "./ApiStatusHandler"
 
-export type { IApiStatusHandlerProps } from "./IApiStatusHandlerProps";
+export type { IApiStatusHandlerProps } from "./IApiStatusHandlerProps"

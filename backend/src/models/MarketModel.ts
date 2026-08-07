@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, ObjectId } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export interface IMarket extends Document<ObjectId> {
     name: string

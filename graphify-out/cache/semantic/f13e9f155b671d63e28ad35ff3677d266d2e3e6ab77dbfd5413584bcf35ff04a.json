@@ -1,1 +1,60 @@
-{"nodes": [{"id": "lefthook_pre_commit_hooks", "label": "Lefthook Pre-commit Hooks (Biome check + typecheck)", "file_type": "code", "source_file": "lefthook.yml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Runs in parallel: Biome check --write on staged backend/frontend JS/TS files (auto-staging fixes) plus tsc --noEmit per package; conditional glob execution keeps hooks fast"}, {"id": "lefthook_commit_msg_commitlint", "label": "Lefthook commit-msg Hook (commitlint)", "file_type": "code", "source_file": "lefthook.yml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [{"source": "lefthook_commit_msg_commitlint", "target": "commit_conventions_conventional_commits", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "lefthook.yml", "source_location": null, "weight": 1.0}, {"source": "lefthook_pre_commit_hooks", "target": "_github_copilot_instructions_monorepo_architecture", "relation": "conceptually_related_to", "confidence": "INFERRED", "confidence_score": 0.75, "source_file": "lefthook.yml", "source_location": null, "weight": 1.0}], "hyperedges": [{"id": "code_quality_enforcement", "label": "Code Quality and Commit Convention Enforcement", "nodes": ["lefthook_pre_commit_hooks", "lefthook_commit_msg_commitlint", "commit_conventions_conventional_commits", "commit_conventions_semantic_versioning", "changelog_changelog"], "relation": "participate_in", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "lefthook.yml"}]}
+{
+    "nodes": [
+        {
+            "id": "lefthook_pre_commit_hooks",
+            "label": "Lefthook Pre-commit Hooks (Biome check + typecheck)",
+            "file_type": "code",
+            "source_file": "lefthook.yml",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null,
+            "rationale": "Runs in parallel: Biome check --write on staged backend/frontend JS/TS files (auto-staging fixes) plus tsc --noEmit per package; conditional glob execution keeps hooks fast"
+        },
+        {
+            "id": "lefthook_commit_msg_commitlint",
+            "label": "Lefthook commit-msg Hook (commitlint)",
+            "file_type": "code",
+            "source_file": "lefthook.yml",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null
+        }
+    ],
+    "edges": [
+        {
+            "source": "lefthook_commit_msg_commitlint",
+            "target": "commit_conventions_conventional_commits",
+            "relation": "implements",
+            "confidence": "INFERRED",
+            "confidence_score": 0.95,
+            "source_file": "lefthook.yml",
+            "source_location": null,
+            "weight": 1.0
+        },
+        {
+            "source": "lefthook_pre_commit_hooks",
+            "target": "_github_copilot_instructions_monorepo_architecture",
+            "relation": "conceptually_related_to",
+            "confidence": "INFERRED",
+            "confidence_score": 0.75,
+            "source_file": "lefthook.yml",
+            "source_location": null,
+            "weight": 1.0
+        }
+    ],
+    "hyperedges": [
+        {
+            "id": "code_quality_enforcement",
+            "label": "Code Quality and Commit Convention Enforcement",
+            "nodes": ["lefthook_pre_commit_hooks", "lefthook_commit_msg_commitlint", "commit_conventions_conventional_commits", "commit_conventions_semantic_versioning", "changelog_changelog"],
+            "relation": "participate_in",
+            "confidence": "INFERRED",
+            "confidence_score": 0.85,
+            "source_file": "lefthook.yml"
+        }
+    ]
+}

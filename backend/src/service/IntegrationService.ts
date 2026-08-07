@@ -1,17 +1,17 @@
-import { ObjectId } from "mongoose"
-import BaseAuthorizedService from "./BaseAuthorizedService"
-import { MicrofrontendService } from "./MicrofrontendService"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import CodeManagementService from "./CodeManagementService"
-import { join } from "path"
-import { tmpdir } from "os"
-import CodeRepository from "../models/CodeRepositoryModel"
 import fs from "fs-extra"
 import * as git from "isomorphic-git"
+import { ObjectId } from "mongoose"
+import { tmpdir } from "os"
+import { join } from "path"
 import { fastify } from ".."
-import ServeService, { MicrofrontendAdaptedToServe } from "./ServeService"
-import DeploymentService from "./DeploymentService"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import CodeRepository from "../models/CodeRepositoryModel"
 import { IDeployment } from "../models/DeploymentModel"
+import BaseAuthorizedService from "./BaseAuthorizedService"
+import CodeManagementService from "./CodeManagementService"
+import DeploymentService from "./DeploymentService"
+import { MicrofrontendService } from "./MicrofrontendService"
+import ServeService, { MicrofrontendAdaptedToServe } from "./ServeService"
 
 export interface IIntegrationData {
     slug: string
@@ -21,7 +21,6 @@ export interface IIntegrationData {
 }
 
 export default class IntegrationService extends BaseAuthorizedService {
-
     async getIntegrationDataByMicrofrontendId(microfrontendId: string | ObjectId) {
         const microfrontendService = new MicrofrontendService(this.getUser())
         const microfrontend = await microfrontendService.getById(microfrontendId)
@@ -67,13 +66,12 @@ export default class IntegrationService extends BaseAuthorizedService {
         const data = await new ServeService().getMicrofrontendAdaptedData({
             microfrontendId: microfrontend._id,
             deploymentId: deploymentId,
-            environmentId: environmentId,
+            environmentId: environmentId
         })
 
         if (!data || !data.microfrotnedUrls || data.microfrotnedUrls.length === 0) {
             throw new Error("No microfrontends found")
         }
-
 
         const tempDir = join(tmpdir(), `mfe-${microfrontend.slug}-${Date.now()}`)
         const codeManagementService = new CodeManagementService(codeRepositoryData.provider, codeRepositoryData.accessToken, tempDir)
@@ -139,9 +137,7 @@ export default class IntegrationService extends BaseAuthorizedService {
         // This is a simplified implementation - you may need to adjust based on your actual vite config structure
 
         // Generate all remote entries from the array
-        const remoteEntries = integrationData.map(data =>
-            `"${data.nameToIntegrate}": "${data.url}"`
-        )
+        const remoteEntries = integrationData.map(data => `"${data.nameToIntegrate}": "${data.url}"`)
 
         // Check if remotes object already exists
         if (configContent.includes("remotes:")) {
@@ -151,21 +147,16 @@ export default class IntegrationService extends BaseAuthorizedService {
 
             if (match) {
                 // Replace with new remotes
-                const newRemotesContent = remoteEntries.length > 0
-                    ? `\n            ${remoteEntries.join(',\n            ')}\n        `
-                    : ''
+                const newRemotesContent = remoteEntries.length > 0 ? `\n            ${remoteEntries.join(",\n            ")}\n        ` : ""
 
                 return configContent.replace(remotesRegex, `$1${newRemotesContent}$3`)
             }
         } else {
             // Add remotes object to federation config
             if (configContent.includes("federation({")) {
-                const remotesString = remoteEntries.join(',\n            ')
+                const remotesString = remoteEntries.join(",\n            ")
                 const federationRegex = /(federation\(\{[^}]*)/
-                return configContent.replace(
-                    federationRegex,
-                    `$1,\n        remotes: {\n            ${remotesString}\n        }`
-                )
+                return configContent.replace(federationRegex, `$1,\n        remotes: {\n            ${remotesString}\n        }`)
             }
         }
 

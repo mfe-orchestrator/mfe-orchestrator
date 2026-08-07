@@ -1,3 +1,2 @@
-export * from "./Badge";
-
-export type { IBadgeProps } from "./Badge";
+export type { IBadgeProps } from "./Badge"
+export * from "./Badge"

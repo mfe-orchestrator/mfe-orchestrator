@@ -1,5 +1,4 @@
 import clsx from "clsx"
-import { InputHTMLAttributes } from "react"
 import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
 import { Input, InputProps } from "@/components/ui/input/input"
 import { Label } from "@/components/ui/label"

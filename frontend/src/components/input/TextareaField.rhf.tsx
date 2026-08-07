@@ -1,7 +1,7 @@
+import clsx from "clsx"
 import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "../ui/textarea"
-import clsx from "clsx"
 
 type TextFieldProps<T extends FieldValues> = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
     name: Path<T>

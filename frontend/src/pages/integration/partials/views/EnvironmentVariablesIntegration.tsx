@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useTranslation } from "react-i18next"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 export const EnvironmentVariablesIntegration = ({ environmentId }: { environmentId?: string }) => {
     const { t } = useTranslation()

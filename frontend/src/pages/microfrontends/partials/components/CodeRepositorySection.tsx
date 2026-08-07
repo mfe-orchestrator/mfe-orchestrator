@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import SelectField from "../../../../components/input/SelectField.rhf"
@@ -97,7 +97,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
     // Effect to fetch repositories when a repository is selected
     useEffect(() => {
         fetchRepository()
-    }, [selectedCodeRepositoryId])
+    }, [fetchRepository])
 
     // Prefill the clone urls with the ones exposed by the provider for the selected repository
     const onRepositorySelected = (repositoryName: string) => {

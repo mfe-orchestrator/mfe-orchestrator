@@ -1,3 +1,3 @@
-export * from './TemplateCard';
-export * from './BlankTemplateCard';
-export * from './FetchDataTemplateCard';
+export * from "./BlankTemplateCard"
+export * from "./FetchDataTemplateCard"
+export * from "./TemplateCard"

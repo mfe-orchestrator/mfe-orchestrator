@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify"
-import { ApiKeyDTO } from "../types/ApiKeyDTO"
-import { ApiKeyService } from "../service/ApiKeyService"
 import { ApiKeyStatus } from "../models/ApiKeyModel"
+import { ApiKeyService } from "../service/ApiKeyService"
+import { ApiKeyDTO } from "../types/ApiKeyDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function apiKeyController(fastify: FastifyInstance) {

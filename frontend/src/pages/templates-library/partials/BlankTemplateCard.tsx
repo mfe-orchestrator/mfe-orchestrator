@@ -1,7 +1,6 @@
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
-
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface BlankTemplateCardProps {
     onClick: () => void

@@ -1,1 +1,255 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_md", "label": "copilot-instructions.md", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "label": "Microfrontend Orchestrator AI Coding Instructions", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_architecture_overview", "label": "Architecture Overview", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L5"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions", "label": "Key Patterns & Conventions", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L28"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_service_pattern", "label": "Backend Service Pattern", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L30"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_controller_pattern", "label": "Backend Controller Pattern", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L45"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_data_fetching_pattern", "label": "Frontend Data Fetching Pattern", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L56"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_navigation_pattern", "label": "Frontend Navigation Pattern", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L71"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure", "label": "Project Structure", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L78"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_key_directories", "label": "Backend Key Directories", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L80"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_key_directories", "label": "Frontend Key Directories", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L87"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_authentication_authorization", "label": "Authentication & Authorization", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L94"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_development_workflows", "label": "Development Workflows", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L103"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_common_implementation_patterns", "label": "Common Implementation Patterns", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L138"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_critical_rules", "label": "Critical Rules", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L171"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_file_naming_organization", "label": "File Naming & Organization", "file_type": "document", "source_file": ".github/copilot-instructions.md", "source_location": "L185"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_architecture_overview", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L5", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L28", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_service_pattern", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L30", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_controller_pattern", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L45", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_data_fetching_pattern", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L56", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_navigation_pattern", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L71", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L78", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_key_directories", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L80", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_key_directories", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L87", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_authentication_authorization", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L94", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_development_workflows", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L103", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_common_implementation_patterns", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L138", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_critical_rules", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L171", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_file_naming_organization", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/copilot-instructions.md", "source_location": "L185", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_md",
+            "label": "copilot-instructions.md",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "label": "Microfrontend Orchestrator AI Coding Instructions",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_architecture_overview",
+            "label": "Architecture Overview",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L5"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions",
+            "label": "Key Patterns & Conventions",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L28"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_service_pattern",
+            "label": "Backend Service Pattern",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L30"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_controller_pattern",
+            "label": "Backend Controller Pattern",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L45"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_data_fetching_pattern",
+            "label": "Frontend Data Fetching Pattern",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L56"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_navigation_pattern",
+            "label": "Frontend Navigation Pattern",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L71"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure",
+            "label": "Project Structure",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L78"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_key_directories",
+            "label": "Backend Key Directories",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L80"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_key_directories",
+            "label": "Frontend Key Directories",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L87"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_authentication_authorization",
+            "label": "Authentication & Authorization",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L94"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_development_workflows",
+            "label": "Development Workflows",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L103"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_common_implementation_patterns",
+            "label": "Common Implementation Patterns",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L138"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_critical_rules",
+            "label": "Critical Rules",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L171"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_file_naming_organization",
+            "label": "File Naming & Organization",
+            "file_type": "document",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L185"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_architecture_overview",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L5",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L28",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_service_pattern",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L30",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_controller_pattern",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L45",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_data_fetching_pattern",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L56",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_key_patterns_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_navigation_pattern",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L71",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L78",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_backend_key_directories",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L80",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_project_structure",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_frontend_key_directories",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L87",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_authentication_authorization",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L94",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_development_workflows",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L103",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_common_implementation_patterns",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L138",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_critical_rules",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L171",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_microfrontend_orchestrator_ai_coding_instructions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_copilot_instructions_file_naming_organization",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/copilot-instructions.md",
+            "source_location": "L185",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

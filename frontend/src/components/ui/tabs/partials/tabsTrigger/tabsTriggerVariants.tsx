@@ -1,5 +1,5 @@
-import { cn } from "@/utils/styleUtils"
 import { cva } from "class-variance-authority"
+import { cn } from "@/utils/styleUtils"
 
 const baseStyle = `
 	inline-flex

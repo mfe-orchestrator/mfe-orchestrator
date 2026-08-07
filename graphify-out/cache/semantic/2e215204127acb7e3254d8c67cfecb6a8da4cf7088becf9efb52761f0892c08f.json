@@ -1,1 +1,44 @@
-{"nodes": [{"id": "_github_workflows_deploy_deploy_to_server", "label": "Deploy to Server Workflow", "file_type": "code", "source_file": ".github/workflows/deploy.yml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "On push to the development branch, builds the Docker image then deploys via SSH by running OpenTofu (tofu init/apply) on the target server"}], "edges": [{"source": "_github_workflows_deploy_deploy_to_server", "target": "_github_workflows_docker_build_docker_build", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": ".github/workflows/deploy.yml", "source_location": null, "weight": 1.0}], "hyperedges": [{"id": "ci_cd_pipeline", "label": "CI/CD Pipeline (build, dockerize, deploy, e2e)", "nodes": ["_github_workflows_monorepo_build_build_and_test", "_github_workflows_docker_build_docker_build", "_github_workflows_deploy_deploy_to_server", "_github_workflows_e2e_tests_e2e_tests"], "relation": "participate_in", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": ".github/workflows/deploy.yml"}]}
+{
+    "nodes": [
+        {
+            "id": "_github_workflows_deploy_deploy_to_server",
+            "label": "Deploy to Server Workflow",
+            "file_type": "code",
+            "source_file": ".github/workflows/deploy.yml",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null,
+            "rationale": "On push to the development branch, builds the Docker image then deploys via SSH by running OpenTofu (tofu init/apply) on the target server"
+        }
+    ],
+    "edges": [
+        {
+            "source": "_github_workflows_deploy_deploy_to_server",
+            "target": "_github_workflows_docker_build_docker_build",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "confidence_score": 1.0,
+            "source_file": ".github/workflows/deploy.yml",
+            "source_location": null,
+            "weight": 1.0
+        }
+    ],
+    "hyperedges": [
+        {
+            "id": "ci_cd_pipeline",
+            "label": "CI/CD Pipeline (build, dockerize, deploy, e2e)",
+            "nodes": [
+                "_github_workflows_monorepo_build_build_and_test",
+                "_github_workflows_docker_build_docker_build",
+                "_github_workflows_deploy_deploy_to_server",
+                "_github_workflows_e2e_tests_e2e_tests"
+            ],
+            "relation": "participate_in",
+            "confidence": "EXTRACTED",
+            "confidence_score": 1.0,
+            "source_file": ".github/workflows/deploy.yml"
+        }
+    ]
+}

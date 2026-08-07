@@ -1,6 +1,6 @@
-import fastifyPlugin from "fastify-plugin"
-import { FastifyInstance } from "fastify"
 import RateLimit from "@fastify/rate-limit"
+import { FastifyInstance } from "fastify"
+import fastifyPlugin from "fastify-plugin"
 
 export default fastifyPlugin(
     async (fastify: FastifyInstance) => {

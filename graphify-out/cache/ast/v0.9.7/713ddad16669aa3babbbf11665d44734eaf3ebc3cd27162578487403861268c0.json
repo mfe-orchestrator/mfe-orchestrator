@@ -1,1 +1,143 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_md", "label": "rules.md", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules", "label": "Project Rules", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_architecture", "label": "Architecture", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L5"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules", "label": "Quick Reference Rules", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L14"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_development_commands", "label": "Development Commands", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L16"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_frontend", "label": "Frontend", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L27"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_api_calls", "label": "API Calls", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L47"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_git_workflow", "label": "Git Workflow", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L52"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_full_documentation", "label": "Full Documentation", "file_type": "document", "source_file": ".windsurf/rules.md", "source_location": "L62"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_architecture", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L5", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L14", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_development_commands", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L16", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_frontend", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L27", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_api_calls", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L47", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_git_workflow", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L52", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_full_documentation", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".windsurf/rules.md", "source_location": "L62", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_md",
+            "label": "rules.md",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules",
+            "label": "Project Rules",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_architecture",
+            "label": "Architecture",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L5"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules",
+            "label": "Quick Reference Rules",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L14"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_development_commands",
+            "label": "Development Commands",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L16"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_frontend",
+            "label": "Frontend",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L27"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_api_calls",
+            "label": "API Calls",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L47"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_git_workflow",
+            "label": "Git Workflow",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L52"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_full_documentation",
+            "label": "Full Documentation",
+            "file_type": "document",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L62"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_architecture",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L5",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L14",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_development_commands",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L16",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_frontend",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L27",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_api_calls",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L47",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_quick_reference_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_git_workflow",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L52",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_project_rules",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_windsurf_rules_full_documentation",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".windsurf/rules.md",
+            "source_location": "L62",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

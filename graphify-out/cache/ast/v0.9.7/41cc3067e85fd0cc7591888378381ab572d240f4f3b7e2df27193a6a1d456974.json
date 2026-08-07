@@ -1,1 +1,591 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_md", "label": "COMMIT_CONVENTIONS.md", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "label": "Commit Conventions", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_why_conventional_commits", "label": "Why Conventional Commits?", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L5"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_format", "label": "Commit Message Format", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L13"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types", "label": "Commit Types", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L23"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_required_types", "label": "Required Types", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L25"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_additional_types", "label": "Additional Types", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L39"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional", "label": "Scopes (Optional)", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L89"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_general_scopes", "label": "General Scopes", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L93"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_module_scopes", "label": "Module Scopes", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L97"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_backend_layer_scopes", "label": "Backend Layer Scopes", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L103"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_frontend_layer_scopes", "label": "Frontend Layer Scopes", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L110"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes", "label": "Breaking Changes", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L117"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_1_use_in_the_type_scope_prefix", "label": "Option 1: Use `!` in the type/scope prefix", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L121"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_2_use_breaking_change_footer", "label": "Option 2: Use `BREAKING CHANGE:` footer", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L130"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_3_both_for_emphasis", "label": "Option 3: Both (for emphasis)", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L137"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "label": "Examples", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L144"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_basic_feature", "label": "Basic Feature", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L146"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_feature_with_scope", "label": "Feature with Scope", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L151"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_bug_fix", "label": "Bug Fix", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L156"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_change", "label": "Breaking Change", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L161"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_refactor", "label": "Refactor", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L168"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multi_paragraph_commit", "label": "Multi-paragraph Commit", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L177"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_documentation", "label": "Documentation", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L190"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_performance_improvement", "label": "Performance Improvement", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L198"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices", "label": "Best Practices", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L206"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_do", "label": "\u2705 Do:", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L208"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_don_t", "label": "\u274c Don't:", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L217"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multiple_types_in_one_commit", "label": "Multiple Types in One Commit", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L224"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_revert_commits", "label": "Revert Commits", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L244"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration", "label": "Git Workflow Integration", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L256"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_branch_naming", "label": "Branch Naming", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L258"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_pull_requests", "label": "Pull Requests", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L266"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_template", "label": "Commit Message Template", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L271"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_tools_automation", "label": "Tools & Automation", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L283"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_resources", "label": "Resources", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L291"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_quick_reference_card", "label": "Quick Reference Card", "file_type": "document", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L297"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_why_conventional_commits", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L5", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_format", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L13", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L23", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_required_types", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L25", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_additional_types", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L39", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L89", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_general_scopes", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L93", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_module_scopes", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L97", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_backend_layer_scopes", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L103", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_frontend_layer_scopes", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L110", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L117", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_1_use_in_the_type_scope_prefix", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L121", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_2_use_breaking_change_footer", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L130", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_3_both_for_emphasis", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L137", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L144", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_basic_feature", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L146", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_feature_with_scope", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L151", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_bug_fix", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L156", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_change", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L161", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_refactor", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L168", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multi_paragraph_commit", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L177", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_documentation", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L190", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_performance_improvement", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L198", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L206", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_do", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L208", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_don_t", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L217", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multiple_types_in_one_commit", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L224", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_revert_commits", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L244", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L256", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_branch_naming", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L258", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_pull_requests", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L266", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_template", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L271", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_tools_automation", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L283", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_resources", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L291", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_quick_reference_card", "relation": "contains", "confidence": "EXTRACTED", "source_file": "COMMIT_CONVENTIONS.md", "source_location": "L297", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_md",
+            "label": "COMMIT_CONVENTIONS.md",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "label": "Commit Conventions",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_why_conventional_commits",
+            "label": "Why Conventional Commits?",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L5"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_format",
+            "label": "Commit Message Format",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L13"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types",
+            "label": "Commit Types",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L23"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_required_types",
+            "label": "Required Types",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L25"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_additional_types",
+            "label": "Additional Types",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L39"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional",
+            "label": "Scopes (Optional)",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L89"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_general_scopes",
+            "label": "General Scopes",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L93"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_module_scopes",
+            "label": "Module Scopes",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L97"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_backend_layer_scopes",
+            "label": "Backend Layer Scopes",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L103"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_frontend_layer_scopes",
+            "label": "Frontend Layer Scopes",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L110"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes",
+            "label": "Breaking Changes",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L117"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_1_use_in_the_type_scope_prefix",
+            "label": "Option 1: Use `!` in the type/scope prefix",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L121"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_2_use_breaking_change_footer",
+            "label": "Option 2: Use `BREAKING CHANGE:` footer",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L130"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_3_both_for_emphasis",
+            "label": "Option 3: Both (for emphasis)",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L137"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "label": "Examples",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L144"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_basic_feature",
+            "label": "Basic Feature",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L146"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_feature_with_scope",
+            "label": "Feature with Scope",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L151"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_bug_fix",
+            "label": "Bug Fix",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L156"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_change",
+            "label": "Breaking Change",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L161"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_refactor",
+            "label": "Refactor",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L168"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multi_paragraph_commit",
+            "label": "Multi-paragraph Commit",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L177"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_documentation",
+            "label": "Documentation",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L190"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_performance_improvement",
+            "label": "Performance Improvement",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L198"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices",
+            "label": "Best Practices",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L206"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_do",
+            "label": "\u2705 Do:",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L208"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_don_t",
+            "label": "\u274c Don't:",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L217"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multiple_types_in_one_commit",
+            "label": "Multiple Types in One Commit",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L224"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_revert_commits",
+            "label": "Revert Commits",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L244"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration",
+            "label": "Git Workflow Integration",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L256"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_branch_naming",
+            "label": "Branch Naming",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L258"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_pull_requests",
+            "label": "Pull Requests",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L266"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_template",
+            "label": "Commit Message Template",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L271"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_tools_automation",
+            "label": "Tools & Automation",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L283"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_resources",
+            "label": "Resources",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L291"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_quick_reference_card",
+            "label": "Quick Reference Card",
+            "file_type": "document",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L297"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_why_conventional_commits",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L5",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_format",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L13",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L23",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_required_types",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L25",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_types",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_additional_types",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L39",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L89",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_general_scopes",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L93",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_module_scopes",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L97",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_backend_layer_scopes",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L103",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_scopes_optional",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_frontend_layer_scopes",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L110",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L117",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_1_use_in_the_type_scope_prefix",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L121",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_2_use_breaking_change_footer",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L130",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_changes",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_option_3_both_for_emphasis",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L137",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L144",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_basic_feature",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L146",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_feature_with_scope",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L151",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_bug_fix",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L156",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_breaking_change",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L161",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_refactor",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L168",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multi_paragraph_commit",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L177",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_documentation",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L190",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_examples",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_performance_improvement",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L198",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L206",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_do",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L208",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_best_practices",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_don_t",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L217",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_multiple_types_in_one_commit",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L224",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_revert_commits",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L244",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L256",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_branch_naming",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L258",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_pull_requests",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L266",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_git_workflow_integration",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_message_template",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L271",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_tools_automation",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L283",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_resources",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L291",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_commit_conventions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_quick_reference_card",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "COMMIT_CONVENTIONS.md",
+            "source_location": "L297",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

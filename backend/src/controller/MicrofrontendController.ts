@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify"
-import MicrofrontendDTO from "../types/MicrofrontendDTO"
-import MicrofrontendService from "../service/MicrofrontendService"
-import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import MicrofrontendService from "../service/MicrofrontendService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
+import MicrofrontendDTO from "../types/MicrofrontendDTO"
+import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function microfrontendController(fastify: FastifyInstance) {
     fastify.get("/microfrontends", async (request, reply) => {
@@ -91,7 +91,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     fastify.post<{
         Params: {
             id: string
-        },
+        }
         Body: {
             version: string
             branch?: string
@@ -103,7 +103,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     fastify.put<{
         Params: {
             id: string
-        },
+        }
         Body: {
             x: number
             y: number
@@ -115,7 +115,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     fastify.put<{
         Params: {
             id: string
-        },
+        }
         Body: {
             width: number
             height: number
@@ -123,6 +123,4 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     }>("/microfrontends/:id/dimension", async (request, reply) => {
         return reply.send(await new MicrofrontendService(request.databaseUser).setDimension(request.params.id, request.body.width, request.body.height))
     })
-
-
 }

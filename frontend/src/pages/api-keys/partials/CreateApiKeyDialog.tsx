@@ -24,7 +24,7 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
 
     const createApiKeyMutation = useMutation({
         mutationFn: apiKeysApi.createApiKey,
-        onSuccess: data => {
+        onSuccess: _data => {
             queryClient.invalidateQueries({ queryKey: ["api-keys", project.project?._id] })
         }
     })

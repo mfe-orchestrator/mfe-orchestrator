@@ -1,8 +1,7 @@
-import Spinner from "@/components/Spinner"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import Gravatar from "react-gravatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const gravatarHash = async (email: string) => {
     if (typeof email !== "string") {

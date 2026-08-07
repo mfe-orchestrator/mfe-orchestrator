@@ -1,7 +1,7 @@
-import { cn } from "@/utils/styleUtils"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { VariantProps } from "class-variance-authority"
 import * as React from "react"
+import { cn } from "@/utils/styleUtils"
 import { SelectContext } from "../../select"
 import { SelectScrollDownButton, SelectScrollUpButton } from "../selectScrollButtons"
 import { selectContentVariants } from "./selectContentVariants"

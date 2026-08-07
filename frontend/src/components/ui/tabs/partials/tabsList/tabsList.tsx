@@ -1,10 +1,9 @@
-import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
-
+import { VariantProps } from "class-variance-authority"
+import * as React from "react"
+import { TabsContext } from "@/components/ui/tabs/tabs"
 import { cn } from "@/utils/styleUtils"
 import { tabsListVariants } from "./tabsListVariants"
-import { VariantProps } from "class-variance-authority"
-import { TabsContext } from "@/components/ui/tabs/tabs"
 
 const TabsList = React.forwardRef<React.ComponentRef<typeof TabsPrimitive.List>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> & VariantProps<typeof tabsListVariants>>(
     ({ className, ...props }, ref) => {

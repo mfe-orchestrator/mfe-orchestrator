@@ -1,12 +1,11 @@
 import React from "react"
-import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import { useTranslation } from "react-i18next"
+import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { cn } from "@/utils/styleUtils"
 import { SelectContent } from "../../../../components/ui/select/partials/selectContent/selectContent"
 import { SelectItem } from "../../../../components/ui/select/partials/selectItem/selectItem"
 import { SelectTrigger } from "../../../../components/ui/select/partials/selectTrigger/selectTrigger"
 import { Select, SelectValue } from "../../../../components/ui/select/select"
-import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { cn } from "@/utils/styleUtils"
 
 interface MicrofrontendSelectorProps {
     microfrontends: Microfrontend[]

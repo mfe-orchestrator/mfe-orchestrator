@@ -1,7 +1,7 @@
-import { cn } from "@/utils/styleUtils"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { ChevronDown } from "lucide-react"
 import * as React from "react"
+import { cn } from "@/utils/styleUtils"
 import { SelectContext } from "../../select"
 import { selectTriggerVariants } from "./selecTriggerVariants"
 

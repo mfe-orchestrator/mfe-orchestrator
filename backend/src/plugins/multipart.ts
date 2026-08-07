@@ -1,5 +1,5 @@
-import { FastifyInstance } from "fastify"
 import fastifyMultipart from "@fastify/multipart"
+import { FastifyInstance } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 
 export default fastifyPlugin(

@@ -1,1 +1,60 @@
-{"nodes": [{"id": "frontend_public_img_azure_logo", "label": "Microsoft Azure Logo (SVG)", "file_type": "image", "source_file": "frontend/public/img/Azure.svg", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "frontend_public_img_azure_microsoft_azure_platform", "label": "Microsoft Azure Cloud Platform", "file_type": "concept", "source_file": "frontend/public/img/Azure.svg", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "frontend_public_img_azure_cloud_provider_option", "label": "Cloud Provider Selection Option in Frontend UI", "file_type": "concept", "source_file": "frontend/public/img/Azure.svg", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [{"source": "frontend_public_img_azure_logo", "target": "frontend_public_img_azure_microsoft_azure_platform", "relation": "references", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "frontend/public/img/Azure.svg", "source_location": null, "weight": 1.0}, {"source": "frontend_public_img_azure_logo", "target": "frontend_public_img_azure_cloud_provider_option", "relation": "conceptually_related_to", "confidence": "INFERRED", "confidence_score": 0.75, "source_file": "frontend/public/img/Azure.svg", "source_location": null, "weight": 1.0}], "hyperedges": []}
+{
+    "nodes": [
+        {
+            "id": "frontend_public_img_azure_logo",
+            "label": "Microsoft Azure Logo (SVG)",
+            "file_type": "image",
+            "source_file": "frontend/public/img/Azure.svg",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null
+        },
+        {
+            "id": "frontend_public_img_azure_microsoft_azure_platform",
+            "label": "Microsoft Azure Cloud Platform",
+            "file_type": "concept",
+            "source_file": "frontend/public/img/Azure.svg",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null
+        },
+        {
+            "id": "frontend_public_img_azure_cloud_provider_option",
+            "label": "Cloud Provider Selection Option in Frontend UI",
+            "file_type": "concept",
+            "source_file": "frontend/public/img/Azure.svg",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null
+        }
+    ],
+    "edges": [
+        {
+            "source": "frontend_public_img_azure_logo",
+            "target": "frontend_public_img_azure_microsoft_azure_platform",
+            "relation": "references",
+            "confidence": "INFERRED",
+            "confidence_score": 0.95,
+            "source_file": "frontend/public/img/Azure.svg",
+            "source_location": null,
+            "weight": 1.0
+        },
+        {
+            "source": "frontend_public_img_azure_logo",
+            "target": "frontend_public_img_azure_cloud_provider_option",
+            "relation": "conceptually_related_to",
+            "confidence": "INFERRED",
+            "confidence_score": 0.75,
+            "source_file": "frontend/public/img/Azure.svg",
+            "source_location": null,
+            "weight": 1.0
+        }
+    ],
+    "hyperedges": []
+}

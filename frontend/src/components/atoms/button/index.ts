@@ -1,3 +1,3 @@
-export * from "./Button";
+export * from "./Button"
 
-export type { IButtonProps } from "./IButtonProps";
+export type { IButtonProps } from "./IButtonProps"
