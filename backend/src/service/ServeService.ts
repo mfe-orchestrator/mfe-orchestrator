@@ -446,7 +446,6 @@ export default defineConfig({
                     headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
                     stream: await this.getMicrofrontendStreamStorage(project, microfrontendSlug, version, filePath, storage)
                 }
-                break
             }
             case HostedOn.CUSTOM_URL:
                 if (!microfrontend.host.url) {
@@ -456,7 +455,6 @@ export default defineConfig({
                     headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
                     stream: await this.getMicrofrontendStreamCustomUrl(project, microfrontendSlug, version, filePath, microfrontend.host.url)
                 }
-                break
             case HostedOn.MFE_ORCHESTRATOR_HUB:
                 return {
                     headers: filePath.includes(mfeEntryPoint) ? HEADERS_NO_CACHE : HEADERS_CACHE,
