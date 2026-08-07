@@ -62,6 +62,8 @@
         "email_placeholder": "nome@esempio.com",
         "invalid_email": "Inserisci un indirizzo email valido",
         "password": "Password",
+        "show_password": "Mostra password",
+        "hide_password": "Nascondi password",
         "password_min_length": "La password deve essere lunga almeno 8 caratteri",
         "passwords_dont_match": "Le password non corrispondono",
         "confirm_password": "Conferma Password",
