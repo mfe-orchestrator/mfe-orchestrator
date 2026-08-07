@@ -20,8 +20,8 @@
         "semantic_hash": ""
     },
     "backend/postbuild.js": {
-        "mtime": 1786109863.457244,
-        "ast_hash": "f630920326e36b5146cbe07df91089ce",
+        "mtime": 1786116425.9659169,
+        "ast_hash": "6f132623eaf316e73134260588979972",
         "semantic_hash": ""
     },
     "backend/src/client/AzureDevOpsClient.ts": {
@@ -685,8 +685,8 @@
         "semantic_hash": ""
     },
     "frontend/package.json": {
-        "mtime": 1786114818.8305402,
-        "ast_hash": "7a4334688b508fd4dd2b00dfc7b29925",
+        "mtime": 1786116280.7013605,
+        "ast_hash": "254d53541fddc910c693403d277fd40f",
         "semantic_hash": ""
     },
     "frontend/postcss.config.js": {
@@ -870,8 +870,8 @@
         "semantic_hash": ""
     },
     "frontend/src/components/ui/Sidebar/Sidebar.tsx": {
-        "mtime": 1786114053.2314372,
-        "ast_hash": "8fc49c5530574ba9620fbcf5296aa849",
+        "mtime": 1786116431.9366026,
+        "ast_hash": "2b4292e392fb5c8852de590aabe95b7d",
         "semantic_hash": ""
     },
     "frontend/src/components/ui/Sidebar/partials/LanguageSelector.tsx": {
@@ -1902,6 +1902,16 @@
     "docs/DEPENDENCIES.md": {
         "mtime": 1786109994.3519962,
         "ast_hash": "492fb33f4c4f9a18e3fa50f744775a46",
+        "semantic_hash": ""
+    },
+    "backend/src/templates/canary/is-canary.template.js": {
+        "mtime": 1786116370.7691045,
+        "ast_hash": "d448bc985d4b57a9a5a4bc0987761f64",
+        "semantic_hash": ""
+    },
+    "backend/src/templates/canary/user-id.template.js": {
+        "mtime": 1786116420.103505,
+        "ast_hash": "e782a414dea8c9daa5b4abfa1b0c94b4",
         "semantic_hash": ""
     }
 }
