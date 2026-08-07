@@ -95,9 +95,10 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
     }
 
     // Effect to fetch repositories when a repository is selected
+    // biome-ignore lint/correctness/useExhaustiveDependencies: fetchRepository is recreated on every render; refetch only when the selected provider changes
     useEffect(() => {
         fetchRepository()
-    }, [fetchRepository])
+    }, [selectedCodeRepositoryId, codeRepositoryEnabled, forceCreation])
 
     // Prefill the clone urls with the ones exposed by the provider for the selected repository
     const onRepositorySelected = (repositoryName: string) => {
@@ -259,26 +260,6 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                                 <Switch name="codeRepository.createData.private" label={t("microfrontend.github_private")} />
                             )}
                         </>
-                    )}
-
-                    {selectedCodeRepositoryId && (
-                        <div className="flex flex-col gap-2">
-                            <p className="text-sm text-foreground-secondary">{t("microfrontend.clone_urls_description")}</p>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                <TextField
-                                    name="codeRepository.cloneUrlHttps"
-                                    label={t("microfrontend.clone_url_https")}
-                                    placeholder={t("microfrontend.clone_url_https_placeholder")}
-                                    containerClassName="flex-[1_1_240px]"
-                                />
-                                <TextField
-                                    name="codeRepository.cloneUrlSsh"
-                                    label={t("microfrontend.clone_url_ssh")}
-                                    placeholder={t("microfrontend.clone_url_ssh_placeholder")}
-                                    containerClassName="flex-[1_1_240px]"
-                                />
-                            </div>
-                        </div>
                     )}
                 </CardContent>
             )}

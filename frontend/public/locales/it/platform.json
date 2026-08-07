@@ -559,11 +559,6 @@
         "select_repository_placeholder": "Scegli un repository...",
         "sourceCodeProvider": "Provider Codice Sorgente",
         "create_new_repository": "Crea nuovo...",
-        "clone_urls_description": "Gli URL di clone vengono compilati automaticamente alla creazione del repository e possono essere modificati in qualsiasi momento.",
-        "clone_url_https": "URL di clone HTTPS",
-        "clone_url_https_placeholder": "https://github.com/org/repository.git",
-        "clone_url_ssh": "URL di clone SSH",
-        "clone_url_ssh_placeholder": "git@github.com:org/repository.git",
         "clone": {
             "button": "Clona repo",
             "title": "Clona repository",
