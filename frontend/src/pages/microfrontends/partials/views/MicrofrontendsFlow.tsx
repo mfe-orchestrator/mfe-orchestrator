@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
+import CloneRepositoryPopover from "../components/CloneRepositoryPopover"
 import "@xyflow/react/dist/style.css"
 
 interface MicrofrontendFlowProps {
@@ -56,7 +57,17 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
 
             return {
                 id: mfe._id,
-                data: { label: mfe.name },
+                data: {
+                    label: (
+                        <>
+                            {mfe.name}
+                            {/* nodrag/nopan keep React Flow from hijacking the click; stopPropagation keeps a double click from navigating away. */}
+                            <span className="nodrag nopan absolute -right-2.5 -top-2.5" onDoubleClick={event => event.stopPropagation()}>
+                                <CloneRepositoryPopover microfrontend={mfe} iconOnly />
+                            </span>
+                        </>
+                    )
+                },
                 position: { x: mfe?.position?.x || col * 250, y: mfe?.position?.y || row * 150 },
                 dimensions: { width: mfe?.position?.width, height: mfe?.position?.height },
                 className: NODE_CLASS

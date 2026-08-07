@@ -9,6 +9,8 @@ import { buildGitCloneCommand, buildVsCodeCloneUrl } from "@/utils/repositoryClo
 interface CloneRepositoryPopoverProps {
     microfrontend: Microfrontend
     className?: string
+    /** Renders the trigger as a compact icon-only button, for tight spots like the flow nodes. */
+    iconOnly?: boolean
 }
 
 type CopiedTarget = "https" | "ssh" | null
@@ -32,7 +34,7 @@ const CloneUrlRow: React.FC<CloneUrlRowProps> = ({ label, url, copied, onCopy })
     </div>
 )
 
-export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ microfrontend, className }) => {
+export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ microfrontend, className, iconOnly = false }) => {
     const { t } = useTranslation("platform")
     const [copied, setCopied] = useState<CopiedTarget>(null)
     const resetCopiedTimeout = useRef<ReturnType<typeof setTimeout>>()
@@ -58,9 +60,15 @@ export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ 
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="secondary" size="sm" className={className}>
+                <Button
+                    variant="secondary"
+                    size={iconOnly ? "icon-sm" : "sm"}
+                    className={className}
+                    title={iconOnly ? t("microfrontend.clone.button") : undefined}
+                    aria-label={t("microfrontend.clone.button")}
+                >
                     <GitBranch />
-                    {t("microfrontend.clone.button")}
+                    {!iconOnly && t("microfrontend.clone.button")}
                 </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="flex w-80 flex-col gap-3">

@@ -700,13 +700,13 @@
         "semantic_hash": ""
     },
     "frontend/public/locales/en/platform.json": {
-        "mtime": 1786108237.1947682,
-        "ast_hash": "8ab8c6083e9cdfc258bb7ca68bfbcf34",
+        "mtime": 1786108769.4349346,
+        "ast_hash": "e1e003942bbdff3d3a2f27c9f1bafe03",
         "semantic_hash": ""
     },
     "frontend/public/locales/it/platform.json": {
-        "mtime": 1786108237.1934881,
-        "ast_hash": "7d001ba678b90bc2a4d943bdd9adc1f3",
+        "mtime": 1786108767.887832,
+        "ast_hash": "0def64512a8437d3881388bccb5cb8bd",
         "semantic_hash": ""
     },
     "frontend/public/manifest.json": {
@@ -1480,8 +1480,8 @@
         "semantic_hash": "66dc660454caa865e92935609a77e9c5"
     },
     "frontend/src/pages/microfrontends/partials/components/CodeRepositorySection.tsx": {
-        "mtime": 1786106536.5593479,
-        "ast_hash": "aa136058dc1b3dc970c2c05ac2b844aa",
+        "mtime": 1786108846.3058872,
+        "ast_hash": "b4301800cbfa1b64d5459f63a97c80d7",
         "semantic_hash": ""
     },
     "frontend/src/pages/microfrontends/partials/components/DangerZoneRemoveMicrofrontend.tsx": {
@@ -2077,11 +2077,6 @@
     "docs/assets/promo-video.gif": {
         "mtime": 1785996534.1225603,
         "ast_hash": "fd22ea7c70c098f8d433da67aad01b8b",
-        "semantic_hash": ""
-    },
-    "e2e/.netwatch.tmp.mjs": {
-        "mtime": 1786107719.5160162,
-        "ast_hash": "92e5b9c490f8007109420d2d1c3e2d29",
         "semantic_hash": ""
     }
 }

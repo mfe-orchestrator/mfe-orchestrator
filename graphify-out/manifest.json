@@ -1475,9 +1475,9 @@
     "semantic_hash": "6293630132120ef4226abe4990e98454"
   },
   "frontend/src/pages/microfrontends/partials/components/CloneRepositoryPopover.tsx": {
-    "mtime": 1785912357.5887594,
-    "ast_hash": "66dc660454caa865e92935609a77e9c5",
-    "semantic_hash": "66dc660454caa865e92935609a77e9c5"
+    "mtime": 1786109087.1914644,
+    "ast_hash": "860e3e7a88a4f651490fdd44da484fcf",
+    "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/CodeRepositorySection.tsx": {
     "mtime": 1786108846.3058872,
@@ -1515,8 +1515,8 @@
     "semantic_hash": "b7e91ff8aab78edfddfe61cd2e2dfe1c"
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsFlow.tsx": {
-    "mtime": 1786106536.5596633,
-    "ast_hash": "c880e15c7678b6a8646b98b17ccc9ff5",
+    "mtime": 1786109062.474747,
+    "ast_hash": "82bf2b669f3bf544beee116975bb36f2",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsGrid.tsx": {
