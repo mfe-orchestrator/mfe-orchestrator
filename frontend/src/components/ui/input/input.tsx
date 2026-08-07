@@ -10,16 +10,20 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement>,
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type, layoutSize, fullWidth, onDebounce, debounceTime = 500, ...props }, ref) => {
+    // Il callback vive in una ref: se finisse nelle dipendenze dell'effect, una
+    // funzione ricreata a ogni render farebbe ripartire il timer all'infinito
+    // (loop di richieste anche a valore invariato).
+    const onDebounceRef = React.useRef(onDebounce)
+    onDebounceRef.current = onDebounce
+
     React.useEffect(() => {
-        if (!onDebounce) return
-        //console.log("Checking repository name availability for:", repositoryName)
-        const timeoutId = setTimeout(async () => {
-            //console.log("Set timeout started", repositoryName)
-            onDebounce?.(props.value)
+        if (!onDebounceRef.current) return
+        const timeoutId = setTimeout(() => {
+            onDebounceRef.current?.(props.value)
         }, debounceTime)
 
         return () => clearTimeout(timeoutId)
-    }, [props.value, debounceTime, onDebounce])
+    }, [props.value, debounceTime])
 
     return <input type={type} className={cn(inputVariants({ layoutSize, fullWidth }), className)} ref={ref} {...props} />
 })

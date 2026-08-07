@@ -837,7 +837,19 @@
             "githubAccessDescription": "Update your GitHub authentication if needed",
             "connectionSaved": "GitHub connection \"{{name}}\" saved successfully",
             "error": "There are connection issues with your GitHub, refresh the connection",
-            "repositoryIdRequired": "Repository ID is required to configure GitHub connection."
+            "repositoryIdRequired": "Repository ID is required to configure GitHub connection.",
+            "callback": {
+                "authenticatingTitle": "Authenticating with GitHub",
+                "authenticatingDescription": "Please wait while we complete the authentication process...",
+                "successTitle": "Authentication Successful!",
+                "successDescription": "You have been successfully authenticated with GitHub. Redirecting to repository selection...",
+                "failedTitle": "Authentication Failed",
+                "authFailed": "GitHub authentication failed: {{error}}",
+                "missingParams": "Missing authentication parameters",
+                "invalidState": "Invalid state parameter",
+                "tryAgain": "Try Again",
+                "backToRepositories": "Back to Repositories"
+            }
         }
     },
     "market": {

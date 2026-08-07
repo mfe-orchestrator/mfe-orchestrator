@@ -45,9 +45,9 @@
         "semantic_hash": "9896f0ea1f7fce4390db878d5a0c4d08"
     },
     "backend/src/client/GoogleStorageAccount.ts": {
-        "mtime": 1785880209.9819775,
-        "ast_hash": "cb06a7ec61455bb2a187b132859d4fa1",
-        "semantic_hash": "cb06a7ec61455bb2a187b132859d4fa1"
+        "mtime": 1786084674.5767324,
+        "ast_hash": "08bd5bbb025e356f0a9ea2909f679976",
+        "semantic_hash": ""
     },
     "backend/src/client/S3Buckets.ts": {
         "mtime": 1785880209.9820774,
@@ -440,9 +440,9 @@
         "semantic_hash": "56b289cc4df3cfae333b503ed9537b0c"
     },
     "backend/src/service/ServeService.ts": {
-        "mtime": 1785880209.9911888,
-        "ast_hash": "0b29389692d75df9578f9c2ac2eefb99",
-        "semantic_hash": "0b29389692d75df9578f9c2ac2eefb99"
+        "mtime": 1786084519.6947126,
+        "ast_hash": "7eef3f5d86434f082ae31051ed66f79b",
+        "semantic_hash": ""
     },
     "backend/src/service/StorageService.ts": {
         "mtime": 1785880209.991321,
@@ -1190,9 +1190,9 @@
         "semantic_hash": "c6af3274058aaa4b2849f4bc25984437"
     },
     "frontend/src/hooks/apiClients/useProjectApi.ts": {
-        "mtime": 1785880210.008693,
-        "ast_hash": "f0b02a4fe35008f9e1159e0ceb3a5284",
-        "semantic_hash": "f0b02a4fe35008f9e1159e0ceb3a5284"
+        "mtime": 1786084597.5259755,
+        "ast_hash": "015901e1998b6705f9c5be67d28d9f72",
+        "semantic_hash": ""
     },
     "frontend/src/hooks/apiClients/useProjectUserApi.ts": {
         "mtime": 1785880210.0087523,
@@ -1795,8 +1795,8 @@
         "semantic_hash": "0f62a02d7c242beba7b389ebd530acea"
     },
     "package.json": {
-        "mtime": 1786084216.8753927,
-        "ast_hash": "f1c480a1277c5fd8fc421a5ce0548a63",
+        "mtime": 1786084327.4160511,
+        "ast_hash": "ef2687fddead4a0015813d96d0d9196c",
         "semantic_hash": ""
     },
     "start.sh": {
