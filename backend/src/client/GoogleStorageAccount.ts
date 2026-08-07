@@ -68,6 +68,10 @@ export class GoogleStorageClient {
                 if (Buffer.isBuffer(fileContent) || typeof fileContent === "string") {
                     stream.end(fileContent)
                 } else if (fileContent instanceof Readable) {
+                    fileContent.on("error", (error: Error) => {
+                        stream.destroy(error)
+                        reject(error)
+                    })
                     fileContent.pipe(stream)
                 } else {
                     reject(new Error("Unsupported file content type"))

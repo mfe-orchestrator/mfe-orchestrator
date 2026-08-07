@@ -15,9 +15,9 @@
         "semantic_hash": "d450fd3e2351bf7e3bb2ea7821523206"
     },
     "backend/package.json": {
-        "mtime": 1785912357.5847566,
-        "ast_hash": "2f3a9ae75edd5f36dca9b0282c0aed23",
-        "semantic_hash": "2f3a9ae75edd5f36dca9b0282c0aed23"
+        "mtime": 1786084216.8738291,
+        "ast_hash": "269e55cad4bffad5b0b3bf601a8adb11",
+        "semantic_hash": ""
     },
     "backend/postbuild.js": {
         "mtime": 1785880209.9810145,
@@ -305,8 +305,8 @@
         "semantic_hash": "8a2fb5658b0259d69d8788958a5602e9"
     },
     "backend/src/models/WizardProjectState.ts": {
-        "mtime": 1786023161.472127,
-        "ast_hash": "aa04cad2407a532171558fcc963e8aac",
+        "mtime": 1786084233.8753712,
+        "ast_hash": "dfb79ea83c1e3bb23dc8c9ba62a185a8",
         "semantic_hash": ""
     },
     "backend/src/plugins/autorization.ts": {
@@ -640,9 +640,9 @@
         "semantic_hash": "b2fa38386b1d1a99eba605b13a092f0b"
     },
     "e2e/package.json": {
-        "mtime": 1785880209.9957836,
-        "ast_hash": "c646f12c35b0a0cdcf2cf0ad4e6365cc",
-        "semantic_hash": "c646f12c35b0a0cdcf2cf0ad4e6365cc"
+        "mtime": 1786084216.8743742,
+        "ast_hash": "74523a7f4d342ceae9b0e6ab0e8de5a5",
+        "semantic_hash": ""
     },
     "e2e/playwright.config.ts": {
         "mtime": 1785880209.9958465,
@@ -690,9 +690,9 @@
         "semantic_hash": "8374b74daf75bd47ef5e1123bccde4ad"
     },
     "frontend/package.json": {
-        "mtime": 1785946358.9352872,
-        "ast_hash": "b323c274d365a28083fd2266c2103778",
-        "semantic_hash": "b323c274d365a28083fd2266c2103778"
+        "mtime": 1786084216.8748538,
+        "ast_hash": "48c00fd39ebe3aebc99c48e4990a9434",
+        "semantic_hash": ""
     },
     "frontend/postcss.config.js": {
         "mtime": 1785880209.9972954,
@@ -945,9 +945,9 @@
         "semantic_hash": "f161ed9db91621d85995adc5999612e6"
     },
     "frontend/src/components/ui/Sidebar/partials/UserButton.tsx": {
-        "mtime": 1785880210.0042558,
-        "ast_hash": "c943c2baa7173b55d6aa54e9b5864c54",
-        "semantic_hash": "c943c2baa7173b55d6aa54e9b5864c54"
+        "mtime": 1786084216.8751795,
+        "ast_hash": "281cea70421675e73c33726cb96abc90",
+        "semantic_hash": ""
     },
     "frontend/src/components/ui/accordion.tsx": {
         "mtime": 1785880210.004321,
@@ -1310,8 +1310,8 @@
         "semantic_hash": "935805463b40a7ba16aceb1c86688602"
     },
     "frontend/src/pages/code-repositories/AddGitHub.tsx": {
-        "mtime": 1786050678.1945503,
-        "ast_hash": "128e2fe61eae23552ba3246e91247490",
+        "mtime": 1786051189.8997765,
+        "ast_hash": "32a8a8abfa8f9fe5dbb425f4e8bc88f2",
         "semantic_hash": ""
     },
     "frontend/src/pages/code-repositories/AddGitlab.tsx": {
@@ -1330,8 +1330,8 @@
         "semantic_hash": "f3b80c3a638297289a19561267476ee0"
     },
     "frontend/src/pages/code-repositories/partials/AddRepositoryDialog.tsx": {
-        "mtime": 1786050690.3713205,
-        "ast_hash": "9a521c693c4ed17747a9a8ea420cdbf6",
+        "mtime": 1786051189.8994873,
+        "ast_hash": "73ac8106ebb1fb9f335ff4e0348ae2a5",
         "semantic_hash": ""
     },
     "frontend/src/pages/code-repositories/partials/index.ts": {
@@ -1795,9 +1795,9 @@
         "semantic_hash": "0f62a02d7c242beba7b389ebd530acea"
     },
     "package.json": {
-        "mtime": 1785912357.5902057,
-        "ast_hash": "2461bbf4d8dbb4e04dbfe059aef6d3f4",
-        "semantic_hash": "2461bbf4d8dbb4e04dbfe059aef6d3f4"
+        "mtime": 1786084216.8753927,
+        "ast_hash": "f1c480a1277c5fd8fc421a5ce0548a63",
+        "semantic_hash": ""
     },
     "start.sh": {
         "mtime": 1785880210.0222704,
@@ -1865,13 +1865,13 @@
         "semantic_hash": "3d52c23c339365f92db1aed503260374"
     },
     ".github/workflows/deploy.yml": {
-        "mtime": 1785946358.932998,
-        "ast_hash": "c69b2228c811b9862e4642103f12f4d2",
-        "semantic_hash": "c69b2228c811b9862e4642103f12f4d2"
+        "mtime": 1786051850.4582906,
+        "ast_hash": "a23954007ed9f36c4d3e7fc8b903e801",
+        "semantic_hash": ""
     },
     ".github/workflows/docker-build.yml": {
-        "mtime": 1785953165.16619,
-        "ast_hash": "6c13ab3a1c2f0cbd9509d61770b034bc",
+        "mtime": 1786051336.9126618,
+        "ast_hash": "225e4bbe73168bcebbaf080da7ce23bc",
         "semantic_hash": ""
     },
     ".github/workflows/e2e-tests.yml": {
@@ -1880,9 +1880,9 @@
         "semantic_hash": "a54ebc0bc4666227900d00d31cf85bd5"
     },
     ".github/workflows/monorepo-build.yml": {
-        "mtime": 1785946358.9339888,
-        "ast_hash": "67e54f65432476dae01fe4be11a3b352",
-        "semantic_hash": "67e54f65432476dae01fe4be11a3b352"
+        "mtime": 1786051346.5878823,
+        "ast_hash": "54f2bfd86e934acb7248b2c9a5490ccb",
+        "semantic_hash": ""
     },
     ".windsurf/rules.md": {
         "mtime": 1785880209.9797807,
