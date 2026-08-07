@@ -1,12 +1,11 @@
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, NavItem } from "@mfe-orchestrator/design-system"
 import { Globe } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import useUserApi from "@/hooks/apiClients/useUserApi"
 import useThemeStore from "@/store/useThemeStore"
 import useUserStore from "@/store/useUserStore"
 import { setLanguageInLocalStorage } from "@/utils/localStorageUtils"
-import { NavItem } from "./NavItem/NavItem"
 
 interface LanguageSelectorProps {
     isSidebarCollapsed?: boolean

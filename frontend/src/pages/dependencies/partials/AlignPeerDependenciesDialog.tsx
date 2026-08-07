@@ -1,10 +1,9 @@
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { AlertTriangle, CheckCircle2, GitBranch, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input/input"
 import useDependenciesApi, { AlignmentApplyResult, MicrofrontendAlignmentChange } from "@/hooks/apiClients/useDependenciesApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 

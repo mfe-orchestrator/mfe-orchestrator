@@ -1,11 +1,10 @@
+import { Card, CardContent, Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import { AlertCircle, CheckCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/atoms"
-import Spinner from "@/components/Spinner"
-import { Card, CardContent } from "@/components/ui/card"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 
 const GitHubCallbackPage = () => {

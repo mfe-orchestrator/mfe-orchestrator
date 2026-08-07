@@ -1,11 +1,7 @@
+import { Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
 import { AlertTriangle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
-import { Card, CardContent } from "@/components/ui/card"
-import { SelectContent } from "@/components/ui/select/partials/selectContent/selectContent"
-import { SelectItem } from "@/components/ui/select/partials/selectItem/selectItem"
-import { SelectTrigger } from "@/components/ui/select/partials/selectTrigger/selectTrigger"
-import { Select, SelectValue } from "@/components/ui/select/select"
 import { MicrofrontendScanTarget } from "@/hooks/apiClients/useDependenciesApi"
 
 export interface BranchSelectionProps {

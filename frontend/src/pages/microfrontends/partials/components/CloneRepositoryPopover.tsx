@@ -1,8 +1,8 @@
+import { Popover, PopoverContent, PopoverTrigger } from "@mfe-orchestrator/design-system"
 import { Check, Copy, GitBranch, Terminal } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { buildGitCloneCommand, buildVsCodeCloneUrl } from "@/utils/repositoryCloneUrls"
 

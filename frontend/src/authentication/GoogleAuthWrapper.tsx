@@ -1,6 +1,6 @@
+import { Spinner } from "@mfe-orchestrator/design-system"
 import { GoogleOAuthProvider } from "@react-oauth/google"
 import React, { useMemo, useState } from "react"
-import Spinner from "@/components/Spinner"
 import { useGlobalParameters } from "@/contexts/GlobalParameterProvider"
 import { GoogleProviderConfig } from "@/types/ConfigResponseDTO"
 

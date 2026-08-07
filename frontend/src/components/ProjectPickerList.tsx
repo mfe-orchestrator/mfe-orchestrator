@@ -1,8 +1,8 @@
+import { Input } from "@mfe-orchestrator/design-system"
 import { Check, ChevronRight, FolderPlus, Plus, Search } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Input } from "@/components/ui/input/input"
 import { Project } from "@/hooks/apiClients/useProjectApi"
 import { cn } from "@/utils/styleUtils"
 

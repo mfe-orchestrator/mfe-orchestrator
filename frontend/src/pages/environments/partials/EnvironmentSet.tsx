@@ -1,7 +1,7 @@
 import { PlusCircleIcon } from "@heroicons/react/24/outline"
+import { Card } from "@mfe-orchestrator/design-system"
 import { Badge } from "@/components/atoms"
 import { EnvironmentPreset } from "@/utils/EnviromentsPresets"
-import { Card } from "../../../components/ui/card"
 
 interface EnvironmentSetProps {
     name: string

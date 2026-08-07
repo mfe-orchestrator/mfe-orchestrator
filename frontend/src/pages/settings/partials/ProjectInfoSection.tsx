@@ -1,9 +1,7 @@
+import { Card, CardContent, CardHeader, Label, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
 import { Copy } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Project } from "@/hooks/apiClients/useProjectApi"
 
 interface InfoItemProps {

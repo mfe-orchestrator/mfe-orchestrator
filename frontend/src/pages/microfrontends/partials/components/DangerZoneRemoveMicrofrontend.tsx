@@ -1,16 +1,27 @@
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    Input,
+    Label
+} from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import { AlertCircle, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/atoms"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { Input } from "../../../../components/ui/input/input"
-import { Label } from "../../../../components/ui/label"
 
 // Simple class name concatenation helper
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" ")

@@ -1,3 +1,20 @@
+import {
+    Avatar,
+    AvatarFallback,
+    Card,
+    CardContent,
+    CardTitle,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger
+} from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { LayoutGrid, MailCheck, RefreshCw, StretchHorizontal, Trash2, X } from "lucide-react"
@@ -7,14 +24,7 @@ import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
-import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
-import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
-import { Tabs } from "@/components/ui/tabs/tabs"
 import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 import useProjectUserApi, { ProjectUser } from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"

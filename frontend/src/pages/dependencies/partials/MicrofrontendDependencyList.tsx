@@ -1,9 +1,7 @@
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { AlertTriangle, GitBranch } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dependency, DependencyKind, DependencyUpdateStatus, MicrofrontendDependencies } from "@/hooks/apiClients/useDependenciesApi"
 import DependencyStatusBadge from "./DependencyStatusBadge"
 

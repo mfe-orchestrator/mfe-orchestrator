@@ -1,6 +1,6 @@
+import { Card, CardContent } from "@mfe-orchestrator/design-system"
 import { Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/utils/styleUtils"
 
 interface AddNewMicrofrontendCardProps {

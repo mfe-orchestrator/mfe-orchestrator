@@ -1,7 +1,7 @@
+import { Card } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import { ApiStatusHandler } from "@/components/organisms"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
-import { Card } from "../../../components/ui/card"
 
 export interface DeploymentGateProps extends React.PropsWithChildren {
     environmentId: string

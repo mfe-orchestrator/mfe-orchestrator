@@ -1,3 +1,2 @@
+export type { IButtonProps } from "@mfe-orchestrator/design-system"
 export * from "./Button"
-
-export type { IButtonProps } from "./IButtonProps"

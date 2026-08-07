@@ -1,3 +1,4 @@
+import { Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -5,7 +6,6 @@ import { useNavigate } from "react-router-dom"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
-import Spinner from "@/components/Spinner"
 import useUserApi from "@/hooks/apiClients/useUserApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 

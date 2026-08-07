@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, SelectField } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { FormProvider, useForm } from "react-hook-form"
@@ -9,9 +10,7 @@ import { ApiStatusHandler } from "@/components/organisms"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import SelectField from "../../../../components/input/SelectField.rhf"
 import TextField from "../../../../components/input/TextField.rhf"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../../components/ui/dialog"
 
 interface BuildDialogProps {
     open: boolean

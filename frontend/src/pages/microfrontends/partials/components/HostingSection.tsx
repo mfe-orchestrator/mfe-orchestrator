@@ -1,8 +1,7 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import SelectField from "@/components/input/SelectField.rhf"
 import TextField from "@/components/input/TextField.rhf"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Storage } from "@/hooks/apiClients/useStorageApi"
 
 const logoMap: Record<string, string> = {

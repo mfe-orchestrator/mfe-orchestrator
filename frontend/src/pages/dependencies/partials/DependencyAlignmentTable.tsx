@@ -1,7 +1,6 @@
+import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
-import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DependencyAlignmentIssue } from "@/hooks/apiClients/useDependenciesApi"
 import DependencyStatusBadge from "./DependencyStatusBadge"
 

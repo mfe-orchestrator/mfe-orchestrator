@@ -1,8 +1,8 @@
+import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
 import { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/atoms"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 interface StatCardProps {
     icon: ReactNode

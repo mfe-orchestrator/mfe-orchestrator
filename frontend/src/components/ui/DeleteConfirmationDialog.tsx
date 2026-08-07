@@ -1,62 +1,12 @@
-import * as React from "react"
+import { DeleteConfirmationDialog as DesignSystemDeleteConfirmationDialog } from "@mfe-orchestrator/design-system"
+import type { ComponentProps } from "react"
 import { useTranslation } from "react-i18next"
-import { Button } from "../atoms/button/Button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./dialog"
 
-interface DeleteConfirmationDialogProps {
-    isOpen: boolean
-    onOpenChange: (open: boolean) => void
-    onDelete: () => Promise<void> | void
-    onDeleteSuccess?: () => void
-    onCancel?: () => void
-    title?: string
-    description?: string
-}
+type DeleteConfirmationDialogProps = ComponentProps<typeof DesignSystemDeleteConfirmationDialog>
 
-export function DeleteConfirmationDialog({
-    isOpen,
-    onOpenChange,
-    onDelete,
-    onDeleteSuccess,
-    onCancel,
-    title = "Delete Confirmation",
-    description = "Are you sure you want to delete"
-}: DeleteConfirmationDialogProps) {
+/** Dialog di conferma del design system con le etichette dei pulsanti tradotte. */
+export function DeleteConfirmationDialog(props: DeleteConfirmationDialogProps) {
     const { t } = useTranslation()
-    const [isDeleting, setIsDeleting] = React.useState(false)
 
-    const handleDelete = async () => {
-        try {
-            setIsDeleting(true)
-            await onDelete()
-            onOpenChange(false)
-            onDeleteSuccess?.()
-        } finally {
-            setIsDeleting(false)
-        }
-    }
-
-    const handleCancel = () => {
-        onCancel?.()
-        onOpenChange(false)
-    }
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                </DialogHeader>
-                <p>{description}</p>
-                <DialogFooter>
-                    <Button variant="secondary" onClick={handleCancel} disabled={isDeleting}>
-                        {t("common.cancel")}
-                    </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                        {isDeleting ? t("common.deleting") : t("common.delete")}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
+    return <DesignSystemDeleteConfirmationDialog cancelLabel={t("common.cancel")} deleteLabel={t("common.delete")} deletingLabel={t("common.deleting")} {...props} />
 }

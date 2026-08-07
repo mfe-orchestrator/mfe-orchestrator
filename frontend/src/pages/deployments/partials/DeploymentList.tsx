@@ -1,11 +1,10 @@
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Card, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { BadgeCheck, History, PackageOpen, RefreshCw, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import useDeploymentsApi from "../../../hooks/apiClients/useDeploymentsApi"
 
 interface DeploymentListProps {

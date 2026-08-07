@@ -1,12 +1,9 @@
+import { Alert, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField, SwitchField as Switch } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import SelectField from "../../../../components/input/SelectField.rhf"
-import Switch from "../../../../components/input/Switch.rhf"
 import TextField from "../../../../components/input/TextField.rhf"
-import { Alert, AlertDescription } from "../../../../components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../components/ui/card"
 import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../../../hooks/apiClients/useCodeRepositoriesApi"
 import { extractCloneUrls } from "../../../../utils/repositoryCloneUrls"
 

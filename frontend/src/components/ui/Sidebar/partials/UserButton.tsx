@@ -1,13 +1,12 @@
 import { useAuth0 } from "@auth0/auth0-react"
 import { AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, NavItem, NavItemProps } from "@mfe-orchestrator/design-system"
 import { LogOut, User } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { deleteToken } from "@/authentication/tokenUtils"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import useUserStore from "@/store/useUserStore"
-import { NavItem, NavItemProps } from "./NavItem/NavItem"
 
 export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disabled }) => {
     const { user, clearUser } = useUserStore()

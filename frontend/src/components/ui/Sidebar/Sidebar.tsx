@@ -1,9 +1,10 @@
+import { NavItem } from "@mfe-orchestrator/design-system"
 import { ArrowLeftFromLine, ArrowRightFromLine, BookOpen, GitBranch, Menu } from "lucide-react"
 import * as React from "react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/atoms"
-import { NavItem } from "@/components/ui/Sidebar/partials/NavItem/NavItem"
 import { cn } from "@/utils/styleUtils"
 import LanguageSelector from "./partials/LanguageSelector"
 import ThemeToggle from "./partials/ThemeToggle"
@@ -26,28 +27,27 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sidebarHeader, mainNavItems, isCollapsed, toggleCollapsed, ...props }, ref) => {
     const { t } = useTranslation()
+    const location = useLocation()
 
     const [isMobile, setIsMobile] = useState(window.matchMedia("(max-width: 767px)").matches)
     const [isMenuVisible, setIsMenuVisible] = useState(false)
 
-    const handleShowMenu = () => {
+    useEffect(() => {
+        const onResize = () => {
+            setIsMobile(window.matchMedia("(max-width: 767px)").matches)
+            setIsMenuVisible(false)
+        }
+        window.addEventListener("resize", onResize)
+        return () => window.removeEventListener("resize", onResize)
+    }, [])
+
+    useEffect(() => {
         if (isMobile && isMenuVisible) {
             document.querySelector("#main_content")?.classList.add("hidden")
         } else {
             document.querySelector("#main_content")?.classList.remove("hidden")
         }
-    }
-
-    useEffect(() => {
-        window.addEventListener("resize", () => {
-            setIsMobile(window.matchMedia("(max-width: 767px)").matches)
-            setIsMenuVisible(false)
-        })
-    }, [])
-
-    useEffect(() => {
-        handleShowMenu()
-    }, [handleShowMenu])
+    }, [isMobile, isMenuVisible])
 
     const navBarStyle = `
 		w-[calc(100%-1rem)] p-4 sticky top-2 start-2 z-10 bg-sidebar h-fit flex flex-col transition-all duration-300 ease-in-out border-2 border-sidebar-border rounded-md
@@ -56,7 +56,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
     const sidebarStyle = `md:h-sidebar md:py-6 group ${!isCollapsed ? "md:w-64 md:px-3" : "md:w-20 md:px-2"}`
 
     return (
-        <div id="sidebar_container" className={cn(navBarStyle, sidebarStyle, isMenuVisible && "h-sidebar", className)}>
+        <div ref={ref} id="sidebar_container" className={cn(navBarStyle, sidebarStyle, isMenuVisible && "h-sidebar", className)} {...props}>
             <div className={`flex items-center justify-between md:mb-12 ${isCollapsed ? "md:justify-center" : "md:justify-start"}`}>
                 <div className="flex items-center md:p-2 gap-3">
                     <div className="h-8 w-8 rounded-sm bg-orchestrator-accent flex items-center justify-center text-white font-bold">{!isCollapsed ? "MF" : "M"}</div>
@@ -67,6 +67,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
                 </Button>
             </div>
 
+            {sidebarHeader}
+
             <div id="sidebar_menu" className={`${isMenuVisible ? "flex" : "hidden"} flex-col flex-grow border-t border-divider overflow-auto md:flex md:border-0 pt-2 md:pt-0 mt-4 md:mt-0`}>
                 {mainNavItems && (
                     <nav className="flex flex-col gap-1 flex-grow">
@@ -74,13 +76,19 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
                             <NavItem
                                 key={item.path}
                                 type="main"
-                                to={item.path}
+                                href={item.path}
+                                active={location.pathname === item.path}
                                 icon={item.icon}
                                 name={item.name}
                                 isSidebarCollapsed={isCollapsed}
                                 disabled={item.disabled}
                                 isMobile={isMobile}
                                 setIsMenuVisible={setIsMenuVisible}
+                                renderLink={({ href, className: linkClassName, children, onClick }) => (
+                                    <Link to={href} className={linkClassName} onClick={onClick}>
+                                        {children}
+                                    </Link>
+                                )}
                             />
                         ))}
                     </nav>
@@ -110,5 +118,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ className, sid
         </div>
     )
 })
+
+Sidebar.displayName = "Sidebar"
 
 export { Sidebar }

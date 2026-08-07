@@ -1,3 +1,4 @@
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, NavItem } from "@mfe-orchestrator/design-system"
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
@@ -5,8 +6,6 @@ import useUserApi from "@/hooks/apiClients/useUserApi"
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
 import useUserStore from "@/store/useUserStore"
 import { setThemeInLocalStorage } from "@/utils/localStorageUtils"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../dropdown-menu"
-import { NavItem } from "./NavItem/NavItem"
 
 interface ThemeToggleProps {
     isSidebarCollapsed?: boolean

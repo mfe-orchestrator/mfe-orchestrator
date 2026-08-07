@@ -1,153 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..700;1,300..700&display=swap");
 @import "tailwindcss";
-@config "../tailwind.config.ts";
+@import "@mfe-orchestrator/design-system/theme.css";
+@source "../node_modules/@mfe-orchestrator/design-system/dist";
 
 /*
- * Theme: "Light Blue" rebrand (inspired by flatlogic/light-blue-html5)
- * Signature: deep-navy sidebar (#002B49) · light blue-grey body (#f9fbfd)
- * white soft-shadow cards · vivid blue primary (#2477FF) · Montserrat
+ * Token, tema chiaro/scuro, ombre e animazioni arrivano dal design system.
+ * Qui restano solo gli scostamenti specifici dell'applicazione.
  */
-@layer base {
-    :root {
-        /* MFE Orchestrator brand (mfe-orchestrator.dev) — light theme, white bg, violet accent */
-        --background: 0 0% 100%; /* white */
-        --background-gradient-from: 0 0% 100%;
-        --background-gradient-to: 262 40% 99%;
-        --foreground: 222 30% 16%; /* dark slate */
-        --foreground-secondary: 222 12% 40%;
 
-        --card: 0 0% 100%;
-        --card-foreground: 222 30% 16%;
-
-        --popover: 0 0% 100%;
-        --popover-foreground: 222 30% 16%;
-
-        --primary: 262 83% 66%; /* brand violet ~#8B5CF6 */
-        --primary-foreground: 0 0% 100%;
-        --primary-active: 262 83% 58%;
-
-        --secondary: 262 30% 95%; /* light violet-grey */
-        --secondary-foreground: 262 25% 30%;
-        --secondary-active: 262 30% 90%;
-
-        --muted: 240 20% 96%;
-        --muted-foreground: 240 8% 46%;
-
-        --accent: 262 100% 97%; /* light violet hover wash */
-        --accent-foreground: 262 70% 52%;
-        --accent-active: 262 100% 93%;
-
-        --destructive: 0 84% 60%; /* brand red */
-        --destructive-foreground: 0 0% 100%;
-        --destructive-active: 0 84% 52%;
-
-        --border: 262 20% 90%; /* soft violet-tinted border */
-        --input: 262 20% 88%;
-        --ring: 262 83% 66% / 25%;
-        --divider: 262 20% 93%;
-
-        --radius: 0.75rem; /* brand radius */
-        --font-sans: "Montserrat", "system-ui", sans-serif;
-
-        --sidebar-height: 100vh;
-        --sidebar-background: 0 0% 100%; /* seamless white */
-        --sidebar-foreground: 240 6% 40%;
-        --sidebar-primary: 262 83% 66%;
-        --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 262 100% 97%; /* light violet active bg */
-        --sidebar-accent-foreground: 262 75% 55%;
-        --sidebar-border: 262 20% 92%;
-        --sidebar-ring: 262 83% 66% / 25%;
-
-        /* Flat buttons/inputs: drop the embossed inner shadows */
-        --button-inner-shadow: none;
-        --button-lg-inner-shadow: none;
-        --button-active-inner-shadow: none;
-        --button-lg-active-inner-shadow: none;
-
-        --input-inner-shadow: none;
-        --input-lg-inner-shadow: none;
-    }
-
-    .dark {
-        /* MFE Orchestrator brand — dark theme (dark blue-grey + violet) */
-        --background: 220 26% 14%;
-        --background-gradient-from: 220 26% 14%;
-        --background-gradient-to: 220 20% 18%;
-        --foreground: 210 40% 98%;
-        --foreground-secondary: 217 10% 70%;
-
-        --card: 220 22% 17%; /* surface */
-        --card-foreground: 210 40% 98%;
-
-        --popover: 220 22% 17%;
-        --popover-foreground: 210 40% 98%;
-
-        --primary: 262 83% 66%;
-        --primary-foreground: 0 0% 100%;
-        --primary-active: 262 83% 74%; /* glow */
-
-        --secondary: 220 15% 25%;
-        --secondary-foreground: 210 40% 98%;
-        --secondary-active: 220 15% 30%;
-
-        --muted: 220 15% 25%;
-        --muted-foreground: 217 10% 64%;
-
-        --accent: 262 40% 26%;
-        --accent-foreground: 262 90% 85%;
-        --accent-active: 262 40% 32%;
-
-        --destructive: 0 70% 55%;
-        --destructive-foreground: 210 40% 98%;
-        --destructive-active: 0 70% 48%;
-
-        --border: 220 15% 25%;
-        --input: 220 15% 25%;
-        --ring: 262 83% 66% / 35%;
-        --divider: 220 15% 22%;
-
-        --sidebar-background: 220 26% 14%;
-        --sidebar-foreground: 217 10% 72%;
-        --sidebar-primary: 262 83% 66%;
-        --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 262 40% 26%;
-        --sidebar-accent-foreground: 262 90% 88%;
-        --sidebar-border: 220 15% 22%;
-        --sidebar-ring: 262 83% 66% / 35%;
-    }
+/* Tailwind v4 non ha piu le opzioni center/padding di container: le riproduciamo. */
+@utility container {
+    margin-inline: auto;
+    padding-inline: 2rem;
 }
 
 @layer base {
-    * {
-        border-color: hsl(var(--border));
-    }
-
     body {
-        background-color: hsl(var(--background));
-        background-image: linear-gradient(135deg, hsl(var(--background-gradient-from)) 0%, hsl(var(--background-gradient-to)) 100%);
-        background-attachment: fixed;
-        color: hsl(var(--foreground));
+        /* Lo scroll e gestito dai singoli pannelli del layout, non dal body. */
         overflow: hidden;
-    }
-}
-
-.loader {
-    width: 48px;
-    height: 48px;
-    border: 5px solid #fff;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    box-sizing: border-box;
-    animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
     }
 }

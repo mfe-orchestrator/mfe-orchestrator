@@ -1,7 +1,6 @@
+import { Alert, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Alert } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Market } from "@/hooks/apiClients/useMarketApi"
 
 interface TemplateCardProps {

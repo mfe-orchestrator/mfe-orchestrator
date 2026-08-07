@@ -1,6 +1,6 @@
+import { Alert, AlertDescription, AlertTitle } from "@mfe-orchestrator/design-system"
 import { Info } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { StorageForm } from "@/pages/storages/AddStorage"
 import { WizardStepProps } from "./wizardShared"
 
