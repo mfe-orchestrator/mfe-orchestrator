@@ -1,7 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react"
 import { AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
-import CryptoJS from "crypto-js"
 import { LogOut, User } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -50,7 +49,7 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
         return user?.email
     }, [user, auth0.user, msal.instance, getActiveMsalAccount])
 
-    const getProfilePictureUrl = React.useCallback(() => {
+    const getProfilePictureUrl = React.useCallback(async () => {
         // Check Auth0 profile picture
         if (auth0.user?.picture) {
             return auth0.user.picture
@@ -70,7 +69,10 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
         // Fallback to Gravatar using the user's email
         if (user?.email) {
             const email = user.email.trim().toLowerCase()
-            const hash = CryptoJS.MD5(email).toString()
+            const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(email))
+            const hash = Array.from(new Uint8Array(hashBuffer))
+                .map(b => b.toString(16).padStart(2, "0"))
+                .join("")
             return `https://www.gravatar.com/avatar/${hash}?s=200&d=mp` // mp = mystery person as default
         }
 
@@ -122,7 +124,7 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
 
     useEffect(() => {
         getNameAndSurname().then(res => setNameAndSurname(res))
-        setProfilePictureUrl(getProfilePictureUrl())
+        getProfilePictureUrl().then(res => setProfilePictureUrl(res ?? undefined))
     }, [getNameAndSurname, getProfilePictureUrl])
 
     return (

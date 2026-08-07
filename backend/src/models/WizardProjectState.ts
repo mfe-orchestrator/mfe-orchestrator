@@ -12,7 +12,7 @@ export interface IWizardProjectState extends Document<ObjectId> {
     /**
      * Context XState serializzato
      */
-    context: Record<string, any>
+    context: Record<string, unknown>
 
     /**
      * Versione della macchina (utile se la FSM evolve)
