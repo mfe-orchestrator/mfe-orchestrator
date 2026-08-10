@@ -51,6 +51,11 @@ jobs:
         env:
           CI: true
           BASE_URL: "https://console-dev.mfe-orchestrator.dev"
+          # Le caselle usate dai test vivono su inbox.testmail.app: console-dev spedisce
+          # con il proprio SMTP e i test leggono da li'. Senza queste due variabili i
+          # test che seguono i link ricevuti via email si escludono da soli.
+          TESTMAIL_API_KEY: ${{ secrets.TESTMAIL_API_KEY }}
+          TESTMAIL_NAMESPACE: ${{ secrets.TESTMAIL_NAMESPACE }}
 
       - name: Create test summary
         if: always()

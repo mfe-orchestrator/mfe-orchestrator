@@ -7,7 +7,7 @@
         "lint": "turbo lint",
         "format": "turbo format",
         "test": "turbo test",
-        "test:e2e": "turbo test --filter=@mfe-orchestrator/e2e",
+        "test:e2e": "pnpm --filter @mfe-orchestrator/e2e test",
         "test:e2e:ui": "pnpm --filter @mfe-orchestrator/e2e test:ui",
         "test:e2e:headed": "pnpm --filter @mfe-orchestrator/e2e test:headed",
         "test:e2e:debug": "pnpm --filter @mfe-orchestrator/e2e test:debug",
