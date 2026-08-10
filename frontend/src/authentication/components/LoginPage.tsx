@@ -90,7 +90,7 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
                             {loginMutation.isPending ? (
                                 <Spinner />
                             ) : (
-                                <Button type="submit" className="w-full mt-5" id="access">
+                                <Button type="submit" className="w-full mt-5" id="access" dataTestId="login">
                                     {t("auth.login")}
                                 </Button>
                             )}

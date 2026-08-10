@@ -92,6 +92,7 @@ const ProjectInvitation = () => {
                                         label={t("auth.password")}
                                         type="password"
                                         placeholder="••••••••"
+                                        dataTestId="invitation-password"
                                         rules={{
                                             required: t("common.required_field") as string,
                                             minLength: { value: 8, message: t("auth.password_min_length") }
@@ -102,6 +103,7 @@ const ProjectInvitation = () => {
                                         label={t("auth.confirm_password")}
                                         type="password"
                                         placeholder="••••••••"
+                                        dataTestId="invitation-confirm-password"
                                         rules={{
                                             required: t("common.required_field") as string,
                                             validate: (value: string) => value === form.getValues("password") || t("auth.passwords_dont_match")
@@ -113,7 +115,7 @@ const ProjectInvitation = () => {
                             {acceptMutation.isPending ? (
                                 <Spinner />
                             ) : (
-                                <Button type="submit" className="w-full">
+                                <Button type="submit" className="w-full" dataTestId="accept-invitation">
                                     {t("project_invitation.accept")}
                                 </Button>
                             )}

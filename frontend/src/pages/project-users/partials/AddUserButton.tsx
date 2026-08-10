@@ -92,7 +92,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     return (
         <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button dataTestId="invite-user">
                     <UserRoundPlus />
                     {t("project_users.invite_user")}
                 </Button>
@@ -105,23 +105,26 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
                             <DialogDescription>{t("project_users.invite_user_modal_description")}</DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <TextField name="email" label={t("auth.email")} placeholder={t("auth.email_placeholder")} type="email" />
-                            <SelectField
-                                name="role"
-                                label={t("project_users.role")}
-                                placeholder={t("project_users.select_role")}
-                                options={[
-                                    { value: "OWNER", label: t("project_users.roles.admin") },
-                                    { value: "MEMBER", label: t("project_users.roles.editor") },
-                                    { value: "VIEWER", label: t("project_users.roles.viewer") }
-                                ]}
-                            />
+                            <TextField name="email" label={t("auth.email")} placeholder={t("auth.email_placeholder")} type="email" dataTestId="invite-user-email" />
+                            {/* SelectField non espone un test id: il wrapper dà ai test un aggancio stabile sul trigger. */}
+                            <div data-testid="invite-user-role">
+                                <SelectField
+                                    name="role"
+                                    label={t("project_users.role")}
+                                    placeholder={t("project_users.select_role")}
+                                    options={[
+                                        { value: "OWNER", label: t("project_users.roles.admin") },
+                                        { value: "MEMBER", label: t("project_users.roles.editor") },
+                                        { value: "VIEWER", label: t("project_users.roles.viewer") }
+                                    ]}
+                                />
+                            </div>
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="secondary" onClick={() => setIsInviteModalOpen(false)} disabled={inviteUserMutation.isPending}>
+                            <Button type="button" variant="secondary" onClick={() => setIsInviteModalOpen(false)} disabled={inviteUserMutation.isPending} dataTestId="cancel-invitation">
                                 {t("common.cancel")}
                             </Button>
-                            <Button type="submit" disabled={inviteUserMutation.isPending}>
+                            <Button type="submit" disabled={inviteUserMutation.isPending} dataTestId="send-invitation">
                                 {inviteUserMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : t("project_users.send_invitation")}
                             </Button>
                         </DialogFooter>
