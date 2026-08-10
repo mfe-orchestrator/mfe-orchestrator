@@ -30,7 +30,7 @@ import {
  * registrazione. Se manca qualcosa i test si auto-escludono spiegando il motivo.
  */
 test.describe
-    .serial("Invito di un nuovo collaboratore", () => {
+    .serial("Invitation of a new collaborator", () => {
         const owner = newTestUser("owner")
         const collaborator = newTestUser("collab")
         const projectName = `E2E Collab ${Date.now()}`
@@ -55,7 +55,7 @@ test.describe
             await ownerSession?.context.close()
         })
 
-        test("l'owner si registra con una casella di test e attiva l'account", async ({ browser, request }) => {
+        test("given a brand new owner, when it is registered, then it can be activated from the email link", async ({ browser, request }) => {
             const { context, page } = await openApp(browser)
 
             await registerViaUi(page, owner)
@@ -67,7 +67,7 @@ test.describe
             await context.close()
         })
 
-        test("l'owner invita un collaboratore sul proprio progetto", async ({ browser, request }) => {
+        test("given a project, when the owner invites a collaborator, then the invitation shows up as pending", async ({ browser, request }) => {
             const accessToken = await loginViaApi(request, owner)
             const project = await createProjectViaApi(request, accessToken, projectName)
             expect(project._id).toBeTruthy()
@@ -80,7 +80,7 @@ test.describe
             await expect(page.getByTestId(`pending-invite-${collaborator.email}`)).toBeVisible()
         })
 
-        test("il collaboratore accetta l'invito dall'email e trova il progetto assegnato", async ({ browser, request }) => {
+        test("given an invitation email, when the collaborator accepts it and sets a password, then the account is created", async ({ browser, request }) => {
             const { context, page } = await openApp(browser)
 
             await openInvitationFromEmail(page, request, collaborator, projectName)
@@ -96,7 +96,7 @@ test.describe
             await context.close()
         })
 
-        test("il collaboratore accede al portale e vede il progetto tra i suoi", async ({ browser, request }) => {
+        test("given an accepted invitation, when the collaborator signs in, then the project is already assigned", async ({ browser, request }) => {
             // Login da zero: e' il punto del test, quindi qui la sessione non si riusa.
             const { context, page } = await openApp(browser)
 

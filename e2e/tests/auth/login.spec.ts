@@ -21,7 +21,7 @@ test.describe
             test.skip(Boolean(unavailable), unavailable ?? "")
         })
 
-        test("un nuovo utente si registra e attiva l'account", async ({ browser, request }) => {
+        test("given a brand new account, when it is registered, then it can be activated from the email link", async ({ browser, request }) => {
             const { context, page } = await openApp(browser)
 
             await registerViaUi(page, user)
@@ -30,7 +30,7 @@ test.describe
             await context.close()
         })
 
-        test("con le credenziali corrette la sessione viene aperta", async ({ browser }) => {
+        test("given an activated account, when logging in with the right credentials, then a session is opened", async ({ browser }) => {
             const { context, page } = await openApp(browser)
 
             await submitLoginForm(page, user)
@@ -42,7 +42,7 @@ test.describe
             await context.close()
         })
 
-        test("con la password sbagliata non si entra e viene mostrato un errore", async ({ browser }) => {
+        test("given an activated account, when logging in with a wrong password, then an error is shown and no session is opened", async ({ browser }) => {
             const { context, page } = await openApp(browser)
 
             await submitLoginForm(page, { email: user.email, password: "PasswordSbagliata!123" })
@@ -54,7 +54,7 @@ test.describe
             await context.close()
         })
 
-        test("con un'email sconosciuta non si entra", async ({ browser }) => {
+        test("given an unknown email, when logging in, then an error is shown and no session is opened", async ({ browser }) => {
             const { context, page } = await openApp(browser)
 
             await submitLoginForm(page, { email: `sconosciuto-${Date.now()}@inbox.testmail.app`, password: user.password })
@@ -65,7 +65,7 @@ test.describe
             await context.close()
         })
 
-        test("la sessione sopravvive a un ricaricamento della pagina", async ({ browser }) => {
+        test("given an open session, when the page is reloaded, then the session survives", async ({ browser }) => {
             const { context, page } = await openApp(browser)
 
             await submitLoginForm(page, user)

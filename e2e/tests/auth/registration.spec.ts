@@ -3,7 +3,7 @@ import { emailDeliveryUnavailable, newTestUser } from "../fixtures/appUser"
 import { toAppPath, waitForEmailLink } from "../fixtures/emailClient"
 
 test.describe
-    .serial("as a new user", () => {
+    .serial("Registration", () => {
         const user = newTestUser("signup")
         const password = user.password
 
@@ -13,7 +13,7 @@ test.describe
             test.skip(Boolean(unavailable), unavailable ?? "")
         })
 
-        test("should be able to register", async ({ page }) => {
+        test("given a brand new account, when it is registered, then it can be activated from the email link", async ({ page }) => {
             await page.goto("/")
             await page.getByTestId("register-link").click()
             await page.getByTestId("email").fill(user.email)
@@ -29,14 +29,14 @@ test.describe
             await page.goto(toAppPath(link))
         })
 
-        test("should be able to login", async ({ page }) => {
+        test("given an activated account, when logging in, then a session is opened", async ({ page }) => {
             await page.goto("/")
             await page.getByTestId("email").fill(user.email)
             await page.getByTestId("password").fill(password)
             await page.getByTestId("login").click()
         })
 
-        test("should be able to reset password", async ({ page }) => {
+        test("given an activated account, when the password is reset from the email link, then the new password works", async ({ page }) => {
             await page.goto("/")
             await page.getByTestId("forgot-password-link").click()
             await page.getByTestId("email").fill(user.email)

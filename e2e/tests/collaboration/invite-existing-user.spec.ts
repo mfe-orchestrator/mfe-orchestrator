@@ -32,7 +32,7 @@ import { waitForMessage } from "../fixtures/emailClient"
  * in ambiente. Se manca qualcosa i test si auto-escludono spiegando il motivo.
  */
 test.describe
-    .serial("Invito di un utente gia' registrato", () => {
+    .serial("Invitation of an already registered user", () => {
         const userOne = newTestUser("user1")
         const userTwo = newTestUser("user2")
         const projectName = `E2E Invito ${Date.now()}`
@@ -56,7 +56,7 @@ test.describe
             test.skip(Boolean(unavailable), unavailable ?? "")
         })
 
-        test("entrambi gli utenti si registrano con una casella di test", async ({ browser, request }) => {
+        test("given two brand new accounts, when they are registered, then both can be activated from the email link", async ({ browser, request }) => {
             for (const user of [userOne, userTwo]) {
                 const { context, page } = await openApp(browser)
                 await registerViaUi(page, user)
@@ -66,7 +66,7 @@ test.describe
             }
         })
 
-        test("l'utente 1 invita l'utente 2 sul proprio progetto come Editore", async ({ browser, request }) => {
+        test("given a project, when user one invites user two as editor, then the invitation is sent", async ({ browser, request }) => {
             const accessToken = await loginViaApi(request, userOne)
             await createProjectViaApi(request, accessToken, projectName)
 
@@ -75,14 +75,14 @@ test.describe
             await inviteCollaboratorViaUi(page, userTwo.email, RoleInProject.MEMBER)
         })
 
-        test("l'utente 2 riceve l'email di invito al progetto", async ({ request }) => {
+        test("given a sent invitation, when the mailbox is checked, then user two received the project invitation email", async ({ request }) => {
             const message = await waitForMessage(request, userTwo.inbox, {
                 subject: `You're invited to join ${projectName}`
             })
             expect(message.subject).toContain(projectName)
         })
 
-        test("l'utente 1 vede l'invito in sospeso dentro il proprio progetto", async ({ browser }) => {
+        test("given a sent invitation, when user one opens the project members, then the invitation is listed as pending", async ({ browser }) => {
             const { page } = await getUserOneSession(browser)
             await openProjectUsers(page)
 
@@ -98,7 +98,7 @@ test.describe
             await expect(page.getByTestId(`project-member-${userTwo.email}`)).toHaveCount(0)
         })
 
-        test("l'utente 2 accetta l'invito senza dover impostare una nuova password", async ({ browser, request }) => {
+        test("given an existing account, when user two accepts the invitation, then no new password is asked", async ({ browser, request }) => {
             const { context, page } = await openApp(browser)
 
             await openInvitationFromEmail(page, request, userTwo, projectName)
@@ -116,7 +116,7 @@ test.describe
             await context.close()
         })
 
-        test("l'utente 1 vede l'utente 2 tra i membri e non piu' tra gli inviti in sospeso", async ({ browser }) => {
+        test("given an accepted invitation, when user one opens the project members, then user two is a member and no longer pending", async ({ browser }) => {
             const { page } = await getUserOneSession(browser)
             await openProjectUsers(page)
 

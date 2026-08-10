@@ -13,7 +13,7 @@ import { AppSession, activateAccountFromEmail, emailDeliveryUnavailable, loginVi
  * e SMTP configurato sul backend, per ricevere il link di attivazione.
  */
 test.describe
-    .serial("Creazione di un progetto", () => {
+    .serial("Project creation", () => {
         const owner = newTestUser("project")
         const projectName = `E2E Progetto ${Date.now()}`
 
@@ -44,7 +44,7 @@ test.describe
             await session?.context.close()
         })
 
-        test("un nuovo utente si registra e attiva l'account", async ({ browser, request }) => {
+        test("given a brand new account, when it is registered, then it can be activated from the email link", async ({ browser, request }) => {
             const { context, page } = await openApp(browser)
 
             await registerViaUi(page, owner)
@@ -53,7 +53,7 @@ test.describe
             await context.close()
         })
 
-        test("al primo accesso, senza progetti, si viene portati nel wizard", async ({ browser, request }) => {
+        test("given an account without projects, when it signs in, then the wizard takes over the dashboard", async ({ browser, request }) => {
             const { page } = await getSession(browser)
 
             // Il wizard prende il posto della dashboard finche' non c'e' un progetto.
@@ -64,7 +64,7 @@ test.describe
             expect(await myProjects(request)).toHaveLength(0)
         })
 
-        test("senza nome il wizard resta sul primo passo", async ({ browser }) => {
+        test("given the wizard, when it is submitted without a name, then it stays on the first step", async ({ browser }) => {
             const { page } = await getSession(browser)
 
             await page.getByTestId("wizard-next").click()
@@ -73,7 +73,7 @@ test.describe
             await expect(page.getByTestId("wizard-project-name")).toBeVisible()
         })
 
-        test("dando un nome il progetto viene creato e diventa quello attivo", async ({ browser, request }) => {
+        test("given the wizard, when a name is submitted, then the project is created and becomes the active one", async ({ browser, request }) => {
             const { page } = await getSession(browser)
 
             await page.getByTestId("wizard-project-name").fill(projectName)
@@ -89,7 +89,7 @@ test.describe
             expect(projects.find(project => project.name === projectName)?.slug).toBe(projectName.toLowerCase().replaceAll(" ", "-"))
         })
 
-        test("il progetto creato e' raggiungibile dalla app", async ({ browser }) => {
+        test("given a created project, when the app is reopened, then the project is reachable", async ({ browser }) => {
             const { page } = await getSession(browser)
 
             // Un solo progetto: viene selezionato in automatico e la app si apre su di esso.
