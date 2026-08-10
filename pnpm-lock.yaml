@@ -159,6 +159,9 @@ importers:
       '@types/node':
         specifier: ^26.1.2
         version: 26.1.2
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       mailinator-client:
         specifier: ^1.1.1
         version: 1.1.1

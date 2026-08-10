@@ -1,4 +1,12 @@
 import { defineConfig, devices } from "@playwright/test"
+import dotenv from "dotenv"
+
+/**
+ * Configurazione locale da `e2e/.env` (gitignorato): BASE_URL, credenziali del
+ * provider di posta. Non sovrascrive le variabili gia' presenti nell'ambiente,
+ * quindi in pipeline continuano a vincere quelle passate dal workflow.
+ */
+dotenv.config()
 
 /**
  * See https://playwright.dev/docs/test-configuration.

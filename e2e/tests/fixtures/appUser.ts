@@ -96,13 +96,23 @@ export async function registerViaUi(page: Page, user: TestUser): Promise<void> {
     await expect(page.getByTestId("registration-success")).toBeVisible()
 }
 
-/** Segue il link di attivazione ricevuto via email. */
+/**
+ * Segue il link di attivazione ricevuto via email.
+ *
+ * La pagina di attivazione chiama l'API al mount, quindi la `goto` ritorna prima
+ * che l'account sia davvero verificato: senza attendere l'esito si prosegue con
+ * un utente che il backend rifiuta ancora con "User not verified".
+ */
 export async function activateAccountFromEmail(page: Page, request: APIRequestContext, user: TestUser): Promise<void> {
     const link = await waitForEmailLink(request, user.inbox, {
         subject: "Activate Your Account",
         linkContains: "/account-activation/"
     })
+
+    const activation = page.waitForResponse(response => response.url().includes("/users/account-activation") && response.request().method() === "POST")
     await page.goto(toAppPath(link))
+    const response = await activation
+    expect(response.ok(), `Attivazione account fallita per ${user.email} (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
 }
 
 /** Login dalla UI con email e password, con attesa del token in localStorage. */
