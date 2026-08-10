@@ -33,11 +33,17 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     const queryClient = useQueryClient()
     const currentUserEmail = useUserStore(state => state.user?.email?.toLowerCase())
 
-    // Same key as the ProjectUsers page, so this reads from the already-fetched cache
+    // Same key as the ProjectUsers page, so this reads from the already-fetched cache.
+    // `refetchOnMount: false` non e' un dettaglio: il bottone vive dentro
+    // l'ApiStatusHandler della pagina, che tratta anche un refetch in background come
+    // caricamento. Rifacendo la fetch al mount il bottone si farebbe smontare dal
+    // proprio genitore, per poi rimontare e rifare la fetch: la pagina resterebbe
+    // sullo spinner interrogando la API in modo continuo.
     const projectUsersQuery = useQuery({
         queryKey: ["projectUsers", project?._id],
         queryFn: () => projectUserApi.getProjectUsers(project?._id || ""),
-        enabled: !!project?._id
+        enabled: !!project?._id,
+        refetchOnMount: false
     })
 
     const inviteUserSchema = useMemo(
