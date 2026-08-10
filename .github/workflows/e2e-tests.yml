@@ -25,10 +25,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # Nessun `version`: la prende da `packageManager` nel package.json, che resta
+      # l'unica fonte. Dichiararla anche qui fa fallire l'action per conflitto.
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
-        with:
-          version: 10.24.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
