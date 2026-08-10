@@ -115,13 +115,37 @@ export async function activateAccountFromEmail(page: Page, request: APIRequestCo
     expect(response.ok(), `Attivazione account fallita per ${user.email} (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
 }
 
+/**
+ * Compila e invia il form di login senza attendere l'esito: serve ai casi in cui
+ * il login deve fallire, dove aspettare il token bloccherebbe fino al timeout.
+ */
+export async function submitLoginForm(page: Page, credentials: { email: string; password: string }): Promise<void> {
+    await page.goto("/")
+    await page.getByTestId("email").fill(credentials.email)
+    await page.getByTestId("password").fill(credentials.password)
+    await page.getByTestId("login").click()
+}
+
 /** Login dalla UI con email e password, con attesa del token in localStorage. */
 export async function loginViaUi(page: Page, user: TestUser): Promise<void> {
-    await page.goto("/")
-    await page.getByTestId("email").fill(user.email)
-    await page.getByTestId("password").fill(user.password)
-    await page.getByTestId("login").click()
+    await submitLoginForm(page, user)
     await waitForAuthenticated(page)
+}
+
+/** C'e' una sessione attiva nel browser? */
+export const isAuthenticated = (page: Page): Promise<boolean> => page.evaluate(() => Boolean(localStorage.getItem("token")))
+
+/**
+ * Sessione gia' autenticata, da tenere aperta per piu' test.
+ *
+ * Rifare login e bootstrap della app a ogni test costa una decina di chiamate
+ * ciascuno: su un ambiente condiviso con rate limit per IP la suite arriva a
+ * prendersi dei 429 da sola. Nei describe seriali conviene riusare la stessa.
+ */
+export async function openAppAs(browser: Browser, user: TestUser): Promise<AppSession> {
+    const session = await openApp(browser)
+    await loginViaUi(session.page, user)
+    return session
 }
 
 /** Attende che la sessione sia stabilita: senza questo una goto successiva rischia di partire da anonimo. */
@@ -158,9 +182,22 @@ export async function createProjectViaApi(request: APIRequestContext, accessToke
     return (await response.json()) as CreatedProject
 }
 
+/**
+ * Apre la pagina membri e aspetta che abbia finito di caricare.
+ *
+ * La pagina e' un chunk lazy dentro ApiStatusHandler: finche' la query non
+ * risolve mostra un loader, e a freddo puo' volerci piu' dei 5s di default di
+ * `expect`. Il bottone di invito compare solo a caricamento concluso, quindi fa
+ * da segnale di pagina pronta.
+ */
+export async function openProjectUsers(page: Page): Promise<void> {
+    await page.goto("/project-users")
+    await expect(page.getByTestId("invite-user")).toBeVisible({ timeout: 30_000 })
+}
+
 /** Invita un collaboratore dalla pagina membri del progetto. */
 export async function inviteCollaboratorViaUi(page: Page, email: string, role: RoleInProject): Promise<void> {
-    await page.goto("/project-users")
+    await openProjectUsers(page)
     await page.getByTestId("invite-user").click()
     await page.getByTestId("invite-user-email").fill(email)
     await page.getByTestId("invite-user-role").getByRole("combobox").click()

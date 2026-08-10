@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test"
+import { Browser, expect, test } from "@playwright/test"
 import {
+    AppSession,
     activateAccountFromEmail,
     createProjectViaApi,
     emailDeliveryUnavailable,
@@ -8,7 +9,9 @@ import {
     loginViaUi,
     newTestUser,
     openApp,
+    openAppAs,
     openInvitationFromEmail,
+    openProjectUsers,
     RoleInProject,
     registerViaUi
 } from "../fixtures/appUser"
@@ -32,11 +35,24 @@ test.describe
         const collaborator = newTestUser("collab")
         const projectName = `E2E Collab ${Date.now()}`
 
+        // La sessione dell'owner resta aperta per tutto lo scenario: rifare login e
+        // bootstrap a ogni test fa scattare il rate limit per IP dell'ambiente.
+        let ownerSession: AppSession | undefined
+
+        const getOwnerSession = async (browser: Browser): Promise<AppSession> => {
+            ownerSession ??= await openAppAs(browser, owner)
+            return ownerSession
+        }
+
         test.beforeEach(async ({ request }) => {
             // Il test attende la consegna di email vere: il timeout di default (30s) non basta.
             test.setTimeout(300_000)
             const unavailable = await emailDeliveryUnavailable(request)
             test.skip(Boolean(unavailable), unavailable ?? "")
+        })
+
+        test.afterAll(async () => {
+            await ownerSession?.context.close()
         })
 
         test("l'owner si registra con una casella di test e attiva l'account", async ({ browser, request }) => {
@@ -56,15 +72,12 @@ test.describe
             const project = await createProjectViaApi(request, accessToken, projectName)
             expect(project._id).toBeTruthy()
 
-            const { context, page } = await openApp(browser)
-            await loginViaUi(page, owner)
+            const { page } = await getOwnerSession(browser)
 
             await inviteCollaboratorViaUi(page, collaborator.email, RoleInProject.MEMBER)
 
             // L'invito compare subito tra quelli in sospeso.
             await expect(page.getByTestId(`pending-invite-${collaborator.email}`)).toBeVisible()
-
-            await context.close()
         })
 
         test("il collaboratore accetta l'invito dall'email e trova il progetto assegnato", async ({ browser, request }) => {
@@ -84,12 +97,13 @@ test.describe
         })
 
         test("il collaboratore accede al portale e vede il progetto tra i suoi", async ({ browser, request }) => {
+            // Login da zero: e' il punto del test, quindi qui la sessione non si riusa.
             const { context, page } = await openApp(browser)
 
             await loginViaUi(page, collaborator)
 
             // Un solo progetto: viene selezionato in automatico e la app si apre su di esso.
-            await page.goto("/project-users")
+            await openProjectUsers(page)
             await expect(page.getByTestId(`project-member-${collaborator.email}`)).toBeVisible()
             await expect(page.getByTestId(`project-member-${owner.email}`)).toBeVisible()
 
@@ -98,11 +112,9 @@ test.describe
 
             // Il progetto risulta assegnato anche lato API.
             const accessToken = await loginViaApi(request, collaborator)
-            const response = await request.get("/api/projects/mine", {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            })
+            const response = await request.get("/api/projects/mine", { headers: { Authorization: `Bearer ${accessToken}` } })
             expect(response.ok()).toBeTruthy()
-            expect((await response.json()).map((project: { name: string }) => project.name)).toContain(projectName)
+            expect(((await response.json()) as Array<{ name: string }>).map(project => project.name)).toContain(projectName)
 
             await context.close()
         })

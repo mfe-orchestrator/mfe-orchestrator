@@ -1,5 +1,6 @@
-import { expect, test } from "@playwright/test"
+import { Browser, expect, test } from "@playwright/test"
 import {
+    AppSession,
     activateAccountFromEmail,
     createProjectViaApi,
     emailDeliveryUnavailable,
@@ -8,7 +9,9 @@ import {
     loginViaUi,
     newTestUser,
     openApp,
+    openAppAs,
     openInvitationFromEmail,
+    openProjectUsers,
     RoleInProject,
     registerViaUi
 } from "../fixtures/appUser"
@@ -34,6 +37,19 @@ test.describe
         const userTwo = newTestUser("user2")
         const projectName = `E2E Invito ${Date.now()}`
 
+        // La sessione dell'utente 1 resta aperta per tutto lo scenario: rifare login
+        // e bootstrap a ogni test fa scattare il rate limit per IP dell'ambiente.
+        let userOneSession: AppSession | undefined
+
+        const getUserOneSession = async (browser: Browser): Promise<AppSession> => {
+            userOneSession ??= await openAppAs(browser, userOne)
+            return userOneSession
+        }
+
+        test.afterAll(async () => {
+            await userOneSession?.context.close()
+        })
+
         test.beforeEach(async ({ request }) => {
             test.setTimeout(300_000)
             const unavailable = await emailDeliveryUnavailable(request)
@@ -54,12 +70,9 @@ test.describe
             const accessToken = await loginViaApi(request, userOne)
             await createProjectViaApi(request, accessToken, projectName)
 
-            const { context, page } = await openApp(browser)
-            await loginViaUi(page, userOne)
+            const { page } = await getUserOneSession(browser)
 
             await inviteCollaboratorViaUi(page, userTwo.email, RoleInProject.MEMBER)
-
-            await context.close()
         })
 
         test("l'utente 2 riceve l'email di invito al progetto", async ({ request }) => {
@@ -70,9 +83,8 @@ test.describe
         })
 
         test("l'utente 1 vede l'invito in sospeso dentro il proprio progetto", async ({ browser }) => {
-            const { context, page } = await openApp(browser)
-            await loginViaUi(page, userOne)
-            await page.goto("/project-users")
+            const { page } = await getUserOneSession(browser)
+            await openProjectUsers(page)
 
             const pendingInvites = page.getByTestId("pending-invites")
             await expect(pendingInvites).toBeVisible()
@@ -84,8 +96,6 @@ test.describe
 
             // Finche' l'invito e' in sospeso l'utente 2 non e' ancora un membro.
             await expect(page.getByTestId(`project-member-${userTwo.email}`)).toHaveCount(0)
-
-            await context.close()
         })
 
         test("l'utente 2 accetta l'invito senza dover impostare una nuova password", async ({ browser, request }) => {
@@ -100,20 +110,17 @@ test.describe
 
             await expect(page).not.toHaveURL(/\/project-invitation\//)
 
-            await page.goto("/project-users")
+            await openProjectUsers(page)
             await expect(page.getByTestId(`project-member-${userTwo.email}`)).toBeVisible()
 
             await context.close()
         })
 
         test("l'utente 1 vede l'utente 2 tra i membri e non piu' tra gli inviti in sospeso", async ({ browser }) => {
-            const { context, page } = await openApp(browser)
-            await loginViaUi(page, userOne)
-            await page.goto("/project-users")
+            const { page } = await getUserOneSession(browser)
+            await openProjectUsers(page)
 
             await expect(page.getByTestId(`project-member-${userTwo.email}`)).toBeVisible()
             await expect(page.getByTestId(`pending-invite-${userTwo.email}`)).toHaveCount(0)
-
-            await context.close()
         })
     })
