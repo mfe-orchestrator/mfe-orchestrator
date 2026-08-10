@@ -30,6 +30,7 @@ function copyFile(src, dest) {
 function postBuild() {
     console.log("Runing Postbuild script")
     copyDirectory(path.join(__dirname, "src", "templates/emails"), path.join(__dirname, "dist", "src/templates/emails"))
+    copyDirectory(path.join(__dirname, "src", "templates/canary"), path.join(__dirname, "dist", "src/templates/canary"))
     console.log("Postbuild script done")
 }
 
