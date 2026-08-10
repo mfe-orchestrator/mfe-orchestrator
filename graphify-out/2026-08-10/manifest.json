@@ -645,13 +645,13 @@
     "semantic_hash": ""
   },
   "e2e/playwright.config.ts": {
-    "mtime": 1786365097.6459918,
-    "ast_hash": "6975f048831ea316b1eac47a30a12960",
-    "semantic_hash": ""
+    "mtime": 1785880209.9958465,
+    "ast_hash": "eea1428ee026d79ac0505b5382863477",
+    "semantic_hash": "eea1428ee026d79ac0505b5382863477"
   },
   "e2e/tests/auth/registration.spec.ts": {
-    "mtime": 1786365229.457403,
-    "ast_hash": "8c1796eed142186c0b8ed79ff730adfb",
+    "mtime": 1786109863.4886148,
+    "ast_hash": "25824faca2f830430b797493efcf0a15",
     "semantic_hash": ""
   },
   "e2e/tests/example.spec.ts": {
@@ -667,6 +667,11 @@
   "e2e/tests/fixtures/example.ts": {
     "mtime": 1786109863.4898045,
     "ast_hash": "ebe7159ba4d0b2e98874531b85f29944",
+    "semantic_hash": ""
+  },
+  "e2e/tests/fixtures/mailinatorClient.ts": {
+    "mtime": 1786363628.0714674,
+    "ast_hash": "2d6c9db51fa2d76afb29e26b4a297414",
     "semantic_hash": ""
   },
   "e2e/tests/project-wizard.spec.ts": {
@@ -1625,9 +1630,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/e2e-tests.yml": {
-    "mtime": 1786365121.9087424,
-    "ast_hash": "b17ad20d8559872adf31f66c2fd56503",
-    "semantic_hash": ""
+    "mtime": 1785946358.9335659,
+    "ast_hash": "a54ebc0bc4666227900d00d31cf85bd5",
+    "semantic_hash": "a54ebc0bc4666227900d00d31cf85bd5"
   },
   ".github/workflows/monorepo-build.yml": {
     "mtime": 1786109863.455657,
@@ -1665,7 +1670,7 @@
     "semantic_hash": "6187f2aa1802f962b32dc8ce264cf4cd"
   },
   "docker-local/docker-compose-development.yaml": {
-    "mtime": 1786365079.5233672,
+    "mtime": 1785880209.9955754,
     "ast_hash": "c4693fa60aabdad828e0a07e68eeaffa",
     "semantic_hash": "c4693fa60aabdad828e0a07e68eeaffa"
   },
@@ -1675,8 +1680,8 @@
     "semantic_hash": "01a724cc9dc490bf1f0a4f1cac7a79d8"
   },
   "e2e/README.md": {
-    "mtime": 1786365161.0990431,
-    "ast_hash": "58bb3d4e7770af2524108cc3832d41a0",
+    "mtime": 1786363906.8073337,
+    "ast_hash": "bad123329822cb2976366a6a05884dbe",
     "semantic_hash": ""
   },
   "frontend/index.html": {
@@ -1910,23 +1915,18 @@
     "semantic_hash": ""
   },
   "e2e/tests/collaboration/invite-existing-user.spec.ts": {
-    "mtime": 1786365177.4375062,
-    "ast_hash": "38a859816c6963ed2043feb4896abd7e",
+    "mtime": 1786363880.7493997,
+    "ast_hash": "769d8a98df4a7976a57ac8476fb5eb1d",
     "semantic_hash": ""
   },
   "e2e/tests/collaboration/invite-new-collaborator.spec.ts": {
-    "mtime": 1786365177.4363985,
-    "ast_hash": "da4e28b2c0c90b73007237c830a89822",
+    "mtime": 1786363880.749298,
+    "ast_hash": "3fd3720194c89c23b075bb63c66dbd47",
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/appUser.ts": {
-    "mtime": 1786365216.9013367,
-    "ast_hash": "3d11ff3ec2562beed64fbff12db5b846",
-    "semantic_hash": ""
-  },
-  "e2e/tests/fixtures/emailClient.ts": {
-    "mtime": 1786365181.940798,
-    "ast_hash": "e5e4bbccc86b062a1e0b93b850c72136",
+    "mtime": 1786363718.7518435,
+    "ast_hash": "a1dd0e2bc3b887fb48d53b9f94057429",
     "semantic_hash": ""
   }
 }
