@@ -39,6 +39,7 @@ declare module "fastify" {
             ALLOWED_ORIGINS: string
             REGISTRATION_ALLOWED: boolean
             ALLOW_EMBEDDED_LOGIN: boolean
+            RATE_LIMIT_MAX: number
             REDIS_URL: string
             REDIS_PASSWORD: string
             EMAIL_SMTP_HOST: string

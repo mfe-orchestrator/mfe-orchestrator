@@ -30,6 +30,12 @@ export default fastifyPlugin(
                     type: "boolean",
                     default: true
                 },
+                // Richieste per IP al minuto. Non impostata vale 100, come prima che
+                // fosse configurabile.
+                RATE_LIMIT_MAX: {
+                    type: "number",
+                    default: 100
+                },
                 ALLOW_EMBEDDED_LOGIN: {
                     type: "boolean",
                     default: true

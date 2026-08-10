@@ -48,6 +48,11 @@ env:
   REGISTRATION_ALLOWED: false
   # Enable the built-in email/password login. default: true
   ALLOW_EMBEDDED_LOGIN: true
+  # Requests per IP per minute. Raise it on environments an e2e suite runs
+  # against: a single page of the app fires a group of calls, so 100 is quickly
+  # exhausted and the API starts answering 429. default: 100
+  # Leave commented out to keep the default: an empty value fails validation.
+  # RATE_LIMIT_MAX: 300
 
   ## --- MongoDB ---------------------------------------------------------------
   ## The chart does not deploy MongoDB: point these at your own instance or at
