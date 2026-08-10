@@ -22,7 +22,7 @@
         "@azure/msal-react": "^5.5.2",
         "@heroicons/react": "^2.2.0",
         "@hookform/resolvers": "^5.4.0",
-        "@lottiefiles/dotlottie-react": "^0.19.9",
+        "@lottiefiles/dotlottie-react": "^0.19.13",
         "@mfe-orchestrator/design-system": "^1.0.0",
         "@radix-ui/react-accordion": "^1.2.16",
         "@radix-ui/react-avatar": "^1.2.2",
