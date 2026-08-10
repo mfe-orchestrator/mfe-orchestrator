@@ -32,11 +32,23 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
             case StorageType.AWS:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <TextField name="authConfig.bucketName" label={t("storage.fields.bucketName")} placeholder="my-bucket-name" rules={{ required: t("validation.required") }} />
+                        <TextField
+                            name="authConfig.bucketName"
+                            dataTestId="storage-bucket-name"
+                            label={t("storage.fields.bucketName")}
+                            placeholder="my-bucket-name"
+                            rules={{ required: t("validation.required") }}
+                        />
                         <TextField name="path" label={t("storage.fields.path")} placeholder="/" />
-                        <TextField name="authConfig.accessKeyId" label={t("storage.fields.accessKeyId")} rules={{ required: t("validation.required") }} />
-                        <TextField name="authConfig.secretAccessKey" label={t("storage.fields.secretAccessKey")} type="password" rules={{ required: t("validation.required") }} />
-                        <TextField name="authConfig.region" label={t("storage.fields.region")} placeholder="us-east-1" rules={{ required: t("validation.required") }} />
+                        <TextField name="authConfig.accessKeyId" dataTestId="storage-access-key-id" label={t("storage.fields.accessKeyId")} rules={{ required: t("validation.required") }} />
+                        <TextField
+                            name="authConfig.secretAccessKey"
+                            dataTestId="storage-secret-access-key"
+                            label={t("storage.fields.secretAccessKey")}
+                            type="password"
+                            rules={{ required: t("validation.required") }}
+                        />
+                        <TextField name="authConfig.region" dataTestId="storage-region" label={t("storage.fields.region")} placeholder="us-east-1" rules={{ required: t("validation.required") }} />
                     </div>
                 )
 
@@ -182,7 +194,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <TextField name="name" label={t("storage.name")} placeholder={t("storage.enterStorageName")} rules={{ required: t("validation.required") }} />
+                            <TextField name="name" dataTestId="storage-name" label={t("storage.name")} placeholder={t("storage.enterStorageName")} rules={{ required: t("validation.required") }} />
                             <SelectField name="type" label={t("storage.type")} options={storageTypes} rules={{ required: t("validation.required") }} disabled={isEditMode} />
                         </div>
 
@@ -230,7 +242,9 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
                         <Button type="button" variant="secondary" onClick={onCancel}>
                             {cancelLabel ?? t("common.cancel")}
                         </Button>
-                        <Button type="submit">{submitLabel ?? (isEditMode ? t("common.update") : t("common.create"))}</Button>
+                        <Button type="submit" dataTestId="storage-submit">
+                            {submitLabel ?? (isEditMode ? t("common.update") : t("common.create"))}
+                        </Button>
                     </div>
                 </div>
             </form>

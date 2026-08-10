@@ -89,9 +89,16 @@ The Playwright configuration is in `playwright.config.ts`. Key settings:
 | Path | Covers |
 | --- | --- |
 | `tests/auth` | Registration, login and password reset. |
+| `tests/projects` | Project creation from a brand new account. |
 | `tests/collaboration` | Project invitations: inviting a brand new collaborator and inviting an already registered user. |
+| `tests/environments` | Environments CRUD. |
+| `tests/api-keys` | API keys create / read / revoke. |
+| `tests/storages` | Storage providers CRUD. |
 | `tests/project-wizard.spec.ts` | The new-project wizard. |
-| `tests/fixtures` | Shared helpers: `mailinatorClient` (inbox polling, link extraction) and `appUser` (test users, registration/login flows, invitations). |
+| `tests/fixtures` | Shared helpers: `emailClient` (inbox polling, link extraction), `appUser` (test users, registration/login flows, invitations) and `projectResources` (API seeding and verification). |
+
+Test names are written in English in Given/When/Then form, so the report reads as a
+list of expected behaviours.
 
 Each user in `tests/collaboration` runs in its own browser context, so two accounts can be
 driven in the same test without their tokens and selected project overlapping.

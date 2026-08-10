@@ -53,7 +53,7 @@ export const Storages: React.FC = () => {
                 description={t("storage.storagesDescription")}
                 right={
                     storagesQuery.data?.length > 0 ? (
-                        <Button onClick={handleCreate}>
+                        <Button onClick={handleCreate} dataTestId="storage-new">
                             <PlusCircle />
                             {t("storage.newStorage")}
                         </Button>
@@ -74,7 +74,7 @@ export const Storages: React.FC = () => {
                             </TableHeader>
                             <TableBody>
                                 {storagesQuery.data?.map(storage => (
-                                    <TableRow key={storage._id}>
+                                    <TableRow key={storage._id} data-testid={`storage-row-${storage.name}`}>
                                         <TableCell className="font-medium flex items-center gap-4">
                                             {storage.type === StorageType.AWS && <img src="/img/aws.svg" alt="AWS" className="h-8 w-8" />}
                                             {storage.type === StorageType.AZURE && <img src="/img/Azure.svg" alt="Azure" className="h-8 w-8" />}
@@ -94,7 +94,7 @@ export const Storages: React.FC = () => {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)} dataTestId={`storage-edit-${storage.name}`}>
                                                     <Pencil />
                                                 </Button>
                                                 <Button
@@ -105,6 +105,7 @@ export const Storages: React.FC = () => {
                                                         setStorageToDelete({ id: storage._id, name: storage.name })
                                                         setIsDeleteDialogOpen(true)
                                                     }}
+                                                    dataTestId={`storage-delete-${storage.name}`}
                                                 >
                                                     <Trash2 />
                                                 </Button>
@@ -120,7 +121,7 @@ export const Storages: React.FC = () => {
                         <CardContent>
                             <div className="flex flex-col items-center justify-center h-full">
                                 <div className="text-center py-4 text-foreground">{t("storage.noStoragesFound")}</div>
-                                <Button onClick={handleCreate}>
+                                <Button onClick={handleCreate} dataTestId="storage-new">
                                     <PlusCircle />
                                     {t("storage.newStorage")}
                                 </Button>

@@ -66,7 +66,7 @@ export const ApiKeys = () => {
                     description={t("apiKeys.manage_api_keys")}
                     right={
                         apiKeysQuery.data?.length === 0 ? null : (
-                            <Button onClick={() => setIsCreateDialogOpen(true)}>
+                            <Button onClick={() => setIsCreateDialogOpen(true)} dataTestId="api-key-create">
                                 <Plus className="mr-2 h-4 w-4" />
                                 {t("apiKeys.create_api_key")}
                             </Button>
@@ -92,7 +92,7 @@ export const ApiKeys = () => {
                                         {apiKeysQuery.data?.map(key => {
                                             const keyStatus = getKeyStatus(key.expiresAt)
                                             return (
-                                                <TableRow key={key._id}>
+                                                <TableRow key={key._id} data-testid={`api-key-row-${key.name}`}>
                                                     <TableCell className="font-medium">{key.name}</TableCell>
                                                     <TableCell className="text-muted-foreground">{formatExpirationDate(key.createdAt)}</TableCell>
                                                     <TableCell className="text-muted-foreground">{formatExpirationDate(key.expiresAt)}</TableCell>
@@ -111,6 +111,7 @@ export const ApiKeys = () => {
                                                                 setKeyToDelete({ id: key._id, name: key.name })
                                                                 setIsDeleteDialogOpen(true)
                                                             }}
+                                                            dataTestId={`api-key-delete-${key.name}`}
                                                         >
                                                             <Trash2 className="h-4 w-4 text-destructive" />
                                                         </Button>

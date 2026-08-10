@@ -92,6 +92,7 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <TextField
                             name="name"
+                            dataTestId="environment-name"
                             label={t("environment.form.name")}
                             placeholder={t("environment.form.name_placeholder")}
                             rules={{
@@ -101,6 +102,7 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                         />
                         <TextField
                             name="slug"
+                            dataTestId="environment-slug"
                             label={t("environment.form.slug")}
                             placeholder={t("environment.form.slug_placeholder")}
                             rules={{
@@ -126,7 +128,7 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={form.formState.isSubmitting}>
                                 {t("environment.page.form.cancel")}
                             </Button>
-                            <Button type="submit" disabled={form.formState.isSubmitting}>
+                            <Button type="submit" disabled={form.formState.isSubmitting} dataTestId="environment-submit">
                                 {id ? t("environment.page.form.update") : t("environment.page.form.create")}
                             </Button>
                         </DialogFooter>
@@ -233,7 +235,7 @@ export default function EnvironmentsPage() {
             description={t("environment.page.description")}
             right={
                 !environmentQuery.isLoading && environmentQuery.data?.length != 0 ? (
-                    <Button onClick={openCreateDialog}>
+                    <Button onClick={openCreateDialog} dataTestId="environment-new">
                         <PlusCircle />
                         {t("environment.page.new_environment")}
                     </Button>
@@ -264,6 +266,7 @@ export default function EnvironmentsPage() {
                                 {orderedEnvironments.map(env => (
                                     <TableRow
                                         key={env._id}
+                                        data-testid={`environment-row-${env.slug}`}
                                         {...getItemProps(env._id)}
                                         className={cn(draggingId === env._id && "opacity-50", dragOverId === env._id && "outline-2 -outline-offset-2 outline-dashed outline-primary")}
                                     >
@@ -288,7 +291,7 @@ export default function EnvironmentsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(env)}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(env)} dataTestId={`environment-edit-${env.slug}`}>
                                                     <Pencil />
                                                 </Button>
                                                 <Button
@@ -299,6 +302,7 @@ export default function EnvironmentsPage() {
                                                         setCurrentEnvironment(env)
                                                         setIsDeleteDialogOpen(true)
                                                     }}
+                                                    dataTestId={`environment-delete-${env.slug}`}
                                                 >
                                                     <Trash2 />
                                                 </Button>
