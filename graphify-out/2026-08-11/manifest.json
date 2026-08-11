@@ -95,8 +95,8 @@
     "semantic_hash": "c2951329dc9fa582c1bc2412722144bc"
   },
   "backend/src/controller/GlobalVariablesController.ts": {
-    "mtime": 1786109863.4594836,
-    "ast_hash": "57a36ac85227428737fadfa1254685f6",
+    "mtime": 1786476545.9593544,
+    "ast_hash": "baf2a7906db0eb723cad93530cc7300e",
     "semantic_hash": ""
   },
   "backend/src/controller/IntegrationController.ts": {
@@ -265,9 +265,9 @@
     "semantic_hash": "126b4e101485b858c458566e1c2e6f9c"
   },
   "backend/src/models/EnvironmentModel.ts": {
-    "mtime": 1785880209.9868975,
-    "ast_hash": "27a5993b47240e268ce6dd6ae6ccbfa9",
-    "semantic_hash": "27a5993b47240e268ce6dd6ae6ccbfa9"
+    "mtime": 1786476594.15533,
+    "ast_hash": "f4bbb90b4b05179a4d2d8345f52e5d68",
+    "semantic_hash": ""
   },
   "backend/src/models/GlobalVariableModel.ts": {
     "mtime": 1786109863.4613256,
@@ -390,9 +390,9 @@
     "semantic_hash": ""
   },
   "backend/src/service/DeploymentService.ts": {
-    "mtime": 1785880209.9897614,
-    "ast_hash": "8df121c4ebb0dd68514b84071fba7c0e",
-    "semantic_hash": "8df121c4ebb0dd68514b84071fba7c0e"
+    "mtime": 1786476594.1555805,
+    "ast_hash": "289b6799596ca0e0247f2b44c07daa72",
+    "semantic_hash": ""
   },
   "backend/src/service/EmailSenderService.ts": {
     "mtime": 1785880209.9898508,
@@ -400,9 +400,9 @@
     "semantic_hash": "9ee51b7db04fc5db199d88502fe6e65b"
   },
   "backend/src/service/EnvironmentService.ts": {
-    "mtime": 1785912357.5856059,
-    "ast_hash": "44c1bac173f9883a725a979ef6a847ec",
-    "semantic_hash": "44c1bac173f9883a725a979ef6a847ec"
+    "mtime": 1786476594.1554718,
+    "ast_hash": "cc3a8bac80b9d6816bdd6dc1c06a6c40",
+    "semantic_hash": ""
   },
   "backend/src/service/GlobalVariablesService.ts": {
     "mtime": 1785880209.9902549,
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.ts": {
-    "mtime": 1786469667.7497315,
-    "ast_hash": "90e877cd6e2ccb7adaecff576f5634fe",
+    "mtime": 1786476545.971466,
+    "ast_hash": "5bb87afce4b065b0046d05160c151b5e",
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.ts": {
@@ -430,8 +430,8 @@
     "semantic_hash": "56b289cc4df3cfae333b503ed9537b0c"
   },
   "backend/src/service/ServeService.ts": {
-    "mtime": 1786470305.6576793,
-    "ast_hash": "556de055e13912818ccaed3172ec6a20",
+    "mtime": 1786476545.970325,
+    "ast_hash": "038a94075cd20ee6f961438be2d49b6f",
     "semantic_hash": ""
   },
   "backend/src/service/StorageService.ts": {
@@ -445,19 +445,19 @@
     "semantic_hash": ""
   },
   "backend/src/service/UserProjectService.ts": {
-    "mtime": 1786439266.4873352,
-    "ast_hash": "b39deaa4ebad13b9218684830c65211f",
+    "mtime": 1786476594.1559956,
+    "ast_hash": "1f4ffd8dffb3bce5c2d804285de85d41",
     "semantic_hash": ""
   },
   "backend/src/service/UserService.ts": {
-    "mtime": 1785880209.9917326,
-    "ast_hash": "ec7b727f352a6a8504a50eeeea846cd2",
-    "semantic_hash": "ec7b727f352a6a8504a50eeeea846cd2"
+    "mtime": 1786476545.965726,
+    "ast_hash": "388aac3f5e11708cea619d66ab2eaa19",
+    "semantic_hash": ""
   },
   "backend/src/types/ApiKeyDTO.ts": {
-    "mtime": 1785880209.9924667,
-    "ast_hash": "f0badf759c105724b736ba3f89ca219d",
-    "semantic_hash": "f0badf759c105724b736ba3f89ca219d"
+    "mtime": 1786476594.155436,
+    "ast_hash": "ad32ed049ba8b9a5cc242e224b028971",
+    "semantic_hash": ""
   },
   "backend/src/types/AuthenticationMethod.ts": {
     "mtime": 1786109863.4670105,
@@ -620,8 +620,8 @@
     "semantic_hash": "c5b16e084d7495aee6c48b26abf99ba3"
   },
   "biome.json": {
-    "mtime": 1786460075.390523,
-    "ast_hash": "7560a12185732d7ac643777ecbe3307b",
+    "mtime": 1786476501.0813358,
+    "ast_hash": "95df96cd8875f61f79fadc66feb88041",
     "semantic_hash": ""
   },
   "commitlint.config.js": {
@@ -1525,8 +1525,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1786472676.4894288,
-    "ast_hash": "35484bf5766422892741971cb476bf37",
+    "mtime": 1786476532.2546773,
+    "ast_hash": "a610edc49f0d2f9d7fcb509d6bcd0316",
     "semantic_hash": ""
   },
   "start.sh": {
@@ -1595,8 +1595,8 @@
     "semantic_hash": "3d52c23c339365f92db1aed503260374"
   },
   ".github/workflows/deploy.yml": {
-    "mtime": 1786109863.4550927,
-    "ast_hash": "a23954007ed9f36c4d3e7fc8b903e801",
+    "mtime": 1786476596.1217535,
+    "ast_hash": "d5522ecc86b22f8e201afdd7e9948b31",
     "semantic_hash": ""
   },
   ".github/workflows/docker-build.yml": {
@@ -1605,13 +1605,13 @@
     "semantic_hash": ""
   },
   ".github/workflows/e2e-tests.yml": {
-    "mtime": 1786365891.3682034,
-    "ast_hash": "34424d587f4b8fd46caf4e4938c30975",
+    "mtime": 1786476587.2459805,
+    "ast_hash": "e00cf82416d34c226458a82daf284bbf",
     "semantic_hash": ""
   },
   ".github/workflows/monorepo-build.yml": {
-    "mtime": 1786109863.455657,
-    "ast_hash": "54f2bfd86e934acb7248b2c9a5490ccb",
+    "mtime": 1786476586.1802495,
+    "ast_hash": "5ae60ee5e02ce776bf861bca28e9b148",
     "semantic_hash": ""
   },
   ".windsurf/rules.md": {
@@ -1670,9 +1670,9 @@
     "semantic_hash": "f9dff89adf98833e676de2205921996a"
   },
   "lefthook.yml": {
-    "mtime": 1785880210.021562,
-    "ast_hash": "3c0afcfa6e365ceb2aabbc2b2895ec7e",
-    "semantic_hash": "3c0afcfa6e365ceb2aabbc2b2895ec7e"
+    "mtime": 1786476513.9216075,
+    "ast_hash": "c7f58ab4661ffb61182d1702e659244d",
+    "semantic_hash": ""
   },
   "pnpm-workspace.yaml": {
     "mtime": 1786472682.3889143,
@@ -1810,8 +1810,8 @@
     "semantic_hash": ""
   },
   "backend/src/client/NpmRegistryClient.ts": {
-    "mtime": 1786109994.3513892,
-    "ast_hash": "ae38f83d7ddc3a27caf7aa923f7163f3",
+    "mtime": 1786476418.329981,
+    "ast_hash": "95199a8cead34bf4f43a7139fabc896f",
     "semantic_hash": ""
   },
   "backend/src/controller/MicrofrontendDependencyController.ts": {
@@ -1890,8 +1890,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/collaboration/invite-existing-user.spec.ts": {
-    "mtime": 1786369970.517813,
-    "ast_hash": "ab3771cbee7d0f899e0822e12bcb9be1",
+    "mtime": 1786476545.9893718,
+    "ast_hash": "a5164961bed2b973742e2e40714e2284",
     "semantic_hash": ""
   },
   "e2e/tests/collaboration/invite-new-collaborator.spec.ts": {

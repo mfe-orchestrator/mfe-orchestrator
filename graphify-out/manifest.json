@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "backend/src/controller/ConfigurationController.ts": {
-    "mtime": 1786109863.4591446,
-    "ast_hash": "48f58c6a90bd1408c2ab272591e76544",
+    "mtime": 1786478533.5694702,
+    "ast_hash": "ebef2e81902aaeb7f812b13d4e1dfa33",
     "semantic_hash": ""
   },
   "backend/src/controller/DeploymentCanaryUsersController.ts": {
@@ -150,8 +150,8 @@
     "semantic_hash": "dbd984815a81ecce23e9873726fa85ef"
   },
   "backend/src/controller/UserController.ts": {
-    "mtime": 1786109863.4604962,
-    "ast_hash": "af3f865151ab8ab773ab7f24ddf3a83e",
+    "mtime": 1786478678.720203,
+    "ast_hash": "01f47e59999805df6a4a25802ab594a9",
     "semantic_hash": ""
   },
   "backend/src/dto/AuthTokenData.dto.ts": {
@@ -295,9 +295,9 @@
     "semantic_hash": "056f4211e902b3aa6c109a52e741f927"
   },
   "backend/src/models/UserModel.ts": {
-    "mtime": 1785880209.9875708,
-    "ast_hash": "7b8d64d042d78291278febdb86fa9cd2",
-    "semantic_hash": "7b8d64d042d78291278febdb86fa9cd2"
+    "mtime": 1786478546.4509263,
+    "ast_hash": "f21d3d24dba2a1ba801c21b1a9f45096",
+    "semantic_hash": ""
   },
   "backend/src/models/UserProjectModel.ts": {
     "mtime": 1785880209.9877198,
@@ -315,8 +315,8 @@
     "semantic_hash": "6097d1a775944f6a83e82626694326b0"
   },
   "backend/src/plugins/config.ts": {
-    "mtime": 1786454315.8581667,
-    "ast_hash": "d446566e829cd758af4101a8266179a9",
+    "mtime": 1786478530.1612146,
+    "ast_hash": "607cd52f9e0c832e58c6f21b73d68ce7",
     "semantic_hash": ""
   },
   "backend/src/plugins/cors.ts": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/UserService.ts": {
-    "mtime": 1786476545.965726,
-    "ast_hash": "388aac3f5e11708cea619d66ab2eaa19",
+    "mtime": 1786478663.8458626,
+    "ast_hash": "42240f827003d3ce52a1ec66335f05d1",
     "semantic_hash": ""
   },
   "backend/src/types/ApiKeyDTO.ts": {
@@ -470,9 +470,9 @@
     "semantic_hash": ""
   },
   "backend/src/types/ConfigResponseDTO.ts": {
-    "mtime": 1785880209.9926858,
-    "ast_hash": "e89d4b5009c48737dba071497ce482de",
-    "semantic_hash": "e89d4b5009c48737dba071497ce482de"
+    "mtime": 1786478531.4441636,
+    "ast_hash": "cbfdbfdf962edacd7776358d3689320f",
+    "semantic_hash": ""
   },
   "backend/src/types/CreateAzureDevOpsRepositoryDTO.ts": {
     "mtime": 1785880209.9927573,
@@ -565,13 +565,13 @@
     "semantic_hash": "7353d79f0ec6e70a8a6e8fd882e3388a"
   },
   "backend/src/types/UserRegistrationDTO.ts": {
-    "mtime": 1785880209.9942455,
-    "ast_hash": "ccbee32abca02b047e261ae0c44023d5",
-    "semantic_hash": "ccbee32abca02b047e261ae0c44023d5"
+    "mtime": 1786478535.3322744,
+    "ast_hash": "4a339ecc1b65d4cf781c1d1ede42ed13",
+    "semantic_hash": ""
   },
   "backend/src/types/fastify.d.ts": {
-    "mtime": 1786454316.9103818,
-    "ast_hash": "078fe0e9acad39225e0a3a3fceefded9",
+    "mtime": 1786478652.440962,
+    "ast_hash": "be96915de5a893be906c46d5c7bd843c",
     "semantic_hash": ""
   },
   "backend/src/types/index.ts": {
@@ -640,8 +640,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/auth/registration.spec.ts": {
-    "mtime": 1786439277.0064394,
-    "ast_hash": "b8a79b26ec9d5387aaa23686a80842de",
+    "mtime": 1786478757.4633126,
+    "ast_hash": "10d87708c73e7ef3d9f3910551ad84c1",
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/example.ts": {
@@ -670,13 +670,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786472567.307687,
-    "ast_hash": "b9ac63cf6d3a51feff09bd8970b685c4",
+    "mtime": 1786478591.0534444,
+    "ast_hash": "8e7615b57063e33d1c5b829a9d562b92",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786472567.3081357,
-    "ast_hash": "5188f714bc2bc3edae3476b947a195ea",
+    "mtime": 1786478588.9464316,
+    "ast_hash": "39355bad96087d84e58f8624e7832c66",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -955,8 +955,8 @@
     "semantic_hash": "8068517932c8ee3cd4833219e5b5c115"
   },
   "frontend/src/hooks/apiClients/useUserApi.ts": {
-    "mtime": 1786109863.511674,
-    "ast_hash": "2e7ca2223356de396f0d2fddb09522b0",
+    "mtime": 1786478593.204915,
+    "ast_hash": "cb3e90e5c3042daa71ace717f38758c9",
     "semantic_hash": ""
   },
   "frontend/src/hooks/use-mobile.tsx": {
@@ -1035,8 +1035,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/auth/SignUp.tsx": {
-    "mtime": 1786114751.5492284,
-    "ast_hash": "f6fea0855adbb7a465653d1f7575da4b",
+    "mtime": 1786478771.745195,
+    "ast_hash": "be7a8277ba8cc11d1ea99dd618b5e5cd",
     "semantic_hash": ""
   },
   "frontend/src/pages/code-repositories/AddAzure.tsx": {
@@ -1470,8 +1470,8 @@
     "semantic_hash": ""
   },
   "frontend/src/types/ConfigResponseDTO.ts": {
-    "mtime": 1786109863.52975,
-    "ast_hash": "6e7ddb94ff8c65b6815d84ace2f50deb",
+    "mtime": 1786478594.6767812,
+    "ast_hash": "401a59adb906a04a85fdffc4d5e9fb16",
     "semantic_hash": ""
   },
   "frontend/src/utils/EnviromentsPresets.ts": {
@@ -1710,8 +1710,8 @@
     "semantic_hash": "5e42e264f2604cb73ed383d94c29e766"
   },
   ".claude/settings.json": {
-    "mtime": 1786109863.454807,
-    "ast_hash": "ffad4fa51dadc7678bbe3e5f0d1a0727",
+    "mtime": 1786477527.6636155,
+    "ast_hash": "3aafd8ab4a49ba6989bef16344a50994",
     "semantic_hash": ""
   },
   "docker/all-in-one/entrypoint.sh": {
@@ -1740,8 +1740,8 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1786473828.1756814,
-    "ast_hash": "91005394b5e2679de6e899f936ea1319",
+    "mtime": 1786477554.374966,
+    "ast_hash": "3a2935b1957c28b6a7a6d31901f1b8e3",
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/Chart.yaml": {
@@ -1900,13 +1900,13 @@
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/appUser.ts": {
-    "mtime": 1786439615.2699542,
-    "ast_hash": "18b40059ad4562c982c11e36417cf8bb",
+    "mtime": 1786478737.8478563,
+    "ast_hash": "ea7d801cac7078bf9ed968e70ec66747",
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/emailClient.ts": {
-    "mtime": 1786476352.6034136,
-    "ast_hash": "7f02c16cd3d4b2f2972841769a241d49",
+    "mtime": 1786477036.6863682,
+    "ast_hash": "488b4072223b2b2954b9a549ea898e3e",
     "semantic_hash": ""
   },
   "e2e/tests/api-keys/api-keys-crud.spec.ts": {
