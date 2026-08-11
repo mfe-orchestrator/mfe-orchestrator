@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/Microfrontends.tsx": {
-    "mtime": 1786470001.2179358,
-    "ast_hash": "44ec64ab362e12edc31fb716ee8b9e83",
+    "mtime": 1786475032.2129412,
+    "ast_hash": "dd45e8049e376a500a0af778852148e5",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/AddNewMicrofrontendCard.tsx": {
@@ -1540,9 +1540,9 @@
     "semantic_hash": "729cee23093910da1adc7af3bda46e54"
   },
   "terraform/modules/microfronted-orchestrator-hub.tf": {
-    "mtime": 1785946360.3989327,
-    "ast_hash": "749d2e3dbd23fc12001bb26803a02e99",
-    "semantic_hash": "749d2e3dbd23fc12001bb26803a02e99"
+    "mtime": 1786475481.778818,
+    "ast_hash": "72ca73601547236b0774cd7f0e3b80c9",
+    "semantic_hash": ""
   },
   "terraform/modules/mongo.tf": {
     "mtime": 1785880210.0226119,
@@ -1620,8 +1620,8 @@
     "semantic_hash": "5815ee1058824d6b173af65ed1fe6704"
   },
   "CHANGELOG.md": {
-    "mtime": 1786470001.2139995,
-    "ast_hash": "760c8787f15f76474bcf3eb53d8ef136",
+    "mtime": 1786476115.3571365,
+    "ast_hash": "834daad294a0c841fc7913d807f348f0",
     "semantic_hash": ""
   },
   "COMMIT_CONVENTIONS.md": {
@@ -1630,8 +1630,8 @@
     "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
   },
   "README.md": {
-    "mtime": 1786454323.0896778,
-    "ast_hash": "ade642488263e263b2d9d8a48b048033",
+    "mtime": 1786474407.7419953,
+    "ast_hash": "ba096216ed1db5a3fbb8dadbeb6d4893",
     "semantic_hash": ""
   },
   "SECURITY.md": {
@@ -1640,9 +1640,9 @@
     "semantic_hash": "6327240a6aac982f460572196d4b33e9"
   },
   "docker-compose.yaml": {
-    "mtime": 1785946360.398593,
-    "ast_hash": "6187f2aa1802f962b32dc8ce264cf4cd",
-    "semantic_hash": "6187f2aa1802f962b32dc8ce264cf4cd"
+    "mtime": 1786475483.138673,
+    "ast_hash": "d429f30e65901a534c12740481e062af",
+    "semantic_hash": ""
   },
   "docker-local/docker-compose-development.yaml": {
     "mtime": 1786365079.5233672,
@@ -1745,8 +1745,8 @@
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/Chart.yaml": {
-    "mtime": 1786109863.5618618,
-    "ast_hash": "65e46c4be9398bc1b5c38563624f7b96",
+    "mtime": 1786475480.37895,
+    "ast_hash": "ee356b56b83c21caaadae14a658fa53a",
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/README.md": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/emailClient.ts": {
-    "mtime": 1786365181.940798,
-    "ast_hash": "e5e4bbccc86b062a1e0b93b850c72136",
+    "mtime": 1786476352.6034136,
+    "ast_hash": "7f02c16cd3d4b2f2972841769a241d49",
     "semantic_hash": ""
   },
   "e2e/tests/api-keys/api-keys-crud.spec.ts": {
@@ -2022,6 +2022,21 @@
   "frontend/src/pages/integration/partials/components/StackBadge.tsx": {
     "mtime": 1786470065.4178383,
     "ast_hash": "545150673f390309fe0813fb1278d7b7",
+    "semantic_hash": ""
+  },
+  "docs/REPOSITORY-IMPORT.md": {
+    "mtime": 1786474394.734154,
+    "ast_hash": "1c16b3aa7db121a6973d339111df8116",
+    "semantic_hash": ""
+  },
+  "docs/assets/repository-import-action.png": {
+    "mtime": 1786474802.5132427,
+    "ast_hash": "3ad27451d08732550e57ce664622245e",
+    "semantic_hash": ""
+  },
+  "docs/assets/repository-import-dialog.png": {
+    "mtime": 1786474790.671849,
+    "ast_hash": "8893b9681e9e69dc2785048ce272f82b",
     "semantic_hash": ""
   }
 }
