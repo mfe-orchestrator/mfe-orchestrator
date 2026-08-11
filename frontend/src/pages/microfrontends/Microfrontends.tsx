@@ -96,7 +96,9 @@ const Microfrontends = () => {
 
     return (
         // The Tabs root wraps the whole layout so the view switcher can live in the page header, next to the primary action.
-        <Tabs value={view} onValueChange={value => setView(value as View)} className="flex min-h-full flex-col" iconButtons tabsListPosition="end">
+        // `layoutSize="sm"` is what keeps the switcher aligned with those buttons: TabsList adds its own border and padding
+        // around the triggers, so at the default size the group totals 48px against the 40px of a default Button.
+        <Tabs value={view} onValueChange={value => setView(value as View)} className="flex min-h-full flex-col" layoutSize="sm" iconButtons tabsListPosition="end">
             <SinglePageLayout
                 title={t("microfrontend.dashboard.title")}
                 description={t("microfrontend.dashboard.description")}
