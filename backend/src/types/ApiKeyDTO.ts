@@ -1,4 +1,4 @@
-import { ApiKeyRole, ApiKeyStatus } from "../models/ApiKeyModel"
+import { ApiKeyRole } from "../models/ApiKeyModel"
 
 export interface ApiKeyDTO {
     name: string

@@ -3,7 +3,6 @@ import EnvironmentHeaderNotFoundError from "../errors/EnvironmentHeaderNotFoundE
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import GlobalVariablesService from "../service/GlobalVariablesService"
 import GlobalVariableCreateDTO, { GlobalVariableUpdateDTO } from "../types/GlobalVariableCreateDTO"
-import GlobalVariableDTO from "../types/GlobalVariableDTO"
 import { getEnvironmentIdFromRequest, getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function globalVariablesController(fastify: FastifyInstance) {

@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto"
-import { ObjectId, Schema } from "mongoose"
+import { Schema } from "mongoose"
 import AuthenticationError from "../errors/AuthenticationError"
 import { InvalidCredentialsError } from "../errors/InvalidCredentialsError"
 import { UserAlreadyExistsError } from "../errors/UserAlreadyExistsError"

@@ -5,6 +5,7 @@
         "build": "turbo build",
         "dev": "turbo dev",
         "lint": "turbo lint",
+        "lint:imports": "biome lint --write --unsafe --only=correctness/noUnusedImports .",
         "format": "turbo format",
         "test": "turbo test",
         "test:e2e": "pnpm --filter @mfe-orchestrator/e2e test",

@@ -47,6 +47,7 @@
                 "noUnreachableSuper": "error",
                 "noUnsafeFinally": "error",
                 "noUnsafeOptionalChaining": "error",
+                "noUnusedImports": "error",
                 "noUnusedLabels": "error",
                 "noUnusedPrivateClassMembers": "error",
                 "useIsNan": "error",
@@ -282,7 +283,6 @@
                 "rules": {
                     "correctness": {
                         "noUnusedVariables": "warn",
-                        "noUnusedImports": "warn",
                         "useExhaustiveDependencies": "warn",
                         "useHookAtTopLevel": "error"
                     },
