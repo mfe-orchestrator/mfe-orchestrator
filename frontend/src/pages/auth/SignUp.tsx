@@ -1,7 +1,7 @@
-import { Spinner } from "@mfe-orchestrator/design-system"
+import { Checkbox, Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import { useState } from "react"
-import { FormProvider, useForm } from "react-hook-form"
+import { Controller, FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
@@ -15,6 +15,7 @@ interface FormValues {
     email: string
     password: string
     confirmPassword: string
+    marketingConsent: boolean
 }
 
 export const SignUp = () => {
@@ -25,16 +26,21 @@ export const SignUp = () => {
     const notifications = useToastNotificationStore()
     const [showGreeting, setShowGreeting] = useState<boolean>(false)
 
-    const form = useForm<FormValues>({})
+    // Il consenso marketing parte sempre non selezionato: un default a true non
+    // sarebbe un consenso.
+    const form = useForm<FormValues>({ defaultValues: { marketingConsent: false } })
 
     const registerMutation = useMutation({
         mutationFn: register
     })
 
+    const marketingOptInEnabled = globalParameters.getParameter("marketingOptInEnabled") === true
+
     const handleRegister = async (values: FormValues) => {
         await registerMutation.mutateAsync({
             email: values.email,
-            password: values.password
+            password: values.password,
+            marketingConsent: values.marketingConsent
         })
         if (globalParameters.getParameter("canSendEmail")) {
             setShowGreeting(true)
@@ -110,6 +116,19 @@ export const SignUp = () => {
                                 }}
                                 containerClassName="mt-4"
                             />
+
+                            {marketingOptInEnabled && (
+                                <Controller
+                                    name="marketingConsent"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <label htmlFor="marketing-consent" className="flex items-start gap-2 mt-4 text-sm text-foreground-secondary">
+                                            <Checkbox id="marketing-consent" data-testid="marketing-consent" checked={field.value} onCheckedChange={checked => field.onChange(checked === true)} />
+                                            <span>{t("auth.marketing_consent")}</span>
+                                        </label>
+                                    )}
+                                />
+                            )}
 
                             {registerMutation.isPending ? (
                                 <Spinner />

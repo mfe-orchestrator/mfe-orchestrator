@@ -163,6 +163,21 @@ export default fastifyPlugin(
                 CODE_REPOSITORY_GITHUB_CLIENT_SECRET: {
                     type: "string"
                 },
+                // The marketing opt-in is off unless the operator turns it on. An
+                // installation that has no mailing list must not ask for a consent it
+                // would never use, and the platform never sends commercial email
+                // itself in either case: it only records that the consent was given.
+                MARKETING_OPT_IN_ENABLED: {
+                    type: "boolean",
+                    default: false
+                },
+                // Version of the consent text shown at registration, stored together
+                // with the consent. Without it an old consent cannot be attributed to
+                // the wording that was actually accepted.
+                MARKETING_OPT_IN_VERSION: {
+                    type: "string",
+                    default: "1"
+                },
                 // Telemetry switches are strings and not booleans on purpose: they
                 // have three states (unset, on, off) and a malformed value must
                 // never keep the application from starting. See docs/TELEMETRY.md.

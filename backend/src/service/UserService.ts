@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto"
 import { Schema } from "mongoose"
+import { fastify } from ".."
 import AuthenticationError from "../errors/AuthenticationError"
 import { InvalidCredentialsError } from "../errors/InvalidCredentialsError"
 import { UserAlreadyExistsError } from "../errors/UserAlreadyExistsError"
@@ -9,8 +10,18 @@ import ResetPasswordDataDTO from "../types/ResetPasswordDataDTO"
 import UserAccoutActivationDTO from "../types/UserAccoutActivationDTO"
 import { UserInvitationDTO } from "../types/UserInvitationDTO"
 import UserLoginDTO from "../types/UserLoginDTO"
+import UserRegistrationDTO from "../types/UserRegistrationDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import EmailService from "./EmailSenderService"
+
+/**
+ * The fields `register` accepts. `status` is reachable only from the internal
+ * callers that provision a user outside the public endpoint (federated login and
+ * project invitation): the controller never forwards it from a request body.
+ */
+type RegisterUserData = UserRegistrationDTO & {
+    status?: UserStatus
+}
 
 export class UserService {
     private emailService: EmailService
@@ -39,8 +50,29 @@ export class UserService {
         await user.save()
     }
 
-    async register(userData: Partial<IUser>, verifyEmail: boolean = true) {
-        const { email, ...otherUserData } = userData
+    /**
+     * Builds the consent fields to store for a new user.
+     *
+     * The consent is recorded only where the installation declares it collects
+     * one: `MARKETING_OPT_IN_ENABLED` is off unless the operator turns it on, so
+     * an installation without a mailing list stores nothing. The version of the
+     * accepted text travels with the consent, it is the only thing that keeps an
+     * old consent attributable to the wording it was given for.
+     */
+    private buildMarketingConsent(marketingConsent?: boolean): Partial<IUser> {
+        if (!fastify.config?.MARKETING_OPT_IN_ENABLED || marketingConsent !== true) {
+            return {}
+        }
+
+        return {
+            marketingConsent: true,
+            marketingConsentAt: new Date(),
+            marketingConsentVersion: fastify.config.MARKETING_OPT_IN_VERSION
+        }
+    }
+
+    async register(userData: RegisterUserData, verifyEmail: boolean = true) {
+        const { email, password, name, surname, status, marketingConsent } = userData
         if (!email) {
             throw new Error("Email is required")
         }
@@ -52,9 +84,16 @@ export class UserService {
             throw new UserAlreadyExistsError(email)
         }
 
+        // Only the fields listed here are taken from the request: registration is a
+        // public endpoint, so spreading its body would let anybody sign up with
+        // `role: "admin"` or with a consent the installation never asked for.
         const userToSave: Partial<IUser> = {
             email,
-            ...otherUserData
+            password,
+            name,
+            surname,
+            status,
+            ...this.buildMarketingConsent(marketingConsent)
         }
 
         if (canVerifyEmail) {

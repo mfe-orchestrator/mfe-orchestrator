@@ -28,6 +28,9 @@ export interface IUser {
     updatedAt: Date
     language?: string
     theme?: string
+    marketingConsent?: boolean
+    marketingConsentAt?: Date
+    marketingConsentVersion?: string
 }
 
 export type IUserDocument = IUser &
@@ -107,6 +110,22 @@ const userSchema = new Schema<IUserDocument>(
             type: String,
             enum: ["LIGHT", "DARK", "SYSTEM"],
             default: "LIGHT"
+        },
+        // Marketing consent, recorded only where MARKETING_OPT_IN_ENABLED is on. The
+        // platform never sends commercial email: it stores when the consent was given
+        // and the version of the text that was accepted, which is the only thing that
+        // makes the consent provable afterwards.
+        marketingConsent: {
+            type: Boolean,
+            default: false
+        },
+        marketingConsentAt: {
+            type: Date,
+            required: false
+        },
+        marketingConsentVersion: {
+            type: String,
+            required: false
         }
     },
     {

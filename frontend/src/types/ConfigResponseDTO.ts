@@ -31,6 +31,7 @@ export default interface GlobalConfigDTO {
     frontendUrl: string
     registrationAllowed: boolean
     canSendEmail: boolean
+    marketingOptInEnabled: boolean
     providers: AuthProvidersConfig
     codeRepository?: {
         github?: {

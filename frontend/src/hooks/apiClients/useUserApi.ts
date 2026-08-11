@@ -20,6 +20,7 @@ export interface UserRegistrationDTO {
     password: string
     name?: string
     surname?: string
+    marketingConsent?: boolean
 }
 
 export interface UserLoginDTO {

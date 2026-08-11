@@ -14,7 +14,19 @@ export function UserController(fastify: FastifyInstance) {
     fastify.post<{
         Body: UserRegistrationDTO
     }>("/users/registration", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (req, res) => {
-        const out = await userService.register(req.body, true)
+        // The body is forwarded field by field and never spread: the route is public
+        // and Fastify does not strip what the schema does not declare, so anything
+        // extra that arrives here would otherwise reach the user document.
+        const out = await userService.register(
+            {
+                email: req.body.email,
+                password: req.body.password,
+                name: req.body.name,
+                surname: req.body.surname,
+                marketingConsent: req.body.marketingConsent
+            },
+            true
+        )
         return res.send(out.toFrontendObject())
     })
 

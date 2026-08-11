@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { emailDeliveryUnavailable, expectLoginPage, isAuthenticated, newTestUser, waitForAuthenticated } from "../fixtures/appUser"
+import { emailDeliveryUnavailable, expectLoginPage, isAuthenticated, marketingOptInEnabled, newTestUser, waitForAuthenticated } from "../fixtures/appUser"
 import { toAppPath, waitForEmailLink } from "../fixtures/emailClient"
 
 /**
@@ -99,3 +99,36 @@ test.describe
             await waitForAuthenticated(page)
         })
     })
+
+/**
+ * Consenso marketing: esiste solo dove l'installazione dichiara di raccoglierlo
+ * (`MARKETING_OPT_IN_ENABLED`), quindi questi test si saltano altrove.
+ */
+test.describe("Marketing consent", () => {
+    test.beforeEach(async ({ request }) => {
+        const enabled = await marketingOptInEnabled(request)
+        test.skip(!enabled, "L'installazione non raccoglie il consenso marketing (MARKETING_OPT_IN_ENABLED)")
+    })
+
+    test("given the marketing opt-in is enabled, when the registration form is opened, then the consent starts unselected", async ({ page }) => {
+        await page.goto("/register")
+        await expect(page.getByTestId("marketing-consent")).toBeVisible()
+        // Una casella pre-selezionata non sarebbe un consenso.
+        await expect(page.getByTestId("marketing-consent")).not.toBeChecked()
+    })
+
+    test("given the consent is selected, when the account is registered, then the choice travels with the registration", async ({ page }) => {
+        const user = newTestUser("consent")
+
+        await page.goto("/register")
+        await page.getByTestId("email").fill(user.email)
+        await page.getByTestId("password").fill(user.password)
+        await page.getByTestId("confirm-password").fill(user.password)
+        await page.getByTestId("marketing-consent").click()
+
+        const registration = page.waitForRequest(request => request.url().includes("/users/registration") && request.method() === "POST")
+        await page.getByTestId("create-account").click()
+
+        expect((await registration).postDataJSON()).toMatchObject({ email: user.email, marketingConsent: true })
+    })
+})

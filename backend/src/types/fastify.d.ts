@@ -68,6 +68,8 @@ declare module "fastify" {
             MICROFRONTEND_HOST_FOLDER: string
             CODE_REPOSITORY_GITHUB_CLIENT_ID: string
             CODE_REPOSITORY_GITHUB_CLIENT_SECRET: string
+            MARKETING_OPT_IN_ENABLED: boolean
+            MARKETING_OPT_IN_VERSION: string
             TELEMETRY_ENABLED?: string
             TELEMETRY_DISABLED?: string
             DO_NOT_TRACK?: string

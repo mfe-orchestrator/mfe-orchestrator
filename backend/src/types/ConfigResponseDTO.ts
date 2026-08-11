@@ -3,6 +3,7 @@ export default interface ConfigResponseDTO {
     canSendEmail: boolean
     canRegister: boolean
     allowEmbeddedLogin: boolean
+    marketingOptInEnabled: boolean
     codeRepository?: {
         github?: {
             clientId: string
