@@ -1,10 +1,10 @@
 {
+    /* Type checks the unit tests, which tsconfig.json leaves out of the build so they
+       never reach dist. Checking only, nothing is emitted from here. */
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "types": ["node", "jest"],
-        "esModuleInterop": true,
-        "isolatedModules": true,
-        "module": "commonjs"
+        "noEmit": true
     },
-    "include": ["src/**/*.ts", "src/**/*.test.ts"]
+    "include": ["src/**/*.ts", "src/types/**/*.d.ts"],
+    "exclude": []
 }
