@@ -41,6 +41,9 @@ env:
   BACKEND_URL: ""
   # Comma separated list of origins allowed for cross-origin requests.
   ALLOWED_ORIGINS: ""
+  # Same list, but applied only to the /serve/* endpoints consumed by the host
+  # applications. Falls back to ALLOWED_ORIGINS when empty.
+  ALLOWED_SERVE_ORIGINS: ""
   # Folder the uploaded microfrontends are served from. Kept in sync with
   # persistence.mountPath below. default: /upload-microfrontends
   MICROFRONTEND_HOST_FOLDER: /upload-microfrontends

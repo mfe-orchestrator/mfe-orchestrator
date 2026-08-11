@@ -254,6 +254,7 @@ point it at your own instances. See the
 | `GOOGLE_REDIRECT_URI`                  | _(empty)_                                                                                         | Redirect URI for Google OAuth.                                  |
 | `GOOGLE_AUTH_SCOPE`                    | `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile` | Required scopes to get Google email and profile.                |
 | `ALLOWED_ORIGINS`                      | _(empty)_                                                                                         | List of allowed URLs for cross-origin requests comma separated. |
+| `ALLOWED_SERVE_ORIGINS`                | _(falls back to `ALLOWED_ORIGINS`)_                                                               | Same list, applied only to the `/serve/*` endpoints.            |
 | `LOG_LEVEL`                            | `info` _(debug/info/warn/error)_                                                                  | Logging level.                                                  |
 | `CODE_REPOSITORY_GITHUB_CLIENT_ID`     | _(empty)_                                                                                         | Client ID for GitHub OAuth authentication.                      |
 | `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | _(empty)_                                                                                         | Client secret for GitHub OAuth authentication.                  |

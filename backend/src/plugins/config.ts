@@ -88,6 +88,11 @@ export default fastifyPlugin(
                 ALLOWED_ORIGINS: {
                     type: "string"
                 },
+                // Allow-list dedicata agli endpoint /serve/*. Se non impostata
+                // si ricade su ALLOWED_ORIGINS.
+                ALLOWED_SERVE_ORIGINS: {
+                    type: "string"
+                },
                 AZURE_ENTRAID_TENANT_ID: {
                     type: "string"
                 },
