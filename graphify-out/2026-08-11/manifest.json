@@ -295,8 +295,8 @@
     "semantic_hash": "056f4211e902b3aa6c109a52e741f927"
   },
   "backend/src/models/UserModel.ts": {
-    "mtime": 1786479414.9904075,
-    "ast_hash": "3d9509c23fcb92fa363ad89cfc1d505e",
+    "mtime": 1786481423.6400115,
+    "ast_hash": "6dee1ec94c3f16ad74d9cda4a413b62b",
     "semantic_hash": ""
   },
   "backend/src/models/UserProjectModel.ts": {
@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "backend/src/plugins/autorization.ts": {
-    "mtime": 1786481387.8695548,
-    "ast_hash": "b031bc85d6b92137e6c5a834f55a179d",
+    "mtime": 1786482024.079353,
+    "ast_hash": "6ca98048f973bc462883b07b89938eba",
     "semantic_hash": ""
   },
   "backend/src/plugins/config.ts": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/UserService.ts": {
-    "mtime": 1786481363.5764842,
-    "ast_hash": "4d9c15ce67c38d37ff49784b7af2e6c1",
+    "mtime": 1786482046.974972,
+    "ast_hash": "1025ddb1b01c5b09689f11a25574deba",
     "semantic_hash": ""
   },
   "backend/src/types/ApiKeyDTO.ts": {

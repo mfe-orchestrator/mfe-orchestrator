@@ -15,8 +15,8 @@
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1786472616.1331487,
-    "ast_hash": "84a55b572a832f893e2c18f0d5b9c00d",
+    "mtime": 1786483068.3962095,
+    "ast_hash": "6f60f1924a9eb4df01494eb165f565e5",
     "semantic_hash": ""
   },
   "backend/postbuild.js": {
@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "backend/src/plugins/autorization.ts": {
-    "mtime": 1786482024.079353,
-    "ast_hash": "6ca98048f973bc462883b07b89938eba",
+    "mtime": 1786483007.2576146,
+    "ast_hash": "ce2faa9bc2f53b295a04bf936345ea69",
     "semantic_hash": ""
   },
   "backend/src/plugins/config.ts": {
@@ -450,7 +450,7 @@
     "semantic_hash": ""
   },
   "backend/src/service/UserService.ts": {
-    "mtime": 1786482046.974972,
+    "mtime": 1786483007.254264,
     "ast_hash": "1025ddb1b01c5b09689f11a25574deba",
     "semantic_hash": ""
   },
@@ -610,14 +610,14 @@
     "semantic_hash": "0883f8a152eb76dcbfbbfb1c90039f18"
   },
   "backend/tsconfig.json": {
-    "mtime": 1785880209.995089,
-    "ast_hash": "f1297a6d8a5cf3b57d78fd8c2a645716",
-    "semantic_hash": "f1297a6d8a5cf3b57d78fd8c2a645716"
+    "mtime": 1786483057.467839,
+    "ast_hash": "d762b554f7bc33d015a97585ec2625a1",
+    "semantic_hash": ""
   },
   "backend/tsconfig.test.json": {
-    "mtime": 1785880209.9951503,
-    "ast_hash": "c5b16e084d7495aee6c48b26abf99ba3",
-    "semantic_hash": "c5b16e084d7495aee6c48b26abf99ba3"
+    "mtime": 1786483063.4582763,
+    "ast_hash": "0a7b0ec0dd51c38db2c929817ac16b98",
+    "semantic_hash": ""
   },
   "biome.json": {
     "mtime": 1786476501.0813358,
@@ -1610,8 +1610,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/monorepo-build.yml": {
-    "mtime": 1786476586.1802495,
-    "ast_hash": "5ae60ee5e02ce776bf861bca28e9b148",
+    "mtime": 1786483023.0878017,
+    "ast_hash": "5897e7d0cb73456249c6f510479fe409",
     "semantic_hash": ""
   },
   ".windsurf/rules.md": {
@@ -1670,8 +1670,8 @@
     "semantic_hash": "f9dff89adf98833e676de2205921996a"
   },
   "lefthook.yml": {
-    "mtime": 1786476513.9216075,
-    "ast_hash": "c7f58ab4661ffb61182d1702e659244d",
+    "mtime": 1786483077.592255,
+    "ast_hash": "4d9b699d3a75940686d4dc9c322b34c2",
     "semantic_hash": ""
   },
   "pnpm-workspace.yaml": {
@@ -2037,6 +2037,21 @@
   "docs/assets/repository-import-dialog.png": {
     "mtime": 1786474790.671849,
     "ast_hash": "8893b9681e9e69dc2785048ce272f82b",
+    "semantic_hash": ""
+  },
+  "backend/src/plugins/autorization.test.ts": {
+    "mtime": 1786482940.6713495,
+    "ast_hash": "a78c6635ee3f98bc7462b71ce00c5107",
+    "semantic_hash": ""
+  },
+  "backend/src/service/UserService.test.ts": {
+    "mtime": 1786482920.018399,
+    "ast_hash": "32f08ead3ecc6c1d2caf79871dd02814",
+    "semantic_hash": ""
+  },
+  "backend/vitest.config.mts": {
+    "mtime": 1786482903.0428245,
+    "ast_hash": "ceaa6a79c0c369e1361190ed509ae50b",
     "semantic_hash": ""
   }
 }
