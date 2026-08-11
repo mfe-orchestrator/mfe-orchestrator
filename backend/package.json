@@ -4,8 +4,8 @@
     "description": "Backend service for micro-frontend orchestrator",
     "main": "index.js",
     "scripts": {
-        "start": "nodemon ./src/index.ts",
-        "st": "ts-node ./src/index.ts",
+        "start": "nodemon --exec tsx ./src/index.ts",
+        "st": "tsx ./src/index.ts",
         "dev": "pnpm run start",
         "build": "tsc && node ./postbuild.js",
         "lint": "biome lint --write ./src",
@@ -59,6 +59,6 @@
         "@types/node": "^26.1.2",
         "@types/nodemailer": "^8.0.1",
         "@types/pug": "^2.0.10",
-        "ts-node": "^10.9.2"
+        "tsx": "^4.23.12"
     }
 }

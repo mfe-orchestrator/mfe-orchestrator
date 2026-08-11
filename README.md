@@ -258,10 +258,7 @@ point it at your own instances. See the
 | `CODE_REPOSITORY_GITHUB_CLIENT_ID`     | _(empty)_                                                                                         | Client ID for GitHub OAuth authentication.                      |
 | `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | _(empty)_                                                                                         | Client secret for GitHub OAuth authentication.                  |
 | `TELEMETRY_DISABLED`                   | _(empty)_                                                                                         | If `true`, turns off the anonymous telemetry ping.              |
-| `TELEMETRY_ENABLED`                    | _(empty)_                                                                                         | Explicit telemetry override, wins over every other switch.      |
 | `DO_NOT_TRACK`                         | _(empty)_                                                                                         | If `1`, turns off the anonymous telemetry ping.                 |
-| `TELEMETRY_ENDPOINT`                   | `https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted`                               | Where the anonymous telemetry ping is sent.                     |
-| `TELEMETRY_INTERVAL_HOURS`             | `24`                                                                                              | Hours between two telemetry pings (minimum `1`).                |
 
 ## Anonymous telemetry 📡
 

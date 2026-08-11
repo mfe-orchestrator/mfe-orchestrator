@@ -15,8 +15,8 @@
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1786437129.3368506,
-    "ast_hash": "4677e14bac7fc6a3b3735d18ca27be50",
+    "mtime": 1786109863.4569664,
+    "ast_hash": "269e55cad4bffad5b0b3bf601a8adb11",
     "semantic_hash": ""
   },
   "backend/postbuild.js": {
@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/auth/registration.spec.ts": {
-    "mtime": 1786436959.2024517,
-    "ast_hash": "a30880140152a7c970111155a7eee10d",
+    "mtime": 1786369970.5183508,
+    "ast_hash": "8738d562fe2e8327417f6677b65521df",
     "semantic_hash": ""
   },
   "e2e/tests/example.spec.ts": {
@@ -740,8 +740,8 @@
     "semantic_hash": ""
   },
   "frontend/src/authentication/components/LoginPage.tsx": {
-    "mtime": 1786436915.7407076,
-    "ast_hash": "f7163a8eed3902bc0f60d8c4044c6c15",
+    "mtime": 1786363473.5980833,
+    "ast_hash": "7de7e674309d150724ed268f0b67307f",
     "semantic_hash": ""
   },
   "frontend/src/authentication/components/LoginWithAuth0Button.tsx": {
@@ -1045,13 +1045,13 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/auth/ResetPassword.tsx": {
-    "mtime": 1786436936.364295,
-    "ast_hash": "17e9db287684d046a012c562a6bb8495",
+    "mtime": 1786114751.5487704,
+    "ast_hash": "0420db668fbe764c8c62d3a333e6ffa5",
     "semantic_hash": ""
   },
   "frontend/src/pages/auth/ResetPasswordRequest.tsx": {
-    "mtime": 1786436923.8435998,
-    "ast_hash": "cd014ec8579aea91dbec4e7f451f9571",
+    "mtime": 1786114751.5491097,
+    "ast_hash": "5801d5c65a0727351d895a113da0c730",
     "semantic_hash": ""
   },
   "frontend/src/pages/auth/SignUp.tsx": {
@@ -1680,9 +1680,9 @@
     "semantic_hash": ""
   },
   "frontend/index.html": {
-    "mtime": 1786436983.5913587,
-    "ast_hash": "d88f17bf9ddd96d17fc81698946e8a4a",
-    "semantic_hash": ""
+    "mtime": 1785880209.9971535,
+    "ast_hash": "07ce395210f1f5330e34345eda1f8b2e",
+    "semantic_hash": "07ce395210f1f5330e34345eda1f8b2e"
   },
   "frontend/public/robots.txt": {
     "mtime": 1785880209.9986887,
