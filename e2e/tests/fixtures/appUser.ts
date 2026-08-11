@@ -193,6 +193,24 @@ export async function createProjectViaApi(request: APIRequestContext, accessToke
     return (await response.json()) as CreatedProject
 }
 
+/** Invita un collaboratore via API: la UI di invito ha i suoi test, qui serve solo l'invito in sospeso. */
+export async function inviteCollaboratorViaApi(request: APIRequestContext, accessToken: string, projectId: string, email: string, role: RoleInProject): Promise<void> {
+    const response = await request.post(`/api/projects/${projectId}/users`, {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER },
+        data: { email, role }
+    })
+    expect(response.ok(), `Invito fallito (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+}
+
+/** Progetti di cui l'utente e' membro a tutti gli effetti: gli inviti in sospeso non ci sono. */
+export async function getMineProjectsViaApi(request: APIRequestContext, accessToken: string): Promise<CreatedProject[]> {
+    const response = await request.get("/api/projects/mine", {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(response.ok(), `Lettura progetti fallita (HTTP ${response.status()})`).toBeTruthy()
+    return (await response.json()) as CreatedProject[]
+}
+
 /**
  * Apre la pagina membri e aspetta che abbia finito di caricare.
  *

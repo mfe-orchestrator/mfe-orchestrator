@@ -315,7 +315,12 @@
         "title": "Project invitation",
         "description": "You've been invited to join {{project}} as {{role}}.",
         "accept": "Accept invitation",
+        "accept_short": "Accept",
         "accepted": "Invitation accepted",
+        "decline": "Decline",
+        "declined": "Invitation declined",
+        "pending_count": "{{count}} projects you've been invited to",
+        "pending_count_one": "You've been invited to a project",
         "not_found_title": "Invitation not found",
         "not_found_description": "The link you followed doesn't match any invitation: it may have expired, been used already, or be invalid. Ask the person who invited you to send you a new one.",
         "error_title": "Something went wrong",
@@ -468,10 +473,11 @@
         "clone": {
             "button": "Clone repo",
             "title": "Clone repository",
-            "description": "Copy the clone command or open the repository directly in VS Code.",
+            "description": "Copy the clone command or open the repository directly in VS Code or IntelliJ IDEA.",
             "https": "Clone via HTTPS",
             "ssh": "Clone via SSH",
-            "vscode": "Clone with VS Code"
+            "vscode": "Clone with VS Code",
+            "intellij": "Clone with IntelliJ IDEA"
         },
         "dangerZone": {
             "title": "Danger Zone",

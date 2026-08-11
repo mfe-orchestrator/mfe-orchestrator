@@ -144,7 +144,7 @@
             "title": "Configurazione",
             "viewAll": "Visualizza Tutto",
             "teamMembers": "Membri",
-            "environments": "Environments",
+            "environments": "Ambienti",
             "apiKeys": "API Keys",
             "storages": "Storages",
             "codeRepositories": "Repository Codice"
@@ -265,7 +265,12 @@
         "title": "Invito al progetto",
         "description": "Sei stato invitato a unirti a {{project}} con il ruolo di {{role}}.",
         "accept": "Accetta invito",
+        "accept_short": "Accetta",
         "accepted": "Invito accettato",
+        "decline": "Rifiuta",
+        "declined": "Invito rifiutato",
+        "pending_count": "{{count}} progetti a cui sei stato invitato",
+        "pending_count_one": "Sei stato invitato a un progetto",
         "not_found_title": "Invito non trovato",
         "not_found_description": "Il link che hai seguito non corrisponde a nessun invito: potrebbe essere scaduto, già utilizzato o non valido. Chiedi a chi ti ha invitato di inviartene uno nuovo.",
         "error_title": "Qualcosa è andato storto",
@@ -564,10 +569,11 @@
         "clone": {
             "button": "Clona repo",
             "title": "Clona repository",
-            "description": "Copia il comando di clone oppure apri il repository direttamente in VS Code.",
+            "description": "Copia il comando di clone oppure apri il repository direttamente in VS Code o IntelliJ IDEA.",
             "https": "Clona via HTTPS",
             "ssh": "Clona via SSH",
-            "vscode": "Clona con VS Code"
+            "vscode": "Clona con VS Code",
+            "intellij": "Clona con IntelliJ IDEA"
         },
         "noMicrofrontendsFound": "Nessun microfrontend trovato",
         "ofUsers": "degli utenti",

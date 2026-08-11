@@ -78,10 +78,13 @@ export default abstract class BaseAuthorizedService {
             return false
         }
 
-        // Check if user is directly associated with the project
+        // Check if user is directly associated with the project.
+        // Rows with a pending invitation token are excluded: until the invitation is
+        // accepted the user is not a member and must not reach the project's data.
         const userProject = await UserProject.findOne({
             userId: this.user._id,
-            projectId: toObjectId(projectId)
+            projectId: toObjectId(projectId),
+            invitationToken: null
         }).session(session ?? null)
 
         // If user has any role in the project, they have access

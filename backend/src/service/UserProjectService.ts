@@ -34,6 +34,16 @@ interface IAcceptInvitationData {
     name?: string
     surname?: string
 }
+
+/** An invitation waiting for an answer from the signed-in user, as shown in the project switcher. */
+interface IPendingInvitation {
+    projectId: string
+    projectName: string
+    projectDescription?: string
+    role: RoleInProject
+    invitedAt: Date
+    expiresAt?: Date
+}
 class UserProjectService extends BaseAuthorizedService {
     emailSenderService = new EmailSenderService()
     userService = new UserService()
@@ -185,6 +195,83 @@ class UserProjectService extends BaseAuthorizedService {
             })
         }
         return this.regenerateInvitation(userProject, user, project, userProject.role, true)
+    }
+
+    /**
+     * Invitations addressed to the signed-in user that are still waiting for an answer.
+     * Only reachable once the user can sign in, so it covers the "already registered user
+     * invited to another project" case that the emailed link alone does not serve.
+     */
+    async getMyPendingInvitations(): Promise<IPendingInvitation[]> {
+        const user = this.getUser()
+        if (!user) {
+            return []
+        }
+
+        const userProjects = await UserProject.find({
+            userId: toObjectId(user._id),
+            invitationToken: { $ne: null },
+            // Expired invitations can no longer be accepted, so they are not offered at all
+            $or: [{ inviationTokenExpiresAt: null }, { inviationTokenExpiresAt: { $gt: new Date() } }]
+        }).populate<{ projectId: IProject | null }>("projectId", "name description")
+
+        return userProjects
+            .filter(up => Boolean(up.projectId))
+            .map<IPendingInvitation>(up => {
+                const project = up.projectId as unknown as IProject
+                return {
+                    projectId: project._id.toString(),
+                    projectName: project.name,
+                    projectDescription: project.description,
+                    role: up.role,
+                    invitedAt: up.createdAt,
+                    expiresAt: up.inviationTokenExpiresAt
+                }
+            })
+    }
+
+    /** Accepts an invitation from inside the app: being signed in already proves the identity, so no token is needed. */
+    async acceptMyInvitation(projectId: string | Schema.Types.ObjectId): Promise<IUserProject> {
+        const user = this.getUser()
+        if (!user) {
+            throw createBusinessException({ code: "INVITATION_NOT_FOUND", message: "No pending invitation for this project", statusCode: 404 })
+        }
+
+        const userProject = await UserProject.findOne({
+            userId: toObjectId(user._id),
+            projectId: toObjectId(projectId),
+            invitationToken: { $ne: null }
+        })
+
+        if (!userProject) {
+            throw createBusinessException({ code: "INVITATION_NOT_FOUND", message: "No pending invitation for this project", statusCode: 404 })
+        }
+        if (userProject.inviationTokenExpiresAt && userProject.inviationTokenExpiresAt < new Date()) {
+            throw createBusinessException({ code: "INVITATION_EXPIRED", message: "This invitation has expired", statusCode: 410 })
+        }
+
+        userProject.invitationToken = undefined
+        userProject.inviationTokenExpiresAt = undefined
+        return userProject.save()
+    }
+
+    /**
+     * Declines an invitation by dropping the relationship altogether: the inviter sees the pending
+     * invite disappear and can send a new one. Expired invitations can be declined too, to dismiss them.
+     */
+    async declineMyInvitation(projectId: string | Schema.Types.ObjectId): Promise<void> {
+        const user = this.getUser()
+        const result = user
+            ? await UserProject.deleteOne({
+                  userId: toObjectId(user._id),
+                  projectId: toObjectId(projectId),
+                  invitationToken: { $ne: null }
+              })
+            : undefined
+
+        if (!result?.deletedCount) {
+            throw createBusinessException({ code: "INVITATION_NOT_FOUND", message: "No pending invitation for this project", statusCode: 404 })
+        }
     }
 
     private async findValidInvitation(token: string): Promise<IUserProject> {

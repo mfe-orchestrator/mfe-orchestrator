@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/atoms"
+import PendingInvitationsList from "@/components/PendingInvitationsList"
 import ProjectPickerList from "@/components/ProjectPickerList"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
@@ -54,6 +55,8 @@ const SwitchProjectButton = () => {
                     <DialogDescription>{t("project.switch_desc", { defaultValue: "Select a project to work on or create a new one." })}</DialogDescription>
                 </DialogHeader>
                 <div className="pt-2">
+                    {/* Accepting turns the invitation into a project, so the list underneath has to be reloaded. */}
+                    <PendingInvitationsList className="mb-4" onAccepted={loadProjects} />
                     <ProjectPickerList projects={projects} activeProjectId={project?._id} onSelect={handleProjectSelect} autoFocusSearch className="mb-4" />
                     <div className="border-t border-divider pt-4">
                         <Button variant="primary" size="sm" className="w-full" onClick={() => navigate("/project-wizard")}>
