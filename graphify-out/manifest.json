@@ -15,8 +15,8 @@
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1786437129.3368506,
-    "ast_hash": "4677e14bac7fc6a3b3735d18ca27be50",
+    "mtime": 1786472616.1331487,
+    "ast_hash": "84a55b572a832f893e2c18f0d5b9c00d",
     "semantic_hash": ""
   },
   "backend/postbuild.js": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "e2e/package.json": {
-    "mtime": 1786366264.2121477,
-    "ast_hash": "c52c4ca8d65ddde5503f1744f1ef96f3",
+    "mtime": 1786472616.1331172,
+    "ast_hash": "2f8a2d7fce0111bcf7d9430f861e7c68",
     "semantic_hash": ""
   },
   "e2e/playwright.config.ts": {
@@ -660,8 +660,8 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1786440443.3748608,
-    "ast_hash": "4688a35f8478635ae72484e3329169d8",
+    "mtime": 1786472616.133105,
+    "ast_hash": "3607a15165f83069cd4898a21a8a3dfc",
     "semantic_hash": ""
   },
   "frontend/postcss.config.js": {
@@ -1525,8 +1525,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1786365504.1798062,
-    "ast_hash": "39f26ba58339b300c9ca0b5c4f717c69",
+    "mtime": 1786472676.4894288,
+    "ast_hash": "35484bf5766422892741971cb476bf37",
     "semantic_hash": ""
   },
   "start.sh": {
@@ -1585,9 +1585,9 @@
     "semantic_hash": "d2ba13b38e7778eec229fc843492421b"
   },
   ".github/dependabot.yml": {
-    "mtime": 1785880209.9787848,
-    "ast_hash": "e787ebb66c52328fb2061a15a16e77e1",
-    "semantic_hash": "e787ebb66c52328fb2061a15a16e77e1"
+    "mtime": 1786472811.892057,
+    "ast_hash": "c31a2c355326f488bd1782beffa52464",
+    "semantic_hash": ""
   },
   ".github/workflows/README.md": {
     "mtime": 1785880209.9789495,
@@ -1675,9 +1675,9 @@
     "semantic_hash": "3c0afcfa6e365ceb2aabbc2b2895ec7e"
   },
   "pnpm-workspace.yaml": {
-    "mtime": 1785880210.0222232,
-    "ast_hash": "ec6f346b24079b035eb750cace74176f",
-    "semantic_hash": "ec6f346b24079b035eb750cace74176f"
+    "mtime": 1786472682.3889143,
+    "ast_hash": "24b490f265c55f6a622b21a91bd63fbd",
+    "semantic_hash": ""
   },
   "frontend/public/img/Azure.svg": {
     "mtime": 1785880209.9976084,
@@ -1740,8 +1740,8 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1786109863.4562573,
-    "ast_hash": "5f7d555b54895302c5f2d1175daacfd9",
+    "mtime": 1786473828.1756814,
+    "ast_hash": "91005394b5e2679de6e899f936ea1319",
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/Chart.yaml": {

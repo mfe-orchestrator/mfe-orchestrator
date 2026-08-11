@@ -1,7 +1,7 @@
 {
   "package.json": {
-    "mtime": 1786437129.3368506,
-    "ast_hash": "4677e14bac7fc6a3b3735d18ca27be50",
+    "mtime": 1786472616.1331487,
+    "ast_hash": "84a55b572a832f893e2c18f0d5b9c00d",
     "semantic_hash": ""
   },
   "postbuild.js": {
