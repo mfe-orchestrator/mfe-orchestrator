@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/Microfrontends.tsx": {
-    "mtime": 1786470001.2179358,
-    "ast_hash": "44ec64ab362e12edc31fb716ee8b9e83",
+    "mtime": 1786475032.2129412,
+    "ast_hash": "dd45e8049e376a500a0af778852148e5",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/AddNewMicrofrontendCard.tsx": {
@@ -1630,8 +1630,8 @@
     "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
   },
   "README.md": {
-    "mtime": 1786454323.0896778,
-    "ast_hash": "ade642488263e263b2d9d8a48b048033",
+    "mtime": 1786474407.7419953,
+    "ast_hash": "ba096216ed1db5a3fbb8dadbeb6d4893",
     "semantic_hash": ""
   },
   "SECURITY.md": {
@@ -2022,6 +2022,21 @@
   "frontend/src/pages/integration/partials/components/StackBadge.tsx": {
     "mtime": 1786470065.4178383,
     "ast_hash": "545150673f390309fe0813fb1278d7b7",
+    "semantic_hash": ""
+  },
+  "docs/REPOSITORY-IMPORT.md": {
+    "mtime": 1786474394.734154,
+    "ast_hash": "1c16b3aa7db121a6973d339111df8116",
+    "semantic_hash": ""
+  },
+  "docs/assets/repository-import-action.png": {
+    "mtime": 1786474802.5132427,
+    "ast_hash": "3ad27451d08732550e57ce664622245e",
+    "semantic_hash": ""
+  },
+  "docs/assets/repository-import-dialog.png": {
+    "mtime": 1786474790.671849,
+    "ast_hash": "8893b9681e9e69dc2785048ce272f82b",
     "semantic_hash": ""
   }
 }
