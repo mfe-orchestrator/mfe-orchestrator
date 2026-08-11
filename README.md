@@ -53,6 +53,11 @@ one-click rollback.
   Azure DevOps, plus an API for everything else.
 - **Canary releases** *(experimental)* — serve a new version to a share of your
   users and stop the rollout by changing one setting.
+- **Cross-repository dependency analysis** — scan your micro frontend
+  repositories and align peer dependencies across them.
+- **Import your repositories** — connect your GitHub organization, GitLab group
+  or Azure DevOps project and create one micro frontend per repository in a
+  single pass, instead of declaring them one by one.
 
 ## How it works
 
@@ -90,6 +95,8 @@ Project reference:
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
+- **[Dependency analysis](docs/DEPENDENCIES.md)** - How microfrontend dependencies are scanned and peer dependencies aligned
+- **[Repository import](docs/REPOSITORY-IMPORT.md)** - Creating one microfrontend per repository from a code repository connection
 
 ## Run with Docker
 
@@ -251,14 +258,12 @@ point it at your own instances. See the
 | `GOOGLE_REDIRECT_URI`                  | _(empty)_                                                                                         | Redirect URI for Google OAuth.                                  |
 | `GOOGLE_AUTH_SCOPE`                    | `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile` | Required scopes to get Google email and profile.                |
 | `ALLOWED_ORIGINS`                      | _(empty)_                                                                                         | List of allowed URLs for cross-origin requests comma separated. |
+| `ALLOWED_SERVE_ORIGINS`                | _(falls back to `ALLOWED_ORIGINS`)_                                                               | Same list, applied only to the `/serve/*` endpoints.            |
 | `LOG_LEVEL`                            | `info` _(debug/info/warn/error)_                                                                  | Logging level.                                                  |
 | `CODE_REPOSITORY_GITHUB_CLIENT_ID`     | _(empty)_                                                                                         | Client ID for GitHub OAuth authentication.                      |
 | `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | _(empty)_                                                                                         | Client secret for GitHub OAuth authentication.                  |
 | `TELEMETRY_DISABLED`                   | _(empty)_                                                                                         | If `true`, turns off the anonymous telemetry ping.              |
-| `TELEMETRY_ENABLED`                    | _(empty)_                                                                                         | Explicit telemetry override, wins over every other switch.      |
 | `DO_NOT_TRACK`                         | _(empty)_                                                                                         | If `1`, turns off the anonymous telemetry ping.                 |
-| `TELEMETRY_ENDPOINT`                   | `https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted`                               | Where the anonymous telemetry ping is sent.                     |
-| `TELEMETRY_INTERVAL_HOURS`             | `24`                                                                                              | Hours between two telemetry pings (minimum `1`).                |
 
 ## Anonymous telemetry 📡
 

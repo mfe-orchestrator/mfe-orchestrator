@@ -1,5 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react"
-import { AccountEntity, AccountInfo } from "@azure/msal-browser"
+import { AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { AxiosError, AxiosResponse } from "axios"
 import { deleteToken, getToken as getTokenFromStorage, IToken, setToken } from "@/authentication/tokenUtils"

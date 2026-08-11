@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse, RawAxiosRequestHeaders } from "axios"
+import axios, { AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios"
 import UrlPattern from "url-pattern"
 
 export enum AuthenticationType {

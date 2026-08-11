@@ -1,13 +1,12 @@
 import { FastifyInstance } from "fastify"
+import EnvironmentHeaderNotFoundError from "../errors/EnvironmentHeaderNotFoundError"
+import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import GlobalVariablesService from "../service/GlobalVariablesService"
+import GlobalVariableCreateDTO, { GlobalVariableUpdateDTO } from "../types/GlobalVariableCreateDTO"
 import GlobalVariableDTO from "../types/GlobalVariableDTO"
 import { getEnvironmentIdFromRequest, getProjectIdFromRequest } from "../utils/requestUtils"
-import GlobalVariablesService from "../service/GlobalVariablesService"
-import EnvironmentHeaderNotFoundError from "../errors/EnvironmentHeaderNotFoundError"
-import GlobalVariableCreateDTO, { GlobalVariableUpdateDTO } from "../types/GlobalVariableCreateDTO"
-import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 
 export default async function globalVariablesController(fastify: FastifyInstance) {
-
     fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/global-variables", async (request, reply) => {
         const projectId = request.params.projectId
         return reply.send(await new GlobalVariablesService(request.databaseUser).getAllByProjectId(projectId))

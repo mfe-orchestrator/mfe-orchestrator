@@ -1,5 +1,4 @@
-import mongoose, { Document, Schema, ObjectId } from "mongoose"
-
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export interface IBuiltFrontend extends Document<ObjectId> {
     microfrontendId: ObjectId
@@ -21,7 +20,7 @@ const builtFrontendSchema = new Schema<IBuiltFrontend>(
             required: true,
             trim: true,
             maxlength: 255
-        },
+        }
     },
     {
         timestamps: true

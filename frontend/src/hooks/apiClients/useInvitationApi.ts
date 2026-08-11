@@ -1,5 +1,6 @@
 import { AuthenticationType } from "@/api/apiClient"
 import useApiClient from "@/hooks/useApiClient"
+import { RoleInProject } from "./useProjectApi"
 import { User } from "./useUserApi"
 
 export interface InvitationInfo {
@@ -7,6 +8,16 @@ export interface InvitationInfo {
     role: string
     email: string
     needsPassword: boolean
+}
+
+/** An invitation addressed to the signed-in user that has not been answered yet. */
+export interface PendingInvitation {
+    projectId: string
+    projectName: string
+    projectDescription?: string
+    role: RoleInProject
+    invitedAt: string
+    expiresAt?: string
 }
 
 export interface AcceptInvitationDTO {
@@ -42,9 +53,36 @@ const useInvitationApi = () => {
         return response.data
     }
 
+    /** In-app counterpart of the emailed link: the signed-in user answers the invitations addressed to them. */
+    const getMyInvitations = async (): Promise<PendingInvitation[]> => {
+        const response = await doRequest<PendingInvitation[]>({
+            url: "/api/users/me/invitations",
+            // Loaded in the background next to the project list: a failure must not raise a toast on its own
+            silent: true
+        })
+        return response.data
+    }
+
+    const acceptMyInvitation = async (projectId: string): Promise<void> => {
+        await doRequest({
+            url: `/api/users/me/invitations/${projectId}/accept`,
+            method: "POST"
+        })
+    }
+
+    const declineMyInvitation = async (projectId: string): Promise<void> => {
+        await doRequest({
+            url: `/api/users/me/invitations/${projectId}`,
+            method: "DELETE"
+        })
+    }
+
     return {
         getInvitation,
-        acceptInvitation
+        acceptInvitation,
+        getMyInvitations,
+        acceptMyInvitation,
+        declineMyInvitation
     }
 }
 

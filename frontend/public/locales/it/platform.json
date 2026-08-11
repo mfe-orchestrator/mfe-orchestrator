@@ -18,20 +18,47 @@
         "fe_integration_tab": {
             "title": "Integrazione frontend",
             "description": "Segui le istruzioni riportate di seguito per integrare il tuo microfrontend con la nostra piattaforma.",
-            "vite": {
-                "title": "Integrazione Vite Module Federation",
-                "description": "Per integrare il tuo microfrontend con la nostra piattaforma, segui le istruzioni riportate di seguito.",
-                "step2": "Poi, aggiorna la tua configurazione vite:"
-            },
-            "webpack": {
-                "title": "Integrazione Webpack Module Federation",
-                "description": "Per Webpack Module Federation, assicurati di avere Webpack 5 installato. Poi configura il tuo webpack config:"
-            },
             "curl": {
                 "title": "Accesso diretto API via CURL",
                 "description": "Puoi anche interagire con la nostra API direttamente utilizzando CURL:",
                 "step2": "Ecco un esempio:"
-            }
+            },
+            "detected_stack": "Stack rilevato",
+            "stack_from_template": "dal template",
+            "stack_detected": "rilevato nel repository",
+            "stack_manual": "impostato manualmente",
+            "stack_unknown_title": "Stack non rilevato",
+            "stack_unknown_description": "Non siamo riusciti a capire quale framework e quale bundler usa questo microfrontend. Selezionali qui sotto per ottenere le istruzioni corrette, oppure collega il repository per farceli leggere.",
+            "framework_label": "Framework",
+            "compiler_label": "Bundler",
+            "install_step": "Installa quello che serve all'integrazione:",
+            "config_step": "Poi scrivi questa configurazione in {{path}}:",
+            "runtime_integration_title": "Integrazione a runtime",
+            "integrate_all_button": "Integra i miei microfrontend",
+            "stack_auto": "Automatico",
+            "federation_tab": "Module Federation",
+            "runtime_integration_description": "I microfrontend web component sono semplici script che registrano un custom element, quindi non c'è nessuna configurazione di module federation da scrivere: l'host chiede l'url risolto all'SDK e monta l'elemento. Vedi MicrofrontendLoader nei template web component.",
+            "integrate_dialog_title": "Configura module federation",
+            "integrate_dialog_description": "Per ogni microfrontend che consuma altri, scriviamo la configurazione del bundler che dichiara i suoi remote e aggiungiamo i pacchetti che servono. Controlla cosa cambia, poi scegli cosa committare: la scrittura finisce sul branch predefinito di ogni repository.",
+            "integrate_confirm": "Committa nei repository selezionati",
+            "integrate_nothing_to_do": "Niente da integrare: i repository sono già configurati, oppure nessuno dei tuoi microfrontend ne consuma ancora un altro.",
+            "integrate_success": "Module federation configurato in {{count}} repository",
+            "integrate_partial": "Configurati {{applied}} repository, {{failed}} falliti",
+            "integrate_remotes": "Remote",
+            "integrate_file_new": "file nuovo",
+            "integrate_file_replaced": "sostituisce il contenuto attuale",
+            "integrate_show_diff": "Mostra cosa cambia",
+            "integrate_hide_diff": "Nascondi",
+            "integrate_current_content": "Attualmente nel repository",
+            "integrate_proposed_content": "Quello che scriveremmo",
+            "status_already_integrated": "Già integrato",
+            "status_config_to_create": "Configurazione da creare",
+            "status_config_to_replace": "Configurazione da sostituire",
+            "status_no_remotes": "Nessun remote da dichiarare",
+            "status_stack_unknown": "Stack sconosciuto",
+            "status_runtime_integration": "Si integra a runtime",
+            "status_error": "Errore",
+            "integrate_one_button": "Integra solo questo"
         },
         "env_vars_integration_tab": {
             "title": "Variabili d'ambiente",
@@ -62,6 +89,8 @@
         "email_placeholder": "nome@esempio.com",
         "invalid_email": "Inserisci un indirizzo email valido",
         "password": "Password",
+        "show_password": "Mostra password",
+        "hide_password": "Nascondi password",
         "password_min_length": "La password deve essere lunga almeno 8 caratteri",
         "passwords_dont_match": "Le password non corrispondono",
         "confirm_password": "Conferma Password",
@@ -142,7 +171,7 @@
             "title": "Configurazione",
             "viewAll": "Visualizza Tutto",
             "teamMembers": "Membri",
-            "environments": "Environments",
+            "environments": "Ambienti",
             "apiKeys": "API Keys",
             "storages": "Storages",
             "codeRepositories": "Repository Codice"
@@ -196,6 +225,11 @@
         "env_variables_title": "Variabili d'ambiente",
         "no_deployments": "Nessuna distribuzione trovata",
         "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
+        "microfrontend_card": {
+            "stable_version": "Versione stabile",
+            "canary_traffic": "Canary {{percentage}}%",
+            "canary_target_missing": "Non configurata"
+        },
         "actions": {
             "view_canary_users": "Visualizza utenti canary",
             "redeploy": "Redeploy"
@@ -237,6 +271,10 @@
         "select_role": "Seleziona un ruolo",
         "send_invitation": "Invia invito",
         "invite_success": "Invito inviato con successo",
+        "role_required": "Seleziona un ruolo per l'utente",
+        "cannot_invite_self": "Non puoi invitare te stesso: fai già parte del progetto",
+        "already_invited": "Questo utente ha già un invito in sospeso",
+        "already_member": "Questo utente fa già parte del progetto",
         "roles": {
             "admin": "Amministratore",
             "editor": "Editore",
@@ -259,9 +297,17 @@
         "title": "Invito al progetto",
         "description": "Sei stato invitato a unirti a {{project}} con il ruolo di {{role}}.",
         "accept": "Accetta invito",
+        "accept_short": "Accetta",
         "accepted": "Invito accettato",
-        "name_label": "Nome",
-        "surname_label": "Cognome"
+        "decline": "Rifiuta",
+        "declined": "Invito rifiutato",
+        "pending_count": "{{count}} progetti a cui sei stato invitato",
+        "pending_count_one": "Sei stato invitato a un progetto",
+        "not_found_title": "Invito non trovato",
+        "not_found_description": "Il link che hai seguito non corrisponde a nessun invito: potrebbe essere scaduto, già utilizzato o non valido. Chiedi a chi ti ha invitato di inviartene uno nuovo.",
+        "error_title": "Qualcosa è andato storto",
+        "error_description": "Non siamo riusciti a caricare l'invito. Riprova tra qualche istante.",
+        "go_to_login": "Vai al login"
     },
     "environmentVariables": {
         "title": "Variabili d'Ambiente",
@@ -449,6 +495,26 @@
             "startBuild": "Avvia Build",
             "buildSuccess": "Build iniziata per {{name}}"
         },
+        "import": {
+            "action": "Importa da repository",
+            "title": "Importa repository",
+            "description": "Crea un microfrontend per ogni repository della connessione selezionata. I repository già collegati a un microfrontend vengono ignorati.",
+            "loading": "Caricamento dei repository...",
+            "loadError": "Impossibile caricare i repository di questa connessione.",
+            "noRepositories": "Questa connessione non espone alcun repository.",
+            "noSearchResults": "Nessun repository corrisponde alla ricerca.",
+            "searchPlaceholder": "Cerca repository...",
+            "selectAll": "Seleziona tutti",
+            "selectedCount": "{{count}} di {{total}} selezionati",
+            "alreadyImported": "Già importato",
+            "import_one": "Importa {{count}} repository",
+            "import_other": "Importa {{count}} repository",
+            "importedCount_one": "{{count}} microfrontend importato",
+            "importedCount_other": "{{count}} microfrontend importati",
+            "failedCount_one": "{{count}} repository non è stato importato: {{names}}",
+            "failedCount_other": "{{count}} repository non sono stati importati: {{names}}",
+            "nothingImported": "Nessun repository è stato importato."
+        },
         "card": {
             "canary": "Canary",
             "repository": "Repository",
@@ -514,6 +580,7 @@
         "enable_canary": "Abilita Distribuzione Canary",
         "canary_percentage": "Percentuale Canary",
         "canary_percentage_description": "Percentuale di traffico da indirizzare alla versione canary",
+        "canary_percentage_presets": "Percentuali suggerite",
         "canary_type": "Tipo di Canary",
         "select_canary_type": "Seleziona il tipo di canary",
         "on_sessions": "Sulle Sessioni",
@@ -552,18 +619,14 @@
         "select_repository_placeholder": "Scegli un repository...",
         "sourceCodeProvider": "Provider Codice Sorgente",
         "create_new_repository": "Crea nuovo...",
-        "clone_urls_description": "Gli URL di clone vengono compilati automaticamente alla creazione del repository e possono essere modificati in qualsiasi momento.",
-        "clone_url_https": "URL di clone HTTPS",
-        "clone_url_https_placeholder": "https://github.com/org/repository.git",
-        "clone_url_ssh": "URL di clone SSH",
-        "clone_url_ssh_placeholder": "git@github.com:org/repository.git",
         "clone": {
             "button": "Clona repo",
             "title": "Clona repository",
-            "description": "Copia il comando di clone oppure apri il repository direttamente in VS Code.",
+            "description": "Copia il comando di clone oppure apri il repository direttamente in VS Code o IntelliJ IDEA.",
             "https": "Clona via HTTPS",
             "ssh": "Clona via SSH",
-            "vscode": "Clona con VS Code"
+            "vscode": "Clona con VS Code",
+            "intellij": "Clona con IntelliJ IDEA"
         },
         "noMicrofrontendsFound": "Nessun microfrontend trovato",
         "ofUsers": "degli utenti",
@@ -663,7 +726,7 @@
         "providerConfiguration": "Configurazione Provider",
         "providerConfigurationDescription": "Configura le impostazioni di autenticazione e accesso per il tuo storage {{storageType}}",
         "securityNotice": "Avviso di Sicurezza:",
-        "securityNoticeDescription": "Tutte le credenziali sono criptate e memorizzate in modo sicuro. Vengono utilizzate solo per accedere alle tue risorse di storage e non vengono mai condivise con terze parti.",
+        "securityNoticeDescription": "Tutte le credenziali sono memorizzate in modo sicuro. Vengono utilizzate solo per accedere alle tue risorse di storage e non vengono mai condivise con terze parti.",
         "path": "Percorso",
         "serviceAccountJsonKey": "Chiave JSON Account di Servizio"
     },
@@ -849,7 +912,19 @@
             "githubAccessDescription": "Aggiorna la tua autenticazione GitHub se necessario",
             "connectionSaved": "Connessione GitHub \"{{name}}\" salvata con successo",
             "error": "Ci sono problemi di connessione al tuo github, aggiorna la connessione",
-            "repositoryIdRequired": "L'ID del repository è necessario per configurare la connessione GitHub."
+            "repositoryIdRequired": "L'ID del repository è necessario per configurare la connessione GitHub.",
+            "callback": {
+                "authenticatingTitle": "Autenticazione con GitHub",
+                "authenticatingDescription": "Attendi mentre completiamo il processo di autenticazione...",
+                "successTitle": "Autenticazione riuscita!",
+                "successDescription": "Autenticazione con GitHub completata. Reindirizzamento alla selezione del repository...",
+                "failedTitle": "Autenticazione fallita",
+                "authFailed": "Autenticazione GitHub fallita: {{error}}",
+                "missingParams": "Parametri di autenticazione mancanti",
+                "invalidState": "Parametro state non valido",
+                "tryAgain": "Riprova",
+                "backToRepositories": "Torna ai repository"
+            }
         }
     },
     "market": {
@@ -886,6 +961,140 @@
             "description": "Inizia da zero senza nessun template",
             "framework": "Qualsiasi Framework",
             "tag": "Vuoto"
+        }
+    },
+    "newProjectWizard": {
+        "subtitle": "Crea un nuovo progetto",
+        "close": "Chiudi wizard",
+        "steps": {
+            "name": "Nome",
+            "environments": "Ambienti",
+            "storages": "Storage",
+            "repositories": "Repository",
+            "collaborators": "Collaboratori"
+        },
+        "footer": {
+            "back": "Indietro",
+            "skip": "Salta",
+            "next": "Continua",
+            "loading": "Attendere…"
+        },
+        "main_data": {
+            "title": "Diamo un nome al progetto",
+            "description": "Il nome identifica il progetto nella console. Potrai modificarlo in seguito dalle impostazioni.",
+            "name_label": "Nome progetto",
+            "name_placeholder": "Es. Portale Clienti",
+            "name_required": "Il nome è obbligatorio",
+            "name_min_length": "Minimo 3 caratteri",
+            "description_label": "Descrizione (opzionale)",
+            "description_placeholder": "A cosa serve questo progetto?",
+            "submit": "Crea progetto",
+            "create_error": "Impossibile creare il progetto"
+        },
+        "environments": {
+            "title": "Configura gli ambienti",
+            "description": "Gli ambienti (es. sviluppo, produzione) ti permettono di gestire versioni diverse dei microfrontend. Scegli un preset o personalizzali, poi salva."
+        },
+        "hosting": {
+            "title": "Dove ospitiamo i microfrontend?",
+            "description": "Collega un bucket di storage per il deploy dei bundle. Puoi saltare questo passaggio e configurarlo più tardi.",
+            "alert_title": "Questo passaggio non è fondamentale",
+            "alert_description": "Se lo salti e non colleghi nessun cloud, i bundle dei microfrontend verranno comunque ospitati direttamente da MFE Orchestrator. Potrai collegare uno storage esterno in qualsiasi momento dalle impostazioni del progetto.",
+            "submit": "Salva e continua"
+        },
+        "code_repositories": {
+            "title": "Collega il codice sorgente",
+            "description": "Collega un provider Git (GitHub, GitLab o Azure DevOps) per abilitare build e deploy automatici dei microfrontend.",
+            "skippable_note": "Nessuna fretta: puoi collegare o cambiare i repository in qualsiasi momento dalla sezione Repository del progetto.",
+            "connect_repository": "Collega un repository"
+        },
+        "team_mates": {
+            "title": "Invita i collaboratori",
+            "description": "Aggiungi le persone che lavoreranno al progetto. Riceveranno un invito via email. Puoi saltare e invitarle più tardi.",
+            "skippable_note": "Nessuna fretta: puoi invitare o rimuovere collaboratori in qualsiasi momento dalle impostazioni del progetto.",
+            "email_placeholder": "collega@azienda.com",
+            "invalid_email": "Email non valida: {{email}}",
+            "duplicate_email": "Email duplicata: {{email}}",
+            "cannot_invite_self": "Non puoi invitare te stesso: fai già parte del progetto",
+            "invite_error": "Alcuni inviti non sono stati inviati",
+            "remove_collaborator": "Rimuovi collaboratore",
+            "add_collaborator": "Aggiungi collaboratore",
+            "role_note": "I collaboratori invitati potranno accedere al progetto in base al ruolo assegnato.",
+            "skip_and_complete": "Salta e completa",
+            "complete": "Completa"
+        },
+        "completed": {
+            "title": "Progetto pronto!",
+            "configured_with_name": "è stato configurato con successo.",
+            "configured_generic": "Il progetto è stato configurato con successo.",
+            "start_adding": "Puoi iniziare ad aggiungere microfrontend.",
+            "start_deploying": "Inizia a deployare i tuoi microfrontend",
+            "go_to_dashboard": "Vai alla dashboard",
+            "add_microfrontend": "Aggiungi microfrontend"
+        }
+    },
+    "dependencies": {
+        "sidebar_title": "Dipendenze",
+        "title": "Dipendenze",
+        "description": "Analizza i repository dei microfrontend, verifica cosa non è aggiornato e allinea le peer dependencies.",
+        "rescan": "Rianalizza",
+        "align_peer_dependencies": "Allinea peer dependencies",
+        "registry_unavailable": "Non è stato possibile contattare il registry npm: le ultime versioni non sono disponibili, viene mostrato solo il confronto tra microfrontend.",
+        "summary_microfrontends": "Microfrontend analizzati",
+        "summary_packages": "Pacchetti distinti",
+        "summary_outdated": "Pacchetti non aggiornati",
+        "summary_peer_misaligned": "Peer dependencies disallineate",
+        "peer_section_title": "Peer dependencies da allineare",
+        "shared_section_title": "Dipendenze condivise con versioni diverse",
+        "shared_section_description": "Segnalate solo per visibilità: l'azione di allineamento non le modifica mai.",
+        "per_microfrontend_title": "Dipendenze per microfrontend",
+        "only_outdated": "Mostra solo non aggiornate",
+        "no_peer_issues": "Tutte le peer dependencies sono allineate tra i microfrontend.",
+        "no_shared_issues": "Nessuna dipendenza condivisa dichiarata con versioni diverse.",
+        "no_microfrontends": "Nessun microfrontend di questo progetto è collegato a un repository di codice.",
+        "no_dependencies": "Questo package.json non dichiara dipendenze.",
+        "all_up_to_date": "Tutte le dipendenze sono aggiornate.",
+        "scan_failed": "Analisi fallita",
+        "scanned_at": "Ultima analisi: {{date}}",
+        "package": "Pacchetto",
+        "kind": "Tipo",
+        "declared_range": "Range dichiarato",
+        "suggested_range": "Range suggerito",
+        "latest_version": "Ultima versione",
+        "status_column": "Stato",
+        "declared_by": "Dichiarato da",
+        "deprecated": "Deprecato",
+        "dependencies_count": "{{count}} dipendenze",
+        "outdated_count": "{{count}} non aggiornate",
+        "already_aligned": "Già allineata",
+        "to_be_aligned": "Verrà allineata a {{range}}",
+        "align_dialog_title": "Allinea peer dependencies",
+        "align_dialog_description": "Il package.json aggiornato viene committato su un branch dedicato di ogni repository, creato dal branch che hai confrontato. Quel branch non viene mai modificato.",
+        "target_branch": "Branch di destinazione",
+        "target_branch_hint": "Creato dal branch confrontato per ogni repository se non esiste ancora.",
+        "align_confirm": "Crea i commit",
+        "align_success": "Peer dependencies allineate su {{count}} repository, branch {{branch}}",
+        "align_partial": "{{applied}} repository allineati, {{failed}} falliti",
+        "align_failed": "Fallito",
+        "align_nothing_to_do": "Già allineato",
+        "branch_selection_title": "Branch da confrontare",
+        "branch_selection_description": "Ogni microfrontend viene analizzato sul suo branch di default. Scegli un altro branch per confrontarne uno diverso, poi rianalizza.",
+        "branch_default": "default",
+        "branch_not_default": "Diverso dal branch di default",
+        "rescan_pending": "Applica i branch selezionati",
+        "branch_column": "Branch",
+        "kinds": {
+            "PROD": "dependency",
+            "DEV": "devDependency",
+            "PEER": "peerDependency",
+            "OPTIONAL": "optionalDependency"
+        },
+        "status": {
+            "UP_TO_DATE": "Aggiornata",
+            "PATCH_BEHIND": "Patch indietro",
+            "MINOR_BEHIND": "Minor indietro",
+            "MAJOR_BEHIND": "Major indietro",
+            "UNKNOWN": "Sconosciuto"
         }
     }
 }

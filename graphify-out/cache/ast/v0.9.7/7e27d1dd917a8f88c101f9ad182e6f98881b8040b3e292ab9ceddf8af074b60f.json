@@ -1,1 +1,79 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_md", "label": "README.md", "file_type": "document", "source_file": ".github/workflows/README.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows", "label": "GitHub Actions Workflows", "file_type": "document", "source_file": ".github/workflows/README.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_available_workflows", "label": "Available Workflows", "file_type": "document", "source_file": ".github/workflows/README.md", "source_location": "L5"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_e2e_tests_e2e_tests_yml", "label": "E2E Tests (`e2e-tests.yml`)", "file_type": "document", "source_file": ".github/workflows/README.md", "source_location": "L7"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_adding_new_workflows", "label": "Adding New Workflows", "file_type": "document", "source_file": ".github/workflows/README.md", "source_location": "L33"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/workflows/README.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_available_workflows", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/workflows/README.md", "source_location": "L5", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_available_workflows", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_e2e_tests_e2e_tests_yml", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/workflows/README.md", "source_location": "L7", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_adding_new_workflows", "relation": "contains", "confidence": "EXTRACTED", "source_file": ".github/workflows/README.md", "source_location": "L33", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_md",
+            "label": "README.md",
+            "file_type": "document",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows",
+            "label": "GitHub Actions Workflows",
+            "file_type": "document",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_available_workflows",
+            "label": "Available Workflows",
+            "file_type": "document",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L5"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_e2e_tests_e2e_tests_yml",
+            "label": "E2E Tests (`e2e-tests.yml`)",
+            "file_type": "document",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L7"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_adding_new_workflows",
+            "label": "Adding New Workflows",
+            "file_type": "document",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L33"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_available_workflows",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L5",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_available_workflows",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_e2e_tests_e2e_tests_yml",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L7",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_github_actions_workflows",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_github_workflows_readme_adding_new_workflows",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": ".github/workflows/README.md",
+            "source_location": "L33",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

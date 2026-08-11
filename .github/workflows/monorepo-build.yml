@@ -7,9 +7,9 @@ permissions:
 on:
   workflow_call:
   push:
-    branches: [main, develop]
+    branches: [main, development]
   pull_request:
-    branches: [main, develop]
+    branches: [main, development]
 
 jobs:
   build-and-test:

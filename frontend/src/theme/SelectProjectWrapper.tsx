@@ -1,8 +1,10 @@
+import { Spinner } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
 import { ApiStatusHandler } from "@/components/organisms"
+import PendingInvitationsList, { usePendingInvitationsQuery } from "@/components/PendingInvitationsList"
 import ProjectPickerList from "@/components/ProjectPickerList"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import NewProjectWizard from "@/pages/new-project-wizard/NewProjectWizard"
@@ -26,6 +28,8 @@ const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ onCreateNewProjec
 
     return (
         <AuthenticationLayout title={t("project.select_project")} description={t("project.switch_desc")} size="lg">
+            {/* Invitations come first: they are the only thing on this screen that still needs an answer. */}
+            <PendingInvitationsList className="mb-4" />
             <ProjectPickerList projects={projectStore.projects ?? []} onSelect={onSelectProject} onCreateNew={onCreateNewProject} variant="grid" autoFocusSearch />
         </AuthenticationLayout>
     )
@@ -36,13 +40,27 @@ const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children
     const queryClient = useQueryClient()
     const [firstRunComplete, setFirstRunComplete] = useState(false)
     const [isCreatingProject, setIsCreatingProject] = useState(false)
+    // Same query key as the list below, so this reads the cached answer instead of fetching again.
+    const invitationsQuery = usePendingInvitationsQuery()
 
     const hasProjects = Boolean(projectStore.projects && projectStore.projects.length > 0)
+    const hasPendingInvitations = Boolean(invitationsQuery.data && invitationsQuery.data.length > 0)
+
+    // Whether the user has somewhere to go depends on the invitations too, so hold on until they arrive.
+    if (!hasProjects && invitationsQuery.isPending) {
+        return (
+            <div className="flex min-h-[200px] items-center justify-center">
+                <Spinner />
+            </div>
+        )
+    }
 
     // First run: no projects yet → guide the user through the full project wizard.
     // Gated on a local flag so the wizard stays mounted for every step even though
     // step 1 already sets the active project in the store.
-    const isFirstRun = !hasProjects && !firstRunComplete
+    // A pending invitation is a way in as well, so it takes precedence over the wizard:
+    // otherwise the only screen offered would be "create a project".
+    const isFirstRun = !hasProjects && !hasPendingInvitations && !firstRunComplete
 
     // The picker can also reach the wizard, which this component has to render itself:
     // until a project is active it shadows the routed pages, so navigating there would show nothing.

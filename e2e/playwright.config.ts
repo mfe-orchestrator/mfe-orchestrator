@@ -1,4 +1,12 @@
 import { defineConfig, devices } from "@playwright/test"
+import dotenv from "dotenv"
+
+/**
+ * Configurazione locale da `e2e/.env` (gitignorato): BASE_URL, credenziali del
+ * provider di posta. Non sovrascrive le variabili gia' presenti nell'ambiente,
+ * quindi in pipeline continuano a vincere quelle passate dal workflow.
+ */
+dotenv.config()
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -46,17 +54,24 @@ export default defineConfig({
         }
     ],
 
-    /* Run your local dev server before starting the tests */
-    webServer: {
-        command: "pnpm dev",
-        url: "http://localhost:5173",
-        reuseExistingServer: !process.env.CI,
-        timeout: 120000,
-        cwd: "..",
-        env: {
-            TURBO_UI: "true",
-            FORCE_COLOR: "1",
-            CI: "true"
-        }
-    }
+    /*
+     * Dev server locale, avviato solo quando i test girano su localhost.
+     * Con `BASE_URL` valorizzata (es. la pipeline, che punta a console-dev) l'ambiente
+     * e' gia' in piedi: avviare qui `pnpm dev` bloccherebbe la run in attesa di un
+     * localhost:5173 che non serve a nessuno.
+     */
+    webServer: process.env.BASE_URL
+        ? undefined
+        : {
+              command: "pnpm dev",
+              url: "http://localhost:5173",
+              reuseExistingServer: !process.env.CI,
+              timeout: 120000,
+              cwd: "..",
+              env: {
+                  TURBO_UI: "true",
+                  FORCE_COLOR: "1",
+                  CI: "true"
+              }
+          }
 })

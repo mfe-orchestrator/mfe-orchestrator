@@ -1,1 +1,142 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py", "label": "quit-on-fatal.py", "file_type": "code", "source_file": "docker/all-in-one/quit-on-fatal.py", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "label": "main()", "file_type": "code", "source_file": "docker/all-in-one/quit-on-fatal.py", "source_location": "L17", "_callable": true}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py", "target": "os", "relation": "imports", "context": "import", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/quit-on-fatal.py", "source_location": "L11", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py", "target": "sys", "relation": "imports", "context": "import", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/quit-on-fatal.py", "source_location": "L12", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py", "target": "supervisor", "relation": "imports_from", "context": "import", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/quit-on-fatal.py", "source_location": "L14", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docker/all-in-one/quit-on-fatal.py", "source_location": "L17", "weight": 1.0}], "raw_calls": [{"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "wait", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L19", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "get", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L21", "receiver": "headers"}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "ok", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L22", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "get", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L25", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "get_headers", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L25", "receiver": "childutils"}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "write", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L26", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "flush", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L27", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "ok", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L29", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "shutdown", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L32", "receiver": null}, {"caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main", "callee": "getRPCInterface", "is_member_call": true, "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py", "source_location": "L32", "receiver": "childutils"}]}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py",
+            "label": "quit-on-fatal.py",
+            "file_type": "code",
+            "source_file": "docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "label": "main()",
+            "file_type": "code",
+            "source_file": "docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L17",
+            "_callable": true
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py",
+            "target": "os",
+            "relation": "imports",
+            "context": "import",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L11",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py",
+            "target": "sys",
+            "relation": "imports",
+            "context": "import",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L12",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py",
+            "target": "supervisor",
+            "relation": "imports_from",
+            "context": "import",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L14",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_py",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L17",
+            "weight": 1.0
+        }
+    ],
+    "raw_calls": [
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "wait",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L19",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "get",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L21",
+            "receiver": "headers"
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "ok",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L22",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "get",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L25",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "get_headers",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L25",
+            "receiver": "childutils"
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "write",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L26",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "flush",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L27",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "ok",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L29",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "shutdown",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L32",
+            "receiver": null
+        },
+        {
+            "caller_nid": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docker_all_in_one_quit_on_fatal_main",
+            "callee": "getRPCInterface",
+            "is_member_call": true,
+            "source_file": "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/docker/all-in-one/quit-on-fatal.py",
+            "source_location": "L32",
+            "receiver": "childutils"
+        }
+    ]
+}

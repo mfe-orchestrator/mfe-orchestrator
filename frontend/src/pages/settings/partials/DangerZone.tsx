@@ -1,24 +1,35 @@
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    Input,
+    Label
+} from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import { AlertCircle, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input/input"
-import { Label } from "@/components/ui/label"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
 
 // Simple class name concatenation helper
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" ")
 
 // Temporary type definitions for typography components
-const TypographyH3 = ({ className, children }: { className?: string; children: React.ReactNode }) => <h3 className={`scroll-m-20 text-2xl font-semibold tracking-tight ${className}`}>{children}</h3>
+const _TypographyH3 = ({ className, children }: { className?: string; children: React.ReactNode }) => <h3 className={`scroll-m-20 text-2xl font-semibold tracking-tight ${className}`}>{children}</h3>
 
-const TypographyP = ({ className, children }: { className?: string; children: React.ReactNode }) => <p className={`leading-7 [&:not(:first-child)]:mt-6 ${className}`}>{children}</p>
+const _TypographyP = ({ className, children }: { className?: string; children: React.ReactNode }) => <p className={`leading-7 [&:not(:first-child)]:mt-6 ${className}`}>{children}</p>
 
-const TypographySmall = ({ className, children }: { className?: string; children: React.ReactNode }) => <small className={`text-sm font-medium leading-none ${className}`}>{children}</small>
+const _TypographySmall = ({ className, children }: { className?: string; children: React.ReactNode }) => <small className={`text-sm font-medium leading-none ${className}`}>{children}</small>
 
 interface DangerZoneProps {
     projectName: string

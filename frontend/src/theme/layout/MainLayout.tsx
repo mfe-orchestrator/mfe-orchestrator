@@ -1,7 +1,7 @@
-import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
-import { FileText, LayoutDashboard, Link as LinkIcon, Rocket as RocketIcon, Settings } from "lucide-react"
+import { FileText, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
 import Header from "./Header"
 
 interface MainLayoutProps {
@@ -26,6 +26,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             name: t("environmentVariables.title"),
             path: "/environment-variables",
             icon: <FileText />
+        },
+        {
+            name: t("dependencies.sidebar_title"),
+            path: "/dependencies",
+            icon: <PackageIcon />
         },
         {
             name: t("deployments.title"),

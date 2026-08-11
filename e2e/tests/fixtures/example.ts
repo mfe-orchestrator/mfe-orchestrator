@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from "@playwright/test"
 
 /**
  * Example of custom fixtures.
@@ -11,27 +11,27 @@ import { test as base } from '@playwright/test';
  */
 
 type CustomFixtures = {
-  // Add your custom fixtures here
-  // Example: authenticatedPage: Page;
-};
+    // Add your custom fixtures here
+    // Example: authenticatedPage: Page;
+}
 
 // Extend the base test with custom fixtures
 export const test = base.extend<CustomFixtures>({
-  // Define your fixtures here
-  // Example:
-  // authenticatedPage: async ({ page }, use) => {
-  //   // Setup: login to the application
-  //   await page.goto('/login');
-  //   await page.fill('[name="email"]', 'test@example.com');
-  //   await page.fill('[name="password"]', 'password');
-  //   await page.click('[type="submit"]');
-  //
-  //   // Use the fixture
-  //   await use(page);
-  //
-  //   // Teardown (optional)
-  //   await page.context().clearCookies();
-  // },
-});
+    // Define your fixtures here
+    // Example:
+    // authenticatedPage: async ({ page }, use) => {
+    //   // Setup: login to the application
+    //   await page.goto('/login');
+    //   await page.fill('[name="email"]', 'test@example.com');
+    //   await page.fill('[name="password"]', 'password');
+    //   await page.click('[type="submit"]');
+    //
+    //   // Use the fixture
+    //   await use(page);
+    //
+    //   // Teardown (optional)
+    //   await page.context().clearCookies();
+    // },
+})
 
-export { expect } from '@playwright/test';
+export { expect } from "@playwright/test"

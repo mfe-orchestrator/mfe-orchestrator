@@ -1,9 +1,13 @@
 import { isValidObjectId, ObjectId, Schema } from "mongoose"
+import { createBusinessException } from "../errors/BusinessException"
 
 export function toObjectId(id: string | ObjectId | Schema.Types.ObjectId): Schema.Types.ObjectId {
-    //return typeof id === "string" ? new Types.ObjectId(id) : id
     if (isValidObjectId(id)) {
         return id as unknown as Schema.Types.ObjectId
     }
-    return new Schema.Types.ObjectId(id as unknown as string)
+    throw createBusinessException({
+        code: "INVALID_OBJECT_ID",
+        message: `Invalid identifier: ${typeof id === "string" ? id : JSON.stringify(id)}`,
+        statusCode: 400
+    })
 }

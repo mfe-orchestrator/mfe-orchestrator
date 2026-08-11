@@ -1,4 +1,5 @@
 import { CanaryDeploymentType, CanaryType } from "../models/MicrofrontendModel"
+import { MicrofrontendStackDTO } from "./MicrofrontendStack"
 
 interface MicrofrontendDTO {
     id: string
@@ -7,6 +8,9 @@ interface MicrofrontendDTO {
     url: string
     environment: string
     version?: string
+    /** Slug of the marketplace template the repository was scaffolded from */
+    template?: string
+    stack?: MicrofrontendStackDTO
     status?: "active" | "inactive"
     createdAt?: Date
     updatedAt?: Date

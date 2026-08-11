@@ -1,153 +1,135 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/atoms";
-import { Card, CardContent } from "@/components/ui/card";
-import { useGlobalParameters } from "@/contexts/GlobalParameterProvider";
-import { useNavigate } from "react-router-dom";
-import { GITHUB_SCOPES } from "./utils";
+import { Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/atoms"
+import { useGlobalParameters } from "@/contexts/GlobalParameterProvider"
+import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
+import { GITHUB_SCOPES } from "./utils"
 
 interface AddRepositoryDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+    isOpen: boolean
+    onOpenChange: (open: boolean) => void
 }
 
-type RepositoryProvider = "azure" | "github" | "gitlab";
+type RepositoryProvider = "azure" | "github" | "gitlab"
 
 export const AddRepositoryDialog = ({ isOpen, onOpenChange }: AddRepositoryDialogProps) => {
-  const { t } = useTranslation();
-  const [selectedProvider, setSelectedProvider] = useState<RepositoryProvider | null>(null);
-  const globalParameters = useGlobalParameters();
-  const githubClientId = globalParameters.getParameter("codeRepository.github.clientId");
-  const navigate = useNavigate();
+    const { t } = useTranslation()
+    const [selectedProvider, setSelectedProvider] = useState<RepositoryProvider | null>(null)
+    const globalParameters = useGlobalParameters()
+    const githubClientId = globalParameters.getParameter("codeRepository.github.clientId")
+    const navigate = useNavigate()
+    const { revokeGithubGrant } = useCodeRepositoriesApi()
 
-  const providers = [
-    githubClientId && {
-      id: "github" as const,
-      name: t("codeRepositories.addDialog.providers.github.name"),
-      description: t("codeRepositories.addDialog.providers.github.description"),
-      icon: (
-        <img
-          src="/img/GitHub.svg"
-          alt="GitHub"
-          className="h-8 w-8"
-        />
-      ),
-      color: "bg-muted hover:bg-muted/80",
-    },
-    {
-      id: "azure" as const,
-      name: t("codeRepositories.addDialog.providers.azure.name"),
-      description: t("codeRepositories.addDialog.providers.azure.description"),
-      icon: (
-        <img
-          src="/img/AzureDevOps.svg"
-          alt="Azure DevOps"
-          className="h-8 w-8"
-        />
-      ),
-      color: "bg-muted hover:bg-muted/80",
-    },
-    {
-      id: "gitlab" as const,
-      name: t("codeRepositories.addDialog.providers.gitlab.name"),
-      description: t("codeRepositories.addDialog.providers.gitlab.description"),
-      icon: (
-        <img
-          src="/img/GitLab.svg"
-          alt="GitLab"
-          className="h-8 w-8"
-        />
-      ),
-      color: "bg-muted hover:bg-muted/80",
-    },
-  ].filter(Boolean);
+    const providers = [
+        githubClientId && {
+            id: "github" as const,
+            name: t("codeRepositories.addDialog.providers.github.name"),
+            description: t("codeRepositories.addDialog.providers.github.description"),
+            icon: <img src="/img/GitHub.svg" alt="GitHub" className="h-8 w-8" />,
+            color: "bg-muted hover:bg-muted/80"
+        },
+        {
+            id: "azure" as const,
+            name: t("codeRepositories.addDialog.providers.azure.name"),
+            description: t("codeRepositories.addDialog.providers.azure.description"),
+            icon: <img src="/img/AzureDevOps.svg" alt="Azure DevOps" className="h-8 w-8" />,
+            color: "bg-muted hover:bg-muted/80"
+        },
+        {
+            id: "gitlab" as const,
+            name: t("codeRepositories.addDialog.providers.gitlab.name"),
+            description: t("codeRepositories.addDialog.providers.gitlab.description"),
+            icon: <img src="/img/GitLab.svg" alt="GitLab" className="h-8 w-8" />,
+            color: "bg-muted hover:bg-muted/80"
+        }
+    ].filter(Boolean)
 
-  const handleProviderSelect = (providerId: RepositoryProvider) => {
-    setSelectedProvider(providerId);
+    const handleProviderSelect = async (providerId: RepositoryProvider) => {
+        setSelectedProvider(providerId)
 
-    if (providerId === "github") {
-      // Redirect to GitHub OAuth for SSO access
-      const redirectUri = `${window.location.origin}/code-repositories/callback/github`;
+        if (providerId === "github") {
+            // Revoke any existing OAuth grant so GitHub always shows the
+            // authorization page (including the org "Grant" buttons).
+            try {
+                await revokeGithubGrant(undefined, { silent: true })
+            } catch {
+                // Best effort: even if the revoke fails, proceed with the OAuth flow
+            }
 
-      const state = btoa(
-        JSON.stringify({
-          provider: "github",
-          timestamp: Date.now(),
-        }),
-      );
+            // Redirect to GitHub OAuth for SSO access
+            const redirectUri = `${window.location.origin}/code-repositories/callback/github`
 
-      const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(
-        redirectUri,
-      )}&scope=${GITHUB_SCOPES}&state=${state}&prompt=login`;
+            const state = btoa(
+                JSON.stringify({
+                    provider: "github",
+                    timestamp: Date.now()
+                })
+            )
 
-      // Open GitHub auth in current window
-      window.location.href = githubAuthUrl;
-      return;
+            const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${GITHUB_SCOPES}&state=${state}`
+
+            // Open GitHub auth in current window
+            window.location.href = githubAuthUrl
+            return
+        }
+
+        if (providerId === "azure") {
+            navigate("/code-repositories/azure")
+        }
+
+        if (providerId === "gitlab") {
+            navigate("/code-repositories/gitlab")
+        }
+
+        // Close dialog for now
+        onOpenChange(false)
+        setSelectedProvider(null)
     }
 
-    if (providerId === "azure") {
-      navigate("/code-repositories/azure");
+    const handleClose = () => {
+        onOpenChange(false)
+        setSelectedProvider(null)
     }
 
-    if (providerId === "gitlab") {
-      navigate("/code-repositories/gitlab");
-    }
+    return (
+        <Dialog open={isOpen} onOpenChange={handleClose}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>{t("codeRepositories.addDialog.title")}</DialogTitle>
+                </DialogHeader>
 
-    // Close dialog for now
-    onOpenChange(false);
-    setSelectedProvider(null);
-  };
+                <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">{t("codeRepositories.addDialog.description")}</p>
 
-  const handleClose = () => {
-    onOpenChange(false);
-    setSelectedProvider(null);
-  };
+                    <div className="grid gap-3">
+                        {providers.map(provider => (
+                            <Card
+                                key={provider.id}
+                                className={`cursor-pointer transition-colors ${provider.color} ${selectedProvider === provider.id ? "ring-2 ring-primary" : ""}`}
+                                onClick={() => handleProviderSelect(provider.id)}
+                            >
+                                <CardContent className="flex items-center p-4">
+                                    <div className="mr-4">{provider.icon}</div>
+                                    <div className="flex-1">
+                                        <h3 className="font-medium">{provider.name}</h3>
+                                        <p className="text-sm text-muted-foreground">{provider.description}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
 
-  return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("codeRepositories.addDialog.title")}</DialogTitle>
-        </DialogHeader>
+                    <div className="flex justify-end space-x-2 pt-4">
+                        <Button variant="secondary" onClick={handleClose}>
+                            {t("common.cancel")}
+                        </Button>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("codeRepositories.addDialog.description")}
-          </p>
-
-          <div className="grid gap-3">
-            {providers.map((provider) => (
-              <Card
-                key={provider.id}
-                className={`cursor-pointer transition-colors ${provider.color} ${
-                  selectedProvider === provider.id ? "ring-2 ring-primary" : ""
-                }`}
-                onClick={() => handleProviderSelect(provider.id)}>
-                <CardContent className="flex items-center p-4">
-                  <div className="mr-4">{provider.icon}</div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">{provider.name}</h3>
-                    <p className="text-sm text-muted-foreground">{provider.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              variant="secondary"
-              onClick={handleClose}>
-              {t("common.cancel")}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export default AddRepositoryDialog;
+export default AddRepositoryDialog

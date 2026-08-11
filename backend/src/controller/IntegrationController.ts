@@ -1,16 +1,25 @@
 import { FastifyInstance } from "fastify"
-import IntegrationService from "../service/IntegrationService"
+import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import FederationIntegrationService, { FederationIntegrationApplyRequestDTO } from "../service/FederationIntegrationService"
+import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function integrationController(fastify: FastifyInstance) {
+    /** Dry run: what wiring up module federation would change in every repository of the project */
+    fastify.get("/integration/module-federation/plan", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+        return reply.send(await new FederationIntegrationService(request.databaseUser).getPlan(projectId))
+    })
+
     fastify.post<{
-        Params: {
-            microfrontendId: string
+        Body: FederationIntegrationApplyRequestDTO
+    }>("/integration/module-federation/apply", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
         }
-        Querystring: {
-            deploymentId?: string
-            environmentId?: string
-        }
-    }>("/microfrontend/:microfrontendId/host-injection", async (request, reply) => {
-        return reply.send(await new IntegrationService(request.databaseUser).injectMicrofrontendHostData(request.params.microfrontendId, request.query.environmentId, request.query.deploymentId))
+        return reply.send(await new FederationIntegrationService(request.databaseUser).apply(projectId, request.body))
     })
 }

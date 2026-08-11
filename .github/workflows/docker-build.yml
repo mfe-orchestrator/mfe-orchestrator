@@ -6,7 +6,7 @@ permissions:
 on:
   workflow_call:
   push:
-    branches: [main]
+    branches: [main,development]
     tags: ["*"]
 
 jobs:

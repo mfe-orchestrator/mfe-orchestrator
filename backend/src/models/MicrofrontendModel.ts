@@ -1,8 +1,17 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
 
 export enum MicrofrontendType {
     HOST = "HOST",
     REMOTE = "REMOTE"
+}
+
+/** Framework and bundler of a microfrontend, and where that knowledge came from */
+export interface IMicrofrontendStack {
+    framework?: MicrofrontendFramework
+    compiler?: MicrofrontendCompiler
+    source: MicrofrontendStackSource
+    detectedAt?: Date
 }
 export interface ICodeRepositoryMicrofrontend {
     enabled: boolean
@@ -43,6 +52,7 @@ export interface IPosition {
 export interface IMicrofrontend extends Document<ObjectId> {
     type: MicrofrontendType
     template: string
+    stack?: IMicrofrontendStack
     slug: string
     name: string
     version: string
@@ -176,6 +186,31 @@ const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofronten
     }
 })
 
+const microfrontendStackSchema = new Schema<IMicrofrontendStack>(
+    {
+        framework: {
+            type: String,
+            enum: Object.values(MicrofrontendFramework),
+            required: false
+        },
+        compiler: {
+            type: String,
+            enum: Object.values(MicrofrontendCompiler),
+            required: false
+        },
+        source: {
+            type: String,
+            enum: Object.values(MicrofrontendStackSource),
+            required: true
+        },
+        detectedAt: {
+            type: Date,
+            required: false
+        }
+    },
+    { _id: false }
+)
+
 const microfrontendPositionSchema = new Schema<IPosition>({
     x: {
         type: Number,
@@ -224,6 +259,10 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         },
         template: {
             type: String,
+            required: false
+        },
+        stack: {
+            type: microfrontendStackSchema,
             required: false
         },
         canary: {

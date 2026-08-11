@@ -1,0 +1,45 @@
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_json",
+            "label": "manifest.json",
+            "file_type": "code",
+            "source_file": "public/manifest.json",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_name",
+            "label": "name",
+            "file_type": "code",
+            "source_file": "public/manifest.json",
+            "source_location": "L2"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_icons",
+            "label": "icons",
+            "file_type": "code",
+            "source_file": "public/manifest.json",
+            "source_location": "L3"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_name",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "public/manifest.json",
+            "source_location": "L2",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_public_manifest_icons",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "public/manifest.json",
+            "source_location": "L3",
+            "weight": 1.0
+        }
+    ]
+}

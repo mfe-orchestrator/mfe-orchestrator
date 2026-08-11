@@ -1,6 +1,6 @@
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
 import { ReactNode } from "react"
 import MainLogo from "@/components/MainLogo"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import LanguageSelector from "@/components/ui/Sidebar/partials/LanguageSelector"
 import ThemeToggle from "@/components/ui/Sidebar/partials/ThemeToggle"
 import { cn } from "@/utils/styleUtils"

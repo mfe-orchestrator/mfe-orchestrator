@@ -1,3 +1,20 @@
+import {
+    Avatar,
+    AvatarFallback,
+    Card,
+    CardContent,
+    CardTitle,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger
+} from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { LayoutGrid, MailCheck, RefreshCw, StretchHorizontal, Trash2, X } from "lucide-react"
@@ -7,14 +24,7 @@ import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { TabsContent } from "@/components/ui/tabs/partials/tabsContent/tabsContent"
-import { TabsList } from "@/components/ui/tabs/partials/tabsList/tabsList"
-import { TabsTrigger } from "@/components/ui/tabs/partials/tabsTrigger/tabsTrigger"
-import { Tabs } from "@/components/ui/tabs/tabs"
 import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 import useProjectUserApi, { ProjectUser } from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
@@ -43,7 +53,7 @@ const UserCard: React.FC<{
     const { t } = useTranslation()
 
     return (
-        <Card key={user._id} className="w-full h-full relative">
+        <Card key={user._id} className="w-full h-full relative" data-testid={`project-member-${user.email}`}>
             <CardContent>
                 <div className="flex flex-col items-center gap-4">
                     <UserPicture userEmail={user.email} userInitials={getUserInitials(user)} />
@@ -170,7 +180,7 @@ const ProjectUsers: React.FC = () => {
                                             </TableHeader>
                                             <TableBody>
                                                 {members.map(user => (
-                                                    <TableRow key={user._id}>
+                                                    <TableRow key={user._id} data-testid={`project-member-${user.email}`}>
                                                         <TableCell className="flex items-center space-x-3">
                                                             <Avatar className="h-8 w-8">
                                                                 <Gravatar email={user.email} className="rounded-full" />
@@ -214,7 +224,7 @@ const ProjectUsers: React.FC = () => {
                     </Tabs>
 
                     {pendingInvites.length > 0 && (
-                        <div className="space-y-4">
+                        <div className="space-y-4" data-testid="pending-invites">
                             <div className="flex items-center gap-2">
                                 <MailCheck className="h-5 w-5 text-muted-foreground" />
                                 <h2 className="text-xl font-semibold text-foreground-secondary">{t("project_users.pending_invites", { count: pendingInvites.length })}</h2>
@@ -231,7 +241,7 @@ const ProjectUsers: React.FC = () => {
                                     </TableHeader>
                                     <TableBody>
                                         {pendingInvites.map(user => (
-                                            <TableRow key={user._id}>
+                                            <TableRow key={user._id} data-testid={`pending-invite-${user.email}`}>
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-8 w-8">

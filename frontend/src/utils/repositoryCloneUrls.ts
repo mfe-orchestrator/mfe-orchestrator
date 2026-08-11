@@ -22,3 +22,9 @@ export const buildGitCloneCommand = (cloneUrl: string) => `git clone ${cloneUrl}
 
 /** Deep link handled by VS Code (and forks exposing the same handler) to clone a repository and open it. */
 export const buildVsCodeCloneUrl = (cloneUrl: string) => `vscode://vscode.git/clone?url=${encodeURIComponent(cloneUrl)}`
+
+/**
+ * Deep link handled by JetBrains Toolbox / IntelliJ IDEA to check out a repository and open it.
+ * `idea.required.plugins.id` makes the IDE ensure the Git plugin is enabled before the checkout.
+ */
+export const buildIntelliJCloneUrl = (cloneUrl: string) => `jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=${encodeURIComponent(cloneUrl)}`

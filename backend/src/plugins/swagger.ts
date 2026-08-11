@@ -1,7 +1,7 @@
-import fastifyPlugin from "fastify-plugin"
 import fastifySwagger from "@fastify/swagger"
 import fastifySwaggerUI from "@fastify/swagger-ui"
 import { FastifyInstance } from "fastify"
+import fastifyPlugin from "fastify-plugin"
 
 /**
  * This plugins adds some utilities to handle http errors

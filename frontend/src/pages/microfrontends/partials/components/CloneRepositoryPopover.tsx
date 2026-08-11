@@ -1,14 +1,16 @@
-import { Check, Copy, GitBranch, Terminal } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@mfe-orchestrator/design-system"
+import { Check, Code, Copy, GitBranch, Terminal } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { buildGitCloneCommand, buildVsCodeCloneUrl } from "@/utils/repositoryCloneUrls"
+import { buildGitCloneCommand, buildIntelliJCloneUrl, buildVsCodeCloneUrl } from "@/utils/repositoryCloneUrls"
 
 interface CloneRepositoryPopoverProps {
     microfrontend: Microfrontend
     className?: string
+    /** Renders the trigger as a compact icon-only button, for tight spots like the flow nodes. */
+    iconOnly?: boolean
 }
 
 type CopiedTarget = "https" | "ssh" | null
@@ -32,7 +34,24 @@ const CloneUrlRow: React.FC<CloneUrlRowProps> = ({ label, url, copied, onCopy })
     </div>
 )
 
-export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ microfrontend, className }) => {
+interface IdeCloneButtonProps {
+    label: string
+    href: string
+    icon: React.ReactNode
+    variant: "primary" | "secondary"
+}
+
+const IdeCloneButton: React.FC<IdeCloneButtonProps> = ({ label, href, icon, variant }) => (
+    <Button asChild variant={variant} size="sm" className="w-full justify-start">
+        {/* Protocol handler link, so it cannot go through the router-aware `href` prop of Button. */}
+        <a href={href}>
+            {icon}
+            <span className="truncate">{label}</span>
+        </a>
+    </Button>
+)
+
+export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ microfrontend, className, iconOnly = false }) => {
     const { t } = useTranslation("platform")
     const [copied, setCopied] = useState<CopiedTarget>(null)
     const resetCopiedTimeout = useRef<ReturnType<typeof setTimeout>>()
@@ -42,7 +61,7 @@ export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ 
 
     const httpsUrl = microfrontend.codeRepository?.cloneUrlHttps
     const sshUrl = microfrontend.codeRepository?.cloneUrlSsh
-    const vsCodeUrl = httpsUrl || sshUrl
+    const ideUrl = httpsUrl || sshUrl
 
     if (!microfrontend.codeRepository?.enabled || (!httpsUrl && !sshUrl)) {
         return null
@@ -58,9 +77,15 @@ export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ 
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="secondary" size="sm" className={className}>
+                <Button
+                    variant="secondary"
+                    size={iconOnly ? "icon-sm" : "sm"}
+                    className={className}
+                    title={iconOnly ? t("microfrontend.clone.button") : undefined}
+                    aria-label={t("microfrontend.clone.button")}
+                >
                     <GitBranch />
-                    {t("microfrontend.clone.button")}
+                    {!iconOnly && t("microfrontend.clone.button")}
                 </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="flex w-80 flex-col gap-3">
@@ -72,14 +97,11 @@ export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ 
                 {httpsUrl && <CloneUrlRow label={t("microfrontend.clone.https")} url={httpsUrl} copied={copied === "https"} onCopy={() => copyCloneCommand("https", httpsUrl)} />}
                 {sshUrl && <CloneUrlRow label={t("microfrontend.clone.ssh")} url={sshUrl} copied={copied === "ssh"} onCopy={() => copyCloneCommand("ssh", sshUrl)} />}
 
-                {vsCodeUrl && (
-                    <Button asChild variant="primary" size="sm" className="w-full justify-start">
-                        {/* Protocol handler link, so it cannot go through the router-aware `href` prop of Button. */}
-                        <a href={buildVsCodeCloneUrl(vsCodeUrl)}>
-                            <Terminal />
-                            <span className="truncate">{t("microfrontend.clone.vscode")}</span>
-                        </a>
-                    </Button>
+                {ideUrl && (
+                    <>
+                        <IdeCloneButton label={t("microfrontend.clone.vscode")} href={buildVsCodeCloneUrl(ideUrl)} icon={<Terminal />} variant="primary" />
+                        <IdeCloneButton label={t("microfrontend.clone.intellij")} href={buildIntelliJCloneUrl(ideUrl)} icon={<Code />} variant="secondary" />
+                    </>
                 )}
             </PopoverContent>
         </Popover>

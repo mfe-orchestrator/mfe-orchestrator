@@ -1,8 +1,7 @@
-
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom"
 
 const Index = () => {
-  return <Navigate to="/microfrontends" replace />;
-};
+    return <Navigate to="/microfrontends" replace />
+}
 
-export default Index;
+export default Index

@@ -1,5 +1,8 @@
 import axios, { AxiosInstance } from "axios"
 
+/** Safety net so a misbehaving pagination cursor cannot turn a repository listing into an endless loop. */
+const maxRepositoryPages = 50
+
 interface GitLabGroup {
     id: number
     name: string
@@ -56,6 +59,20 @@ interface AddGroupSecretRequest {
     secretValue: string
 }
 
+export interface CommitAction {
+    action: "create" | "update" | "delete" | "move"
+    file_path: string
+    content?: string
+    previous_path?: string
+}
+
+export interface CommitFilesRequest {
+    branch: string
+    startBranch?: string
+    commitMessage: string
+    actions: CommitAction[]
+}
+
 export interface GitLabBranch {
     name: string
     commit: {
@@ -99,8 +116,21 @@ class GitLabClient {
     }
 
     async getRepositoriesByGroupId(groupId: string | number): Promise<GitLabProject[]> {
-        const res = await this.api.get<GitLabProject[]>(`/groups/${groupId}/projects`)
-        return res.data
+        const perPage = 100
+        const projects: GitLabProject[] = []
+
+        // GitLab returns 20 projects per page by default, so every page is walked to get the complete list.
+        for (let page = 1; page <= maxRepositoryPages; page++) {
+            const res = await this.api.get<GitLabProject[]>(`/groups/${groupId}/projects`, {
+                params: { per_page: perPage, page }
+            })
+
+            projects.push(...res.data)
+
+            if (res.data.length < perPage) break
+        }
+
+        return projects
     }
 
     async getRepositoryPathsByGroupId(groupId: string | number): Promise<string[]> {
@@ -154,6 +184,55 @@ class GitLabClient {
             tag_name: tagName,
             ref: ref
         })
+    }
+
+    async getProject(projectId: string | number): Promise<GitLabProject> {
+        const res = await this.api.get<GitLabProject>(`/projects/${projectId}`)
+        return res.data
+    }
+
+    /**
+     * Reads a text file from a project. Returns null when the file does not exist on the ref.
+     */
+    async getFileContent(projectId: string | number, filePath: string, ref: string): Promise<string | null> {
+        try {
+            const res = await this.api.get<string>(`/projects/${projectId}/repository/files/${encodeURIComponent(filePath)}/raw`, {
+                params: { ref },
+                // GitLab returns the raw file: keep it as text, axios would try to parse JSON otherwise
+                transformResponse: [data => data]
+            })
+            return res.data
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                return null
+            }
+            throw error
+        }
+    }
+
+    /**
+     * Commits a set of file changes. When `startBranch` is provided GitLab creates `branch`
+     * from it as part of the same call.
+     */
+    async commitFiles(projectId: string | number, request: CommitFilesRequest): Promise<void> {
+        await this.api.post(`/projects/${projectId}/repository/commits`, {
+            branch: request.branch,
+            start_branch: request.startBranch,
+            commit_message: request.commitMessage,
+            actions: request.actions
+        })
+    }
+
+    async branchExists(projectId: string | number, branchName: string): Promise<boolean> {
+        try {
+            await this.api.get(`/projects/${projectId}/repository/branches/${encodeURIComponent(branchName)}`)
+            return true
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                return false
+            }
+            throw error
+        }
     }
 }
 

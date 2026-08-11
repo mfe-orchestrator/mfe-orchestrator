@@ -1,22 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import * as z from "zod"
 import { Button } from "@/components/atoms"
-import SelectField from "@/components/input/SelectField.rhf"
-import Switch from "@/components/input/Switch.rhf"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import { Alert } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection } from "@/pages/microfrontends/partials/components"
+import { CanarySection, CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { FetchDataTemplateCard } from "../templates-library/partials/"
@@ -162,8 +159,6 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         }
     })
 
-    const { watch } = form
-    const canaryEnabled = watch("canary.enabled")
     const notificationToast = useToastNotificationStore()
 
     const onSubmit = async (data: FormValues) => {
@@ -277,65 +272,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
 
                     <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
 
-                    {/* Canary Settings Section */}
-                    <div className="relative">
-                        <Card className="opacity-50">
-                            <CardHeader className={!canaryEnabled ? "border-b-0 pb-0" : ""}>
-                                <div className="flex items-end justify-between flex-wrap gap-x-4 gap-y-2">
-                                    <div>
-                                        <CardTitle className="mb-0">{t("microfrontend.canary_settings")}</CardTitle>
-                                        <CardDescription>{t("microfrontend.canary_settings_description")}</CardDescription>
-                                    </div>
-                                    <Switch name="canary.enabled" disabled={true} />
-                                </div>
-                            </CardHeader>
-                            {canaryEnabled && (
-                                <CardContent className="flex flex-col gap-2 pt-3">
-                                    <TextField
-                                        name="canary.percentage"
-                                        label={t("microfrontend.canary_percentage")}
-                                        placeholder="38%"
-                                        // type="number"
-                                        // required
-                                        // min={0}
-                                        // max={100}
-                                    />
-                                    <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                        <SelectField
-                                            name="canary.type"
-                                            label={t("microfrontend.canary_type")}
-                                            options={[
-                                                { value: "ON_SESSIONS", label: t("microfrontend.on_sessions") },
-                                                { value: "ON_USER", label: t("microfrontend.on_user") },
-                                                { value: "COOKIE_BASED", label: t("microfrontend.cookie_based") }
-                                            ]}
-                                            required
-                                            containerClassName="flex-[1_1_240px]"
-                                        />
-                                        <SelectField
-                                            name="canary.deploymentType"
-                                            label={t("microfrontend.deployment_type")}
-                                            options={[
-                                                { value: "BASED_ON_VERSION", label: t("microfrontend.based_on_version") },
-                                                { value: "BASED_ON_URL", label: t("microfrontend.based_on_url") }
-                                            ]}
-                                            required
-                                            containerClassName="flex-[1_1_240px]"
-                                        />
-                                    </div>
-                                    {form.watch("canary.deploymentType") === "BASED_ON_VERSION" && (
-                                        <TextField name="canary.canaryVersion" label={t("microfrontend.canary_version")} placeholder="1.1.0" required />
-                                    )}
-                                    {form.watch("canary.deploymentType") === "BASED_ON_URL" && (
-                                        <TextField name="canary.canaryUrl" label={t("microfrontend.canary_url")} placeholder="https://canary.example.com" required />
-                                    )}
-                                </CardContent>
-                            )}
-                        </Card>
-                        <Alert className="text-center font-semibold tracking-normal py-2 px-4 uppercase bg-accent text-accent-foreground w-auto rounded-sm absolute top-1/2 -translate-y-1/2 start-1/2 -translate-x-1/2 -rotate-6">
-                            Coming Soon
-                        </Alert>
-                    </div>
+                    <CanarySection />
 
                     <DangerZoneRemoveMicrofrontend microfrontend={frontend} />
                     <div className="flex justify-end gap-2">

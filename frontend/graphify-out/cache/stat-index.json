@@ -1,0 +1,846 @@
+{
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/components.json": {
+        "size": 470,
+        "mtime_ns": 1786109863490510273,
+        "word_count": 36,
+        "hash": "f777922e59f1c703869d9a7b10505ec20a787187647bcd3a05023622b08721ea"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/index.html": { "size": 1535, "mtime_ns": 1786436983591358738, "word_count": 125 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/package.json": {
+        "size": 2389,
+        "mtime_ns": 1786440443374860784,
+        "word_count": 152,
+        "hash": "745badd0dfb821c2d185e5463443ce0c27e55261dfca8064be070489d74cd625"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/postcss.config.js": { "size": 75, "mtime_ns": 1786109863491000398, "word_count": 9 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/Azure.svg": { "size": 1713, "mtime_ns": 1785880209997608331, "word_count": 117 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/AzureDevOps.svg": { "size": 726, "mtime_ns": 1785880209997702369, "word_count": 48 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/GitHub.svg": { "size": 1866, "mtime_ns": 1785880209997785283, "word_count": 124 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/GitLab.svg": { "size": 1151, "mtime_ns": 1785880209997862530, "word_count": 117 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/GoogleCloud.svg": { "size": 782, "mtime_ns": 1785880209997944777, "word_count": 72 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/aws.svg": { "size": 3743, "mtime_ns": 1785880209998035524, "word_count": 274 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/locales/en/platform.json": {
+        "size": 49203,
+        "mtime_ns": 1786440490215720792,
+        "word_count": 4217,
+        "hash": "2eedf509fe0e28ffdeaf05c97710b0300c6044e8f6d6d3ca75428dec3f1b9ad5"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/locales/it/platform.json": {
+        "size": 52822,
+        "mtime_ns": 1786440488665233821,
+        "word_count": 4519,
+        "hash": "f91d58e5c91dae47e9f6f3e03529ed42c49a400980b466eec5b77f5fbd89aa58"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/manifest.json": {
+        "size": 1030,
+        "mtime_ns": 1786109863491933108,
+        "word_count": 68,
+        "hash": "75f87efcdbf1b3e08f07d22b55a615ff89366a6379afaf452d96afc68ace34d6"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/robots.txt": { "size": 160, "mtime_ns": 1785880209998688625, "word_count": 20 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/App.tsx": { "size": 1764, "mtime_ns": 1786114751536763667, "word_count": 122 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/Routes.tsx": { "size": 7306, "mtime_ns": 1786109994352778933, "word_count": 513 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/api/apiClient.ts": { "size": 3831, "mtime_ns": 1786109863492959109, "word_count": 360 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/Auth0AuthWrapper.tsx": {
+        "size": 1162,
+        "mtime_ns": 1786109863493213651,
+        "word_count": 94
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/GoogleAuthWrapper.tsx": {
+        "size": 1008,
+        "mtime_ns": 1786114751537009583,
+        "word_count": 95
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/MicrosoftAuthWrapper.tsx": {
+        "size": 2529,
+        "mtime_ns": 1786109863493670610,
+        "word_count": 189
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/components/AuthenticationLayout.tsx": {
+        "size": 1997,
+        "mtime_ns": 1786114751536932292,
+        "word_count": 165
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/components/LoginPage.tsx": {
+        "size": 4430,
+        "mtime_ns": 1786436915740707723,
+        "word_count": 268
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/components/LoginWithAuth0Button.tsx": {
+        "size": 631,
+        "mtime_ns": 1786109863494208319,
+        "word_count": 64
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/components/LoginWithGoogleButton.tsx": {
+        "size": 1757,
+        "mtime_ns": 1785880210000017825,
+        "word_count": 158
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/components/LoginWithMicrosoftButton.tsx": {
+        "size": 653,
+        "mtime_ns": 1786109863494435277,
+        "word_count": 62
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/components/SocialLoginRow.tsx": {
+        "size": 1970,
+        "mtime_ns": 1786109863494697277,
+        "word_count": 133
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/googleAuthTokenUtils.ts": {
+        "size": 387,
+        "mtime_ns": 1786109863494905653,
+        "word_count": 36
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/authentication/tokenUtils.ts": { "size": 1322, "mtime_ns": 1785880210000342064, "word_count": 151 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/MainLogo.tsx": { "size": 973, "mtime_ns": 1786109863495142361, "word_count": 132 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ProjectPickerList.tsx": {
+        "size": 10645,
+        "mtime_ns": 1786114751540512786,
+        "word_count": 702
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/RouteWithSuspense.tsx": { "size": 262, "mtime_ns": 1786114751537924290, "word_count": 30 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/SinglePageLayout.tsx": { "size": 1237, "mtime_ns": 1785880210000760173, "word_count": 95 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/Spinner.tsx": { "size": 600, "mtime_ns": 1786109863496438863, "word_count": 69 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/SwitchProjectButton.tsx": {
+        "size": 3297,
+        "mtime_ns": 1786439484531833464,
+        "word_count": 272
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/badge/Badge.tsx": { "size": 537, "mtime_ns": 1786109863496676821, "word_count": 63 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/badge/BadgeVariants.tsx": {
+        "size": 789,
+        "mtime_ns": 1786109863496891488,
+        "word_count": 67
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/badge/index.ts": { "size": 67, "mtime_ns": 1786109863497078988, "word_count": 11 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/button/Button.tsx": { "size": 693, "mtime_ns": 1786113955858729685, "word_count": 79 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/button/ButtonVariants.tsx": {
+        "size": 2714,
+        "mtime_ns": 1786109863497312739,
+        "word_count": 190
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/button/IButtonProps.ts": {
+        "size": 374,
+        "mtime_ns": 1785880210001516270,
+        "word_count": 37
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/button/index.ts": { "size": 93, "mtime_ns": 1786113956875560912, "word_count": 11 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/index.ts": { "size": 99, "mtime_ns": 1786113962240003818, "word_count": 12 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/CalendarField.rhf.tsx": {
+        "size": 613,
+        "mtime_ns": 1786114280343318715,
+        "word_count": 63
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/ColorPicker.rhf.tsx": {
+        "size": 760,
+        "mtime_ns": 1786114751538563373,
+        "word_count": 75
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/SelectField.rhf.tsx": {
+        "size": 5158,
+        "mtime_ns": 1785880210002291616,
+        "word_count": 326
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/Switch.rhf.tsx": { "size": 1925, "mtime_ns": 1786109863498910199, "word_count": 161 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/TextField.rhf.tsx": { "size": 695, "mtime_ns": 1786114266291682774, "word_count": 76 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/TextareaChipsField.rhf.tsx": {
+        "size": 5487,
+        "mtime_ns": 1785880210002610146,
+        "word_count": 357
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/input/TextareaField.rhf.tsx": {
+        "size": 742,
+        "mtime_ns": 1786114269007826044,
+        "word_count": 79
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/molecules/EnvironmentSelector.tsx": {
+        "size": 2436,
+        "mtime_ns": 1786114751539362288,
+        "word_count": 148
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/organisms/api-status-handler/ApiStatusHandler.tsx": {
+        "size": 1275,
+        "mtime_ns": 1785880210002995007,
+        "word_count": 131
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/organisms/api-status-handler/IApiStatusHandlerProps.ts": {
+        "size": 379,
+        "mtime_ns": 1785880210003071379,
+        "word_count": 35
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/organisms/api-status-handler/index.ts": {
+        "size": 107,
+        "mtime_ns": 1786109863499828658,
+        "word_count": 11
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/organisms/index.ts": { "size": 37, "mtime_ns": 1786109863500040075, "word_count": 4 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/DeleteConfirmationDialog.tsx": {
+        "size": 674,
+        "mtime_ns": 1786113998356277113,
+        "word_count": 59
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/Sidebar/Sidebar.tsx": {
+        "size": 2307,
+        "mtime_ns": 1786116431936602596,
+        "word_count": 213
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/Sidebar/partials/LanguageSelector.tsx": {
+        "size": 2286,
+        "mtime_ns": 1786114751540295495,
+        "word_count": 186
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/Sidebar/partials/NavItem/NavItem.tsx": {
+        "size": 2629,
+        "mtime_ns": 1786109863501118576,
+        "word_count": 217
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/Sidebar/partials/NavItem/NavItemVariants.tsx": {
+        "size": 950,
+        "mtime_ns": 1786109863501337910,
+        "word_count": 79
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/Sidebar/partials/ThemeToggle.tsx": {
+        "size": 3039,
+        "mtime_ns": 1786114751540703869,
+        "word_count": 256
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/Sidebar/partials/UserButton.tsx": {
+        "size": 5873,
+        "mtime_ns": 1786114751542771533,
+        "word_count": 488
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/accordion.tsx": { "size": 2283, "mtime_ns": 1786109863502116744, "word_count": 147 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/alert.tsx": { "size": 1541, "mtime_ns": 1786109863502347577, "word_count": 136 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/avatar.tsx": { "size": 1345, "mtime_ns": 1786109863502572786, "word_count": 109 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/card.tsx": { "size": 1751, "mtime_ns": 1786109863502796786, "word_count": 158 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/checkbox.tsx": { "size": 1094, "mtime_ns": 1786109863503076828, "word_count": 79 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/dialog.tsx": { "size": 3736, "mtime_ns": 1786109863503463162, "word_count": 252 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/dropdown-menu.tsx": { "size": 7905, "mtime_ns": 1786109863503856162, "word_count": 484 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/form.tsx": { "size": 3953, "mtime_ns": 1786109863504149288, "word_count": 366 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/input/input.tsx": { "size": 1339, "mtime_ns": 1786109863504421788, "word_count": 147 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/input/inputVariants.tsx": {
+        "size": 1188,
+        "mtime_ns": 1786109863504677080,
+        "word_count": 103
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/label.tsx": { "size": 905, "mtime_ns": 1786109863504897747, "word_count": 85 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/popover.tsx": { "size": 1353, "mtime_ns": 1786109863505096247, "word_count": 87 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/radio-group.tsx": { "size": 1508, "mtime_ns": 1786109863505297039, "word_count": 107 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectContent/selectContent.tsx": {
+        "size": 1337,
+        "mtime_ns": 1786109863505559623,
+        "word_count": 102
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectContent/selectContentVariants.tsx": {
+        "size": 1334,
+        "mtime_ns": 1786109863505845206,
+        "word_count": 86
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectItem/selectItem.tsx": {
+        "size": 991,
+        "mtime_ns": 1786109863506082998,
+        "word_count": 81
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectItem/selectItemVariants.tsx": {
+        "size": 1068,
+        "mtime_ns": 1786109863506314040,
+        "word_count": 94
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectLabel/selectLabel.tsx": {
+        "size": 688,
+        "mtime_ns": 1785880210005951190,
+        "word_count": 66
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectLabel/selectLabelVariants.tsx": {
+        "size": 451,
+        "mtime_ns": 1786109863506530332,
+        "word_count": 49
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectScrollButtons.tsx": {
+        "size": 1396,
+        "mtime_ns": 1786109863506715666,
+        "word_count": 99
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectSeparator.tsx": {
+        "size": 742,
+        "mtime_ns": 1785880210006179264,
+        "word_count": 77
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectTrigger/selecTriggerVariants.tsx": {
+        "size": 1169,
+        "mtime_ns": 1786109863506960457,
+        "word_count": 100
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/partials/selectTrigger/selectTrigger.tsx": {
+        "size": 964,
+        "mtime_ns": 1786109863507169374,
+        "word_count": 83
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/select/select.tsx": { "size": 1104, "mtime_ns": 1785880210006435713, "word_count": 90 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/switch.tsx": { "size": 1276, "mtime_ns": 1786109863507402166, "word_count": 83 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/table.tsx": { "size": 2549, "mtime_ns": 1786109863507628458, "word_count": 213 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tabs/partials/tabsContent/tabsContent.tsx": {
+        "size": 664,
+        "mtime_ns": 1785880210006775826,
+        "word_count": 58
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tabs/partials/tabsList/tabsList.tsx": {
+        "size": 1414,
+        "mtime_ns": 1786109863507859458,
+        "word_count": 123
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tabs/partials/tabsList/tabsListVariants.tsx": {
+        "size": 538,
+        "mtime_ns": 1785880210006974985,
+        "word_count": 53
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tabs/partials/tabsTrigger/tabsTrigger.tsx": {
+        "size": 924,
+        "mtime_ns": 1786109863508093000,
+        "word_count": 87
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tabs/partials/tabsTrigger/tabsTriggerVariants.tsx": {
+        "size": 1717,
+        "mtime_ns": 1786109863508353875,
+        "word_count": 140
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tabs/tabs.tsx": { "size": 1036, "mtime_ns": 1785880210007252475, "word_count": 95 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/textarea.tsx": { "size": 847, "mtime_ns": 1786109863508600126, "word_count": 67 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/toggle-group.tsx": { "size": 1892, "mtime_ns": 1786109863508812584, "word_count": 136 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/toggle.tsx": { "size": 1501, "mtime_ns": 1786109863509051710, "word_count": 120 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/ui/tooltip.tsx": { "size": 1246, "mtime_ns": 1786109863509297043, "word_count": 88 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/contexts/GlobalParameterProvider.tsx": {
+        "size": 1964,
+        "mtime_ns": 1785880210007623045,
+        "word_count": 173
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/global.d.ts": { "size": 202, "mtime_ns": 1785912357587262120, "word_count": 20 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useApiKeysApi.ts": {
+        "size": 1485,
+        "mtime_ns": 1786109863509554960,
+        "word_count": 131
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useCanaryUsersApi.ts": {
+        "size": 507,
+        "mtime_ns": 1786109863509755544,
+        "word_count": 52
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useCodeRepositoriesApi.ts": {
+        "size": 12408,
+        "mtime_ns": 1786109863510014919,
+        "word_count": 1009
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useDependenciesApi.ts": {
+        "size": 4667,
+        "mtime_ns": 1786109994352921350,
+        "word_count": 403
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useDeploymentsApi.ts": {
+        "size": 2529,
+        "mtime_ns": 1786109863510186294,
+        "word_count": 211
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useEnvironmentsApi.ts": {
+        "size": 2399,
+        "mtime_ns": 1785912357587422828,
+        "word_count": 218
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useGlobalVariablesApi.ts": {
+        "size": 1622,
+        "mtime_ns": 1786109863510420461,
+        "word_count": 144
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useIntegrationApi.ts": {
+        "size": 698,
+        "mtime_ns": 1786109863510656170,
+        "word_count": 52
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useInvitationApi.ts": {
+        "size": 2642,
+        "mtime_ns": 1786439416637649865,
+        "word_count": 254
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useMarketApi.ts": { "size": 966, "mtime_ns": 1786109863510847920, "word_count": 99 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useMicrofrontendsApi.ts": {
+        "size": 5151,
+        "mtime_ns": 1785912357587616702,
+        "word_count": 472
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useProjectApi.ts": {
+        "size": 3073,
+        "mtime_ns": 1786109863511066420,
+        "word_count": 276
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useProjectUserApi.ts": {
+        "size": 1503,
+        "mtime_ns": 1785880210008752378,
+        "word_count": 121
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useProjectWizardClient.ts": {
+        "size": 885,
+        "mtime_ns": 1785880210008839500,
+        "word_count": 87
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useServeApi.ts": { "size": 1389, "mtime_ns": 1786109863511254170, "word_count": 125 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useStartupApi.ts": { "size": 1056, "mtime_ns": 1786109863511458421, "word_count": 88 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useStorageApi.ts": {
+        "size": 3148,
+        "mtime_ns": 1785880210009035992,
+        "word_count": 302
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useUserApi.ts": { "size": 3644, "mtime_ns": 1786109863511673837, "word_count": 309 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/use-mobile.tsx": { "size": 603, "mtime_ns": 1786109863511859338, "word_count": 56 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/useApiClient.tsx": { "size": 9907, "mtime_ns": 1786109863512108505, "word_count": 753 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/useDragAndDropOrder.ts": { "size": 3813, "mtime_ns": 1785912357587727244, "word_count": 436 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/i18n.ts": { "size": 1321, "mtime_ns": 1785912357587895826, "word_count": 125 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/main.tsx": { "size": 157, "mtime_ns": 1786109863512372005, "word_count": 14 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/Index.tsx": { "size": 144, "mtime_ns": 1786109863512643297, "word_count": 21 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/api-keys/ApiKeys.tsx": { "size": 8199, "mtime_ns": 1786369775519757124, "word_count": 477 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/api-keys/partials/CreateApiKeyDialog.tsx": {
+        "size": 5855,
+        "mtime_ns": 1786369970928427785,
+        "word_count": 330
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/api-keys/partials/CreateApiKeyForm.tsx": {
+        "size": 1631,
+        "mtime_ns": 1786369775520846883,
+        "word_count": 139
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/api-keys/partials/NoApiKeyPlaceholder.tsx": {
+        "size": 1391,
+        "mtime_ns": 1786369901292461436,
+        "word_count": 119
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/api-keys/partials/index.ts": { "size": 110, "mtime_ns": 1786109863513172797, "word_count": 12 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/auth/AccountActivation.tsx": { "size": 1406, "mtime_ns": 1786109863513461923, "word_count": 109 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/auth/ProjectInvitation.tsx": { "size": 5988, "mtime_ns": 1786363543159860833, "word_count": 404 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/auth/ResetPassword.tsx": { "size": 3442, "mtime_ns": 1786436936364295036, "word_count": 206 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/auth/ResetPasswordRequest.tsx": {
+        "size": 2719,
+        "mtime_ns": 1786436923843599806,
+        "word_count": 171
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/auth/SignUp.tsx": { "size": 5341, "mtime_ns": 1786114751549228398, "word_count": 285 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/AddAzure.tsx": {
+        "size": 14336,
+        "mtime_ns": 1786114751551133895,
+        "word_count": 599
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/AddGitHub.tsx": {
+        "size": 15081,
+        "mtime_ns": 1786114751552490268,
+        "word_count": 801
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/AddGitlab.tsx": {
+        "size": 17244,
+        "mtime_ns": 1786114751552615684,
+        "word_count": 806
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/CodeRepositories.tsx": {
+        "size": 9371,
+        "mtime_ns": 1786114751550345438,
+        "word_count": 466
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/GitHubCallbackPage.tsx": {
+        "size": 4432,
+        "mtime_ns": 1786114751554035974,
+        "word_count": 262
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/partials/AddRepositoryDialog.tsx": {
+        "size": 5641,
+        "mtime_ns": 1786114751554539015,
+        "word_count": 383
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/partials/index.ts": {
+        "size": 62,
+        "mtime_ns": 1786109863515441383,
+        "word_count": 8
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/code-repositories/partials/utils.ts": {
+        "size": 86,
+        "mtime_ns": 1786109863515773050,
+        "word_count": 5
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/Dependencies.tsx": {
+        "size": 8460,
+        "mtime_ns": 1786114751555930262,
+        "word_count": 562
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/partials/AlignPeerDependenciesDialog.tsx": {
+        "size": 7812,
+        "mtime_ns": 1786114751555551638,
+        "word_count": 480
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/partials/BranchSelection.tsx": {
+        "size": 3464,
+        "mtime_ns": 1786114751553637683,
+        "word_count": 195
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/partials/DependencyAlignmentTable.tsx": {
+        "size": 3490,
+        "mtime_ns": 1786114751553962890,
+        "word_count": 174
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/partials/DependencyStatusBadge.tsx": {
+        "size": 900,
+        "mtime_ns": 1786109994353474476,
+        "word_count": 71
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/partials/MicrofrontendDependencyList.tsx": {
+        "size": 7623,
+        "mtime_ns": 1786114751554698931,
+        "word_count": 329
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/dependencies/partials/index.ts": {
+        "size": 209,
+        "mtime_ns": 1786109994353637018,
+        "word_count": 20
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/deployments/CanaryUsers.tsx": {
+        "size": 4513,
+        "mtime_ns": 1786109863516064342,
+        "word_count": 196
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/deployments/Deployments.tsx": {
+        "size": 2215,
+        "mtime_ns": 1786109863516243259,
+        "word_count": 146
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/deployments/partials/DeploymentList.tsx": {
+        "size": 13836,
+        "mtime_ns": 1786114751557348719,
+        "word_count": 491
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environment-variables/EnvironmentVariables.tsx": {
+        "size": 9845,
+        "mtime_ns": 1786114751557738968,
+        "word_count": 572
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environment-variables/partials/EnvironmentVariableDialog.tsx": {
+        "size": 3678,
+        "mtime_ns": 1786114751556027012,
+        "word_count": 248
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environment-variables/partials/EnvironmentVariableForm.tsx": {
+        "size": 3173,
+        "mtime_ns": 1786109863517374260,
+        "word_count": 241
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environment-variables/partials/index.ts": {
+        "size": 86,
+        "mtime_ns": 1786109863517626177,
+        "word_count": 8
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environments/Environments.tsx": {
+        "size": 15578,
+        "mtime_ns": 1786369759505875775,
+        "word_count": 825
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environments/partials/EnvironmentList.tsx": {
+        "size": 12494,
+        "mtime_ns": 1786438273097456792,
+        "word_count": 780
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environments/partials/EnvironmentSet.tsx": {
+        "size": 1444,
+        "mtime_ns": 1786438689683823857,
+        "word_count": 112
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environments/partials/NoEnvironmentPlaceholder.tsx": {
+        "size": 2869,
+        "mtime_ns": 1786114751558794216,
+        "word_count": 204
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/environments/partials/index.ts": {
+        "size": 110,
+        "mtime_ns": 1786109863518146845,
+        "word_count": 12
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/error/NotFound.tsx": { "size": 793, "mtime_ns": 1786109863518391761, "word_count": 73 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/Integration.tsx": {
+        "size": 3397,
+        "mtime_ns": 1786114751559194091,
+        "word_count": 180
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/DeploymentGate.tsx": {
+        "size": 871,
+        "mtime_ns": 1786114751568240868,
+        "word_count": 74
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/components/CodeIntegration.tsx": {
+        "size": 819,
+        "mtime_ns": 1786109863519036096,
+        "word_count": 72
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/components/MicrofrontendSelector.tsx": {
+        "size": 2306,
+        "mtime_ns": 1786114751558880049,
+        "word_count": 139
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/components/index.ts": {
+        "size": 74,
+        "mtime_ns": 1786109863519470388,
+        "word_count": 8
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/index.ts": { "size": 53, "mtime_ns": 1786109863519672763, "word_count": 8 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/views/EnvironmentVariablesIntegration.tsx": {
+        "size": 2425,
+        "mtime_ns": 1786114751559695673,
+        "word_count": 148
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/views/FrontendIntegration.tsx": {
+        "size": 6172,
+        "mtime_ns": 1786114751561274254,
+        "word_count": 326
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/integration/partials/views/index.ts": {
+        "size": 88,
+        "mtime_ns": 1786109863520033972,
+        "word_count": 8
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/AddMicrofrontend.tsx": {
+        "size": 14101,
+        "mtime_ns": 1786440109506329507,
+        "word_count": 851
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/Microfrontends.tsx": {
+        "size": 8712,
+        "mtime_ns": 1786114751573482194,
+        "word_count": 591
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/AddNewMicrofrontendCard.tsx": {
+        "size": 1735,
+        "mtime_ns": 1786114751561362629,
+        "word_count": 129
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/BuildDialog.tsx": {
+        "size": 5714,
+        "mtime_ns": 1786114751563291584,
+        "word_count": 365
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/CloneRepositoryPopover.tsx": {
+        "size": 4671,
+        "mtime_ns": 1786439233585913226,
+        "word_count": 385
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/CodeRepositorySection.tsx": {
+        "size": 12659,
+        "mtime_ns": 1786114751565569831,
+        "word_count": 772
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/DangerZoneRemoveMicrofrontend.tsx": {
+        "size": 5828,
+        "mtime_ns": 1786114751563379459,
+        "word_count": 318
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/HostingSection.tsx": {
+        "size": 2906,
+        "mtime_ns": 1786114751562428419,
+        "word_count": 170
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/MicrofrontendCard.tsx": {
+        "size": 6363,
+        "mtime_ns": 1786114751563185501,
+        "word_count": 366
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/MicrofrontendsEmptyState.tsx": {
+        "size": 1987,
+        "mtime_ns": 1785880210015529086,
+        "word_count": 162
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/index.ts": {
+        "size": 345,
+        "mtime_ns": 1786439297488974209,
+        "word_count": 36
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/labels.ts": {
+        "size": 1017,
+        "mtime_ns": 1785880210015651664,
+        "word_count": 70
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/views/MicrofrontendsFlow.tsx": {
+        "size": 9498,
+        "mtime_ns": 1786109863521282264,
+        "word_count": 776
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/views/MicrofrontendsGrid.tsx": {
+        "size": 916,
+        "mtime_ns": 1785880210016029817,
+        "word_count": 75
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/views/MicrofrontendsTable.tsx": {
+        "size": 5248,
+        "mtime_ns": 1786114751566022997,
+        "word_count": 265
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/views/index.ts": {
+        "size": 112,
+        "mtime_ns": 1785880210016285849,
+        "word_count": 12
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/NewProjectWizard.tsx": {
+        "size": 4669,
+        "mtime_ns": 1786438273098504492,
+        "word_count": 395
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/CodeRepositories.tsx": {
+        "size": 1622,
+        "mtime_ns": 1786109863521789974,
+        "word_count": 146
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/Completed.tsx": {
+        "size": 2302,
+        "mtime_ns": 1786109863522000849,
+        "word_count": 155
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/Environments.tsx": {
+        "size": 1467,
+        "mtime_ns": 1786109863522180807,
+        "word_count": 117
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/Hosting.tsx": {
+        "size": 1797,
+        "mtime_ns": 1786114751565481831,
+        "word_count": 129
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/MainData.tsx": {
+        "size": 3155,
+        "mtime_ns": 1786109863522571224,
+        "word_count": 196
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/TeamMates.tsx": {
+        "size": 6047,
+        "mtime_ns": 1786114751569792616,
+        "word_count": 444
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/WizardBasicProps.ts": {
+        "size": 130,
+        "mtime_ns": 1785880210017155484,
+        "word_count": 15
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/new-project-wizard/pages/wizardShared.tsx": {
+        "size": 5257,
+        "mtime_ns": 1786109863523145517,
+        "word_count": 457
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/project-users/ProjectUsers.tsx": {
+        "size": 16854,
+        "mtime_ns": 1786363524078434759,
+        "word_count": 855
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/project-users/partials/AddUserButton.tsx": {
+        "size": 6944,
+        "mtime_ns": 1786369325469073417,
+        "word_count": 504
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/project-users/partials/UserPicture.tsx": {
+        "size": 1625,
+        "mtime_ns": 1786114751568234493,
+        "word_count": 168
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/project-users/partials/index.ts": {
+        "size": 62,
+        "mtime_ns": 1786109863524285268,
+        "word_count": 8
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/settings/Settings.tsx": { "size": 4363, "mtime_ns": 1786109863524665768, "word_count": 283 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/settings/partials/DangerZone.tsx": {
+        "size": 5300,
+        "mtime_ns": 1786114751574363609,
+        "word_count": 327
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/settings/partials/ProjectInfoSection.tsx": {
+        "size": 2744,
+        "mtime_ns": 1786114751573620485,
+        "word_count": 192
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/settings/partials/ProjectStatsSection.tsx": {
+        "size": 2328,
+        "mtime_ns": 1786114751574145568,
+        "word_count": 191
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/settings/partials/index.ts": { "size": 104, "mtime_ns": 1786109863525637228, "word_count": 12 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/storages/AddStorage.tsx": { "size": 14319, "mtime_ns": 1786438273097990954, "word_count": 929 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/storages/Storages.tsx": { "size": 8178, "mtime_ns": 1786369793898703290, "word_count": 424 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/templates-library/TemplatesLibrary.tsx": {
+        "size": 11660,
+        "mtime_ns": 1786114751579064977,
+        "word_count": 718
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/templates-library/partials/BlankTemplateCard.tsx": {
+        "size": 1437,
+        "mtime_ns": 1786114751574799692,
+        "word_count": 100
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/templates-library/partials/FetchDataTemplateCard.tsx": {
+        "size": 871,
+        "mtime_ns": 1786109863526967729,
+        "word_count": 88
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/templates-library/partials/TemplateCard.tsx": {
+        "size": 3490,
+        "mtime_ns": 1786114751575860857,
+        "word_count": 253
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/templates-library/partials/index.ts": {
+        "size": 107,
+        "mtime_ns": 1786109863527460230,
+        "word_count": 12
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/store/useProjectStore.ts": { "size": 1190, "mtime_ns": 1786109863527656438, "word_count": 111 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/store/useThemeStore.ts": { "size": 1388, "mtime_ns": 1785880210019549604, "word_count": 169 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/store/useToastNotificationStore.ts": {
+        "size": 1480,
+        "mtime_ns": 1786109863527838355,
+        "word_count": 133
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/store/useUserStore.ts": { "size": 956, "mtime_ns": 1786109863528058480, "word_count": 112 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/AuthWrapper.tsx": { "size": 2079, "mtime_ns": 1786109863528276189, "word_count": 156 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/EnvironmentsGate.tsx": { "size": 1595, "mtime_ns": 1786109863528533189, "word_count": 114 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/FirstStartupWrapper.tsx": { "size": 5260, "mtime_ns": 1786109863528769481, "word_count": 309 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/InitialThemeWrapper.tsx": { "size": 912, "mtime_ns": 1785880210020026628, "word_count": 87 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/Notification.tsx": { "size": 1910, "mtime_ns": 1785880210020081126, "word_count": 141 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/SelectProjectWrapper.tsx": { "size": 5276, "mtime_ns": 1786439471572108535, "word_count": 505 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/SentryInit.tsx": { "size": 1691, "mtime_ns": 1785880210020290951, "word_count": 151 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/ThemeHandler.tsx": { "size": 1618, "mtime_ns": 1786109863529000981, "word_count": 150 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/layout/Header.tsx": { "size": 514, "mtime_ns": 1785880210020454237, "word_count": 46 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/layout/MainLayout.tsx": { "size": 2155, "mtime_ns": 1786109994353772435, "word_count": 187 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/types/ApiResponseDTO.ts": { "size": 96, "mtime_ns": 1786109863529535565, "word_count": 11 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/types/ConfigResponseDTO.ts": { "size": 885, "mtime_ns": 1786109863529750149, "word_count": 81 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/utils/EnviromentsPresets.ts": { "size": 2547, "mtime_ns": 1786109863529993441, "word_count": 285 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/utils/StringUtils.ts": { "size": 221, "mtime_ns": 1786109863530213233, "word_count": 35 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/utils/localStorageUtils.ts": { "size": 806, "mtime_ns": 1786109863530498191, "word_count": 81 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/utils/repositoryCloneUrls.ts": { "size": 1607, "mtime_ns": 1786439205241563903, "word_count": 174 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/utils/styleUtils.ts": { "size": 168, "mtime_ns": 1786109863530682483, "word_count": 22 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/vite-env.d.ts": { "size": 222, "mtime_ns": 1785912357589743944, "word_count": 30 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/tailwind.config.ts": { "size": 5205, "mtime_ns": 1785880210021222875, "word_count": 294 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/tsconfig.app.json": {
+        "size": 724,
+        "mtime_ns": 1786109863530896025,
+        "word_count": 53,
+        "hash": "380ca4ae9187e3b36588560b0cd8475181987fa7cecb5dd63ff6ca95901dc3a5"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/tsconfig.json": {
+        "size": 395,
+        "mtime_ns": 1786109863531128442,
+        "word_count": 33,
+        "hash": "cb2a38ef2aada5adff2d9bb4ebdd2cb40c920a52da5e80684448680b8272e699"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/tsconfig.node.json": {
+        "size": 547,
+        "mtime_ns": 1786109863531339067,
+        "word_count": 40,
+        "hash": "28cf803ea956f7798b5df30d8b751694f61ce80c1472ca21e7c24a7101117804"
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/vite.config.ts": { "size": 982, "mtime_ns": 1786438531609788622, "word_count": 95 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/PendingInvitationsList.tsx": {
+        "size": 5841,
+        "mtime_ns": 1786439548235505580,
+        "word_count": 454
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/CanarySection.tsx": {
+        "size": 3610,
+        "mtime_ns": 1786446302482969266,
+        "word_count": 187
+    }
+}

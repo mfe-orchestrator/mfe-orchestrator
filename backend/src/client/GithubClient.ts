@@ -2,6 +2,9 @@ import axios from "axios"
 import sodium from "libsodium-wrappers"
 import { CodeRepositoryType } from "../models/CodeRepositoryModel"
 
+/** Safety net so a misbehaving pagination cursor cannot turn a repository listing into an endless loop. */
+const maxRepositoryPages = 50
+
 export interface GithubAccessTokenResponse {
     access_token: string
     scope: string
@@ -217,6 +220,37 @@ export interface GithubOrganizationSecretDTO extends GithubBaseDTO {
     selectedRepositoryIds?: number[]
 }
 
+export interface GithubFileDTO extends GithubRepositoryBaseDTO {
+    path: string
+    ref?: string
+}
+
+export interface GithubCreateBranchDTO extends GithubRepositoryBaseDTO {
+    branchName: string
+    sha: string
+}
+
+export interface GithubUpdateFileDTO extends GithubRepositoryBaseDTO {
+    path: string
+    content: string
+    message: string
+    branch: string
+    /** Sha of the blob being replaced. Leave it out to create the file. */
+    sha?: string
+}
+
+export interface GithubFileContent {
+    content: string
+    sha: string
+}
+
+interface GithubContentsResponse {
+    type?: string
+    encoding?: string
+    content?: string
+    sha: string
+}
+
 class GithubClient {
     async encryptValueForSecret(key: string, secret: string): Promise<string> {
         await sodium.ready
@@ -250,6 +284,40 @@ class GithubClient {
         }
 
         return responseGithub.data
+    }
+
+    /**
+     * Revoca il grant dell'OAuth App per l'utente proprietario del token.
+     * Dopo la revoca GitHub ripropone sempre la pagina di autorizzazione
+     * (inclusi i bottoni "Grant" per le organizzazioni) al prossimo authorize.
+     */
+    async revokeApplicationGrant(clientId: string, clientSecret: string, accessToken: string): Promise<void> {
+        try {
+            await axios.request({
+                method: "DELETE",
+                url: `https://api.github.com/applications/${clientId}/grant`,
+                auth: {
+                    username: clientId,
+                    password: clientSecret
+                },
+                headers: {
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                },
+                data: {
+                    access_token: accessToken
+                }
+            })
+        } catch (error: unknown) {
+            if (error && typeof error === "object" && "response" in error) {
+                const err = error as { response?: { status?: number } }
+                // 404/422: token già revocato o non più valido — il grant non esiste, che è l'obiettivo
+                if (err.response?.status === 404 || err.response?.status === 422) {
+                    return
+                }
+            }
+            throw error
+        }
     }
 
     async getUser(accessToken: string): Promise<GithubUser> {
@@ -486,17 +554,27 @@ class GithubClient {
 
     async getRepositories(accessToken: string, orgName?: string): Promise<GithubRepository[]> {
         const url = orgName ? `https://api.github.com/orgs/${orgName}/repos` : "https://api.github.com/user/repos"
+        const perPage = 100
+        const repositories: GithubRepository[] = []
 
-        const response = await axios.request<GithubRepository[]>({
-            url,
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: "application/vnd.github.v3+json",
-                "User-Agent": "MFE-Orchestrator"
-            }
-        })
+        // GitHub paginates this endpoint, so every page is walked: callers need the complete list of repositories.
+        for (let page = 1; page <= maxRepositoryPages; page++) {
+            const response = await axios.request<GithubRepository[]>({
+                url,
+                params: { per_page: perPage, page },
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                }
+            })
 
-        return response.data
+            repositories.push(...response.data)
+
+            if (response.data.length < perPage) break
+        }
+
+        return repositories
     }
 
     async createBuild(buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> {
@@ -551,6 +629,97 @@ class GithubClient {
         })
 
         return response.data
+    }
+
+    async getRepository({ accessToken, orgName, userName, repositoryName }: GithubRepositoryBaseDTO): Promise<GithubRepository> {
+        const response = await axios.request<GithubRepository>({
+            url: this.getRepositoryBaseUrlBase(repositoryName, orgName, userName),
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            }
+        })
+
+        return response.data
+    }
+
+    /**
+     * Reads a text file from a repository. Returns null when the file does not exist on the
+     * given ref, so callers can treat a missing package.json as "nothing to analyse".
+     */
+    async getFileContent({ accessToken, orgName, userName, repositoryName, path, ref }: GithubFileDTO): Promise<GithubFileContent | null> {
+        try {
+            const response = await axios.request<GithubContentsResponse>({
+                url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/contents/${encodeURI(path)}`,
+                params: ref ? { ref } : undefined,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                }
+            })
+
+            if (Array.isArray(response.data) || response.data.type !== "file" || response.data.content === undefined) {
+                return null
+            }
+
+            return {
+                content: Buffer.from(response.data.content, (response.data.encoding as BufferEncoding) || "base64").toString("utf8"),
+                sha: response.data.sha
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                return null
+            }
+            throw error
+        }
+    }
+
+    /**
+     * Creates a branch pointing at `sha`. Returns false when the branch already exists.
+     */
+    async createBranch({ accessToken, orgName, userName, repositoryName, branchName, sha }: GithubCreateBranchDTO): Promise<boolean> {
+        try {
+            await axios.request({
+                method: "POST",
+                url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/git/refs`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                },
+                data: {
+                    ref: `refs/heads/${branchName}`,
+                    sha
+                }
+            })
+
+            return true
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 422) {
+                return false
+            }
+            throw error
+        }
+    }
+
+    async updateFileContent({ accessToken, orgName, userName, repositoryName, path, content, message, branch, sha }: GithubUpdateFileDTO): Promise<void> {
+        await axios.request({
+            method: "PUT",
+            url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/contents/${encodeURI(path)}`,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            },
+            data: {
+                message,
+                content: Buffer.from(content, "utf8").toString("base64"),
+                branch,
+                sha
+            }
+        })
     }
 }
 

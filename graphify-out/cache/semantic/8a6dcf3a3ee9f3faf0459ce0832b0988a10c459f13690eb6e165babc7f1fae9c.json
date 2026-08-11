@@ -1,1 +1,29 @@
-{"nodes": [{"id": "_github_workflows_e2e_tests_e2e_tests", "label": "E2E Tests Workflow (Playwright)", "file_type": "code", "source_file": ".github/workflows/e2e-tests.yml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Runs Playwright Chromium E2E tests against https://console-dev.mfe-orchestrator.dev on manual dispatch, push to the e2e branch, or weekly cron (Monday 6:00 UTC); uploads playwright-report and test-results artifacts for 30 days"}], "edges": [{"source": "_github_workflows_e2e_tests_e2e_tests", "target": "e2e_readme_playwright_e2e_tests", "relation": "references", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": ".github/workflows/e2e-tests.yml", "source_location": null, "weight": 1.0}], "hyperedges": []}
+{
+    "nodes": [
+        {
+            "id": "_github_workflows_e2e_tests_e2e_tests",
+            "label": "E2E Tests Workflow (Playwright)",
+            "file_type": "code",
+            "source_file": ".github/workflows/e2e-tests.yml",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null,
+            "rationale": "Runs Playwright Chromium E2E tests against https://console-dev.mfe-orchestrator.dev on manual dispatch, push to the e2e branch, or weekly cron (Monday 6:00 UTC); uploads playwright-report and test-results artifacts for 30 days"
+        }
+    ],
+    "edges": [
+        {
+            "source": "_github_workflows_e2e_tests_e2e_tests",
+            "target": "e2e_readme_playwright_e2e_tests",
+            "relation": "references",
+            "confidence": "INFERRED",
+            "confidence_score": 0.95,
+            "source_file": ".github/workflows/e2e-tests.yml",
+            "source_location": null,
+            "weight": 1.0
+        }
+    ],
+    "hyperedges": []
+}

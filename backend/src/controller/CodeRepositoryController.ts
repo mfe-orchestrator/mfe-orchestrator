@@ -1,8 +1,10 @@
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import CodeRepositoryImportService from "../service/CodeRepositoryImportService"
 import CodeRepositoryService from "../service/CodeRepositoryService"
 import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
+import ImportRepositoriesDTO from "../types/ImportRepositoriesDTO"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
@@ -33,6 +35,28 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
     }>("/repositories/:repositoryId/repositories", async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).getRepositories(request.params.repositoryId)
         return reply.send(repository)
+    })
+
+    fastify.get<{
+        Params: {
+            codeRepositoryId: string
+        }
+        Querystring: {
+            groupId?: number
+        }
+    }>("/repositories/:codeRepositoryId/importable-repositories", async (request, reply) => {
+        const repositories = await new CodeRepositoryImportService(request.databaseUser).getImportableRepositories(request.params.codeRepositoryId, request.query.groupId)
+        return reply.send(repositories)
+    })
+
+    fastify.post<{
+        Params: {
+            codeRepositoryId: string
+        }
+        Body: ImportRepositoriesDTO
+    }>("/repositories/:codeRepositoryId/import", async (request, reply) => {
+        const result = await new CodeRepositoryImportService(request.databaseUser).importRepositories(request.params.codeRepositoryId, request.body)
+        return reply.send(result)
     })
 
     fastify.get<{
@@ -87,6 +111,19 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
     }>("/repositories/:repositoryId/deactivate", async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).deactivate(request.params.repositoryId)
         return reply.send(repository)
+    })
+
+    fastify.post<{
+        Body: {
+            repositoryId?: string
+        }
+    }>("/repositories/github/revoke-grant", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+        await new CodeRepositoryService(request.databaseUser).revokeGithubGrant(projectId, request.body?.repositoryId)
+        return reply.status(204).send()
     })
 
     fastify.post<{

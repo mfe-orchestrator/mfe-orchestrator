@@ -1,0 +1,1367 @@
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "label": "package.json",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_name",
+            "label": "name",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L2"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_version",
+            "label": "version",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L3"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_description",
+            "label": "description",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L4"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_main",
+            "label": "main",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L5"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "label": "scripts",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L6"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_start",
+            "label": "start",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L7"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_st",
+            "label": "st",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L8"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_dev",
+            "label": "dev",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L9"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_build",
+            "label": "build",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L10"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_lint",
+            "label": "lint",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L11"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_format",
+            "label": "format",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L12"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_typecheck",
+            "label": "typecheck",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L13"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_keywords",
+            "label": "keywords",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L15"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_author",
+            "label": "author",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L16"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_license",
+            "label": "license",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L17"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_packagemanager",
+            "label": "packageManager",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L18"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "label": "dependencies",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L19"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_aws_sdk_client_s3",
+            "label": "@aws-sdk/client-s3",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L20"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_aws_sdk_s3_request_presigner",
+            "label": "@aws-sdk/s3-request-presigner",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L21"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_azure_identity",
+            "label": "@azure/identity",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L22"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_azure_storage_blob",
+            "label": "@azure/storage-blob",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L23"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_autoload",
+            "label": "@fastify/autoload",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L24"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_cors",
+            "label": "@fastify/cors",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L25"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_env",
+            "label": "@fastify/env",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L26"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_helmet",
+            "label": "@fastify/helmet",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L27"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_multipart",
+            "label": "@fastify/multipart",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L28"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_rate_limit",
+            "label": "@fastify/rate-limit",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L29"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_sensible",
+            "label": "@fastify/sensible",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L30"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_swagger",
+            "label": "@fastify/swagger",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L31"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_swagger_ui",
+            "label": "@fastify/swagger-ui",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L32"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_google_cloud_storage",
+            "label": "@google-cloud/storage",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L33"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_redis_client",
+            "label": "@redis/client",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L34"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_sentry_node",
+            "label": "@sentry/node",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L35"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_adm_zip",
+            "label": "adm-zip",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L36"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_axios",
+            "label": "axios",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L37"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_bcryptjs",
+            "label": "bcryptjs",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L38"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_dotenv",
+            "label": "dotenv",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L39"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify",
+            "label": "fastify",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L40"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_auth0_verify",
+            "label": "fastify-auth0-verify",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L41"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_plugin",
+            "label": "fastify-plugin",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L42"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fs_extra",
+            "label": "fs-extra",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L43"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_isomorphic_git",
+            "label": "isomorphic-git",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L44"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_jsonwebtoken",
+            "label": "jsonwebtoken",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L45"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_libsodium_wrappers",
+            "label": "libsodium-wrappers",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L46"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_mongoose",
+            "label": "mongoose",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L47"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_nodemailer",
+            "label": "nodemailer",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L48"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_nodemon",
+            "label": "nodemon",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L49"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_pug",
+            "label": "pug",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L50"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_typescript",
+            "label": "typescript",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L51"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_typescript_eslint",
+            "label": "typescript-eslint",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L52"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_xstate",
+            "label": "xstate",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L53"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "label": "devDependencies",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L55"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_adm_zip",
+            "label": "@types/adm-zip",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L56"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_fs_extra",
+            "label": "@types/fs-extra",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L57"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_jsonwebtoken",
+            "label": "@types/jsonwebtoken",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L58"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_node",
+            "label": "@types/node",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L59"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_nodemailer",
+            "label": "@types/nodemailer",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L60"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_pug",
+            "label": "@types/pug",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L61"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_tsx",
+            "label": "tsx",
+            "file_type": "code",
+            "source_file": "package.json",
+            "source_location": "L62"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_name",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L2",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_version",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L3",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_description",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L4",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_main",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L5",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L6",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_start",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L7",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_st",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L8",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_dev",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L9",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_build",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L10",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_lint",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L11",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_format",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L12",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_scripts_typecheck",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L13",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_keywords",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L15",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_author",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L16",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_license",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L17",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_packagemanager",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L18",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L19",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_aws_sdk_client_s3",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L20",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_aws_sdk_client_s3",
+            "target": "aws_sdk_client_s3",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L20",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_aws_sdk_s3_request_presigner",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L21",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_aws_sdk_s3_request_presigner",
+            "target": "aws_sdk_s3_request_presigner",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L21",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_azure_identity",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L22",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_azure_identity",
+            "target": "azure_identity",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L22",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_azure_storage_blob",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L23",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_azure_storage_blob",
+            "target": "azure_storage_blob",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L23",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_autoload",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L24",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_autoload",
+            "target": "fastify_autoload",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L24",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_cors",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L25",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_cors",
+            "target": "fastify_cors",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L25",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_env",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L26",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_env",
+            "target": "fastify_env",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L26",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_helmet",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L27",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_helmet",
+            "target": "fastify_helmet",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L27",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_multipart",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L28",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_multipart",
+            "target": "fastify_multipart",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L28",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_rate_limit",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L29",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_rate_limit",
+            "target": "fastify_rate_limit",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L29",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_sensible",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L30",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_sensible",
+            "target": "fastify_sensible",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L30",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_swagger",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L31",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_swagger",
+            "target": "fastify_swagger",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L31",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_swagger_ui",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L32",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_swagger_ui",
+            "target": "fastify_swagger_ui",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L32",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_google_cloud_storage",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L33",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_google_cloud_storage",
+            "target": "google_cloud_storage",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L33",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_redis_client",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L34",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_redis_client",
+            "target": "redis_client",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L34",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_sentry_node",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L35",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_sentry_node",
+            "target": "sentry_node",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L35",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_adm_zip",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L36",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_adm_zip",
+            "target": "adm_zip",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L36",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_axios",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L37",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_axios",
+            "target": "axios",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L37",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_bcryptjs",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L38",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_bcryptjs",
+            "target": "bcryptjs",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L38",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_dotenv",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L39",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_dotenv",
+            "target": "dotenv",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L39",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L40",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify",
+            "target": "fastify",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L40",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_auth0_verify",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L41",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_auth0_verify",
+            "target": "fastify_auth0_verify",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L41",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_plugin",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L42",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fastify_plugin",
+            "target": "fastify_plugin",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L42",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fs_extra",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L43",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_fs_extra",
+            "target": "fs_extra",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L43",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_isomorphic_git",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L44",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_isomorphic_git",
+            "target": "isomorphic_git",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L44",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_jsonwebtoken",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L45",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_jsonwebtoken",
+            "target": "jsonwebtoken",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L45",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_libsodium_wrappers",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L46",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_libsodium_wrappers",
+            "target": "libsodium_wrappers",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L46",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_mongoose",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L47",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_mongoose",
+            "target": "mongoose",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L47",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_nodemailer",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L48",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_nodemailer",
+            "target": "nodemailer",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L48",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_nodemon",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L49",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_nodemon",
+            "target": "nodemon",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L49",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_pug",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L50",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_pug",
+            "target": "pug",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L50",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_typescript",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L51",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_typescript",
+            "target": "typescript",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L51",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_typescript_eslint",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L52",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_typescript_eslint",
+            "target": "typescript_eslint",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L52",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_xstate",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L53",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_dependencies_xstate",
+            "target": "xstate",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L53",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L55",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_adm_zip",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L56",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_adm_zip",
+            "target": "types_adm_zip",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L56",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_fs_extra",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L57",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_fs_extra",
+            "target": "types_fs_extra",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L57",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_jsonwebtoken",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L58",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_jsonwebtoken",
+            "target": "types_jsonwebtoken",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L58",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_node",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L59",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_node",
+            "target": "types_node",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L59",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_nodemailer",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L60",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_nodemailer",
+            "target": "types_nodemailer",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L60",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_pug",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L61",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_types_pug",
+            "target": "types_pug",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L61",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_tsx",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L62",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_backend_package_devdependencies_tsx",
+            "target": "tsx",
+            "relation": "imports",
+            "confidence": "EXTRACTED",
+            "source_file": "package.json",
+            "source_location": "L62",
+            "weight": 1.0,
+            "context": "import"
+        }
+    ]
+}

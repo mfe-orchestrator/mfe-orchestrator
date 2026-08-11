@@ -1,59 +1,17 @@
-import clsx from "clsx"
-import { InputHTMLAttributes } from "react"
-import { Controller, FieldError, FieldValues, Path, RegisterOptions, useFormContext } from "react-hook-form"
-import { Input, InputProps } from "@/components/ui/input/input"
-import { Label } from "@/components/ui/label"
+import { TextField as DesignSystemTextField } from "@mfe-orchestrator/design-system"
+import type { FieldValues } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 
-type TextFieldProps<T extends FieldValues> = InputProps & {
-    name: Path<T>
-    label: string
-    rules?: Omit<RegisterOptions<T, string & Path<T>>, "disabled" | "valueAsNumber" | "valueAsDate" | "setValueAs">
-    textTransform?: (value: string) => string
-    containerClassName?: string
-    dataTestId?: string
-}
+type TextFieldProps<T extends FieldValues> = Parameters<typeof DesignSystemTextField<T>>[0]
 
-const TextField = <T extends FieldValues>({ name, label, rules, className, id, containerClassName, textTransform, disabled, dataTestId, ...props }: TextFieldProps<T>) => {
-    const {
-        control,
-        formState: { errors }
-    } = useFormContext<T>()
+/**
+ * TextField del design system con le etichette del toggle di visibilita
+ * tradotte: con `type="password"` il campo mostra l'icona occhio.
+ */
+const TextField = <T extends FieldValues>(props: TextFieldProps<T>) => {
+    const { t } = useTranslation()
 
-    const error = errors[name] as FieldError | undefined
-    const inputId = id || name
-
-    return (
-        <Controller
-            name={name}
-            control={control}
-            rules={rules}
-            render={({ field, formState }) => (
-                <div className={clsx(`flex flex-col gap-1`, containerClassName)}>
-                    <Label htmlFor={inputId} className={error ? "text-destructive" : "text-foreground-secondary"}>
-                        {label}
-                        {props.required && <span className="text-destructive ml-1">*</span>}
-                    </Label>
-                    <Input
-                        disabled={disabled || formState.isSubmitting}
-                        aria-label={label}
-                        aria-invalid={!!error}
-                        aria-disabled={disabled}
-                        id={inputId}
-                        data-testid={dataTestId || inputId}
-                        className={`${className} ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                        {...field}
-                        {...props}
-                        onChange={e => {
-                            field.onChange(textTransform ? textTransform(e.target.value) : e.target.value)
-                            props.onChange?.(e)
-                        }}
-                        value={field.value || ""}
-                    />
-                    {error && <p className="text-sm font-medium text-destructive">{error.message}</p>}
-                </div>
-            )}
-        />
-    )
+    return <DesignSystemTextField<T> showValueLabel={t("auth.show_password")} hideValueLabel={t("auth.hide_password")} {...props} />
 }
 
 export default TextField

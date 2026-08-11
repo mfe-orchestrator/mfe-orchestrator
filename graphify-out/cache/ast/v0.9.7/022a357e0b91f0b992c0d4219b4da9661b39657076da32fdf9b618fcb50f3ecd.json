@@ -1,1 +1,296 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md", "label": "CHANGELOG.md", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "label": "Changelog", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "label": "[Unreleased]", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L8"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added", "label": "Added", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L10"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changed", "label": "Changed", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L22"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_fixed", "label": "Fixed", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L30"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_removed", "label": "Removed", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L37"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_technical_improvements", "label": "Technical Improvements", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L44"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd", "label": "[1.0.0] - TBD", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L54"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added_56", "label": "Added", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L56"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_documentation", "label": "Documentation", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L73"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_versioning", "label": "Versioning", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L82"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_commit_type_to_version_mapping", "label": "Commit Type to Version Mapping", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L90"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_legend", "label": "Legend", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L96"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_how_to_update_this_changelog", "label": "How to Update This Changelog", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L105"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_example", "label": "Example", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L115"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_automated_changelog_generation", "label": "Automated Changelog Generation", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L134"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_release_workflow", "label": "Release Workflow", "file_type": "document", "source_file": "CHANGELOG.md", "source_location": "L150"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L8", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L10", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md", "relation": "references", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L13", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changed", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L22", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_fixed", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L30", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_removed", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L37", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_technical_improvements", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L44", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L54", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added_56", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L56", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_documentation", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L73", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_versioning", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L82", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_versioning", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_commit_type_to_version_mapping", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L90", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_legend", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L96", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_how_to_update_this_changelog", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L105", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_how_to_update_this_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_example", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L115", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_automated_changelog_generation", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L134", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_release_workflow", "relation": "contains", "confidence": "EXTRACTED", "source_file": "CHANGELOG.md", "source_location": "L150", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md",
+            "label": "CHANGELOG.md",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "label": "Changelog",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "label": "[Unreleased]",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L8"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added",
+            "label": "Added",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L10"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changed",
+            "label": "Changed",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L22"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_fixed",
+            "label": "Fixed",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L30"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_removed",
+            "label": "Removed",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L37"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_technical_improvements",
+            "label": "Technical Improvements",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L44"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd",
+            "label": "[1.0.0] - TBD",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L54"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added_56",
+            "label": "Added",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L56"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_documentation",
+            "label": "Documentation",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L73"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_versioning",
+            "label": "Versioning",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L82"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_commit_type_to_version_mapping",
+            "label": "Commit Type to Version Mapping",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L90"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_legend",
+            "label": "Legend",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L96"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_how_to_update_this_changelog",
+            "label": "How to Update This Changelog",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L105"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_example",
+            "label": "Example",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L115"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_automated_changelog_generation",
+            "label": "Automated Changelog Generation",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L134"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_release_workflow",
+            "label": "Release Workflow",
+            "file_type": "document",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L150"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L8",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L10",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L13",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changed",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L22",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_fixed",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L30",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_removed",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L37",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_unreleased",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_technical_improvements",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L44",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L54",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_added_56",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L56",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_1_0_0_tbd",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_documentation",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L73",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_versioning",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L82",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_versioning",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_commit_type_to_version_mapping",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L90",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_legend",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L96",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_how_to_update_this_changelog",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L105",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_how_to_update_this_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_example",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L115",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_automated_changelog_generation",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L134",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_changelog",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_release_workflow",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "CHANGELOG.md",
+            "source_location": "L150",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

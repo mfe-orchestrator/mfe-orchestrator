@@ -23,7 +23,7 @@ export const NoApiKeyPlaceholder: React.FC<NoApiKeyPlaceholderProps> = ({ onCrea
                 </p>
             </div>
             {onCreate && (
-                <Button onClick={onCreate}>
+                <Button onClick={onCreate} dataTestId="api-key-create">
                     <Plus className="mr-2 h-4 w-4" />
                     {t("apiKeys.create_api_key")}
                 </Button>

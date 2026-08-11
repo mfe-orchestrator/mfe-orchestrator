@@ -181,11 +181,28 @@ export default async function projectUserController(fastify: FastifyInstance) {
         return reply.status(204).send()
     })
 
+    // Invitations waiting for an answer from the current user
+    fastify.get("/users/me/invitations", async (request, reply) => {
+        return reply.send(await new UserProjectService(request.databaseUser).getMyPendingInvitations())
+    })
+
+    // Accept an invitation from inside the app
+    fastify.post<{ Params: { projectId: string } }>("/users/me/invitations/:projectId/accept", async (request, reply) => {
+        return reply.send(await new UserProjectService(request.databaseUser).acceptMyInvitation(request.params.projectId))
+    })
+
+    // Decline an invitation from inside the app
+    fastify.delete<{ Params: { projectId: string } }>("/users/me/invitations/:projectId", async (request, reply) => {
+        await new UserProjectService(request.databaseUser).declineMyInvitation(request.params.projectId)
+        return reply.status(204).send()
+    })
+
     // Get all projects for the current user
     fastify.get("/users/me/projects", async (request, reply) => {
         const userId = request.databaseUser._id
 
-        const userProjects = (await UserProject.find({ userId }).populate<{
+        // Pending invitations are not memberships yet, so they are left out
+        const userProjects = (await UserProject.find({ userId, invitationToken: null }).populate<{
             projectId: PopulatedProject
         }>("projectId", "name description")) as unknown as UserProjectWithProject[]
 

@@ -1,9 +1,9 @@
+import AutoLoad from "@fastify/autoload"
+import * as Sentry from "@sentry/node"
 import dotenv from "dotenv"
 import Fastify from "fastify"
-import AutoLoad from "@fastify/autoload"
 import path from "path"
 import { AppInstance } from "./types/fastify"
-import * as Sentry from "@sentry/node"
 
 export const fastify: AppInstance = Fastify({
     logger: true

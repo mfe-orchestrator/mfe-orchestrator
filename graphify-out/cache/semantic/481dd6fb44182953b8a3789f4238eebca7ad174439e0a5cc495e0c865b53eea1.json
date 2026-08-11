@@ -1,1 +1,18 @@
-{"nodes": [{"id": "e2e_readme_playwright_e2e_tests", "label": "Playwright E2E Test Suite", "file_type": "document", "source_file": "e2e/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Chromium-only Playwright tests with base URL http://localhost:5173 overridable via BASE_URL; in CI tests retry up to 2 times and run sequentially, and the dev server is not reused"}], "edges": [], "hyperedges": []}
+{
+    "nodes": [
+        {
+            "id": "e2e_readme_playwright_e2e_tests",
+            "label": "Playwright E2E Test Suite",
+            "file_type": "document",
+            "source_file": "e2e/README.md",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null,
+            "rationale": "Chromium-only Playwright tests with base URL http://localhost:5173 overridable via BASE_URL; in CI tests retry up to 2 times and run sequentially, and the dev server is not reused"
+        }
+    ],
+    "edges": [],
+    "hyperedges": []
+}

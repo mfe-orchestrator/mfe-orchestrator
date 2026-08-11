@@ -13,7 +13,7 @@ export const CreateApiKeyFormInner = () => {
     const { t } = useTranslation()
     return (
         <div className="space-y-2">
-            <TextField name="name" label={t("apiKeys.name")} placeholder={t("apiKeys.name_placeholder")} />
+            <TextField name="name" dataTestId="api-key-name" label={t("apiKeys.name")} placeholder={t("apiKeys.name_placeholder")} />
             <CalendarField name="expirationDate" label={t("apiKeys.expiresAt")} placeholder={t("apiKeys.expiresAt_placeholder")} minDate={startOfToday()} />
         </div>
     )

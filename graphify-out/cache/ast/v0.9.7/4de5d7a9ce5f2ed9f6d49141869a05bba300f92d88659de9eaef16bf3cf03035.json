@@ -1,0 +1,199 @@
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_json",
+            "label": "tsconfig.json",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_files",
+            "label": "files",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L2"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_references",
+            "label": "references",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L3"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "label": "compilerOptions",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L4"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_paths",
+            "label": "paths",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L5"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_paths",
+            "label": "@/*",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L6"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_noimplicitany",
+            "label": "noImplicitAny",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L8"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_nounusedparameters",
+            "label": "noUnusedParameters",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L9"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_skiplibcheck",
+            "label": "skipLibCheck",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L10"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_allowjs",
+            "label": "allowJs",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L11"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_nounusedlocals",
+            "label": "noUnusedLocals",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L12"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_strictnullchecks",
+            "label": "strictNullChecks",
+            "file_type": "code",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L13"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_files",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L2",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_references",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L3",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_json",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L4",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_paths",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L5",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_paths",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_paths",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L6",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_paths",
+            "target": "ref_src",
+            "relation": "extends",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L6",
+            "weight": 1.0,
+            "context": "import"
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_noimplicitany",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L8",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_nounusedparameters",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L9",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_skiplibcheck",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L10",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_allowjs",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L11",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_nounusedlocals",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L12",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_frontend_tsconfig_compileroptions_strictnullchecks",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "frontend/tsconfig.json",
+            "source_location": "L13",
+            "weight": 1.0
+        }
+    ]
+}

@@ -18,20 +18,47 @@
         "fe_integration_tab": {
             "title": "Frontend Integration",
             "description": "Follow the instructions below to integrate with our platform.",
-            "vite": {
-                "title": "Vite Module Federation Setup",
-                "description": "To integrate using Vite Module Federation, first install the required plugin:",
-                "step2": "Then, update your Vite configuration:"
-            },
-            "webpack": {
-                "title": "Webpack Module Federation Setup",
-                "description": "For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:"
-            },
             "curl": {
                 "title": "Direct API Access via CURL",
                 "description": "You can also interact with our API directly using CURL:",
                 "step2": "Here is the preview:"
-            }
+            },
+            "detected_stack": "Detected stack",
+            "stack_from_template": "from the template",
+            "stack_detected": "detected in the repository",
+            "stack_manual": "set manually",
+            "stack_unknown_title": "Stack not detected",
+            "stack_unknown_description": "We could not tell which framework and bundler this microfrontend uses. Pick them below to get the right instructions, or connect the repository so we can read them.",
+            "framework_label": "Framework",
+            "compiler_label": "Bundler",
+            "install_step": "Install what the integration needs:",
+            "config_step": "Then write this configuration to {{path}}:",
+            "runtime_integration_title": "Runtime integration",
+            "integrate_all_button": "Integrate my microfrontends",
+            "stack_auto": "Automatic",
+            "federation_tab": "Module Federation",
+            "runtime_integration_description": "Web component microfrontends are plain scripts that register a custom element, so there is no module federation config to write: the host asks the SDK for the resolved url and mounts the element. See MicrofrontendLoader in the web component templates.",
+            "integrate_dialog_title": "Wire up module federation",
+            "integrate_dialog_description": "For each microfrontend that consumes others, we write the bundler config declaring its remotes and add the packages that config needs. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
+            "integrate_confirm": "Commit to the selected repositories",
+            "integrate_nothing_to_do": "Nothing to integrate: every repository is already wired up, or none of your microfrontends consumes another one yet.",
+            "integrate_success": "Module federation wired up in {{count}} repositories",
+            "integrate_partial": "Wired up {{applied}} repositories, {{failed}} failed",
+            "integrate_remotes": "Remotes",
+            "integrate_file_new": "new file",
+            "integrate_file_replaced": "replaces the current content",
+            "integrate_show_diff": "Show what changes",
+            "integrate_hide_diff": "Hide",
+            "integrate_current_content": "Currently in the repository",
+            "integrate_proposed_content": "What we would write",
+            "status_already_integrated": "Already integrated",
+            "status_config_to_create": "Config to create",
+            "status_config_to_replace": "Config to replace",
+            "status_no_remotes": "No remotes to declare",
+            "status_stack_unknown": "Stack unknown",
+            "status_runtime_integration": "Integrates at runtime",
+            "status_error": "Error",
+            "integrate_one_button": "Integrate only this one"
         },
         "env_vars_integration_tab": {
             "title": "Environment Variables",
@@ -62,6 +89,8 @@
         "email_placeholder": "name@example.com",
         "invalid_email": "Please enter a valid email address",
         "password": "Password",
+        "show_password": "Show password",
+        "hide_password": "Hide password",
         "password_min_length": "Password must be at least 8 characters",
         "passwords_dont_match": "Passwords don't match",
         "confirm_password": "Confirm Password",
@@ -247,6 +276,11 @@
         "env_variables_title": "Environment variables",
         "no_deployments": "No deployments found",
         "no_deployments_description": "Deployments will appear here once created",
+        "microfrontend_card": {
+            "stable_version": "Stable version",
+            "canary_traffic": "Canary {{percentage}}%",
+            "canary_target_missing": "Not configured"
+        },
         "actions": {
             "view_canary_users": "View canary users",
             "redeploy": "Redeploy"
@@ -287,6 +321,10 @@
         "select_role": "Select a role",
         "send_invitation": "Send invitation",
         "invite_success": "Invitation sent successfully",
+        "role_required": "Select a role for the user",
+        "cannot_invite_self": "You can't invite yourself: you're already part of the project",
+        "already_invited": "This user already has a pending invitation",
+        "already_member": "This user is already a member of the project",
         "roles": {
             "admin": "Admin",
             "editor": "Editor",
@@ -309,9 +347,17 @@
         "title": "Project invitation",
         "description": "You've been invited to join {{project}} as {{role}}.",
         "accept": "Accept invitation",
+        "accept_short": "Accept",
         "accepted": "Invitation accepted",
-        "name_label": "First name",
-        "surname_label": "Last name"
+        "decline": "Decline",
+        "declined": "Invitation declined",
+        "pending_count": "{{count}} projects you've been invited to",
+        "pending_count_one": "You've been invited to a project",
+        "not_found_title": "Invitation not found",
+        "not_found_description": "The link you followed doesn't match any invitation: it may have expired, been used already, or be invalid. Ask the person who invited you to send you a new one.",
+        "error_title": "Something went wrong",
+        "error_description": "We couldn't load the invitation. Please try again in a moment.",
+        "go_to_login": "Go to login"
     },
     "microfrontend": {
         "host": "Host",
@@ -352,6 +398,26 @@
             "building": "Building...",
             "startBuild": "Start Build",
             "buildSuccess": "Build started for {{name}}"
+        },
+        "import": {
+            "action": "Import from repository",
+            "title": "Import repositories",
+            "description": "Create one microfrontend for each repository of the selected connection. Repositories already linked to a microfrontend are skipped.",
+            "loading": "Loading repositories...",
+            "loadError": "Unable to load the repositories of this connection.",
+            "noRepositories": "This connection does not expose any repository.",
+            "noSearchResults": "No repository matches your search.",
+            "searchPlaceholder": "Search repository...",
+            "selectAll": "Select all",
+            "selectedCount": "{{count}} of {{total}} selected",
+            "alreadyImported": "Already imported",
+            "import_one": "Import {{count}} repository",
+            "import_other": "Import {{count}} repositories",
+            "importedCount_one": "{{count}} microfrontend imported",
+            "importedCount_other": "{{count}} microfrontends imported",
+            "failedCount_one": "{{count}} repository could not be imported: {{names}}",
+            "failedCount_other": "{{count}} repositories could not be imported: {{names}}",
+            "nothingImported": "No repository was imported."
         },
         "card": {
             "canary": "Canary",
@@ -418,6 +484,7 @@
         "enable_canary": "Enable Canary Deployment",
         "canary_percentage": "Canary Percentage",
         "canary_percentage_description": "Percentage of traffic to route to canary version",
+        "canary_percentage_presets": "Suggested percentages",
         "canary_type": "Canary Type",
         "select_canary_type": "Select canary type",
         "on_sessions": "On Sessions",
@@ -456,18 +523,14 @@
         "select_repository_placeholder": "Choose a repository...",
         "sourceCodeProvider": "Source Code Provider",
         "create_new_repository": "Create new...",
-        "clone_urls_description": "Clone urls are filled in automatically when the repository is created, and can be edited at any time.",
-        "clone_url_https": "HTTPS clone URL",
-        "clone_url_https_placeholder": "https://github.com/org/repository.git",
-        "clone_url_ssh": "SSH clone URL",
-        "clone_url_ssh_placeholder": "git@github.com:org/repository.git",
         "clone": {
             "button": "Clone repo",
             "title": "Clone repository",
-            "description": "Copy the clone command or open the repository directly in VS Code.",
+            "description": "Copy the clone command or open the repository directly in VS Code or IntelliJ IDEA.",
             "https": "Clone via HTTPS",
             "ssh": "Clone via SSH",
-            "vscode": "Clone with VS Code"
+            "vscode": "Clone with VS Code",
+            "intellij": "Clone with IntelliJ IDEA"
         },
         "dangerZone": {
             "title": "Danger Zone",
@@ -644,7 +707,7 @@
         "providerConfiguration": "Provider Configuration",
         "providerConfigurationDescription": "Configure authentication and access settings for your {{storageType}} storage",
         "securityNotice": "Security Notice:",
-        "securityNoticeDescription": "All credentials are encrypted and stored securely. They are only used to access your storage resources and are never shared with third parties.",
+        "securityNoticeDescription": "All credentials are stored securely. They are only used to access your storage resources and are never shared with third parties.",
         "path": "Path",
         "serviceAccountJsonKey": "Service Account JSON Key"
     },
@@ -830,7 +893,19 @@
             "githubAccessDescription": "Update your GitHub authentication if needed",
             "connectionSaved": "GitHub connection \"{{name}}\" saved successfully",
             "error": "There are connection issues with your GitHub, refresh the connection",
-            "repositoryIdRequired": "Repository ID is required to configure GitHub connection."
+            "repositoryIdRequired": "Repository ID is required to configure GitHub connection.",
+            "callback": {
+                "authenticatingTitle": "Authenticating with GitHub",
+                "authenticatingDescription": "Please wait while we complete the authentication process...",
+                "successTitle": "Authentication Successful!",
+                "successDescription": "You have been successfully authenticated with GitHub. Redirecting to repository selection...",
+                "failedTitle": "Authentication Failed",
+                "authFailed": "GitHub authentication failed: {{error}}",
+                "missingParams": "Missing authentication parameters",
+                "invalidState": "Invalid state parameter",
+                "tryAgain": "Try Again",
+                "backToRepositories": "Back to Repositories"
+            }
         }
     },
     "market": {
@@ -867,6 +942,140 @@
             "description": "Start from scratch without any template",
             "framework": "Any Framework",
             "tag": "Blank"
+        }
+    },
+    "newProjectWizard": {
+        "subtitle": "Create a new project",
+        "close": "Close wizard",
+        "steps": {
+            "name": "Name",
+            "environments": "Environments",
+            "storages": "Storage",
+            "repositories": "Repositories",
+            "collaborators": "Collaborators"
+        },
+        "footer": {
+            "back": "Back",
+            "skip": "Skip",
+            "next": "Continue",
+            "loading": "Please wait…"
+        },
+        "main_data": {
+            "title": "Let's name your project",
+            "description": "The name identifies the project in the console. You can change it later from the settings.",
+            "name_label": "Project name",
+            "name_placeholder": "E.g. Customer Portal",
+            "name_required": "Name is required",
+            "name_min_length": "Minimum 3 characters",
+            "description_label": "Description (optional)",
+            "description_placeholder": "What is this project for?",
+            "submit": "Create project",
+            "create_error": "Unable to create the project"
+        },
+        "environments": {
+            "title": "Configure environments",
+            "description": "Environments (e.g. development, production) let you manage different versions of your microfrontends. Choose a preset or customize them, then save."
+        },
+        "hosting": {
+            "title": "Where do we host your microfrontends?",
+            "description": "Connect a storage bucket to deploy your bundles. You can skip this step and configure it later.",
+            "alert_title": "This step is not essential",
+            "alert_description": "If you skip it and don't connect any cloud, microfrontend bundles will still be hosted directly by MFE Orchestrator. You can connect an external storage at any time from the project settings.",
+            "submit": "Save and continue"
+        },
+        "code_repositories": {
+            "title": "Connect your source code",
+            "description": "Connect a Git provider (GitHub, GitLab or Azure DevOps) to enable automatic builds and deployments of your microfrontends.",
+            "skippable_note": "No rush: you can connect or change repositories at any time from the project's Repositories section.",
+            "connect_repository": "Connect a repository"
+        },
+        "team_mates": {
+            "title": "Invite collaborators",
+            "description": "Add the people who will work on the project. They will receive an email invitation. You can skip and invite them later.",
+            "skippable_note": "No rush: you can invite or remove collaborators at any time from the project settings.",
+            "email_placeholder": "colleague@company.com",
+            "invalid_email": "Invalid email: {{email}}",
+            "duplicate_email": "Duplicate email: {{email}}",
+            "cannot_invite_self": "You cannot invite yourself: you are already part of the project",
+            "invite_error": "Some invitations could not be sent",
+            "remove_collaborator": "Remove collaborator",
+            "add_collaborator": "Add collaborator",
+            "role_note": "Invited collaborators will be able to access the project based on their assigned role.",
+            "skip_and_complete": "Skip and complete",
+            "complete": "Complete"
+        },
+        "completed": {
+            "title": "Project ready!",
+            "configured_with_name": "has been configured successfully.",
+            "configured_generic": "The project has been configured successfully.",
+            "start_adding": "You can start adding microfrontends.",
+            "start_deploying": "Start deploying your microfrontends",
+            "go_to_dashboard": "Go to dashboard",
+            "add_microfrontend": "Add microfrontend"
+        }
+    },
+    "dependencies": {
+        "sidebar_title": "Dependencies",
+        "title": "Dependencies",
+        "description": "Scan the microfrontend repositories, check what is outdated and align the peer dependencies.",
+        "rescan": "Rescan",
+        "align_peer_dependencies": "Align peer dependencies",
+        "registry_unavailable": "The npm registry could not be reached: the latest versions are not available, only the cross-microfrontend comparison is shown.",
+        "summary_microfrontends": "Scanned microfrontends",
+        "summary_packages": "Distinct packages",
+        "summary_outdated": "Outdated packages",
+        "summary_peer_misaligned": "Misaligned peer dependencies",
+        "peer_section_title": "Peer dependencies to align",
+        "shared_section_title": "Shared dependencies with different versions",
+        "shared_section_description": "Reported for visibility only: the alignment action never rewrites these.",
+        "per_microfrontend_title": "Dependencies by microfrontend",
+        "only_outdated": "Show outdated only",
+        "no_peer_issues": "All peer dependencies are aligned across the microfrontends.",
+        "no_shared_issues": "No shared dependency declared with different versions.",
+        "no_microfrontends": "No microfrontend of this project is connected to a code repository.",
+        "no_dependencies": "This package.json declares no dependency.",
+        "all_up_to_date": "Every dependency is up to date.",
+        "scan_failed": "Scan failed",
+        "scanned_at": "Last scan: {{date}}",
+        "package": "Package",
+        "kind": "Type",
+        "declared_range": "Declared range",
+        "suggested_range": "Suggested range",
+        "latest_version": "Latest version",
+        "status_column": "Status",
+        "declared_by": "Declared by",
+        "deprecated": "Deprecated",
+        "dependencies_count": "{{count}} dependencies",
+        "outdated_count": "{{count}} outdated",
+        "already_aligned": "Already aligned",
+        "to_be_aligned": "Will be aligned to {{range}}",
+        "align_dialog_title": "Align peer dependencies",
+        "align_dialog_description": "The updated package.json is committed on a dedicated branch of every repository, created from the branch you compared. That branch is never modified.",
+        "target_branch": "Target branch",
+        "target_branch_hint": "Created from the branch compared for each repository if it does not exist yet.",
+        "align_confirm": "Create the commits",
+        "align_success": "Peer dependencies aligned on {{count}} repositories, branch {{branch}}",
+        "align_partial": "{{applied}} repositories aligned, {{failed}} failed",
+        "align_failed": "Failed",
+        "align_nothing_to_do": "Already aligned",
+        "branch_selection_title": "Branches to compare",
+        "branch_selection_description": "Each microfrontend is scanned on its default branch. Pick another one to compare a different branch, then rescan.",
+        "branch_default": "default",
+        "branch_not_default": "Different from the default branch",
+        "rescan_pending": "Apply the selected branches",
+        "branch_column": "Branch",
+        "kinds": {
+            "PROD": "dependency",
+            "DEV": "devDependency",
+            "PEER": "peerDependency",
+            "OPTIONAL": "optionalDependency"
+        },
+        "status": {
+            "UP_TO_DATE": "Up to date",
+            "PATCH_BEHIND": "Patch behind",
+            "MINOR_BEHIND": "Minor behind",
+            "MAJOR_BEHIND": "Major behind",
+            "UNKNOWN": "Unknown"
         }
     }
 }

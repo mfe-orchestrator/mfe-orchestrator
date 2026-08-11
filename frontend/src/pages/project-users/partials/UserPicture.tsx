@@ -1,5 +1,4 @@
-import Spinner from "@/components/Spinner"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import Gravatar from "react-gravatar"

@@ -1,6 +1,6 @@
-import fastifyPlugin from "fastify-plugin"
-import { FastifyInstance } from "fastify"
 import { createClient, RedisClientType } from "@redis/client"
+import { FastifyInstance } from "fastify"
+import fastifyPlugin from "fastify-plugin"
 
 export let redisClient: RedisClientType
 

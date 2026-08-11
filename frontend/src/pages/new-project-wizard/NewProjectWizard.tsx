@@ -19,17 +19,17 @@ export interface NewProjectWizardProps {
     onComplete?: () => void
 }
 
-const STEPS: WizardStepMeta[] = [
-    { key: "name", label: "Nome", icon: <FolderPlus className="size-5" /> },
-    { key: "environments", label: "Ambienti", icon: <Layers className="size-5" /> },
-    { key: "storages", label: "Storage", icon: <Database className="size-5" /> },
-    { key: "repositories", label: "Repository", icon: <GitBranch className="size-5" /> },
-    { key: "collaborators", label: "Collaboratori", icon: <Users className="size-5" /> }
-]
-
 const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onComplete }) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
+
+    const STEPS: WizardStepMeta[] = [
+        { key: "name", label: t("newProjectWizard.steps.name"), icon: <FolderPlus className="size-5" /> },
+        { key: "environments", label: t("newProjectWizard.steps.environments"), icon: <Layers className="size-5" /> },
+        { key: "storages", label: t("newProjectWizard.steps.storages"), icon: <Database className="size-5" /> },
+        { key: "repositories", label: t("newProjectWizard.steps.repositories"), icon: <GitBranch className="size-5" /> },
+        { key: "collaborators", label: t("newProjectWizard.steps.collaborators"), icon: <Users className="size-5" /> }
+    ]
     const embedded = Boolean(onComplete)
     const projectStore = useProjectStore()
     const [stepIndex, setStepIndex] = useState(0)
@@ -71,10 +71,17 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onComplete }) => {
                     <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-sm">MF</div>
                     <div>
                         <h1 className="text-xl font-semibold text-foreground leading-tight">{t("app.name")}</h1>
-                        <p className="text-sm text-foreground-secondary">Crea un nuovo progetto</p>
+                        <p className="text-sm text-foreground-secondary">{t("newProjectWizard.subtitle")}</p>
                     </div>
                     {!embedded && (
-                        <Button variant="ghost" size="icon" className="ml-auto text-muted-foreground hover:text-foreground" aria-label="Chiudi wizard" onClick={() => navigate("/microfrontends")}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="ml-auto text-muted-foreground hover:text-foreground"
+                            aria-label={t("newProjectWizard.close")}
+                            dataTestId="wizard-close"
+                            onClick={() => navigate("/microfrontends")}
+                        >
                             <X />
                         </Button>
                     )}

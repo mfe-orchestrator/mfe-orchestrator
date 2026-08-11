@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 
 export const EnvironmentVariablesIntegration = ({ environmentId }: { environmentId?: string }) => {

@@ -1,1 +1,216 @@
-{"nodes": [{"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md", "label": "TELEMETRY.md", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "label": "Anonymous telemetry \ud83d\udce1", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L1"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_why_it_exists", "label": "Why it exists", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L13"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_send", "label": "What we send", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L21"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_never_send", "label": "What we never send", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L51"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_when_it_is_sent", "label": "When it is sent", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L67"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_where_it_is_sent", "label": "Where it is sent", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L73"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off", "label": "How to turn it off", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L81"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_full_precedence", "label": "Full precedence", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L94"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_environment_variables", "label": "Environment variables", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L108"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_check_all_of_this_yourself", "label": "How to check all of this yourself", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L120"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_the_installation_id", "label": "The installation id", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L161"}, {"id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_our_commitments", "label": "Our commitments", "file_type": "document", "source_file": "docs/TELEMETRY.md", "source_location": "L171"}], "edges": [{"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L1", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_why_it_exists", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L13", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_send", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L21", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_never_send", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L51", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_when_it_is_sent", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L67", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_where_it_is_sent", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L73", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L81", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_full_precedence", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L94", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_environment_variables", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L108", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_check_all_of_this_yourself", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L120", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_the_installation_id", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L161", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_our_commitments", "relation": "contains", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L171", "weight": 1.0}, {"source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md", "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md", "relation": "references", "confidence": "EXTRACTED", "source_file": "docs/TELEMETRY.md", "source_location": "L173", "weight": 1.0}], "input_tokens": 0, "output_tokens": 0}
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md",
+            "label": "TELEMETRY.md",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "label": "Anonymous telemetry \ud83d\udce1",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_why_it_exists",
+            "label": "Why it exists",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L13"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_send",
+            "label": "What we send",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L21"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_never_send",
+            "label": "What we never send",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L51"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_when_it_is_sent",
+            "label": "When it is sent",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L67"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_where_it_is_sent",
+            "label": "Where it is sent",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L73"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off",
+            "label": "How to turn it off",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L81"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_full_precedence",
+            "label": "Full precedence",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L94"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_environment_variables",
+            "label": "Environment variables",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L108"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_check_all_of_this_yourself",
+            "label": "How to check all of this yourself",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L120"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_the_installation_id",
+            "label": "The installation id",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L161"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_our_commitments",
+            "label": "Our commitments",
+            "file_type": "document",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L171"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_why_it_exists",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L13",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_send",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L21",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_what_we_never_send",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L51",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_when_it_is_sent",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L67",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_where_it_is_sent",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L73",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L81",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_full_precedence",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L94",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_turn_it_off",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_environment_variables",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L108",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_how_to_check_all_of_this_yourself",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L120",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_the_installation_id",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L161",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_anonymous_telemetry",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_our_commitments",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L171",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "docs/TELEMETRY.md",
+            "source_location": "L173",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

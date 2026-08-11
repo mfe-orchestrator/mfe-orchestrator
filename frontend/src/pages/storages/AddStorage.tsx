@@ -1,17 +1,15 @@
+import { Alert, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { Cloud, Info, Key, Settings } from "lucide-react"
+import { Info, Key, Settings } from "lucide-react"
 import React, { useMemo } from "react"
 import { FormProvider, useForm, useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/atoms"
-import SelectField from "@/components/input/SelectField.rhf"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import useStorageApi, { CreateStorageDTO, Storage, StorageType } from "@/hooks/apiClients/useStorageApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
@@ -19,39 +17,9 @@ interface StorageAuthFieldsProps {
     storageType: StorageType
 }
 
-const getProviderInfo = (storageType: StorageType) => {
-    switch (storageType) {
-        case StorageType.AWS:
-            return {
-                icon: <img src="/img/aws.svg" alt="AWS" className="h-5 w-5" />,
-                name: "Amazon S3",
-                description: "Configure AWS S3 bucket access credentials"
-            }
-        case StorageType.GOOGLE:
-            return {
-                icon: <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-5 w-5" />,
-                name: "Google Cloud Storage",
-                description: "Configure Google Cloud Storage bucket access"
-            }
-        case StorageType.AZURE:
-            return {
-                icon: <img src="/img/Azure.svg" alt="Azure" className="h-5 w-5" />,
-                name: "Azure Blob Storage",
-                description: "Configure Azure Blob Storage container access"
-            }
-        default:
-            return {
-                icon: <Cloud className="h-5 w-5" />,
-                name: "Storage Provider",
-                description: "Configure storage provider settings"
-            }
-    }
-}
-
 const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) => {
     const { t } = useTranslation()
     const { watch } = useFormContext()
-    const providerInfo = getProviderInfo(storageType)
 
     const azureAuthTypes = [
         { value: "connectionString", label: t("storage.authTypes.azure.connectionString") },
@@ -64,11 +32,23 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
             case StorageType.AWS:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <TextField name="authConfig.bucketName" label={t("storage.fields.bucketName")} placeholder="my-bucket-name" rules={{ required: t("validation.required") }} />
+                        <TextField
+                            name="authConfig.bucketName"
+                            dataTestId="storage-bucket-name"
+                            label={t("storage.fields.bucketName")}
+                            placeholder="my-bucket-name"
+                            rules={{ required: t("validation.required") }}
+                        />
                         <TextField name="path" label={t("storage.fields.path")} placeholder="/" />
-                        <TextField name="authConfig.accessKeyId" label={t("storage.fields.accessKeyId")} rules={{ required: t("validation.required") }} />
-                        <TextField name="authConfig.secretAccessKey" label={t("storage.fields.secretAccessKey")} type="password" rules={{ required: t("validation.required") }} />
-                        <TextField name="authConfig.region" label={t("storage.fields.region")} placeholder="us-east-1" rules={{ required: t("validation.required") }} />
+                        <TextField name="authConfig.accessKeyId" dataTestId="storage-access-key-id" label={t("storage.fields.accessKeyId")} rules={{ required: t("validation.required") }} />
+                        <TextField
+                            name="authConfig.secretAccessKey"
+                            dataTestId="storage-secret-access-key"
+                            label={t("storage.fields.secretAccessKey")}
+                            type="password"
+                            rules={{ required: t("validation.required") }}
+                        />
+                        <TextField name="authConfig.region" dataTestId="storage-region" label={t("storage.fields.region")} placeholder="us-east-1" rules={{ required: t("validation.required") }} />
                     </div>
                 )
 
@@ -120,7 +100,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
                                     <Key className="h-4 w-4 text-primary" />
                                     <h4 className="text-sm font-medium text-foreground">{t("storage.connectionString")}</h4>
                                 </div>
-                                <TextField name="authConfig.connectionString" label={t("storage.fields.connectionString")} required rules={{ required: true }} />
+                                <TextField name="authConfig.connectionString" label={t("storage.fields.connectionString")} required type="password" rules={{ required: true }} />
                             </div>
                         )}
 
@@ -142,18 +122,7 @@ const StorageAuthFields: React.FC<StorageAuthFieldsProps> = ({ storageType }) =>
         }
     }
 
-    return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
-                {providerInfo.icon}
-                <div>
-                    <h3 className="font-medium text-foreground">{providerInfo.name}</h3>
-                    <p className="text-sm text-muted-foreground">{providerInfo.description}</p>
-                </div>
-            </div>
-            {renderStorageConfig()}
-        </div>
-    )
+    return <div className="space-y-4">{renderStorageConfig()}</div>
 }
 
 interface StorageFormProps {
@@ -225,7 +194,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <TextField name="name" label={t("storage.name")} placeholder={t("storage.enterStorageName")} rules={{ required: t("validation.required") }} />
+                            <TextField name="name" dataTestId="storage-name" label={t("storage.name")} placeholder={t("storage.enterStorageName")} rules={{ required: t("validation.required") }} />
                             <SelectField name="type" label={t("storage.type")} options={storageTypes} rules={{ required: t("validation.required") }} disabled={isEditMode} />
                         </div>
 
@@ -270,10 +239,12 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
                         )}
                     </div>
                     <div className="flex space-x-4">
-                        <Button type="button" variant="secondary" onClick={onCancel}>
+                        <Button type="button" variant="secondary" onClick={onCancel} dataTestId="storage-cancel">
                             {cancelLabel ?? t("common.cancel")}
                         </Button>
-                        <Button type="submit">{submitLabel ?? (isEditMode ? t("common.update") : t("common.create"))}</Button>
+                        <Button type="submit" dataTestId="storage-submit">
+                            {submitLabel ?? (isEditMode ? t("common.update") : t("common.create"))}
+                        </Button>
                     </div>
                 </div>
             </form>

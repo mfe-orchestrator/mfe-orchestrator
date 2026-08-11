@@ -1,12 +1,12 @@
-import UserRegistrationDTO from "../types/UserRegistrationDTO"
-import UserLoginDTO from "../types/UserLoginDTO"
-import ResetPasswordRequestDTO from "../types/ResetPasswordRequestDTO"
-import ResetPasswordDataDTO from "../types/ResetPasswordDataDTO"
-import { UserInvitationDTO } from "../types/UserInvitationDTO"
 import { FastifyInstance } from "fastify"
 import UserService from "../service/UserService"
-import UserAccoutActivationDTO from "../types/UserAccoutActivationDTO"
 import AuthenticationMethod from "../types/AuthenticationMethod"
+import ResetPasswordDataDTO from "../types/ResetPasswordDataDTO"
+import ResetPasswordRequestDTO from "../types/ResetPasswordRequestDTO"
+import UserAccoutActivationDTO from "../types/UserAccoutActivationDTO"
+import { UserInvitationDTO } from "../types/UserInvitationDTO"
+import UserLoginDTO from "../types/UserLoginDTO"
+import UserRegistrationDTO from "../types/UserRegistrationDTO"
 
 export function UserController(fastify: FastifyInstance) {
     const userService = new UserService()

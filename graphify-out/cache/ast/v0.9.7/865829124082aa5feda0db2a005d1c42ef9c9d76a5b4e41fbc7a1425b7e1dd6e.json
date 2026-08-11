@@ -1,0 +1,414 @@
+{
+    "nodes": [
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "label": "README.md",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "label": "MFE Orchestrator",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L1"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_try_it_in_60_seconds",
+            "label": "Try it in 60 seconds",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L15"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_what_it_does",
+            "label": "What it does",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L36"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_how_it_works",
+            "label": "How it works",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L59"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_documentation",
+            "label": "Documentation \ud83d\udcda",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L80"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_with_docker",
+            "label": "Run with Docker",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L97"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_everything_in_a_single_container",
+            "label": "Run everything in a single container \ud83d\udce6",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L105"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_with_terraform_opentofu",
+            "label": "Run with Terraform (OpenTofu)",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L170"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_on_kubernetes_with_helm",
+            "label": "Run on Kubernetes with Helm \u2388",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L180"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_environment_variables",
+            "label": "Environment variables \ud83d\udd27",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L220"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_anonymous_telemetry",
+            "label": "Anonymous telemetry \ud83d\udce1",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L263"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_local_installation_for_development",
+            "label": "Local Installation for development \ud83d\udee0\ufe0f",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L290"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_prerequisites",
+            "label": "Prerequisites",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L300"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_quick_start",
+            "label": "Quick Start",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L305"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_available_commands",
+            "label": "Available Commands",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L357"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_development_urls",
+            "label": "Development URLs",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L381"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_contributing",
+            "label": "Contributing \ud83e\udd1d",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L387"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_development_workflow",
+            "label": "Development Workflow",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L389"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_code_quality",
+            "label": "Code Quality",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L418"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_development_guidelines",
+            "label": "Development Guidelines",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L427"
+        },
+        {
+            "id": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_license",
+            "label": "License",
+            "file_type": "document",
+            "source_file": "README.md",
+            "source_location": "L434"
+        }
+    ],
+    "edges": [
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L1",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_try_it_in_60_seconds",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L15",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_what_it_does",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L36",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_how_it_works",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L59",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_documentation",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L80",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_commit_conventions_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L91",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_changelog_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L92",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_security_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L93",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_telemetry_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L94",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_docs_dependencies_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L95",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_with_docker",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L97",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_everything_in_a_single_container",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L105",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_with_terraform_opentofu",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L170",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_run_on_kubernetes_with_helm",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L180",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_helm_mfe_orchestrator_readme_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L182",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_environment_variables",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L220",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_anonymous_telemetry",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L263",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_local_installation_for_development",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L290",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_local_installation_for_development",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_prerequisites",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L300",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_local_installation_for_development",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_quick_start",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L305",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_local_installation_for_development",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_available_commands",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L357",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_local_installation_for_development",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_development_urls",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L381",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_contributing",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L387",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_contributing",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_development_workflow",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L389",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_contributing",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_code_quality",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L418",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_contributing",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_development_guidelines",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L427",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_mfe_orchestrator",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_license",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L434",
+            "weight": 1.0
+        },
+        {
+            "source": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_readme_md",
+            "target": "users_lorenzodefrancesco_projects_personal_mfe_orchestrator_mfe_orchestrator_license_md",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "source_file": "README.md",
+            "source_location": "L436",
+            "weight": 1.0
+        }
+    ],
+    "input_tokens": 0,
+    "output_tokens": 0
+}

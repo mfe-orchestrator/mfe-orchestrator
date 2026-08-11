@@ -1,10 +1,10 @@
+import { Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
-import Spinner from "@/components/Spinner"
 import { useGlobalParameters } from "@/contexts/GlobalParameterProvider"
 import useUserApi from "@/hooks/apiClients/useUserApi"
 import useUserStore from "@/store/useUserStore"
@@ -40,6 +40,7 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
         })
         userStore.setUser(loginData.user)
         setToken(loginData.accessToken, "microfrontend.orchestrator.hub")
+        onSuccessLogin?.()
     }
 
     const footer = (
@@ -81,7 +82,7 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
                             {parameters.getParameter("canSendEmail") && (
                                 <p className="text-sm text-foreground-secondary text-right mt-2">
                                     {t("auth.forgot_password")}{" "}
-                                    <Link to="/reset-password-request" className="text-primary underline-offset-4 underline">
+                                    <Link to="/reset-password-request" data-testid="forgot-password-link" className="text-primary underline-offset-4 underline">
                                         {t("auth.recover")}
                                     </Link>
                                 </p>
@@ -89,7 +90,7 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
                             {loginMutation.isPending ? (
                                 <Spinner />
                             ) : (
-                                <Button type="submit" className="w-full mt-5" id="access">
+                                <Button type="submit" className="w-full mt-5" id="access" dataTestId="login">
                                     {t("auth.login")}
                                 </Button>
                             )}

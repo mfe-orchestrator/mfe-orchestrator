@@ -1,51 +1,101 @@
-import { test } from '@playwright/test';
-import { getEmailLinks } from '../fixtures/mailinatorClient';
+import { expect, test } from "@playwright/test"
+import { emailDeliveryUnavailable, expectLoginPage, isAuthenticated, newTestUser, waitForAuthenticated } from "../fixtures/appUser"
+import { toAppPath, waitForEmailLink } from "../fixtures/emailClient"
 
-test.describe.serial('as a new user', () => {
-    const sampleEmail = "test+"+Math.floor(Math.random()*1000)+"@mailinator.com"
-    const password = "Astr0ngPassword!£%£$"
+/**
+ * Registrazione, primo accesso e recupero password, seguendo i link ricevuti
+ * via email.
+ *
+ * Nota sul recupero password: sia la richiesta sia l'impostazione della nuova
+ * password non hanno una schermata di conferma, mostrano un toast e riportano
+ * al login. Le asserzioni seguono quel comportamento invece di aspettarsi una
+ * pagina di successo.
+ */
+test.describe
+    .serial("Registration", () => {
+        const user = newTestUser("signup")
+        const password = user.password
+        const newPassword = "NewStr0ngPassword!£%£$"
 
-    test('should be able to register', async ({ page }) => {
-        await page.goto('/');
-        await page.getByTestId('register-link').click();
-        await page.getByTestId('email').fill(sampleEmail);
-        await page.getByTestId('password').fill(password);
-        await page.getByTestId('confirm-password').fill(password);
-        await page.getByTestId('create-account').click();
-        await page.getByTestId('registration-success').isVisible();
+        test.beforeEach(async ({ request }) => {
+            test.setTimeout(300_000)
+            const unavailable = await emailDeliveryUnavailable(request)
+            test.skip(Boolean(unavailable), unavailable ?? "")
+        })
 
-        const link = await getEmailLinks(page.request, sampleEmail)
-        await page.goto(link);
-    });
+        test("given a brand new account, when it is registered, then it can be activated from the email link", async ({ page }) => {
+            await page.goto("/")
+            await page.getByTestId("register-link").click()
+            await page.getByTestId("email").fill(user.email)
+            await page.getByTestId("password").fill(password)
+            await page.getByTestId("confirm-password").fill(password)
+            await page.getByTestId("create-account").click()
+            await expect(page.getByTestId("registration-success")).toBeVisible()
 
-    test('should be able to login', async ({ page }) => {
-        await page.goto('/');
-        await page.getByTestId('email').fill(sampleEmail);
-        await page.getByTestId('password').fill(password);
-        await page.getByTestId('login').click();
-    });
+            const link = await waitForEmailLink(page.request, user.inbox, {
+                subject: "Activate Your Account",
+                linkContains: "/account-activation/"
+            })
 
-    test('should be able to reset password', async ({ page }) => {
-        await page.goto('/');
-        await page.getByTestId('forgot-password-link').click();
-        await page.getByTestId('email').fill(sampleEmail);
-        await page.getByTestId('reset-password').click();
-        await page.getByTestId('reset-password-success').isVisible();
+            const activation = page.waitForResponse(response => response.url().includes("/users/account-activation") && response.request().method() === "POST")
+            await page.goto(toAppPath(link))
+            expect((await activation).ok()).toBeTruthy()
+        })
 
-        const resetLink = await getEmailLinks(page.request, sampleEmail);
-        await page.goto(resetLink);
+        test("given an activated account, when logging in, then a session is opened", async ({ page }) => {
+            await page.goto("/")
+            await page.getByTestId("email").fill(user.email)
+            await page.getByTestId("password").fill(password)
+            await page.getByTestId("login").click()
 
-        const newPassword = "NewStr0ngPassword!£%£$";
-        await page.getByTestId('new-password').fill(newPassword);
-        await page.getByTestId('confirm-new-password').fill(newPassword);
-        await page.getByTestId('submit-new-password').click();
-        await page.getByTestId('password-reset-complete').isVisible();
+            await waitForAuthenticated(page)
+        })
 
-        // Verify login with new password
-        await page.goto('/');
-        await page.getByTestId('email').fill(sampleEmail);
-        await page.getByTestId('password').fill(newPassword);
-        await page.getByTestId('login').click();
+        test("given an activated account, when a password reset is requested, then the reset email is delivered", async ({ page }) => {
+            await page.goto("/")
+            await page.getByTestId("forgot-password-link").click()
+
+            // Il campo email si chiama `email` sia qui sia nel login: senza aspettare
+            // il cambio pagina il fill finisce su quello della pagina che sta uscendo.
+            await expect(page.getByTestId("reset-password")).toBeVisible({ timeout: 30_000 })
+
+            await page.getByTestId("email").fill(user.email)
+            await page.getByTestId("reset-password").click()
+
+            // Nessuna schermata di conferma: si torna al login.
+            await expectLoginPage(page)
+
+            const resetLink = await waitForEmailLink(page.request, user.inbox, {
+                subject: "Reset Your Password",
+                linkContains: "/reset-password/"
+            })
+            expect(resetLink).toContain("/reset-password/")
+        })
+
+        test("given the reset link, when a new password is set, then the old one stops working and the new one opens a session", async ({ page }) => {
+            const resetLink = await waitForEmailLink(page.request, user.inbox, {
+                subject: "Reset Your Password",
+                linkContains: "/reset-password/"
+            })
+            await page.goto(toAppPath(resetLink))
+
+            await page.getByTestId("new-password").fill(newPassword)
+            await page.getByTestId("confirm-new-password").fill(newPassword)
+            await page.getByTestId("submit-new-password").click()
+
+            // Anche qui si torna al login, senza schermata intermedia.
+            await expectLoginPage(page)
+
+            // La vecchia password non vale piu'.
+            await page.getByTestId("email").fill(user.email)
+            await page.getByTestId("password").fill(password)
+            await page.getByTestId("login").click()
+            await expect(page.locator(".Toastify__toast--error")).toBeVisible()
+            expect(await isAuthenticated(page)).toBe(false)
+
+            // Quella nuova apre la sessione.
+            await page.getByTestId("password").fill(newPassword)
+            await page.getByTestId("login").click()
+            await waitForAuthenticated(page)
+        })
     })
-})
-

@@ -30,6 +30,12 @@ export default fastifyPlugin(
                     type: "boolean",
                     default: true
                 },
+                // Richieste per IP al minuto. Non impostata vale 100, come prima che
+                // fosse configurabile.
+                RATE_LIMIT_MAX: {
+                    type: "number",
+                    default: 100
+                },
                 ALLOW_EMBEDDED_LOGIN: {
                     type: "boolean",
                     default: true
@@ -80,6 +86,11 @@ export default fastifyPlugin(
                     type: "string"
                 },
                 ALLOWED_ORIGINS: {
+                    type: "string"
+                },
+                // Allow-list dedicata agli endpoint /serve/*. Se non impostata
+                // si ricade su ALLOWED_ORIGINS.
+                ALLOWED_SERVE_ORIGINS: {
                     type: "string"
                 },
                 AZURE_ENTRAID_TENANT_ID: {

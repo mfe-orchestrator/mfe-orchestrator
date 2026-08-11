@@ -48,7 +48,9 @@ export class ProjectService extends BaseAuthorizedService {
     async findMine(userId: ObjectId): Promise<IProject[]> {
         try {
             const projects: IProject[] = await UserProject.aggregate([
-                { $match: { userId } },
+                // A pending invitation is not a membership yet: it must be accepted first,
+                // otherwise the project would show up in the switcher as if it were already the user's.
+                { $match: { userId, invitationToken: null } },
                 {
                     $lookup: {
                         from: "projects", // ⚠️ nome della collezione Mongo (di default è minuscolo e plurale)

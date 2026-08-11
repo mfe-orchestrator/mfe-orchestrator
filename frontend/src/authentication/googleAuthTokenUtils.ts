@@ -8,12 +8,8 @@ export interface GoogleTokenResponse {
     token_type: string
 }
 
-
 export async function getAccessToken(code: string): Promise<GoogleTokenResponse> {
-    const response = await axios.get<GoogleTokenResponse>(
-        '/api/auth/google?code='+ code
-    )
+    const response = await axios.get<GoogleTokenResponse>("/api/auth/google?code=" + code)
 
     return response.data
-
 }

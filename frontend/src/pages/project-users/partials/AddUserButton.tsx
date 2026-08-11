@@ -1,27 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, UserRoundPlus } from "lucide-react"
-import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Form, SelectField } from "@mfe-orchestrator/design-system"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { UserRoundPlus } from "lucide-react"
+import { useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 import { Button } from "@/components/atoms"
-import SelectField from "@/components/input/SelectField.rhf"
 import TextField from "@/components/input/TextField.rhf"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
 import useProjectApi, { RoleInProject } from "@/hooks/apiClients/useProjectApi"
+import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import useUserStore from "@/store/useUserStore"
 
-const inviteUserSchema = z.object({
-    email: z.string().email("Inserisci un indirizzo email valido"),
-    role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
-        required_error: "Seleziona un ruolo per l'utente"
-    })
-})
-
-type InviteUserFormValues = z.infer<typeof inviteUserSchema>
+interface InviteUserFormValues {
+    email: string
+    role: RoleInProject
+}
 
 interface AddUserButtonProps {
     onSuccess?: () => void
@@ -32,8 +28,34 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
     const notifications = useToastNotificationStore()
     const projectApi = useProjectApi()
+    const projectUserApi = useProjectUserApi()
     const { project } = useProjectStore()
     const queryClient = useQueryClient()
+    const currentUserEmail = useUserStore(state => state.user?.email?.toLowerCase())
+
+    // Same key as the ProjectUsers page, so this reads from the already-fetched cache.
+    // `refetchOnMount: false` non e' un dettaglio: il bottone vive dentro
+    // l'ApiStatusHandler della pagina, che tratta anche un refetch in background come
+    // caricamento. Rifacendo la fetch al mount il bottone si farebbe smontare dal
+    // proprio genitore, per poi rimontare e rifare la fetch: la pagina resterebbe
+    // sullo spinner interrogando la API in modo continuo.
+    const projectUsersQuery = useQuery({
+        queryKey: ["projectUsers", project?._id],
+        queryFn: () => projectUserApi.getProjectUsers(project?._id || ""),
+        enabled: !!project?._id,
+        refetchOnMount: false
+    })
+
+    const inviteUserSchema = useMemo(
+        () =>
+            z.object({
+                email: z.string().email(t("auth.invalid_email")),
+                role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
+                    required_error: t("project_users.role_required")
+                })
+            }),
+        [t]
+    )
 
     const form = useForm<InviteUserFormValues>({
         resolver: zodResolver(inviteUserSchema),
@@ -48,6 +70,16 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     })
 
     const onSubmit = async (values: InviteUserFormValues) => {
+        const email = values.email.trim().toLowerCase()
+        if (currentUserEmail && email === currentUserEmail) {
+            form.setError("email", { message: t("project_users.cannot_invite_self") })
+            return
+        }
+        const existing = (projectUsersQuery.data ?? []).find(u => u.email.toLowerCase() === email)
+        if (existing) {
+            form.setError("email", { message: existing.invitationPending ? t("project_users.already_invited") : t("project_users.already_member") })
+            return
+        }
         await inviteUserMutation.mutateAsync({
             email: values.email!,
             role: values.role,
@@ -66,7 +98,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     return (
         <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button dataTestId="invite-user">
                     <UserRoundPlus />
                     {t("project_users.invite_user")}
                 </Button>
@@ -79,23 +111,26 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
                             <DialogDescription>{t("project_users.invite_user_modal_description")}</DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <TextField name="email" label={t("auth.email")} placeholder={t("auth.email_placeholder")} type="email" />
-                            <SelectField
-                                name="role"
-                                label={t("project_users.role")}
-                                placeholder={t("project_users.select_role")}
-                                options={[
-                                    { value: "OWNER", label: t("project_users.roles.admin") },
-                                    { value: "MEMBER", label: t("project_users.roles.editor") },
-                                    { value: "VIEWER", label: t("project_users.roles.viewer") }
-                                ]}
-                            />
+                            <TextField name="email" label={t("auth.email")} placeholder={t("auth.email_placeholder")} type="email" dataTestId="invite-user-email" />
+                            {/* SelectField non espone un test id: il wrapper dà ai test un aggancio stabile sul trigger. */}
+                            <div data-testid="invite-user-role">
+                                <SelectField
+                                    name="role"
+                                    label={t("project_users.role")}
+                                    placeholder={t("project_users.select_role")}
+                                    options={[
+                                        { value: "OWNER", label: t("project_users.roles.admin") },
+                                        { value: "MEMBER", label: t("project_users.roles.editor") },
+                                        { value: "VIEWER", label: t("project_users.roles.viewer") }
+                                    ]}
+                                />
+                            </div>
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="secondary" onClick={() => setIsInviteModalOpen(false)} disabled={inviteUserMutation.isPending}>
+                            <Button type="button" variant="secondary" onClick={() => setIsInviteModalOpen(false)} disabled={inviteUserMutation.isPending} dataTestId="cancel-invitation">
                                 {t("common.cancel")}
                             </Button>
-                            <Button type="submit" disabled={inviteUserMutation.isPending}>
+                            <Button type="submit" disabled={inviteUserMutation.isPending} dataTestId="send-invitation">
                                 {inviteUserMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : t("project_users.send_invitation")}
                             </Button>
                         </DialogFooter>

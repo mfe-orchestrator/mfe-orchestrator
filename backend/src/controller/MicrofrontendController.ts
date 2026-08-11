@@ -1,9 +1,11 @@
+import fastifyMultipart from "@fastify/multipart"
 import { FastifyInstance } from "fastify"
-import MicrofrontendDTO from "../types/MicrofrontendDTO"
-import MicrofrontendService from "../service/MicrofrontendService"
-import { getProjectIdFromRequest } from "../utils/requestUtils"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import MicrofrontendService from "../service/MicrofrontendService"
+import StackDetectionService from "../service/StackDetectionService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
+import MicrofrontendDTO from "../types/MicrofrontendDTO"
+import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function microfrontendController(fastify: FastifyInstance) {
     fastify.get("/microfrontends", async (request, reply) => {
@@ -55,19 +57,40 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         })
     })
 
-    fastify.post<{
-        Params: { microfrontendSlug: string; version: string }
-        Body: { file: string }
-    }>("/microfrontends/by-slug/:microfrontendSlug/upload/:version", { config: { authMethod: AuthenticationMethod.API_KEY } }, async (request, reply) => {
+    fastify.post("/microfrontends/stack-detection", async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
         }
-        const data = await request.file()
-        if (!data) {
-            throw new Error("File not found")
-        }
-        return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, projectId, data))
+        return reply.send(await new StackDetectionService(request.databaseUser).detectForProject(projectId))
+    })
+
+    fastify.put<{
+        Params: { id: string }
+        Body: { framework?: string; compiler?: string }
+    }>("/microfrontends/:id/stack", async (request, reply) => {
+        return reply.send(await new StackDetectionService(request.databaseUser).setManualStack(request.params.id, request.body.framework, request.body.compiler))
+    })
+
+    // Encapsulated scope: the multipart parser stays local to the upload route, so every
+    // other endpoint keeps accepting JSON only.
+    await fastify.register(async uploadScope => {
+        await uploadScope.register(fastifyMultipart)
+
+        uploadScope.post<{
+            Params: { microfrontendSlug: string; version: string }
+            Body: { file: string }
+        }>("/microfrontends/by-slug/:microfrontendSlug/upload/:version", { config: { authMethod: AuthenticationMethod.API_KEY } }, async (request, reply) => {
+            const projectId = getProjectIdFromRequest(request)
+            if (!projectId) {
+                throw new ProjectHeaderNotFoundError()
+            }
+            const data = await request.file()
+            if (!data) {
+                throw new Error("File not found")
+            }
+            return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, projectId, data))
+        })
     })
 
     fastify.put<{
@@ -91,7 +114,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     fastify.post<{
         Params: {
             id: string
-        },
+        }
         Body: {
             version: string
             branch?: string
@@ -103,7 +126,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     fastify.put<{
         Params: {
             id: string
-        },
+        }
         Body: {
             x: number
             y: number
@@ -115,7 +138,7 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     fastify.put<{
         Params: {
             id: string
-        },
+        }
         Body: {
             width: number
             height: number
@@ -123,6 +146,4 @@ export default async function microfrontendController(fastify: FastifyInstance) 
     }>("/microfrontends/:id/dimension", async (request, reply) => {
         return reply.send(await new MicrofrontendService(request.databaseUser).setDimension(request.params.id, request.body.width, request.body.height))
     })
-
-
 }

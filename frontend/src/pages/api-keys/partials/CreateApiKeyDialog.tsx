@@ -1,10 +1,10 @@
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Check, Copy } from "lucide-react"
 import { useEffect, useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import useApiKeysApi from "@/hooks/apiClients/useApiKeysApi"
 import useProjectStore from "@/store/useProjectStore"
 import { ApiKeyFormData, CreateApiKeyFormInner } from "./CreateApiKeyForm"
@@ -24,7 +24,7 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
 
     const createApiKeyMutation = useMutation({
         mutationFn: apiKeysApi.createApiKey,
-        onSuccess: data => {
+        onSuccess: _data => {
             queryClient.invalidateQueries({ queryKey: ["api-keys", project.project?._id] })
         }
     })
@@ -74,7 +74,9 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
                         {showSuccess ? (
                             <div className="my-4 space-y-2">
                                 <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
-                                    <code className="flex-1 select-all break-all font-mono text-sm text-foreground">{createApiKeyMutation.data.apiKey}</code>
+                                    <code data-testid="api-key-value" className="flex-1 select-all break-all font-mono text-sm text-foreground">
+                                        {createApiKeyMutation.data.apiKey}
+                                    </code>
                                     <button
                                         type="button"
                                         onClick={handleCopy}
@@ -94,7 +96,7 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
 
                         {showSuccess ? (
                             <DialogFooter>
-                                <Button variant="secondary" type="button" onClick={() => setIsCreateDialogOpen(false)} disabled={form.formState.isSubmitting}>
+                                <Button variant="secondary" type="button" onClick={() => setIsCreateDialogOpen(false)} disabled={form.formState.isSubmitting} dataTestId="api-key-close">
                                     {t("common.close")}
                                 </Button>
                             </DialogFooter>
@@ -103,7 +105,7 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
                                 <Button variant="secondary" type="button" onClick={() => setIsCreateDialogOpen(false)} disabled={form.formState.isSubmitting}>
                                     {t("common.cancel")}
                                 </Button>
-                                <Button type="submit" disabled={form.formState.isSubmitting}>
+                                <Button type="submit" disabled={form.formState.isSubmitting} dataTestId="api-key-submit">
                                     {t("apiKeys.create_key")}
                                 </Button>
                             </DialogFooter>

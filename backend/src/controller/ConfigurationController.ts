@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify"
-import ConfigResponseDTO from "../types/ConfigResponseDTO"
 import AuthenticationMethod from "../types/AuthenticationMethod"
+import ConfigResponseDTO from "../types/ConfigResponseDTO"
 
 export default async function configurationController(fastify: FastifyInstance) {
     fastify.get("/configuration", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {

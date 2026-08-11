@@ -1,4 +1,7 @@
+import { Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
+import { AxiosError } from "axios"
+import { MailX } from "lucide-react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
@@ -7,19 +10,38 @@ import { setToken } from "@/authentication/tokenUtils"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
-import Spinner from "@/components/Spinner"
 import useInvitationApi, { AcceptInvitationDTO } from "@/hooks/apiClients/useInvitationApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useUserStore from "@/store/useUserStore"
 
 interface FormValues {
-    name?: string
-    surname?: string
     password?: string
     confirmPassword?: string
 }
 
 const ISSUER = "microfrontend.orchestrator.hub"
+
+/** Friendly screen for an invitation link that can't be loaded (404 = token unknown/expired). */
+const InvitationError: React.FC<{ error: unknown }> = ({ error }) => {
+    const { t } = useTranslation()
+    const navigate = useNavigate()
+    const notFound = error instanceof AxiosError && error.response?.status === 404
+
+    return (
+        <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <MailX className="size-6 text-primary" />
+            </div>
+            <div>
+                <h3 className="font-semibold text-foreground">{t(notFound ? "project_invitation.not_found_title" : "project_invitation.error_title")}</h3>
+                <p className="mt-1 text-sm text-foreground-secondary">{t(notFound ? "project_invitation.not_found_description" : "project_invitation.error_description")}</p>
+            </div>
+            <Button className="w-full" onClick={() => navigate("/")}>
+                {t("project_invitation.go_to_login")}
+            </Button>
+        </div>
+    )
+}
 
 const ProjectInvitation = () => {
     const { t } = useTranslation()
@@ -51,7 +73,7 @@ const ProjectInvitation = () => {
     })
 
     const onAccept = (values: FormValues) => {
-        acceptMutation.mutate(invitation?.needsPassword ? { name: values.name, surname: values.surname, password: values.password } : {})
+        acceptMutation.mutate(invitation?.needsPassword ? { password: values.password } : {})
     }
 
     return (
@@ -59,19 +81,18 @@ const ProjectInvitation = () => {
             title={t("project_invitation.title")}
             description={invitation ? t("project_invitation.description", { project: invitation.projectName, role: invitation.role }) : undefined}
         >
-            <ApiStatusHandler queries={[invitationQuery]}>
+            <ApiStatusHandler queries={[invitationQuery]} errorComponent={error => <InvitationError error={error} />}>
                 <FormProvider {...form}>
                     <form onSubmit={form.handleSubmit(onAccept)}>
                         <div className="grid gap-4">
                             {invitation?.needsPassword && (
                                 <>
-                                    <TextField name="name" label={t("project_invitation.name_label")} placeholder={t("project_invitation.name_label")} />
-                                    <TextField name="surname" label={t("project_invitation.surname_label")} placeholder={t("project_invitation.surname_label")} />
                                     <TextField
                                         name="password"
                                         label={t("auth.password")}
                                         type="password"
                                         placeholder="••••••••"
+                                        dataTestId="invitation-password"
                                         rules={{
                                             required: t("common.required_field") as string,
                                             minLength: { value: 8, message: t("auth.password_min_length") }
@@ -82,6 +103,7 @@ const ProjectInvitation = () => {
                                         label={t("auth.confirm_password")}
                                         type="password"
                                         placeholder="••••••••"
+                                        dataTestId="invitation-confirm-password"
                                         rules={{
                                             required: t("common.required_field") as string,
                                             validate: (value: string) => value === form.getValues("password") || t("auth.passwords_dont_match")
@@ -93,7 +115,7 @@ const ProjectInvitation = () => {
                             {acceptMutation.isPending ? (
                                 <Spinner />
                             ) : (
-                                <Button type="submit" className="w-full">
+                                <Button type="submit" className="w-full" dataTestId="accept-invitation">
                                     {t("project_invitation.accept")}
                                 </Button>
                             )}

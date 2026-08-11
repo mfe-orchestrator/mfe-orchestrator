@@ -1,4 +1,4 @@
-import { CirclePlus, PackageOpen, SearchX } from "lucide-react"
+import { CirclePlus, DownloadCloud, PackageOpen, SearchX } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 
@@ -7,10 +7,12 @@ interface MicrofrontendsEmptyStateProps {
     variant: "empty" | "no-results"
     searchTerm?: string
     onAddNewMicrofrontend?: () => void
+    /** Only provided when the project has at least one code repository connection to import from. */
+    onImportRepositories?: () => void
     onResetFilters?: () => void
 }
 
-export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> = ({ variant, searchTerm, onAddNewMicrofrontend, onResetFilters }) => {
+export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> = ({ variant, searchTerm, onAddNewMicrofrontend, onImportRepositories, onResetFilters }) => {
     const { t } = useTranslation()
 
     const isNoResults = variant === "no-results"
@@ -32,10 +34,18 @@ export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> =
                     {t("microfrontend.dashboard.resetFilters")}
                 </Button>
             ) : (
-                <Button onClick={onAddNewMicrofrontend}>
-                    <CirclePlus />
-                    {t("microfrontend.add_new")}
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button onClick={onAddNewMicrofrontend}>
+                        <CirclePlus />
+                        {t("microfrontend.add_new")}
+                    </Button>
+                    {onImportRepositories && (
+                        <Button variant="secondary" onClick={onImportRepositories}>
+                            <DownloadCloud />
+                            {t("microfrontend.import.action")}
+                        </Button>
+                    )}
+                </div>
             )}
         </div>
     )

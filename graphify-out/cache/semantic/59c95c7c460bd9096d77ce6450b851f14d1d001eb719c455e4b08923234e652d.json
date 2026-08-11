@@ -1,1 +1,40 @@
-{"nodes": [{"id": "frontend_index_app_entry", "label": "Frontend HTML Entry Point (Microfrontend Orchestrator Hub)", "file_type": "code", "source_file": "frontend/index.html", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Loads /config.js as a plain script before the module bundle so runtime configuration is available prior to app startup; hosted console lives at https://console.mfe-orchestrator.dev with full Open Graph and Twitter meta tags"}, {"id": "frontend_src_main_main", "label": "Frontend main.tsx Entry Module", "file_type": "code", "source_file": "frontend/index.html", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [{"source": "frontend_index_app_entry", "target": "frontend_src_main_main", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "frontend/index.html", "source_location": null, "weight": 1.0}], "hyperedges": []}
+{
+    "nodes": [
+        {
+            "id": "frontend_index_app_entry",
+            "label": "Frontend HTML Entry Point (Microfrontend Orchestrator Hub)",
+            "file_type": "code",
+            "source_file": "frontend/index.html",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null,
+            "rationale": "Loads /config.js as a plain script before the module bundle so runtime configuration is available prior to app startup; hosted console lives at https://console.mfe-orchestrator.dev with full Open Graph and Twitter meta tags"
+        },
+        {
+            "id": "frontend_src_main_main",
+            "label": "Frontend main.tsx Entry Module",
+            "file_type": "code",
+            "source_file": "frontend/index.html",
+            "source_location": null,
+            "source_url": null,
+            "captured_at": null,
+            "author": null,
+            "contributor": null
+        }
+    ],
+    "edges": [
+        {
+            "source": "frontend_index_app_entry",
+            "target": "frontend_src_main_main",
+            "relation": "references",
+            "confidence": "EXTRACTED",
+            "confidence_score": 1.0,
+            "source_file": "frontend/index.html",
+            "source_location": null,
+            "weight": 1.0
+        }
+    ],
+    "hyperedges": []
+}

@@ -1,21 +1,21 @@
-import { useGlobalParameters } from "@/contexts/GlobalParameterProvider";
-import LoginWithGoogleButton from "./LoginWithGoogleButton";
-import LoginWithAuth0Button from "./LoginWithAuth0Button";
-import LoginWithMicrosoftButton from "./LoginWithMicrosoftButton";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next"
+import { useGlobalParameters } from "@/contexts/GlobalParameterProvider"
+import LoginWithAuth0Button from "./LoginWithAuth0Button"
+import LoginWithGoogleButton from "./LoginWithGoogleButton"
+import LoginWithMicrosoftButton from "./LoginWithMicrosoftButton"
 
-export interface SocialLoginRowProps{
-    onSuccessLogin?: () => void;
+export interface SocialLoginRowProps {
+    onSuccessLogin?: () => void
 }
 
-const SocialLoginRow: React.FC<SocialLoginRowProps> = ({  onSuccessLogin  }) => {
-    const { t } = useTranslation();
-    const parameters = useGlobalParameters();
+const SocialLoginRow: React.FC<SocialLoginRowProps> = ({ onSuccessLogin }) => {
+    const { t } = useTranslation()
+    const parameters = useGlobalParameters()
 
-    const providersCount = Object.keys(parameters.getParameter("providers") || {}).length;
+    const providersCount = Object.keys(parameters.getParameter("providers") || {}).length
 
-    if(providersCount === 0){
-        return null;
+    if (providersCount === 0) {
+        return null
     }
 
     return (

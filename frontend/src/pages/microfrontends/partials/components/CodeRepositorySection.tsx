@@ -1,12 +1,9 @@
+import { Alert, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField, SwitchField as Switch } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import SelectField from "../../../../components/input/SelectField.rhf"
-import Switch from "../../../../components/input/Switch.rhf"
 import TextField from "../../../../components/input/TextField.rhf"
-import { Alert, AlertDescription } from "../../../../components/ui/alert"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../components/ui/card"
 import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../../../hooks/apiClients/useCodeRepositoriesApi"
 import { extractCloneUrls } from "../../../../utils/repositoryCloneUrls"
 
@@ -95,9 +92,10 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
     }
 
     // Effect to fetch repositories when a repository is selected
+    // biome-ignore lint/correctness/useExhaustiveDependencies: fetchRepository is recreated on every render; refetch only when the selected provider changes
     useEffect(() => {
         fetchRepository()
-    }, [selectedCodeRepositoryId])
+    }, [selectedCodeRepositoryId, codeRepositoryEnabled, forceCreation])
 
     // Prefill the clone urls with the ones exposed by the provider for the selected repository
     const onRepositorySelected = (repositoryName: string) => {
@@ -259,26 +257,6 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                                 <Switch name="codeRepository.createData.private" label={t("microfrontend.github_private")} />
                             )}
                         </>
-                    )}
-
-                    {selectedCodeRepositoryId && (
-                        <div className="flex flex-col gap-2">
-                            <p className="text-sm text-foreground-secondary">{t("microfrontend.clone_urls_description")}</p>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                <TextField
-                                    name="codeRepository.cloneUrlHttps"
-                                    label={t("microfrontend.clone_url_https")}
-                                    placeholder={t("microfrontend.clone_url_https_placeholder")}
-                                    containerClassName="flex-[1_1_240px]"
-                                />
-                                <TextField
-                                    name="codeRepository.cloneUrlSsh"
-                                    label={t("microfrontend.clone_url_ssh")}
-                                    placeholder={t("microfrontend.clone_url_ssh_placeholder")}
-                                    containerClassName="flex-[1_1_240px]"
-                                />
-                            </div>
-                        </div>
                     )}
                 </CardContent>
             )}

@@ -1,10 +1,10 @@
+import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
 import { useMutation } from "@tanstack/react-query"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
 import useEnvironmentsApi, { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import presetEnvironmentGroups, { EnvironmentPreset } from "@/utils/EnviromentsPresets"
-import { Card, CardContent, CardHeader } from "../../../components/ui/card"
 import { EnvironmentList, EnvironmentSet } from "./index"
 
 interface NoEnvironmentPlaceholderProps {

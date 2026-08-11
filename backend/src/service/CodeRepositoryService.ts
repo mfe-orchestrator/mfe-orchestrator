@@ -376,6 +376,31 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return await this.update(repositoryId, { isActive: false })
     }
 
+    /**
+     * Revoca il grant GitHub così che il prossimo authorize mostri sempre la
+     * pagina di autorizzazione. Con repositoryId revoca solo quella connessione,
+     * altrimenti tutte le connessioni GitHub del progetto (best effort).
+     */
+    async revokeGithubGrant(projectId: string, repositoryId?: string): Promise<void> {
+        await this.ensureAccessToProject(projectId)
+
+        let repositories: ICodeRepository[]
+        if (repositoryId) {
+            const repository = await this.findById(repositoryId)
+            if (!repository) {
+                throw new EntityNotFoundError(repositoryId)
+            }
+            repositories = [repository]
+        } else {
+            repositories = await CodeRepository.find({ projectId: toObjectId(projectId), provider: CodeRepositoryProvider.GITHUB })
+        }
+
+        const githubClient = new GithubClient()
+        const tokens = [...new Set(repositories.filter(repository => repository.provider === CodeRepositoryProvider.GITHUB && repository.accessToken).map(repository => repository.accessToken))]
+
+        await Promise.all(tokens.map(token => githubClient.revokeApplicationGrant(fastify.config.CODE_REPOSITORY_GITHUB_CLIENT_ID, fastify.config.CODE_REPOSITORY_GITHUB_CLIENT_SECRET, token)))
+    }
+
     async addRepositoryGithub(code: string, state: string, projectId: string, codeRepositoryId: string) {
         await this.ensureAccessToProject(projectId)
         const githubClient = new GithubClient()

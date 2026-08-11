@@ -23,6 +23,7 @@ import Microfrontend, { HostedOn, IMicrofrontend } from "../models/Microfrontend
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
+import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { ApiKeyService } from "./ApiKeyService"
@@ -120,6 +121,17 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     // Now will inject the template
                     if (template) {
                         await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)
+                    }
+                }
+
+                // The template knows the stack the repository was just scaffolded with: keep it,
+                // it is what makes the integration instructions specific to this microfrontend
+                if (template) {
+                    microfrontend.template = template.slug
+                    microfrontend.stack = {
+                        framework: parseFramework(template.framework),
+                        compiler: parseCompiler(template.compiler),
+                        source: MicrofrontendStackSource.TEMPLATE
                     }
                 }
 
