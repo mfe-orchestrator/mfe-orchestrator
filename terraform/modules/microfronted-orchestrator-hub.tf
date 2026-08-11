@@ -1,5 +1,5 @@
 resource "docker_image" "microfrontend_orchestrator_hub" {
-  name         = "lory1990/mfe-orchestrator:latest"
+  name         = "lory1990/mfe-orchestrator:2.3.0"
   keep_locally = true
 }
 resource "docker_container" "microfrontend_orchestrator_hub" {
