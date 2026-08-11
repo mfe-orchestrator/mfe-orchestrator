@@ -20,13 +20,13 @@
     "semantic_hash": ""
   },
   "src/client/GithubClient.ts": {
-    "mtime": 1786469501.372368,
-    "ast_hash": "130f81fc827b0d9031d1b00a77b4c41e",
+    "mtime": 1786470001.2141945,
+    "ast_hash": "5469e26ff2bff131a74a7ec88d304513",
     "semantic_hash": ""
   },
   "src/client/GitlabClient.ts": {
-    "mtime": 1786109994.3513093,
-    "ast_hash": "5ed596531bce4506d7eba7a3946a5dcf",
+    "mtime": 1786470001.2145944,
+    "ast_hash": "cff776024fd5d862015aa8e6cd42afae",
     "semantic_hash": ""
   },
   "src/client/GoogleStorageAccount.ts": {
@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "src/controller/CodeRepositoryController.ts": {
-    "mtime": 1786109863.4588926,
-    "ast_hash": "977793f30436a721c56daf82785ce16e",
+    "mtime": 1786470001.2149627,
+    "ast_hash": "58f53fabf09dfc66e280f5d9238d3243",
     "semantic_hash": ""
   },
   "src/controller/ConfigurationController.ts": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "src/controller/IntegrationController.ts": {
-    "mtime": 1785880209.9831429,
-    "ast_hash": "2bc722d073582d00a3619d316502f6c3",
+    "mtime": 1786470383.6506228,
+    "ast_hash": "61f7a124732fbd25c02c27a2eb14691f",
     "semantic_hash": ""
   },
   "src/controller/MarketController.ts": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "src/controller/MicrofrontendController.ts": {
-    "mtime": 1786467827.396686,
-    "ast_hash": "8c869551f9185e4adaad0cb463f50f15",
+    "mtime": 1786469739.0038698,
+    "ast_hash": "4375ffd6965174e48b64cb0a057cf57d",
     "semantic_hash": ""
   },
   "src/controller/MicrofrontendDependencyController.ts": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "src/controller/ServeController.ts": {
-    "mtime": 1786469501.3725836,
-    "ast_hash": "065cf0b6c0623543197e4969a408c2d4",
+    "mtime": 1786469979.1756537,
+    "ast_hash": "ecff9d768b05b12c3ba8b6014c6bdb6a",
     "semantic_hash": ""
   },
   "src/controller/StartupController.ts": {
@@ -435,8 +435,8 @@
     "semantic_hash": ""
   },
   "src/service/ServeService.ts": {
-    "mtime": 1786469501.372972,
-    "ast_hash": "ce45389e898f9b89d9db26c94b929bd4",
+    "mtime": 1786470305.6576793,
+    "ast_hash": "556de055e13912818ccaed3172ec6a20",
     "semantic_hash": ""
   },
   "src/service/StorageService.ts": {
@@ -655,8 +655,43 @@
     "semantic_hash": ""
   },
   "src/types/MicrofrontendStack.ts": {
-    "mtime": 1786469618.5721967,
-    "ast_hash": "3137be0e6c033888ecb6607463c621b5",
+    "mtime": 1786469746.1994286,
+    "ast_hash": "b38433318470f5446ea6c98fe2f09f26",
+    "semantic_hash": ""
+  },
+  "src/service/CodeRepositoryImportService.ts": {
+    "mtime": 1786470001.2150633,
+    "ast_hash": "f554b819f453e7d5dad80af10652b500",
+    "semantic_hash": ""
+  },
+  "src/service/FederationConfigService.ts": {
+    "mtime": 1786470305.6572456,
+    "ast_hash": "4b24b70ad589d80c5f1e3bfb2ff4ee6b",
+    "semantic_hash": ""
+  },
+  "src/service/FederationIntegrationService.ts": {
+    "mtime": 1786470395.1684496,
+    "ast_hash": "c8e6edcb413d0856ba2483ee42fef029",
+    "semantic_hash": ""
+  },
+  "src/service/StackDetectionService.ts": {
+    "mtime": 1786469780.8818426,
+    "ast_hash": "a101cb2da1da5456417c9354854f4a3f",
+    "semantic_hash": ""
+  },
+  "src/types/ImportRepositoriesDTO.ts": {
+    "mtime": 1786470001.215155,
+    "ast_hash": "800b9fd126f1d33af52281819d832b20",
+    "semantic_hash": ""
+  },
+  "src/utils/codeRepositoryUtils.ts": {
+    "mtime": 1786470001.2152283,
+    "ast_hash": "0307fdb60cf6d2ebb0a7d45af33c806d",
+    "semantic_hash": ""
+  },
+  "src/utils/packageJsonUtils.ts": {
+    "mtime": 1786470305.670809,
+    "ast_hash": "d7e1b7598b8aab9040097b7ab4d3f620",
     "semantic_hash": ""
   }
 }
