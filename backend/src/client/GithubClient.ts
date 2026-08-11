@@ -232,7 +232,8 @@ export interface GithubUpdateFileDTO extends GithubRepositoryBaseDTO {
     content: string
     message: string
     branch: string
-    sha: string
+    /** Sha of the blob being replaced. Leave it out to create the file. */
+    sha?: string
 }
 
 export interface GithubFileContent {

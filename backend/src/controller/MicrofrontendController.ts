@@ -2,6 +2,7 @@ import fastifyMultipart from "@fastify/multipart"
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import MicrofrontendService from "../service/MicrofrontendService"
+import StackDetectionService from "../service/StackDetectionService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
@@ -54,6 +55,21 @@ export default async function microfrontendController(fastify: FastifyInstance) 
             message: "Microfrontends deleted successfully",
             deletedCount: await new MicrofrontendService(request.databaseUser).bulkDelete(request.body)
         })
+    })
+
+    fastify.post("/microfrontends/stack-detection", async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+        return reply.send(await new StackDetectionService(request.databaseUser).detectForProject(projectId))
+    })
+
+    fastify.put<{
+        Params: { id: string }
+        Body: { framework?: string; compiler?: string }
+    }>("/microfrontends/:id/stack", async (request, reply) => {
+        return reply.send(await new StackDetectionService(request.databaseUser).setManualStack(request.params.id, request.body.framework, request.body.compiler))
     })
 
     // Encapsulated scope: the multipart parser stays local to the upload route, so every

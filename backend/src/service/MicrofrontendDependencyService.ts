@@ -1,12 +1,7 @@
 import { Schema } from "mongoose"
 import { fastify } from ".."
-import AzureDevOpsClient from "../client/AzureDevOpsClient"
-import GithubClient from "../client/GithubClient"
-import GitlabClient from "../client/GitlabClient"
 import NpmRegistryClient, { NpmPackageInfo } from "../client/NpmRegistryClient"
 import { createBusinessException } from "../errors/BusinessException"
-import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
-import Microfrontend, { IMicrofrontend } from "../models/MicrofrontendModel"
 import {
     AlignmentApplyRequestDTO,
     AlignmentApplyResultDTO,
@@ -23,16 +18,14 @@ import {
     MicrofrontendScanTargetDTO,
     ProjectDependenciesReportDTO
 } from "../types/MicrofrontendDependencyDTO"
-import { toObjectId } from "../utils/mongooseUtils"
 import { diffVersions, minVersionOfRange, parseVersion, pickHighestRange } from "../utils/semverUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import CodeRepositoryService from "./CodeRepositoryService"
+import RepositoryFileService, { mapWithConcurrency, REPOSITORY_CONCURRENCY, RepositoryTarget, toErrorMessage } from "./RepositoryFileService"
 
 const PACKAGE_JSON_PATH = "package.json"
 const DEFAULT_ALIGNMENT_BRANCH = "chore/align-peer-dependencies"
 const DEFAULT_COMMIT_MESSAGE = "chore(deps): align peer dependencies"
 const BRANCH_NAME_PATTERN = /^[A-Za-z0-9._\-/]+$/
-const REPOSITORY_CONCURRENCY = 4
 
 const DEPENDENCY_SECTIONS: { section: string; kind: DependencyKind }[] = [
     { section: "dependencies", kind: DependencyKind.PROD },
@@ -54,12 +47,6 @@ interface PackageManifest {
     [section: string]: unknown
 }
 
-interface RepositoryTarget {
-    microfrontend: IMicrofrontend
-    codeRepository: ICodeRepository
-    repositoryName: string
-}
-
 interface ManifestFile {
     raw: string
     manifest: PackageManifest
@@ -76,33 +63,16 @@ interface ManifestSnapshot {
     error?: string
 }
 
-const mapWithConcurrency = async <T, R>(items: T[], concurrency: number, mapper: (item: T) => Promise<R>): Promise<R[]> => {
-    const results: R[] = new Array(items.length)
-    let cursor = 0
-
-    const worker = async () => {
-        while (cursor < items.length) {
-            const index = cursor++
-            results[index] = await mapper(items[index])
-        }
-    }
-
-    await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker))
-
-    return results
-}
-
-const toErrorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error))
-
 export class MicrofrontendDependencyService extends BaseAuthorizedService {
     private readonly npmRegistryClient = new NpmRegistryClient()
+    private readonly repositoryFiles = new RepositoryFileService(this.user)
 
     /**
      * Lists what the scan would walk: one entry per microfrontend backed by a code repository,
      * with its default branch and the branches available to compare.
      */
     async getScanTargets(projectId: string | Schema.Types.ObjectId): Promise<MicrofrontendScanTargetDTO[]> {
-        const targets = await this.resolveTargets(projectId)
+        const targets = await this.repositoryFiles.resolveTargets(projectId)
 
         return mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, async target => {
             const base: MicrofrontendScanTargetDTO = {
@@ -119,7 +89,7 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
             }
 
             try {
-                const [defaultBranch, branches] = await Promise.all([this.getDefaultBranch(target), this.listBranches(target)])
+                const [defaultBranch, branches] = await Promise.all([this.repositoryFiles.getDefaultBranch(target), this.repositoryFiles.listBranches(target)])
                 return { ...base, defaultBranch, branches: branches.length > 0 ? branches : [defaultBranch] }
             } catch (error) {
                 fastify.log.error(error, `Unable to list the branches of ${target.microfrontend.slug}`)
@@ -232,43 +202,12 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
     }
 
     /**
-     * Every microfrontend of the project backed by a code repository, paired with the
-     * connection it belongs to. `codeRepository` is left undefined when the connection
-     * referenced by the microfrontend no longer exists.
-     */
-    private async resolveTargets(projectId: string | Schema.Types.ObjectId): Promise<RepositoryTarget[]> {
-        const projectIdObj = toObjectId(projectId)
-        await this.ensureAccessToProject(projectIdObj)
-
-        const microfrontends = await Microfrontend.find({ projectId: projectIdObj }).sort({ slug: 1 })
-        const withRepository = microfrontends.filter(microfrontend => microfrontend.codeRepository?.enabled && microfrontend.codeRepository?.codeRepositoryId)
-
-        if (withRepository.length === 0) {
-            return []
-        }
-
-        const codeRepositoryIds = [...new Set(withRepository.map(microfrontend => microfrontend.codeRepository!.codeRepositoryId.toString()))]
-        const codeRepositories = await CodeRepository.find({ _id: { $in: codeRepositoryIds.map(id => toObjectId(id)) } })
-        const codeRepositoryById = new Map(codeRepositories.map(codeRepository => [codeRepository._id.toString(), codeRepository]))
-
-        return withRepository.map(microfrontend => {
-            const codeRepository = codeRepositoryById.get(microfrontend.codeRepository!.codeRepositoryId.toString())
-
-            return {
-                microfrontend,
-                codeRepository: codeRepository as ICodeRepository,
-                repositoryName: codeRepository ? this.resolveRepositoryName(microfrontend, codeRepository) : microfrontend.codeRepository?.name || ""
-            }
-        })
-    }
-
-    /**
      * Loads the package.json of every microfrontend backed by a repository, on the branch
      * requested for it or on the repository default branch.
      * Failures are captured per microfrontend so one broken repository does not hide the others.
      */
     private async collectSnapshots(projectId: string | Schema.Types.ObjectId, request: DependencyScanRequestDTO = {}): Promise<ManifestSnapshot[]> {
-        const targets = await this.resolveTargets(projectId)
+        const targets = await this.repositoryFiles.resolveTargets(projectId)
 
         return mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, async target => {
             const microfrontendId = target.microfrontend._id.toString()
@@ -278,7 +217,7 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
             }
 
             try {
-                const defaultBranch = await this.getDefaultBranch(target)
+                const defaultBranch = await this.repositoryFiles.getDefaultBranch(target)
                 const requestedBranch = request.branches?.[microfrontendId]?.trim()
                 const branch = requestedBranch ? this.resolveBranchName(requestedBranch) : defaultBranch
 
@@ -296,114 +235,26 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
         })
     }
 
-    /**
-     * Branch names available for comparison, through the same unified mapping used by the
-     * repository settings screen.
-     */
-    private async listBranches(target: RepositoryTarget): Promise<string[]> {
-        const branches = await new CodeRepositoryService(this.user).getBranches(target.codeRepository._id.toString(), target.repositoryName)
-        return [...new Set(branches.map(branch => branch.branch).filter(Boolean))]
-    }
-
-    private resolveRepositoryName(microfrontend: IMicrofrontend, codeRepository: ICodeRepository): string {
-        const repository = microfrontend.codeRepository
-
-        if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-            return repository?.name || repository?.repositoryId || ""
-        }
-
-        return repository?.repositoryId || repository?.name || ""
-    }
-
-    private async getDefaultBranch(target: RepositoryTarget): Promise<string> {
-        const { codeRepository, repositoryName } = target
-
-        switch (codeRepository.provider) {
-            case CodeRepositoryProvider.GITHUB: {
-                const repository = await new GithubClient().getRepository({
-                    accessToken: codeRepository.accessToken,
-                    orgName: codeRepository.githubData?.organizationId,
-                    userName: codeRepository.githubData?.userName,
-                    repositoryName
-                })
-                return repository.default_branch || "main"
-            }
-            case CodeRepositoryProvider.GITLAB: {
-                this.ensureGitlabData(codeRepository)
-                const project = await new GitlabClient(codeRepository.gitlabData!.url, codeRepository.accessToken).getProject(encodeURIComponent(repositoryName))
-                return project.default_branch || "main"
-            }
-            case CodeRepositoryProvider.AZURE_DEV_OPS: {
-                this.ensureAzureData(codeRepository)
-                const repository = await new AzureDevOpsClient().getRepository(codeRepository.accessToken, codeRepository.azureData!.organization, codeRepository.azureData!.projectId, repositoryName)
-                return (repository?.defaultBranch || "refs/heads/main").replace("refs/heads/", "")
-            }
-            default:
-                throw createBusinessException({
-                    code: "UNSUPPORTED_PROVIDER",
-                    message: `Unsupported code repository provider: ${codeRepository.provider}`
-                })
-        }
-    }
-
+    /** The package.json of a microfrontend on `branch`, parsed, or null when it is not there. */
     private async readManifest(target: RepositoryTarget, branch: string): Promise<ManifestFile | null> {
-        const { codeRepository, repositoryName } = target
-        let raw: string | null = null
-        let sha: string | undefined
+        const file = await this.repositoryFiles.readFile(target, PACKAGE_JSON_PATH, branch)
 
-        switch (codeRepository.provider) {
-            case CodeRepositoryProvider.GITHUB: {
-                const file = await new GithubClient().getFileContent({
-                    accessToken: codeRepository.accessToken,
-                    orgName: codeRepository.githubData?.organizationId,
-                    userName: codeRepository.githubData?.userName,
-                    repositoryName,
-                    path: PACKAGE_JSON_PATH,
-                    ref: branch
-                })
-                raw = file?.content ?? null
-                sha = file?.sha
-                break
-            }
-            case CodeRepositoryProvider.GITLAB: {
-                this.ensureGitlabData(codeRepository)
-                raw = await new GitlabClient(codeRepository.gitlabData!.url, codeRepository.accessToken).getFileContent(encodeURIComponent(repositoryName), PACKAGE_JSON_PATH, branch)
-                break
-            }
-            case CodeRepositoryProvider.AZURE_DEV_OPS: {
-                this.ensureAzureData(codeRepository)
-                raw = await new AzureDevOpsClient().getFileContent(
-                    codeRepository.accessToken,
-                    codeRepository.azureData!.organization,
-                    codeRepository.azureData!.projectId,
-                    repositoryName,
-                    PACKAGE_JSON_PATH,
-                    branch
-                )
-                break
-            }
-            default:
-                throw createBusinessException({
-                    code: "UNSUPPORTED_PROVIDER",
-                    message: `Unsupported code repository provider: ${codeRepository.provider}`
-                })
-        }
-
-        if (raw === null || raw === undefined) {
+        if (!file) {
             return null
         }
 
-        let manifest: PackageManifest
+        return { raw: file.raw, manifest: this.parseManifest(file.raw, target.repositoryName), sha: file.sha }
+    }
+
+    private parseManifest(raw: string, repositoryName: string): PackageManifest {
         try {
-            manifest = JSON.parse(raw) as PackageManifest
+            return JSON.parse(raw) as PackageManifest
         } catch (error) {
             throw createBusinessException({
                 code: "INVALID_PACKAGE_JSON",
                 message: `${PACKAGE_JSON_PATH} of "${repositoryName}" is not valid JSON: ${toErrorMessage(error)}`
             })
         }
-
-        return { raw, manifest, sha }
     }
 
     private getDependencyEntries(manifest: PackageManifest): { name: string; kind: DependencyKind; range: string }[] {
@@ -623,167 +474,35 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
      * Returns false when the branch already carries the aligned ranges.
      */
     private async commitAlignment(snapshot: ManifestSnapshot, targetBranch: string, changes: MicrofrontendAlignmentChangeDTO[], commitMessage: string): Promise<boolean> {
-        const { codeRepository, repositoryName } = snapshot.target
+        const { target } = snapshot
 
-        switch (codeRepository.provider) {
-            case CodeRepositoryProvider.GITHUB:
-                return this.commitAlignmentGithub(snapshot, targetBranch, changes, commitMessage)
-            case CodeRepositoryProvider.GITLAB:
-                return this.commitAlignmentGitlab(snapshot, targetBranch, changes, commitMessage)
-            case CodeRepositoryProvider.AZURE_DEV_OPS:
-                return this.commitAlignmentAzure(snapshot, targetBranch, changes, commitMessage)
-            default:
-                throw createBusinessException({
-                    code: "UNSUPPORTED_PROVIDER",
-                    message: `Unsupported code repository provider for "${repositoryName}": ${codeRepository.provider}`
-                })
-        }
-    }
-
-    private async commitAlignmentGithub(snapshot: ManifestSnapshot, targetBranch: string, changes: MicrofrontendAlignmentChangeDTO[], commitMessage: string): Promise<boolean> {
-        const { codeRepository, repositoryName } = snapshot.target
-        const githubClient = new GithubClient()
-        const orgName = codeRepository.githubData?.organizationId
-        const userName = codeRepository.githubData?.userName
-
-        const baseSha = await githubClient.getBranchCommitSha(codeRepository.accessToken, repositoryName, snapshot.branch, orgName, userName)
-        await githubClient.createBranch({
-            accessToken: codeRepository.accessToken,
-            orgName,
-            userName,
-            repositoryName,
-            branchName: targetBranch,
-            sha: baseSha
-        })
-
-        // Re-read on the target branch so re-running the alignment stays idempotent
-        const file = await githubClient.getFileContent({
-            accessToken: codeRepository.accessToken,
-            orgName,
-            userName,
-            repositoryName,
-            path: PACKAGE_JSON_PATH,
-            ref: targetBranch
-        })
+        // Read the alignment branch first, falling back to the branch it is created from, so
+        // re-running the alignment builds on what is already committed there
+        const { file, sourceBranch } = await this.repositoryFiles.readFileForWrite(target, PACKAGE_JSON_PATH, targetBranch, snapshot.branch)
 
         if (!file) {
             throw createBusinessException({
                 code: "PACKAGE_JSON_NOT_FOUND",
-                message: `${PACKAGE_JSON_PATH} not found on branch "${targetBranch}" of "${repositoryName}"`
+                message: `${PACKAGE_JSON_PATH} not found on branch "${sourceBranch}" of "${target.repositoryName}"`
             })
         }
 
-        const manifest = JSON.parse(file.content) as PackageManifest
-        const updated = this.applyChangesToManifest(manifest, changes)
+        const updated = this.applyChangesToManifest(this.parseManifest(file.raw, target.repositoryName), changes)
+
         if (!updated) {
             return false
         }
 
-        await githubClient.updateFileContent({
-            accessToken: codeRepository.accessToken,
-            orgName,
-            userName,
-            repositoryName,
+        await this.repositoryFiles.writeFile(target, {
             path: PACKAGE_JSON_PATH,
-            content: this.serializeManifest(file.content, updated),
+            content: this.serializeManifest(file.raw, updated),
+            branch: targetBranch,
             message: this.buildCommitMessage(commitMessage, changes),
-            branch: targetBranch,
-            sha: file.sha
+            existing: file,
+            createBranchFrom: snapshot.branch
         })
 
         return true
-    }
-
-    private async commitAlignmentGitlab(snapshot: ManifestSnapshot, targetBranch: string, changes: MicrofrontendAlignmentChangeDTO[], commitMessage: string): Promise<boolean> {
-        const { codeRepository, repositoryName } = snapshot.target
-        this.ensureGitlabData(codeRepository)
-
-        const gitlabClient = new GitlabClient(codeRepository.gitlabData!.url, codeRepository.accessToken)
-        const projectId = encodeURIComponent(repositoryName)
-        const branchAlreadyExists = await gitlabClient.branchExists(projectId, targetBranch)
-        const sourceBranch = branchAlreadyExists ? targetBranch : snapshot.branch
-
-        const raw = await gitlabClient.getFileContent(projectId, PACKAGE_JSON_PATH, sourceBranch)
-        if (raw === null) {
-            throw createBusinessException({
-                code: "PACKAGE_JSON_NOT_FOUND",
-                message: `${PACKAGE_JSON_PATH} not found on branch "${sourceBranch}" of "${repositoryName}"`
-            })
-        }
-
-        const updated = this.applyChangesToManifest(JSON.parse(raw) as PackageManifest, changes)
-        if (!updated) {
-            return false
-        }
-
-        await gitlabClient.commitFiles(projectId, {
-            branch: targetBranch,
-            startBranch: branchAlreadyExists ? undefined : snapshot.branch,
-            commitMessage: this.buildCommitMessage(commitMessage, changes),
-            actions: [
-                {
-                    action: "update",
-                    file_path: PACKAGE_JSON_PATH,
-                    content: this.serializeManifest(raw, updated)
-                }
-            ]
-        })
-
-        return true
-    }
-
-    private async commitAlignmentAzure(snapshot: ManifestSnapshot, targetBranch: string, changes: MicrofrontendAlignmentChangeDTO[], commitMessage: string): Promise<boolean> {
-        const { codeRepository, repositoryName } = snapshot.target
-        this.ensureAzureData(codeRepository)
-
-        const azureClient = new AzureDevOpsClient()
-        const { organization, projectId } = codeRepository.azureData!
-
-        const existingCommitId = await azureClient.getBranchCommitId(codeRepository.accessToken, organization, projectId, repositoryName, targetBranch).catch(() => undefined)
-
-        const sourceBranch = existingCommitId ? targetBranch : snapshot.branch
-        const baseCommitId = existingCommitId || (await azureClient.getBranchCommitId(codeRepository.accessToken, organization, projectId, repositoryName, snapshot.branch))
-
-        const raw = await azureClient.getFileContent(codeRepository.accessToken, organization, projectId, repositoryName, PACKAGE_JSON_PATH, sourceBranch)
-        if (raw === null) {
-            throw createBusinessException({
-                code: "PACKAGE_JSON_NOT_FOUND",
-                message: `${PACKAGE_JSON_PATH} not found on branch "${sourceBranch}" of "${repositoryName}"`
-            })
-        }
-
-        const updated = this.applyChangesToManifest(JSON.parse(raw) as PackageManifest, changes)
-        if (!updated) {
-            return false
-        }
-
-        await azureClient.pushFileEdit(codeRepository.accessToken, organization, projectId, repositoryName, {
-            branchName: targetBranch,
-            baseCommitId,
-            filePath: PACKAGE_JSON_PATH,
-            content: this.serializeManifest(raw, updated),
-            comment: this.buildCommitMessage(commitMessage, changes)
-        })
-
-        return true
-    }
-
-    private ensureGitlabData(codeRepository: ICodeRepository) {
-        if (!codeRepository.gitlabData?.url) {
-            throw createBusinessException({
-                code: "INVALID_PROVIDER",
-                message: "GitLab connection data is missing"
-            })
-        }
-    }
-
-    private ensureAzureData(codeRepository: ICodeRepository) {
-        if (!codeRepository.azureData?.organization || !codeRepository.azureData?.projectId) {
-            throw createBusinessException({
-                code: "INVALID_PROVIDER",
-                message: "Azure DevOps connection data is missing"
-            })
-        }
     }
 }
 

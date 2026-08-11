@@ -99,6 +99,8 @@ export interface AzurePushFileEditRequest {
     filePath: string
     content: string
     comment: string
+    /** "edit" replaces an existing file, "add" creates it. Defaults to "edit". */
+    changeType?: "edit" | "add"
 }
 
 export interface AzureDevOpsBranch {
@@ -505,8 +507,9 @@ class AzureDevOpsClient {
     }
 
     /**
-     * Pushes an edit of a single file. When `branchName` does not exist yet, Azure DevOps
-     * creates it from `baseCommitId` as part of the push.
+     * Pushes a single file change, an edit by default or an addition when `changeType` says so.
+     * When `branchName` does not exist yet, Azure DevOps creates it from `baseCommitId` as part
+     * of the push.
      */
     async pushFileEdit(token: string, organization: string, project: string, repositoryId: string, request: AzurePushFileEditRequest): Promise<void> {
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}/pushes?api-version=7.1-preview.2`
@@ -530,7 +533,7 @@ class AzureDevOpsClient {
                         comment: request.comment,
                         changes: [
                             {
-                                changeType: "edit",
+                                changeType: request.changeType || "edit",
                                 item: {
                                     path: request.filePath.startsWith("/") ? request.filePath : `/${request.filePath}`
                                 },
