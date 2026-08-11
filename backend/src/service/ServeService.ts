@@ -430,6 +430,35 @@ export default defineConfig({
     }
 
     /**
+     * Resolve the environment a request belongs to from the domain it comes from.
+     *
+     * This is what lets the "auto" URLs work: the host page only knows its own project, the environment
+     * is a deployment detail it should not have to configure, so it is derived from the domains
+     * registered on the environment itself.
+     * @param referer The referer (or host) of the request
+     * @param projectId The ID of the project
+     * @returns Promise with the Environment the referer belongs to
+     */
+    private async getEnvironmentByRefererAndProjectIdOrFail(referer: string, projectId: string): Promise<IEnvironment> {
+        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
+        if (!environment) {
+            throw new EntityNotFoundError("Environment")
+        }
+        return environment
+    }
+
+    /**
+     * Same payload as getAllByProjectIdAndEnvironmentSlug, with the environment resolved from the referer.
+     * @param projectId The ID of the project
+     * @param referer The referer (or host) of the request
+     * @returns Promise with array of Microfrontend objects
+     */
+    async getAllByProjectIdAndReferer(projectId: string, referer: string): Promise<GetAllDataDTO> {
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, projectId)
+        return this.getAllByEnvironmentId(environment._id)
+    }
+
+    /**
      * Get microfrontend by microfrontend ID
      * @param mfeId The ID of the microfrontend
      * @param referer The referer of the request
@@ -468,6 +497,27 @@ export default defineConfig({
         if (!environment) {
             throw new EntityNotFoundError("Environment")
         }
+        return this.getMicrofrontendConfigurationByEnvironmentAndMfeSlug(environment, mfeSlug)
+    }
+
+    /**
+     * Same payload as getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug, with the
+     * environment resolved from the referer.
+     * @param projectId The ID of the project
+     * @param mfeSlug The slug of the microfrontend
+     * @param referer The referer (or host) of the request
+     * @returns Promise with Microfrontend object
+     */
+    async getMicrofrontendConfigurationByProjectIdRefererAndMfeSlug(projectId: string, mfeSlug: string, referer: string): Promise<MicrofrontendAdaptedToServe> {
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, projectId)
+        return this.getMicrofrontendConfigurationByEnvironmentAndMfeSlug(environment, mfeSlug)
+    }
+
+    /**
+     * Everything the two lookups above have in common, once the environment has been resolved: how the
+     * environment was found must not change what is served.
+     */
+    private async getMicrofrontendConfigurationByEnvironmentAndMfeSlug(environment: IEnvironment, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
         const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
@@ -509,7 +559,14 @@ export default defineConfig({
     }
 
     async getGlobalVariablesByEnvironmentIdFile(environmentId: string): Promise<string> {
-        const variables = await this.getGlobalVariablesByEnvironmentId(environmentId)
+        return this.renderGlobalVariablesFile(await this.getGlobalVariablesByEnvironmentId(environmentId))
+    }
+
+    /**
+     * The JS flavour of the global variables, shared by every URL exposing them as a file so that they
+     * all hand the host page the very same global.
+     */
+    private renderGlobalVariablesFile(variables: { key: string; value: string }[]): string {
         const fileData = `window.globalConfig = {
   ${variables.map(v => `"${v.key}": "${v.value}"`).join(",\n  ")}
 }`
@@ -527,6 +584,33 @@ export default defineConfig({
         if (!environment) {
             throw new EntityNotFoundError(environmentSlug)
         }
+        return this.getGlobalVariablesByEnvironment(environment)
+    }
+
+    /**
+     * Same payload as getGlobalVariablesByProjectIdAndEnvironmentSlug, with the environment resolved
+     * from the referer.
+     * @param projectId The ID of the project
+     * @param referer The referer (or host) of the request
+     * @returns Promise with global variables object
+     */
+    async getGlobalVariablesByProjectIdAndReferer(projectId: string, referer: string): Promise<IGlobalVariable[]> {
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, projectId)
+        return this.getGlobalVariablesByEnvironment(environment)
+    }
+
+    /**
+     * The JS file flavour of getGlobalVariablesByProjectIdAndReferer, for the host pages loading the
+     * global variables with a plain script tag.
+     * @param projectId The ID of the project
+     * @param referer The referer (or host) of the request
+     * @returns Promise with the content of the global variables file
+     */
+    async getGlobalVariablesByProjectIdAndRefererFile(projectId: string, referer: string): Promise<string> {
+        return this.renderGlobalVariablesFile(await this.getGlobalVariablesByProjectIdAndReferer(projectId, referer))
+    }
+
+    private async getGlobalVariablesByEnvironment(environment: IEnvironment): Promise<IGlobalVariable[]> {
         const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")

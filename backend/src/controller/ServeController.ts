@@ -21,6 +21,17 @@ export default async function serveController(fastify: FastifyInstance) {
         return reply.send(await new ServeService(request, reply).getAllByEnvironmentId(request.params.environmentId))
     })
 
+    // Registered before /serve/all/:projectId/:environmentSlug on purpose: `auto` is a static segment and
+    // find-my-way gives it precedence over the parametric one anyway, but keeping the more specific route
+    // first makes that precedence visible instead of implied.
+    fastify.get<{
+        Params: {
+            projectId: string
+        }
+    }>("/serve/all/auto/:projectId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await new ServeService(request, reply).getAllByProjectIdAndReferer(request.params.projectId, getReferer(request)))
+    })
+
     fastify.get<{
         Params: {
             projectId: string
@@ -50,6 +61,23 @@ export default async function serveController(fastify: FastifyInstance) {
     fastify.get<{
         Params: {
             projectId: string
+        }
+    }>("/serve/global-variables/auto/:projectId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await new ServeService(request, reply).getGlobalVariablesByProjectIdAndReferer(request.params.projectId, getReferer(request)))
+    })
+
+    fastify.get<{
+        Params: {
+            projectId: string
+        }
+    }>("/serve/global-variables/auto/:projectId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        reply.header("Content-Type", "application/javascript")
+        return reply.send(await new ServeService(request, reply).getGlobalVariablesByProjectIdAndRefererFile(request.params.projectId, getReferer(request)))
+    })
+
+    fastify.get<{
+        Params: {
+            projectId: string
             environmentSlug: string
         }
     }>("/serve/global-variables/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
@@ -66,6 +94,15 @@ export default async function serveController(fastify: FastifyInstance) {
             throw new Error("Referer not found")
         }
         return reply.send(await new ServeService(request, reply).getMicrofrontendConfigurationByMicrofrontendId(request.params.mfeId, referer))
+    })
+
+    fastify.get<{
+        Params: {
+            projectId: string
+            mfeSlug: string
+        }
+    }>("/serve/mfe/config/auto/:projectId/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+        return reply.send(await new ServeService(request, reply).getMicrofrontendConfigurationByProjectIdRefererAndMfeSlug(request.params.projectId, request.params.mfeSlug, getReferer(request)))
     })
 
     fastify.get<{
@@ -188,10 +225,7 @@ export default async function serveController(fastify: FastifyInstance) {
      * Same as serveByEnvironmentSlug, for the URLs that resolve the environment from the referer.
      */
     async function serveAutoByReferer(request: FastifyRequest<{ Params: { projectId: string; mfeSlug: string; version?: string; "*": string } }>, reply: FastifyReply) {
-        const referer = request.headers.referer || request.host || request.hostname
-        if (!referer) {
-            throw new Error("Referer not found")
-        }
+        const referer = getReferer(request)
         const { projectId, mfeSlug, version } = request.params
         const filePath = request.params["*"] || ""
         const data = await new ServeService(request, reply).getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId, mfeSlug, filePath, referer, version)
@@ -203,6 +237,19 @@ export default async function serveController(fastify: FastifyInstance) {
 
         addHeadersFromFilePath(filePath, data.headers, reply)
         return reply.send(data.stream)
+    }
+
+    /**
+     * The domain the request comes from, which is what the "auto" URLs resolve the environment against.
+     * The referer is the domain of the host page, the one registered on the environment; the host is the
+     * fallback for when the browser sends no referer.
+     */
+    function getReferer(request: FastifyRequest): string {
+        const referer = request.headers.referer || request.host || request.hostname
+        if (!referer) {
+            throw new Error("Referer not found")
+        }
+        return referer
     }
 
     function addHeaders(headers: Record<string, string>, reply: FastifyReply) {
