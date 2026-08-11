@@ -8,9 +8,9 @@
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/index.html": { "size": 1535, "mtime_ns": 1786436983591358738, "word_count": 125 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/package.json": {
         "size": 2389,
-        "mtime_ns": 1786116280701360548,
+        "mtime_ns": 1786440443374860784,
         "word_count": 152,
-        "hash": "10a76cc6395fc84c22713a60d082e1b74fe806b7442bc3dd1f001525be86c663"
+        "hash": "745badd0dfb821c2d185e5463443ce0c27e55261dfca8064be070489d74cd625"
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/postcss.config.js": { "size": 75, "mtime_ns": 1786109863491000398, "word_count": 9 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/Azure.svg": { "size": 1713, "mtime_ns": 1785880209997608331, "word_count": 117 },
@@ -20,16 +20,16 @@
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/GoogleCloud.svg": { "size": 782, "mtime_ns": 1785880209997944777, "word_count": 72 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/img/aws.svg": { "size": 3743, "mtime_ns": 1785880209998035524, "word_count": 274 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/locales/en/platform.json": {
-        "size": 48899,
-        "mtime_ns": 1786439242564737424,
-        "word_count": 4193,
-        "hash": "66d18942f9ba90a27c4f46580e2e4644e1b2b020dc12d1a5ab1dacddf88df1fe"
+        "size": 49203,
+        "mtime_ns": 1786440490215720792,
+        "word_count": 4217,
+        "hash": "2eedf509fe0e28ffdeaf05c97710b0300c6044e8f6d6d3ca75428dec3f1b9ad5"
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/locales/it/platform.json": {
-        "size": 52518,
-        "mtime_ns": 1786439240526355743,
-        "word_count": 4494,
-        "hash": "4f8f485953706fab1b6ceff66522b011e02d4eeb1cc14f92aaae4dad7af713f2"
+        "size": 52822,
+        "mtime_ns": 1786440488665233821,
+        "word_count": 4519,
+        "hash": "f91d58e5c91dae47e9f6f3e03529ed42c49a400980b466eec5b77f5fbd89aa58"
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/public/manifest.json": {
         "size": 1030,
@@ -102,9 +102,9 @@
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/SinglePageLayout.tsx": { "size": 1237, "mtime_ns": 1785880210000760173, "word_count": 95 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/Spinner.tsx": { "size": 600, "mtime_ns": 1786109863496438863, "word_count": 69 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/SwitchProjectButton.tsx": {
-        "size": 3016,
-        "mtime_ns": 1786114751539545455,
-        "word_count": 247
+        "size": 3297,
+        "mtime_ns": 1786439484531833464,
+        "word_count": 272
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/badge/Badge.tsx": { "size": 537, "mtime_ns": 1786109863496676821, "word_count": 63 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/atoms/badge/BadgeVariants.tsx": {
@@ -356,9 +356,9 @@
         "word_count": 52
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useInvitationApi.ts": {
-        "size": 1337,
-        "mtime_ns": 1785880210008381808,
-        "word_count": 121
+        "size": 2642,
+        "mtime_ns": 1786439416637649865,
+        "word_count": 254
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useMarketApi.ts": { "size": 966, "mtime_ns": 1786109863510847920, "word_count": 99 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/hooks/apiClients/useMicrofrontendsApi.ts": {
@@ -599,9 +599,9 @@
         "word_count": 8
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/AddMicrofrontend.tsx": {
-        "size": 18016,
-        "mtime_ns": 1786439230125730415,
-        "word_count": 996
+        "size": 14101,
+        "mtime_ns": 1786440109506329507,
+        "word_count": 851
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/Microfrontends.tsx": {
         "size": 8712,
@@ -649,9 +649,9 @@
         "word_count": 162
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/index.ts": {
-        "size": 313,
-        "mtime_ns": 1785912357589270029,
-        "word_count": 32
+        "size": 345,
+        "mtime_ns": 1786439297488974209,
+        "word_count": 36
     },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/labels.ts": {
         "size": 1017,
@@ -800,7 +800,7 @@
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/FirstStartupWrapper.tsx": { "size": 5260, "mtime_ns": 1786109863528769481, "word_count": 309 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/InitialThemeWrapper.tsx": { "size": 912, "mtime_ns": 1785880210020026628, "word_count": 87 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/Notification.tsx": { "size": 1910, "mtime_ns": 1785880210020081126, "word_count": 141 },
-    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/SelectProjectWrapper.tsx": { "size": 4184, "mtime_ns": 1785880210020224620, "word_count": 375 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/SelectProjectWrapper.tsx": { "size": 5276, "mtime_ns": 1786439471572108535, "word_count": 505 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/SentryInit.tsx": { "size": 1691, "mtime_ns": 1785880210020290951, "word_count": 151 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/ThemeHandler.tsx": { "size": 1618, "mtime_ns": 1786109863529000981, "word_count": 150 },
     "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/theme/layout/Header.tsx": { "size": 514, "mtime_ns": 1785880210020454237, "word_count": 46 },
@@ -832,5 +832,15 @@
         "word_count": 40,
         "hash": "28cf803ea956f7798b5df30d8b751694f61ce80c1472ca21e7c24a7101117804"
     },
-    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/vite.config.ts": { "size": 982, "mtime_ns": 1786438531609788622, "word_count": 95 }
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/vite.config.ts": { "size": 982, "mtime_ns": 1786438531609788622, "word_count": 95 },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/components/PendingInvitationsList.tsx": {
+        "size": 5841,
+        "mtime_ns": 1786439548235505580,
+        "word_count": 454
+    },
+    "/Users/lorenzodefrancesco/projects-personal/mfe-orchestrator/mfe-orchestrator/frontend/src/pages/microfrontends/partials/components/CanarySection.tsx": {
+        "size": 3610,
+        "mtime_ns": 1786446302482969266,
+        "word_count": 187
+    }
 }

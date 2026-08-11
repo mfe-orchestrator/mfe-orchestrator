@@ -1,11 +1,12 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Card, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { BadgeCheck, History, PackageOpen, RefreshCw, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Badge, Button } from "@/components/atoms"
+import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import useDeploymentsApi from "../../../hooks/apiClients/useDeploymentsApi"
+import DeploymentMicrofrontendCard from "./DeploymentMicrofrontendCard"
 
 interface DeploymentListProps {
     environmentId: string
@@ -49,7 +50,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                     {deployments
                                         .filter(deployment => deployment.active)
                                         ?.map(deployment => (
-                                            <AccordionItem value={deployment._id}>
+                                            <AccordionItem key={deployment._id} value={deployment._id}>
                                                 <AccordionTrigger>
                                                     <div className="flex items-end gap-2">
                                                         <h3 className="font-medium">Deployment {deployment.deploymentId}</h3>
@@ -62,15 +63,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                             <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
                                                             <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
                                                                 {deployment.microfrontends.map(microfrontend => (
-                                                                    <Card key={microfrontend._id}>
-                                                                        <CardHeader className="flex-row items-end justify-between flex-wrap-reverse border-0 pb-0">
-                                                                            <div>
-                                                                                <CardTitle className="mb-0 text-base">{microfrontend.name}</CardTitle>
-                                                                                <div className="text-sm text-foreground-secondary">{microfrontend.slug}</div>
-                                                                            </div>
-                                                                            <Badge>{microfrontend.version}</Badge>
-                                                                        </CardHeader>
-                                                                    </Card>
+                                                                    <DeploymentMicrofrontendCard key={microfrontend._id} microfrontend={microfrontend} />
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -113,8 +106,8 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                             <Accordion type="single" collapsible>
                                 {deployments
                                     .filter(deployment => !deployment.active)
-                                    ?.map((deployment, index) => (
-                                        <AccordionItem value={deployment._id}>
+                                    ?.map(deployment => (
+                                        <AccordionItem key={deployment._id} value={deployment._id}>
                                             <AccordionTrigger>
                                                 <div className="flex items-end gap-2">
                                                     <h3>Deployment {deployment.deploymentId}</h3>
@@ -127,15 +120,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                         <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
                                                         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
                                                             {deployment.microfrontends.map(microfrontend => (
-                                                                <Card key={microfrontend._id}>
-                                                                    <CardHeader className="flex-row items-end justify-between flex-wrap-reverse border-0 pb-0">
-                                                                        <div>
-                                                                            <CardTitle className="mb-0 text-base">{microfrontend.name}</CardTitle>
-                                                                            <div className="text-sm text-foreground-secondary">{microfrontend.slug}</div>
-                                                                        </div>
-                                                                        <Badge>{microfrontend.version}</Badge>
-                                                                    </CardHeader>
-                                                                </Card>
+                                                                <DeploymentMicrofrontendCard key={microfrontend._id} microfrontend={microfrontend} />
                                                             ))}
                                                         </div>
                                                     </div>

@@ -1,7 +1,7 @@
 {
     "package.json": {
-        "mtime": 1786116280.7013605,
-        "ast_hash": "254d53541fddc910c693403d277fd40f",
+        "mtime": 1786440443.3748608,
+        "ast_hash": "4688a35f8478635ae72484e3329169d8",
         "semantic_hash": ""
     },
     "postcss.config.js": {
@@ -10,13 +10,13 @@
         "semantic_hash": ""
     },
     "public/locales/en/platform.json": {
-        "mtime": 1786439242.5647373,
-        "ast_hash": "1b88c43697a5b0fcadcbbce6c4206326",
+        "mtime": 1786440490.215721,
+        "ast_hash": "2cc6251cac994bc249f4c5a32dcf2da1",
         "semantic_hash": ""
     },
     "public/locales/it/platform.json": {
-        "mtime": 1786439240.5263557,
-        "ast_hash": "387f76592bcafea061efce002ae33e25",
+        "mtime": 1786440488.6652339,
+        "ast_hash": "0031124ba7560baabf159ebdc872f8d8",
         "semantic_hash": ""
     },
     "public/manifest.json": {
@@ -115,8 +115,8 @@
         "semantic_hash": ""
     },
     "src/components/SwitchProjectButton.tsx": {
-        "mtime": 1786114751.5395455,
-        "ast_hash": "f9175fc08714aac189ca2c76ab0b0c4d",
+        "mtime": 1786439484.5318334,
+        "ast_hash": "0b61a985e9942cf43013eb27f6e1bf17",
         "semantic_hash": ""
     },
     "src/components/atoms/button/Button.tsx": {
@@ -255,8 +255,8 @@
         "semantic_hash": ""
     },
     "src/hooks/apiClients/useInvitationApi.ts": {
-        "mtime": 1785880210.0083818,
-        "ast_hash": "9ac810e9c720ee14a3873e74230de172",
+        "mtime": 1786439416.6376498,
+        "ast_hash": "08f8513622a1d523d3fe2467bd639c87",
         "semantic_hash": ""
     },
     "src/hooks/apiClients/useMarketApi.ts": {
@@ -570,8 +570,8 @@
         "semantic_hash": ""
     },
     "src/pages/microfrontends/AddMicrofrontend.tsx": {
-        "mtime": 1786439230.1257305,
-        "ast_hash": "549184b7ca025d198453feaf8d74c407",
+        "mtime": 1786440109.5063295,
+        "ast_hash": "f9c0e0e1e7b1f84a49040c8b91f69b5e",
         "semantic_hash": ""
     },
     "src/pages/microfrontends/Microfrontends.tsx": {
@@ -620,8 +620,8 @@
         "semantic_hash": ""
     },
     "src/pages/microfrontends/partials/components/index.ts": {
-        "mtime": 1785912357.58927,
-        "ast_hash": "d679e507b88789c79561843afcf72389",
+        "mtime": 1786439297.488974,
+        "ast_hash": "ab1bd5147e1714201aae385abbc539c7",
         "semantic_hash": ""
     },
     "src/pages/microfrontends/partials/labels.ts": {
@@ -820,8 +820,8 @@
         "semantic_hash": ""
     },
     "src/theme/SelectProjectWrapper.tsx": {
-        "mtime": 1785880210.0202246,
-        "ast_hash": "6030964844da304f18787cf2f752b2a0",
+        "mtime": 1786439471.5721085,
+        "ast_hash": "7fdb3d47b8c5c76bc342f1b19f74c298",
         "semantic_hash": ""
     },
     "src/theme/SentryInit.tsx": {
@@ -942,6 +942,16 @@
     "public/img/aws.svg": {
         "mtime": 1785880209.9980354,
         "ast_hash": "5e42e264f2604cb73ed383d94c29e766",
+        "semantic_hash": ""
+    },
+    "src/components/PendingInvitationsList.tsx": {
+        "mtime": 1786439548.2355056,
+        "ast_hash": "d95739856989b36ff9330c5b60a4b23b",
+        "semantic_hash": ""
+    },
+    "src/pages/microfrontends/partials/components/CanarySection.tsx": {
+        "mtime": 1786446302.4829693,
+        "ast_hash": "e907cca26ad9e5bfd493f1e373f50937",
         "semantic_hash": ""
     }
 }

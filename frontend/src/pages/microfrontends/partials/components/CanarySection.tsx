@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField, SwitchField as Switch } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField, SliderField, SwitchField as Switch } from "@mfe-orchestrator/design-system"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import TextField from "@/components/input/TextField.rhf"
@@ -23,7 +23,16 @@ export const CanarySection: React.FC = () => {
                 </CardHeader>
                 {canaryEnabled && (
                     <CardContent className="flex flex-col gap-2 pt-3">
-                        <TextField name="canary.percentage" label={t("microfrontend.canary_percentage")} placeholder="38%" type="number" required min={0} max={100} />
+                        <SliderField
+                            name="canary.percentage"
+                            label={t("microfrontend.canary_percentage")}
+                            unit="%"
+                            min={0}
+                            max={100}
+                            presets={[5, 10, 25, 50]}
+                            presetsLabel={t("microfrontend.canary_percentage_presets")}
+                            required
+                        />
                         <div className="flex flex-wrap gap-x-4 gap-y-2">
                             <SelectField
                                 name="canary.type"
@@ -47,8 +56,8 @@ export const CanarySection: React.FC = () => {
                                 containerClassName="flex-[1_1_240px]"
                             />
                         </div>
-                        {deploymentType === "BASED_ON_VERSION" && <TextField name="canary.canaryVersion" label={t("microfrontend.canary_version")} placeholder="1.1.0" required />}
-                        {deploymentType === "BASED_ON_URL" && <TextField name="canary.canaryUrl" label={t("microfrontend.canary_url")} placeholder="https://canary.example.com" required />}
+                        {deploymentType === "BASED_ON_VERSION" && <TextField name="canary.version" label={t("microfrontend.canary_version")} placeholder="1.1.0" required />}
+                        {deploymentType === "BASED_ON_URL" && <TextField name="canary.url" label={t("microfrontend.canary_url")} placeholder="https://canary.example.com" required />}
                     </CardContent>
                 )}
             </Card>

@@ -249,6 +249,11 @@
         "env_variables_title": "Environment variables",
         "no_deployments": "No deployments found",
         "no_deployments_description": "Deployments will appear here once created",
+        "microfrontend_card": {
+            "stable_version": "Stable version",
+            "canary_traffic": "Canary {{percentage}}%",
+            "canary_target_missing": "Not configured"
+        },
         "actions": {
             "view_canary_users": "View canary users",
             "redeploy": "Redeploy"
@@ -432,6 +437,7 @@
         "enable_canary": "Enable Canary Deployment",
         "canary_percentage": "Canary Percentage",
         "canary_percentage_description": "Percentage of traffic to route to canary version",
+        "canary_percentage_presets": "Suggested percentages",
         "canary_type": "Canary Type",
         "select_canary_type": "Select canary type",
         "on_sessions": "On Sessions",

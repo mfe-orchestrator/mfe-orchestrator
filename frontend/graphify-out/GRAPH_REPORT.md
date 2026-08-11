@@ -1,16 +1,16 @@
 # Graph Report - frontend  (2026-08-11)
 
 ## Corpus Check
-- 181 files · ~49,240 words
+- 183 files · ~50,077 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1738 nodes · 2766 edges · 93 communities (86 shown, 7 thin omitted)
+- 1747 nodes · 2801 edges · 100 communities (92 shown, 8 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0af5d815`
+- Built from commit: `52fdf4cb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -69,11 +69,14 @@
 - [[_COMMUNITY_compilerOptions|compilerOptions]]
 - [[_COMMUNITY_environment|environment]]
 - [[_COMMUNITY_environmentVariables|environmentVariables]]
+- [[_COMMUNITY_AddMicrofrontend.tsx|AddMicrofrontend.tsx]]
 - [[_COMMUNITY_build|build]]
 - [[_COMMUNITY_platform.json|platform.json]]
 - [[_COMMUNITY_page|page]]
 - [[_COMMUNITY_compilerOptions|compilerOptions]]
 - [[_COMMUNITY_build|build]]
+- [[_COMMUNITY_Microfrontends.tsx|Microfrontends.tsx]]
+- [[_COMMUNITY_useUserApi.ts|useUserApi.ts]]
 - [[_COMMUNITY_project_invitation|project_invitation]]
 - [[_COMMUNITY_project_invitation|project_invitation]]
 - [[_COMMUNITY_platform.json|platform.json]]
@@ -90,10 +93,13 @@
 - [[_COMMUNITY_setup|setup]]
 - [[_COMMUNITY_form|form]]
 - [[_COMMUNITY_setup|setup]]
+- [[_COMMUNITY_EnvironmentVariableForm.tsx|EnvironmentVariableForm.tsx]]
 - [[_COMMUNITY_app|app]]
 - [[_COMMUNITY_projectInfo|projectInfo]]
+- [[_COMMUNITY_Auth0AuthWrapper.tsx|Auth0AuthWrapper.tsx]]
 - [[_COMMUNITY_app|app]]
 - [[_COMMUNITY_react|react]]
+- [[_COMMUNITY_ApiStatusHandler.tsx|ApiStatusHandler.tsx]]
 - [[_COMMUNITY_hostTypes|hostTypes]]
 - [[_COMMUNITY_validation|validation]]
 - [[_COMMUNITY_hostTypes|hostTypes]]
@@ -107,10 +113,10 @@
 - [[_COMMUNITY_vite.config.ts|vite.config.ts]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `microfrontend` - 101 edges
-2. `microfrontend` - 82 edges
-3. `Button()` - 55 edges
-4. `useToastNotificationStore` - 52 edges
+1. `microfrontend` - 102 edges
+2. `microfrontend` - 77 edges
+3. `Button()` - 56 edges
+4. `useToastNotificationStore` - 54 edges
 5. `apiKeys` - 45 edges
 6. `apiKeys` - 45 edges
 7. `useProjectStore` - 43 edges
@@ -125,25 +131,25 @@
   src/hooks/use-mobile.tsx → package.json
 - `useApiClient()` --indirect_call--> `doRequest()`  [INFERRED]
   src/hooks/useApiClient.tsx → src/api/apiClient.ts
+- `Auth0AuthWrapper()` --calls--> `useGlobalParameters()`  [EXTRACTED]
+  src/authentication/Auth0AuthWrapper.tsx → src/contexts/GlobalParameterProvider.tsx
 - `SocialLoginRow()` --calls--> `useGlobalParameters()`  [EXTRACTED]
   src/authentication/components/SocialLoginRow.tsx → src/contexts/GlobalParameterProvider.tsx
-- `InviteUserFormValues` --references--> `RoleInProject`  [EXTRACTED]
-  src/pages/project-users/partials/AddUserButton.tsx → src/hooks/apiClients/useProjectApi.ts
 
 ## Import Cycles
 - 3-file cycle: `src/pages/integration/partials/index.ts -> src/pages/integration/partials/views/index.ts -> src/pages/integration/partials/views/FrontendIntegration.tsx -> src/pages/integration/partials/index.ts`
-- 3-file cycle: `src/authentication/components/LoginPage.tsx -> src/authentication/components/SocialLoginRow.tsx -> src/authentication/components/LoginWithAuth0Button.tsx -> src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `src/authentication/components/LoginPage.tsx -> src/authentication/components/SocialLoginRow.tsx -> src/authentication/components/LoginWithGoogleButton.tsx -> src/authentication/components/LoginPage.tsx`
+- 3-file cycle: `src/authentication/components/LoginPage.tsx -> src/authentication/components/SocialLoginRow.tsx -> src/authentication/components/LoginWithAuth0Button.tsx -> src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `src/authentication/components/LoginPage.tsx -> src/authentication/components/SocialLoginRow.tsx -> src/authentication/components/LoginWithMicrosoftButton.tsx -> src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `src/hooks/apiClients/useEnvironmentsApi.ts -> src/hooks/useApiClient.tsx -> src/store/useProjectStore.ts -> src/hooks/apiClients/useEnvironmentsApi.ts`
 - 3-file cycle: `src/hooks/apiClients/useProjectApi.ts -> src/hooks/useApiClient.tsx -> src/store/useProjectStore.ts -> src/hooks/apiClients/useProjectApi.ts`
 - 4-file cycle: `src/hooks/apiClients/useEnvironmentsApi.ts -> src/hooks/useApiClient.tsx -> src/store/useProjectStore.ts -> src/hooks/apiClients/useProjectApi.ts -> src/hooks/apiClients/useEnvironmentsApi.ts`
 
-## Communities (93 total, 7 thin omitted)
+## Communities (100 total, 8 thin omitted)
 
 ### Community 0 - "microfrontend"
 Cohesion: 0.02
-Nodes (94): microfrontend, add_new, add_new_description, add_your_first_microfrontend, azure_project, based_on_url, based_on_version, canary_percentage (+86 more)
+Nodes (95): microfrontend, add_new, add_new_description, add_your_first_microfrontend, azure_project, based_on_url, based_on_version, canary_percentage (+87 more)
 
 ### Community 1 - "cn"
 Cohesion: 0.24
@@ -151,11 +157,11 @@ Nodes (9): Market, useMarketApi(), BlankTemplateCard(), BlankTemplateCardProps, 
 
 ### Community 2 - "microfrontend"
 Cohesion: 0.03
-Nodes (77): microfrontend, add_new, add_new_description, add_your_first_microfrontend, azure_project, based_on_url, based_on_version, canary_percentage (+69 more)
+Nodes (72): microfrontend, add_new, add_new_description, add_your_first_microfrontend, azure_project, based_on_url, based_on_version, canary_percentage (+64 more)
 
 ### Community 3 - "useProjectStore"
 Cohesion: 0.13
-Nodes (17): AddUserToProjectDTO, ProjectSummaryDTO, RoleInProject, NewProjectWizard(), NewProjectWizardProps, MainData(), MainDataForm, slugify() (+9 more)
+Nodes (17): Button(), MicrofrontendsEmptyState(), MicrofrontendsEmptyStateProps, NewProjectWizard(), NewProjectWizardProps, MainData(), MainDataForm, slugify() (+9 more)
 
 ### Community 4 - "dependencies"
 Cohesion: 0.06
@@ -182,8 +188,8 @@ Cohesion: 0.05
 Nodes (41): delete, subtitle, title, button, confirmation, description, dialog, error (+33 more)
 
 ### Community 10 - "useMicrofrontendsApi.ts"
-Cohesion: 0.09
-Nodes (31): CanaryDeploymentType, CanaryType, DimensionsDTO, HostedOn, Microfrontend, PositionDTO, RelationDTO, useMicrofrontendsApi() (+23 more)
+Cohesion: 0.20
+Nodes (12): CanaryDeploymentType, CanaryType, DimensionsDTO, HostedOn, PositionDTO, RelationDTO, MicrofrontendCardProps, CANARY_DEPLOYMENT_TYPE_LABEL_KEYS (+4 more)
 
 ### Community 11 - "MicrofrontendDependencyList.tsx"
 Cohesion: 0.09
@@ -194,8 +200,8 @@ Cohesion: 0.11
 Nodes (18): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss (+10 more)
 
 ### Community 13 - "ThemeToggle.tsx"
-Cohesion: 0.19
-Nodes (16): CalendarField(), CalendarFieldProps, LanguageSelector(), LanguageSelectorProps, ThemeToggle(), ThemeToggleProps, ThemeState, useThemeStore (+8 more)
+Cohesion: 0.25
+Nodes (13): LoginPage(), CalendarField(), CalendarFieldProps, LanguageSelector(), LanguageSelectorProps, ThemeToggle(), ThemeToggleProps, useUserApi() (+5 more)
 
 ### Community 14 - "Routes.tsx"
 Cohesion: 0.06
@@ -210,16 +216,16 @@ Cohesion: 0.06
 Nodes (34): description, success, title, auth, account_activation, already_have_account, confirm_password, create_account (+26 more)
 
 ### Community 17 - "EnvironmentList.tsx"
-Cohesion: 0.10
-Nodes (19): ColorPickerProps, EnvironmentSelectorProps, EnvironmentDTO, moveItem(), useDragAndDropOrder(), UseDragAndDropOrderProps, EnvironmentList(), EnvironmentListProps (+11 more)
+Cohesion: 0.12
+Nodes (20): EnvironmentSelectorProps, CreateEnvironmentDTO, EnvironmentDTO, useEnvironmentsApi(), moveItem(), useDragAndDropOrder(), UseDragAndDropOrderProps, EnvironmentDialog() (+12 more)
 
 ### Community 18 - "useToastNotificationStore.ts"
-Cohesion: 0.24
-Nodes (15): ProjectPickerListProps, SwitchProjectButton(), Project, useProjectApi(), TeamMates(), Settings(), ProjectState, useProjectStore (+7 more)
+Cohesion: 0.21
+Nodes (16): ProjectPickerListProps, SwitchProjectButton(), AddUserToProjectDTO, Project, ProjectSummaryDTO, useProjectApi(), Settings(), useProjectStore (+8 more)
 
 ### Community 19 - "card.tsx"
-Cohesion: 0.17
-Nodes (13): ProjectPickerList(), SinglePageHeaderProps, SinglePageLayout(), CreateEnvironmentDTO, useEnvironmentsApi(), EnvironmentDialog(), EnvironmentDialogFormData, EnvironmentDialogProps (+5 more)
+Cohesion: 0.33
+Nodes (6): ProjectPickerList(), SinglePageLayout(), MicrofrontendSelector(), AddNewMicrofrontendCard(), AddNewMicrofrontendCardProps, cn()
 
 ### Community 20 - "integration"
 Cohesion: 0.07
@@ -242,8 +248,8 @@ Cohesion: 0.07
 Nodes (27): common, actions, active, add, back, cancel, close, configuration (+19 more)
 
 ### Community 25 - "AuthenticationLayout.tsx"
-Cohesion: 0.12
-Nodes (20): AuthenticationLayout(), AuthenticationLayoutProps, sizeClasses, MainLogo(), MainLogoProps, sizeClasses, AuthResponse, ResetPasswordDataDTO (+12 more)
+Cohesion: 0.13
+Nodes (21): AuthenticationLayout(), ApiStatusHandler(), GlobalParameterContext, IGlobalParametersContext, useGlobalParameters(), CodeRepositoryType, AccountActivation(), FormValues (+13 more)
 
 ### Community 26 - "deployments"
 Cohesion: 0.08
@@ -254,28 +260,28 @@ Cohesion: 0.08
 Nodes (25): redeploy, view_canary_users, columns, coming_soon, coming_soon_description, no_users, subtitle, title (+17 more)
 
 ### Community 28 - "useApiClient.tsx"
-Cohesion: 0.09
-Nodes (28): AuthenticationType, createUrl(), doRequest(), getUTMFields(), IClientRequestData, IClientRequestMetadata, IUTMFields, out (+20 more)
+Cohesion: 0.13
+Nodes (20): AuthenticationType, createUrl(), doRequest(), getUTMFields(), IClientRequestData, IClientRequestMetadata, IUTMFields, out (+12 more)
 
 ### Community 29 - "index.ts"
 Cohesion: 0.18
-Nodes (15): FormValues, LoginComponentProps, LoginPage(), LoginWithAuth0Button(), LoginWithGoogleButton(), LoginWithMicrosoftButton(), SocialLoginRow(), SocialLoginRowProps (+7 more)
+Nodes (14): FormValues, LoginComponentProps, LoginWithAuth0Button(), LoginWithGoogleButton(), LoginWithMicrosoftButton(), SocialLoginRow(), SocialLoginRowProps, getAccessToken() (+6 more)
 
 ### Community 30 - "Microfrontends.tsx"
-Cohesion: 0.19
-Nodes (8): InjectRemotesInHostParams, useIntegrationApi(), useServeApi(), useApiClient(), CodeIntegration(), CodeIntegrationProps, EnvironmentVariablesIntegration(), FrontendIntegration()
+Cohesion: 0.31
+Nodes (4): InjectRemotesInHostParams, useIntegrationApi(), EnvironmentVariablesIntegration(), FrontendIntegration()
 
 ### Community 31 - "FirstStartupWrapper.tsx"
-Cohesion: 0.13
-Nodes (18): Auth0AuthWrapper(), Auth0AuthWrapperProps, GoogleAuthWrapper(), MicrosoftAuthWrapper(), MicrosoftAuthWrapperProps, useGlobalParameters(), useStartupApi(), AddRepositoryDialog() (+10 more)
+Cohesion: 0.24
+Nodes (7): GoogleAuthWrapper(), MicrosoftAuthWrapper(), MicrosoftAuthWrapperProps, AuthProvidersConfig, AzureProviderConfig, GlobalConfigDTO, GoogleProviderConfig
 
 ### Community 32 - "useUserApi.ts"
-Cohesion: 0.26
-Nodes (9): AcceptInvitationDTO, AcceptInvitationResponse, InvitationInfo, useInvitationApi(), User, FormValues, ProjectInvitation(), ThemeEnum (+1 more)
+Cohesion: 0.29
+Nodes (9): PENDING_INVITATIONS_QUERY_KEY, PendingInvitationsList(), PendingInvitationsListProps, usePendingInvitationsQuery(), AcceptInvitationDTO, AcceptInvitationResponse, InvitationInfo, PendingInvitation (+1 more)
 
 ### Community 33 - "ApiStatusHandler"
-Cohesion: 0.16
-Nodes (14): ApiStatusHandler(), IApiStatusHandlerProps, CanaryUser, useCanaryUsersApi(), CanaryUser, useDeploymentsApi(), CanaryUsers(), Deployments() (+6 more)
+Cohesion: 0.19
+Nodes (12): CanaryUser, useCanaryUsersApi(), CanaryUser, useDeploymentsApi(), useApiClient(), CanaryUsers(), Deployments(), DeploymentList() (+4 more)
 
 ### Community 34 - "compilerOptions"
 Cohesion: 0.10
@@ -302,24 +308,24 @@ Cohesion: 0.11
 Nodes (19): project, create, create_new, create_new_project, description, description_placeholder, name, name_placeholder (+11 more)
 
 ### Community 40 - "useToastNotificationStore"
-Cohesion: 0.28
-Nodes (6): EXTERNAL_NAV_ITEMS, Sidebar, SidebarProps, Header(), MainLayout(), MainLayoutProps
+Cohesion: 0.50
+Nodes (3): Sidebar, MainLayout(), MainLayoutProps
 
 ### Community 41 - "CreateApiKeyDialog.tsx"
 Cohesion: 0.16
-Nodes (12): DeleteConfirmationDialog(), DeleteConfirmationDialogProps, useApiKeysApi(), ApiKeys(), CreateApiKeyDialog(), CreateApiKeyDialogProps, ApiKeyFormData, CreateApiKeyFormInner() (+4 more)
+Nodes (12): ApiKey, CreateApiKeyDTO, CreateApiKeyResponseDTO, useApiKeysApi(), ApiKeys(), CreateApiKeyDialog(), CreateApiKeyDialogProps, ApiKeyFormData (+4 more)
 
 ### Community 42 - "AddMicrofrontend.tsx"
-Cohesion: 0.14
-Nodes (16): ICodeRepository, Repository, CloneRepositoryPopover(), CloneUrlRowProps, CopiedTarget, IdeCloneButtonProps, CodeRepositorySection(), CodeRepositorySectionProps (+8 more)
+Cohesion: 0.22
+Nodes (10): CloneRepositoryPopover(), CloneUrlRowProps, CopiedTarget, IdeCloneButtonProps, asNonEmptyString(), buildGitCloneCommand(), buildIntelliJCloneUrl(), buildVsCodeCloneUrl() (+2 more)
 
 ### Community 43 - "components.json"
 Cohesion: 0.25
 Nodes (7): engines, node, name, packageManager, private, type, version
 
 ### Community 44 - "environment"
-Cohesion: 0.12
-Nodes (17): environment, color, color_tooltip, configure, create_success, created_success_message, custom_environments, delete_title (+9 more)
+Cohesion: 0.11
+Nodes (19): environment, color, color_tooltip, configure, create_success, created_success_message, custom_environments, delete_title (+11 more)
 
 ### Community 45 - "environmentVariables"
 Cohesion: 0.10
@@ -330,20 +336,20 @@ Cohesion: 0.25
 Nodes (8): scripts, build, build:dev, dev, format, lint, preview, typecheck
 
 ### Community 47 - "useCodeRepositoriesApi.ts"
-Cohesion: 0.08
-Nodes (31): Button(), TextFieldProps, AddRepositoryAzureDTO, AddRepositoryGithubDTO, AddRepositoryGitlabDTO, AzureDevOpsProject, AzureDevOpsProjectsResponse, CodeRepositoryProvider (+23 more)
+Cohesion: 0.09
+Nodes (25): SinglePageHeaderProps, AddRepositoryAzureDTO, AddRepositoryGithubDTO, AddRepositoryGitlabDTO, AzureDevOpsProject, AzureDevOpsProjectsResponse, CodeRepositoryProvider, GithubOrganization (+17 more)
 
 ### Community 48 - "App.tsx"
-Cohesion: 0.19
-Nodes (8): App(), queryClient, GlobalParameterContext, GlobalParameterProvider(), IGlobalParametersContext, SentryInit(), themeEnumToClassName, ThemeHandler()
+Cohesion: 0.17
+Nodes (10): App(), queryClient, GlobalParameterProvider(), InitialThemeWrapper(), Notification(), SentryInit(), themeEnumToClassName, ThemeHandler() (+2 more)
 
 ### Community 49 - "ProjectUsers.tsx"
-Cohesion: 0.25
-Nodes (10): useProjectUserApi(), AddUserButton(), AddUserButtonProps, InviteUserFormValues, gravatarHash(), UserPicture(), getUserFullName(), getUserInitials() (+2 more)
+Cohesion: 0.21
+Nodes (13): RoleInProject, ProjectUser, useProjectUserApi(), Row, AddUserButton(), AddUserButtonProps, InviteUserFormValues, gravatarHash() (+5 more)
 
 ### Community 50 - "AddStorage.tsx"
-Cohesion: 0.09
-Nodes (25): TextareaFieldProps, AzureAuthConfig, AzureStorageConfig, CreateStorageDTO, GoogleAuthConfig, GoogleStorageConfig, IStorageAuth, S3ClientConfig (+17 more)
+Cohesion: 0.12
+Nodes (16): TextareaFieldProps, AzureAuthConfig, AzureStorageConfig, CreateStorageDTO, GoogleAuthConfig, GoogleStorageConfig, IStorageAuth, S3ClientConfig (+8 more)
 
 ### Community 51 - "compilerOptions"
 Cohesion: 0.12
@@ -356,6 +362,10 @@ Nodes (15): environment, add_environment, color, color_tooltip, configure, creat
 ### Community 53 - "environmentVariables"
 Cohesion: 0.11
 Nodes (19): environmentVariables, actions, addVariable, created_success, deleteConfirmation, deleted_success, deleteVariable, editVariable (+11 more)
+
+### Community 54 - "AddMicrofrontend.tsx"
+Cohesion: 0.13
+Nodes (17): TextFieldProps, ICodeRepository, Repository, Storage, AddNewMicrofrontendForm(), AddNewMicrofrontendFormProps, AddNewMicrofrontendPageProps, formSchema (+9 more)
 
 ### Community 55 - "build"
 Cohesion: 0.17
@@ -377,41 +387,49 @@ Nodes (11): compilerOptions, allowJs, noImplicitAny, noUnusedLocals, noUnusedPar
 Cohesion: 0.18
 Nodes (11): branch, building, buildSuccess, defaultBranch, loadingBranches, selectBranch, startBuild, title (+3 more)
 
-### Community 62 - "project_invitation"
+### Community 60 - "Microfrontends.tsx"
 Cohesion: 0.20
-Nodes (10): project_invitation, accept, accepted, description, error_description, error_title, go_to_login, not_found_description (+2 more)
+Nodes (11): useMicrofrontendsApi(), Microfrontends(), View, VIEWS, BuildDialog(), BuildDialogProps, FormData, FormDataSchema (+3 more)
+
+### Community 61 - "useUserApi.ts"
+Cohesion: 0.24
+Nodes (10): AuthResponse, ResetPasswordDataDTO, ResetPasswordRequestDTO, User, UserInvitationDTO, UserLoginDTO, UserRegistrationDTO, ThemeEnum (+2 more)
+
+### Community 62 - "project_invitation"
+Cohesion: 0.13
+Nodes (15): project_invitation, accept, accept_short, accepted, decline, declined, description, error_description (+7 more)
 
 ### Community 63 - "project_invitation"
-Cohesion: 0.20
-Nodes (10): project_invitation, accept, accepted, description, error_description, error_title, go_to_login, not_found_description (+2 more)
+Cohesion: 0.13
+Nodes (15): project_invitation, accept, accept_short, accepted, decline, declined, description, error_description (+7 more)
 
 ### Community 64 - "platform.json"
-Cohesion: 0.14
-Nodes (13): color_picker, select_color, language, change, english, italian, theme, dark (+5 more)
+Cohesion: 0.22
+Nodes (8): color_picker, select_color, language, change, english, italian, validation, required
 
 ### Community 65 - "page"
-Cohesion: 0.25
-Nodes (8): title, page, actions, color, delete, description, new_environment, title
+Cohesion: 0.21
+Nodes (9): AuthenticationLayoutProps, sizeClasses, MainLogo(), MainLogoProps, sizeClasses, useStartupApi(), FirstStartupWrapper(), RegisterFirstUser() (+1 more)
 
 ### Community 66 - "delete"
-Cohesion: 0.32
-Nodes (8): delete, subtitle, title, button, description, success, dangerZone, dangerZone
+Cohesion: 0.06
+Nodes (38): delete, subtitle, title, button, description, dialog, success, title (+30 more)
 
 ### Community 67 - "dialog"
-Cohesion: 0.25
-Nodes (8): dialog, confirmation, confirmationText, confirmButton, deleting, description, title, warning
+Cohesion: 0.21
+Nodes (9): DeploymentDTO, GlobalVariable, ICodeIntegrationDTO, ICodeIntegrationRequestDTO, IServe, IServeMicrofrontend, useServeApi(), CodeIntegration() (+1 more)
 
 ### Community 68 - "settings"
-Cohesion: 0.25
-Nodes (8): projectDeleted, projectNameUpdated, projectNameUpdateFailed, settings, account, notifications, subtitle, title
+Cohesion: 0.21
+Nodes (9): Microfrontend, MicrofrontendSelectorProps, CloneRepositoryPopoverProps, IDangerZoneRemoveMicrofrontendProps, MicrofrontendCard(), MicrofrontendFlowProps, THEME_TO_COLOR_MODE, MicrofrontendsGrid() (+1 more)
 
 ### Community 69 - "stats"
-Cohesion: 0.25
-Nodes (8): stats, apiKeys, codeRepositories, environments, storages, teamMembers, title, viewAll
+Cohesion: 0.24
+Nodes (7): ColorPickerProps, EnvironmentSet(), EnvironmentSetProps, DEFAULT_COLORS, EnvironmentPreset, EnvironmentPresetGroup, presetEnvironmentGroups
 
 ### Community 70 - "EnvironmentVariableForm.tsx"
-Cohesion: 0.16
-Nodes (13): EnvironmentValue, GlobalVariableCreateDTO, GlobalVariableUpdateDTO, useGlobalVariablesApi(), EnvironmentVariablesPageInner(), EnvironmentVariableDialog(), EnvironmentVariableDialogProps, EnvironmentValue (+5 more)
+Cohesion: 0.23
+Nodes (9): DeleteConfirmationDialog(), DeleteConfirmationDialogProps, EnvironmentValue, GlobalVariableCreateDTO, GlobalVariableUpdateDTO, useGlobalVariablesApi(), EnvironmentVariablesPageInner(), EnvironmentVariableDialog() (+1 more)
 
 ### Community 71 - "card"
 Cohesion: 0.29
@@ -441,13 +459,21 @@ Nodes (6): cancel, create, create_title, edit_title, update, form
 Cohesion: 0.33
 Nodes (6): setup, description, project_name, project_name_min_length, project_name_placeholder, title
 
+### Community 78 - "EnvironmentVariableForm.tsx"
+Cohesion: 0.29
+Nodes (5): EnvironmentValue, environmentValueSchema, EnvironmentVariableFormProps, formSchema, FormValues
+
 ### Community 79 - "app"
 Cohesion: 0.40
 Nodes (5): app, error, name, generic, not_found
 
 ### Community 80 - "projectInfo"
 Cohesion: 0.40
-Nodes (5): id, name, slug, title, projectInfo
+Nodes (5): theme, dark, light, system, toggle_theme
+
+### Community 81 - "Auth0AuthWrapper.tsx"
+Cohesion: 0.50
+Nodes (3): Auth0AuthWrapper(), Auth0AuthWrapperProps, Auth0ProviderConfig
 
 ### Community 82 - "app"
 Cohesion: 0.40
@@ -474,9 +500,9 @@ Cohesion: 0.67
 Nodes (3): basedOnUrl, basedOnVersion, deploymentTypes
 
 ## Knowledge Gaps
-- **1163 isolated node(s):** `name`, `private`, `version`, `type`, `packageManager` (+1158 more)
+- **1167 isolated node(s):** `name`, `private`, `version`, `type`, `packageManager` (+1162 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -485,13 +511,13 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `react`, `components.json`?**
   _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `UserButton()` connect `index.ts` to `useToastNotificationStore`, `react`, `ThemeToggle.tsx`?**
-  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `UserButton()` connect `index.ts` to `react`, `ThemeToggle.tsx`?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
 - **What connects `name`, `private`, `version` to the rest of the system?**
-  _1163 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1167 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `microfrontend` be split into smaller, more focused modules?**
-  _Cohesion score 0.02127659574468085 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.021052631578947368 - nodes in this community are weakly interconnected._
 - **Should `microfrontend` be split into smaller, more focused modules?**
-  _Cohesion score 0.025974025974025976 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.027777777777777776 - nodes in this community are weakly interconnected._
 - **Should `useProjectStore` be split into smaller, more focused modules?**
-  _Cohesion score 0.1349206349206349 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.13118279569892474 - nodes in this community are weakly interconnected._

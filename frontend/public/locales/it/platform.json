@@ -198,6 +198,11 @@
         "env_variables_title": "Variabili d'ambiente",
         "no_deployments": "Nessuna distribuzione trovata",
         "no_deployments_description": "Le distribuzioni appariranno qui una volta create",
+        "microfrontend_card": {
+            "stable_version": "Versione stabile",
+            "canary_traffic": "Canary {{percentage}}%",
+            "canary_target_missing": "Non configurata"
+        },
         "actions": {
             "view_canary_users": "Visualizza utenti canary",
             "redeploy": "Redeploy"
@@ -528,6 +533,7 @@
         "enable_canary": "Abilita Distribuzione Canary",
         "canary_percentage": "Percentuale Canary",
         "canary_percentage_description": "Percentuale di traffico da indirizzare alla versione canary",
+        "canary_percentage_presets": "Percentuali suggerite",
         "canary_type": "Tipo di Canary",
         "select_canary_type": "Seleziona il tipo di canary",
         "on_sessions": "Sulle Sessioni",
