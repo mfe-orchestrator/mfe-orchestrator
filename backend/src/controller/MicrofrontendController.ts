@@ -1,3 +1,4 @@
+import fastifyMultipart from "@fastify/multipart"
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import MicrofrontendService from "../service/MicrofrontendService"
@@ -55,19 +56,25 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         })
     })
 
-    fastify.post<{
-        Params: { microfrontendSlug: string; version: string }
-        Body: { file: string }
-    }>("/microfrontends/by-slug/:microfrontendSlug/upload/:version", { config: { authMethod: AuthenticationMethod.API_KEY } }, async (request, reply) => {
-        const projectId = getProjectIdFromRequest(request)
-        if (!projectId) {
-            throw new ProjectHeaderNotFoundError()
-        }
-        const data = await request.file()
-        if (!data) {
-            throw new Error("File not found")
-        }
-        return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, projectId, data))
+    // Encapsulated scope: the multipart parser stays local to the upload route, so every
+    // other endpoint keeps accepting JSON only.
+    await fastify.register(async uploadScope => {
+        await uploadScope.register(fastifyMultipart)
+
+        uploadScope.post<{
+            Params: { microfrontendSlug: string; version: string }
+            Body: { file: string }
+        }>("/microfrontends/by-slug/:microfrontendSlug/upload/:version", { config: { authMethod: AuthenticationMethod.API_KEY } }, async (request, reply) => {
+            const projectId = getProjectIdFromRequest(request)
+            if (!projectId) {
+                throw new ProjectHeaderNotFoundError()
+            }
+            const data = await request.file()
+            if (!data) {
+                throw new Error("File not found")
+            }
+            return reply.send(await new MicrofrontendService().uploadWithPermissionCheck(request.params.microfrontendSlug, request.params.version, projectId, data))
+        })
     })
 
     fastify.put<{
