@@ -56,8 +56,8 @@ const FRAMEWORK_PROFILES: Record<MicrofrontendFramework, FrameworkProfile> = {
         vitePluginCall: "react()",
         webpackImports: ["const HtmlWebpackPlugin = require('html-webpack-plugin');"],
         webpackPlugins: ["new HtmlWebpackPlugin({ template: './public/index.html' })"],
-        webpackRules: [String.raw`{ test: /\.[jt]sx?$/, exclude: /node_modules/, use: 'babel-loader' }`, String.raw`{ test: /\.css$/, use: ['style-loader', 'css-loader'] }`],
-        webpackExtensions: ["'.js'", "'.jsx'", "'.ts'", "'.tsx'"],
+        webpackRules: [String.raw`{ test: /\.(ts|tsx)$/, exclude: /node_modules/, use: { loader: 'ts-loader' } }`, String.raw`{ test: /\.css$/, use: ['style-loader', 'css-loader'] }`],
+        webpackExtensions: ["'.ts'", "'.tsx'", "'.js'", "'.jsx'"],
         shared: ["react", "react-dom"],
         exposedComponent: "'./App': './src/App'",
         entryPoint: "src/main.tsx"
@@ -79,9 +79,10 @@ const FRAMEWORK_PROFILES: Record<MicrofrontendFramework, FrameworkProfile> = {
         // Drops Angular's development only assertions, the way the Angular CLI does in a
         // production build. Without it the debug helpers end up in the bundle.
         viteExtras: "  define: {\n    ngDevMode: 'false'\n  },",
-        webpackImports: ["const HtmlWebpackPlugin = require('html-webpack-plugin');"],
-        webpackPlugins: ["new HtmlWebpackPlugin({ template: './public/index.html' })"],
-        webpackRules: [String.raw`{ test: /\.ts$/, use: '@ngtools/webpack' }`, String.raw`{ test: /\.css$/, use: ['style-loader', 'css-loader'] }`],
+        webpackImports: ["const HtmlWebpackPlugin = require('html-webpack-plugin');", "const { AngularWebpackPlugin } = require('@ngtools/webpack');"],
+        webpackPlugins: ["new HtmlWebpackPlugin({ template: './public/index.html' })", "new AngularWebpackPlugin({ tsconfig: 'tsconfig.json', jitMode: false })"],
+        // AngularWebpackPlugin above installs the AOT compiler behind this loader
+        webpackRules: [String.raw`{ test: /\.[cm]?[jt]sx?$/, loader: '@ngtools/webpack' }`, String.raw`{ test: /\.css$/, use: ['style-loader', 'css-loader'] }`],
         webpackExtensions: ["'.ts'", "'.js'"],
         shared: ["@angular/core", "@angular/common", "@angular/platform-browser", "rxjs"],
         exposedComponent: "'./App': './src/app/app.component.ts'",
