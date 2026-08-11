@@ -5,7 +5,7 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import AuthenticationError from "../errors/AuthenticationError"
 import ApiKey from "../models/ApiKeyModel"
 import UserModel, { getSecret, ISSUER } from "../models/UserModel"
-import UserService from "../service/UserService"
+import UserService, { FEDERATED_LOGIN_WINDOW_MS, recordLogin } from "../service/UserService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { redisClient } from "./redis"
 
@@ -153,6 +153,26 @@ const getUserDataFromToken = async (fastify: FastifyInstance, authToken: string,
     }
 }
 
+/**
+ * When the identity provider authenticated the user, taken from the token.
+ *
+ * `auth_time` is the interactive sign-in and does not move when the token is
+ * refreshed silently, so it is preferred over `iat`. Returns undefined for a token
+ * that is not a JWT (a Google access token is opaque) or that states neither
+ * claim: there the caller has to date the access by arrival time instead.
+ */
+const getFederatedAuthenticationMoment = (authToken: string): Date | undefined => {
+    let payload: JwtPayload | null = null
+    try {
+        payload = jwt.decode(authToken, { json: true })
+    } catch {
+        return undefined
+    }
+
+    const seconds = typeof payload?.auth_time === "number" ? payload.auth_time : payload?.iat
+    return typeof seconds === "number" ? new Date(seconds * 1000) : undefined
+}
+
 const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest): Promise<string> => {
     const apiKey = request.headers["api-key"] || (request.query as Record<string, unknown>)["apiKey"]
     if (!apiKey || typeof apiKey !== "string") {
@@ -227,6 +247,15 @@ export default fastifyPlugin(
                 } else {
                     throw new AuthenticationError("User found in authentication provider but not in database with email " + userData.email)
                 }
+            }
+
+            if (isFederatedAuth) {
+                // Federated users never call `/users/login`: their token is issued by the
+                // provider, so the authentication moment is read from the token itself and
+                // this hook is only where it becomes visible. Re-seeing the same token is
+                // not a new login, `recordLogin` ignores a moment it already stored.
+                const authenticatedAt = getFederatedAuthenticationMoment(authToken)
+                await recordLogin(user, authenticatedAt ?? new Date(), authenticatedAt ? 0 : FEDERATED_LOGIN_WINDOW_MS)
             }
 
             request.databaseUser = {

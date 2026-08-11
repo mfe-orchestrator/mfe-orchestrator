@@ -26,6 +26,7 @@ export interface IUser {
     activateEmailExpires?: Date
     createdAt: Date
     updatedAt: Date
+    lastLoginAt?: Date
     language?: string
     theme?: string
     marketingConsent?: boolean
@@ -126,6 +127,13 @@ const userSchema = new Schema<IUserDocument>(
         marketingConsentVersion: {
             type: String,
             required: false
+        },
+        // Moment of the last access. Written by recordLogin() and read only from the
+        // database: it is stripped from toFrontendObject(), so no API response
+        // carries it.
+        lastLoginAt: {
+            type: Date,
+            required: false
         }
     },
     {
@@ -150,6 +158,9 @@ userSchema.methods.toFrontendObject = function (): IUser {
     delete obj.password
     delete obj.salt
     delete obj.__v
+    // The access date is internal: it exists for the operator querying the
+    // database, not for the client, so it never leaves the backend.
+    delete obj.lastLoginAt
     return obj
 }
 

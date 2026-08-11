@@ -6,7 +6,7 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Project, { IProject } from "../models/ProjectModel"
 import User, { IUser, IUserDocument, UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
-import UserService from "../service/UserService"
+import UserService, { recordLogin } from "../service/UserService"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
@@ -162,6 +162,10 @@ class UserProjectService extends BaseAuthorizedService {
         userProject.invitationToken = undefined
         userProject.inviationTokenExpiresAt = undefined
         await userProject.save()
+
+        // Accepting the invitation hands out an access token, so it is an access like
+        // any other login.
+        await recordLogin(user)
 
         return {
             user: user.toFrontendObject(),

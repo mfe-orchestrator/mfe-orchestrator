@@ -23,6 +23,53 @@ type RegisterUserData = UserRegistrationDTO & {
     status?: UserStatus
 }
 
+/**
+ * Fallback window for a federated access whose token carries no authentication
+ * moment: an opaque token (a Google access token is not a JWT) leaves nothing to
+ * read, so the access is dated "now" and the window keeps ordinary request traffic
+ * from writing on the user document over and over.
+ *
+ * Only that fallback is approximate. When the token does state when the provider
+ * authenticated the user, `recordLogin` stores exactly that moment.
+ */
+export const FEDERATED_LOGIN_WINDOW_MS = 15 * 60 * 1000
+
+/**
+ * Stores the moment of an access on the user document.
+ *
+ * The write happens only when `at` is newer than what is already stored: the
+ * authorization hook calls this on every federated request, always with the
+ * authentication moment of the same token, so re-seeing that token is not a new
+ * login and must not move the field. `minGapMs` covers the caller that has no
+ * authentication moment to pass and has to date the access "now".
+ *
+ * A failed write never fails the request: the field is an operational record, and
+ * an authenticated user losing access because a bookkeeping update timed out would
+ * be a far worse outcome than a missing date.
+ *
+ * Deliberately not a method of `UserService`: the authorization hook calls it on
+ * every federated request, and building a service there would build an
+ * `EmailService`, hence an SMTP transport, to run one `updateOne`.
+ */
+export const recordLogin = async (user: Pick<IUser, "_id" | "lastLoginAt">, at: Date = new Date(), minGapMs: number = 0): Promise<void> => {
+    if (user.lastLoginAt) {
+        const elapsed = at.getTime() - user.lastLoginAt.getTime()
+        if (elapsed <= 0 || elapsed < minGapMs) {
+            return
+        }
+    }
+
+    const userId = toObjectId(user._id)
+    try {
+        // Timestamps off on purpose: an access is not a change to the user, and
+        // letting it bump `updatedAt` would turn that field into "last seen" for
+        // every user in the collection.
+        await User.updateOne({ _id: userId }, { lastLoginAt: at }, { timestamps: false })
+    } catch (error) {
+        fastify?.log?.warn({ err: error, userId: userId.toString() }, "Unable to record the last login date")
+    }
+}
+
 export class UserService {
     private emailService: EmailService
 
@@ -132,6 +179,8 @@ export class UserService {
         if (!isValidPassword) {
             throw new InvalidCredentialsError()
         }
+
+        await recordLogin(user)
 
         return {
             user: user.toFrontendObject(),
