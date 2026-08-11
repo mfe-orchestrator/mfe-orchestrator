@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { emailDeliveryUnavailable, isAuthenticated, newTestUser, waitForAuthenticated } from "../fixtures/appUser"
+import { emailDeliveryUnavailable, expectLoginPage, isAuthenticated, newTestUser, waitForAuthenticated } from "../fixtures/appUser"
 import { toAppPath, waitForEmailLink } from "../fixtures/emailClient"
 
 /**
@@ -54,11 +54,16 @@ test.describe
         test("given an activated account, when a password reset is requested, then the reset email is delivered", async ({ page }) => {
             await page.goto("/")
             await page.getByTestId("forgot-password-link").click()
+
+            // Il campo email si chiama `email` sia qui sia nel login: senza aspettare
+            // il cambio pagina il fill finisce su quello della pagina che sta uscendo.
+            await expect(page.getByTestId("reset-password")).toBeVisible({ timeout: 30_000 })
+
             await page.getByTestId("email").fill(user.email)
             await page.getByTestId("reset-password").click()
 
             // Nessuna schermata di conferma: si torna al login.
-            await expect(page.getByTestId("login")).toBeVisible()
+            await expectLoginPage(page)
 
             const resetLink = await waitForEmailLink(page.request, user.inbox, {
                 subject: "Reset Your Password",
@@ -79,7 +84,7 @@ test.describe
             await page.getByTestId("submit-new-password").click()
 
             // Anche qui si torna al login, senza schermata intermedia.
-            await expect(page.getByTestId("login")).toBeVisible()
+            await expectLoginPage(page)
 
             // La vecchia password non vale piu'.
             await page.getByTestId("email").fill(user.email)

@@ -153,6 +153,17 @@ export async function waitForAuthenticated(page: Page): Promise<void> {
     await page.waitForFunction(() => Boolean(localStorage.getItem("token")))
 }
 
+/**
+ * Attende che sia a video il form di login.
+ *
+ * Arrivarci significa quasi sempre aver appena navigato su `/`, dove la app
+ * riparte da capo: i 5s di default di `expect` non bastano, soprattutto con piu'
+ * worker in parallelo.
+ */
+export async function expectLoginPage(page: Page): Promise<void> {
+    await expect(page.getByTestId("login")).toBeVisible({ timeout: 30_000 })
+}
+
 /** Login via API: usato per preparare lo stato senza passare dalla UI. */
 export async function loginViaApi(request: APIRequestContext, user: TestUser): Promise<string> {
     const response = await request.post("/api/users/login", {
