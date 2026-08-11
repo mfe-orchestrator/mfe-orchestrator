@@ -33,7 +33,7 @@ jobs:
 
       # - name: 💾 Cache node_modules
       #   id: cache-node-modules
-      #   uses: actions/cache@v5
+      #   uses: actions/cache@v6
       #   with:
       #     path: |
       #       **/node_modules
@@ -48,7 +48,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 💾 Turbo Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .turbo
           key: ${{ runner.os }}-turbo-${{ github.sha }}
