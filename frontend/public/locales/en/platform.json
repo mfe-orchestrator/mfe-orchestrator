@@ -18,20 +18,27 @@
         "fe_integration_tab": {
             "title": "Frontend Integration",
             "description": "Follow the instructions below to integrate with our platform.",
-            "vite": {
-                "title": "Vite Module Federation Setup",
-                "description": "To integrate using Vite Module Federation, first install the required plugin:",
-                "step2": "Then, update your Vite configuration:"
-            },
-            "webpack": {
-                "title": "Webpack Module Federation Setup",
-                "description": "For Webpack Module Federation, ensure you have Webpack 5 installed. Then configure your webpack config:"
-            },
             "curl": {
                 "title": "Direct API Access via CURL",
                 "description": "You can also interact with our API directly using CURL:",
                 "step2": "Here is the preview:"
-            }
+            },
+            "detected_stack": "Detected stack",
+            "stack_from_template": "from the template",
+            "stack_detected": "detected in the repository",
+            "stack_manual": "set manually",
+            "stack_unknown_title": "Stack not detected",
+            "stack_unknown_description": "We could not tell which framework and bundler this microfrontend uses. Pick them below to get the right instructions, or connect the repository so we can read them.",
+            "framework_label": "Framework",
+            "compiler_label": "Bundler",
+            "install_step": "Install what the integration needs:",
+            "config_step": "Then write this configuration to {{path}}:",
+            "runtime_integration_title": "Runtime integration",
+            "integrate_all_button": "Integrate my microfrontends",
+            "stack_auto": "Automatic",
+            "federation_tab": "Module Federation",
+            "inject_in_repository": "Inject remotes in the repository",
+            "runtime_integration_description": "Web component microfrontends are plain scripts that register a custom element, so there is no module federation config to write: the host asks the SDK for the resolved url and mounts the element. See MicrofrontendLoader in the web component templates."
         },
         "env_vars_integration_tab": {
             "title": "Environment Variables",

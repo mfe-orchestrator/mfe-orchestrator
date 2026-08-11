@@ -13,11 +13,13 @@ import Deployment, { IDeployment } from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import GlobalVariable, { IGlobalVariable } from "../models/GlobalVariableModel"
-import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend, MicrofrontendType } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import { IStorage, StorageType } from "../models/StorageModel"
+import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
 import { toObjectId } from "../utils/mongooseUtils"
 import DeploymentService from "./DeploymentService"
+import FederationConfigService, { IntegrationInstructions } from "./FederationConfigService"
 
 interface GetRemotesRequestDTO {
     microfrontendId: string | ObjectId
@@ -117,7 +119,6 @@ const CANARY_BUCKETS = 100
  * manifest, already pinned to the version this browser must get. That is what keeps the canary
  * decision on this side: a config with a static url would freeze one version into the host bundle.
  */
-const CLIENT_SDK_PACKAGE = "@mfe-orchestrator-hub/client"
 
 /**
  * FNV-1a: cheap, dependency free and stable across processes, which is what makes the decision
@@ -135,11 +136,19 @@ const hashToBucket = (value: string): number => {
 }
 
 interface CodeIntegrationRequestDTO extends GetRemotesRequestDTO {
-    framework: string
+    /** Framework override, defaulting to the stack stored on the microfrontend */
+    framework?: string
+    /** Bundler override, defaulting to the stack stored on the microfrontend */
+    compiler?: string
 }
 
-interface CodeIntegrationResponseDTO {
-    code: string
+interface CodeIntegrationResponseDTO extends IntegrationInstructions {
+    /** The stack the instructions were generated for, so the screen can say which one it picked */
+    stack: {
+        framework?: MicrofrontendFramework
+        compiler?: MicrofrontendCompiler
+        source?: MicrofrontendStackSource
+    }
 }
 
 export default class ServeService {
@@ -186,159 +195,6 @@ export default class ServeService {
         return forcedVersion && this.getServableVersions(microfrontend).includes(forcedVersion) ? forcedVersion : undefined
     }
 
-    /**
-     * The generated remotes resolve themselves through the SDK, and the SDK has to be told which backend
-     * and which project to ask: without this block the generated config cannot work.
-     *
-     * The environment is the one thing it does not have to be told. It is emitted as a conditional
-     * spread rather than as a plain field so that the key is simply not there when the variable is
-     * unset: the SDK then falls back to the `auto` endpoints, which resolve the environment from the
-     * domain the page is running on. Passing `environment: undefined` would not be the same thing to
-     * read, and it is exactly the shape that makes people believe the value is required.
-     *
-     * It is emitted commented out because it does not belong to the bundler config file but to the entry
-     * point of the host app, where it has to run before anything imports a remote.
-     *
-     * @param entryPoint Where the snippet is meant to be pasted, shown to the reader
-     * @param readEnvVariable How the host bundler exposes an environment variable to the bundle
-     * @param envNote What the reader has to do for those variables to reach the bundle
-     */
-    private getBootstrapSnippet(microfrontends: MicrofrontendAdaptedToServe[], entryPoint: string, readEnvVariable: (variable: string) => string, envNote: string): string {
-        if (microfrontends.length === 0) {
-            return ""
-        }
-
-        return `
-
-// ---------------------------------------------------------------------------
-// Host bootstrap: paste this at the very top of your entry point (${entryPoint}).
-// The remotes above ask the SDK for their url, so configure() has to run before
-// anything imports one of them.
-// ${envNote}
-// ---------------------------------------------------------------------------
-/*
-import { configure } from '${CLIENT_SDK_PACKAGE}'
-
-// Optional: leave it unset and the environment is resolved from the domain this
-// page is served on, so the same build can run on every environment.
-const environment = ${readEnvVariable("MFE_ENVIRONMENT")}
-
-configure({
-  backendUrl: ${readEnvVariable("MFE_BACKEND_URL")},
-  projectId: ${readEnvVariable("MFE_PROJECT_ID")},
-  ...(environment ? { environment } : {})
-})
-*/`
-    }
-
-    getWebpackConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string) {
-        // `promise <expression>` is how ModuleFederationPlugin declares a remote whose url is only known
-        // at runtime: the expression is inlined in the host bundle and awaited before the remote is used
-        const remotesString = microfrontends
-            .map((mfe, index) => {
-                const name = mfe.nameToIntegrate || `mfe${index + 1}`
-                return `        '${name}': \`promise import('${CLIENT_SDK_PACKAGE}').then(m => m.remoteUrl('${mfe.slug}'))\``
-            })
-            .join(",\n")
-
-        const remotesBlock =
-            microfrontends.length > 0
-                ? `
-      remotes: {
-${remotesString}
-      },`
-                : ""
-
-        return `// webpack.config.js
-const { ModuleFederationPlugin } = require('webpack').container;
-
-module.exports = {
-  // ... other webpack config
-  plugins: [
-    new ModuleFederationPlugin({
-      name: '${microfrontendSlug}',
-      filename: 'remoteEntry.js',${remotesBlock}
-      shared: {
-        react: {
-          singleton: true,
-          requiredVersion: '^18.2.0',
-          eager: true
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: '^18.2.0',
-          eager: true
-        },
-        'react-router-dom': {
-          singleton: true,
-          requiredVersion: '^6.15.0',
-          eager: true
-        }
-      },
-    }),
-  ],
-};${this.getBootstrapSnippet(microfrontends, "src/index.js", variable => `process.env.${variable}`, "Expose these variables to the bundle with webpack.EnvironmentPlugin. MFE_ENVIRONMENT is optional.")}`
-    }
-
-    getViteConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string): string {
-        // `externalType: 'promise'` tells the plugin that `external` is an expression resolving to the url
-        // instead of the url itself, so it is evaluated and awaited in the host bundle at import time
-        const remotesString = microfrontends
-            .map((mfe, index) => {
-                const name = mfe.nameToIntegrate || `mfe${index + 1}`
-                return `        '${name}': {
-          external: \`import('${CLIENT_SDK_PACKAGE}').then(m => m.remoteUrl('${mfe.slug}'))\`,
-          externalType: 'promise'
-        }`
-            })
-            .join(",\n")
-
-        const remotesBlock =
-            microfrontends.length > 0
-                ? `
-      remotes: {
-${remotesString}
-      },`
-                : ""
-
-        const viteConfig = `// vite.config.js
-import { defineConfig } from 'vite';
-import federation from '@originjs/vite-plugin-federation';
-
-export default defineConfig({
-  plugins: [
-    federation({
-      name: '${microfrontendSlug}',
-      filename: 'remoteEntry.js',${remotesBlock}
-      shared: ['react', 'react-dom', 'react-router-dom']
-    })
-  ],
-  build: {
-    target: 'esnext',
-    minify: false,
-    cssCodeSplit: false,
-    rollupOptions: {
-      output: {
-        minifyInternalExports: false
-      }
-    }
-  }
-});${this.getBootstrapSnippet(microfrontends, "src/main.js", variable => `import.meta.env.VITE_${variable}`, "Vite only exposes to the bundle the variables prefixed with VITE_. VITE_MFE_ENVIRONMENT is optional.")}`
-
-        return viteConfig
-    }
-
-    getConfig(framework: string, microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string): string {
-        switch (framework) {
-            case "vite":
-                return this.getViteConfig(microfrontends, microfrontendSlug)
-            case "webpack":
-                return this.getWebpackConfig(microfrontends, microfrontendSlug)
-            default:
-                return ""
-        }
-    }
-
     async getRemotes({ microfrontendId, environmentId, deploymentId }: GetRemotesRequestDTO): Promise<GetRemotesResponseDTO> {
         let deployment: IDeployment | null = null
         if (deploymentId) {
@@ -379,15 +235,34 @@ export default defineConfig({
         }
     }
 
-    async getCodeIntegration({ framework, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
+    /**
+     * The integration instructions of a microfrontend, generated for the stack it is actually
+     * built with. `framework` and `compiler` only override what is stored on it, so the screen
+     * can still show another stack on request.
+     */
+    async getCodeIntegration({ framework, compiler, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
         const allData = await this.getRemotes({ microfrontendId, deploymentId })
 
         const childs = await Promise.all(allData.filteredMicrofrontends.map(child => this.adaptMicrofrontendToServe(child, allData.environment.slug, allData.deployment._id)))
 
-        return {
-            code: this.getConfig(framework, childs, allData.microfrontend.slug)
+        const stored = allData.microfrontend.stack
+        const stack = {
+            framework: parseFramework(framework) || stored?.framework,
+            compiler: parseCompiler(compiler) || stored?.compiler,
+            source: stored?.source
         }
+
+        const instructions = new FederationConfigService().getInstructions({
+            framework: stack.framework,
+            compiler: stack.compiler,
+            microfrontendSlug: allData.microfrontend.slug,
+            exposeSelf: allData.microfrontend.type === MicrofrontendType.HOST,
+            remotes: childs.map((child, index) => ({ name: child.nameToIntegrate || `mfe${index + 1}`, slug: child.slug }))
+        })
+
+        return { ...instructions, stack }
     }
+
     /**
      * Get all microfrontends by environment ID
      * @param environmentId The ID of the environment

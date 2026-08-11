@@ -13,14 +13,36 @@ export interface IServe {
     microfrontends: IServeMicrofrontend[]
 }
 
+export type MicrofrontendFramework = "REACT" | "VUE" | "ANGULAR"
+export type MicrofrontendCompiler = "VITE" | "WEBPACK" | "WEBCOMPONENT"
+export type MicrofrontendStackSource = "TEMPLATE" | "DETECTED" | "MANUAL"
+
+export interface IMicrofrontendStackDTO {
+    framework?: MicrofrontendFramework
+    compiler?: MicrofrontendCompiler
+    source?: MicrofrontendStackSource
+}
+
 export interface ICodeIntegrationDTO {
+    /** Bundler config and host bootstrap, ready to paste */
     code: string
+    /** Where the config belongs in the repository */
+    configPath?: string
+    /** Packages the integration needs, and the command that installs them */
+    dependencies: string[]
+    installCommand?: string
+    /** True when the stack integrates at runtime instead of through module federation */
+    runtimeIntegration?: boolean
+    /** The stack the instructions were generated for */
+    stack: IMicrofrontendStackDTO
 }
 
 export interface ICodeIntegrationRequestDTO {
-    framework: string
     microfrontendId: string
     deploymentId: string
+    /** Both default to the stack stored on the microfrontend */
+    framework?: MicrofrontendFramework
+    compiler?: MicrofrontendCompiler
 }
 
 const useServeApi = () => {

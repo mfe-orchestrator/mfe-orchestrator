@@ -18,20 +18,27 @@
         "fe_integration_tab": {
             "title": "Integrazione frontend",
             "description": "Segui le istruzioni riportate di seguito per integrare il tuo microfrontend con la nostra piattaforma.",
-            "vite": {
-                "title": "Integrazione Vite Module Federation",
-                "description": "Per integrare il tuo microfrontend con la nostra piattaforma, segui le istruzioni riportate di seguito.",
-                "step2": "Poi, aggiorna la tua configurazione vite:"
-            },
-            "webpack": {
-                "title": "Integrazione Webpack Module Federation",
-                "description": "Per Webpack Module Federation, assicurati di avere Webpack 5 installato. Poi configura il tuo webpack config:"
-            },
             "curl": {
                 "title": "Accesso diretto API via CURL",
                 "description": "Puoi anche interagire con la nostra API direttamente utilizzando CURL:",
                 "step2": "Ecco un esempio:"
-            }
+            },
+            "detected_stack": "Stack rilevato",
+            "stack_from_template": "dal template",
+            "stack_detected": "rilevato nel repository",
+            "stack_manual": "impostato manualmente",
+            "stack_unknown_title": "Stack non rilevato",
+            "stack_unknown_description": "Non siamo riusciti a capire quale framework e quale bundler usa questo microfrontend. Selezionali qui sotto per ottenere le istruzioni corrette, oppure collega il repository per farceli leggere.",
+            "framework_label": "Framework",
+            "compiler_label": "Bundler",
+            "install_step": "Installa quello che serve all'integrazione:",
+            "config_step": "Poi scrivi questa configurazione in {{path}}:",
+            "runtime_integration_title": "Integrazione a runtime",
+            "integrate_all_button": "Integra i miei microfrontend",
+            "stack_auto": "Automatico",
+            "federation_tab": "Module Federation",
+            "inject_in_repository": "Inietta i remote nel repository",
+            "runtime_integration_description": "I microfrontend web component sono semplici script che registrano un custom element, quindi non c'è nessuna configurazione di module federation da scrivere: l'host chiede l'url risolto all'SDK e monta l'elemento. Vedi MicrofrontendLoader nei template web component."
         },
         "env_vars_integration_tab": {
             "title": "Variabili d'ambiente",

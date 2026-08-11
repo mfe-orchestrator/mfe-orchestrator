@@ -5,7 +5,9 @@ import AuthenticationMethod from "../types/AuthenticationMethod"
 export default async function serveController(fastify: FastifyInstance) {
     fastify.get<{
         Querystring: {
-            framework: string
+            /** Both default to the stack stored on the microfrontend */
+            framework?: string
+            compiler?: string
             microfrontendId: string
             deploymentId: string
         }
