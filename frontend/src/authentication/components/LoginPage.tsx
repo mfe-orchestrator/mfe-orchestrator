@@ -82,7 +82,7 @@ const LoginPage: React.FC<LoginComponentProps> = ({ onSuccessLogin }) => {
                             {parameters.getParameter("canSendEmail") && (
                                 <p className="text-sm text-foreground-secondary text-right mt-2">
                                     {t("auth.forgot_password")}{" "}
-                                    <Link to="/reset-password-request" className="text-primary underline-offset-4 underline">
+                                    <Link to="/reset-password-request" data-testid="forgot-password-link" className="text-primary underline-offset-4 underline">
                                         {t("auth.recover")}
                                     </Link>
                                 </p>

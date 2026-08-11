@@ -56,7 +56,7 @@ export const ResetPasswordRequest = () => {
                         {resetPasswordMutation.isPending ? (
                             <Spinner />
                         ) : (
-                            <Button type="submit" className="w-full">
+                            <Button type="submit" className="w-full" dataTestId="reset-password">
                                 {t("auth.recover_password_button")}
                             </Button>
                         )}

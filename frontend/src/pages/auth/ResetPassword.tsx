@@ -45,6 +45,7 @@ const ResetPassword = () => {
                     <div className="grid gap-4">
                         <TextField
                             name="password"
+                            dataTestId="new-password"
                             label={t("auth.password")}
                             type="password"
                             placeholder="••••••••"
@@ -59,6 +60,7 @@ const ResetPassword = () => {
 
                         <TextField
                             name="confirmPassword"
+                            dataTestId="confirm-new-password"
                             label={t("auth.confirm_password")}
                             type="password"
                             placeholder="••••••••"
@@ -71,7 +73,7 @@ const ResetPassword = () => {
                         {registerMutation.isPending ? (
                             <Spinner />
                         ) : (
-                            <Button type="submit" className="w-full">
+                            <Button type="submit" className="w-full" dataTestId="submit-new-password">
                                 {t("auth.reset_password")}
                             </Button>
                         )}
