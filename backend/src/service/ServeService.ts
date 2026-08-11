@@ -19,7 +19,7 @@ import { IStorage, StorageType } from "../models/StorageModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
 import { toObjectId } from "../utils/mongooseUtils"
 import DeploymentService from "./DeploymentService"
-import FederationConfigService, { IntegrationInstructions } from "./FederationConfigService"
+import FederationConfigService, { federationName, IntegrationInstructions } from "./FederationConfigService"
 
 interface GetRemotesRequestDTO {
     microfrontendId: string | ObjectId
@@ -854,5 +854,5 @@ const buildMicrofrontendAdaptedToServe = (microfrontend: IMicrofrontend, url: st
     name: microfrontend.name,
     slug: microfrontend.slug,
     continuousDeployment: microfrontend.continuousDeployment,
-    nameToIntegrate: microfrontend?.slug?.replace(/\//g, "_").replace(/-/g, "") || `mfe${microfrontend._id}`
+    nameToIntegrate: microfrontend?.slug ? federationName(microfrontend.slug) : `mfe${microfrontend._id}`
 })

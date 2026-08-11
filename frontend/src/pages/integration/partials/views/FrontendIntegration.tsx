@@ -7,6 +7,7 @@ import { DeploymentDTO } from "@/hooks/apiClients/useDeploymentsApi"
 import useIntegrationApi from "@/hooks/apiClients/useIntegrationApi"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { MicrofrontendCompiler, MicrofrontendFramework } from "@/hooks/apiClients/useServeApi"
+import IntegrateMicrofrontendsDialog from "@/pages/integration/partials/components/IntegrateMicrofrontendsDialog"
 import MicrofrontendSelector from "@/pages/integration/partials/components/MicrofrontendSelector"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { CodeIntegration } from "../index"
@@ -40,6 +41,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
     // these are here for when detection got it wrong, or for reading another stack's instructions
     const [framework, setFramework] = useState<MicrofrontendFramework | undefined>()
     const [compiler, setCompiler] = useState<MicrofrontendCompiler | undefined>()
+    const [isIntegrateDialogOpen, setIsIntegrateDialogOpen] = useState(false)
 
     const injectInRepositoryMutation = useMutation({
         mutationFn: integrationApi.injectRemotesInHost
@@ -66,12 +68,15 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
             <CardContent>
                 <div className="flex gap-2 flex-wrap items-end mb-4">
                     <MicrofrontendSelector microfrontends={activeDeployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
+                    <Button onClick={() => setIsIntegrateDialogOpen(true)}>{t("integration.fe_integration_tab.integrate_all_button")}</Button>
                     {activeDeployment.storage && activeDeployment.storage.length > 0 && (
-                        <Button onClick={injectInRepository} disabled={!selectedMicrofrontend || injectInRepositoryMutation.isPending}>
+                        <Button variant="secondary" onClick={injectInRepository} disabled={!selectedMicrofrontend || injectInRepositoryMutation.isPending}>
                             {t("integration.fe_integration_tab.inject_in_repository")}
                         </Button>
                     )}
                 </div>
+
+                <IntegrateMicrofrontendsDialog isOpen={isIntegrateDialogOpen} onOpenChange={setIsIntegrateDialogOpen} />
 
                 {selectedMicrofrontend ? (
                     <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">

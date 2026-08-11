@@ -3,6 +3,12 @@ import { MicrofrontendCompiler, MicrofrontendFramework } from "../types/Microfro
 /** The package a host imports remoteUrl() and configure() from */
 export const CLIENT_SDK_PACKAGE = "@mfe-orchestrator-hub/client"
 
+/**
+ * A slug turned into an identifier module federation accepts as a remote name: slashes become
+ * underscores and dashes go, because the host imports from it ("myremote/Button").
+ */
+export const federationName = (slug: string): string => slug.replace(/\//g, "_").replace(/-/g, "")
+
 export interface FederationRemote {
     /** Federation-safe name the host imports from */
     name: string
