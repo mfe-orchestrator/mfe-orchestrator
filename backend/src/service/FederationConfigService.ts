@@ -279,7 +279,13 @@ ${sharedBlock}
 
     /**
      * The generated remotes resolve themselves through the SDK, and the SDK has to be told which
-     * backend, project and environment to ask: without this block the config cannot work.
+     * backend and which project to ask: without this block the config cannot work.
+     *
+     * The environment is the one thing it does not have to be told. It is emitted as a conditional
+     * spread rather than as a plain field so that the key is simply not there when the variable is
+     * unset: the SDK then falls back to the `auto` endpoints, which resolve the environment from the
+     * domain the page is running on. Passing `environment: undefined` would not be the same thing to
+     * read, and it is exactly the shape that makes people believe the value is required.
      *
      * It is emitted commented out because it does not belong to the bundler config but to the
      * entry point of the host app, where it has to run before anything imports a remote.
@@ -291,7 +297,9 @@ ${sharedBlock}
 
         const isVite = compiler === MicrofrontendCompiler.VITE
         const readEnvVariable = (variable: string) => (isVite ? `import.meta.env.VITE_${variable}` : `process.env.${variable}`)
-        const envNote = isVite ? "Vite only exposes to the bundle the variables prefixed with VITE_." : "Expose the three variables to the bundle with webpack.EnvironmentPlugin or DefinePlugin."
+        const envNote = isVite
+            ? "Vite only exposes to the bundle the variables prefixed with VITE_. VITE_MFE_ENVIRONMENT is optional."
+            : "Expose these variables to the bundle with webpack.EnvironmentPlugin. MFE_ENVIRONMENT is optional."
 
         return `
 
@@ -304,10 +312,14 @@ ${sharedBlock}
 /*
 import { configure } from '${CLIENT_SDK_PACKAGE}'
 
+// Optional: leave it unset and the environment is resolved from the domain this
+// page is served on, so the same build can run on every environment.
+const environment = ${readEnvVariable("MFE_ENVIRONMENT")}
+
 configure({
   backendUrl: ${readEnvVariable("MFE_BACKEND_URL")},
   projectId: ${readEnvVariable("MFE_PROJECT_ID")},
-  environment: ${readEnvVariable("MFE_ENVIRONMENT")}
+  ...(environment ? { environment } : {})
 })
 */`
     }
