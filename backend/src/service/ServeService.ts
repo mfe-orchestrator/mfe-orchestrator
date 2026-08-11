@@ -117,7 +117,7 @@ const CANARY_BUCKETS = 100
  * manifest, already pinned to the version this browser must get. That is what keeps the canary
  * decision on this side: a config with a static url would freeze one version into the host bundle.
  */
-const CLIENT_SDK_PACKAGE = "@mfe-orchestrator/client"
+const CLIENT_SDK_PACKAGE = "@mfe-orchestrator-hub/client"
 
 /**
  * FNV-1a: cheap, dependency free and stable across processes, which is what makes the decision
