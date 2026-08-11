@@ -42,5 +42,11 @@
   "40": "AuthenticationMethod.ts",
   "41": "RepositoryFileService.ts",
   "42": "ICodeRepository",
-  "43": "GitlabClient.ts"
+  "43": "GitlabClient.ts",
+  "44": "StackDetectionService",
+  "45": "IMarket",
+  "46": "FederationConfigService",
+  "47": "EmailSenderService",
+  "48": ".gitHubInjectApiKey",
+  "49": "projectWizardStateMachine.ts"
 }
