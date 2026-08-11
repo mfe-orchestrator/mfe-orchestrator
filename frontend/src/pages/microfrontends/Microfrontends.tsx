@@ -1,6 +1,6 @@
 import { Input, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { CirclePlus, LayoutGrid, Search, StretchHorizontal, Workflow, X } from "lucide-react"
+import { CirclePlus, DownloadCloud, LayoutGrid, Search, StretchHorizontal, Workflow, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -10,7 +10,7 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useProjectStore from "@/store/useProjectStore"
-import { MicrofrontendsEmptyState } from "./partials/components"
+import { ImportRepositoriesDialog, MicrofrontendsEmptyState } from "./partials/components"
 import { MicrofrontendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
 
 const VIEWS = [
@@ -33,6 +33,7 @@ const Microfrontends = () => {
 
     const [searchTerm, setSearchTerm] = useState("")
     const [view, setView] = useState<View>("flow")
+    const [importDialogOpen, setImportDialogOpen] = useState(false)
 
     const onResetFilters = () => {
         setSearchTerm("")
@@ -43,6 +44,16 @@ const Microfrontends = () => {
         queryFn: () => microfrontendsApi.getByProjectId(projectId),
         enabled: !!projectId
     })
+
+    const codeRepositoriesQuery = useQuery({
+        queryKey: ["repositories", projectId],
+        queryFn: () => codeRepositoriesApi.getRepositoriesByProjectId(projectId!),
+        enabled: !!projectId
+    })
+
+    const codeRepositories = codeRepositoriesQuery.data ?? []
+    // Importing repositories only makes sense once at least one provider connection exists.
+    const canImportRepositories = codeRepositories.length > 0
 
     const microfrontendsList = useMemo(() => {
         const data = microfrontendListQuery?.data
@@ -134,6 +145,12 @@ const Microfrontends = () => {
                                 ))}
                             </TabsList>
                         )}
+                        {canImportRepositories && (
+                            <Button variant="secondary" onClick={() => setImportDialogOpen(true)}>
+                                <DownloadCloud />
+                                {t("microfrontend.import.action")}
+                            </Button>
+                        )}
                         <Button variant="primary" onClick={() => onAddNewMicrofrontend()}>
                             <CirclePlus />
                             {t("microfrontend.add_new")}
@@ -143,7 +160,11 @@ const Microfrontends = () => {
             >
                 <ApiStatusHandler queries={[microfrontendListQuery]}>
                     {!hasMicrofrontends ? (
-                        <MicrofrontendsEmptyState variant="empty" onAddNewMicrofrontend={() => onAddNewMicrofrontend()} />
+                        <MicrofrontendsEmptyState
+                            variant="empty"
+                            onAddNewMicrofrontend={() => onAddNewMicrofrontend()}
+                            onImportRepositories={canImportRepositories ? () => setImportDialogOpen(true) : undefined}
+                        />
                     ) : filteredCount === 0 ? (
                         <MicrofrontendsEmptyState variant="no-results" searchTerm={searchTerm} onResetFilters={onResetFilters} />
                     ) : (
@@ -160,6 +181,8 @@ const Microfrontends = () => {
                         </>
                     )}
                 </ApiStatusHandler>
+
+                {canImportRepositories && <ImportRepositoriesDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} codeRepositories={codeRepositories} />}
             </SinglePageLayout>
         </Tabs>
     )
