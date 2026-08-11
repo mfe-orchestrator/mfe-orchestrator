@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "backend/src/controller/IntegrationController.ts": {
-    "mtime": 1786470383.6506228,
-    "ast_hash": "61f7a124732fbd25c02c27a2eb14691f",
+    "mtime": 1786472567.3073468,
+    "ast_hash": "71c431027da7769efbddb01beb23a5ff",
     "semantic_hash": ""
   },
   "backend/src/controller/MarketController.ts": {
@@ -409,11 +409,6 @@
     "ast_hash": "cd7f4c325cbaf566cd3b4d69fb19a996",
     "semantic_hash": "cd7f4c325cbaf566cd3b4d69fb19a996"
   },
-  "backend/src/service/IntegrationService.ts": {
-    "mtime": 1786109863.4648309,
-    "ast_hash": "8454eedc908101774f1df6856f22c8e8",
-    "semantic_hash": ""
-  },
   "backend/src/service/MarketService.ts": {
     "mtime": 1786109863.4651353,
     "ast_hash": "38aa4f71d3b988b23c309750efd91dab",
@@ -675,13 +670,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786470458.8489623,
-    "ast_hash": "562a3b94fed95009d03caebe9b6413e8",
+    "mtime": 1786472567.307687,
+    "ast_hash": "b9ac63cf6d3a51feff09bd8970b685c4",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786470458.8578782,
-    "ast_hash": "e662c33a971565fa3d3de700c08eed55",
+    "mtime": 1786472567.3081357,
+    "ast_hash": "5188f714bc2bc3edae3476b947a195ea",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -910,8 +905,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useIntegrationApi.ts": {
-    "mtime": 1786470439.4070768,
-    "ast_hash": "e779d673e10ace0932763164fb526908",
+    "mtime": 1786472567.3084285,
+    "ast_hash": "f551703b55410414cf69c2f6e507fb59",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useInvitationApi.ts": {
@@ -1185,8 +1180,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/views/FrontendIntegration.tsx": {
-    "mtime": 1786470511.6657178,
-    "ast_hash": "2fc1471c4fabca0d417c010fec904c48",
+    "mtime": 1786472567.3090687,
+    "ast_hash": "d41829e45db54cf77591dc0910a8e35f",
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/views/index.ts": {
@@ -2020,8 +2015,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/components/IntegrateMicrofrontendsDialog.tsx": {
-    "mtime": 1786470494.6504068,
-    "ast_hash": "d340a4a8fa4f0ec0a1142af5d72487d9",
+    "mtime": 1786472567.3087437,
+    "ast_hash": "15d86749202107b461965df5930945d4",
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/components/StackBadge.tsx": {

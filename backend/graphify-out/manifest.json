@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "src/controller/IntegrationController.ts": {
-    "mtime": 1786470383.6506228,
-    "ast_hash": "61f7a124732fbd25c02c27a2eb14691f",
+    "mtime": 1786472567.3073468,
+    "ast_hash": "71c431027da7769efbddb01beb23a5ff",
     "semantic_hash": ""
   },
   "src/controller/MarketController.ts": {
@@ -402,11 +402,6 @@
   "src/service/GlobalVariablesService.ts": {
     "mtime": 1785880209.9902549,
     "ast_hash": "cd7f4c325cbaf566cd3b4d69fb19a996",
-    "semantic_hash": ""
-  },
-  "src/service/IntegrationService.ts": {
-    "mtime": 1786109863.4648309,
-    "ast_hash": "8454eedc908101774f1df6856f22c8e8",
     "semantic_hash": ""
   },
   "src/service/MarketService.ts": {
