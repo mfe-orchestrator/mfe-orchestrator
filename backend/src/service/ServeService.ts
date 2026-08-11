@@ -187,8 +187,14 @@ export default class ServeService {
     }
 
     /**
-     * The generated remotes resolve themselves through the SDK, and the SDK has to be told which backend,
-     * project and environment to ask: without this block the generated config cannot work.
+     * The generated remotes resolve themselves through the SDK, and the SDK has to be told which backend
+     * and which project to ask: without this block the generated config cannot work.
+     *
+     * The environment is the one thing it does not have to be told. It is emitted as a conditional
+     * spread rather than as a plain field so that the key is simply not there when the variable is
+     * unset: the SDK then falls back to the `auto` endpoints, which resolve the environment from the
+     * domain the page is running on. Passing `environment: undefined` would not be the same thing to
+     * read, and it is exactly the shape that makes people believe the value is required.
      *
      * It is emitted commented out because it does not belong to the bundler config file but to the entry
      * point of the host app, where it has to run before anything imports a remote.
@@ -213,10 +219,14 @@ export default class ServeService {
 /*
 import { configure } from '${CLIENT_SDK_PACKAGE}'
 
+// Optional: leave it unset and the environment is resolved from the domain this
+// page is served on, so the same build can run on every environment.
+const environment = ${readEnvVariable("MFE_ENVIRONMENT")}
+
 configure({
   backendUrl: ${readEnvVariable("MFE_BACKEND_URL")},
   projectId: ${readEnvVariable("MFE_PROJECT_ID")},
-  environment: ${readEnvVariable("MFE_ENVIRONMENT")}
+  ...(environment ? { environment } : {})
 })
 */`
     }
@@ -267,7 +277,7 @@ module.exports = {
       },
     }),
   ],
-};${this.getBootstrapSnippet(microfrontends, "src/index.js", variable => `process.env.${variable}`, "Expose the three variables to the bundle with webpack.EnvironmentPlugin.")}`
+};${this.getBootstrapSnippet(microfrontends, "src/index.js", variable => `process.env.${variable}`, "Expose these variables to the bundle with webpack.EnvironmentPlugin. MFE_ENVIRONMENT is optional.")}`
     }
 
     getViteConfig(microfrontends: MicrofrontendAdaptedToServe[], microfrontendSlug: string): string {
@@ -313,7 +323,7 @@ export default defineConfig({
       }
     }
   }
-});${this.getBootstrapSnippet(microfrontends, "src/main.js", variable => `import.meta.env.VITE_${variable}`, "Vite only exposes to the bundle the variables prefixed with VITE_.")}`
+});${this.getBootstrapSnippet(microfrontends, "src/main.js", variable => `import.meta.env.VITE_${variable}`, "Vite only exposes to the bundle the variables prefixed with VITE_. VITE_MFE_ENVIRONMENT is optional.")}`
 
         return viteConfig
     }
