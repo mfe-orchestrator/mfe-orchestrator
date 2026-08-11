@@ -1,7 +1,7 @@
 {
     ".claude/settings.local.json": {
-        "mtime": 1786106319.1958866,
-        "ast_hash": "be31497267c5290a47681bd148713899",
+        "mtime": 1786453532.0402267,
+        "ast_hash": "a279b4aad9f006086e7d1a9f09ffe2ed",
         "semantic_hash": ""
     },
     ".vscode/extensions.json": {
@@ -315,13 +315,13 @@
         "semantic_hash": "6097d1a775944f6a83e82626694326b0"
     },
     "backend/src/plugins/config.ts": {
-        "mtime": 1786367125.7203476,
-        "ast_hash": "dd5404a6176422ee50e232625475398d",
+        "mtime": 1786454315.8581667,
+        "ast_hash": "d446566e829cd758af4101a8266179a9",
         "semantic_hash": ""
     },
     "backend/src/plugins/cors.ts": {
-        "mtime": 1786109863.4622426,
-        "ast_hash": "0a4edb00cebb047edb75f05d7e40e759",
+        "mtime": 1786454308.5172617,
+        "ast_hash": "d7c7eafe7846611d871c6a53110b3d9f",
         "semantic_hash": ""
     },
     "backend/src/plugins/errorHandler.ts": {
@@ -440,8 +440,8 @@
         "semantic_hash": "56b289cc4df3cfae333b503ed9537b0c"
     },
     "backend/src/service/ServeService.ts": {
-        "mtime": 1786453122.1932616,
-        "ast_hash": "1dc759658d6b55ba844c93c21f59f33b",
+        "mtime": 1786458386.3597405,
+        "ast_hash": "459eafc72f092a24747dab40f3142621",
         "semantic_hash": ""
     },
     "backend/src/service/StorageService.ts": {
@@ -580,8 +580,8 @@
         "semantic_hash": "ccbee32abca02b047e261ae0c44023d5"
     },
     "backend/src/types/fastify.d.ts": {
-        "mtime": 1786367137.3003554,
-        "ast_hash": "d3ff8bfd1afec82d544e88980dccb2b4",
+        "mtime": 1786454316.9103818,
+        "ast_hash": "078fe0e9acad39225e0a3a3fceefded9",
         "semantic_hash": ""
     },
     "backend/src/types/index.ts": {
@@ -1640,8 +1640,8 @@
         "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
     },
     "README.md": {
-        "mtime": 1786438364.9284933,
-        "ast_hash": "4d8dade9bc913ef884aef819ac9d569e",
+        "mtime": 1786454323.0896778,
+        "ast_hash": "ade642488263e263b2d9d8a48b048033",
         "semantic_hash": ""
     },
     "SECURITY.md": {
@@ -1760,8 +1760,8 @@
         "semantic_hash": ""
     },
     "helm/mfe-orchestrator/README.md": {
-        "mtime": 1786109863.5619757,
-        "ast_hash": "bf64894e2770b3dc367059f574a03e91",
+        "mtime": 1786454328.5479023,
+        "ast_hash": "b746d12b4dd54c721ceda1edb5b33895",
         "semantic_hash": ""
     },
     "helm/mfe-orchestrator/templates/NOTES.txt": {
@@ -1810,8 +1810,8 @@
         "semantic_hash": ""
     },
     "helm/mfe-orchestrator/values.yaml": {
-        "mtime": 1786367189.5864706,
-        "ast_hash": "388fc5d8373f1e467429363779be4a23",
+        "mtime": 1786454325.186038,
+        "ast_hash": "e21944e2fa574e45f3be4d6eee66f985",
         "semantic_hash": ""
     },
     "docs/assets/promo-video.gif": {

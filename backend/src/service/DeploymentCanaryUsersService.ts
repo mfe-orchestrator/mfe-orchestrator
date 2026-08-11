@@ -5,14 +5,8 @@ import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 class DeploymentCanaryUsersService extends BaseAuthorizedService {
-    async getCanaryUsersByDeployment(deploymentId: string | ObjectId) {
-        const users = await DeploymentToCanaryUsers.findById(deploymentId)
-
-        if (!users) {
-            return []
-        }
-
-        return users
+    async getCanaryUsersByDeployment(deploymentId: string | ObjectId): Promise<IDeploymentToCanaryUsers[]> {
+        return DeploymentToCanaryUsers.find({ deploymentId: toObjectId(deploymentId) })
     }
 
     async getCanaryUsersByDeploymentWithPermissionCheck(deploymentId: string | ObjectId) {

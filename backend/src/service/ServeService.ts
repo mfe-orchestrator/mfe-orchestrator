@@ -629,13 +629,22 @@ export default defineConfig({
      * An explicit row on the deployment always wins, so a single user can be pinned on the canary or
      * kept out of it. Everyone else is bucketed by userId, which keeps the choice stable for that user
      * on any browser and any device.
+     *
+     * A row can be scoped to one microfrontend or to the whole deployment: enrolment through
+     * DeploymentCanaryUsersService is per deployment and leaves microfrontendId unset, so matching only
+     * on a concrete microfrontendId would never find those rows. The more specific row wins, which is
+     * what sorting by microfrontendId descending gives us: an ObjectId sorts after null in Mongo.
      */
     private async isUserInCanary(microfrontend: IMicrofrontend, deploymentId?: string | ObjectId | Schema.Types.ObjectId): Promise<boolean> {
         const userId = this.getQueryParam(USER_ID_QUERY_PARAM)
         if (!userId || !deploymentId) {
             return false
         }
-        const explicitDecision = await DeploymentToCanaryUsers.findOne({ microfrontendId: microfrontend._id, userId, deploymentId: toObjectId(deploymentId) })
+        const explicitDecision = await DeploymentToCanaryUsers.findOne({
+            deploymentId: toObjectId(deploymentId),
+            userId,
+            $or: [{ microfrontendId: microfrontend._id }, { microfrontendId: null }, { microfrontendId: { $exists: false } }]
+        }).sort({ microfrontendId: -1 })
         if (explicitDecision) {
             return explicitDecision.enabled
         }
