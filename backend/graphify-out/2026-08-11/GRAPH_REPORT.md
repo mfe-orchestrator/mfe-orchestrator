@@ -1,16 +1,16 @@
 # Graph Report - backend  (2026-08-11)
 
 ## Corpus Check
-- 130 files · ~42,600 words
+- 130 files · ~42,413 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 896 nodes · 2346 edges · 34 communities (31 shown, 3 thin omitted)
+- 896 nodes · 2344 edges · 37 communities (32 shown, 5 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.54)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `806a4c63`
+- Built from commit: `1c31f5d5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -32,18 +32,21 @@
 - [[_COMMUNITY_AzureDevOpsClient.ts|AzureDevOpsClient.ts]]
 - [[_COMMUNITY_CodeRepositoryService.ts|CodeRepositoryService.ts]]
 - [[_COMMUNITY_DeploymentCanaryUsersService|DeploymentCanaryUsersService]]
+- [[_COMMUNITY_AzureDevOpsClient|AzureDevOpsClient]]
 - [[_COMMUNITY_ProjectWizardService|ProjectWizardService]]
 - [[_COMMUNITY_compilerOptions|compilerOptions]]
 - [[_COMMUNITY_package.json|package.json]]
+- [[_COMMUNITY_CodeRepository|CodeRepository]]
 - [[_COMMUNITY_devDependencies|devDependencies]]
 - [[_COMMUNITY_scripts|scripts]]
+- [[_COMMUNITY_CodeRepositoryModel.ts|CodeRepositoryModel.ts]]
 - [[_COMMUNITY_compilerOptions|compilerOptions]]
 - [[_COMMUNITY_postbuild.js|postbuild.js]]
 - [[_COMMUNITY_recaptcha.ts|recaptcha.ts]]
 - [[_COMMUNITY_ProjectNewDTO.ts|ProjectNewDTO.ts]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `toObjectId()` - 86 edges
+1. `toObjectId()` - 85 edges
 2. `CodeRepositoryService` - 42 edges
 3. `BaseAuthorizedService` - 39 edges
 4. `ServeService` - 39 edges
@@ -69,7 +72,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (34 total, 3 thin omitted)
+## Communities (37 total, 5 thin omitted)
 
 ### Community 0 - "MicrofrontendService.ts"
 Cohesion: 0.06
@@ -80,16 +83,16 @@ Cohesion: 0.06
 Nodes (45): cache, CacheEntry, NpmAbbreviatedPackument, NpmPackageInfo, NpmRegistryClient, CodeRepositoryProvider, CodeRepositoryCreateInput, CodeRepositoryUpdateInput (+37 more)
 
 ### Community 2 - "ServeService.ts"
-Cohesion: 0.08
-Nodes (28): AuthConfig, AzureStorageClient, AzureStorageConfig, AuthConfig, GoogleStorageConfig, S3ClientConfig, IStorage, IStorageAuth (+20 more)
+Cohesion: 0.05
+Nodes (42): AuthConfig, AzureStorageClient, AzureStorageConfig, AuthConfig, GoogleStorageConfig, S3ClientConfig, CanaryDeploymentType, CanaryType (+34 more)
 
 ### Community 3 - "MicrofrontendService"
-Cohesion: 0.06
+Cohesion: 0.07
 Nodes (14): adm-zip, GoogleStorageClient, S3BucketClient, marketController(), IMarket, Market, marketSchema, IMicrofrontend (+6 more)
 
 ### Community 4 - "UserService.ts"
-Cohesion: 0.08
-Nodes (20): authorizationController(), GoogleTokenResponse, configurationController(), serveController(), StartupController(), StartupUserRegistrationDTO, UserController(), User (+12 more)
+Cohesion: 0.06
+Nodes (29): authorizationController(), GoogleTokenResponse, configurationController(), serveController(), StartupController(), StartupUserRegistrationDTO, UserController(), AuthenticationError (+21 more)
 
 ### Community 5 - "toObjectId"
 Cohesion: 0.11
@@ -99,13 +102,17 @@ Nodes (17): deploymentSchema, Environment, environmentSchema, IEnvironment, Glob
 Cohesion: 0.09
 Nodes (5): Deployment, IDeployment, DeploymentService, hashToBucket(), ServeService
 
+### Community 7 - "GithubClient"
+Cohesion: 0.05
+Nodes (9): GithubClient, AddGroupSecretRequest, CheckGroupSecretExistsRequest, CommitAction, CommitFilesRequest, CreateRepositoryRequest, GitLabClient, GitLabGroup (+1 more)
+
 ### Community 8 - "CustomError"
 Cohesion: 0.06
 Nodes (13): BusinessException, CustomError, EnvironmentHeaderNotFoundError, InvalidCredentialsError, ProjectHeaderNotFoundError, UserAlreadyExistsError, UserCannotAccessThisDeploymentError, UserNotFoundError (+5 more)
 
 ### Community 9 - "FastifyInstance"
-Cohesion: 0.08
-Nodes (29): apiKeyController(), codeRepositoryController(), deploymentController(), environmentController(), globalVariablesController(), integrationController(), microfrontendController(), microfrontendDependencyController() (+21 more)
+Cohesion: 0.11
+Nodes (23): apiKeyController(), codeRepositoryController(), deploymentController(), environmentController(), globalVariablesController(), integrationController(), microfrontendController(), microfrontendDependencyController() (+15 more)
 
 ### Community 10 - "TelemetryService.ts"
 Cohesion: 0.10
@@ -119,20 +126,16 @@ Nodes (34): dependencies, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, axi
 Cohesion: 0.12
 Nodes (20): CreateBuildRequest, CreateRepositoryRequest, GithubAccessTokenResponse, GithubAccessTokenRquest, GithubBaseDTO, GithubContentsResponse, GithubCreateBranchDTO, GithubFileContent (+12 more)
 
-### Community 13 - "CodeRepositoryService"
-Cohesion: 0.05
-Nodes (27): AzureDevOpsBranch, GithubBranch, AddGroupSecretRequest, CheckGroupSecretExistsRequest, CommitAction, CommitFilesRequest, CreateRepositoryRequest, GitLabBranch (+19 more)
-
 ### Community 14 - "AzureDevOpsClient.ts"
-Cohesion: 0.07
-Nodes (18): AzureAccessTokenRequest, AzureAccessTokenResponse, AzureDevOpsBranchDTO, AzureDevOpsClient, AzureDevOpsItem, AzureDevOpsPipeline, AzureDevOpsProject, AzureDevOpsProjectsResponse (+10 more)
+Cohesion: 0.10
+Nodes (18): AzureAccessTokenRequest, AzureAccessTokenResponse, AzureDevOpsBranch, AzureDevOpsBranchDTO, AzureDevOpsItem, AzureDevOpsPipeline, AzureDevOpsProject, AzureDevOpsProjectsResponse (+10 more)
 
 ### Community 15 - "CodeRepositoryService.ts"
-Cohesion: 0.14
-Nodes (17): AuthenticationError, ApiKey, ApiKeyRole, apiKeySchema, ApiKeyStatus, IApiKey, IApiKeyDocument, getSecret() (+9 more)
+Cohesion: 0.19
+Nodes (7): GithubBranch, CodeRepositoryType, UnifiedBranch, CreateAzureDevOpsRepositoryDTO, CreateGitlabRepositoryDto, UpdateGithubDTO, runInTransaction()
 
 ### Community 16 - "DeploymentCanaryUsersService"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (6): deploymentController(), DeploymentToCanaryUsers, deploymentToCanaryUsersSchema, IDeploymentToCanaryUsers, DeploymentCanaryUsersService, DeploymentCanaryUsersDTO
 
 ### Community 18 - "ProjectWizardService"
@@ -155,6 +158,10 @@ Nodes (8): devDependencies, tsx, @types/adm-zip, @types/fs-extra, @types/jsonweb
 Cohesion: 0.25
 Nodes (8): scripts, build, dev, format, lint, st, start, typecheck
 
+### Community 24 - "CodeRepositoryModel.ts"
+Cohesion: 0.25
+Nodes (7): azureDataSchema, codeRepositorySchema, githubDataSchema, gitlabDataSchema, IAzureData, IGithubData, IGitlabData
+
 ### Community 25 - "compilerOptions"
 Cohesion: 0.25
 Nodes (7): compilerOptions, esModuleInterop, isolatedModules, module, types, extends, include
@@ -166,15 +173,15 @@ Nodes (4): copyDirectory(), fs, path, postBuild()
 ## Knowledge Gaps
 - **182 isolated node(s):** `description`, `main`, `start`, `st`, `dev` (+177 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `toObjectId()` connect `toObjectId` to `MicrofrontendService.ts`, `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `UserService.ts`, `ServeService`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `ProjectWizardService`?**
-  _High betweenness centrality (0.140) - this node is a cross-community bridge._
-- **Why does `BaseAuthorizedService` connect `toObjectId` to `MicrofrontendService.ts`, `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `ServeService`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `ProjectWizardService`?**
-  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+- **Why does `toObjectId()` connect `toObjectId` to `MicrofrontendService.ts`, `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `UserService.ts`, `ServeService`, `FastifyInstance`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `ProjectWizardService`, `CodeRepository`?**
+  _High betweenness centrality (0.137) - this node is a cross-community bridge._
+- **Why does `BaseAuthorizedService` connect `toObjectId` to `MicrofrontendService.ts`, `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `ServeService`, `FastifyInstance`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `ProjectWizardService`?**
+  _High betweenness centrality (0.074) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `MicrofrontendService`, `package.json`?**
   _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **What connects `description`, `main`, `start` to the rest of the system?**
@@ -184,4 +191,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `MicrofrontendDependencyService.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.06263173742848539 - nodes in this community are weakly interconnected._
 - **Should `ServeService.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.07738095238095238 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05407925407925408 - nodes in this community are weakly interconnected._
