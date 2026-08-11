@@ -192,6 +192,40 @@ interface IGetRepositories extends IClientRequestMetadataExtended {
     repositoryId: string
 }
 
+export interface ImportableRepository {
+    repositoryId: string
+    name: string
+    slug: string
+    description?: string
+    defaultBranch?: string
+    cloneUrlHttps?: string
+    cloneUrlSsh?: string
+    webUrl?: string
+    gitlab?: {
+        groupId?: number
+        path?: string
+    }
+    alreadyImported: boolean
+    importedAs?: {
+        _id: string
+        slug: string
+        name: string
+    }
+}
+
+export interface ImportRepositoriesDTO {
+    /** Provider repository ids to import. When empty or omitted, every repository not imported yet is taken. */
+    repositoryIds?: string[]
+    groupId?: number
+    version?: string
+}
+
+export interface ImportRepositoriesResult {
+    imported: { repositoryId: string; name: string; slug: string; microfrontendId: string }[]
+    skipped: { repositoryId: string; name: string; reason: "ALREADY_IMPORTED" | "NOT_FOUND" }[]
+    failed: { repositoryId: string; name: string; error: string }[]
+}
+
 const useCodeRepositoriesApi = () => {
     const apiClient = useApiClient()
 
@@ -216,6 +250,23 @@ const useCodeRepositoriesApi = () => {
             ...config
         })
         return data.data
+    }
+
+    const getImportableRepositories = async (codeRepositoryId: string, groupId?: number): Promise<ImportableRepository[]> => {
+        const data = await apiClient.doRequest<ImportableRepository[]>({
+            url: `/api/repositories/${codeRepositoryId}/importable-repositories`,
+            params: { groupId }
+        })
+        return data.data
+    }
+
+    const importRepositories = async (codeRepositoryId: string, data: ImportRepositoriesDTO): Promise<ImportRepositoriesResult> => {
+        const response = await apiClient.doRequest<ImportRepositoriesResult>({
+            url: `/api/repositories/${codeRepositoryId}/import`,
+            method: "POST",
+            data
+        })
+        return response.data
     }
 
     const updateRepository = async (repositoryId: string, data: ICodeRepository): Promise<ICodeRepository> => {
@@ -415,7 +466,9 @@ const useCodeRepositoriesApi = () => {
         updateRepositoryGithub,
         setRepositoryAsDefault,
         editRepositoryGitlab,
-        getRepositories
+        getRepositories,
+        getImportableRepositories,
+        importRepositories
     }
 }
 

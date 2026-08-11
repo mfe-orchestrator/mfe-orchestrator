@@ -2,6 +2,9 @@ import axios from "axios"
 import sodium from "libsodium-wrappers"
 import { CodeRepositoryType } from "../models/CodeRepositoryModel"
 
+/** Safety net so a misbehaving pagination cursor cannot turn a repository listing into an endless loop. */
+const maxRepositoryPages = 50
+
 export interface GithubAccessTokenResponse {
     access_token: string
     scope: string
@@ -551,17 +554,27 @@ class GithubClient {
 
     async getRepositories(accessToken: string, orgName?: string): Promise<GithubRepository[]> {
         const url = orgName ? `https://api.github.com/orgs/${orgName}/repos` : "https://api.github.com/user/repos"
+        const perPage = 100
+        const repositories: GithubRepository[] = []
 
-        const response = await axios.request<GithubRepository[]>({
-            url,
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: "application/vnd.github.v3+json",
-                "User-Agent": "MFE-Orchestrator"
-            }
-        })
+        // GitHub paginates this endpoint, so every page is walked: callers need the complete list of repositories.
+        for (let page = 1; page <= maxRepositoryPages; page++) {
+            const response = await axios.request<GithubRepository[]>({
+                url,
+                params: { per_page: perPage, page },
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "User-Agent": "MFE-Orchestrator"
+                }
+            })
 
-        return response.data
+            repositories.push(...response.data)
+
+            if (response.data.length < perPage) break
+        }
+
+        return repositories
     }
 
     async createBuild(buildData: CreateBuildRequest, accessToken: string): Promise<GithubWorkflowDispatchResponse> {
