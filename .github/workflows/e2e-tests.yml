@@ -28,7 +28,7 @@ jobs:
       # Nessun `version`: la prende da `packageManager` nel package.json, che resta
       # l'unica fonte. Dichiararla anche qui fa fallire l'action per conflitto.
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
