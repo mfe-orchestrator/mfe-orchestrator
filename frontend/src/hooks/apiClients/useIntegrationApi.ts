@@ -1,12 +1,6 @@
 import useApiClient from "../useApiClient"
 import { IMicrofrontendStackDTO } from "./useServeApi"
 
-interface InjectRemotesInHostParams {
-    microfrontendId: string
-    deploymentId?: string
-    environmentId?: string
-}
-
 export type FederationIntegrationStatus = "ALREADY_INTEGRATED" | "CONFIG_TO_CREATE" | "CONFIG_TO_REPLACE" | "NO_REMOTES" | "STACK_UNKNOWN" | "RUNTIME_INTEGRATION" | "ERROR"
 
 export interface FederationFileChange {
@@ -53,17 +47,6 @@ export interface FederationIntegrationApplyResult {
 function useIntegrationApi() {
     const apiClient = useApiClient()
 
-    const injectRemotesInHost = async (params: InjectRemotesInHostParams) => {
-        return apiClient.doRequest({
-            method: "POST",
-            url: `/api/microfrontend/${params.microfrontendId}/host-injection`,
-            params: {
-                deploymentId: params.deploymentId,
-                environmentId: params.environmentId
-            }
-        })
-    }
-
     /** Dry run of the project wide module federation integration: nothing is written */
     const getModuleFederationPlan = async (): Promise<FederationIntegrationPlan> => {
         const response = await apiClient.doRequest<FederationIntegrationPlan>({
@@ -83,7 +66,6 @@ function useIntegrationApi() {
     }
 
     return {
-        injectRemotesInHost,
         getModuleFederationPlan,
         applyModuleFederation
     }

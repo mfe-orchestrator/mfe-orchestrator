@@ -37,7 +37,6 @@
             "integrate_all_button": "Integrate my microfrontends",
             "stack_auto": "Automatic",
             "federation_tab": "Module Federation",
-            "inject_in_repository": "Inject remotes in the repository",
             "runtime_integration_description": "Web component microfrontends are plain scripts that register a custom element, so there is no module federation config to write: the host asks the SDK for the resolved url and mounts the element. See MicrofrontendLoader in the web component templates.",
             "integrate_dialog_title": "Wire up module federation",
             "integrate_dialog_description": "For each microfrontend that consumes others, we write the bundler config declaring its remotes and add the packages that config needs. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
@@ -58,7 +57,8 @@
             "status_no_remotes": "No remotes to declare",
             "status_stack_unknown": "Stack unknown",
             "status_runtime_integration": "Integrates at runtime",
-            "status_error": "Error"
+            "status_error": "Error",
+            "integrate_one_button": "Integrate only this one"
         },
         "env_vars_integration_tab": {
             "title": "Environment Variables",

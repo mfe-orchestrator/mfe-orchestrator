@@ -11,6 +11,12 @@ import StackBadge from "./StackBadge"
 export interface IntegrateMicrofrontendsDialogProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
+    /**
+     * Narrows the plan to a single microfrontend. The plan is always computed for the whole
+     * project, because the remotes of one are the other microfrontends of it: this only decides
+     * what is shown and what can be committed.
+     */
+    onlyMicrofrontendId?: string
 }
 
 /** Only these two mean there is something to write, the rest is there to explain why not */
@@ -120,7 +126,7 @@ const PlanRow: React.FC<{
  * repository by repository, and commits only what was ticked. A config that is already there is
  * shown as a diff first: it is never replaced without being looked at.
  */
-export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDialogProps> = ({ isOpen, onOpenChange }) => {
+export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDialogProps> = ({ isOpen, onOpenChange, onlyMicrofrontendId }) => {
     const { t } = useTranslation()
     const integrationApi = useIntegrationApi()
     const notifications = useToastNotificationStore()
@@ -134,9 +140,11 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
         enabled: isOpen
     })
 
+    const shownItems = (planQuery.data?.microfrontends || []).filter(item => !onlyMicrofrontendId || item.microfrontendId === onlyMicrofrontendId)
+
     // Everything writable starts ticked, so the common case is one click: the set tracks what the
     // user took out rather than what they put in, which keeps a refreshed plan selected by default
-    const writableItems = (planQuery.data?.microfrontends || []).filter(item => WRITABLE.includes(item.status))
+    const writableItems = shownItems.filter(item => WRITABLE.includes(item.status))
     const selectedIds = writableItems.map(item => item.microfrontendId).filter(id => !deselected.has(id))
 
     const toggle = (microfrontendId: string) => {
@@ -213,7 +221,7 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
                 ) : (
                     <div className="flex flex-col gap-3">
                         {writableItems.length === 0 && <p>{t("integration.fe_integration_tab.integrate_nothing_to_do")}</p>}
-                        {planQuery.data?.microfrontends.map(item => (
+                        {shownItems.map(item => (
                             <PlanRow key={item.microfrontendId} item={item} selected={!deselected.has(item.microfrontendId)} onToggle={toggle} />
                         ))}
                     </div>

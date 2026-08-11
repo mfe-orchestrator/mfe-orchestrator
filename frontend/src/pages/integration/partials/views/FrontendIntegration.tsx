@@ -1,15 +1,12 @@
 import { Card, CardContent, CardHeader, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
-import { useMutation } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { DeploymentDTO } from "@/hooks/apiClients/useDeploymentsApi"
-import useIntegrationApi from "@/hooks/apiClients/useIntegrationApi"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { MicrofrontendCompiler, MicrofrontendFramework } from "@/hooks/apiClients/useServeApi"
 import IntegrateMicrofrontendsDialog from "@/pages/integration/partials/components/IntegrateMicrofrontendsDialog"
 import MicrofrontendSelector from "@/pages/integration/partials/components/MicrofrontendSelector"
-import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { CodeIntegration } from "../index"
 
 const AUTO = "AUTO"
@@ -29,8 +26,6 @@ const COMPILER_OPTIONS: { value: MicrofrontendCompiler; label: string }[] = [
 export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {
     const { t } = useTranslation()
     const [activeTab, setActiveTab] = useState("federation")
-    const integrationApi = useIntegrationApi()
-    const notification = useToastNotificationStore()
     const activeDeployment = deployment instanceof Array ? deployment.find(d => d.active) : deployment
 
     const curlExample = `# Example CURL request to fetch a remote module
@@ -41,21 +36,13 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
     // these are here for when detection got it wrong, or for reading another stack's instructions
     const [framework, setFramework] = useState<MicrofrontendFramework | undefined>()
     const [compiler, setCompiler] = useState<MicrofrontendCompiler | undefined>()
+    // Undefined opens the dialog on the whole project, an id narrows it to one microfrontend
+    const [integrateOnly, setIntegrateOnly] = useState<string | undefined>()
     const [isIntegrateDialogOpen, setIsIntegrateDialogOpen] = useState(false)
 
-    const injectInRepositoryMutation = useMutation({
-        mutationFn: integrationApi.injectRemotesInHost
-    })
-
-    const injectInRepository = async () => {
-        await injectInRepositoryMutation.mutateAsync({
-            microfrontendId: selectedMicrofrontend._id,
-            environmentId: activeDeployment.environmentId
-        })
-
-        notification.showSuccessNotification({
-            message: "Remotes injected successfully"
-        })
+    const openIntegrateDialog = (onlyMicrofrontendId?: string) => {
+        setIntegrateOnly(onlyMicrofrontendId)
+        setIsIntegrateDialogOpen(true)
     }
 
     return (
@@ -68,15 +55,13 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
             <CardContent>
                 <div className="flex gap-2 flex-wrap items-end mb-4">
                     <MicrofrontendSelector microfrontends={activeDeployment.microfrontends} selectedMicrofrontend={selectedMicrofrontend} onSelect={setSelectedMicrofrontend} />
-                    <Button onClick={() => setIsIntegrateDialogOpen(true)}>{t("integration.fe_integration_tab.integrate_all_button")}</Button>
-                    {activeDeployment.storage && activeDeployment.storage.length > 0 && (
-                        <Button variant="secondary" onClick={injectInRepository} disabled={!selectedMicrofrontend || injectInRepositoryMutation.isPending}>
-                            {t("integration.fe_integration_tab.inject_in_repository")}
-                        </Button>
-                    )}
+                    <Button onClick={() => openIntegrateDialog()}>{t("integration.fe_integration_tab.integrate_all_button")}</Button>
+                    <Button variant="secondary" onClick={() => openIntegrateDialog(selectedMicrofrontend?._id)} disabled={!selectedMicrofrontend}>
+                        {t("integration.fe_integration_tab.integrate_one_button")}
+                    </Button>
                 </div>
 
-                <IntegrateMicrofrontendsDialog isOpen={isIntegrateDialogOpen} onOpenChange={setIsIntegrateDialogOpen} />
+                <IntegrateMicrofrontendsDialog isOpen={isIntegrateDialogOpen} onOpenChange={setIsIntegrateDialogOpen} onlyMicrofrontendId={integrateOnly} />
 
                 {selectedMicrofrontend ? (
                     <Tabs value={activeTab} onValueChange={setActiveTab} tabsListPosition="fullWidth">
