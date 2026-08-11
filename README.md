@@ -55,6 +55,9 @@ one-click rollback.
   users and stop the rollout by changing one setting.
 - **Cross-repository dependency analysis** — scan your micro frontend
   repositories and align peer dependencies across them.
+- **Import your repositories** — connect your GitHub organization, GitLab group
+  or Azure DevOps project and create one micro frontend per repository in a
+  single pass, instead of declaring them one by one.
 
 ## How it works
 
@@ -93,6 +96,7 @@ Project reference:
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
 - **[Dependency analysis](docs/DEPENDENCIES.md)** - How microfrontend dependencies are scanned and peer dependencies aligned
+- **[Repository import](docs/REPOSITORY-IMPORT.md)** - Creating one microfrontend per repository from a code repository connection
 
 ## Run with Docker
 
