@@ -250,7 +250,7 @@ export const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, 
                     )}
                     {environmentList && environmentList.length !== 0 && (
                         <div className="flex justify-end gap-2 mt-4">
-                            <Button onClick={onSaveEnvironmentWrapper} disabled={loading} variant="primary">
+                            <Button onClick={onSaveEnvironmentWrapper} disabled={loading} variant="primary" dataTestId="environments-save">
                                 <Save />
                                 {t("common.save")}
                             </Button>

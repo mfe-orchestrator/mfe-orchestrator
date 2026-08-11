@@ -239,7 +239,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
                         )}
                     </div>
                     <div className="flex space-x-4">
-                        <Button type="button" variant="secondary" onClick={onCancel}>
+                        <Button type="button" variant="secondary" onClick={onCancel} dataTestId="storage-cancel">
                             {cancelLabel ?? t("common.cancel")}
                         </Button>
                         <Button type="submit" dataTestId="storage-submit">

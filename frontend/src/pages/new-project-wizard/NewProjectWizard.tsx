@@ -79,6 +79,7 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onComplete }) => {
                             size="icon"
                             className="ml-auto text-muted-foreground hover:text-foreground"
                             aria-label={t("newProjectWizard.close")}
+                            dataTestId="wizard-close"
                             onClick={() => navigate("/microfrontends")}
                         >
                             <X />
