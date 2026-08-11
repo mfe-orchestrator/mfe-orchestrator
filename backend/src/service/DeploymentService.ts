@@ -1,4 +1,4 @@
-import { ClientSession, Schema, Types } from "mongoose"
+import { ClientSession, Schema } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"

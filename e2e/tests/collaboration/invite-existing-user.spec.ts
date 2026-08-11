@@ -6,7 +6,6 @@ import {
     emailDeliveryUnavailable,
     inviteCollaboratorViaUi,
     loginViaApi,
-    loginViaUi,
     newTestUser,
     openApp,
     openAppAs,

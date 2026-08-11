@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto"
-import { ClientSession, ObjectId, Schema, Types } from "mongoose"
+import { ClientSession, ObjectId, Schema } from "mongoose"
 import { fastify } from ".."
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"

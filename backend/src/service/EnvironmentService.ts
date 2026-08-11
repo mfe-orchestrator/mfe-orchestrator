@@ -1,11 +1,8 @@
-import { ClientSession, ObjectId, Schema, Types } from "mongoose"
+import { ClientSession, ObjectId, Schema } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
-import GlobalVariable from "../models/GlobalVariableModel"
-import Microfrontend from "../models/MicrofrontendModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
 import { toObjectId } from "../utils/mongooseUtils"
-import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 class EnvironmentService extends BaseAuthorizedService {

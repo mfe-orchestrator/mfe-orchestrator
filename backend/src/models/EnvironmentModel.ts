@@ -1,4 +1,4 @@
-import mongoose, { Document, ObjectId, Schema, Types } from "mongoose"
+import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
 export interface IEnvironment extends Document<ObjectId> {
     name: string

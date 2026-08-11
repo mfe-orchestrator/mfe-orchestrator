@@ -5,7 +5,7 @@ pre-commit:
   parallel: true
   commands:
     lint-and-format:
-      glob: "{backend,frontend}/**/*.{js,ts,tsx,json}"
+      glob: "{backend,frontend,e2e}/**/*.{js,ts,tsx,json}"
       run: "pnpm exec biome check --write --staged {staged_files}"
       stage_fixed: true
 
