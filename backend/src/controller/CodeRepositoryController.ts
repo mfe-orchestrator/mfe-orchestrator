@@ -1,5 +1,26 @@
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import {
+    azureCheckRepositoryNameSchema,
+    azureProjectRepositoriesSchema,
+    branchesSchema,
+    checkNameSchema,
+    codeRepositoryIdSchema,
+    createAzureSchema,
+    createGitlabSchema,
+    githubCallbackSchema,
+    gitlabGroupSchema,
+    importableRepositoriesSchema,
+    importRepositoriesSchema,
+    listRepositoriesByProjectSchema,
+    repositoryIdSchema,
+    revokeGithubGrantSchema,
+    testAzureSchema,
+    testGitlabSchema,
+    updateAzureSchema,
+    updateGithubSchema,
+    updateGitlabSchema
+} from "../schemas/codeRepository.schema"
 import CodeRepositoryImportService from "../service/CodeRepositoryImportService"
 import CodeRepositoryService from "../service/CodeRepositoryService"
 import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
@@ -13,7 +34,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId/repositories", async (request, reply) => {
+    }>("/projects/:projectId/repositories", { schema: listRepositoriesByProjectSchema }, async (request, reply) => {
         const repositories = await new CodeRepositoryService(request.databaseUser).getByProjectId(request.params.projectId)
         return reply.send(repositories)
     })
@@ -23,7 +44,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             projectId: string
             repositoryId: string
         }
-    }>("/repositories/:repositoryId", async (request, reply) => {
+    }>("/repositories/:repositoryId", { schema: repositoryIdSchema }, async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).findById(request.params.repositoryId)
         return reply.send(repository)
     })
@@ -32,7 +53,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Params: {
             repositoryId: string
         }
-    }>("/repositories/:repositoryId/repositories", async (request, reply) => {
+    }>("/repositories/:repositoryId/repositories", { schema: repositoryIdSchema }, async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).getRepositories(request.params.repositoryId)
         return reply.send(repository)
     })
@@ -44,7 +65,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Querystring: {
             groupId?: number
         }
-    }>("/repositories/:codeRepositoryId/importable-repositories", async (request, reply) => {
+    }>("/repositories/:codeRepositoryId/importable-repositories", { schema: importableRepositoriesSchema }, async (request, reply) => {
         const repositories = await new CodeRepositoryImportService(request.databaseUser).getImportableRepositories(request.params.codeRepositoryId, request.query.groupId)
         return reply.send(repositories)
     })
@@ -54,7 +75,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             codeRepositoryId: string
         }
         Body: ImportRepositoriesDTO
-    }>("/repositories/:codeRepositoryId/import", async (request, reply) => {
+    }>("/repositories/:codeRepositoryId/import", { schema: importRepositoriesSchema }, async (request, reply) => {
         const result = await new CodeRepositoryImportService(request.databaseUser).importRepositories(request.params.codeRepositoryId, request.body)
         return reply.send(result)
     })
@@ -64,7 +85,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             codeRepositoryId: string
             repositoryId: string
         }
-    }>("/repositories/:codeRepositoryId/repositories/:repositoryId/branches", async (request, reply) => {
+    }>("/repositories/:codeRepositoryId/repositories/:repositoryId/branches", { schema: branchesSchema }, async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).getBranches(request.params.codeRepositoryId, request.params.repositoryId)
         return reply.send(repository)
     })
@@ -78,7 +99,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             groupPath?: string
             groupId?: number
         }
-    }>("/repositories/:repositoryId/repositories/check-name", async (request, reply) => {
+    }>("/repositories/:repositoryId/repositories/check-name", { schema: checkNameSchema }, async (request, reply) => {
         return reply.send(
             await new CodeRepositoryService(request.databaseUser).isRepositoryNameAvailable(request.params.repositoryId, request.query.name, request.query.groupPath, request.query.groupId)
         )
@@ -89,7 +110,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             projectId: string
             repositoryId: string
         }
-    }>("/repositories/:repositoryId", async (request, reply) => {
+    }>("/repositories/:repositoryId", { schema: repositoryIdSchema }, async (request, reply) => {
         await new CodeRepositoryService(request.databaseUser).delete(request.params.repositoryId)
         return reply.status(204).send()
     })
@@ -99,7 +120,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             projectId: string
             repositoryId: string
         }
-    }>("/repositories/:repositoryId/activate", async (request, reply) => {
+    }>("/repositories/:repositoryId/activate", { schema: repositoryIdSchema }, async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).activate(request.params.repositoryId)
         return reply.send(repository)
     })
@@ -108,7 +129,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Params: {
             repositoryId: string
         }
-    }>("/repositories/:repositoryId/deactivate", async (request, reply) => {
+    }>("/repositories/:repositoryId/deactivate", { schema: repositoryIdSchema }, async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).deactivate(request.params.repositoryId)
         return reply.send(repository)
     })
@@ -117,7 +138,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Body: {
             repositoryId?: string
         }
-    }>("/repositories/github/revoke-grant", async (request, reply) => {
+    }>("/repositories/github/revoke-grant", { schema: revokeGithubGrantSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -132,7 +153,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             state: string
             codeRepositoryId: string
         }
-    }>("/repositories/callback/github", async (request, reply) => {
+    }>("/repositories/callback/github", { schema: githubCallbackSchema }, async (request, reply) => {
         const code = request.body.code
         const state = request.body.state
         const codeRepositoryId = request.body.codeRepositoryId
@@ -148,7 +169,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         Params: {
             repositoryId: string
         }
-    }>("/repositories/:repositoryId/default", async (request, reply) => {
+    }>("/repositories/:repositoryId/default", { schema: repositoryIdSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).makeDefault(request.params.repositoryId))
     })
 
@@ -157,7 +178,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             repositoryId: string
         }
         Body: UpdateGithubDTO
-    }>("/repositories/:repositoryId/github", async (request, reply) => {
+    }>("/repositories/:repositoryId/github", { schema: updateGithubSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).updateGithub(request.params.repositoryId, request.body))
     })
 
@@ -166,13 +187,13 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             repositoryId: string
         }
         Body: CreateGitlabRepositoryDto
-    }>("/repositories/:repositoryId/gitlab", async (request, reply) => {
+    }>("/repositories/:repositoryId/gitlab", { schema: updateGitlabSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).editRepositoryGitlab(request.body, request.params.repositoryId))
     })
 
     fastify.post<{
         Body: CreateAzureDevOpsRepositoryDTO
-    }>("/repositories/azure", async (request, reply) => {
+    }>("/repositories/azure", { schema: createAzureSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -184,17 +205,17 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
     fastify.put<{
         Body: CreateAzureDevOpsRepositoryDTO
         Params: { repositoryId: string }
-    }>("/repositories/:repositoryId/azure", async (request, reply) => {
+    }>("/repositories/:repositoryId/azure", { schema: updateAzureSchema }, async (request, reply) => {
         await new CodeRepositoryService(request.databaseUser).editRepositoryAzureDevOps(request.body, request.params.repositoryId)
         reply.send()
     })
 
-    fastify.post<{ Body: { organization: string; pat: string } }>("/repositories/azure/test", async (request, reply) => {
+    fastify.post<{ Body: { organization: string; pat: string } }>("/repositories/azure/test", { schema: testAzureSchema }, async (request, reply) => {
         const result = await new CodeRepositoryService(request.databaseUser).testConnectionAzure(request.body.organization, request.body.pat)
         reply.send(result)
     })
 
-    fastify.post<{ Body: CreateGitlabRepositoryDto }>("/repositories/gitlab", async (request, reply) => {
+    fastify.post<{ Body: CreateGitlabRepositoryDto }>("/repositories/gitlab", { schema: createGitlabSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -203,43 +224,47 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send()
     })
 
-    fastify.post<{ Body: { url: string; pat: string } }>("/repositories/gitlab/test", async (request, reply) => {
+    fastify.post<{ Body: { url: string; pat: string } }>("/repositories/gitlab/test", { schema: testGitlabSchema }, async (request, reply) => {
         const result = await new CodeRepositoryService(request.databaseUser).testConnectionGitlab(request.body.url, request.body.pat)
         reply.send(result)
     })
 
-    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/github/organizations", async (request, reply) => {
+    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/github/organizations", { schema: repositoryIdSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).getGithubOrganizations(request.params.repositoryId))
     })
 
-    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/github/user", async (request, reply) => {
+    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/github/user", { schema: repositoryIdSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).getGithubUser(request.params.repositoryId))
     })
 
-    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/azure/projects", async (request, reply) => {
+    fastify.get<{ Params: { repositoryId: string } }>("/repositories/:repositoryId/azure/projects", { schema: repositoryIdSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).getAzureProjects(request.params.repositoryId))
     })
 
-    fastify.get<{ Params: { repositoryId: string; projectId: string } }>("/repositories/:repositoryId/azure/projects/:projectId/repositories", async (request, reply) => {
-        reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(request.params.repositoryId, request.params.projectId))
-    })
+    fastify.get<{ Params: { repositoryId: string; projectId: string } }>(
+        "/repositories/:repositoryId/azure/projects/:projectId/repositories",
+        { schema: azureProjectRepositoriesSchema },
+        async (request, reply) => {
+            reply.send(await new CodeRepositoryService(request.databaseUser).getAzureRepositories(request.params.repositoryId, request.params.projectId))
+        }
+    )
 
-    fastify.get<{ Params: { codeRepositoryId: string } }>("/repositories/:codeRepositoryId/gitlab/groups", async (request, reply) => {
+    fastify.get<{ Params: { codeRepositoryId: string } }>("/repositories/:codeRepositoryId/gitlab/groups", { schema: codeRepositoryIdSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabGroups(request.params.codeRepositoryId))
     })
 
-    fastify.get<{ Params: { repositoryId: string; groupId: string } }>("/repositories/:repositoryId/gitlab/groups/:groupId/paths", async (request, reply) => {
+    fastify.get<{ Params: { repositoryId: string; groupId: string } }>("/repositories/:repositoryId/gitlab/groups/:groupId/paths", { schema: gitlabGroupSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabPaths(request.params.repositoryId, parseInt(request.params.groupId, 10)))
     })
 
-    fastify.get<{ Params: { repositoryId: string; groupId: string } }>("/repositories/:repositoryId/gitlab/groups/:groupId/repositories", async (request, reply) => {
+    fastify.get<{ Params: { repositoryId: string; groupId: string } }>("/repositories/:repositoryId/gitlab/groups/:groupId/repositories", { schema: gitlabGroupSchema }, async (request, reply) => {
         reply.send(await new CodeRepositoryService(request.databaseUser).getGitlabRepositories(request.params.repositoryId, parseInt(request.params.groupId, 10)))
     })
 
     fastify.post<{
         Params: { repositoryId: string; projectId: string }
         Body: { repositoryName: string }
-    }>("/repositories/:repositoryId/azure/projects/:projectId/repositories/check-name", async (request, reply) => {
+    }>("/repositories/:repositoryId/azure/projects/:projectId/repositories/check-name", { schema: azureCheckRepositoryNameSchema }, async (request, reply) => {
         const repositories = await new CodeRepositoryService(request.databaseUser).getAzureRepositories(request.params.repositoryId, request.params.projectId)
         const isAvailable = !repositories.some(repo => repo.name.toLowerCase() === request.body.repositoryName.toLowerCase())
         reply.send({ available: isAvailable })

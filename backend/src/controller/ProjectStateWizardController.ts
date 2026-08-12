@@ -1,9 +1,10 @@
 import { FastifyInstance } from "fastify"
+import { createWizardProjectSchema, wizardProjectIdSchema } from "../schemas/misc.schema"
 import { ProjectCreateInput } from "../service/ProjectService"
 import ProjectWizardService from "../service/ProjectWizardService"
 
 export default async function projectStateWizardController(fastify: FastifyInstance) {
-    fastify.post<{ Body: ProjectCreateInput }>("/projects/wizard", async (request, reply) => {
+    fastify.post<{ Body: ProjectCreateInput }>("/projects/wizard", { schema: createWizardProjectSchema }, async (request, reply) => {
         return reply.send(await new ProjectWizardService().createNew(request.body, request.databaseUser._id))
     })
 
@@ -11,7 +12,7 @@ export default async function projectStateWizardController(fastify: FastifyInsta
         Params: {
             projectId: string
         }
-    }>("/projects/wizard/:projectId/next", async (request, reply) => {
+    }>("/projects/wizard/:projectId/next", { schema: wizardProjectIdSchema }, async (request, reply) => {
         return reply.send(await new ProjectWizardService().next(request.params.projectId))
     })
 
@@ -19,7 +20,7 @@ export default async function projectStateWizardController(fastify: FastifyInsta
         Params: {
             projectId: string
         }
-    }>("/projects/wizard/:projectId/prev", async (request, reply) => {
+    }>("/projects/wizard/:projectId/prev", { schema: wizardProjectIdSchema }, async (request, reply) => {
         return reply.send(await new ProjectWizardService().prev(request.params.projectId))
     })
 }

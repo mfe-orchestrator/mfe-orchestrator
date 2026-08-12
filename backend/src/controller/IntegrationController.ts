@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import { applyFederationSchema } from "../schemas/misc.schema"
 import FederationIntegrationService, { FederationIntegrationApplyRequestDTO } from "../service/FederationIntegrationService"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
@@ -15,7 +16,7 @@ export default async function integrationController(fastify: FastifyInstance) {
 
     fastify.post<{
         Body: FederationIntegrationApplyRequestDTO
-    }>("/integration/module-federation/apply", async (request, reply) => {
+    }>("/integration/module-federation/apply", { schema: applyFederationSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()

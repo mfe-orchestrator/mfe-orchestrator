@@ -1,4 +1,20 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
+import {
+    codeIntegrationSchema,
+    environmentAndMfeSlugSchema,
+    filesByEnvironmentSlugAndVersionSchema,
+    filesByEnvironmentSlugSchema,
+    filesByMicrofrontendIdAndVersionSchema,
+    filesByMicrofrontendIdSchema,
+    filesByRefererAndVersionSchema,
+    filesByRefererSchema,
+    projectAndEnvironmentSlugSchema,
+    projectAndMfeSlugSchema,
+    projectEnvironmentAndMfeSlugSchema,
+    serveEnvironmentIdSchema,
+    serveMicrofrontendIdSchema,
+    serveProjectIdSchema
+} from "../schemas/serve.schema"
 import ServeService, { isRedirectToVersion, VERSION_PATH_SEGMENT } from "../service/ServeService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
@@ -11,7 +27,7 @@ export default async function serveController(fastify: FastifyInstance) {
             microfrontendId: string
             deploymentId: string
         }
-    }>("/serve/code", async (request, reply) => {
+    }>("/serve/code", { schema: codeIntegrationSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getCodeIntegration(request.query))
     })
 
@@ -19,7 +35,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             environmentId: string
         }
-    }>("/serve/all/:environmentId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/all/:environmentId", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveEnvironmentIdSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getAllByEnvironmentId(request.params.environmentId))
     })
 
@@ -30,7 +46,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/serve/all/auto/:projectId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/all/auto/:projectId", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveProjectIdSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getAllByProjectIdAndReferer(request.params.projectId, getReferer(request)))
     })
 
@@ -39,7 +55,7 @@ export default async function serveController(fastify: FastifyInstance) {
             projectId: string
             environmentSlug: string
         }
-    }>("/serve/all/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/all/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: projectAndEnvironmentSlugSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getAllByProjectIdAndEnvironmentSlug(request.params.projectId, request.params.environmentSlug))
     })
 
@@ -47,7 +63,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             environmentId: string
         }
-    }>("/serve/global-variables/:environmentId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/global-variables/:environmentId", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveEnvironmentIdSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getGlobalVariablesByEnvironmentId(request.params.environmentId))
     })
 
@@ -55,7 +71,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             environmentId: string
         }
-    }>("/serve/global-variables/:environmentId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/global-variables/:environmentId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveEnvironmentIdSchema }, async (request, reply) => {
         reply.header("Content-Type", "application/javascript")
         return reply.send(await new ServeService(request, reply).getGlobalVariablesByEnvironmentIdFile(request.params.environmentId))
     })
@@ -64,7 +80,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/serve/global-variables/auto/:projectId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/global-variables/auto/:projectId", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveProjectIdSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getGlobalVariablesByProjectIdAndReferer(request.params.projectId, getReferer(request)))
     })
 
@@ -72,7 +88,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/serve/global-variables/auto/:projectId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/global-variables/auto/:projectId/index.js", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveProjectIdSchema }, async (request, reply) => {
         reply.header("Content-Type", "application/javascript")
         return reply.send(await new ServeService(request, reply).getGlobalVariablesByProjectIdAndRefererFile(request.params.projectId, getReferer(request)))
     })
@@ -82,7 +98,7 @@ export default async function serveController(fastify: FastifyInstance) {
             projectId: string
             environmentSlug: string
         }
-    }>("/serve/global-variables/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/global-variables/:projectId/:environmentSlug", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: projectAndEnvironmentSlugSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getGlobalVariablesByProjectIdAndEnvironmentSlug(request.params.projectId, request.params.environmentSlug))
     })
 
@@ -90,7 +106,7 @@ export default async function serveController(fastify: FastifyInstance) {
         Params: {
             mfeId: string
         }
-    }>("/serve/mfe/config/:mfeId", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/mfe/config/:mfeId", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: serveMicrofrontendIdSchema }, async (request, reply) => {
         const referer = request.headers.referer
         if (!referer) {
             throw new Error("Referer not found")
@@ -103,7 +119,7 @@ export default async function serveController(fastify: FastifyInstance) {
             projectId: string
             mfeSlug: string
         }
-    }>("/serve/mfe/config/auto/:projectId/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/mfe/config/auto/:projectId/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: projectAndMfeSlugSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getMicrofrontendConfigurationByProjectIdRefererAndMfeSlug(request.params.projectId, request.params.mfeSlug, getReferer(request)))
     })
 
@@ -113,7 +129,7 @@ export default async function serveController(fastify: FastifyInstance) {
             environmentSlug: string
             mfeSlug: string
         }
-    }>("/serve/mfe/config/:projectId/:environmentSlug/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/mfe/config/:projectId/:environmentSlug/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: projectEnvironmentAndMfeSlugSchema }, async (request, reply) => {
         return reply.send(
             await new ServeService(request, reply).getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(request.params.projectId, request.params.environmentSlug, request.params.mfeSlug)
         )
@@ -124,7 +140,7 @@ export default async function serveController(fastify: FastifyInstance) {
             environmentId: string
             mfeSlug: string
         }
-    }>("/serve/mfe/config/:environmentId/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/serve/mfe/config/:environmentId/:mfeSlug", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: environmentAndMfeSlugSchema }, async (request, reply) => {
         return reply.send(await new ServeService(request, reply).getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(request.params.environmentId, request.params.mfeSlug))
     })
 
@@ -136,7 +152,11 @@ export default async function serveController(fastify: FastifyInstance) {
             version?: string
             "*": string
         }
-    }>(`/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/${VERSION_PATH_SEGMENT}/:version/*`, { config: { authMethod: AuthenticationMethod.PUBLIC } }, serveByEnvironmentSlug)
+    }>(
+        `/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/${VERSION_PATH_SEGMENT}/:version/*`,
+        { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: filesByEnvironmentSlugAndVersionSchema },
+        serveByEnvironmentSlug
+    )
 
     fastify.get<{
         Params: {
@@ -146,7 +166,7 @@ export default async function serveController(fastify: FastifyInstance) {
             version?: string
             "*": string
         }
-    }>("/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, serveByEnvironmentSlug)
+    }>("/serve/mfe/files/:projectId/:environmentSlug/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: filesByEnvironmentSlugSchema }, serveByEnvironmentSlug)
 
     fastify.get<{
         Params: {
@@ -154,7 +174,7 @@ export default async function serveController(fastify: FastifyInstance) {
             version?: string
             "*": string
         }
-    }>(`/serve/mfe/files/:mfeId/${VERSION_PATH_SEGMENT}/:version/*`, { config: { authMethod: AuthenticationMethod.PUBLIC } }, serveByMicrofrontendId)
+    }>(`/serve/mfe/files/:mfeId/${VERSION_PATH_SEGMENT}/:version/*`, { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: filesByMicrofrontendIdAndVersionSchema }, serveByMicrofrontendId)
 
     fastify.get<{
         Params: {
@@ -162,7 +182,7 @@ export default async function serveController(fastify: FastifyInstance) {
             version?: string
             "*": string
         }
-    }>("/serve/mfe/files/:mfeId/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, serveByMicrofrontendId)
+    }>("/serve/mfe/files/:mfeId/*", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: filesByMicrofrontendIdSchema }, serveByMicrofrontendId)
 
     fastify.get<{
         Params: {
@@ -171,7 +191,11 @@ export default async function serveController(fastify: FastifyInstance) {
             version?: string
             "*": string
         }
-    }>(`/serve/mfe/files/auto/:projectId/:mfeSlug/${VERSION_PATH_SEGMENT}/:version/*`, { config: { authMethod: AuthenticationMethod.PUBLIC } }, serveAutoByReferer)
+    }>(
+        `/serve/mfe/files/auto/:projectId/:mfeSlug/${VERSION_PATH_SEGMENT}/:version/*`,
+        { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: filesByRefererAndVersionSchema },
+        serveAutoByReferer
+    )
 
     fastify.get<{
         Params: {
@@ -180,7 +204,7 @@ export default async function serveController(fastify: FastifyInstance) {
             version?: string
             "*": string
         }
-    }>("/serve/mfe/files/auto/:projectId/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC } }, serveAutoByReferer)
+    }>("/serve/mfe/files/auto/:projectId/:mfeSlug/*", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: filesByRefererSchema }, serveAutoByReferer)
 
     /**
      * Serves a microfrontend file, with or without the version pinned in the URL.

@@ -5,6 +5,16 @@ import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import Project from "../models/ProjectModel"
 import User, { UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
+import {
+    acceptInvitationSchema,
+    addUserToProjectSchema,
+    invitationByTokenSchema,
+    invitationDecisionSchema,
+    listProjectUsersSchema,
+    removeUserFromProjectSchema,
+    resendInvitationSchema,
+    updateUserRoleSchema
+} from "../schemas/projectUser.schema"
 import UserProjectService from "../service/UserProjectService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { toObjectId } from "../utils/mongooseUtils"
@@ -39,7 +49,7 @@ interface AcceptInvitationDTO {
 export default async function projectUserController(fastify: FastifyInstance) {
     // Get all users in a project
 
-    fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/users", async (request, reply) => {
+    fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/users", { schema: listProjectUsersSchema }, async (request, reply) => {
         const projectId = request.params.projectId
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -51,7 +61,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
     fastify.post<{
         Params: { projectId: string }
         Body: AddUserToProjectDTO
-    }>("/projects/:projectId/users", async (request, reply) => {
+    }>("/projects/:projectId/users", { schema: addUserToProjectSchema }, async (request, reply) => {
         const { projectId } = request.params
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -62,7 +72,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
     })
 
     // Resend a pending invitation email
-    fastify.post<{ Params: { projectId: string; userId: string } }>("/projects/:projectId/users/:userId/resend-invitation", async (request, reply) => {
+    fastify.post<{ Params: { projectId: string; userId: string } }>("/projects/:projectId/users/:userId/resend-invitation", { schema: resendInvitationSchema }, async (request, reply) => {
         const { projectId, userId } = request.params
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -71,7 +81,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
     })
 
     // Public: read invitation details by token (used by the acceptance page)
-    fastify.get<{ Params: { token: string } }>("/projects/invitations/:token", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    fastify.get<{ Params: { token: string } }>("/projects/invitations/:token", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: invitationByTokenSchema }, async (request, reply) => {
         return reply.send(await new UserProjectService().getInvitationByToken(request.params.token))
     })
 
@@ -79,7 +89,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
     fastify.post<{
         Params: { token: string }
         Body: AcceptInvitationDTO
-    }>("/projects/invitations/:token/accept", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/projects/invitations/:token/accept", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: acceptInvitationSchema }, async (request, reply) => {
         return reply.send(await new UserProjectService().acceptInvitation(request.params.token, request.body || {}))
     })
 
@@ -90,7 +100,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
             userId: string
         }
         Body: UpdateUserRoleDTO
-    }>("/projects/:projectId/users/:userId", async (request, reply) => {
+    }>("/projects/:projectId/users/:userId", { schema: updateUserRoleSchema }, async (request, reply) => {
         const { projectId, userId } = request.params
         const { role } = request.body
 
@@ -127,7 +137,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
     })
 
     // Remove user from project
-    fastify.delete<{ Params: { projectId: string; userId: string } }>("/projects/:projectId/users/:userId", async (request, reply) => {
+    fastify.delete<{ Params: { projectId: string; userId: string } }>("/projects/:projectId/users/:userId", { schema: removeUserFromProjectSchema }, async (request, reply) => {
         const { projectId, userId } = request.params
 
         // Verify project exists
@@ -187,12 +197,12 @@ export default async function projectUserController(fastify: FastifyInstance) {
     })
 
     // Accept an invitation from inside the app
-    fastify.post<{ Params: { projectId: string } }>("/users/me/invitations/:projectId/accept", async (request, reply) => {
+    fastify.post<{ Params: { projectId: string } }>("/users/me/invitations/:projectId/accept", { schema: invitationDecisionSchema }, async (request, reply) => {
         return reply.send(await new UserProjectService(request.databaseUser).acceptMyInvitation(request.params.projectId))
     })
 
     // Decline an invitation from inside the app
-    fastify.delete<{ Params: { projectId: string } }>("/users/me/invitations/:projectId", async (request, reply) => {
+    fastify.delete<{ Params: { projectId: string } }>("/users/me/invitations/:projectId", { schema: invitationDecisionSchema }, async (request, reply) => {
         await new UserProjectService(request.databaseUser).declineMyInvitation(request.params.projectId)
         return reply.status(204).send()
     })

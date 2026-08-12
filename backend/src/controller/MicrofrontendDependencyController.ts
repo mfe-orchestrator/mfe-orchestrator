@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import { alignmentSchema, dependencyReportSchema, projectDependenciesSchema } from "../schemas/microfrontendDependency.schema"
 import MicrofrontendDependencyService from "../service/MicrofrontendDependencyService"
 import { AlignmentApplyRequestDTO, DependencyScanRequestDTO } from "../types/MicrofrontendDependencyDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
@@ -25,13 +26,13 @@ export default async function microfrontendDependencyController(fastify: Fastify
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId/dependencies", async (request, reply) => {
+    }>("/projects/:projectId/dependencies", { schema: projectDependenciesSchema }, async (request, reply) => {
         return reply.send(await new MicrofrontendDependencyService(request.databaseUser).getReport(request.params.projectId))
     })
 
     fastify.post<{
         Body: DependencyScanRequestDTO
-    }>("/dependencies/report", async (request, reply) => {
+    }>("/dependencies/report", { schema: dependencyReportSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -41,7 +42,7 @@ export default async function microfrontendDependencyController(fastify: Fastify
 
     fastify.post<{
         Body: AlignmentApplyRequestDTO
-    }>("/dependencies/peer/alignment-plan", async (request, reply) => {
+    }>("/dependencies/peer/alignment-plan", { schema: alignmentSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
@@ -51,7 +52,7 @@ export default async function microfrontendDependencyController(fastify: Fastify
 
     fastify.post<{
         Body: AlignmentApplyRequestDTO
-    }>("/dependencies/peer/align", async (request, reply) => {
+    }>("/dependencies/peer/align", { schema: alignmentSchema }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()

@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify"
+import { createProjectSchema, projectIdSchema, updateProjectSchema } from "../schemas/project.schema"
 import EnvironmentService from "../service/EnvironmentService"
 import MicrofrontendService from "../service/MicrofrontendService"
 import ProjectService, { ProjectCreateInput } from "../service/ProjectService"
@@ -14,7 +15,7 @@ export default async function projectController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId", async (request, reply) => {
+    }>("/projects/:projectId", { schema: projectIdSchema }, async (request, reply) => {
         const project = await new ProjectService(request.databaseUser).findById(request.params.projectId)
         return reply.send(project)
     })
@@ -23,7 +24,7 @@ export default async function projectController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId/summary", async (request, reply) => {
+    }>("/projects/:projectId/summary", { schema: projectIdSchema }, async (request, reply) => {
         return reply.send(await new ProjectService(request.databaseUser).getSummary(request.params.projectId))
     })
 
@@ -32,18 +33,18 @@ export default async function projectController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId/environments", async (request, reply) => {
+    }>("/projects/:projectId/environments", { schema: projectIdSchema }, async (request, reply) => {
         return reply.send(await new EnvironmentService(request.databaseUser).getByProjectId(request.params.projectId))
     })
 
-    fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/microfrontends", async (request, reply) => {
+    fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/microfrontends", { schema: projectIdSchema }, async (request, reply) => {
         return reply.send(await new MicrofrontendService(request.databaseUser).getByProjectId(request.params.projectId))
     })
 
     // Create new project
     fastify.post<{
         Body: ProjectCreateInput
-    }>("/projects", async (request, reply) => {
+    }>("/projects", { schema: createProjectSchema }, async (request, reply) => {
         const project = await new ProjectService(request.databaseUser).create(request.body, request.databaseUser._id)
         return reply.status(201).send(project)
     })
@@ -54,7 +55,7 @@ export default async function projectController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId", async (request, reply) => {
+    }>("/projects/:projectId", { schema: updateProjectSchema }, async (request, reply) => {
         const project = await new ProjectService(request.databaseUser).update(request.params.projectId, request.body)
         return reply.send({ success: true, data: project })
     })
@@ -64,7 +65,7 @@ export default async function projectController(fastify: FastifyInstance) {
         Params: {
             projectId: string
         }
-    }>("/projects/:projectId", async (request, reply) => {
+    }>("/projects/:projectId", { schema: projectIdSchema }, async (request, reply) => {
         await new ProjectService(request.databaseUser).delete(request.params.projectId)
         return reply.status(204).send()
     })

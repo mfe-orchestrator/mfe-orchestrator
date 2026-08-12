@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify"
+import { startupRegistrationSchema } from "../schemas/startup.schema"
 import ProjectService from "../service/ProjectService"
 import UserService from "../service/UserService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
@@ -18,7 +19,7 @@ export function StartupController(fastify: FastifyInstance) {
         return res.send({ exists: out })
     })
 
-    fastify.post<{ Body: StartupUserRegistrationDTO }>("/startup/registration", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (req, res) => {
+    fastify.post<{ Body: StartupUserRegistrationDTO }>("/startup/registration", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: startupRegistrationSchema }, async (req, res) => {
         const registeredUser = await userService.register(
             {
                 email: req.body.email,

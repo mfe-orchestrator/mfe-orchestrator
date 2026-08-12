@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify"
+import { marketSlugSchema } from "../schemas/misc.schema"
 import MarketService from "../service/MarketService"
 
 export default async function marketController(fastify: FastifyInstance) {
@@ -12,7 +13,7 @@ export default async function marketController(fastify: FastifyInstance) {
         Params: {
             slug: string
         }
-    }>("/market/:slug", async (request, reply) => {
+    }>("/market/:slug", { schema: marketSlugSchema }, async (request, reply) => {
         return reply.send(await new MarketService(request.databaseUser).getSingle(request.params.slug))
     })
 }

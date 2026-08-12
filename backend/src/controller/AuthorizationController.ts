@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from "axios"
 import { FastifyInstance } from "fastify"
+import { googleAuthCodeSchema, googleRefreshTokenSchema } from "../schemas/misc.schema"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
 export interface GoogleTokenResponse {
@@ -15,7 +16,7 @@ export default async function authorizationController(fastify: FastifyInstance) 
         Querystring: {
             code: string
         }
-    }>("/auth/google", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/auth/google", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: googleAuthCodeSchema }, async (request, reply) => {
         const form = new URLSearchParams({
             code: request.query.code,
             client_id: fastify.config.GOOGLE_CLIENT_ID,
@@ -40,7 +41,7 @@ export default async function authorizationController(fastify: FastifyInstance) 
         Body: {
             refresh_token: string
         }
-    }>("/auth/google/refresh", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
+    }>("/auth/google/refresh", { config: { authMethod: AuthenticationMethod.PUBLIC }, schema: googleRefreshTokenSchema }, async (request, reply) => {
         const form = new URLSearchParams({
             refresh_token: request.body.refresh_token,
             client_id: fastify.config.GOOGLE_CLIENT_ID,
