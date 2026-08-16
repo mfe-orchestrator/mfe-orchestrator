@@ -430,8 +430,8 @@
     "semantic_hash": "56b289cc4df3cfae333b503ed9537b0c"
   },
   "backend/src/service/ServeService.ts": {
-    "mtime": 1786871907.9727867,
-    "ast_hash": "11b0a7a565c8322e62f0ca8e8db73d33",
+    "mtime": 1786873016.7136118,
+    "ast_hash": "3fb84d5772fcfd1781a6a3b48b0581e1",
     "semantic_hash": ""
   },
   "backend/src/service/StorageService.ts": {
@@ -1980,8 +1980,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/FederationConfigService.ts": {
-    "mtime": 1786470726.4572861,
-    "ast_hash": "cea46128cf15c0e5d5f4f9a7fb2c73fe",
+    "mtime": 1786872997.504614,
+    "ast_hash": "235695d4d276b6287849d6cc5fcad8d9",
     "semantic_hash": ""
   },
   "backend/src/service/StackDetectionService.ts": {
@@ -2005,8 +2005,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/FederationIntegrationService.ts": {
-    "mtime": 1786470395.1684496,
-    "ast_hash": "c8e6edcb413d0856ba2483ee42fef029",
+    "mtime": 1786872958.7887127,
+    "ast_hash": "98b1d423cdb0834dd458cb3e3653716e",
     "semantic_hash": ""
   },
   "backend/src/utils/packageJsonUtils.ts": {
@@ -2147,6 +2147,11 @@
   "backend/src/plugins/errorHandler.test.ts": {
     "mtime": 1786871989.3369517,
     "ast_hash": "f5815c7b11dd4e1c83c54307360c82e4",
+    "semantic_hash": ""
+  },
+  "backend/src/utils/backendUrl.ts": {
+    "mtime": 1786872883.665231,
+    "ast_hash": "fbda75b7157bc659e5877fd6a548a882",
     "semantic_hash": ""
   }
 }
