@@ -9,8 +9,8 @@ import { UserButton } from "./partials/UserButton"
 
 export type { SidebarNavItemProps }
 
-/** Titolo, blocco secondario, footer e router li decide questo componente. */
-export type SidebarProps = Omit<DesignSystemSidebarProps, "title" | "secondaryNavItems" | "secondaryContent" | "footer" | "renderLink">
+/** Logo, titolo, blocco secondario, footer e router li decide questo componente. */
+export type SidebarProps = Omit<DesignSystemSidebarProps, "logo" | "title" | "secondaryNavItems" | "secondaryContent" | "footer" | "renderLink">
 
 const EXTERNAL_NAV_ITEMS: SidebarNavItemProps[] = [
     { name: "Documentation", path: "https://mfe-orchestrator.dev/documentation/", icon: <BookOpen /> },
@@ -26,6 +26,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ mainNavItems, 
             ref={ref}
             {...props}
             title={t("app.name")}
+            logo={<img src="/img/logo.png" alt={t("app.name")} className="h-8 w-8" />}
             mainNavItems={mainNavItems?.map(item => ({ ...item, active: location.pathname === item.path }))}
             secondaryNavItems={EXTERNAL_NAV_ITEMS}
             secondaryContent={({ isCollapsed, isMobile }) => (
