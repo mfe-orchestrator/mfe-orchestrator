@@ -11,6 +11,15 @@ ARG PNPM_VERSION=10.19.0
 RUN apk add --update nodejs npm && \
     npm install -g pnpm@${PNPM_VERSION}
 
+# The pinned version is a deliberate choice, so the "Update available!" banner
+# is just noise in the build log: pnpm only hides it on its own when it detects
+# a CI environment, which a `docker build` is not.
+# Both spellings are set on purpose: pnpm 10 reads settings from the npm-style
+# `NPM_CONFIG_*` variables, while pnpm 11 only reads its own `PNPM_CONFIG_*`
+# prefix. This way bumping PNPM_VERSION does not bring the banner back.
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PNPM_CONFIG_UPDATE_NOTIFIER=false
+
 # Create application directories
 RUN mkdir -p /var/www/frontend /var/www/backend
 
