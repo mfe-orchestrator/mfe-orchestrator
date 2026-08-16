@@ -9,7 +9,10 @@
         "page_title": "{{page}} · {{app}}",
         "error": {
             "generic": "An error occurred. Please try again later.",
-            "not_found": "Page not found"
+            "not_found": "Page not found",
+            "not_found_title": "Oops! Page not found",
+            "not_found_description": "The page you are looking for does not exist or has been moved.",
+            "back_home": "Return to Home"
         }
     },
     "integration": {

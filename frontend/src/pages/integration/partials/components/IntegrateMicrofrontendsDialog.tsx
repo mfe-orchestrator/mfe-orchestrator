@@ -75,16 +75,8 @@ const FileChange: React.FC<{ change: FederationFileChange }> = ({ change }) => {
 
             {expanded && (
                 <div className="mt-2 flex flex-col gap-2">
-                    {!isNew && (
-                        <div>
-                            <p className="text-xs font-medium text-foreground-secondary">{t("integration.fe_integration_tab.integrate_current_content")}</p>
-                            <CodeBlock code={change.currentContent} size="sm" maxHeightClassName="max-h-60" />
-                        </div>
-                    )}
-                    <div>
-                        <p className="text-xs font-medium text-foreground-secondary">{t("integration.fe_integration_tab.integrate_proposed_content")}</p>
-                        <CodeBlock code={change.proposedContent} size="sm" maxHeightClassName="max-h-60" />
-                    </div>
+                    {!isNew && <CodeBlock label={t("integration.fe_integration_tab.integrate_current_content")} code={change.currentContent} size="sm" maxHeightClassName="max-h-60" />}
+                    <CodeBlock label={t("integration.fe_integration_tab.integrate_proposed_content")} code={change.proposedContent} size="sm" maxHeightClassName="max-h-60" />
                 </div>
             )}
         </div>

@@ -1,5 +1,6 @@
-import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
+import { EmptyState, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
+import { PackageOpen, SearchX } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -181,16 +182,18 @@ export const TemplatesLibrary: React.FC = () => {
                                 </div>
                             ) : null}
 
-                            <div className="text-center py-12">
-                                <div className="text-gray-500 text-lg mb-2">
-                                    {searchTerm || selectedFramework !== "all" || selectedCompiler !== "all" || hostType !== "all" ? t("market.noResults.title") : t("market.noTemplates.title")}
-                                </div>
-                                <p className="text-gray-400">
-                                    {searchTerm || selectedFramework !== "all" || selectedCompiler !== "all" || hostType !== "all"
+                            <EmptyState
+                                size="lg"
+                                tone="muted"
+                                iconVariant="bare"
+                                icon={searchTerm || selectedFramework !== "all" || selectedCompiler !== "all" || hostType !== "all" ? <SearchX /> : <PackageOpen />}
+                                title={searchTerm || selectedFramework !== "all" || selectedCompiler !== "all" || hostType !== "all" ? t("market.noResults.title") : t("market.noTemplates.title")}
+                                description={
+                                    searchTerm || selectedFramework !== "all" || selectedCompiler !== "all" || hostType !== "all"
                                         ? t("market.noResults.description")
-                                        : t("market.noTemplates.description")}
-                                </p>
-                            </div>
+                                        : t("market.noTemplates.description")
+                                }
+                            />
                         </div>
                     )}
                 </div>

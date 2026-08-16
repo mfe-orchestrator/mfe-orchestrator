@@ -9,7 +9,10 @@
         "page_title": "{{page}} · {{app}}",
         "error": {
             "generic": "Si è verificato un errore. Riprova più tardi.",
-            "not_found": "Pagina non trovata"
+            "not_found": "Pagina non trovata",
+            "not_found_title": "Ops! Pagina non trovata",
+            "not_found_description": "La pagina che stai cercando non esiste o è stata spostata.",
+            "back_home": "Torna alla home"
         }
     },
     "integration": {

@@ -39,6 +39,9 @@ export const EnvironmentVariablesIntegration = ({ projectId }: { projectId?: str
                         </>
                     }
                     code={`<script src="${envVarsUrl}/index.js"></script>`}
+                    copyable
+                    copyLabel={t("common.copy")}
+                    copiedLabel={t("common.copied")}
                     wrapperClassName="mb-4"
                 />
                 <p className="mb-4 text-sm text-foreground-secondary">{t("integration.env_vars_integration_tab.javascript_auto_note")}</p>
@@ -53,6 +56,9 @@ if (featureFlag) {
 	// Feature is enabled
 	fetch(apiUrl + '/data').then(/* ... */);
 }`}
+                    copyable
+                    copyLabel={t("common.copy")}
+                    copiedLabel={t("common.copied")}
                     wrapperClassName="mb-4"
                 />
 
@@ -65,6 +71,9 @@ if (featureFlag) {
 	console.log(data);
 	});
 				`}
+                    copyable
+                    copyLabel={t("common.copy")}
+                    copiedLabel={t("common.copied")}
                 />
             </CardContent>
         </Card>

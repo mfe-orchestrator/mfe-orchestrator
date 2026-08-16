@@ -117,7 +117,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
                         <TabsContent value="curl">
                             <h3 className="text-lg font-semibold">{t("integration.fe_integration_tab.curl.title")}</h3>
                             <p className="mb-4">{t("integration.fe_integration_tab.curl.description")}</p>
-                            <CodeBlock code={curlExample} wrapperClassName="mb-4" />
+                            <CodeBlock code={curlExample} copyable copyLabel={t("common.copy")} copiedLabel={t("common.copied")} wrapperClassName="mb-4" />
                             <p className="mb-4">{t("integration.fe_integration_tab.curl.step2")}</p>
                             <div className="border-2 border-border rounded-md overflow-hidden">
                                 <iframe src={`https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`} className="w-full h-[500px] border-0" title="API Response Preview" />

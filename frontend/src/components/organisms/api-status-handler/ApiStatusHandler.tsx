@@ -1,16 +1,37 @@
-import { Loader2 } from "lucide-react"
+import { Alert, AlertDescription, EmptyState, Spinner } from "@mfe-orchestrator/design-system"
+import { useTranslation } from "react-i18next"
 import { IApiStatusHandlerProps } from "./IApiStatusHandlerProps"
+
+/**
+ * I default di `emptyComponent` ed `errorComponent` sono elementi JSX, non componenti: senza
+ * questi wrapper non ci sarebbe un corpo di componente da cui chiamare l'hook di traduzione.
+ */
+const DefaultEmptyComponent: React.FC = () => {
+    const { t } = useTranslation()
+
+    return <EmptyState size="sm" description={t("common.no_data")} />
+}
+
+const DefaultErrorComponent: React.FC<{ error: unknown }> = ({ error }) => {
+    const { t } = useTranslation()
+
+    return (
+        <Alert variant="destructive">
+            <AlertDescription>{error instanceof Error ? error.message : t("app.error.generic")}</AlertDescription>
+        </Alert>
+    )
+}
 
 export const ApiStatusHandler: React.FC<IApiStatusHandlerProps> = ({
     queries,
     children,
     loadingComponent = (
         <div className="flex items-center justify-center min-h-[200px]">
-            <Loader2 className="w-8 h-8 animate-spin" />
+            <Spinner size={32} />
         </div>
     ),
-    errorComponent = (error: unknown) => <div className="p-4 text-red-500 text-center">Error: {error instanceof Error ? error.message : "An error occurred"}</div>,
-    emptyComponent = <div className="p-4 text-red-500 text-center">No data</div>,
+    errorComponent = (error: unknown) => <DefaultErrorComponent error={error} />,
+    emptyComponent = <DefaultEmptyComponent />,
     interceptError = true,
     interceptEmpty = true
 }) => {
