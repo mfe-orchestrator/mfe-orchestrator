@@ -840,8 +840,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/Sidebar/Sidebar.tsx": {
-    "mtime": 1786116431.9366026,
-    "ast_hash": "2b4292e392fb5c8852de590aabe95b7d",
+    "mtime": 1786880506.9212406,
+    "ast_hash": "f82cbb6ed418530ce57228990fa34690",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/Sidebar/partials/LanguageSelector.tsx": {
@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/CanaryUsers.tsx": {
-    "mtime": 1786880070.337149,
-    "ast_hash": "b0539e3ce3a33e9428cb0c5e0e2e2980",
+    "mtime": 1786880203.1311412,
+    "ast_hash": "68fc8ef46d4c19d7922c7466b2ff528e",
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/Deployments.tsx": {
@@ -2162,6 +2162,11 @@
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendFlowNode.tsx": {
     "mtime": 1786877759.444236,
     "ast_hash": "11536b49cde9acf2fc481f75367eca6f",
+    "semantic_hash": ""
+  },
+  "frontend/public/img/logo.png": {
+    "mtime": 1786880496.0958352,
+    "ast_hash": "1f9c2e2433a0ff2d786cf52669bb90e3",
     "semantic_hash": ""
   }
 }
