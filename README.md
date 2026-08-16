@@ -285,7 +285,7 @@ falling back to it.
 | `BACKEND_URL`                          | _(empty, falls back to `FRONTEND_URL` + `/api`)_                                                  | Public URL of the API, written into the generated configuration. |
 | `PORT`                                 | `3000`                                                                                            | Port the backend listens on.                                    |
 | `RATE_LIMIT_MAX`                       | `100`                                                                                             | Requests per IP per minute.                                     |
-| `MARKETING_OPT_IN_ENABLED`             | `false`                                                                                           | If `true`, the registration form collects a marketing consent.  |
+| `MARKETING_OPT_IN_ENABLED`             | `false`                                                                                           | If `true`, the registration form collects a marketing consent, which the profile page can then change. |
 | `MARKETING_OPT_IN_VERSION`             | `1`                                                                                               | Version of the consent text, stored together with the consent.  |
 | `GOOGLE_CLIENT_SECRET`                 | _(empty)_                                                                                         | Client secret for Google OAuth authentication.                  |
 | `GOOGLE_AUTH_HOSTED_DOMAIN`            | _(empty)_                                                                                         | Restricts the Google login to a single Workspace domain.        |

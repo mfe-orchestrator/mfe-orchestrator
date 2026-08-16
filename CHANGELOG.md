@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Marketing Consent On The Profile Page**: The consent could only be given at registration, and the `PUT /api/users/marketing-consent` endpoint that changes it had no interface calling it. The profile page now carries the consent checkbox, showing the date it was given and clearing it on withdrawal, and appears only where `MARKETING_OPT_IN_ENABLED` is on — the same condition as the registration checkbox
+
 ### Changed
 
 - **Deployable Infrastructure Pinned To 3.1.0**: The Compose file, the Terraform module and the Helm chart named `2.3.0`, so a fresh installation came up a major version behind — without the builds page, the canary strategies or the marketing opt-in. All three now name `3.1.0`, the chart version was bumped to `0.1.2`, and MongoDB and Redis are pinned to `mongo:8.0` and `redis:8-alpine` instead of floating on `latest` and `alpine`

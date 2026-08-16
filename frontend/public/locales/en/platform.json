@@ -299,6 +299,15 @@
                 "confirmation": "Do you really want to remove your profile picture?"
             }
         },
+        "marketing": {
+            "title": "Marketing communications",
+            "subtitle": "Choose whether to receive emails with product news and updates",
+            "grantedAt": "Consent given on {{date}}",
+            "notifications": {
+                "granted": "Marketing consent granted",
+                "withdrawn": "Marketing consent withdrawn"
+            }
+        },
         "notifications": {
             "personalDataUpdated": "Personal data updated"
         }

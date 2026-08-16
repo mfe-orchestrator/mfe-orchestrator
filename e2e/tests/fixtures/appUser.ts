@@ -191,6 +191,9 @@ export interface UserProfile {
     email: string
     name?: string
     surname?: string
+    marketingConsent?: boolean
+    marketingConsentAt?: string
+    marketingConsentVersion?: string
 }
 
 /** Profilo letto dal server: serve a confermare quello che la pagina dichiara di aver salvato. */

@@ -554,6 +554,15 @@
                 "confirmation": "Vuoi davvero rimuovere l'immagine del profilo?"
             }
         },
+        "marketing": {
+            "title": "Comunicazioni commerciali",
+            "subtitle": "Decidi se ricevere email con novità e aggiornamenti sul prodotto",
+            "grantedAt": "Consenso prestato il {{date}}",
+            "notifications": {
+                "granted": "Consenso marketing attivato",
+                "withdrawn": "Consenso marketing revocato"
+            }
+        },
         "notifications": {
             "personalDataUpdated": "Dati personali aggiornati"
         }
