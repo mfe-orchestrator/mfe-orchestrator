@@ -12,6 +12,8 @@ providers show and nothing more.
 
 ## What the page shows
 
+![The builds page with a status badge per microfrontend and one row expanded on its last runs](assets/builds-page.png)
+
 The table has one row per microfrontend of the current project, sorted by name, with:
 
 | Column               | Content                                                                    |

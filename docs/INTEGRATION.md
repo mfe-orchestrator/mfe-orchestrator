@@ -297,6 +297,8 @@ stack, its remotes and a status; every file it would touch is shown as a diff â€
 next to proposed content â€” and everything writable starts ticked. Only what is ticked is
 committed.
 
+![The module federation dialog planning the write: one microfrontend has remotes to declare and two files to replace, the others have none](assets/integration-dialog.png)
+
 | Status                | Meaning                                                        |
 | --------------------- | -------------------------------------------------------------- |
 | `ALREADY_INTEGRATED`  | The repository already carries exactly what would be written    |
