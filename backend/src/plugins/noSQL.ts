@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 import mongoose from "mongoose"
+import { runMigrations } from "../utils/migrations"
 
 export let noSQLClient: mongoose.Mongoose
 export let isReplicaSet: boolean = false
@@ -45,6 +46,8 @@ export default fastifyPlugin(
                         fastify.log.warn("Connected to standalone MongoDB (not replica set)")
                         isReplicaSet = false
                     }
+
+                    await runMigrations(fastify.log)
                 } catch (e) {
                     fastify.log.error({ error: e }, "Error while checking replica set status:")
                 }

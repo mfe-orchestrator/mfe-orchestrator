@@ -66,6 +66,7 @@
             "description": "Accedi alle variabili d'ambiente in microfrontends utilizzando i seguenti metodi.",
             "javascript_title": "Integrazione JavaScript",
             "javascript_description": "Aggiungi questo script al tuo HTML per rendere le variabili d'ambiente disponibili come",
+            "javascript_auto_note": "Lo stesso tag funziona in ogni ambiente: la console risolve quale risponde dal dominio su cui la pagina è servita, quindi promuovere una build non richiede mai di modificare questo url.",
             "javascript_example": "Esempio di utilizzo",
             "javascript_direct_api_access": "Accesso diretto API",
             "javascript_direct_api_access_description": "Recupera le variabili d'ambiente direttamente dall'API"
@@ -238,15 +239,23 @@
         },
         "canary_users": {
             "title": "Utenti Canary",
-            "subtitle": "Utenti con accesso alla versione canary",
+            "subtitle": "Chi vede la versione canary dei microfrontend di questo deployment configurati con tipo «Utente»",
             "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
             "columns": {
                 "user": "Utente",
-                "email": "Email",
                 "status": "Stato"
             },
-            "coming_soon": "In arrivo",
-            "coming_soon_description": "Questa funzionalità è ancora in fase di sviluppo e sarà disponibile in una prossima versione. Restate sintonizzati!"
+            "add_title": "Aggiungi utenti",
+            "add_description": "Inserisci gli identificativi utente della tua applicazione, quelli che passi al client SDK come userId. Puoi incollarne più di uno separandoli con virgole, spazi o a capo.",
+            "user_id_placeholder": "user-123, user-456",
+            "add_button": "Aggiungi",
+            "added_success": "Utenti aggiunti agli utenti canary",
+            "updated_success": "Utente canary aggiornato",
+            "removed_success": "Utente rimosso dagli utenti canary",
+            "enabled": "Canary",
+            "disabled": "Escluso",
+            "remove_title": "Rimuovi utente canary",
+            "remove_description": "Vuoi rimuovere «{{userId}}» dagli utenti canary? Tornerà a vedere la versione stabile."
         }
     },
     "builds": {
@@ -599,11 +608,11 @@
         "hosting_type": "Tipo di Hosting",
         "canaryReleaseActive": "Canary Release Attiva",
         "distribution": "Distribuzione:",
-        "usersPercentage": "{{percentage}}% degli utenti",
-        "type": "Tipo:",
         "sessionType": "Sessione",
-        "ipType": "Indirizzo IP",
-        "deployment": "Distribuzione",
+        "randomType": "Casuale",
+        "canary_type_random_description": "Estrazione a ogni caricamento della pagina: lo stesso browser può vedere una versione diversa a ogni refresh.",
+        "canary_type_session_description": "Estrazione una sola volta per browser, conservata nel localStorage della pagina host: la versione resta la stessa anche dopo la chiusura del browser.",
+        "canary_type_user_description": "Nessuna estrazione: la canary va solo agli utenti presenti nell'elenco del deployment. Chi non è autenticato vede sempre la versione stabile.",
         "deploymentTypes": {
             "basedOnVersion": "Basato su Versione",
             "basedOnUrl": "Basato su URL"
@@ -611,26 +620,26 @@
         "canaryUrl": "URL Canary",
         "canaryVersion": "Versione Canary",
         "userType": "Utente",
-        "cookieBasedType": "Basato su Cookie",
         "entry_point": "Punto di Ingresso",
         "select_hosting_type": "Seleziona il tipo di hosting",
         "mfe_orchestrator_hub": "MFE Orchestrator Hub",
         "custom_url": "URL Personalizzato",
         "custom_source": "Sorgente Personalizzata",
+        "release_settings": "Rilascio",
+        "release_settings_description": "La versione servita ai tuoi utenti e come viene distribuita la canary",
+        "tabs": {
+            "general": "Generale",
+            "hosting": "Hosting",
+            "repository": "Repository",
+            "danger_zone": "Zona Pericolosa"
+        },
         "canary_release": "Distribuzione canary",
         "canary_settings": "Impostazioni Canary",
         "canary_settings_description": "Configura le impostazioni di distribuzione canary",
-        "enable_canary": "Abilita Distribuzione Canary",
         "canary_percentage": "Percentuale Canary",
-        "canary_percentage_description": "Percentuale di traffico da indirizzare alla versione canary",
         "canary_percentage_presets": "Percentuali suggerite",
         "canary_type": "Tipo di Canary",
-        "select_canary_type": "Seleziona il tipo di canary",
-        "on_sessions": "Sulle Sessioni",
-        "on_user": "Sull'Utente",
-        "cookie_based": "Basato su Cookie",
         "deployment_type": "Tipo di Distribuzione",
-        "select_deployment_type": "Seleziona il tipo di distribuzione",
         "based_on_version": "Basato su Versione",
         "based_on_url": "Basato su URL",
         "canary_version": "Versione Canary",
@@ -691,7 +700,8 @@
                     "confirmButton": "Elimina Microfrontend"
                 }
             }
-        }
+        },
+        "canary_enrolled_users": "Utenti selezionati"
     },
     "color_picker": {
         "select_color": "Seleziona un colore"

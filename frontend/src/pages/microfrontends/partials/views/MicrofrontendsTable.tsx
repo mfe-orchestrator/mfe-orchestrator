@@ -4,7 +4,7 @@ import React from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
-import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { CloneRepositoryPopover } from "@/pages/microfrontends/partials/components"
 import { HOST_TYPE_LABEL_KEYS } from "../labels"
 
@@ -13,6 +13,34 @@ interface MicrofrontendsTableProps {
 }
 
 const COLUMN_COUNT = 6
+
+/**
+ * The canary column. On User enrols an explicit list of users instead of splitting traffic, so it gets
+ * a badge: a share bar sitting at 0% would read as "nobody sees the canary".
+ */
+const CanaryCell: React.FC<{ canary: Microfrontend["canary"] }> = ({ canary }) => {
+    const { t } = useTranslation("platform")
+
+    if (canary?.enabled && canary.type === CanaryType.ON_USER) {
+        return <Badge variant="outline">{t("microfrontend.canary_enrolled_users")}</Badge>
+    }
+
+    const percentage = canary?.enabled ? Math.min(100, Math.max(0, canary.percentage ?? 0)) : 0
+    if (percentage <= 0) {
+        return <span className="italic text-foreground-secondary">{t("common.no_data")}</span>
+    }
+
+    return (
+        <div className="flex min-w-[7rem] items-center gap-2">
+            <div className="h-1.5 w-full max-w-20 overflow-hidden rounded-full bg-primary/20">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
+            </div>
+            <span className="whitespace-nowrap text-xs tabular-nums text-foreground-secondary">
+                {percentage}% {t("microfrontend.ofUsers")}
+            </span>
+        </div>
+    )
+}
 
 export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microfrontends }) => {
     const { t } = useTranslation("platform")
@@ -34,8 +62,6 @@ export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microf
                 <TableBody>
                     {microfrontends.length > 0 ? (
                         microfrontends.map(mfe => {
-                            const canaryPercentage = mfe.canary?.enabled ? Math.min(100, Math.max(0, mfe.canary.percentage ?? 0)) : 0
-
                             return (
                                 <TableRow key={mfe._id} className="border-divider hover:bg-primary/5">
                                     {/* Capped so a long name or slug cannot push the action column out of view. */}
@@ -50,18 +76,7 @@ export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microf
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap text-foreground-secondary">{t(HOST_TYPE_LABEL_KEYS[mfe.host.type])}</TableCell>
                                     <TableCell>
-                                        {canaryPercentage > 0 ? (
-                                            <div className="flex min-w-[7rem] items-center gap-2">
-                                                <div className="h-1.5 w-full max-w-20 overflow-hidden rounded-full bg-primary/20">
-                                                    <div className="h-full rounded-full bg-primary" style={{ width: `${canaryPercentage}%` }} />
-                                                </div>
-                                                <span className="whitespace-nowrap text-xs tabular-nums text-foreground-secondary">
-                                                    {canaryPercentage}% {t("microfrontend.ofUsers")}
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <span className="italic text-foreground-secondary">{t("common.no_data")}</span>
-                                        )}
+                                        <CanaryCell canary={mfe.canary} />
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap text-right">
                                         <div className="flex justify-end gap-2">

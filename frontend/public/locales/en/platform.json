@@ -66,6 +66,7 @@
             "description": "Access your environment variables in your microfrontends using the following methods.",
             "javascript_title": "JavaScript Integration",
             "javascript_description": "Include this script in your HTML to make environment variables available as",
+            "javascript_auto_note": "The same tag works in every environment: the console resolves which one answers from the domain the page is served on, so promoting a build never means editing this url.",
             "javascript_example": "Usage example",
             "javascript_direct_api_access": "Direct API Access",
             "javascript_direct_api_access_description": "Fetch variables directly from the API"
@@ -289,15 +290,23 @@
         },
         "canary_users": {
             "title": "Canary Users",
-            "subtitle": "Users with access to canary version",
+            "subtitle": "Who sees the canary version of the microfrontends of this deployment configured with the \"User\" type",
             "no_users": "No users have access to this canary version yet.",
             "columns": {
                 "user": "User",
-                "email": "Email",
                 "status": "Status"
             },
-            "coming_soon": "Coming soon",
-            "coming_soon_description": "This feature is still under development and will be available in a future release. Stay tuned!"
+            "add_title": "Add users",
+            "add_description": "Enter the user identifiers of your application, the ones you pass to the client SDK as userId. Paste several at once separated by commas, spaces or new lines.",
+            "user_id_placeholder": "user-123, user-456",
+            "add_button": "Add",
+            "added_success": "Users added to the canary users",
+            "updated_success": "Canary user updated",
+            "removed_success": "User removed from the canary users",
+            "enabled": "Canary",
+            "disabled": "Excluded",
+            "remove_title": "Remove canary user",
+            "remove_description": "Remove \"{{userId}}\" from the canary users? They will go back to the stable version."
         }
     },
     "builds": {
@@ -503,11 +512,11 @@
         "hosting_type": "Hosting Type",
         "canaryReleaseActive": "Canary Release Active",
         "distribution": "Distribution:",
-        "usersPercentage": "{{percentage}}% of users",
-        "type": "Type:",
         "sessionType": "Session",
-        "ipType": "IP Address",
-        "deployment": "Deployment",
+        "randomType": "Random",
+        "canary_type_random_description": "Drawn on every page load: the same browser can get a different version on every refresh.",
+        "canary_type_session_description": "Drawn once per browser and kept in the localStorage of the host page: the version stays the same across browser restarts.",
+        "canary_type_user_description": "No draw: the canary goes only to the users enrolled on the deployment. Anyone not signed in always gets the stable version.",
         "deploymentTypes": {
             "basedOnVersion": "Based on Version",
             "basedOnUrl": "Based on URL"
@@ -515,26 +524,26 @@
         "canaryUrl": "Canary URL",
         "canaryVersion": "Canary Version",
         "userType": "User",
-        "cookieBasedType": "Cookie Based",
         "entry_point": "Entry Point",
         "select_hosting_type": "Select hosting type",
         "mfe_orchestrator_hub": "MFE Orchestrator Hub",
         "custom_url": "Custom URL",
         "custom_source": "Custom Source",
+        "release_settings": "Release",
+        "release_settings_description": "The version served to your users and how the canary is rolled out",
+        "tabs": {
+            "general": "General",
+            "hosting": "Hosting",
+            "repository": "Repository",
+            "danger_zone": "Danger Zone"
+        },
         "canary_release": "Canary Release",
         "canary_settings": "Canary Settings",
         "canary_settings_description": "Configure canary deployment settings",
-        "enable_canary": "Enable Canary Deployment",
         "canary_percentage": "Canary Percentage",
-        "canary_percentage_description": "Percentage of traffic to route to canary version",
         "canary_percentage_presets": "Suggested percentages",
         "canary_type": "Canary Type",
-        "select_canary_type": "Select canary type",
-        "on_sessions": "On Sessions",
-        "on_user": "On User",
-        "cookie_based": "Cookie Based",
         "deployment_type": "Deployment Type",
-        "select_deployment_type": "Select deployment type",
         "based_on_version": "Based on Version",
         "based_on_url": "Based on URL",
         "canary_version": "Canary Version",
@@ -594,7 +603,8 @@
                 }
             }
         },
-        "ofUsers": "of users"
+        "ofUsers": "of users",
+        "canary_enrolled_users": "Enrolled users"
     },
     "environmentVariables": {
         "title": "Environment Variables",

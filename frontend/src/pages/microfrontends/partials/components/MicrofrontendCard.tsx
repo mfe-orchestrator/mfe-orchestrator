@@ -1,11 +1,11 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
-import { Cog, GitBranch, Globe, Hammer, UsersRound } from "lucide-react"
+import { Cog, GitBranch, Hammer, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
-import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS, HOST_TYPE_LABEL_KEYS } from "../labels"
+import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS } from "../labels"
 import BuildDialog from "./BuildDialog"
 import CloneRepositoryPopover from "./CloneRepositoryPopover"
 
@@ -21,6 +21,9 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
 
     const canary = mfe.canary?.enabled ? mfe.canary : undefined
     const canaryPercentage = Math.min(100, Math.max(0, canary?.percentage ?? 0))
+    // On User has no traffic share: the canary goes to the enrolled users, so a bar at 0% would read
+    // as "nobody sees it".
+    const showCanaryShare = Boolean(canary) && canary?.type !== CanaryType.ON_USER
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
 
     return (
@@ -38,15 +41,8 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
             </CardHeader>
 
             <CardContent className="flex flex-grow flex-col gap-3 py-3">
-                <dl className="flex flex-col gap-1.5 text-sm">
-                    <div className="flex items-center gap-2">
-                        <dt className="flex items-center gap-2 text-foreground-secondary">
-                            <Globe className="size-4 shrink-0" aria-hidden="true" />
-                            <span className="sr-only">{t("microfrontend.host")}</span>
-                        </dt>
-                        <dd className="min-w-0 truncate">{t(HOST_TYPE_LABEL_KEYS[mfe.host.type])}</dd>
-                    </div>
-                    {hasRepository && (
+                {hasRepository && (
+                    <dl className="flex flex-col gap-1.5 text-sm">
                         <div className="flex items-center gap-2">
                             <dt className="flex items-center gap-2 text-foreground-secondary">
                                 <GitBranch className="size-4 shrink-0" aria-hidden="true" />
@@ -56,8 +52,8 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                                 {mfe.codeRepository?.name || t("microfrontend.card.repository")}
                             </dd>
                         </div>
-                    )}
-                </dl>
+                    </dl>
+                )}
 
                 {canary && (
                     <div className="rounded-md border border-divider bg-primary/5 p-3">
@@ -66,18 +62,20 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                                 <UsersRound className="size-4 shrink-0" aria-hidden="true" />
                                 <span className="truncate">{t("microfrontend.card.canary")}</span>
                             </span>
-                            <span className="shrink-0 text-sm font-semibold tabular-nums">{canaryPercentage}%</span>
+                            <span className="shrink-0 text-sm font-semibold tabular-nums">{showCanaryShare ? `${canaryPercentage}%` : t("microfrontend.canary_enrolled_users")}</span>
                         </div>
-                        <div
-                            className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/20"
-                            role="progressbar"
-                            aria-valuenow={canaryPercentage}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-label={t("microfrontend.canaryReleaseActive")}
-                        >
-                            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${canaryPercentage}%` }} />
-                        </div>
+                        {showCanaryShare && (
+                            <div
+                                className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/20"
+                                role="progressbar"
+                                aria-valuenow={canaryPercentage}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label={t("microfrontend.canaryReleaseActive")}
+                            >
+                                <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${canaryPercentage}%` }} />
+                            </div>
+                        )}
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {canary.type && <Badge variant="outline">{t(CANARY_TYPE_LABEL_KEYS[canary.type])}</Badge>}
                             {canary.deploymentType && <Badge variant="outline">{t(CANARY_DEPLOYMENT_TYPE_LABEL_KEYS[canary.deploymentType])}</Badge>}
