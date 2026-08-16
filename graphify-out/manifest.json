@@ -380,13 +380,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/DeploymentCanaryUsersService.ts": {
-    "mtime": 1786464426.4754746,
-    "ast_hash": "12a48a967aaa552930c3500b43d5f726",
+    "mtime": 1786883749.0432644,
+    "ast_hash": "aaa94edb6242dc75b47ae643b367e528",
     "semantic_hash": ""
   },
   "backend/src/service/DeploymentService.ts": {
-    "mtime": 1786871947.562893,
-    "ast_hash": "8f3a58ec3aad04c164ca62d99bac8af1",
+    "mtime": 1786883758.5080514,
+    "ast_hash": "e06457a95bcf48dc23d8e9dafd68d037",
     "semantic_hash": ""
   },
   "backend/src/service/EmailSenderService.ts": {
@@ -2167,6 +2167,11 @@
   "frontend/public/img/logo.png": {
     "mtime": 1786880496.0958352,
     "ast_hash": "1f9c2e2433a0ff2d786cf52669bb90e3",
+    "semantic_hash": ""
+  },
+  "backend/src/service/DeploymentCanaryUsersService.test.ts": {
+    "mtime": 1786883773.5836983,
+    "ast_hash": "58045ecd7326cb5b5ca3bb04d8edd5e9",
     "semantic_hash": ""
   }
 }
