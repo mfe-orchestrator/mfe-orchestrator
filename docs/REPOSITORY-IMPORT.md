@@ -37,14 +37,14 @@ the **slug** the microfrontend would get.
 - **Search** — filters the list by repository name.
 - **Select all** — selects the repositories currently visible, so it composes with the search:
   filter by prefix, select all, refine, import.
-- **Already imported** — repositories already linked to a microfrontend of this project are
-  flagged, shown with their existing slug and cannot be selected. They keep the slug they were
-  imported with, so the list stays recognizable.
+- **Already imported** — repositories already linked to a microfrontend of this project carry an
+  *Already imported* badge in place of the slug and cannot be selected. The API still reports the
+  slug they were imported with, in `slug` and in `importedAs`.
 
 A repository counts as already imported when its provider id matches the one stored on a
-microfrontend of the project. Microfrontends created by hand through the *add microfrontend*
-form do not always carry that id — it is only known once the repository exists — so a
-case-insensitive match on the repository **name** is used as a fallback.
+microfrontend of the project linked to the same connection. Microfrontends created by hand
+through the *add microfrontend* form do not always carry that id — it is only known once the
+repository exists — so a case-insensitive match on the repository **name** is used as a fallback.
 
 ## What each import creates
 
@@ -81,8 +81,10 @@ not roll back what has already been created. The result splits into three lists:
 
 The console reports each list on its own: a success notification with the number of
 microfrontends created, an error notification naming the repositories that failed. When
-something failed the dialog stays open and reloads the list, so the successful part of the batch
-is already visible and can be retried without redoing the selection.
+something failed the dialog stays open, reloads the list and clears the selection: the
+repositories that were imported come back flagged as already imported, and the failed ones can be
+selected again for a retry. When the batch imported nothing and failed on nothing — everything
+was already linked — an informational notification says so instead.
 
 ## API
 
@@ -146,8 +148,9 @@ The response is `200` even when nothing was imported: an empty `imported` with a
 `skipped` means the connection had nothing left to adopt, which is a successful outcome and not
 an error. Read the three lists rather than the status code.
 
-Listing walks **every page** of the provider API, so connections with more than 30 repositories
-on GitHub, or 20 on GitLab, are listed and imported completely.
+Listing walks the pages of the provider API 100 repositories at a time, up to 50 pages, so
+connections with more than the provider's default page (30 on GitHub, 20 on GitLab) are listed
+and imported completely.
 
 ## Related
 

@@ -51,13 +51,23 @@ one-click rollback.
   on-premise when they cannot leave your network.
 - **CI/CD included** — ready-made pipelines for GitHub Actions, GitLab CI and
   Azure DevOps, plus an API for everything else.
-- **Canary releases** *(experimental)* — serve a new version to a share of your
-  users and stop the rollout by changing one setting.
+- **Canary releases** — roll a new version out to a random percentage, to a
+  sticky share of browsers, or to an explicit list of enrolled users, and switch
+  strategy without touching the host application.
+- **Build status, live** — the builds screen lists the pipeline runs of every
+  micro frontend and streams their status, reading GitHub Actions, GitLab
+  pipelines and Azure DevOps builds through the provider each one is hosted on.
+- **Global variables, injected for you** — the generated integration writes a
+  global variables script straight into the host document, addressed per
+  project, so the host picks up the environment's variables without wiring them
+  by hand.
 - **Cross-repository dependency analysis** — scan your micro frontend
   repositories and align peer dependencies across them.
 - **Import your repositories** — connect your GitHub organization, GitLab group
   or Azure DevOps project and create one micro frontend per repository in a
   single pass, instead of declaring them one by one.
+
+![The microfrontends of a project, with the version, the host and the canary split each one is serving](docs/assets/microfrontends-dashboard.png)
 
 ## How it works
 
@@ -94,6 +104,9 @@ Project reference:
 - **[Commit Conventions](COMMIT_CONVENTIONS.md)** - Conventional Commits specification
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
+- **[Host integration](docs/INTEGRATION.md)** - Wiring module federation and the global variables script into a host application
+- **[Canary releases](docs/CANARY.md)** - The three strategies, enrolled users and how a version is pinned
+- **[Build status](docs/BUILDS.md)** - How pipeline runs are read from each provider and streamed to the console
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
 - **[Dependency analysis](docs/DEPENDENCIES.md)** - How microfrontend dependencies are scanned and peer dependencies aligned
 - **[Repository import](docs/REPOSITORY-IMPORT.md)** - Creating one microfrontend per repository from a code repository connection
@@ -223,33 +236,36 @@ point it at your own instances. See the
 
 ## Environment variables 🔧
 
-| Variable                               | Default Value                                                                                     | Description                                                     |
+The database, Redis and SMTP variables have no built-in default: the values below
+are examples, and leaving one empty skips the feature it configures rather than
+falling back to it.
+
+| Variable                               | Default / example                                                                                 | Description                                                     |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | `FRONTEND_URL`                         | `http://localhost:3000`                                                                           | URL of the frontend application.                                |
-| `REGISTRATION_ALLOWED`                 | `false`                                                                                           | If `true`, allows new user registration.                        |
+| `REGISTRATION_ALLOWED`                 | `true`                                                                                            | If `true`, allows new user registration.                        |
 | `ALLOW_EMBEDDED_LOGIN`                 | `true`                                                                                            | If `true`, enables the login system within the application.     |
-| `MICROFRONTEND_HOST_FOLDER`            | `/var/microfrontends`                                                                             | Folder containing the host microfrontends.                      |
+| `MICROFRONTEND_HOST_FOLDER`            | `/upload-microfrontends`                                                                          | Folder containing the host microfrontends.                      |
 | `NOSQL_DATABASE_URL`                   | `mongodb://localhost:27017/microfrontend-orchestrator`                                            | MongoDB database connection URL.                                |
 | `NOSQL_DATABASE_NAME`                  | `microfrontend-orchestrator`                                                                      | MongoDB database name.                                          |
 | `NOSQL_DATABASE_USERNAME`              | `root`                                                                                            | MongoDB username.                                               |
 | `NOSQL_DATABASE_PASSWORD`              | `example`                                                                                         | MongoDB password.                                               |
 | `REDIS_URL`                            | `redis://localhost:6379`                                                                          | Redis server connection URL.                                    |
 | `REDIS_PASSWORD`                       | _(empty)_                                                                                         | Password for Redis access (if set).                             |
-| `NODE_ENV`                             | `development`                                                                                     | Node.js environment mode (development/production/test).         |
+| `NODE_ENV`                             | `prod` _(development/prod/test/local)_                                                            | Node.js environment mode. Any other value stops the boot.       |
 | `EMAIL_SMTP_HOST`                      | `smtp.example.com`                                                                                | SMTP server host for sending emails.                            |
 | `EMAIL_SMTP_PORT`                      | `587`                                                                                             | SMTP server port (e.g., 587 for TLS).                           |
 | `EMAIL_SMTP_SECURE`                    | `false`                                                                                           | If `true`, uses secure connection (SSL/TLS).                    |
 | `EMAIL_SMTP_USER`                      | _(empty)_                                                                                         | Username for SMTP authentication.                               |
 | `EMAIL_SMTP_PASSWORD`                  | _(empty)_                                                                                         | Password for SMTP authentication.                               |
 | `EMAIL_SMTP_FROM`                      | `no-reply@example.com`                                                                            | Sender email address.                                           |
-| `JWT_SECRET`                           | `your-secret-key-here`                                                                            | Secret key for JWT generation and validation.                   |
+| `JWT_SECRET`                           | `your-secret-key`                                                                                 | Secret key for JWT generation and validation.                   |
 | `AUTH0_DOMAIN`                         | _(empty)_                                                                                         | Auth0 tenant domain.                                            |
 | `AUTH0_CLIENT_ID`                      | _(empty)_                                                                                         | Client ID of the Auth0 application.                             |
 | `AUTH0_AUDIENCE`                       | _(empty)_                                                                                         | API Audience configured in Auth0.                               |
 | `AUTH0_SCOPE`                          | `openid profile email`                                                                            | OAuth scopes (space-separated)                                  |
 | `AZURE_ENTRAID_TENANT_ID`              | _(empty)_                                                                                         | Azure Entra ID tenant ID.                                       |
 | `AZURE_ENTRAID_CLIENT_ID`              | _(empty)_                                                                                         | Client ID of the registered Azure application.                  |
-| `AZURE_ENTRAID_CLIENT_SECRET`          | _(empty)_                                                                                         | Client secret of the registered Azure application.              |
 | `AZURE_ENTRAID_REDIRECT_URI`           | _(empty)_                                                                                         | Redirect URI for Azure authentication.                          |
 | `AZURE_ENTRAID_AUTHORITY`              | `https://login.microsoftonline.com`                                                               | Authentication authority URL.                                   |
 | `AZURE_ENTRAID_SCOPES`                 | `openid profile email`                                                                            | Required scopes during login.                                   |
@@ -259,11 +275,23 @@ point it at your own instances. See the
 | `GOOGLE_AUTH_SCOPE`                    | `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile` | Required scopes to get Google email and profile.                |
 | `ALLOWED_ORIGINS`                      | _(empty)_                                                                                         | List of allowed URLs for cross-origin requests comma separated. |
 | `ALLOWED_SERVE_ORIGINS`                | _(falls back to `ALLOWED_ORIGINS`)_                                                               | Same list, applied only to the `/serve/*` endpoints.            |
-| `LOG_LEVEL`                            | `info` _(debug/info/warn/error)_                                                                  | Logging level.                                                  |
 | `CODE_REPOSITORY_GITHUB_CLIENT_ID`     | _(empty)_                                                                                         | Client ID for GitHub OAuth authentication.                      |
 | `CODE_REPOSITORY_GITHUB_CLIENT_SECRET` | _(empty)_                                                                                         | Client secret for GitHub OAuth authentication.                  |
 | `TELEMETRY_DISABLED`                   | _(empty)_                                                                                         | If `true`, turns off the anonymous telemetry ping.              |
 | `DO_NOT_TRACK`                         | _(empty)_                                                                                         | If `1`, turns off the anonymous telemetry ping.                 |
+| `TELEMETRY_ENABLED`                    | _(empty)_                                                                                         | Explicit switch for the telemetry ping. See [docs/TELEMETRY.md](docs/TELEMETRY.md) for how the three switches interact. |
+| `TELEMETRY_ENDPOINT`                   | `https://telemetry.mfe-orchestrator.dev/api/telemetry/self-hosted`                                | Where the anonymous ping is sent.                               |
+| `TELEMETRY_INTERVAL_HOURS`             | `24`                                                                                              | Hours between two pings.                                        |
+| `BACKEND_URL`                          | _(empty, falls back to `FRONTEND_URL` + `/api`)_                                                  | Public URL of the API, written into the generated configuration. |
+| `PORT`                                 | `3000`                                                                                            | Port the backend listens on.                                    |
+| `RATE_LIMIT_MAX`                       | `100`                                                                                             | Requests per IP per minute.                                     |
+| `MARKETING_OPT_IN_ENABLED`             | `false`                                                                                           | If `true`, the registration form collects a marketing consent.  |
+| `MARKETING_OPT_IN_VERSION`             | `1`                                                                                               | Version of the consent text, stored together with the consent.  |
+| `GOOGLE_CLIENT_SECRET`                 | _(empty)_                                                                                         | Client secret for Google OAuth authentication.                  |
+| `GOOGLE_AUTH_HOSTED_DOMAIN`            | _(empty)_                                                                                         | Restricts the Google login to a single Workspace domain.        |
+| `GOOGLE_API_AUDIENCE`                  | _(empty)_                                                                                         | Protected API identifier for Google.                            |
+| `NPM_REGISTRY_URL`                     | `https://registry.npmjs.org`                                                                      | Registry queried by the dependency analysis for published versions. |
+| `SENTRY_DSN`                           | _(empty)_                                                                                         | Sentry DSN. Leave empty to disable error reporting.             |
 
 ## Anonymous telemetry 📡
 
@@ -299,12 +327,13 @@ formatted with Biome, with Lefthook git hooks and commitlint-enforced
 conventional commits. The **backend** is Fastify + TypeScript (layered
 models → services → controllers → plugins, MongoDB with Mongoose, Redis for
 caching, multi-auth: local JWT, Auth0, Google OAuth, Azure Entra ID). The
-**frontend** is React + TypeScript (shadcn/ui with Tailwind CSS, React Query +
-Zustand, React Router, react-hook-form, react-i18next).
+**frontend** is React + TypeScript (rendered through
+`@mfe-orchestrator/design-system` on Tailwind CSS, React Query + Zustand, React
+Router, react-hook-form, react-i18next).
 
 ### Prerequisites
 
-- Node.js 18+ and pnpm installed
+- Node.js 21+ and pnpm installed
 - Docker and Docker Compose
 
 ### Quick Start
@@ -353,10 +382,6 @@ CODE_REPOSITORY_GITHUB_CLIENT_SECRET=your_github_client_secret
 ```bash
 # Start both backend and frontend in development mode
 pnpm dev
-
-# Or start them individually:
-# Backend only: pnpm dev:backend
-# Frontend only: pnpm dev:frontend
 ```
 
 ### Available Commands
@@ -365,29 +390,29 @@ The monorepo provides these workspace-level commands:
 
 ```bash
 # Development
-pnpm dev              # Start both backend and frontend
-pnpm dev:backend      # Start backend only
-pnpm dev:frontend     # Start frontend only
+pnpm dev              # Start both backend and frontend (Turbo fans it out)
 
 # Building
 pnpm build            # Build all packages
-pnpm build:backend    # Build backend only
-pnpm build:frontend   # Build frontend only
 
 # Code Quality
 pnpm lint             # Lint all packages with Biome
+pnpm lint:imports     # Strip unused imports across the repo
 pnpm format           # Format all packages with Biome
 pnpm typecheck        # TypeScript check for all packages
 
 # Testing
-pnpm test             # Run tests in all packages
+pnpm test             # Run unit tests in all packages
+pnpm test:e2e         # Run the Playwright end-to-end suite
+pnpm test:e2e:ui      # ...in the Playwright UI
+pnpm test:e2e:report  # Open the last HTML report
 ```
 
 ### Development URLs
 
-- **Backend**: `http://localhost:8080`
-- **Frontend**: `http://localhost:3000`
-- **API Documentation**: `http://localhost:8080/api-docs`
+- **Backend**: `http://localhost:3000`
+- **Frontend**: `http://localhost:5173`
+- **API Documentation**: `http://localhost:3000/api-docs`
 
 ## Contributing 🤝
 

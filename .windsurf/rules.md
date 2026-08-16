@@ -10,6 +10,14 @@ This is a **monorepo** with:
 - **⚡ Turbo** for optimized builds and task orchestration
 - **🎨 Biome** for unified linting and formatting
 - **🪝 Lefthook** for git hooks and code quality checks
+- Three workspace packages: `frontend`, `backend`, `e2e` (Playwright)
+
+## Key Features
+
+- **Canary deployments**: `CanaryType` (`RANDOM` | `ON_SESSION` | `ON_USER`, default `ON_SESSION`) and `CanaryDeploymentType` (`BASED_ON_VERSION` | `BASED_ON_URL`) in `backend/src/models/MicrofrontendModel.ts`; enrolled canary users in `DeploymentCanaryUsersController.ts`. See `docs/CANARY.md`
+- **Federation integration**: `FederationIntegrationService` replaced the old host injection, which is gone. See `docs/INTEGRATION.md`
+- **Environment-free serving**: manifest, global variables and microfrontend config are served both with an environment slug and without it, via the `auto/:projectId` route forms
+- **Pages**: `src/pages/` has 17 feature directories, including `builds` (see `docs/BUILDS.md`), `profile`, `dependencies`, `integration`, `templates-library`
 
 ## Quick Reference Rules
 
@@ -31,7 +39,7 @@ pnpm typecheck        # TypeScript check all packages
 - Always reuse existing **UI elements** instead of creating new ones from scratch
 - For forms, always use **react-hook-form**
 - For icons, use only **lucide-react**
-- Use every time ui components from `/src/components/ui`
+- Use every time ui components from `@mfe-orchestrator/design-system`. `/src/components/ui` holds only the local leftovers (`DeleteConfirmationDialog`, `Sidebar`) - do not add to it
 - For toast notifications, use:
   ```ts
   import useToastNotificationStore from "@/store/useToastNotificationStore";

@@ -67,7 +67,7 @@ The backoffice that receives the ping is an ordinary HTTP service, so it sees th
 ## When it is sent
 
 - **60 seconds after startup**, then **once every 24 hours** while the process runs. The initial delay keeps builds, CI runs and smoke tests from being counted as installations.
-- The request has a **5 second timeout**, is **never retried**, and any failure is swallowed: an air-gapped or offline installation logs a debug line and keeps working exactly as before. Telemetry cannot slow down, block or break the orchestrator.
+- The request has a **5 second timeout**, is **never retried**, and any failure is swallowed: the first failure of each process is logged (with the reason and how to stop trying), later ones only at debug level, and the installation keeps working exactly as before. Telemetry cannot slow down, block or break the orchestrator.
 - Pings are skipped entirely while the database is unreachable.
 
 ## Where it is sent
@@ -97,13 +97,13 @@ Values understood by every switch: `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`of
 
 The first rule that matches wins:
 
-| #   | Condition                        | Result   | Why                                                                        |
-| --- | -------------------------------- | -------- | -------------------------------------------------------------------------- |
-| 1   | `TELEMETRY_ENABLED` is set       | its value | An explicit choice always wins, in both directions                         |
-| 2   | `TELEMETRY_DISABLED` is true     | off      | The documented opt-out                                                     |
-| 3   | `DO_NOT_TRACK` is true           | off      | Cross-tool convention                                                      |
-| 4   | `NODE_ENV` is not `prod`         | off      | Developer machines, CI and test runs are not installations                  |
-| 5   | none of the above                | **on**   | Opt-out default                                                            |
+| #   | Condition                                        | Result    | Why                                                                        |
+| --- | ------------------------------------------------ | --------- | -------------------------------------------------------------------------- |
+| 1   | `TELEMETRY_ENABLED` is set to a recognized value  | its value | An explicit choice always wins, in both directions                         |
+| 2   | `TELEMETRY_DISABLED` is true                     | off       | The documented opt-out                                                     |
+| 3   | `DO_NOT_TRACK` is true                           | off       | Cross-tool convention                                                      |
+| 4   | `NODE_ENV` is set to something other than `prod` | off       | Developer machines, CI and test runs are not installations. An unset NODE_ENV counts as prod. |
+| 5   | none of the above                                | **on**    | Opt-out default                                                            |
 
 ### Environment variables
 
@@ -151,6 +151,9 @@ The first ping of each process is also logged in full, so the real bytes that le
   "documentationUrl": "https://github.com/mfe-orchestrator/mfe-orchestrator/blob/main/docs/TELEMETRY.md"
 }
 ```
+
+`payload` is `null` when the database is not connected: the status endpoint answers anyway, it
+just cannot collect the counters.
 
 **3. Watch the wire.** Point `TELEMETRY_ENDPOINT` at a local listener and read what arrives. It will be the JSON above, byte for byte.
 

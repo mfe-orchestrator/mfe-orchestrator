@@ -26,9 +26,9 @@ lists the available branches per microfrontend and lets you point one at `develo
 branch, or anything else before rescanning.
 
 `GET /dependencies/targets` returns what the scan would walk — one entry per microfrontend with
-its `defaultBranch` and the `branches` available — and every other endpoint accepts a `branches`
-map keyed by microfrontend id. Microfrontends left out of the map fall back to their default
-branch.
+its `defaultBranch` and the `branches` available — and the three `POST` endpoints accept a
+`branches` map keyed by microfrontend id. Microfrontends left out of the map — and every request
+to the two `GET` report endpoints, which take no body — fall back to the default branch.
 
 ### Update status
 
@@ -73,18 +73,20 @@ Every repository is processed independently: a failure on one of them (revoked t
 
 ## API
 
-All the endpoints below are scoped to the project carried by the `Project-Id` header.
+All the endpoints below are served under `/api` and are scoped to the project carried by the
+`Project-Id` header, except `/api/projects/:projectId/dependencies`, which takes the project from
+the path.
 
-| Method | Path                                | Description                                                       |
-| ------ | ----------------------------------- | ----------------------------------------------------------------- |
-| `GET`  | `/dependencies/targets`             | Microfrontends the scan would walk, with default and available branches |
-| `GET`  | `/dependencies`                     | Full report on the default branches                                |
-| `GET`  | `/projects/:projectId/dependencies` | Same report, with the project in the path                          |
-| `POST` | `/dependencies/report`              | Full report on the branches given in the body                      |
-| `POST` | `/dependencies/peer/alignment-plan` | Dry run: what would change, repository by repository               |
-| `POST` | `/dependencies/peer/align`          | Applies the alignment and returns the outcome per repository       |
+| Method | Path                                    | Description                                                       |
+| ------ | --------------------------------------- | ----------------------------------------------------------------- |
+| `GET`  | `/api/dependencies/targets`             | Microfrontends the scan would walk, with default and available branches |
+| `GET`  | `/api/dependencies`                     | Full report on the default branches                                |
+| `GET`  | `/api/projects/:projectId/dependencies` | Same report, with the project in the path                          |
+| `POST` | `/api/dependencies/report`              | Full report on the branches given in the body                      |
+| `POST` | `/api/dependencies/peer/alignment-plan` | Dry run: what would change, repository by repository               |
+| `POST` | `/api/dependencies/peer/align`          | Applies the alignment and returns the outcome per repository       |
 
-The body of the `POST` endpoints is optional. `/dependencies/report` accepts `branches` only,
+The body of the `POST` endpoints is optional. `/api/dependencies/report` accepts `branches` only,
 the two alignment endpoints accept every field:
 
 ```jsonc
