@@ -21,6 +21,7 @@
   "19": "Backend Controller Layer",
   "20": "Tables & Layout Components",
   "21": "Sidebar & Theme Toggle",
+  "22": "ApiKeyService.ts",
   "23": "Frontend API Client",
   "24": "Auth Wrappers & Context",
   "25": "Project Docs & Tooling",
@@ -187,15 +188,11 @@
   "186": "AzureStorageClient",
   "187": "CloneRepositoryPopover.tsx",
   "188": "NpmRegistryClient.ts",
-  "189": "BaseAuthorizedService",
-  "190": "account_activation",
   "191": "card",
   "195": "table",
   "196": "form",
   "197": "FederationConfigService",
   "202": "hostTypes",
   "203": "validation",
-  "205": "globalVariablesScript.ts",
-  "206": "deploymentTypes",
-  "208": "assist"
+  "206": "deploymentTypes"
 }

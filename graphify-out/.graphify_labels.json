@@ -188,11 +188,18 @@
   "186": "AzureStorageClient",
   "187": "CloneRepositoryPopover.tsx",
   "188": "NpmRegistryClient.ts",
+  "189": "stats",
+  "190": "marketing",
   "191": "card",
+  "192": "Sidebar.tsx",
+  "193": "globalVariablesScript.ts",
+  "194": "setup",
   "195": "table",
   "196": "form",
   "197": "FederationConfigService",
+  "198": "theme",
+  "199": "DeploymentController.ts",
+  "200": "[3.1.0] - 2026-08-16",
   "202": "hostTypes",
-  "203": "validation",
-  "206": "deploymentTypes"
+  "203": "validation"
 }
