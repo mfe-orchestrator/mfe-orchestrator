@@ -655,8 +655,8 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1786893374.9176269,
-    "ast_hash": "ca99492d25b1305e6d7e4e706f37e3f3",
+    "mtime": 1786893607.085176,
+    "ast_hash": "dccbbf645877e51f53c089a5de1388e9",
     "semantic_hash": ""
   },
   "frontend/postcss.config.js": {
@@ -665,13 +665,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786891571.8606095,
-    "ast_hash": "0fe16b0b09ba8f762597650bbbed69dc",
+    "mtime": 1786893654.5323224,
+    "ast_hash": "e081c5b89fc7eb26439c77f39761e213",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786891569.7061756,
-    "ast_hash": "8403dbc46359df6bede936491f91a80d",
+    "mtime": 1786893656.247993,
+    "ast_hash": "3779cc1fcc107042a91b80f02a4ccca2",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/api-keys/partials/CreateApiKeyDialog.tsx": {
-    "mtime": 1786893486.119771,
-    "ast_hash": "0f1e00a06b65cc184fe7188ab182e950",
+    "mtime": 1786893672.6725807,
+    "ast_hash": "fa82cd1a7c7c9b4f683469196118ce24",
     "semantic_hash": ""
   },
   "frontend/src/pages/api-keys/partials/CreateApiKeyForm.tsx": {
@@ -1150,8 +1150,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/components/CodeIntegration.tsx": {
-    "mtime": 1786893435.7862096,
-    "ast_hash": "4f83ad6b9a1c6463e71a75c56e60f820",
+    "mtime": 1786893679.5982683,
+    "ast_hash": "6f83c00ba6af3e5b9b5cb8166ade6263",
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/components/MicrofrontendSelector.tsx": {
@@ -1340,8 +1340,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/partials/ProjectInfoSection.tsx": {
-    "mtime": 1786893570.4545677,
-    "ast_hash": "10fba7cab5fc5c25e85a6280ae04be2a",
+    "mtime": 1786893672.6648278,
+    "ast_hash": "ae85baae5043cbf57fb9c49a1ef3352f",
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/partials/ProjectStatsSection.tsx": {
@@ -2255,8 +2255,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/screenshots.spec.ts": {
-    "mtime": 1786893359.1873844,
-    "ast_hash": "7a196ef91386a959056b01814b4574e2",
+    "mtime": 1786893650.7252507,
+    "ast_hash": "e4151a4dc30722a3935746d564e150ed",
     "semantic_hash": ""
   },
   "docs/assets/builds-page.png": {

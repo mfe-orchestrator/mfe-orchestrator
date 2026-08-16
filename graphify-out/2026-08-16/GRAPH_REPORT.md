@@ -1,11 +1,11 @@
 # Graph Report - mfe-orchestrator  (2026-08-16)
 
 ## Corpus Check
-- 412 files · ~465,203 words
+- 412 files · ~465,061 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3587 nodes · 6766 edges · 210 communities (171 shown, 39 thin omitted)
+- 3587 nodes · 6766 edges · 209 communities (170 shown, 39 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 40 edges (avg confidence: 0.73)
 - Token cost: 0 input · 0 output
 
@@ -203,7 +203,6 @@
 - [[_COMMUNITY_theme|theme]]
 - [[_COMMUNITY_DeploymentController.ts|DeploymentController.ts]]
 - [[_COMMUNITY_3.1.0 - 2026-08-16|[3.1.0] - 2026-08-16]]
-- [[_COMMUNITY_hostTypes|hostTypes]]
 - [[_COMMUNITY_validation|validation]]
 - [[_COMMUNITY_Dependencies.tsx|Dependencies.tsx]]
 - [[_COMMUNITY_CodeRepositoryService.ts|CodeRepositoryService.ts]]
@@ -238,8 +237,8 @@
 
 ## Import Cycles
 - 3-file cycle: `frontend/src/pages/integration/partials/index.ts -> frontend/src/pages/integration/partials/views/index.ts -> frontend/src/pages/integration/partials/views/FrontendIntegration.tsx -> frontend/src/pages/integration/partials/index.ts`
-- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithAuth0Button.tsx -> frontend/src/authentication/components/LoginPage.tsx`
+- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
 - 3-file cycle: `frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts`
@@ -249,7 +248,7 @@
 - **CI/CD Pipeline (build, dockerize, deploy, e2e)** — _github_workflows_monorepo_build_build_and_test, _github_workflows_docker_build_docker_build, _github_workflows_deploy_deploy_to_server, _github_workflows_e2e_tests_e2e_tests [EXTRACTED 1.00]
 - **Code Quality and Commit Convention Enforcement** — lefthook_pre_commit_hooks, lefthook_commit_msg_commitlint, commit_conventions_conventional_commits, commit_conventions_semantic_versioning, changelog_changelog [INFERRED 0.85]
 
-## Communities (210 total, 39 thin omitted)
+## Communities (209 total, 39 thin omitted)
 
 ### Community 1 - "Frontend Dependencies"
 Cohesion: 0.06
@@ -292,12 +291,12 @@ Cohesion: 0.05
 Nodes (37): devDependencies, @biomejs/biome, @commitlint/cli, @commitlint/config-conventional, lefthook, turbo, license, packageManager (+29 more)
 
 ### Community 11 - "Project & Environment APIs"
-Cohesion: 0.22
-Nodes (9): microfrontend, add_new, add_new_description, add_your_first_microfrontend, edit, edit_description, host, no_microfrontends_found (+1 more)
+Cohesion: 0.17
+Nodes (12): customSource, customUrl, mfeOrchestratorHub, microfrontend, add_new, add_new_description, add_your_first_microfrontend, edit (+4 more)
 
 ### Community 12 - "Microfrontend Pages & API"
-Cohesion: 0.14
-Nodes (19): App(), queryClient, LanguageSelector(), LanguageSelectorProps, ThemeToggle(), ThemeToggleProps, ThemeEnum, ThemeState (+11 more)
+Cohesion: 0.15
+Nodes (16): App(), queryClient, LanguageSelector(), LanguageSelectorProps, ThemeToggle(), useThemeStore, AuthWrapper(), InitialThemeWrapper() (+8 more)
 
 ### Community 13 - "Backend Dependencies"
 Cohesion: 0.06
@@ -320,8 +319,8 @@ Cohesion: 0.10
 Nodes (29): AcceptInvitationDTO, AddUserToProjectDTO, PopulatedProject, UpdateUserRoleDTO, UserProjectWithProject, AuthTokenDataDTO, build(), fastify (+21 more)
 
 ### Community 18 - "Frontend Routes"
-Cohesion: 0.06
-Nodes (28): AccountActivation, AddAzure, AddGithub, AddGitlab, AddMicrofrontend, AddStorage, ApiKeys, Builds (+20 more)
+Cohesion: 0.05
+Nodes (33): EXTERNAL_NAV_ITEMS, Sidebar, SidebarProps, AccountActivation, AddAzure, AddGithub, AddGitlab, AddMicrofrontend (+25 more)
 
 ### Community 19 - "Backend Controller Layer"
 Cohesion: 0.10
@@ -360,8 +359,8 @@ Cohesion: 0.06
 Nodes (35): builds, empty, live, refresh, status, subtitle, table, title (+27 more)
 
 ### Community 29 - "API Hooks & Pages"
-Cohesion: 0.18
-Nodes (11): errors, hint, notifications, remove, subtitle, title, upload, uploading (+3 more)
+Cohesion: 0.20
+Nodes (10): errors, hint, remove, subtitle, title, upload, uploading, invalidFormat (+2 more)
 
 ### Community 30 - "Code Repositories API"
 Cohesion: 0.07
@@ -468,8 +467,8 @@ Cohesion: 0.11
 Nodes (19): action, alreadyImported, description, failedCount_one, failedCount_other, import_one, import_other, importedCount_one (+11 more)
 
 ### Community 56 - "useUserApi.ts"
-Cohesion: 0.14
-Nodes (24): UserButton(), AcceptInvitationResponse, AuthResponse, ResetPasswordDataDTO, ResetPasswordRequestDTO, User, UserInvitationDTO, UserLoginDTO (+16 more)
+Cohesion: 0.24
+Nodes (12): UserButton(), useUserApi(), PROFILE_AVATAR_QUERY_KEY, useProfilePicture(), ALLOWED_MIME_TYPES, AvatarSection(), MarketingConsentSection(), FormValues (+4 more)
 
 ### Community 57 - "Project Wizard Service"
 Cohesion: 0.26
@@ -601,7 +600,7 @@ Nodes (13): errors, hint, notifications, remove, subtitle, title, upload, upload
 
 ### Community 94 - "ApiStatusHandler Component"
 Cohesion: 0.07
-Nodes (27): common, actions, active, add, back, cancel, close, configuration (+19 more)
+Nodes (28): common, actions, active, add, back, cancel, close, configuration (+20 more)
 
 ### Community 95 - "CI/CD Deploy Workflows"
 Cohesion: 0.67
@@ -653,7 +652,7 @@ Nodes (7): Dependabot Weekly npm Updates (frontend and backend), Dependencies, R
 
 ### Community 131 - "common"
 Cohesion: 0.07
-Nodes (27): common, actions, active, add, back, cancel, close, configuration (+19 more)
+Nodes (28): common, actions, active, add, back, cancel, close, configuration (+20 more)
 
 ### Community 132 - "README.md"
 Cohesion: 0.04
@@ -820,8 +819,8 @@ Cohesion: 0.29
 Nodes (7): build, canary, repository, storage, users, version, card
 
 ### Community 192 - "Sidebar.tsx"
-Cohesion: 0.33
-Nodes (5): EXTERNAL_NAV_ITEMS, Sidebar, SidebarProps, MainLayout(), MainLayoutProps
+Cohesion: 0.16
+Nodes (15): ThemeToggleProps, AcceptInvitationResponse, AuthResponse, ResetPasswordDataDTO, ResetPasswordRequestDTO, User, UserInvitationDTO, UserLoginDTO (+7 more)
 
 ### Community 193 - "globalVariablesScript.ts"
 Cohesion: 0.53
@@ -846,10 +845,6 @@ Nodes (5): theme, dark, light, system, toggle_theme
 ### Community 200 - "[3.1.0] - 2026-08-16"
 Cohesion: 0.28
 Nodes (9): useProjectUserApi(), AddUserButton(), AddUserButtonProps, gravatarHash(), UserPicture(), getUserFullName(), getUserInitials(), ProjectUsers() (+1 more)
-
-### Community 202 - "hostTypes"
-Cohesion: 0.50
-Nodes (4): customSource, customUrl, mfeOrchestratorHub, hostTypes
 
 ### Community 203 - "validation"
 Cohesion: 0.50
@@ -887,11 +882,11 @@ Nodes (4): description, step2, title, curl
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useUserApi()` connect `useUserApi.ts` to `Backend Controllers & Auth`, `Backend Dev Dependencies`, `GitHub Client Methods`, `Azure DevOps Client Types`, `Code Repositories UI`, `Microfrontend Pages & API`, `errorHandler.ts`?**
+- **Why does `useUserApi()` connect `useUserApi.ts` to `Sidebar.tsx`, `Backend Controllers & Auth`, `Backend Dev Dependencies`, `GitHub Client Methods`, `Azure DevOps Client Types`, `Code Repositories UI`, `Microfrontend Pages & API`, `errorHandler.ts`?**
   _High betweenness centrality (0.158) - this node is a cross-community bridge._
 - **Why does `toObjectId()` connect `Cloud Storage & Project Controllers` to `Deployment Service & Models`, `UI Cards & Alerts`, `Azure Storage & Microfrontend Model`, `Local Installation for development 🛠️`, `[2.3.0] - 2026-08-11`, `UI Inputs & Popover`, `Tables & Layout Components`, `Code Repository Service`, `Breaking Changes`, `Canary Users Domain`, `User & Invitation API`, `DeploymentService`, `errorHandler.ts`, `MicrofrontendService.ts`, `errorHandler.ts`, `AuthenticationMethod.ts`, `.create`, `CodeRepositoryService.ts`, `Sidebar.tsx`, `Switch Component`?**
   _High betweenness centrality (0.131) - this node is a cross-community bridge._
-- **Why does `UserButton()` connect `useUserApi.ts` to `Sidebar.tsx`, `Backend Controllers & Auth`, `React Misc Hooks`?**
+- **Why does `UserButton()` connect `useUserApi.ts` to `Backend Controllers & Auth`, `Frontend Routes`, `React Misc Hooks`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `toObjectId()` (e.g. with `.getRepositoriesById()` and `.bulkDelete()`) actually correct?**
   _`toObjectId()` has 2 INFERRED edges - model-reasoned connections that need verification._
