@@ -31,10 +31,6 @@ env:
   NODE_ENV: prod
   # Port the backend listens on, behind the in-container nginx. default: 3000
   PORT: 3000
-  # Address the backend binds to.
-  HOST: ""
-  # Logging level: debug | info | warn | error. default: info
-  LOG_LEVEL: ""
   # Public URL of the frontend. default: http://localhost:3000
   FRONTEND_URL: ""
   # Public URL of the API. default: <FRONTEND_URL>/api
@@ -56,6 +52,14 @@ env:
   # exhausted and the API starts answering 429. default: 100
   # Leave commented out to keep the default: an empty value fails validation.
   # RATE_LIMIT_MAX: 300
+  # Collect a marketing consent on the registration form. The platform never
+  # sends commercial email itself: it only records that the consent was given.
+  # default: false
+  MARKETING_OPT_IN_ENABLED: ""
+  # Version of the consent text shown at registration, stored together with the
+  # consent, so an old consent stays attributable to the wording accepted.
+  # default: 1
+  MARKETING_OPT_IN_VERSION: ""
 
   ## --- MongoDB ---------------------------------------------------------------
   ## The chart does not deploy MongoDB: point these at your own instance or at
@@ -65,11 +69,6 @@ env:
   NOSQL_DATABASE_NAME: microfrontend-orchestrator
   NOSQL_DATABASE_USERNAME: ""
   # NOSQL_DATABASE_PASSWORD -> envSecrets
-
-  ## Legacy aliases, still read by the backend configuration schema.
-  NOSQL_DB_URL: ""
-  NOSQL_DB_DATABASE: ""
-  # NOSQL_DB_PASSWORD -> envSecrets
 
   ## --- Redis -----------------------------------------------------------------
   # default: redis://localhost:6379
@@ -102,7 +101,6 @@ env:
   # default: openid profile email
   AZURE_ENTRAID_SCOPES: ""
   AZURE_ENTRAID_API_AUDIENCE: ""
-  # AZURE_ENTRAID_CLIENT_SECRET -> envSecrets
 
   ## --- Google ----------------------------------------------------------------
   GOOGLE_CLIENT_ID: ""
@@ -117,6 +115,11 @@ env:
   ## --- Code repositories -----------------------------------------------------
   CODE_REPOSITORY_GITHUB_CLIENT_ID: ""
   # CODE_REPOSITORY_GITHUB_CLIENT_SECRET -> envSecrets
+
+  ## --- Dependencies ----------------------------------------------------------
+  # Registry the cross-repository dependency analysis queries for published
+  # versions. default: https://registry.npmjs.org
+  NPM_REGISTRY_URL: ""
 
   ## --- Observability and telemetry -------------------------------------------
   # Anonymous, opt-out telemetry of the self-hosted install. Set TELEMETRY_ENABLED
@@ -137,10 +140,8 @@ envSecrets:
   # Signing key of the JWT tokens - ALWAYS override this in production.
   JWT_SECRET: ""
   NOSQL_DATABASE_PASSWORD: ""
-  NOSQL_DB_PASSWORD: ""
   REDIS_PASSWORD: ""
   EMAIL_SMTP_PASSWORD: ""
-  AZURE_ENTRAID_CLIENT_SECRET: ""
   GOOGLE_CLIENT_SECRET: ""
   CODE_REPOSITORY_GITHUB_CLIENT_SECRET: ""
 

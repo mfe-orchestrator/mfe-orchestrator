@@ -22,11 +22,11 @@ Reach the console:
 Health endpoint: /api/echo
 
 {{- $env := .Values.env | default dict }}
-{{- if not (or (get $env "NOSQL_DATABASE_URL") (get $env "NOSQL_DB_URL")) }}
+{{- if not (get $env "NOSQL_DATABASE_URL") }}
 
-WARNING: neither env.NOSQL_DATABASE_URL nor env.NOSQL_DB_URL is set. This chart
-does not deploy MongoDB, so the application will try to reach a database on
-localhost and fail to start. Set it with:
+WARNING: env.NOSQL_DATABASE_URL is not set. This chart does not deploy MongoDB,
+so the application will try to reach a database on localhost and fail to start.
+Set it with:
 
   --set env.NOSQL_DATABASE_URL="mongodb://user:password@my-mongodb:27017"
 {{- end }}
