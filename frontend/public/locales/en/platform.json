@@ -268,8 +268,45 @@
         "key_copied": "Key Copied",
         "key_copied_to_clipboard": "The API key has been copied to your clipboard"
     },
+    "profile": {
+        "title": "Profile",
+        "subtitle": "Manage your personal data and profile picture",
+        "personalData": {
+            "title": "Personal data",
+            "subtitle": "The name and surname shown across the platform",
+            "email": "Email",
+            "emailNotEditable": "The email cannot be changed",
+            "name": "Name",
+            "surname": "Surname"
+        },
+        "avatar": {
+            "title": "Profile picture",
+            "subtitle": "Replaces the picture inherited from the login provider",
+            "upload": "Upload picture",
+            "uploading": "Uploading...",
+            "remove": "Remove",
+            "hint": "PNG, JPEG, WebP or GIF, up to {{size}}",
+            "errors": {
+                "invalidFormat": "Unsupported format: use PNG, JPEG, WebP or GIF",
+                "tooLarge": "The image exceeds the maximum size of {{size}}"
+            },
+            "notifications": {
+                "uploaded": "Profile picture updated",
+                "deleted": "Profile picture removed"
+            },
+            "delete": {
+                "title": "Remove profile picture",
+                "confirmation": "Do you really want to remove your profile picture?"
+            }
+        },
+        "notifications": {
+            "personalDataUpdated": "Personal data updated"
+        }
+    },
     "validation": {
-        "required": "This field is required"
+        "required": "This field is required",
+        "max_length_one": "Maximum {{count}} character",
+        "max_length_other": "Maximum {{count}} characters"
     },
     "color_picker": {
         "select_color": "Select a color"

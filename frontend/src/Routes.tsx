@@ -31,6 +31,7 @@ const GitHubCallbackPage = lazy(() => import("./pages/code-repositories/GitHubCa
 const TemplatesLibrary = lazy(() => import("./pages/templates-library/TemplatesLibrary"))
 const NotFound = lazy(() => import("./pages/error/NotFound"))
 const Settings = lazy(() => import("./pages/settings/Settings"))
+const Profile = lazy(() => import("./pages/profile/Profile"))
 const NewProjectWizard = lazy(() => import("./pages/new-project-wizard/NewProjectWizard"))
 
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"))
@@ -84,6 +85,7 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/storages/:id" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/api-keys" element={<RouteWithSuspense element={<ApiKeys />} />} />
                 <Route path="/settings" element={<RouteWithSuspense element={<Settings />} />} />
+                <Route path="/profile" element={<RouteWithSuspense element={<Profile />} />} />
                 <Route path="/environments" element={<RouteWithSuspense element={<Environments />} />} />
                 <Route path="/environment-variables" element={<RouteWithSuspense element={<EnvironmentVariables />} />} />
                 <Route path="/code-repositories" element={<RouteWithSuspense element={<CodeRepositories />} />} />

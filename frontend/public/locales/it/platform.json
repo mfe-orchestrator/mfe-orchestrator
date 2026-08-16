@@ -523,8 +523,45 @@
         "key_copied": "Chiave copiata",
         "key_copied_to_clipboard": "La chiave API è stata copiata negli appunti"
     },
+    "profile": {
+        "title": "Profilo",
+        "subtitle": "Gestisci i tuoi dati personali e l'immagine del profilo",
+        "personalData": {
+            "title": "Dati personali",
+            "subtitle": "Il nome e il cognome mostrati nella piattaforma",
+            "email": "Email",
+            "emailNotEditable": "L'email non è modificabile",
+            "name": "Nome",
+            "surname": "Cognome"
+        },
+        "avatar": {
+            "title": "Immagine del profilo",
+            "subtitle": "Sostituisce l'immagine ereditata dal provider di login",
+            "upload": "Carica immagine",
+            "uploading": "Caricamento...",
+            "remove": "Rimuovi",
+            "hint": "PNG, JPEG, WebP o GIF, fino a {{size}}",
+            "errors": {
+                "invalidFormat": "Formato non supportato: usa PNG, JPEG, WebP o GIF",
+                "tooLarge": "L'immagine supera la dimensione massima di {{size}}"
+            },
+            "notifications": {
+                "uploaded": "Immagine del profilo aggiornata",
+                "deleted": "Immagine del profilo rimossa"
+            },
+            "delete": {
+                "title": "Rimuovi l'immagine del profilo",
+                "confirmation": "Vuoi davvero rimuovere l'immagine del profilo?"
+            }
+        },
+        "notifications": {
+            "personalDataUpdated": "Dati personali aggiornati"
+        }
+    },
     "validation": {
-        "required": "Questo campo è obbligatorio"
+        "required": "Questo campo è obbligatorio",
+        "max_length_one": "Massimo {{count}} carattere",
+        "max_length_other": "Massimo {{count}} caratteri"
     },
     "microfrontend": {
         "host": "Host",
