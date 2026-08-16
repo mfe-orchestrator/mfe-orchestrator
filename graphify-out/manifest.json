@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "backend/src/controller/IntegrationController.ts": {
-    "mtime": 1786472567.3073468,
-    "ast_hash": "71c431027da7769efbddb01beb23a5ff",
+    "mtime": 1786879752.329737,
+    "ast_hash": "aaec7fc87fb451d237cf9601d0885d67",
     "semantic_hash": ""
   },
   "backend/src/controller/MarketController.ts": {
@@ -665,13 +665,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786876232.8146102,
-    "ast_hash": "6bafded6e605c450381f597522009656",
+    "mtime": 1786880091.228948,
+    "ast_hash": "23f15d69f28b259ef1a42be4aa0b0f5e",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786876232.8132248,
-    "ast_hash": "98426c53d4eaa2be13da1dbe594ce43f",
+    "mtime": 1786880086.493441,
+    "ast_hash": "c606fc32427c17d9175b313c0ca5c805",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -900,8 +900,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useIntegrationApi.ts": {
-    "mtime": 1786472567.3084285,
-    "ast_hash": "f551703b55410414cf69c2f6e507fb59",
+    "mtime": 1786879769.60506,
+    "ast_hash": "b0fe2bd9a002efc029ea1024a9c5821f",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useInvitationApi.ts": {
@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/CanaryUsers.tsx": {
-    "mtime": 1786877142.6302829,
-    "ast_hash": "557f8e76d34758458e1b47c34056f5be",
+    "mtime": 1786880070.337149,
+    "ast_hash": "b0539e3ce3a33e9428cb0c5e0e2e2980",
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/Deployments.tsx": {
@@ -1170,8 +1170,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/views/EnvironmentVariablesIntegration.tsx": {
-    "mtime": 1786875565.2515368,
-    "ast_hash": "23b787bc8637bc77925e39a0808bd3ba",
+    "mtime": 1786879838.8235235,
+    "ast_hash": "04c497ae99e220ed98132f9d5b5d3688",
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/views/FrontendIntegration.tsx": {
@@ -1255,8 +1255,8 @@
     "semantic_hash": "1f0f72273838ef4112e228507973cfcf"
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsTable.tsx": {
-    "mtime": 1786875373.57134,
-    "ast_hash": "ede052ffca87fcea7a2f5eb77ff837cd",
+    "mtime": 1786879513.3724263,
+    "ast_hash": "7b902dd0a425cfaa304e79ae59b19545",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/index.ts": {
@@ -1985,8 +1985,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/FederationIntegrationService.ts": {
-    "mtime": 1786875884.3028738,
-    "ast_hash": "96e6ab235cc1f1cde05858d3245b9536",
+    "mtime": 1786879737.8837304,
+    "ast_hash": "0d353ce206870221693b9fc5e158d834",
     "semantic_hash": ""
   },
   "backend/src/utils/packageJsonUtils.ts": {
@@ -1995,8 +1995,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/components/IntegrateMicrofrontendsDialog.tsx": {
-    "mtime": 1786875542.1477075,
-    "ast_hash": "1b30e3bd1d72a1703d5e67e04c68d4ff",
+    "mtime": 1786879825.959395,
+    "ast_hash": "77e2366e9c664374e5822a381101a119",
     "semantic_hash": ""
   },
   "frontend/src/pages/integration/partials/components/StackBadge.tsx": {
