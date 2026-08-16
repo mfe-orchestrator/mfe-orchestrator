@@ -11,6 +11,43 @@ Nothing yet.
 
 ---
 
+## [3.0.0] - 2026-08-16
+
+### Added
+
+- **Build Screen**: A dedicated builds page lists the pipeline runs of every microfrontend of the project and streams their status live over server-sent events, with the run history and a status badge per microfrontend. The status is read through the provider each microfrontend is hosted on — GitHub Actions, GitLab pipelines and Azure DevOps builds — and exposed by `GET /api/builds`
+- **User Profile Page**: A profile page where the logged in user edits their personal data and uploads, replaces or removes their avatar. The avatar is stored server-side and is what the sidebar user button renders
+- **Canary Strategies**: The canary is no longer a single on/off split. A microfrontend picks between a random percentage, a sticky per-session assignment, and an explicit list of enrolled users, and the release settings moved into their own section of the microfrontend form. Existing microfrontends are migrated on boot
+- **Bulk Canary User Actions**: Canary users can be enabled, disabled or removed in bulk from the selection in the canary users table
+- **Global Variables Script**: The generated integration writes a global variables script straight into the host document, addressed per project, so a host picks up the environment variables of the project without wiring them by hand. The integration dialog generates and previews it
+- **Marketing Opt-In At Registration**: The registration form collects a marketing consent, stored on the user and gated by configuration, so it only shows where the deployment enables it
+- **Last Login Tracking**: The user record keeps the date of the last login, updated when a token is issued
+- **Per-Page Document Head**: Every page sets its own document title through a `PageHead` component, the authentication and single-page layouts included
+- **Logged In User In The Bootstrap**: The generated bootstrap names the logged in user, so a host can read it without an extra call
+- **Sidebar Logo**: The sidebar header shows the MFE Orchestrator logo
+
+### Changed
+
+- **Generated Configuration Carries Its Origin**: `backendUrl` and `projectId` are written into the generated configuration, so a served microfrontend knows which backend and project it belongs to without being told
+- **Microfrontends Table**: The host is rendered as an icon instead of a text column and the canary cell has room for the strategy it now describes
+- **Microfrontend Graph Nodes**: The nodes of the microfrontend flow were redrawn into their own component
+- **Error Handling**: The unregistered error handler was dropped and the not-found errors became typed per entity (`EnvironmentNotFoundError`, `ProjectNotFoundError`), so the plugin answers with the right status
+- **Lint**: Unused-import removal is enforced across the whole repo, hooks included
+
+### Fixed
+
+- **Serving On The Resolved Environment**: Microfrontend files are served on the environment actually resolved from the request instead of a stale one
+- **Federated Access Decision**: A federated access is decided from the token instead of from a request header
+- **Scoped Package Registry URL**: The whole npm package name is encoded in the registry URL, so scoped packages resolve
+- **Mail Fixture Decoding**: The ampersand entity is decoded last in the end-to-end mail fixture
+
+### CI
+
+- The monorepo build no longer runs on pull requests
+- The actions pinned by the workflows were upgraded
+
+---
+
 ## [2.3.0] - 2026-08-11
 
 ### Added

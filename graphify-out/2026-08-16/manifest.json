@@ -1960,8 +1960,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/FederationConfigService.ts": {
-    "mtime": 1786872997.504614,
-    "ast_hash": "235695d4d276b6287849d6cc5fcad8d9",
+    "mtime": 1786880891.1930444,
+    "ast_hash": "f00ebe44f95558f0d4adc0e105c7205a",
     "semantic_hash": ""
   },
   "backend/src/service/StackDetectionService.ts": {

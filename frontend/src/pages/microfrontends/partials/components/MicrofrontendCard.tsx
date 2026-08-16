@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS } from "../labels"
 import BuildDialog from "./BuildDialog"
 import CloneRepositoryPopover from "./CloneRepositoryPopover"
 
@@ -76,10 +75,6 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                                 <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${canaryPercentage}%` }} />
                             </div>
                         )}
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                            {canary.type && <Badge variant="outline">{t(CANARY_TYPE_LABEL_KEYS[canary.type])}</Badge>}
-                            {canary.deploymentType && <Badge variant="outline">{t(CANARY_DEPLOYMENT_TYPE_LABEL_KEYS[canary.deploymentType])}</Badge>}
-                        </div>
                         {canary.version && (
                             <p className="mt-2 truncate text-xs text-foreground-secondary">
                                 {t("microfrontend.canaryVersion")}: {canary.version}

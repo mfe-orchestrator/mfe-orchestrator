@@ -186,6 +186,32 @@ export async function loginViaApi(request: APIRequestContext, user: TestUser): P
     return accessToken
 }
 
+export interface UserProfile {
+    _id: string
+    email: string
+    name?: string
+    surname?: string
+}
+
+/** Profilo letto dal server: serve a confermare quello che la pagina dichiara di aver salvato. */
+export async function getProfileViaApi(request: APIRequestContext, accessToken: string): Promise<UserProfile> {
+    const response = await request.get("/api/users/profile", {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(response.ok(), `Lettura profilo fallita (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+    return (await response.json()) as UserProfile
+}
+
+/** Immagine del profilo come data URI, `null` se l'utente non ne ha caricata una. */
+export async function getAvatarViaApi(request: APIRequestContext, accessToken: string): Promise<string | null> {
+    const response = await request.get("/api/users/profile/avatar", {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(response.ok(), `Lettura avatar fallita (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+    const { avatar } = (await response.json()) as { avatar: string | null }
+    return avatar
+}
+
 export interface CreatedProject {
     _id: string
     name: string

@@ -6509,7 +6509,7 @@
       "label": ".bootstrapSnippet()",
       "file_type": "code",
       "source_file": "backend/src/service/FederationConfigService.ts",
-      "source_location": "L351",
+      "source_location": "L356",
       "_origin": "ast",
       "id": "backend_src_service_federationconfigservice_federationconfigservice_bootstrapsnippet",
       "community": 197,
@@ -25184,7 +25184,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_components_pagehead",
-      "community": 22,
+      "community": 53,
       "norm_label": "pagehead.tsx"
     },
     {
@@ -25194,7 +25194,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "frontend_src_components_pagehead_pageheadprops",
-      "community": 22,
+      "community": 53,
       "norm_label": "pageheadprops"
     },
     {
@@ -25204,7 +25204,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "frontend_src_components_pagehead_pagehead",
-      "community": 22,
+      "community": 53,
       "norm_label": "pagehead()"
     },
     {
@@ -25284,7 +25284,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "frontend_src_components_projectpickerlist_projectpickerlist",
-      "community": 174,
+      "community": 53,
       "norm_label": "projectpickerlist()"
     },
     {
@@ -25314,7 +25314,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_components_singlepagelayout",
-      "community": 174,
+      "community": 53,
       "norm_label": "singlepagelayout.tsx"
     },
     {
@@ -25324,7 +25324,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "frontend_src_components_singlepagelayout_singlepageheaderprops",
-      "community": 174,
+      "community": 53,
       "norm_label": "singlepageheaderprops"
     },
     {
@@ -25334,7 +25334,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "frontend_src_components_singlepagelayout_singlepagelayout",
-      "community": 174,
+      "community": 53,
       "norm_label": "singlepagelayout()"
     },
     {
@@ -25364,7 +25364,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_components_atoms_button_button",
-      "community": 22,
+      "community": 120,
       "norm_label": "button.tsx"
     },
     {
@@ -25374,7 +25374,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "frontend_src_components_atoms_button_button_button",
-      "community": 22,
+      "community": 120,
       "norm_label": "button()"
     },
     {
@@ -25384,7 +25384,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_components_atoms_button_index",
-      "community": 22,
+      "community": 120,
       "norm_label": "index.ts"
     },
     {
@@ -25394,7 +25394,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_components_atoms_index",
-      "community": 22,
+      "community": 120,
       "norm_label": "index.ts"
     },
     {
@@ -26894,7 +26894,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_useprojectuserapi_useprojectuserapi",
-      "community": 120,
+      "community": 174,
       "norm_label": "useprojectuserapi()"
     },
     {
@@ -28124,7 +28124,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_githubcallbackpage",
-      "community": 22,
+      "community": 53,
       "norm_label": "githubcallbackpage.tsx"
     },
     {
@@ -28134,7 +28134,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_githubcallbackpage_githubcallbackpage",
-      "community": 22,
+      "community": 53,
       "norm_label": "githubcallbackpage()"
     },
     {
@@ -28144,7 +28144,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_partials_addrepositorydialog",
-      "community": 22,
+      "community": 120,
       "norm_label": "addrepositorydialog.tsx"
     },
     {
@@ -28154,7 +28154,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_partials_addrepositorydialog_addrepositorydialogprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "addrepositorydialogprops"
     },
     {
@@ -28164,7 +28164,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_partials_addrepositorydialog_repositoryprovider",
-      "community": 22,
+      "community": 120,
       "norm_label": "repositoryprovider"
     },
     {
@@ -28184,7 +28184,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_partials_index",
-      "community": 22,
+      "community": 120,
       "norm_label": "index.ts"
     },
     {
@@ -28194,7 +28194,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_code_repositories_partials_utils",
-      "community": 22,
+      "community": 120,
       "norm_label": "utils.ts"
     },
     {
@@ -28254,7 +28254,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_dependencies_partials_alignpeerdependenciesdialog",
-      "community": 22,
+      "community": 120,
       "norm_label": "alignpeerdependenciesdialog.tsx"
     },
     {
@@ -28264,7 +28264,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "frontend_src_pages_dependencies_partials_alignpeerdependenciesdialog_alignpeerdependenciesdialogprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "alignpeerdependenciesdialogprops"
     },
     {
@@ -28274,7 +28274,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "frontend_src_pages_dependencies_partials_alignpeerdependenciesdialog_changelist",
-      "community": 22,
+      "community": 120,
       "norm_label": "changelist()"
     },
     {
@@ -28894,7 +28894,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_error_notfound",
-      "community": 22,
+      "community": 53,
       "norm_label": "notfound.tsx"
     },
     {
@@ -28904,7 +28904,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "frontend_src_pages_error_notfound_notfound",
-      "community": 22,
+      "community": 53,
       "norm_label": "notfound()"
     },
     {
@@ -30104,7 +30104,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_newprojectwizard",
-      "community": 22,
+      "community": 120,
       "norm_label": "newprojectwizard.tsx"
     },
     {
@@ -30114,7 +30114,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_newprojectwizard_newprojectwizardprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "newprojectwizardprops"
     },
     {
@@ -30124,7 +30124,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_newprojectwizard_newprojectwizard",
-      "community": 22,
+      "community": 120,
       "norm_label": "newprojectwizard()"
     },
     {
@@ -30134,7 +30134,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_coderepositories",
-      "community": 22,
+      "community": 120,
       "norm_label": "coderepositories.tsx"
     },
     {
@@ -30144,7 +30144,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_coderepositories_coderepositories",
-      "community": 22,
+      "community": 120,
       "norm_label": "coderepositories()"
     },
     {
@@ -30154,7 +30154,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_completed",
-      "community": 22,
+      "community": 120,
       "norm_label": "completed.tsx"
     },
     {
@@ -30164,7 +30164,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_completed_completed",
-      "community": 22,
+      "community": 120,
       "norm_label": "completed()"
     },
     {
@@ -30174,7 +30174,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_environments",
-      "community": 22,
+      "community": 120,
       "norm_label": "environments.tsx"
     },
     {
@@ -30184,7 +30184,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_environments_environments",
-      "community": 22,
+      "community": 120,
       "norm_label": "environments()"
     },
     {
@@ -30214,7 +30214,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_maindata",
-      "community": 22,
+      "community": 120,
       "norm_label": "maindata.tsx"
     },
     {
@@ -30224,7 +30224,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_maindata_maindataform",
-      "community": 22,
+      "community": 120,
       "norm_label": "maindataform"
     },
     {
@@ -30234,7 +30234,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_maindata_slugify",
-      "community": 22,
+      "community": 120,
       "norm_label": "slugify()"
     },
     {
@@ -30244,7 +30244,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_maindata_maindata",
-      "community": 22,
+      "community": 120,
       "norm_label": "maindata()"
     },
     {
@@ -30304,7 +30304,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardshared.tsx"
     },
     {
@@ -30314,7 +30314,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_wizardstepmeta",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardstepmeta"
     },
     {
@@ -30324,7 +30324,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_wizardstepprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardstepprops"
     },
     {
@@ -30334,7 +30334,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_wizardstepperprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardstepperprops"
     },
     {
@@ -30344,7 +30344,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_wizardstepper",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardstepper()"
     },
     {
@@ -30354,7 +30354,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_stepshellprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "stepshellprops"
     },
     {
@@ -30364,7 +30364,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_stepshell",
-      "community": 22,
+      "community": 120,
       "norm_label": "stepshell()"
     },
     {
@@ -30374,7 +30374,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_wizardfooterprops",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardfooterprops"
     },
     {
@@ -30384,7 +30384,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_pages_wizardshared_wizardfooter",
-      "community": 22,
+      "community": 120,
       "norm_label": "wizardfooter()"
     },
     {
@@ -30434,7 +30434,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_projectusers",
-      "community": 120,
+      "community": 174,
       "norm_label": "projectusers.tsx"
     },
     {
@@ -30444,7 +30444,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_projectusers_getuserinitials",
-      "community": 120,
+      "community": 174,
       "norm_label": "getuserinitials()"
     },
     {
@@ -30454,7 +30454,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_projectusers_getuserfullname",
-      "community": 120,
+      "community": 174,
       "norm_label": "getuserfullname()"
     },
     {
@@ -30464,7 +30464,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_projectusers_usercard",
-      "community": 120,
+      "community": 174,
       "norm_label": "usercard()"
     },
     {
@@ -30474,7 +30474,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_projectusers_projectusers",
-      "community": 120,
+      "community": 174,
       "norm_label": "projectusers()"
     },
     {
@@ -30514,7 +30514,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_partials_adduserbutton_adduserbutton",
-      "community": 120,
+      "community": 174,
       "norm_label": "adduserbutton()"
     },
     {
@@ -30524,7 +30524,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_partials_userpicture",
-      "community": 120,
+      "community": 174,
       "norm_label": "userpicture.tsx"
     },
     {
@@ -30534,7 +30534,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_partials_userpicture_gravatarhash",
-      "community": 120,
+      "community": 174,
       "norm_label": "gravatarhash()"
     },
     {
@@ -30544,7 +30544,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_partials_userpicture_userpicture",
-      "community": 120,
+      "community": 174,
       "norm_label": "userpicture()"
     },
     {
@@ -30554,7 +30554,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_project_users_partials_index",
-      "community": 120,
+      "community": 174,
       "norm_label": "index.ts"
     },
     {
@@ -31674,7 +31674,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_utils_styleutils",
-      "community": 174,
+      "community": 53,
       "norm_label": "styleutils.ts"
     },
     {
@@ -31684,7 +31684,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "frontend_src_utils_styleutils_cn",
-      "community": 174,
+      "community": 53,
       "norm_label": "cn()"
     },
     {
@@ -55932,7 +55932,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/FederationConfigService.ts",
-      "source_location": "L351",
+      "source_location": "L356",
       "weight": 1.0,
       "source": "backend_src_service_federationconfigservice_federationconfigservice",
       "target": "backend_src_service_federationconfigservice_federationconfigservice_bootstrapsnippet",
@@ -56133,7 +56133,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/FederationConfigService.ts",
-      "source_location": "L351",
+      "source_location": "L356",
       "weight": 1.0,
       "source": "backend_src_service_federationconfigservice_federationconfigservice_bootstrapsnippet",
       "target": "backend_src_types_microfrontendstack_microfrontendcompiler",
@@ -104670,5 +104670,5 @@
       "source_file": "lefthook.yml"
     }
   ],
-  "built_at_commit": "9fde22249afac68a431f8682aba97b4fc2284f4e"
+  "built_at_commit": "f3b34fe95e755004cdd070d3e59b25411b2834d2"
 }

@@ -79,19 +79,21 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user }) => {
             </CardHeader>
             <CardContent className="pt-4">
                 <div className="flex items-center gap-6 flex-wrap">
-                    <Avatar className="h-20 w-20 border-2 border-border">
-                        {avatarQuery.data && <AvatarImage src={avatarQuery.data} alt={t("profile.avatar.title")} />}
-                        <AvatarFallback>{initials ?? <UserIcon className="h-8 w-8" />}</AvatarFallback>
-                    </Avatar>
+                    <div data-testid="profile-avatar">
+                        <Avatar className="h-20 w-20 border-2 border-border">
+                            {avatarQuery.data && <AvatarImage src={avatarQuery.data} alt={t("profile.avatar.title")} />}
+                            <AvatarFallback>{initials ?? <UserIcon className="h-8 w-8" />}</AvatarFallback>
+                        </Avatar>
+                    </div>
 
                     <div className="flex flex-col gap-2">
                         <div className="flex gap-2 flex-wrap">
-                            <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isBusy}>
+                            <Button variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={isBusy} dataTestId="profile-avatar-upload">
                                 <Upload />
                                 {uploadMutation.isPending ? t("profile.avatar.uploading") : t("profile.avatar.upload")}
                             </Button>
                             {avatarQuery.data && (
-                                <Button variant="ghost-destructive" onClick={() => setIsDeleteDialogOpen(true)} disabled={isBusy}>
+                                <Button variant="ghost-destructive" onClick={() => setIsDeleteDialogOpen(true)} disabled={isBusy} dataTestId="profile-avatar-remove">
                                     <Trash2 />
                                     {t("profile.avatar.remove")}
                                 </Button>
@@ -100,7 +102,7 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user }) => {
                         <p className="text-sm text-foreground-secondary m-0">{t("profile.avatar.hint", { size: "1 MB" })}</p>
                     </div>
 
-                    <input ref={fileInputRef} type="file" accept={ALLOWED_MIME_TYPES.join(",")} className="hidden" onChange={onFileSelected} />
+                    <input ref={fileInputRef} type="file" accept={ALLOWED_MIME_TYPES.join(",")} className="hidden" onChange={onFileSelected} data-testid="profile-avatar-input" />
                 </div>
             </CardContent>
 

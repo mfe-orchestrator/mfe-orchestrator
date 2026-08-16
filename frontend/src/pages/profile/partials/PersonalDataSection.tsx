@@ -58,7 +58,9 @@ export const PersonalDataSection: React.FC<PersonalDataSectionProps> = ({ user }
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         <div className="flex flex-col gap-1 mb-4">
                             <Label className="text-sm text-foreground-secondary">{t("profile.personalData.email")}</Label>
-                            <span className="break-all">{user.email}</span>
+                            <span className="break-all" data-testid="profile-email">
+                                {user.email}
+                            </span>
                             <p className="text-sm text-foreground-secondary m-0">{t("profile.personalData.emailNotEditable")}</p>
                         </div>
 
@@ -67,6 +69,7 @@ export const PersonalDataSection: React.FC<PersonalDataSectionProps> = ({ user }
                                 name="name"
                                 label={t("profile.personalData.name")}
                                 id="profile-name"
+                                dataTestId="profile-name"
                                 containerClassName="flex-[1_1_200px]"
                                 rules={{
                                     maxLength: {
@@ -79,6 +82,7 @@ export const PersonalDataSection: React.FC<PersonalDataSectionProps> = ({ user }
                                 name="surname"
                                 label={t("profile.personalData.surname")}
                                 id="profile-surname"
+                                dataTestId="profile-surname"
                                 containerClassName="flex-[1_1_200px]"
                                 rules={{
                                     maxLength: {
@@ -89,7 +93,7 @@ export const PersonalDataSection: React.FC<PersonalDataSectionProps> = ({ user }
                             />
                         </div>
 
-                        <Button type="submit" className="mt-5" disabled={updateProfileMutation.isPending || !form.formState.isDirty}>
+                        <Button type="submit" className="mt-5" disabled={updateProfileMutation.isPending || !form.formState.isDirty} dataTestId="profile-save">
                             {updateProfileMutation.isPending ? t("common.saving") : t("common.save")}
                         </Button>
                     </form>
