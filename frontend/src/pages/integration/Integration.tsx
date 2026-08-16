@@ -55,7 +55,7 @@ export const Integration: React.FC = () => {
                                 </TabsContent>
 
                                 <TabsContent value="env-vars">
-                                    <EnvironmentVariablesIntegration environmentId={projectStore.environment?._id} />
+                                    <EnvironmentVariablesIntegration projectId={projectStore.project?._id} />
                                 </TabsContent>
                             </Tabs>
                         )}

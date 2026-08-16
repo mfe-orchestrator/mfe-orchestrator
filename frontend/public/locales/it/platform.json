@@ -6,6 +6,7 @@
     },
     "app": {
         "name": "MFE Orchestrator",
+        "page_title": "{{page}} · {{app}}",
         "error": {
             "generic": "Si è verificato un errore. Riprova più tardi.",
             "not_found": "Pagina non trovata"
@@ -57,6 +58,7 @@
             "status_no_remotes": "Nessun remote da dichiarare",
             "status_stack_unknown": "Stack sconosciuto",
             "status_runtime_integration": "Si integra a runtime",
+            "status_no_document": "Nessun documento in cui scrivere",
             "status_error": "Errore",
             "integrate_one_button": "Integra solo questo"
         },
@@ -65,9 +67,16 @@
             "description": "Accedi alle variabili d'ambiente in microfrontends utilizzando i seguenti metodi.",
             "javascript_title": "Integrazione JavaScript",
             "javascript_description": "Aggiungi questo script al tuo HTML per rendere le variabili d'ambiente disponibili come",
+            "javascript_auto_note": "Lo stesso tag funziona in ogni ambiente: la console risolve quale risponde dal dominio su cui la pagina è servita, quindi promuovere una build non richiede mai di modificare questo url.",
             "javascript_example": "Esempio di utilizzo",
             "javascript_direct_api_access": "Accesso diretto API",
-            "javascript_direct_api_access_description": "Recupera le variabili d'ambiente direttamente dall'API"
+            "javascript_direct_api_access_description": "Recupera le variabili d'ambiente direttamente dall'API",
+            "integrate_button": "Aggiungi lo script ai miei host",
+            "integrate_dialog_title": "Aggiungi lo script delle variabili d'ambiente",
+            "integrate_dialog_description": "Scriviamo il tag <script> nel documento di ogni host, così le variabili d'ambiente sono disponibili come window.globalConfig prima che parta l'applicazione. È un'integrazione a sé: non tocca la configurazione di module federation. Controlla cosa cambia, poi scegli cosa committare: la scrittura finisce sul branch predefinito di ogni repository.",
+            "integrate_nothing_to_do": "Niente da integrare: i documenti dei tuoi host contengono già lo script, oppure non c'è un documento in cui scriverlo.",
+            "integrate_success": "Script aggiunto in {{count}} repository",
+            "integrate_partial": "Script aggiunto in {{applied}} repository, {{failed}} falliti"
         },
         "microfrontend_select_label": "Microfrontend",
         "microfrontend_select_placeholder": "Seleziona un microfrontend"
@@ -84,6 +93,7 @@
         "login_description": "Inserisci le tue credenziali per accedere al sistema",
         "register": "Registrati",
         "register_description": "Inserisci i tuoi dati per creare un account",
+        "marketing_consent": "Voglio ricevere email con novità e aggiornamenti sul prodotto. Puoi disiscriverti quando vuoi.",
         "logout": "Esci",
         "email": "Email",
         "email_placeholder": "nome@esempio.com",
@@ -236,15 +246,75 @@
         },
         "canary_users": {
             "title": "Utenti Canary",
-            "subtitle": "Utenti con accesso alla versione canary",
+            "subtitle": "Chi vede la versione canary dei microfrontend di questo deployment configurati con tipo «Utente»",
             "no_users": "Nessun utente ha ancora accesso a questa versione canary.",
             "columns": {
                 "user": "Utente",
-                "email": "Email",
                 "status": "Stato"
             },
-            "coming_soon": "In arrivo",
-            "coming_soon_description": "Questa funzionalità è ancora in fase di sviluppo e sarà disponibile in una prossima versione. Restate sintonizzati!"
+            "add_title": "Aggiungi utenti",
+            "add_description": "Inserisci gli identificativi utente della tua applicazione, quelli che passi al client SDK come userId. Puoi incollarne più di uno separandoli con virgole, spazi o a capo.",
+            "user_id_placeholder": "user-123, user-456",
+            "add_button": "Aggiungi",
+            "added_success": "Utenti aggiunti agli utenti canary",
+            "updated_success_one": "Utente canary aggiornato",
+            "updated_success_other": "{{count}} utenti canary aggiornati",
+            "removed_success_one": "Utente rimosso dagli utenti canary",
+            "removed_success_other": "{{count}} utenti rimossi dagli utenti canary",
+            "enabled": "Canary",
+            "disabled": "Escluso",
+            "select_all": "Seleziona tutti gli utenti",
+            "select_user": "Seleziona «{{userId}}»",
+            "selected_count_one": "{{count}} utente selezionato",
+            "selected_count_other": "{{count}} utenti selezionati",
+            "enable_selected": "Attiva",
+            "disable_selected": "Disattiva",
+            "remove_selected": "Rimuovi",
+            "remove_title_one": "Rimuovi utente canary",
+            "remove_title_other": "Rimuovi {{count}} utenti canary",
+            "remove_description_one": "Vuoi rimuovere «{{userId}}» dagli utenti canary? Tornerà a vedere la versione stabile.",
+            "remove_description_other": "Vuoi rimuovere {{count}} utenti dagli utenti canary? Torneranno a vedere la versione stabile."
+        }
+    },
+    "builds": {
+        "title": "Build",
+        "subtitle": "Stato delle build dei microfrontend e versione servita da ogni ambiente",
+        "refresh": "Aggiorna",
+        "live": {
+            "connected": "Aggiornamento in tempo reale attivo",
+            "disconnected": "Aggiornamento in tempo reale non disponibile",
+            "last_update": "Ultimo aggiornamento: {{moment}}"
+        },
+        "empty": {
+            "title": "Nessun microfrontend",
+            "description": "Crea un microfrontend per vedere qui lo stato delle sue build."
+        },
+        "table": {
+            "microfrontend": "Microfrontend",
+            "last_build": "Ultima build",
+            "build_ref": "Tag / branch",
+            "last_built_version": "Ultima versione buildata",
+            "production": "Produzione",
+            "no_runs": "Nessuna build",
+            "triggered_by": "avviata da {{user}}",
+            "open_run": "Apri sul provider",
+            "repository": "Repository: {{name}}",
+            "selected_version": "versione selezionata: {{version}}",
+            "expand_history": "Mostra lo storico build di {{name}}",
+            "collapse_history": "Nascondi lo storico build di {{name}}"
+        },
+        "status": {
+            "QUEUED": "In coda",
+            "RUNNING": "In esecuzione",
+            "SUCCESS": "Completata",
+            "FAILED": "Fallita",
+            "CANCELED": "Annullata",
+            "UNKNOWN": "Sconosciuto"
+        },
+        "unavailable": {
+            "NO_REPOSITORY": "Nessun repository collegato",
+            "REPOSITORY_NOT_FOUND": "Repository collegato non trovato",
+            "PROVIDER_ERROR": "Impossibile leggere le build dal provider"
         }
     },
     "project_users": {
@@ -453,8 +523,45 @@
         "key_copied": "Chiave copiata",
         "key_copied_to_clipboard": "La chiave API è stata copiata negli appunti"
     },
+    "profile": {
+        "title": "Profilo",
+        "subtitle": "Gestisci i tuoi dati personali e l'immagine del profilo",
+        "personalData": {
+            "title": "Dati personali",
+            "subtitle": "Il nome e il cognome mostrati nella piattaforma",
+            "email": "Email",
+            "emailNotEditable": "L'email non è modificabile",
+            "name": "Nome",
+            "surname": "Cognome"
+        },
+        "avatar": {
+            "title": "Immagine del profilo",
+            "subtitle": "Sostituisce l'immagine ereditata dal provider di login",
+            "upload": "Carica immagine",
+            "uploading": "Caricamento...",
+            "remove": "Rimuovi",
+            "hint": "PNG, JPEG, WebP o GIF, fino a {{size}}",
+            "errors": {
+                "invalidFormat": "Formato non supportato: usa PNG, JPEG, WebP o GIF",
+                "tooLarge": "L'immagine supera la dimensione massima di {{size}}"
+            },
+            "notifications": {
+                "uploaded": "Immagine del profilo aggiornata",
+                "deleted": "Immagine del profilo rimossa"
+            },
+            "delete": {
+                "title": "Rimuovi l'immagine del profilo",
+                "confirmation": "Vuoi davvero rimuovere l'immagine del profilo?"
+            }
+        },
+        "notifications": {
+            "personalDataUpdated": "Dati personali aggiornati"
+        }
+    },
     "validation": {
-        "required": "Questo campo è obbligatorio"
+        "required": "Questo campo è obbligatorio",
+        "max_length_one": "Massimo {{count}} carattere",
+        "max_length_other": "Massimo {{count}} caratteri"
     },
     "microfrontend": {
         "host": "Host",
@@ -556,11 +663,11 @@
         "hosting_type": "Tipo di Hosting",
         "canaryReleaseActive": "Canary Release Attiva",
         "distribution": "Distribuzione:",
-        "usersPercentage": "{{percentage}}% degli utenti",
-        "type": "Tipo:",
         "sessionType": "Sessione",
-        "ipType": "Indirizzo IP",
-        "deployment": "Distribuzione",
+        "randomType": "Casuale",
+        "canary_type_random_description": "Estrazione a ogni caricamento della pagina: lo stesso browser può vedere una versione diversa a ogni refresh.",
+        "canary_type_session_description": "Estrazione una sola volta per browser, conservata nel localStorage della pagina host: la versione resta la stessa anche dopo la chiusura del browser.",
+        "canary_type_user_description": "Nessuna estrazione: la canary va solo agli utenti presenti nell'elenco del deployment. Chi non è autenticato vede sempre la versione stabile.",
         "deploymentTypes": {
             "basedOnVersion": "Basato su Versione",
             "basedOnUrl": "Basato su URL"
@@ -568,26 +675,26 @@
         "canaryUrl": "URL Canary",
         "canaryVersion": "Versione Canary",
         "userType": "Utente",
-        "cookieBasedType": "Basato su Cookie",
         "entry_point": "Punto di Ingresso",
         "select_hosting_type": "Seleziona il tipo di hosting",
         "mfe_orchestrator_hub": "MFE Orchestrator Hub",
         "custom_url": "URL Personalizzato",
         "custom_source": "Sorgente Personalizzata",
+        "release_settings": "Rilascio",
+        "release_settings_description": "La versione servita ai tuoi utenti e come viene distribuita la canary",
+        "tabs": {
+            "general": "Generale",
+            "hosting": "Hosting",
+            "repository": "Repository",
+            "danger_zone": "Zona Pericolosa"
+        },
         "canary_release": "Distribuzione canary",
         "canary_settings": "Impostazioni Canary",
         "canary_settings_description": "Configura le impostazioni di distribuzione canary",
-        "enable_canary": "Abilita Distribuzione Canary",
         "canary_percentage": "Percentuale Canary",
-        "canary_percentage_description": "Percentuale di traffico da indirizzare alla versione canary",
         "canary_percentage_presets": "Percentuali suggerite",
         "canary_type": "Tipo di Canary",
-        "select_canary_type": "Seleziona il tipo di canary",
-        "on_sessions": "Sulle Sessioni",
-        "on_user": "Sull'Utente",
-        "cookie_based": "Basato su Cookie",
         "deployment_type": "Tipo di Distribuzione",
-        "select_deployment_type": "Seleziona il tipo di distribuzione",
         "based_on_version": "Basato su Versione",
         "based_on_url": "Basato su URL",
         "canary_version": "Versione Canary",
@@ -648,7 +755,9 @@
                     "confirmButton": "Elimina Microfrontend"
                 }
             }
-        }
+        },
+        "canary_enrolled_users": "Utenti selezionati",
+        "canary_none": "Non c'è canary"
     },
     "color_picker": {
         "select_color": "Seleziona un colore"

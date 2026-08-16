@@ -2,17 +2,27 @@ import { ThemeEnum } from "@/store/useThemeStore"
 import { AuthenticationType } from "../../api/apiClient"
 import useApiClient from "../useApiClient"
 
+/** Campi che il backend restituisce da `toFrontendObject()`. */
 export interface User {
-    id: string
+    _id: string
     email: string
-    firstName?: string
-    lastName?: string
+    name?: string
+    surname?: string
     role: string
-    isActive: boolean
+    status: string
+    isInvited?: boolean
     createdAt: string
     updatedAt: string
     language?: string
     theme?: ThemeEnum
+    marketingConsent?: boolean
+    marketingConsentAt?: string
+    marketingConsentVersion?: string
+}
+
+export interface UserProfileUpdateDTO {
+    name?: string
+    surname?: string
 }
 
 export interface UserRegistrationDTO {
@@ -20,6 +30,7 @@ export interface UserRegistrationDTO {
     password: string
     name?: string
     surname?: string
+    marketingConsent?: boolean
 }
 
 export interface UserLoginDTO {
@@ -127,6 +138,58 @@ const useUserApi = () => {
         return response.data
     }
 
+    async function updateProfile(data: UserProfileUpdateDTO) {
+        const response = await doRequest<User>({
+            url: "/api/users/profile",
+            method: "PUT",
+            data
+        })
+        return response.data
+    }
+
+    async function updateMarketingConsent(marketingConsent: boolean) {
+        const response = await doRequest<User>({
+            url: "/api/users/marketing-consent",
+            method: "PUT",
+            data: { marketingConsent }
+        })
+        return response.data
+    }
+
+    /**
+     * L'immagine arriva come data URI e non come URL: l'endpoint è autenticato e
+     * il `src` di un `<img>` non porta con sé l'header Authorization.
+     */
+    async function getAvatar() {
+        const response = await doRequest<{ avatar: string | null }>({
+            url: "/api/users/profile/avatar",
+            method: "GET",
+            silent: true
+        })
+        return response.data.avatar
+    }
+
+    async function uploadAvatar(file: File) {
+        const formData = new FormData()
+        formData.append("file", file)
+        // Il Content-Type va sovrascritto: il client mette application/json di
+        // default e axios, vedendolo, serializzerebbe il FormData come JSON.
+        // Dichiarandolo multipart lascia che sia il browser a scrivere il boundary.
+        await doRequest({
+            url: "/api/users/profile/avatar",
+            method: "POST",
+            data: formData,
+            headers: { "Content-Type": "multipart/form-data" }
+        })
+    }
+
+    async function deleteAvatar() {
+        await doRequest({
+            url: "/api/users/profile/avatar",
+            method: "DELETE"
+        })
+    }
+
     async function inviteUser(invitationData: UserInvitationDTO) {
         const response = await doRequest<User>({
             url: "/api/users/invitation",
@@ -143,6 +206,11 @@ const useUserApi = () => {
         resetPasswordRequest,
         resetPassword,
         getProfile,
+        updateProfile,
+        updateMarketingConsent,
+        getAvatar,
+        uploadAvatar,
+        deleteAvatar,
         activateAccount,
         inviteUser,
         saveTheme,

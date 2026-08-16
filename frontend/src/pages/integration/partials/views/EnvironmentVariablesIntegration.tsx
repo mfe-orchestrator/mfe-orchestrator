@@ -1,9 +1,20 @@
 import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Button } from "@/components/atoms"
+import IntegrateMicrofrontendsDialog from "@/pages/integration/partials/components/IntegrateMicrofrontendsDialog"
 
-export const EnvironmentVariablesIntegration = ({ environmentId }: { environmentId?: string }) => {
+/**
+ * The url is addressed by project, not by environment: the backend resolves which environment
+ * answers from the domain the page asking is served on, so the very same `index.html` can be
+ * promoted from one environment to the next without being edited. Naming an environment here
+ * would bake it into the artifact.
+ */
+export const EnvironmentVariablesIntegration = ({ projectId }: { projectId?: string }) => {
     const { t } = useTranslation()
-    const envVarsUrl = environmentId ? `https://${window.location.host}/api/serve/global-variables/${environmentId}` : ""
+    const envVarsUrl = projectId ? `https://${window.location.host}/api/serve/global-variables/auto/${projectId}` : ""
+
+    const [isIntegrateDialogOpen, setIsIntegrateDialogOpen] = useState(false)
 
     return (
         <Card>
@@ -13,6 +24,13 @@ export const EnvironmentVariablesIntegration = ({ environmentId }: { environment
             </CardHeader>
 
             <CardContent className="pt-4">
+                {/* The same tag, written into the document of every host by us instead of by hand. */}
+                <div className="mb-4">
+                    <Button onClick={() => setIsIntegrateDialogOpen(true)}>{t("integration.env_vars_integration_tab.integrate_button")}</Button>
+                </div>
+
+                <IntegrateMicrofrontendsDialog isOpen={isIntegrateDialogOpen} onOpenChange={setIsIntegrateDialogOpen} scope="GLOBAL_VARIABLES" />
+
                 <h3 className="text-lg font-semibold">{t("integration.env_vars_integration_tab.javascript_title")}</h3>
                 <p className="mb-4">
                     {t("integration.env_vars_integration_tab.javascript_description")} <code>window.globalConfig</code>:
@@ -20,6 +38,7 @@ export const EnvironmentVariablesIntegration = ({ environmentId }: { environment
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                     <code>{`<script src="${envVarsUrl}/index.js"></script>`}</code>
                 </pre>
+                <p className="mb-4 text-sm text-foreground-secondary">{t("integration.env_vars_integration_tab.javascript_auto_note")}</p>
                 <h4 className="text-md font-semibold mb-3">{t("integration.env_vars_integration_tab.javascript_example")}</h4>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                     <code>

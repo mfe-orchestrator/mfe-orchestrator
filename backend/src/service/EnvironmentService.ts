@@ -1,5 +1,5 @@
 import { ClientSession, ObjectId, Schema } from "mongoose"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { EnvironmentNotFoundError } from "../errors/EnvironmentNotFoundError"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
 import { toObjectId } from "../utils/mongooseUtils"
@@ -53,7 +53,7 @@ class EnvironmentService extends BaseAuthorizedService {
         const updatedEnvironment = await Environment.findOneAndUpdate({ _id: environmentIdObj }, updateData, { new: true })
 
         if (!updatedEnvironment) {
-            throw new EntityNotFoundError(environmentIdObj.toString())
+            throw new EnvironmentNotFoundError(environmentIdObj.toString())
         }
 
         return updatedEnvironment
@@ -83,7 +83,7 @@ class EnvironmentService extends BaseAuthorizedService {
         const projectEnvironmentIds = new Set(environments.map(environment => environment._id.toString()))
         const notInProject = idsObj.find(id => !projectEnvironmentIds.has(id.toString()))
         if (notInProject) {
-            throw new EntityNotFoundError(notInProject.toString())
+            throw new EnvironmentNotFoundError(notInProject.toString())
         }
 
         await Environment.bulkWrite(
@@ -103,7 +103,7 @@ class EnvironmentService extends BaseAuthorizedService {
         const environmentIdObj = toObjectId(environmentId)
         const deletedEnvironment = await Environment.findOneAndDelete({ _id: environmentIdObj })
         if (!deletedEnvironment) {
-            throw new EntityNotFoundError(environmentIdObj.toString())
+            throw new EnvironmentNotFoundError(environmentIdObj.toString())
         }
     }
 

@@ -36,8 +36,10 @@ class NpmRegistryClient {
     }
 
     private buildUrl(packageName: string): string {
-        // Scoped packages must keep the "@" but escape the "/"
-        return `${this.registryUrl}/${packageName.replace("/", "%2F")}`
+        // Scoped packages must keep the leading "@" but escape every other reserved
+        // character, so a crafted name cannot escape the registry path segment.
+        const encodedName = encodeURIComponent(packageName).replace(/^%40/, "@")
+        return `${this.registryUrl}/${encodedName}`
     }
 
     /**

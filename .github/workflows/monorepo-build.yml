@@ -8,8 +8,6 @@ on:
   workflow_call:
   push:
     branches: [main, development]
-  pull_request:
-    branches: [main, development]
 
 jobs:
   build-and-test:
@@ -63,8 +61,11 @@ jobs:
       - name: 🔨 Build All Packages
         run: pnpm build
 
-      # - name: 🧪 Run Tests
-      #   run: pnpm test
+      # Scoped to the backend on purpose: the root `pnpm test` would also run the e2e
+      # suite, which needs a live stack and mailbox credentials and has its own
+      # workflow (e2e-tests.yml).
+      - name: 🧪 Run Backend Unit Tests
+        run: pnpm --filter @mfe-orchestrator/backend test
 
       - name: 📤 Upload Backend Build
         uses: actions/upload-artifact@v7

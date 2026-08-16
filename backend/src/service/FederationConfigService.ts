@@ -28,8 +28,8 @@ interface FrameworkProfile {
     vitePluginImport?: string
     /** Call of that plugin inside the plugins array */
     vitePluginCall?: string
-    /** Extra top level keys the framework needs in vite.config */
-    viteExtras?: string
+    /** Entries the framework needs in the `define` block of vite.config */
+    viteDefines?: string[]
     /** Import lines webpack needs, beyond webpack itself */
     webpackImports?: string[]
     /** Plugin instances webpack needs before ModuleFederationPlugin */
@@ -78,7 +78,7 @@ const FRAMEWORK_PROFILES: Record<MicrofrontendFramework, FrameworkProfile> = {
         vitePluginCall: "angular()",
         // Drops Angular's development only assertions, the way the Angular CLI does in a
         // production build. Without it the debug helpers end up in the bundle.
-        viteExtras: "  define: {\n    ngDevMode: 'false'\n  },",
+        viteDefines: ["ngDevMode: 'false'"],
         webpackImports: ["const HtmlWebpackPlugin = require('html-webpack-plugin');", "const { AngularWebpackPlugin } = require('@ngtools/webpack');"],
         webpackPlugins: ["new HtmlWebpackPlugin({ template: './public/index.html' })", "new AngularWebpackPlugin({ tsconfig: 'tsconfig.json', jitMode: false })"],
         // AngularWebpackPlugin above installs the AOT compiler behind this loader
@@ -105,6 +105,10 @@ export interface FederationConfigRequest {
     exposeSelf?: boolean
     /** Config file already in the repository, used to keep its extension */
     configPath?: string
+    /** Id of the project the microfrontend belongs to, written into the config */
+    projectId?: string
+    /** Base url of the console API, written into the config */
+    backendUrl?: string
 }
 
 export interface IntegrationInstructions {
@@ -184,7 +188,57 @@ ${remotes.map(render).join(",\n")}
 ${indent}},`
     }
 
-    private viteConfig({ microfrontendSlug, remotes, exposeSelf }: FederationConfigRequest, profile: FrameworkProfile): string {
+    /**
+     * The two values the SDK cannot work without, written into the config itself rather than read
+     * out of a .env: the config is what we commit into the repository, so a fresh clone builds a
+     * bundle that already knows which console to ask and which project to ask about, and there is
+     * no unset variable turning into a build that fails only once it runs in a browser.
+     *
+     * They are emitted as `define` entries, not as literals inside the app, because the bootstrap
+     * snippet reads the same `import.meta.env` names a .env would have populated: moving the values
+     * into the config changes where they come from, not the code that consumes them.
+     */
+    private viteDefineBlock({ projectId, backendUrl }: FederationConfigRequest, profile: FrameworkProfile): string {
+        const entries = [
+            ...(profile.viteDefines || []),
+            ...(backendUrl ? [`'import.meta.env.VITE_MFE_BACKEND_URL': JSON.stringify(${JSON.stringify(backendUrl)})`] : []),
+            ...(projectId ? [`'import.meta.env.VITE_MFE_PROJECT_ID': JSON.stringify(${JSON.stringify(projectId)})`] : [])
+        ]
+
+        if (entries.length === 0) {
+            return ""
+        }
+
+        return `  define: {\n${entries.map(entry => `    ${entry}`).join(",\n")}\n  },\n`
+    }
+
+    /**
+     * The webpack half of the same thing. It also has to spell out MFE_ENVIRONMENT: webpack leaves
+     * `process.env.X` untouched when nothing defines it, and `process` does not exist in a browser,
+     * so the optional variable the bootstrap snippet reads would throw instead of being undefined.
+     */
+    private webpackDefinePlugin({ projectId, backendUrl }: FederationConfigRequest): string | null {
+        const entries = [
+            ...(backendUrl ? [`'process.env.MFE_BACKEND_URL': JSON.stringify(${JSON.stringify(backendUrl)})`] : []),
+            ...(projectId ? [`'process.env.MFE_PROJECT_ID': JSON.stringify(${JSON.stringify(projectId)})`] : [])
+        ]
+
+        if (entries.length === 0) {
+            return null
+        }
+
+        return `new webpack.DefinePlugin({
+${entries.map(entry => `      ${entry},`).join("\n")}
+      // DefinePlugin pastes the text on the right into the bundle verbatim, so the bare
+      // identifier \`undefined\` is what an unset environment looks like: the SDK then resolves
+      // it from the domain the page is served on. Pin this build to one environment by
+      // replacing it with a quoted slug, ex. JSON.stringify('DEV').
+      'process.env.MFE_ENVIRONMENT': 'undefined'
+    })`
+    }
+
+    private viteConfig(request: FederationConfigRequest, profile: FrameworkProfile): string {
+        const { microfrontendSlug, remotes, exposeSelf } = request
         // `externalType: 'promise'` tells the plugin that `external` is an expression resolving to
         // the url instead of the url itself, so it is awaited in the host bundle at import time
         const remotesBlock = this.remotesBlock(
@@ -219,7 +273,7 @@ export default defineConfig({
       shared: [${profile.shared.map(dependency => `'${dependency}'`).join(", ")}]
     })
   ],
-${profile.viteExtras ? `${profile.viteExtras}\n` : ""}  build: {
+${this.viteDefineBlock(request, profile)}  build: {
     modulePreload: false,
     target: 'esnext',
     minify: false,
@@ -228,14 +282,16 @@ ${profile.viteExtras ? `${profile.viteExtras}\n` : ""}  build: {
 })`
     }
 
-    private webpackConfig({ microfrontendSlug, remotes, exposeSelf }: FederationConfigRequest, profile: FrameworkProfile): string {
+    private webpackConfig(request: FederationConfigRequest, profile: FrameworkProfile): string {
+        const { microfrontendSlug, remotes, exposeSelf } = request
         // `promise <expression>` is how ModuleFederationPlugin declares a remote whose url is only
         // known at runtime: the expression is inlined in the host bundle and awaited before use
         const remotesBlock = this.remotesBlock(remotes, remote => `        ${remote.name}: \`promise import('${CLIENT_SDK_PACKAGE}').then(m => m.remoteUrl('${remote.slug}'))\``, "      ")
 
         const sharedBlock = profile.shared.map(dependency => `        '${dependency}': { singleton: true }`).join(",\n")
         const imports = ["const webpack = require('webpack');", ...(profile.webpackImports || []), "const { ModuleFederationPlugin } = webpack.container;"]
-        const plugins = [...(profile.webpackPlugins || [])]
+        const definePlugin = this.webpackDefinePlugin(request)
+        const plugins = [...(profile.webpackPlugins || []), ...(definePlugin ? [definePlugin] : [])]
 
         return `// webpack.config.js
 ${imports.join("\n")}
@@ -280,13 +336,19 @@ ${sharedBlock}
 
     /**
      * The generated remotes resolve themselves through the SDK, and the SDK has to be told which
-     * backend and which project to ask: without this block the config cannot work.
+     * backend and which project to ask: without this block the config cannot work. It reads the
+     * two values off `import.meta.env` / `process.env`, which the config above already filled in.
      *
      * The environment is the one thing it does not have to be told. It is emitted as a conditional
      * spread rather than as a plain field so that the key is simply not there when the variable is
      * unset: the SDK then falls back to the `auto` endpoints, which resolve the environment from the
      * domain the page is running on. Passing `environment: undefined` would not be the same thing to
      * read, and it is exactly the shape that makes people believe the value is required.
+     *
+     * The logged in user is emitted commented out inside the call, because it is the one field no
+     * environment variable can fill in: only the host knows it, and only a user based canary reads
+     * it. Left out, those microfrontends serve everyone the stable version, which is a silent
+     * outcome — hence the line, so that whoever pastes the block at least knows the option exists.
      *
      * It is emitted commented out because it does not belong to the bundler config but to the
      * entry point of the host app, where it has to run before anything imports a remote.
@@ -298,9 +360,8 @@ ${sharedBlock}
 
         const isVite = compiler === MicrofrontendCompiler.VITE
         const readEnvVariable = (variable: string) => (isVite ? `import.meta.env.VITE_${variable}` : `process.env.${variable}`)
-        const envNote = isVite
-            ? "Vite only exposes to the bundle the variables prefixed with VITE_. VITE_MFE_ENVIRONMENT is optional."
-            : "Expose these variables to the bundle with webpack.EnvironmentPlugin. MFE_ENVIRONMENT is optional."
+        const injectedBy = isVite ? "the `define` block" : "DefinePlugin"
+        const envNote = `The backend url and the project id are already in the config above, written into\n// the bundle by ${injectedBy}: there is no .env to fill in. Only the environment is\n// left to read, and it is optional.`
 
         return `
 
@@ -320,6 +381,11 @@ const environment = ${readEnvVariable("MFE_ENVIRONMENT")}
 configure({
   backendUrl: ${readEnvVariable("MFE_BACKEND_URL")},
   projectId: ${readEnvVariable("MFE_PROJECT_ID")},
+  // Only a canary targeted on users reads this, and nothing else can supply it.
+  // A getter is resolved right before the request, so an auth round trip is in
+  // time; later than that, use setUserId(). Without it those microfrontends
+  // serve everyone the stable version.
+  // userId: () => auth.currentUser?.id,
   ...(environment ? { environment } : {})
 })
 */`

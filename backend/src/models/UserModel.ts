@@ -26,8 +26,12 @@ export interface IUser {
     activateEmailExpires?: Date
     createdAt: Date
     updatedAt: Date
+    lastLoginAt?: Date
     language?: string
     theme?: string
+    marketingConsent?: boolean
+    marketingConsentAt?: Date
+    marketingConsentVersion?: string
 }
 
 export type IUserDocument = IUser &
@@ -107,6 +111,29 @@ const userSchema = new Schema<IUserDocument>(
             type: String,
             enum: ["LIGHT", "DARK", "SYSTEM"],
             default: "LIGHT"
+        },
+        // Marketing consent, recorded only where MARKETING_OPT_IN_ENABLED is on. The
+        // platform never sends commercial email: it stores when the consent was given
+        // and the version of the text that was accepted, which is the only thing that
+        // makes the consent provable afterwards.
+        marketingConsent: {
+            type: Boolean,
+            default: false
+        },
+        marketingConsentAt: {
+            type: Date,
+            required: false
+        },
+        marketingConsentVersion: {
+            type: String,
+            required: false
+        },
+        // Moment of the last access. Written by recordLogin() and read only from the
+        // database: it is stripped from toFrontendObject(), so no API response
+        // carries it.
+        lastLoginAt: {
+            type: Date,
+            required: false
         }
     },
     {
@@ -131,6 +158,9 @@ userSchema.methods.toFrontendObject = function (): IUser {
     delete obj.password
     delete obj.salt
     delete obj.__v
+    // The access date is internal: it exists for the operator querying the
+    // database, not for the client, so it never leaves the backend.
+    delete obj.lastLoginAt
     return obj
 }
 

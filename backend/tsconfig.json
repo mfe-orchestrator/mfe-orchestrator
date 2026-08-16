@@ -101,5 +101,10 @@
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         "skipLibCheck": true /* Skip type checking all .d.ts files. */
     },
-    "include": ["src/**/*.ts", "src/types/**/*.d.ts"]
+    "include": ["src/**/*.ts", "src/types/**/*.d.ts"],
+    /* Tests are never emitted: @fastify/autoload loads every file it finds in
+       dist/src/plugins and dist/src/controller, so a compiled test file would be
+       loaded at boot and would look for vitest, which production does not install.
+       They are still type checked, through tsconfig.test.json. */
+    "exclude": ["src/**/*.test.ts"]
 }

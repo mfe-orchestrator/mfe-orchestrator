@@ -32,7 +32,7 @@ const AuthWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
 
                 if (Sentry.isEnabled()) {
                     Sentry.setUser({
-                        id: profile.id,
+                        id: profile._id,
                         email: profile.email,
                         username: profile.email
                     })

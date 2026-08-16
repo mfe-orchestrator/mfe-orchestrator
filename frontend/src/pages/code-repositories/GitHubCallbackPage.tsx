@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/atoms"
+import PageHead from "@/components/PageHead"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 
 const GitHubCallbackPage = () => {
@@ -52,6 +53,7 @@ const GitHubCallbackPage = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center">
+            <PageHead title={t("codeRepositories.github.callback.authenticatingTitle")} />
             <Card className="w-full max-w-md">
                 <CardContent className="p-6">
                     <div className="text-center">

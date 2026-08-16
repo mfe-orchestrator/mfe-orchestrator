@@ -9,6 +9,7 @@ export default async function configurationController(fastify: FastifyInstance) 
             canSendEmail: Boolean(config.EMAIL_SMTP_HOST),
             canRegister: Boolean(config.REGISTRATION_ALLOWED) && Boolean(config.ALLOW_EMBEDDED_LOGIN),
             allowEmbeddedLogin: Boolean(config.ALLOW_EMBEDDED_LOGIN),
+            marketingOptInEnabled: Boolean(config.MARKETING_OPT_IN_ENABLED),
             frontendUrl: config.FRONTEND_URL,
             providers: {},
             codeRepository: {

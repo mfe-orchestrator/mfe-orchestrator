@@ -1,4 +1,5 @@
 import { cn } from "@/utils/styleUtils"
+import PageHead from "./PageHead"
 
 export interface SinglePageHeaderProps extends React.PropsWithChildren {
     title: string
@@ -13,6 +14,7 @@ export interface SinglePageHeaderProps extends React.PropsWithChildren {
 const SinglePageLayout: React.FC<SinglePageHeaderProps> = ({ title, description, left, right, children, lrContainerClassname, className, headerClassName }) => {
     return (
         <div className={cn("flex flex-col gap-6 min-h-full", className)}>
+            <PageHead title={title} description={description} />
             <div className={cn("mb-4", headerClassName)}>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">{title}</h1>

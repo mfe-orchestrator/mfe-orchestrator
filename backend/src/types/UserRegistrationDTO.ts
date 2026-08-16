@@ -3,6 +3,7 @@ interface UserRegistrationDTO {
     password?: string
     name?: string
     surname?: string
+    marketingConsent?: boolean
 }
 
 export default UserRegistrationDTO

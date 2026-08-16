@@ -73,6 +73,17 @@ export async function canSendEmail(request: APIRequestContext): Promise<boolean>
 }
 
 /**
+ * Verifica se l'installazione raccoglie il consenso marketing: e' spento per
+ * default, quindi la casella non esiste nella maggior parte degli ambienti.
+ */
+export async function marketingOptInEnabled(request: APIRequestContext): Promise<boolean> {
+    const response = await request.get("/api/configuration")
+    if (!response.ok()) return false
+    const config = await response.json()
+    return Boolean(config?.marketingOptInEnabled)
+}
+
+/**
  * Precondizioni dei test che seguono i link ricevuti via email.
  * Restituisce il motivo per cui non sono eseguibili, oppure `null` se tutto e' a posto.
  */

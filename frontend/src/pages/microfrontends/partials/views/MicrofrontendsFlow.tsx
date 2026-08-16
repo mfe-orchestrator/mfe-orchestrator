@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
-import CloneRepositoryPopover from "../components/CloneRepositoryPopover"
+import { MICROFRONTEND_NODE_TYPE, MicrofrontendFlowNode } from "./MicrofrontendFlowNode"
 import "@xyflow/react/dist/style.css"
 
 interface MicrofrontendFlowProps {
@@ -11,13 +11,26 @@ interface MicrofrontendFlowProps {
     onAddNewMicrofrontend: (parentId?: string) => void
 }
 
-/** React Flow ships its own node styling, so the theme tokens have to be forced in. */
-const NODE_BASE_CLASS = "!rounded-md !border-2 !bg-card !px-3 !py-2 !text-sm !font-medium !text-card-foreground !shadow-none"
-const NODE_CLASS = `${NODE_BASE_CLASS} !border-border`
-const NODE_HIGHLIGHTED_CLASS = `${NODE_BASE_CLASS} !border-primary`
-const NODE_DIMMED_CLASS = `${NODE_CLASS} opacity-40`
+/** Defined once, outside the component: React Flow remounts every node when this object changes identity. */
+const NODE_TYPES = { [MICROFRONTEND_NODE_TYPE]: MicrofrontendFlowNode }
+
+/**
+ * The card is drawn by the node itself, so the wrapper only carries the hover state, which the node
+ * reads through `group-[.is-highlighted]` rather than by having its classes rewritten from here.
+ */
+const NODE_CLASS = "group"
+const NODE_HIGHLIGHTED_CLASS = "group is-highlighted"
+const NODE_DIMMED_CLASS = "group is-dimmed opacity-40 transition-opacity"
 
 const EDGE_COLOR = "hsl(var(--primary))"
+const EDGE_BASE_STYLE = { stroke: "hsl(var(--divider))", strokeWidth: 2 }
+
+/** Fallback layout for a microfrontend that has never been dragged: wide enough for the node plus its edges. */
+const NODE_COLUMN_GAP = 300
+const NODE_ROW_GAP = 180
+
+/** Room around the graph, and a ceiling on the zoom so a two node project is not blown up to fill the canvas. */
+const FIT_VIEW_OPTIONS = { padding: 0.25, maxZoom: 1 }
 
 const THEME_TO_COLOR_MODE = {
     [ThemeEnum.LIGHT]: "light",
@@ -46,10 +59,12 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                         id: mfe._id + "-" + parentId,
                         source: parentId,
                         target: mfe._id,
+                        style: EDGE_BASE_STYLE,
                         markerStart: {
                             type: "arrowclosed" as const,
-                            width: 20,
-                            height: 20
+                            width: 16,
+                            height: 16,
+                            color: EDGE_BASE_STYLE.stroke
                         }
                     })
                 }
@@ -57,19 +72,12 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
 
             return {
                 id: mfe._id,
-                data: {
-                    label: (
-                        <>
-                            {mfe.name}
-                            {/* nodrag/nopan keep React Flow from hijacking the click; stopPropagation keeps a double click from navigating away. */}
-                            <span className="nodrag nopan absolute -right-2.5 -top-2.5" onDoubleClick={event => event.stopPropagation()}>
-                                <CloneRepositoryPopover microfrontend={mfe} iconOnly />
-                            </span>
-                        </>
-                    )
-                },
-                position: { x: mfe?.position?.x || col * 250, y: mfe?.position?.y || row * 150 },
-                dimensions: { width: mfe?.position?.width, height: mfe?.position?.height },
+                type: MICROFRONTEND_NODE_TYPE,
+                // The node keeps the microfrontend whole and renders it itself, so nothing here has to be
+                // rebuilt when the language changes — and the positions dragged since the last drag end,
+                // which are the only place they live until then, survive it.
+                data: { microfrontend: mfe },
+                position: { x: mfe?.position?.x ?? col * NODE_COLUMN_GAP, y: mfe?.position?.y ?? row * NODE_ROW_GAP },
                 className: NODE_CLASS
             }
         })
@@ -89,8 +97,9 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
             setEdges(edges =>
                 edges.map(edge => ({
                     ...edge,
-                    style: undefined,
-                    animated: false
+                    style: EDGE_BASE_STYLE,
+                    animated: false,
+                    markerStart: { type: "arrowclosed" as const, width: 16, height: 16, color: EDGE_BASE_STYLE.stroke }
                 }))
             )
             return
@@ -125,16 +134,14 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
 
                 return {
                     ...edge,
-                    style: isConnected ? { stroke: EDGE_COLOR, strokeWidth: 2 } : { opacity: 0.3, strokeWidth: 2 },
+                    style: isConnected ? { stroke: EDGE_COLOR, strokeWidth: 2 } : { ...EDGE_BASE_STYLE, opacity: 0.3 },
                     animated: isConnected,
-                    markerStart: isConnected
-                        ? {
-                              type: "arrowclosed" as const,
-                              width: 20,
-                              height: 20,
-                              color: EDGE_COLOR
-                          }
-                        : edge.markerStart
+                    markerStart: {
+                        type: "arrowclosed" as const,
+                        width: 16,
+                        height: 16,
+                        color: isConnected ? EDGE_COLOR : EDGE_BASE_STYLE.stroke
+                    }
                 }
             })
         )
@@ -221,6 +228,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
+                nodeTypes={NODE_TYPES}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
@@ -230,11 +238,14 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 onNodeDoubleClick={onNodeDoubleClick}
                 colorMode={THEME_TO_COLOR_MODE[theme]}
                 fitView
+                // A graph of two or three microfrontends would otherwise be zoomed until a node fills the
+                // screen, which is what made the cards look like posters.
+                fitViewOptions={FIT_VIEW_OPTIONS}
                 preventScrolling={false}
                 snapToGrid
             >
                 <Background gap={16} color="hsl(var(--divider))" />
-                <Controls />
+                <Controls showInteractive={false} />
             </ReactFlow>
         </div>
     )

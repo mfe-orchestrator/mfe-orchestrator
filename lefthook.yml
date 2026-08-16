@@ -12,7 +12,8 @@ pre-commit:
     typecheck-backend:
       root: "backend/"
       glob: "**/*.{ts,tsx}"
-      run: "pnpm exec tsc --noEmit"
+      # The script checks the build and the tests, which live in two tsconfigs
+      run: "pnpm run typecheck"
 
     typecheck-frontend:
       root: "frontend/"

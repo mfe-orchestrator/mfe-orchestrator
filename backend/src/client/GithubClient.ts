@@ -174,6 +174,28 @@ export interface GithubWorkflowDispatchResponse {
     message?: string
 }
 
+export interface GithubWorkflowRun {
+    id: number
+    name?: string | null
+    display_title?: string
+    /** For a run started by a tag push this holds the tag name, not a branch. */
+    head_branch?: string | null
+    head_sha: string
+    status?: string | null
+    conclusion?: string | null
+    html_url: string
+    event?: string
+    run_started_at?: string
+    created_at: string
+    updated_at: string
+    actor?: { login?: string }
+}
+
+export interface GithubWorkflowRunsResponse {
+    total_count: number
+    workflow_runs: GithubWorkflowRun[]
+}
+
 export interface GithubBranch {
     name: string
     commit: {
@@ -598,6 +620,27 @@ class GithubClient {
         })
 
         return response.data || {}
+    }
+
+    /**
+     * The most recent Actions runs of a repository, newest first.
+     *
+     * Only the first page is read: the build screen shows a handful of runs per
+     * microfrontend and this endpoint is polled, so walking the pagination would
+     * burn the token's rate limit for rows nobody looks at.
+     */
+    async getWorkflowRuns(accessToken: string, repositoryName: string, perPage: number, orgName?: string, userName?: string): Promise<GithubWorkflowRun[]> {
+        const response = await axios.request<GithubWorkflowRunsResponse>({
+            url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/actions/runs`,
+            params: { per_page: perPage },
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            }
+        })
+
+        return response.data?.workflow_runs || []
     }
 
     async getBranchCommitSha(accessToken: string, repositoryName: string, branchName: string, orgName?: string, userName?: string): Promise<string> {

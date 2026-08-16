@@ -72,7 +72,11 @@ interface MailProvider {
     getLinks(request: APIRequestContext, inbox: string, messageId: string): Promise<string[]>
 }
 
-const decodeHtmlEntities = (value: string) => value.replaceAll("&amp;", "&").replaceAll("&#x2F;", "/").replaceAll("&#39;", "'").replaceAll("&quot;", '"')
+/**
+ * L'ampersand va decodificato per ultimo: altrimenti `&amp;#x2F;` (una `&` letterale
+ * seguita da `#x2F;`) diventerebbe prima `&#x2F;` e poi `/`, cioe' doppia decodifica.
+ */
+const decodeHtmlEntities = (value: string) => value.replaceAll("&#x2F;", "/").replaceAll("&#39;", "'").replaceAll("&quot;", '"').replaceAll("&amp;", "&")
 
 /** Estrae i link da un corpo email, sia dalla parte HTML sia da quella testuale. */
 const extractLinks = (html?: string, text?: string): string[] => {

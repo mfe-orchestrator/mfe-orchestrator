@@ -1,16 +1,78 @@
+import { MultipartFile } from "@fastify/multipart"
 import { randomBytes } from "crypto"
 import { Schema } from "mongoose"
+import { fastify } from ".."
 import AuthenticationError from "../errors/AuthenticationError"
+import { createBusinessException } from "../errors/BusinessException"
 import { InvalidCredentialsError } from "../errors/InvalidCredentialsError"
 import { UserAlreadyExistsError } from "../errors/UserAlreadyExistsError"
 import { UserNotFoundError } from "../errors/UserNotFoundError"
+import UserAvatar, { ALLOWED_AVATAR_MIME_TYPES, MAX_AVATAR_SIZE_BYTES } from "../models/UserAvatarModel"
 import User, { IUser, UserStatus } from "../models/UserModel"
 import ResetPasswordDataDTO from "../types/ResetPasswordDataDTO"
 import UserAccoutActivationDTO from "../types/UserAccoutActivationDTO"
 import { UserInvitationDTO } from "../types/UserInvitationDTO"
 import UserLoginDTO from "../types/UserLoginDTO"
+import UserProfileUpdateDTO from "../types/UserProfileUpdateDTO"
+import UserRegistrationDTO from "../types/UserRegistrationDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import EmailService from "./EmailSenderService"
+
+/**
+ * The fields `register` accepts. `status` is reachable only from the internal
+ * callers that provision a user outside the public endpoint (federated login and
+ * project invitation): the controller never forwards it from a request body.
+ */
+type RegisterUserData = UserRegistrationDTO & {
+    status?: UserStatus
+}
+
+/**
+ * Fallback window for a federated access whose token carries no authentication
+ * moment: an opaque token (a Google access token is not a JWT) leaves nothing to
+ * read, so the access is dated "now" and the window keeps ordinary request traffic
+ * from writing on the user document over and over.
+ *
+ * Only that fallback is approximate. When the token does state when the provider
+ * authenticated the user, `recordLogin` stores exactly that moment.
+ */
+export const FEDERATED_LOGIN_WINDOW_MS = 15 * 60 * 1000
+
+/**
+ * Stores the moment of an access on the user document.
+ *
+ * The write happens only when `at` is newer than what is already stored: the
+ * authorization hook calls this on every federated request, always with the
+ * authentication moment of the same token, so re-seeing that token is not a new
+ * login and must not move the field. `minGapMs` covers the caller that has no
+ * authentication moment to pass and has to date the access "now".
+ *
+ * A failed write never fails the request: the field is an operational record, and
+ * an authenticated user losing access because a bookkeeping update timed out would
+ * be a far worse outcome than a missing date.
+ *
+ * Deliberately not a method of `UserService`: the authorization hook calls it on
+ * every federated request, and building a service there would build an
+ * `EmailService`, hence an SMTP transport, to run one `updateOne`.
+ */
+export const recordLogin = async (user: Pick<IUser, "_id" | "lastLoginAt">, at: Date = new Date(), minGapMs: number = 0): Promise<void> => {
+    if (user.lastLoginAt) {
+        const elapsed = at.getTime() - user.lastLoginAt.getTime()
+        if (elapsed <= 0 || elapsed < minGapMs) {
+            return
+        }
+    }
+
+    const userId = toObjectId(user._id)
+    try {
+        // Timestamps off on purpose: an access is not a change to the user, and
+        // letting it bump `updatedAt` would turn that field into "last seen" for
+        // every user in the collection.
+        await User.updateOne({ _id: userId }, { lastLoginAt: at }, { timestamps: false })
+    } catch (error) {
+        fastify?.log?.warn({ err: error, userId: userId.toString() }, "Unable to record the last login date")
+    }
+}
 
 export class UserService {
     private emailService: EmailService
@@ -39,8 +101,29 @@ export class UserService {
         await user.save()
     }
 
-    async register(userData: Partial<IUser>, verifyEmail: boolean = true) {
-        const { email, ...otherUserData } = userData
+    /**
+     * Builds the consent fields to store for a new user.
+     *
+     * The consent is recorded only where the installation declares it collects
+     * one: `MARKETING_OPT_IN_ENABLED` is off unless the operator turns it on, so
+     * an installation without a mailing list stores nothing. The version of the
+     * accepted text travels with the consent, it is the only thing that keeps an
+     * old consent attributable to the wording it was given for.
+     */
+    private buildMarketingConsent(marketingConsent?: boolean): Partial<IUser> {
+        if (!fastify.config?.MARKETING_OPT_IN_ENABLED || marketingConsent !== true) {
+            return {}
+        }
+
+        return {
+            marketingConsent: true,
+            marketingConsentAt: new Date(),
+            marketingConsentVersion: fastify.config.MARKETING_OPT_IN_VERSION
+        }
+    }
+
+    async register(userData: RegisterUserData, verifyEmail: boolean = true) {
+        const { email, password, name, surname, status, marketingConsent } = userData
         if (!email) {
             throw new Error("Email is required")
         }
@@ -52,9 +135,16 @@ export class UserService {
             throw new UserAlreadyExistsError(email)
         }
 
+        // Only the fields listed here are taken from the request: registration is a
+        // public endpoint, so spreading its body would let anybody sign up with
+        // `role: "admin"` or with a consent the installation never asked for.
         const userToSave: Partial<IUser> = {
             email,
-            ...otherUserData
+            password,
+            name,
+            surname,
+            status,
+            ...this.buildMarketingConsent(marketingConsent)
         }
 
         if (canVerifyEmail) {
@@ -93,6 +183,8 @@ export class UserService {
         if (!isValidPassword) {
             throw new InvalidCredentialsError()
         }
+
+        await recordLogin(user)
 
         return {
             user: user.toFrontendObject(),
@@ -171,6 +263,143 @@ export class UserService {
 
     async saveTheme(theme: string, _id: string | Schema.Types.ObjectId): Promise<void> {
         await User.updateOne({ _id: toObjectId(_id) }, { theme })
+    }
+
+    /**
+     * Updates the personal data the user is allowed to change about themselves.
+     *
+     * Only `name` and `surname` are read from the payload: the caller is the
+     * account owner, so spreading the body here would let anybody promote
+     * themselves to `role: "admin"` or move their account to another email.
+     *
+     * An empty string clears the field instead of storing a blank: the schema
+     * trims, and a user who deletes their surname means they have none, not that
+     * they have one made of spaces.
+     */
+    async updateProfile(data: UserProfileUpdateDTO, _id: string | Schema.Types.ObjectId): Promise<IUser> {
+        const user = await User.findOne({ _id: toObjectId(_id) })
+        if (!user) {
+            throw new UserNotFoundError(_id.toString())
+        }
+
+        if (data.name !== undefined) {
+            user.name = data.name.trim() || undefined
+        }
+        if (data.surname !== undefined) {
+            user.surname = data.surname.trim() || undefined
+        }
+
+        await user.save()
+        return user.toFrontendObject()
+    }
+
+    /**
+     * Grants or withdraws the marketing consent from the profile page.
+     *
+     * Granting stores the moment and the version of the text in force, the same
+     * pair `buildMarketingConsent` writes at registration: a consent without the
+     * wording it was given for is not provable afterwards.
+     *
+     * Withdrawing clears both. They describe a consent that no longer holds, and
+     * leaving a date next to `marketingConsent: false` would read as if the
+     * consent were still the one given on that day. Keeping the history of the
+     * changes is a different feature and would need its own log collection: this
+     * field pair only ever describes the consent currently in force.
+     */
+    async setMarketingConsent(marketingConsent: boolean, _id: string | Schema.Types.ObjectId): Promise<IUser> {
+        if (!fastify.config?.MARKETING_OPT_IN_ENABLED) {
+            throw createBusinessException({
+                code: "MARKETING_OPT_IN_DISABLED",
+                message: "This installation does not collect a marketing consent"
+            })
+        }
+
+        const user = await User.findOne({ _id: toObjectId(_id) })
+        if (!user) {
+            throw new UserNotFoundError(_id.toString())
+        }
+
+        if (marketingConsent) {
+            user.marketingConsent = true
+            user.marketingConsentAt = new Date()
+            user.marketingConsentVersion = fastify.config.MARKETING_OPT_IN_VERSION
+        } else {
+            user.marketingConsent = false
+            user.marketingConsentAt = undefined
+            user.marketingConsentVersion = undefined
+        }
+
+        await user.save()
+        return user.toFrontendObject()
+    }
+
+    /**
+     * Stores the uploaded picture, replacing whatever the user had before.
+     *
+     * The declared mime type is checked against a whitelist and never trusted to
+     * decide what gets served back: `getAvatar` reads the stored value, which is
+     * one of the four accepted formats precisely because this check ran first.
+     *
+     * The size is verified on the buffer and not on the multipart headers. The
+     * parser is configured with the same limit, so an oversized upload is
+     * normally refused before reaching here, but a client that lies about the
+     * length must not be the reason the check happens.
+     */
+    async saveAvatar(file: MultipartFile, _id: string | Schema.Types.ObjectId): Promise<void> {
+        if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.mimetype)) {
+            throw createBusinessException({
+                code: "AVATAR_INVALID_FORMAT",
+                message: `Unsupported image format: ${file.mimetype}. Allowed formats are ${ALLOWED_AVATAR_MIME_TYPES.join(", ")}`
+            })
+        }
+
+        const data = await file.toBuffer()
+
+        if (data.length === 0) {
+            throw createBusinessException({
+                code: "AVATAR_EMPTY",
+                message: "The uploaded image is empty"
+            })
+        }
+
+        if (data.length > MAX_AVATAR_SIZE_BYTES) {
+            throw createBusinessException({
+                code: "AVATAR_TOO_LARGE",
+                message: `The image exceeds the maximum size of ${MAX_AVATAR_SIZE_BYTES} bytes`
+            })
+        }
+
+        await UserAvatar.updateOne(
+            { userId: toObjectId(_id) },
+            {
+                data,
+                mimeType: file.mimetype,
+                size: data.length
+            },
+            { upsert: true }
+        )
+    }
+
+    /**
+     * Returns the stored picture as a data URI, or null when the user never
+     * uploaded one.
+     *
+     * A data URI and not a URL to a binary endpoint: the picture is behind
+     * authentication, and the `src` of an `<img>` carries no Authorization
+     * header, so a plain URL would force the frontend to either fetch the bytes
+     * by hand or expose the endpoint publicly.
+     */
+    async getAvatar(_id: string | Schema.Types.ObjectId): Promise<string | null> {
+        const avatar = await UserAvatar.findOne({ userId: toObjectId(_id) })
+        if (!avatar) {
+            return null
+        }
+
+        return `data:${avatar.mimeType};base64,${avatar.data.toString("base64")}`
+    }
+
+    async deleteAvatar(_id: string | Schema.Types.ObjectId): Promise<void> {
+        await UserAvatar.deleteOne({ userId: toObjectId(_id) })
     }
 }
 

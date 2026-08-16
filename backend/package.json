@@ -8,9 +8,11 @@
         "st": "tsx ./src/index.ts",
         "dev": "pnpm run start",
         "build": "tsc && node ./postbuild.js",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "lint": "biome lint --write ./src",
         "format": "biome format --write ./src",
-        "typecheck": "pnpm exec tsc --noEmit"
+        "typecheck": "pnpm exec tsc --noEmit && pnpm exec tsc --noEmit -p tsconfig.test.json"
     },
     "keywords": [],
     "author": "",
@@ -59,6 +61,7 @@
         "@types/node": "^26.2.0",
         "@types/nodemailer": "^8.0.1",
         "@types/pug": "^2.0.10",
-        "tsx": "^4.23.12"
+        "tsx": "^4.23.12",
+        "vitest": "^4.1.10"
     }
 }

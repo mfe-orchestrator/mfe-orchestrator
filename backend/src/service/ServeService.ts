@@ -9,6 +9,8 @@ import AzureStorageClient from "../client/AzureStorageAccount"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { EnvironmentNotFoundError } from "../errors/EnvironmentNotFoundError"
+import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
@@ -17,6 +19,7 @@ import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofronte
 import Project, { IProject } from "../models/ProjectModel"
 import { IStorage, StorageType } from "../models/StorageModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
+import { getBackendUrl } from "../utils/backendUrl"
 import { toObjectId } from "../utils/mongooseUtils"
 import DeploymentService from "./DeploymentService"
 import FederationConfigService, { federationName, IntegrationInstructions } from "./FederationConfigService"
@@ -103,8 +106,12 @@ const FORCE_VERSION_QUERY_PARAM = "mfeVersion"
  * The host page sends every identity it holds and never learns which one we use, so the rollout
  * strategy, its percentage and even its existence stay on this side: switching a microfrontend from
  * one strategy to another takes no change at all on the host page.
+ *
+ * ON_SESSION buckets on the device id, which the SDK keeps in localStorage so that the version a
+ * browser was given survives a restart. ON_USER looks the user id up in the enrolment list, and
+ * RANDOM reads neither. The session id is still accepted, and still sent by the SDK for telemetry,
+ * but no canary strategy is computed on it.
  */
-const SESSION_ID_QUERY_PARAM = "mfeSessionId"
 const DEVICE_ID_QUERY_PARAM = "mfeDeviceId"
 const USER_ID_QUERY_PARAM = "mfeUserId"
 
@@ -212,7 +219,7 @@ export default class ServeService {
 
         const environment = await Environment.findById(deployment.environmentId)
         if (!environment) {
-            throw new EntityNotFoundError(deployment.environmentId?.toString())
+            throw new EnvironmentNotFoundError(deployment.environmentId?.toString())
         }
 
         const filteredMicrofrontends = deployment.microfrontends?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId?.toString())) || []
@@ -257,7 +264,9 @@ export default class ServeService {
             compiler: stack.compiler,
             microfrontendSlug: allData.microfrontend.slug,
             exposeSelf: allData.microfrontend.type === MicrofrontendType.HOST,
-            remotes: childs.map((child, index) => ({ name: child.nameToIntegrate || `mfe${index + 1}`, slug: child.slug }))
+            remotes: childs.map((child, index) => ({ name: child.nameToIntegrate || `mfe${index + 1}`, slug: child.slug })),
+            projectId: allData.microfrontend.projectId.toString(),
+            backendUrl: getBackendUrl()
         })
 
         return { ...instructions, stack }
@@ -275,7 +284,7 @@ export default class ServeService {
         }
         const environment = await Environment.findById(environmentId)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw new EnvironmentNotFoundError(environmentId.toString())
         }
 
         const microFrontendsAdapted = deployment.microfrontends
@@ -309,7 +318,7 @@ export default class ServeService {
     async getAllByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<GetAllDataDTO> {
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectId, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
         return this.getAllByEnvironmentId(environment._id)
     }
@@ -324,10 +333,10 @@ export default class ServeService {
      * @param projectId The ID of the project
      * @returns Promise with the Environment the referer belongs to
      */
-    private async getEnvironmentByRefererAndProjectIdOrFail(referer: string, projectId: string): Promise<IEnvironment> {
+    private async getEnvironmentByRefererAndProjectIdOrFail(referer: string, projectId: string | Schema.Types.ObjectId): Promise<IEnvironment> {
         const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw EnvironmentNotFoundError.fromDomain(referer, projectId.toString())
         }
         return environment
     }
@@ -354,11 +363,7 @@ export default class ServeService {
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
         }
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId)
-
-        if (!environment) {
-            throw new EntityNotFoundError("Environment")
-        }
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, microfrontend.projectId)
         const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
@@ -380,7 +385,7 @@ export default class ServeService {
     async getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(projectId: string, environmentSlug: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectId, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
         return this.getMicrofrontendConfigurationByEnvironmentAndMfeSlug(environment, mfeSlug)
     }
@@ -425,7 +430,7 @@ export default class ServeService {
         }
         const environment = await Environment.findById(environmentId)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw new EnvironmentNotFoundError(environmentId.toString())
         }
         return await this.adaptMicrofrontendToServe(deployedMFE, environment.slug, deployment._id)
     }
@@ -467,7 +472,7 @@ export default class ServeService {
     async getGlobalVariablesByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<IGlobalVariable[]> {
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectId, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
         return this.getGlobalVariablesByEnvironment(environment)
     }
@@ -514,12 +519,12 @@ export default class ServeService {
         const projectIdObj = toObjectId(projectId)
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectIdObj, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
 
         const project = await Project.findOne({ _id: projectIdObj })
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
 
         const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ deployedAt: -1 })
@@ -532,13 +537,10 @@ export default class ServeService {
     async getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId: string, microfrontendSlug: string, filePath: string, referer: string, version?: string): Promise<ServeFileResult> {
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
 
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
-        if (!environment) {
-            throw new EntityNotFoundError("Environment")
-        }
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, projectId)
 
         const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
         if (!deployment) {
@@ -547,6 +549,11 @@ export default class ServeService {
         return this.getMicrofrontendByDeployment(project, deployment, microfrontendSlug, filePath, version)
     }
 
+    /**
+     * Draws the canary. Called from the two places where a version gets decided — the manifest and the
+     * redirect of a versionless entrypoint — and nowhere else: every other file of the microfrontend
+     * reads its version off the URL through getVersionToServe, so one page load runs one build.
+     */
     async getMicrofrontendVersion(deployedMicrofrontend: IMicrofrontend, deploymentId?: string | ObjectId | Schema.Types.ObjectId): Promise<string> {
         const forcedVersion = this.getForcedVersion(deployedMicrofrontend)
         if (forcedVersion) {
@@ -562,17 +569,25 @@ export default class ServeService {
     }
 
     /**
-     * Decide whether this request belongs to the canary bucket, according to how the canary is
-     * configured. Every strategy but ON_USER is the same bucketing over a different identity: the host
-     * page sends all of them and stays unaware of which one ends up being used.
+     * Decide whether this request belongs to the canary, according to how the canary is configured.
+     *
+     * The three strategies answer two different questions. RANDOM and ON_SESSION split traffic by
+     * percentage and differ only in stickiness — a draw per request against a draw per browser, held
+     * by hashing an identity the host page sends. ON_USER does not split anything: the percentage is
+     * ignored and only the users enrolled on the deployment see the canary.
+     *
+     * The host page sends every identity it holds and is never told which one is used, so switching a
+     * microfrontend from one strategy to another takes no change at all on its side.
      */
     private async isCanary(microfrontend: IMicrofrontend, deploymentId?: string | ObjectId | Schema.Types.ObjectId): Promise<boolean> {
         switch (microfrontend.canary?.type) {
-            // A session id is dropped when the browser closes, so the version is drawn again from scratch
-            case CanaryType.ON_SESSIONS:
-                return this.isIdInCanaryBucket(microfrontend, this.getQueryParam(SESSION_ID_QUERY_PARAM))
-            // A device id outlives the browser, so the version stays the same on this machine
-            case CanaryType.COOKIE_BASED:
+            // Nothing is remembered, so a reload draws again: the point is to exercise both versions on
+            // the same browser, not to keep anyone on one of them.
+            case CanaryType.RANDOM:
+                return Math.random() * CANARY_BUCKETS < (microfrontend.canary?.percentage || 0)
+            // The device id lives in the localStorage of the host page, so it outlives the browser and
+            // this machine keeps the version it was given across restarts.
+            case CanaryType.ON_SESSION:
                 return this.isIdInCanaryBucket(microfrontend, this.getQueryParam(DEVICE_ID_QUERY_PARAM))
             case CanaryType.ON_USER:
                 return this.isUserInCanary(microfrontend, deploymentId)
@@ -582,9 +597,9 @@ export default class ServeService {
     }
 
     /**
-     * Bucket one of the identities the host page sent us. Without it the decision cannot be sticky, so
-     * it falls back to a plain draw: consistent within the page load, since the version gets pinned in
-     * the URL right after, but drawn again on the next one.
+     * Bucket the identity the host page sent us. Without it the decision cannot be sticky, so it falls
+     * back to a plain draw: consistent within the page load, since the version gets pinned in the URL
+     * right after, but drawn again on the next one.
      */
     private isIdInCanaryBucket(microfrontend: IMicrofrontend, id?: string): boolean {
         const percentage = microfrontend.canary?.percentage || 0
@@ -595,29 +610,47 @@ export default class ServeService {
     }
 
     /**
-     * An explicit row on the deployment always wins, so a single user can be pinned on the canary or
-     * kept out of it. Everyone else is bucketed by userId, which keeps the choice stable for that user
-     * on any browser and any device.
+     * ON_USER is an explicit enrolment, not a split: a user sees the canary only when the deployment
+     * carries a row enabling them, and everybody else — including every anonymous visitor, who has no
+     * `mfeUserId` to look up — gets the stable version. The percentage plays no part here.
      *
-     * A row can be scoped to one microfrontend or to the whole deployment: enrolment through
-     * DeploymentCanaryUsersService is per deployment and leaves microfrontendId unset, so matching only
-     * on a concrete microfrontendId would never find those rows. The more specific row wins, which is
-     * what sorting by microfrontendId descending gives us: an ObjectId sorts after null in Mongo.
+     * Enrolment is stored per deployment and leaves microfrontendId unset, so a row covers every canary
+     * microfrontend of that deployment. A row scoped to one microfrontend is still honoured and wins
+     * over the deployment wide one, which is what sorting by microfrontendId descending gives us: an
+     * ObjectId sorts after null in Mongo.
      */
     private async isUserInCanary(microfrontend: IMicrofrontend, deploymentId?: string | ObjectId | Schema.Types.ObjectId): Promise<boolean> {
         const userId = this.getQueryParam(USER_ID_QUERY_PARAM)
         if (!userId || !deploymentId) {
             return false
         }
-        const explicitDecision = await DeploymentToCanaryUsers.findOne({
+        const enrolment = await DeploymentToCanaryUsers.findOne({
             deploymentId: toObjectId(deploymentId),
             userId,
             $or: [{ microfrontendId: microfrontend._id }, { microfrontendId: null }, { microfrontendId: { $exists: false } }]
         }).sort({ microfrontendId: -1 })
-        if (explicitDecision) {
-            return explicitDecision.enabled
+        return Boolean(enrolment?.enabled)
+    }
+
+    /**
+     * The version the bytes of one file must come from — read from the URL, never drawn.
+     *
+     * A microfrontend is many files, and they all have to come from the same build. The draw therefore
+     * happens exactly once, on the entrypoint, and its result is pinned into the URL as a
+     * `_v/<version>/` segment that every other file of that microfrontend inherits, because chunks are
+     * imported with relative specifiers and the browser resolves them against the entrypoint URL.
+     *
+     * So a file arriving here without a version has not come through a resolved entrypoint: it is a
+     * host holding a raw url, or a classic script that computed its chunk base before the redirect.
+     * Drawing again for it is exactly the wrong answer — with a RANDOM canary every asset would flip
+     * its own coin and one page would end up running two builds at once. The deployed version is the
+     * only coherent thing to serve, and `mfeVersion` stays available to ask for the other one.
+     */
+    private getVersionToServe(microfrontend: IMicrofrontend, versionFromUrl?: string): string {
+        if (versionFromUrl && this.getServableVersions(microfrontend).includes(versionFromUrl)) {
+            return versionFromUrl
         }
-        return hashToBucket(`${userId}:${microfrontend._id.toString()}`) < (microfrontend.canary?.percentage || 0)
+        return this.getForcedVersion(microfrontend) ?? microfrontend.version
     }
 
     /**
@@ -676,7 +709,7 @@ export default class ServeService {
             }
         }
 
-        const versionToServe = version && this.getServableVersions(microfrontend).includes(version) ? version : await this.getMicrofrontendVersion(microfrontend, deployment._id)
+        const versionToServe = this.getVersionToServe(microfrontend, version)
         const headers = { ...(isEntryPoint ? HEADERS_NO_CACHE : HEADERS_CACHE), [VERSION_HEADER]: versionToServe }
 
         switch (microfrontend.host.type) {
@@ -720,13 +753,10 @@ export default class ServeService {
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
         }
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId)
-        if (!environment) {
-            throw new EntityNotFoundError("Environment")
-        }
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, microfrontend.projectId)
         const project = await Project.findById(environment.projectId)
         if (!project) {
-            throw new EntityNotFoundError("Project")
+            throw new ProjectNotFoundError(environment.projectId.toString())
         }
 
         const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
@@ -795,14 +825,34 @@ export default class ServeService {
     getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | Schema.Types.ObjectId) {
         return Environment.findOne({
             projectId: toObjectId(projectId),
-            $or: [{ domains: { $regex: new RegExp(referer, "i") } }, { domains: { $regex: new RegExp(new URL(referer).origin, "i") } }]
+            $or: refererMatchCandidates(referer).map(candidate => ({ domains: { $regex: new RegExp(escapeRegExp(candidate), "i") } }))
         })
     }
 }
 
-const getBackendUrl = (): string => {
-    return process.env.BACKEND_URL || process.env.FRONTEND_URL + "/api"
+/**
+ * The forms of the calling domain a registered domain can be matched against.
+ *
+ * The referer is a full url when the browser sends one and a bare host when getReferer falls back to
+ * the Host header, so parsing has to tolerate both: `new URL("example.com")` throws, which used to
+ * surface as a 500 on every "auto" url requested without a referer (a plain curl, a preload, a
+ * browser under a no-referrer policy).
+ */
+const refererMatchCandidates = (referer: string): string[] => {
+    const parsed = parseUrlOrNull(referer) ?? parseUrlOrNull(`https://${referer}`)
+    const candidates = [referer, parsed?.origin, parsed?.host, parsed?.hostname]
+    return [...new Set(candidates.filter((candidate): candidate is string => Boolean(candidate)))]
 }
+
+const parseUrlOrNull = (value: string): URL | null => {
+    try {
+        return new URL(value)
+    } catch {
+        return null
+    }
+}
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /**
  * @param pinnedVersion When set, the version is written into the path of the url.
@@ -823,7 +873,10 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
         const versionPath = pinnedVersion ? `${VERSION_PATH_SEGMENT}/${pinnedVersion}/` : ""
         const entryPoint = microfrontend.host.entryPoint || "index.js"
         if (environmentSlug) {
-            return `${backendUrl}/serve/mfe/files/auto/${microfrontend.projectId}/${microfrontend.slug}/${versionPath}${entryPoint}`
+            // The environment is already resolved here, so it goes into the url: an "auto" url would make the
+            // browser resolve it again from the referer of the file request, which fails for any host page whose
+            // domain is not registered on the environment even when it asked for that environment explicitly.
+            return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${versionPath}${entryPoint}`
         } else {
             return `${backendUrl}/serve/mfe/files/${microfrontend._id}/${versionPath}${entryPoint}`
         }
@@ -831,7 +884,10 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
         if (!microfrontend.host.url) {
             throw new Error("Microfrontend URL is not defined")
         }
-        return microfrontend.host.url?.replace("$version", microfrontend.version)
+        // `$version` is how a custom url carries the version, and it has to honour the resolved one:
+        // substituting the deployed version here would hand out the stable bundle while the manifest
+        // reports the canary version next to it, and the canary would never actually roll out.
+        return microfrontend.host.url.replace("$version", pinnedVersion ?? microfrontend.version)
     } else {
         throw new Error("Microfrontend host type is not defined")
     }

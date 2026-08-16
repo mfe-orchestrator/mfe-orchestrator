@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify"
 import { Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import Project from "../models/ProjectModel"
 import User, { UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
@@ -97,7 +98,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
         // Verify project exists
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
 
         // Verify user exists
@@ -133,7 +134,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
         // Verify project exists
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
 
         // Verify user exists

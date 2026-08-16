@@ -2,14 +2,6 @@ import useApiClient from "../useApiClient"
 import { GlobalVariable } from "./useGlobalVariablesApi"
 import { Microfrontend } from "./useMicrofrontendsApi"
 
-export interface CanaryUser {
-    _id: string
-    name: string
-    surname: string
-    email: string
-    isActive: boolean
-}
-
 export interface DeploymentDTO {
     _id: string
     environmentId: string
@@ -69,20 +61,11 @@ const useDeploymentsApi = () => {
         return response.data
     }
 
-    const getCanaryUsers = async (deploymentId: string) => {
-        const response = await apiClient.doRequest<CanaryUser[]>({
-            url: `/api/deployments/${deploymentId}/canary-users`,
-            method: "GET"
-        })
-        return response.data
-    }
-
     return {
         getDeployments,
         createDeployment,
         getDeployment,
         redeploy,
-        getCanaryUsers,
         getLastDeployment
     }
 }

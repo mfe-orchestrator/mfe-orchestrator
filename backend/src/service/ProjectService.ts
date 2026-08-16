@@ -1,7 +1,7 @@
 import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository from "../models/CodeRepositoryModel"
@@ -99,7 +99,7 @@ export class ProjectService extends BaseAuthorizedService {
         const projectIdObj = toObjectId(projectId)
         const project = await this.findById(projectIdObj)
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
         return {
             project,

@@ -2,10 +2,12 @@ import { useAuth0 } from "@auth0/auth0-react"
 import { AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, NavItem, NavItemProps } from "@mfe-orchestrator/design-system"
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, UserCog } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 import { deleteToken } from "@/authentication/tokenUtils"
+import useProfilePicture from "@/hooks/useProfilePicture"
 import useUserStore from "@/store/useUserStore"
 
 export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disabled }) => {
@@ -13,6 +15,8 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
     const { t } = useTranslation()
     const msal = useMsal()
     const auth0 = useAuth0()
+    const navigate = useNavigate()
+    const uploadedPicture = useProfilePicture()
     const [nameAndSurname, setNameAndSurname] = useState<string>()
     const [profilePictureUrl, setProfilePictureUrl] = useState<string>()
 
@@ -26,8 +30,9 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
     }, [msal])
 
     const getNameAndSurname = React.useCallback(async () => {
-        if (user?.firstName || user?.lastName) {
-            return `${user.firstName} ${user.lastName}`
+        const fullName = [user?.name, user?.surname].filter(Boolean).join(" ")
+        if (fullName) {
+            return fullName
         }
 
         if (auth0.user) {
@@ -49,6 +54,13 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
     }, [user, auth0.user, msal.instance, getActiveMsalAccount])
 
     const getProfilePictureUrl = React.useCallback(async () => {
+        // L'immagine caricata dalla pagina profilo vince su tutto: è la sola che
+        // l'utente ha scelto esplicitamente su questa piattaforma, le altre sono
+        // ereditate dal provider di login o dedotte dall'email.
+        if (uploadedPicture.data) {
+            return uploadedPicture.data
+        }
+
         // Check Auth0 profile picture
         if (auth0.user?.picture) {
             return auth0.user.picture
@@ -77,7 +89,7 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
 
         // Return null if no picture is available
         return null
-    }, [user, auth0.user])
+    }, [user, auth0.user, uploadedPicture.data])
 
     const handleLogout = async () => {
         try {
@@ -141,6 +153,10 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
             <DropdownMenuContent className="w-56" align="end" side="right" sideOffset={0}>
                 <DropdownMenuLabel>{t("settings.account")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
+                    <UserCog className="mr-2 h-4 w-4" />
+                    <span>{t("profile.title")}</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>{t("auth.logout")}</span>

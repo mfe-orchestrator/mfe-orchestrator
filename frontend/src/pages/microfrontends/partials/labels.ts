@@ -9,9 +9,16 @@ export const HOST_TYPE_LABEL_KEYS: Record<HostedOn, string> = {
 }
 
 export const CANARY_TYPE_LABEL_KEYS: Record<CanaryType, string> = {
-    [CanaryType.ON_SESSIONS]: "microfrontend.sessionType",
-    [CanaryType.ON_USER]: "microfrontend.userType",
-    [CanaryType.COOKIE_BASED]: "microfrontend.cookieBasedType"
+    [CanaryType.RANDOM]: "microfrontend.randomType",
+    [CanaryType.ON_SESSION]: "microfrontend.sessionType",
+    [CanaryType.ON_USER]: "microfrontend.userType"
+}
+
+/** What each strategy actually does, spelled out under the select and on the microfrontend card. */
+export const CANARY_TYPE_DESCRIPTION_KEYS: Record<CanaryType, string> = {
+    [CanaryType.RANDOM]: "microfrontend.canary_type_random_description",
+    [CanaryType.ON_SESSION]: "microfrontend.canary_type_session_description",
+    [CanaryType.ON_USER]: "microfrontend.canary_type_user_description"
 }
 
 export const CANARY_DEPLOYMENT_TYPE_LABEL_KEYS: Record<CanaryDeploymentType, string> = {

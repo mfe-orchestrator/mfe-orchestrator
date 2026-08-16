@@ -1,4 +1,4 @@
-import { FileText, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
+import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
@@ -31,6 +31,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             name: t("dependencies.sidebar_title"),
             path: "/dependencies",
             icon: <PackageIcon />
+        },
+        {
+            name: t("builds.title"),
+            path: "/builds",
+            icon: <HammerIcon />
         },
         {
             name: t("deployments.title"),

@@ -6,10 +6,15 @@ export enum HostedOn {
     CUSTOM_SOURCE = "CUSTOM_SOURCE"
 }
 
+/**
+ * How the canary picks who gets the new version. RANDOM and ON_SESSION split traffic by percentage
+ * and differ only in whether the draw sticks to the browser; ON_USER ignores the percentage and
+ * serves the canary to the users enrolled on the deployment.
+ */
 export enum CanaryType {
-    ON_SESSIONS = "ON_SESSIONS",
-    ON_USER = "ON_USER",
-    COOKIE_BASED = "COOKIE_BASED"
+    RANDOM = "RANDOM",
+    ON_SESSION = "ON_SESSION",
+    ON_USER = "ON_USER"
 }
 
 export enum CanaryDeploymentType {

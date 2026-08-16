@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
 import { ReactNode } from "react"
 import MainLogo from "@/components/MainLogo"
+import PageHead from "@/components/PageHead"
 import LanguageSelector from "@/components/ui/Sidebar/partials/LanguageSelector"
 import ThemeToggle from "@/components/ui/Sidebar/partials/ThemeToggle"
 import { cn } from "@/utils/styleUtils"
@@ -22,6 +23,8 @@ const sizeClasses = {
 const AuthenticationLayout: React.FC<AuthenticationLayoutProps> = ({ title, description, children, footer, size = "default" }) => {
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
+            {/* title/description accept nodes for the on-screen card, but the document head only takes plain text. */}
+            <PageHead title={typeof title === "string" ? title : undefined} description={typeof description === "string" ? description : undefined} />
             <div className="absolute top-4 right-4 flex items-center space-x-2">
                 <LanguageSelector purpose="page" />
                 <ThemeToggle purpose="page" />

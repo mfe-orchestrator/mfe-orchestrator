@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
-import { CanaryDeploymentType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CanaryDeploymentType, CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS } from "@/pages/microfrontends/partials/labels"
 
 interface DeploymentMicrofrontendCardProps {
@@ -36,7 +36,8 @@ export const DeploymentMicrofrontendCard: React.FC<DeploymentMicrofrontendCardPr
                 <CardContent className="pt-3">
                     <div className="flex flex-wrap items-center gap-1.5">
                         <Badge variant="accent" title={t("microfrontend.canaryReleaseActive")}>
-                            {t("deployments.microfrontend_card.canary_traffic", { percentage: canaryPercentage })}
+                            {/* On User enrols named users instead of splitting traffic, so there is no share to quote. */}
+                            {canary.type === CanaryType.ON_USER ? t("microfrontend.canary_enrolled_users") : t("deployments.microfrontend_card.canary_traffic", { percentage: canaryPercentage })}
                         </Badge>
                         {canary.type && <Badge variant="outline">{t(CANARY_TYPE_LABEL_KEYS[canary.type])}</Badge>}
                         {canary.deploymentType && <Badge variant="outline">{t(CANARY_DEPLOYMENT_TYPE_LABEL_KEYS[canary.deploymentType])}</Badge>}

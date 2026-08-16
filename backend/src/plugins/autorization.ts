@@ -5,7 +5,7 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import AuthenticationError from "../errors/AuthenticationError"
 import ApiKey from "../models/ApiKeyModel"
 import UserModel, { getSecret, ISSUER } from "../models/UserModel"
-import UserService from "../service/UserService"
+import UserService, { FEDERATED_LOGIN_WINDOW_MS, recordLogin } from "../service/UserService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { redisClient } from "./redis"
 
@@ -126,12 +126,40 @@ const getDataFromMsal = async (fastify: FastifyInstance, authToken: string): Pro
     }
 }
 
-const getUserDataFromToken = async (fastify: FastifyInstance, authToken: string, issuer: string) => {
+/**
+ * The Entra ID issuer this installation accepts, or undefined when no tenant is
+ * configured.
+ *
+ * Interpolating an unset tenant would produce an issuer with an empty tenant
+ * segment, a string a crafted token can state as its own `iss` — so an
+ * installation that never enabled Entra login would start accepting tokens for
+ * that issuer.
+ */
+const getEntraIdIssuer = (fastify: FastifyInstance): string | undefined => {
+    const tenantId = fastify.config.AZURE_ENTRAID_TENANT_ID
+    return tenantId ? `https://login.microsoftonline.com/${tenantId}/v2.0` : undefined
+}
+
+/**
+ * Who the caller is, and whether an external identity provider vouched for them.
+ *
+ * `isFederated` is decided here, by the strategy that actually resolved the token,
+ * and never by the `issuer` request header: the header is picked by the client, so
+ * letting it decide would let a caller present a token issued by this platform and
+ * still be treated as federated — which is what turns "user unknown" into "provision
+ * a new user" further down.
+ */
+export interface ResolvedAuthentication {
+    user: AuthUserDTO
+    isFederated: boolean
+}
+
+export const resolveAuthentication = async (fastify: FastifyInstance, authToken: string, issuer: string): Promise<ResolvedAuthentication | undefined> => {
     switch (issuer) {
         case "google":
-            return getDataFromGoogle(fastify, authToken)
+            return { user: await getDataFromGoogle(fastify, authToken), isFederated: true }
         case "auth0":
-            return getDataFromAuth0(fastify, authToken)
+            return { user: await getDataFromAuth0(fastify, authToken), isFederated: true }
         default: {
             const decodedToken = jwt.decode(authToken, {
                 json: true,
@@ -145,12 +173,36 @@ const getUserDataFromToken = async (fastify: FastifyInstance, authToken: string,
                 throw new AuthenticationError("Token expired")
             }
             if (payload.iss == ISSUER) {
-                return getDataFromLocal(fastify, authToken)
-            } else if (payload.iss == `https://login.microsoftonline.com/${fastify.config.AZURE_ENTRAID_TENANT_ID}/v2.0`) {
-                return getDataFromMsal(fastify, authToken)
+                // Local access whatever the header claimed: getDataFromLocal verifies the
+                // signature against this platform's own secret, which is the proof.
+                return { user: await getDataFromLocal(fastify, authToken), isFederated: false }
+            }
+            const entraIdIssuer = getEntraIdIssuer(fastify)
+            if (entraIdIssuer && payload.iss === entraIdIssuer) {
+                return { user: await getDataFromMsal(fastify, authToken), isFederated: true }
             }
         }
     }
+}
+
+/**
+ * When the identity provider authenticated the user, taken from the token.
+ *
+ * `auth_time` is the interactive sign-in and does not move when the token is
+ * refreshed silently, so it is preferred over `iat`. Returns undefined for a token
+ * that is not a JWT (a Google access token is opaque) or that states neither
+ * claim: there the caller has to date the access by arrival time instead.
+ */
+export const getFederatedAuthenticationMoment = (authToken: string): Date | undefined => {
+    let payload: JwtPayload | null = null
+    try {
+        payload = jwt.decode(authToken, { json: true })
+    } catch {
+        return undefined
+    }
+
+    const seconds = typeof payload?.auth_time === "number" ? payload.auth_time : payload?.iat
+    return typeof seconds === "number" ? new Date(seconds * 1000) : undefined
 }
 
 const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest): Promise<string> => {
@@ -199,14 +251,16 @@ export default fastifyPlugin(
             if (!authToken) {
                 throw new AuthenticationError("Missing or invalid Authorization header")
             }
+            // The header only selects which strategy reads the token; whether the access
+            // counts as federated is what that strategy concluded, not what was asked for.
             const issuer = (request.headers["issuer"] as string) || ISSUER
-            const userData = await getUserDataFromToken(fastify, authToken, issuer)
-            if (!userData) {
+            const authentication = await resolveAuthentication(fastify, authToken, issuer)
+            if (!authentication) {
                 throw new AuthenticationError("User not found form JWT")
             }
+            const { user: userData, isFederated: isFederatedAuth } = authentication
 
             let user = await UserModel.findOne({ email: userData.email })
-            const isFederatedAuth = issuer != ISSUER
             if (user?.activateEmailToken) {
                 if (user?.activateEmailExpires && user.activateEmailExpires < new Date()) {
                     throw new AuthenticationError("User not verified and the invitation is expired, please reset your password")
@@ -227,6 +281,15 @@ export default fastifyPlugin(
                 } else {
                     throw new AuthenticationError("User found in authentication provider but not in database with email " + userData.email)
                 }
+            }
+
+            if (isFederatedAuth) {
+                // Federated users never call `/users/login`: their token is issued by the
+                // provider, so the authentication moment is read from the token itself and
+                // this hook is only where it becomes visible. Re-seeing the same token is
+                // not a new login, `recordLogin` ignores a moment it already stored.
+                const authenticatedAt = getFederatedAuthenticationMoment(authToken)
+                await recordLogin(user, authenticatedAt ?? new Date(), authenticatedAt ? 0 : FEDERATED_LOGIN_WINDOW_MS)
             }
 
             request.databaseUser = {

@@ -4,7 +4,13 @@ import { AlertTriangle, CheckCircle2, GitBranch, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
-import useIntegrationApi, { FederationFileChange, FederationIntegrationApplyResult, FederationIntegrationStatus, MicrofrontendIntegrationPlan } from "@/hooks/apiClients/useIntegrationApi"
+import useIntegrationApi, {
+    FederationFileChange,
+    FederationIntegrationApplyResult,
+    FederationIntegrationStatus,
+    IntegrationScope,
+    MicrofrontendIntegrationPlan
+} from "@/hooks/apiClients/useIntegrationApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import StackBadge from "./StackBadge"
 
@@ -17,10 +23,18 @@ export interface IntegrateMicrofrontendsDialogProps {
      * what is shown and what can be committed.
      */
     onlyMicrofrontendId?: string
+    /** Which of the two integrations is being planned. They are never committed together. */
+    scope?: IntegrationScope
 }
 
-/** Only these two mean there is something to write, the rest is there to explain why not */
-const WRITABLE: FederationIntegrationStatus[] = ["CONFIG_TO_CREATE", "CONFIG_TO_REPLACE"]
+/** Only what the plan actually carries can be committed, whatever its status says. */
+const isWritable = (item: MicrofrontendIntegrationPlan): boolean => item.changes.length > 0
+
+/** The wording is the integration's own: what a plan is about differs, what a diff is does not. */
+const COPY_PREFIXES: Record<IntegrationScope, string> = {
+    MODULE_FEDERATION: "integration.fe_integration_tab",
+    GLOBAL_VARIABLES: "integration.env_vars_integration_tab"
+}
 
 const STATUS_KEYS: Record<FederationIntegrationStatus, string> = {
     ALREADY_INTEGRATED: "status_already_integrated",
@@ -29,6 +43,7 @@ const STATUS_KEYS: Record<FederationIntegrationStatus, string> = {
     NO_REMOTES: "status_no_remotes",
     STACK_UNKNOWN: "status_stack_unknown",
     RUNTIME_INTEGRATION: "status_runtime_integration",
+    NO_DOCUMENT: "status_no_document",
     ERROR: "status_error"
 }
 
@@ -39,6 +54,7 @@ const STATUS_VARIANTS: Record<FederationIntegrationStatus, "default" | "outline"
     NO_REMOTES: "outline",
     STACK_UNKNOWN: "outline",
     RUNTIME_INTEGRATION: "outline",
+    NO_DOCUMENT: "outline",
     ERROR: "destructive"
 }
 
@@ -85,7 +101,7 @@ const PlanRow: React.FC<{
     onToggle: (microfrontendId: string) => void
 }> = ({ item, selected, onToggle }) => {
     const { t } = useTranslation()
-    const writable = WRITABLE.includes(item.status)
+    const writable = isWritable(item)
 
     return (
         <div className="rounded-md border-2 border-border p-3">
@@ -122,11 +138,14 @@ const PlanRow: React.FC<{
 }
 
 /**
- * Walks every microfrontend of the project, shows what wiring up module federation would change
- * repository by repository, and commits only what was ticked. A config that is already there is
+ * Walks every microfrontend of the project, shows what the requested integration would change
+ * repository by repository, and commits only what was ticked. A file that is already there is
  * shown as a diff first: it is never replaced without being looked at.
+ *
+ * One scope per run: module federation and the runtime configuration script are separate
+ * integrations, so neither is ever committed as a side effect of the other.
  */
-export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDialogProps> = ({ isOpen, onOpenChange, onlyMicrofrontendId }) => {
+export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDialogProps> = ({ isOpen, onOpenChange, onlyMicrofrontendId, scope = "MODULE_FEDERATION" }) => {
     const { t } = useTranslation()
     const integrationApi = useIntegrationApi()
     const notifications = useToastNotificationStore()
@@ -134,9 +153,11 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
     const [deselected, setDeselected] = useState<Set<string>>(new Set())
     const [result, setResult] = useState<FederationIntegrationApplyResult | undefined>()
 
+    const copy = COPY_PREFIXES[scope]
+
     const planQuery = useQuery({
-        queryKey: ["module-federation-plan"],
-        queryFn: integrationApi.getModuleFederationPlan,
+        queryKey: ["integration-plan", scope],
+        queryFn: () => integrationApi.getPlan(scope),
         enabled: isOpen
     })
 
@@ -144,7 +165,7 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
 
     // Everything writable starts ticked, so the common case is one click: the set tracks what the
     // user took out rather than what they put in, which keeps a refreshed plan selected by default
-    const writableItems = shownItems.filter(item => WRITABLE.includes(item.status))
+    const writableItems = shownItems.filter(isWritable)
     const selectedIds = writableItems.map(item => item.microfrontendId).filter(id => !deselected.has(id))
 
     const toggle = (microfrontendId: string) => {
@@ -160,7 +181,7 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
     }
 
     const applyMutation = useMutation({
-        mutationFn: () => integrationApi.applyModuleFederation(selectedIds),
+        mutationFn: () => integrationApi.apply(scope, selectedIds),
         onSuccess: applyResult => {
             setResult(applyResult)
 
@@ -168,9 +189,9 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
             const failed = applyResult.results.filter(item => item.error).length
 
             if (failed > 0) {
-                notifications.showWarningNotification({ message: t("integration.fe_integration_tab.integrate_partial", { applied, failed }) })
+                notifications.showWarningNotification({ message: t(`${copy}.integrate_partial`, { applied, failed }) })
             } else {
-                notifications.showSuccessNotification({ message: t("integration.fe_integration_tab.integrate_success", { count: applied }) })
+                notifications.showSuccessNotification({ message: t(`${copy}.integrate_success`, { count: applied }) })
             }
         }
     })
@@ -188,8 +209,8 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{t("integration.fe_integration_tab.integrate_dialog_title")}</DialogTitle>
-                    <DialogDescription>{t("integration.fe_integration_tab.integrate_dialog_description")}</DialogDescription>
+                    <DialogTitle>{t(`${copy}.integrate_dialog_title`)}</DialogTitle>
+                    <DialogDescription>{t(`${copy}.integrate_dialog_description`)}</DialogDescription>
                 </DialogHeader>
 
                 {result ? (
@@ -220,7 +241,7 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
-                        {writableItems.length === 0 && <p>{t("integration.fe_integration_tab.integrate_nothing_to_do")}</p>}
+                        {writableItems.length === 0 && <p>{t(`${copy}.integrate_nothing_to_do`)}</p>}
                         {shownItems.map(item => (
                             <PlanRow key={item.microfrontendId} item={item} selected={!deselected.has(item.microfrontendId)} onToggle={toggle} />
                         ))}

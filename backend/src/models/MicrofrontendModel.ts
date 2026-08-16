@@ -76,10 +76,20 @@ export enum HostedOn {
     CUSTOM_SOURCE = "CUSTOM_SOURCE"
 }
 
+/**
+ * How the canary decides who gets the new version.
+ *
+ * The three are not variations of one mechanism: RANDOM and ON_SESSION split traffic by percentage
+ * and differ only in whether the draw sticks, while ON_USER ignores the percentage entirely and
+ * serves the canary to an explicit list of users.
+ */
 export enum CanaryType {
-    ON_SESSIONS = "ON_SESSIONS",
-    ON_USER = "ON_USER",
-    COOKIE_BASED = "COOKIE_BASED"
+    /** A fresh draw on every request: the same browser flips between versions on every reload. */
+    RANDOM = "RANDOM",
+    /** Sticky per browser, on the id the SDK keeps in localStorage, so it survives a restart. */
+    ON_SESSION = "ON_SESSION",
+    /** No draw at all: only the users enrolled on the deployment get the canary. */
+    ON_USER = "ON_USER"
 }
 
 export enum CanaryDeploymentType {
@@ -122,8 +132,8 @@ const microfrontendCanaryTypeSchema = new Schema<ICanaryMicrofrontend>({
     },
     type: {
         type: String,
-        enum: [CanaryType.ON_SESSIONS, CanaryType.ON_USER, CanaryType.COOKIE_BASED],
-        default: CanaryType.ON_SESSIONS,
+        enum: [CanaryType.RANDOM, CanaryType.ON_SESSION, CanaryType.ON_USER],
+        default: CanaryType.ON_SESSION,
         required: true
     },
     deploymentType: {

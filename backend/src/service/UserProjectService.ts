@@ -3,10 +3,11 @@ import { ClientSession, ObjectId, Schema } from "mongoose"
 import { fastify } from ".."
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import Project, { IProject } from "../models/ProjectModel"
 import User, { IUser, IUserDocument, UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
-import UserService from "../service/UserService"
+import UserService, { recordLogin } from "../service/UserService"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
@@ -52,7 +53,7 @@ class UserProjectService extends BaseAuthorizedService {
         const projectIdObj = toObjectId(projectId)
         const project = await Project.findById(projectIdObj)
         if (!project) {
-            throw new EntityNotFoundError(projectIdObj.toString())
+            throw new ProjectNotFoundError(projectIdObj.toString())
         }
 
         const canSendEmail = this.emailSenderService.canSendEmails()
@@ -122,7 +123,7 @@ class UserProjectService extends BaseAuthorizedService {
         const userProject = await this.findValidInvitation(token)
         const project = await Project.findById(userProject.projectId)
         if (!project) {
-            throw new EntityNotFoundError(userProject.projectId.toString())
+            throw new ProjectNotFoundError(userProject.projectId.toString())
         }
         const user = await User.findById(userProject.userId)
         if (!user) {
@@ -163,6 +164,10 @@ class UserProjectService extends BaseAuthorizedService {
         userProject.inviationTokenExpiresAt = undefined
         await userProject.save()
 
+        // Accepting the invitation hands out an access token, so it is an access like
+        // any other login.
+        await recordLogin(user)
+
         return {
             user: user.toFrontendObject(),
             ...user.generateAuthToken()
@@ -172,7 +177,7 @@ class UserProjectService extends BaseAuthorizedService {
     async resendInvitation(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId): Promise<IUserProject> {
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId.toString())
+            throw new ProjectNotFoundError(projectId.toString())
         }
         const userProject = await UserProject.findOne({ userId: toObjectId(userId), projectId: toObjectId(projectId) })
         if (!userProject) {
@@ -296,7 +301,7 @@ class UserProjectService extends BaseAuthorizedService {
         // Verify project exists
         const project = await Project.findById(projectIdObj, {}, { session })
         if (!project) {
-            throw new EntityNotFoundError(projectIdObj.toString())
+            throw new ProjectNotFoundError(projectIdObj.toString())
         }
 
         // Verify user exists
@@ -340,7 +345,7 @@ class UserProjectService extends BaseAuthorizedService {
         // Verify project exists
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId.toString())
+            throw new ProjectNotFoundError(projectId.toString())
         }
 
         type PopulatedUserProject = IUserProject & {
