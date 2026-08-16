@@ -204,10 +204,5 @@
   "202": "hostTypes",
   "203": "validation",
   "204": "hostTypes",
-  "205": ".isCanary",
-  "206": "deploymentTypes",
-  "207": "DeploymentCanaryUsersController.ts",
-  "208": "DeploymentController.ts",
-  "209": "account_activation",
-  "210": "errorHandler.ts"
+  "206": "deploymentTypes"
 }
