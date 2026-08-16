@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "backend/postbuild.js": {
-    "mtime": 1786116425.9659169,
-    "ast_hash": "6f132623eaf316e73134260588979972",
+    "mtime": 1786876196.7485192,
+    "ast_hash": "f630920326e36b5146cbe07df91089ce",
     "semantic_hash": ""
   },
   "backend/src/client/AzureDevOpsClient.ts": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/MicrofrontendModel.ts": {
-    "mtime": 1786874867.8061655,
-    "ast_hash": "ea5f91e367ce7fa4598e573d8902fae6",
+    "mtime": 1786876061.1149476,
+    "ast_hash": "54a7d14c517cbceba15c4b9623bb134a",
     "semantic_hash": ""
   },
   "backend/src/models/ProjectModel.ts": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "backend/src/plugins/noSQL.ts": {
-    "mtime": 1786109863.4629567,
-    "ast_hash": "6ca0116a2ba5bc8492d15adbd72e0389",
+    "mtime": 1786876085.62622,
+    "ast_hash": "6399030c267534a0196f36c5b9dd43b8",
     "semantic_hash": ""
   },
   "backend/src/plugins/rateLimit.ts": {
@@ -425,8 +425,8 @@
     "semantic_hash": "56b289cc4df3cfae333b503ed9537b0c"
   },
   "backend/src/service/ServeService.ts": {
-    "mtime": 1786875196.4828238,
-    "ast_hash": "315630cdc065944acffcc8dabfba51c6",
+    "mtime": 1786877063.805007,
+    "ast_hash": "10e1ffd5d2d49764c04b7cdab8258a92",
     "semantic_hash": ""
   },
   "backend/src/service/StorageService.ts": {
@@ -665,13 +665,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786875581.5030756,
-    "ast_hash": "9ef2392a62828aeae27c0b7c41c165a8",
+    "mtime": 1786876232.8146102,
+    "ast_hash": "6bafded6e605c450381f597522009656",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786875581.504227,
-    "ast_hash": "3266b0e8d1f4d322af368f0296bcb46a",
+    "mtime": 1786876232.8132248,
+    "ast_hash": "98426c53d4eaa2be13da1dbe594ce43f",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/CanaryUsers.tsx": {
-    "mtime": 1786875603.805161,
-    "ast_hash": "f1f5a8d8185f06803c05bdca90d1ff76",
+    "mtime": 1786877142.6302829,
+    "ast_hash": "557f8e76d34758458e1b47c34056f5be",
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/Deployments.tsx": {
@@ -1874,16 +1874,6 @@
     "ast_hash": "492fb33f4c4f9a18e3fa50f744775a46",
     "semantic_hash": ""
   },
-  "backend/src/templates/canary/is-canary.template.js": {
-    "mtime": 1786116543.5970213,
-    "ast_hash": "4ae2bd5d0b90283d4081bbe019ae191e",
-    "semantic_hash": ""
-  },
-  "backend/src/templates/canary/user-id.template.js": {
-    "mtime": 1786116579.5797348,
-    "ast_hash": "2990bc876ce69debc8ba645c24e8e620",
-    "semantic_hash": ""
-  },
   "e2e/tests/collaboration/invite-existing-user.spec.ts": {
     "mtime": 1786476545.9893718,
     "ast_hash": "a5164961bed2b973742e2e40714e2284",
@@ -1945,8 +1935,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/partials/DeploymentMicrofrontendCard.tsx": {
-    "mtime": 1786446779.0430527,
-    "ast_hash": "df5ef6219750963150b25460eb8df614",
+    "mtime": 1786876227.1016998,
+    "ast_hash": "da8ee9772bffbfc7b665a62178bebc9a",
     "semantic_hash": ""
   },
   "backend/src/plugins/contentType.ts": {
@@ -2150,8 +2140,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/MicrofrontendModel.test.ts": {
-    "mtime": 1786875575.6716845,
-    "ast_hash": "447567b1589fd3cbe2ffd494dacc4748",
+    "mtime": 1786876119.318343,
+    "ast_hash": "3f7e9963bbbc15c60d31d565b8931d8b",
     "semantic_hash": ""
   },
   "backend/src/utils/globalVariablesScript.test.ts": {
@@ -2162,6 +2152,11 @@
   "backend/src/utils/globalVariablesScript.ts": {
     "mtime": 1786875429.4814916,
     "ast_hash": "ce0194b1ee7d07d2861540f558657e58",
+    "semantic_hash": ""
+  },
+  "backend/src/utils/migrations.ts": {
+    "mtime": 1786876185.8891885,
+    "ast_hash": "da67321415fe6031c55a39d153ed6ea6",
     "semantic_hash": ""
   }
 }

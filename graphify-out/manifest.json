@@ -1245,8 +1245,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsFlow.tsx": {
-    "mtime": 1786875325.822957,
-    "ast_hash": "6b107c34e7de3b48a037eefcace50d8b",
+    "mtime": 1786877751.7565823,
+    "ast_hash": "9ef50566f384a9e2563ead6272334158",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsGrid.tsx": {
@@ -2157,6 +2157,11 @@
   "backend/src/utils/migrations.ts": {
     "mtime": 1786876185.8891885,
     "ast_hash": "da67321415fe6031c55a39d153ed6ea6",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/partials/views/MicrofrontendFlowNode.tsx": {
+    "mtime": 1786877759.444236,
+    "ast_hash": "11536b49cde9acf2fc481f75367eca6f",
     "semantic_hash": ""
   }
 }
