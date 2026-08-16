@@ -345,6 +345,11 @@ ${sharedBlock}
      * domain the page is running on. Passing `environment: undefined` would not be the same thing to
      * read, and it is exactly the shape that makes people believe the value is required.
      *
+     * The logged in user is emitted commented out inside the call, because it is the one field no
+     * environment variable can fill in: only the host knows it, and only a user based canary reads
+     * it. Left out, those microfrontends serve everyone the stable version, which is a silent
+     * outcome — hence the line, so that whoever pastes the block at least knows the option exists.
+     *
      * It is emitted commented out because it does not belong to the bundler config but to the
      * entry point of the host app, where it has to run before anything imports a remote.
      */
@@ -376,6 +381,11 @@ const environment = ${readEnvVariable("MFE_ENVIRONMENT")}
 configure({
   backendUrl: ${readEnvVariable("MFE_BACKEND_URL")},
   projectId: ${readEnvVariable("MFE_PROJECT_ID")},
+  // Only a canary targeted on users reads this, and nothing else can supply it.
+  // A getter is resolved right before the request, so an auth round trip is in
+  // time; later than that, use setUserId(). Without it those microfrontends
+  // serve everyone the stable version.
+  // userId: () => auth.currentUser?.id,
   ...(environment ? { environment } : {})
 })
 */`
