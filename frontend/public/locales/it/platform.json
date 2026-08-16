@@ -6,6 +6,7 @@
     },
     "app": {
         "name": "MFE Orchestrator",
+        "page_title": "{{page}} · {{app}}",
         "error": {
             "generic": "Si è verificato un errore. Riprova più tardi.",
             "not_found": "Pagina non trovata"

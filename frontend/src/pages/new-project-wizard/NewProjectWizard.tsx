@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/atoms"
+import PageHead from "@/components/PageHead"
 import { Project } from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import CodeRepositories from "./pages/CodeRepositories"
@@ -66,6 +67,7 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onComplete }) => {
 
     return (
         <div className="w-screen h-screen overflow-y-auto bg-background">
+            <PageHead title={t("newProjectWizard.subtitle")} />
             <div className="max-w-3xl mx-auto px-4 py-10 md:py-14">
                 <header className="flex items-center gap-3 mb-10">
                     <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-sm">MF</div>
