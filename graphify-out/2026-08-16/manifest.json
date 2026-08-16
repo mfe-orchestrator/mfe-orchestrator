@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "backend/src/client/AzureDevOpsClient.ts": {
-    "mtime": 1786469501.3721094,
-    "ast_hash": "5b6428997973ae7bd385edaacca2b88b",
+    "mtime": 1786869250.6286645,
+    "ast_hash": "cb019d1d97925ef7580d1dc09ad60b45",
     "semantic_hash": ""
   },
   "backend/src/client/AzureStorageAccount.ts": {
@@ -35,13 +35,13 @@
     "semantic_hash": "feb62084f1319bc76acf2568e782c6aa"
   },
   "backend/src/client/GithubClient.ts": {
-    "mtime": 1786470001.2141945,
-    "ast_hash": "5469e26ff2bff131a74a7ec88d304513",
+    "mtime": 1786869218.27301,
+    "ast_hash": "73a7bb4229b9c55e349727d7f6599306",
     "semantic_hash": ""
   },
   "backend/src/client/GitlabClient.ts": {
-    "mtime": 1786470001.2145944,
-    "ast_hash": "cff776024fd5d862015aa8e6cd42afae",
+    "mtime": 1786869232.3172004,
+    "ast_hash": "52b8844d1a0126b3155653fac0bef798",
     "semantic_hash": ""
   },
   "backend/src/client/GoogleStorageAccount.ts": {
@@ -670,13 +670,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1786868454.2479331,
-    "ast_hash": "496aebdf6da5c84397b7e5e67fb9dd4e",
+    "mtime": 1786869700.9324107,
+    "ast_hash": "b12bc6cc1e6582e6d36b03a7fbccc0e7",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1786868454.246638,
-    "ast_hash": "acedd45e960f9fe6b9cda1360c227bdb",
+    "mtime": 1786869700.9307966,
+    "ast_hash": "859ff0d3028f374d03242359465e9bb7",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -690,8 +690,8 @@
     "semantic_hash": ""
   },
   "frontend/src/Routes.tsx": {
-    "mtime": 1786109994.352779,
-    "ast_hash": "7db3c94a7ea2d8786e2aa57bd70adb2e",
+    "mtime": 1786869668.3319063,
+    "ast_hash": "e4bf2d03e6383006862fa39b0ecfa08b",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.ts": {
@@ -965,8 +965,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/useApiClient.tsx": {
-    "mtime": 1786109863.5121086,
-    "ast_hash": "dd848f24995ce74507ab598e735f5c39",
+    "mtime": 1786869398.878449,
+    "ast_hash": "d9264ad2723ff53f90f56ce71b555636",
     "semantic_hash": ""
   },
   "frontend/src/hooks/useDragAndDropOrder.ts": {
@@ -1460,8 +1460,8 @@
     "semantic_hash": "ca285c049e73941d765f767d7bf50d9b"
   },
   "frontend/src/theme/layout/MainLayout.tsx": {
-    "mtime": 1786109994.3537724,
-    "ast_hash": "5eb7026a510f6993cc4c34118254c3b7",
+    "mtime": 1786869678.5934958,
+    "ast_hash": "2ec8a604eb5639cb11837378263fde3c",
     "semantic_hash": ""
   },
   "frontend/src/types/ApiResponseDTO.ts": {
@@ -2077,6 +2077,61 @@
   "frontend/src/pages/profile/partials/PersonalDataSection.tsx": {
     "mtime": 1786484068.4538882,
     "ast_hash": "4edb7f40c9a65cd46480a632c3966df6",
+    "semantic_hash": ""
+  },
+  "backend/src/controller/BuildController.test.ts": {
+    "mtime": 1786869895.7493958,
+    "ast_hash": "d71ba91dbe7e47a32917310d36706593",
+    "semantic_hash": ""
+  },
+  "backend/src/controller/BuildController.ts": {
+    "mtime": 1786869725.3963351,
+    "ast_hash": "a07be62e2531724ae48f59e24c5a8e5a",
+    "semantic_hash": ""
+  },
+  "backend/src/service/BuildStatusService.test.ts": {
+    "mtime": 1786869798.3294563,
+    "ast_hash": "dbc83c8ca36d328df74d8733bbff3bce",
+    "semantic_hash": ""
+  },
+  "backend/src/service/BuildStatusService.ts": {
+    "mtime": 1786869779.3678408,
+    "ast_hash": "6b9ce7c5ed348657d760663d4274c550",
+    "semantic_hash": ""
+  },
+  "backend/src/types/BuildStatusDTO.ts": {
+    "mtime": 1786869203.5923452,
+    "ast_hash": "5b5389ccc423886e8b047888f7883f78",
+    "semantic_hash": ""
+  },
+  "frontend/src/hooks/apiClients/useBuildsApi.ts": {
+    "mtime": 1786869526.9374976,
+    "ast_hash": "a44af4231a65b5fefaab306edb35fcf6",
+    "semantic_hash": ""
+  },
+  "frontend/src/hooks/useEventStream.ts": {
+    "mtime": 1786869725.3971305,
+    "ast_hash": "d5275c777db8e28156372eae1390673f",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/builds/Builds.tsx": {
+    "mtime": 1786869735.6715565,
+    "ast_hash": "89c0369f57e2da456ff629abca91d7b8",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/builds/partials/BuildRunList.tsx": {
+    "mtime": 1786869615.780694,
+    "ast_hash": "dc62db4f224b91fe4bb0e8f741e90964",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/builds/partials/BuildStatusBadge.tsx": {
+    "mtime": 1786869606.220181,
+    "ast_hash": "f986259b444aea7c9fd48ab4033e05ef",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/builds/partials/BuildStatusTable.tsx": {
+    "mtime": 1786869725.3967125,
+    "ast_hash": "e4cb877cd9771c11dbad76252b82f17a",
     "semantic_hash": ""
   }
 }
