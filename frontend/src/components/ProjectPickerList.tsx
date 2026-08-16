@@ -1,4 +1,4 @@
-import { Input } from "@mfe-orchestrator/design-system"
+import { EmptyState, Input } from "@mfe-orchestrator/design-system"
 import { Check, ChevronRight, FolderPlus, Plus, Search } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -45,13 +45,8 @@ export const ProjectPickerList: React.FC<ProjectPickerListProps> = ({ projects, 
     if (projects.length === 0) {
         return (
             <div className={cn("flex flex-col gap-4", className)}>
-                <div className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-divider bg-muted/30 py-8 text-center">
-                    <div className="rounded-full bg-primary/15 p-3 text-primary">
-                        <FolderPlus className="size-6" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">{t("project.no_projects")}</p>
-                    <p className="text-xs text-foreground-secondary">{t("project.no_projects_desc")}</p>
-                </div>
+                {/* bg-muted/30 al posto della bg-card del DS: qui il riquadro sta dentro una superficie già chiara */}
+                <EmptyState variant="outlined" size="sm" titleAs="p" icon={<FolderPlus />} title={t("project.no_projects")} description={t("project.no_projects_desc")} className="bg-muted/30" />
                 {createButton}
             </div>
         )
@@ -65,7 +60,7 @@ export const ProjectPickerList: React.FC<ProjectPickerListProps> = ({ projects, 
             </div>
         ) : null
 
-    const noResults = <p className="py-8 text-center text-sm text-foreground-secondary">{t("project.no_results")}</p>
+    const noResults = <EmptyState size="sm" description={t("project.no_results")} />
 
     if (variant === "grid") {
         return (

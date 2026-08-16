@@ -1,4 +1,4 @@
-import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, EmptyState, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Pencil, PlusCircle, Star, Trash2 } from "lucide-react"
 import React, { useState } from "react"
@@ -119,13 +119,16 @@ export const Storages: React.FC = () => {
                 ) : (
                     <Card>
                         <CardContent>
-                            <div className="flex flex-col items-center justify-center h-full">
-                                <div className="text-center py-4 text-foreground">{t("storage.noStoragesFound")}</div>
-                                <Button onClick={handleCreate} dataTestId="storage-new">
-                                    <PlusCircle />
-                                    {t("storage.newStorage")}
-                                </Button>
-                            </div>
+                            <EmptyState
+                                size="sm"
+                                description={t("storage.noStoragesFound")}
+                                actions={
+                                    <Button onClick={handleCreate} dataTestId="storage-new">
+                                        <PlusCircle />
+                                        {t("storage.newStorage")}
+                                    </Button>
+                                }
+                            />
                         </CardContent>
                     </Card>
                 )}

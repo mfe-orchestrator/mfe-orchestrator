@@ -1,7 +1,6 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
+import { CopyButton, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Check, Copy } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
@@ -20,7 +19,6 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
     const apiKeysApi = useApiKeysApi()
     const queryClient = useQueryClient()
     const project = useProjectStore()
-    const [copied, setCopied] = useState(false)
 
     const createApiKeyMutation = useMutation({
         mutationFn: apiKeysApi.createApiKey,
@@ -35,16 +33,8 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
             defaultExpiration.setMonth(defaultExpiration.getMonth() + 6)
             form.reset({ name: "", expirationDate: defaultExpiration })
             createApiKeyMutation.reset()
-            setCopied(false)
         }
     }, [isCreateDialogOpen, createApiKeyMutation.reset, form.reset])
-
-    const handleCopy = () => {
-        if (createApiKeyMutation.data?.apiKey) {
-            navigator.clipboard.writeText(createApiKeyMutation.data.apiKey)
-            setCopied(true)
-        }
-    }
 
     const onSubmit = async (data: ApiKeyFormData) => {
         await createApiKeyMutation.mutateAsync({
@@ -77,14 +67,7 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
                                     <code data-testid="api-key-value" className="flex-1 select-all break-all font-mono text-sm text-foreground">
                                         {createApiKeyMutation.data.apiKey}
                                     </code>
-                                    <button
-                                        type="button"
-                                        onClick={handleCopy}
-                                        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        title={t("apiKeys.copy_to_clipboard")}
-                                    >
-                                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                    </button>
+                                    <CopyButton value={createApiKeyMutation.data.apiKey} label={t("apiKeys.copy_to_clipboard")} copiedLabel={t("common.copied")} className="shrink-0" />
                                 </div>
                                 <p className="text-xs text-muted-foreground">{t("apiKeys.key_warning")}</p>
                             </div>

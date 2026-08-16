@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
+import { EmptyStateRow, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
 import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server } from "lucide-react"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -149,11 +149,7 @@ export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microf
                     {microfrontends.length > 0 ? (
                         microfrontends.map(mfe => <MicrofrontendRow key={mfe._id} mfe={mfe} />)
                     ) : (
-                        <TableRow>
-                            <TableCell colSpan={COLUMN_COUNT} className="h-24 text-center">
-                                <span className="text-foreground-secondary">{t("microfrontend.no_microfrontends_found")}</span>
-                            </TableCell>
-                        </TableRow>
+                        <EmptyStateRow colSpan={COLUMN_COUNT}>{t("microfrontend.no_microfrontends_found")}</EmptyStateRow>
                     )}
                 </TableBody>
             </Table>

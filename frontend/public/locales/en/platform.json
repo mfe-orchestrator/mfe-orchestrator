@@ -163,6 +163,7 @@
         "add": "Add",
         "remove": "Remove",
         "copy": "Copy",
+        "copied": "Copied",
         "back": "Back",
         "saving": "Saving..."
     },

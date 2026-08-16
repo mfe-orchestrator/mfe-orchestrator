@@ -1,6 +1,5 @@
-import { Popover, PopoverContent, PopoverTrigger } from "@mfe-orchestrator/design-system"
-import { Check, Code, Copy, GitBranch, Terminal } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { CopyButton, Popover, PopoverContent, PopoverTrigger } from "@mfe-orchestrator/design-system"
+import { Code, GitBranch, Terminal } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -13,21 +12,15 @@ interface CloneRepositoryPopoverProps {
     iconOnly?: boolean
 }
 
-type CopiedTarget = "https" | "ssh" | null
-
 interface CloneUrlRowProps {
     label: string
     url: string
-    copied: boolean
-    onCopy: () => void
 }
 
-const CloneUrlRow: React.FC<CloneUrlRowProps> = ({ label, url, copied, onCopy }) => (
+const CloneUrlRow: React.FC<CloneUrlRowProps> = ({ label, url }) => (
     <div className="flex flex-col gap-1">
-        <Button variant="secondary" size="sm" className="w-full justify-start" onClick={onCopy} title={url}>
-            {copied ? <Check className="text-green-500" /> : <Copy />}
-            <span className="truncate">{label}</span>
-        </Button>
+        {/* Negli appunti finisce il comando completo, mentre il bottone mostra solo l'url */}
+        <CopyButton value={buildGitCloneCommand(url)} label={label} copiedLabel={label} showLabel variant="secondary" size="sm" className="w-full justify-start" title={url} />
         <p className="truncate font-mono text-xs text-foreground-secondary" title={url}>
             {url}
         </p>
@@ -53,11 +46,6 @@ const IdeCloneButton: React.FC<IdeCloneButtonProps> = ({ label, href, icon, vari
 
 export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ microfrontend, className, iconOnly = false }) => {
     const { t } = useTranslation("platform")
-    const [copied, setCopied] = useState<CopiedTarget>(null)
-    const resetCopiedTimeout = useRef<ReturnType<typeof setTimeout>>()
-
-    // The timeout would otherwise call setState on an unmounted popover.
-    useEffect(() => () => clearTimeout(resetCopiedTimeout.current), [])
 
     const httpsUrl = microfrontend.codeRepository?.cloneUrlHttps
     const sshUrl = microfrontend.codeRepository?.cloneUrlSsh
@@ -65,13 +53,6 @@ export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ 
 
     if (!microfrontend.codeRepository?.enabled || (!httpsUrl && !sshUrl)) {
         return null
-    }
-
-    const copyCloneCommand = (target: Exclude<CopiedTarget, null>, url: string) => {
-        navigator.clipboard.writeText(buildGitCloneCommand(url))
-        setCopied(target)
-        clearTimeout(resetCopiedTimeout.current)
-        resetCopiedTimeout.current = setTimeout(() => setCopied(null), 2000)
     }
 
     return (
@@ -94,8 +75,8 @@ export const CloneRepositoryPopover: React.FC<CloneRepositoryPopoverProps> = ({ 
                     <p className="text-sm text-foreground-secondary">{t("microfrontend.clone.description")}</p>
                 </div>
 
-                {httpsUrl && <CloneUrlRow label={t("microfrontend.clone.https")} url={httpsUrl} copied={copied === "https"} onCopy={() => copyCloneCommand("https", httpsUrl)} />}
-                {sshUrl && <CloneUrlRow label={t("microfrontend.clone.ssh")} url={sshUrl} copied={copied === "ssh"} onCopy={() => copyCloneCommand("ssh", sshUrl)} />}
+                {httpsUrl && <CloneUrlRow label={t("microfrontend.clone.https")} url={httpsUrl} />}
+                {sshUrl && <CloneUrlRow label={t("microfrontend.clone.ssh")} url={sshUrl} />}
 
                 {ideUrl && (
                     <>

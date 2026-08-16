@@ -1,4 +1,4 @@
-import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, EmptyState, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
 import { DependencyAlignmentIssue } from "@/hooks/apiClients/useDependenciesApi"
@@ -16,9 +16,7 @@ export const DependencyAlignmentTable: React.FC<DependencyAlignmentTableProps> =
         return (
             <Card>
                 <CardContent className="p-0">
-                    <div className="flex flex-col items-center justify-center p-8 text-center">
-                        <p className="text-foreground">{emptyMessage}</p>
-                    </div>
+                    <EmptyState size="sm" description={emptyMessage} />
                 </CardContent>
             </Card>
         )

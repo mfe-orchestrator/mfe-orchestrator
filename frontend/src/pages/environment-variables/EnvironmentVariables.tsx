@@ -1,4 +1,4 @@
-import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, EmptyState, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CirclePlus, Pencil, Trash2 } from "lucide-react"
 import React, { useCallback, useState } from "react"
@@ -138,13 +138,16 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                 {!variables || Object.keys(variables).length === 0 ? (
                     <Card>
                         <CardContent className="p-0">
-                            <div className="flex flex-col items-center justify-center p-8 text-center">
-                                <p className="text-foreground mb-2">{t("environmentVariables.noVariables")}</p>
-                                <Button onClick={handleAddNew}>
-                                    <CirclePlus />
-                                    {t("environmentVariables.addVariable")}
-                                </Button>
-                            </div>
+                            <EmptyState
+                                size="sm"
+                                description={t("environmentVariables.noVariables")}
+                                actions={
+                                    <Button onClick={handleAddNew}>
+                                        <CirclePlus />
+                                        {t("environmentVariables.addVariable")}
+                                    </Button>
+                                }
+                            />
                         </CardContent>
                     </Card>
                 ) : (

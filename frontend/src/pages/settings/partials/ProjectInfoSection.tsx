@@ -1,7 +1,5 @@
-import { Card, CardContent, CardHeader, Label, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
-import { Copy } from "lucide-react"
+import { Card, CardContent, CardHeader, CopyButton, Label, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
-import { Button } from "@/components/atoms"
 import { Project } from "@/hooks/apiClients/useProjectApi"
 
 interface InfoItemProps {
@@ -21,17 +19,9 @@ const InfoItem: React.FC<InfoItemProps> = ({ label, value, isMonospace = false, 
                 <span className={`${isMonospace && "font-mono"} break-all @sm/settings-card:break-normal`}>{value || "-"}</span>
                 {copyable && value && (
                     <Tooltip delayDuration={300}>
+                        {/* title vuoto: l'etichetta la mostra già il Tooltip, quello nativo si sovrapporrebbe */}
                         <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                    navigator.clipboard.writeText(value)
-                                }}
-                            >
-                                <Copy />
-                                <span className="sr-only">{t("common.copy")}</span>
-                            </Button>
+                            <CopyButton value={value} label={t("common.copy")} copiedLabel={t("common.copied")} size="icon" title="" />
                         </TooltipTrigger>
                         <TooltipContent>
                             <p>{t("common.copy")}</p>

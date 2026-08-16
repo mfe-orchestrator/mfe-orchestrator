@@ -1,4 +1,4 @@
-import { Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
+import { Checkbox, CodeBlock, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { AlertTriangle, CheckCircle2, GitBranch, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -78,16 +78,12 @@ const FileChange: React.FC<{ change: FederationFileChange }> = ({ change }) => {
                     {!isNew && (
                         <div>
                             <p className="text-xs font-medium text-foreground-secondary">{t("integration.fe_integration_tab.integrate_current_content")}</p>
-                            <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs max-h-60">
-                                <code>{change.currentContent}</code>
-                            </pre>
+                            <CodeBlock code={change.currentContent} size="sm" maxHeightClassName="max-h-60" />
                         </div>
                     )}
                     <div>
                         <p className="text-xs font-medium text-foreground-secondary">{t("integration.fe_integration_tab.integrate_proposed_content")}</p>
-                        <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs max-h-60">
-                            <code>{change.proposedContent}</code>
-                        </pre>
+                        <CodeBlock code={change.proposedContent} size="sm" maxHeightClassName="max-h-60" />
                     </div>
                 </div>
             )}

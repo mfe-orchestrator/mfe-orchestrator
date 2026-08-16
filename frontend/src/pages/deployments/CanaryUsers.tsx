@@ -1,4 +1,20 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Switch, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    Checkbox,
+    EmptyStateRow,
+    Input,
+    Switch,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@mfe-orchestrator/design-system"
 import { UseQueryResult, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Trash2, UserPlus } from "lucide-react"
 import { useState } from "react"
@@ -173,11 +189,7 @@ export const CanaryUsers: React.FC = () => {
                                         </TableRow>
                                     ))
                                 ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-24 text-center text-foreground-secondary">
-                                            {t("deployments.canary_users.no_users")}
-                                        </TableCell>
-                                    </TableRow>
+                                    <EmptyStateRow colSpan={4}>{t("deployments.canary_users.no_users")}</EmptyStateRow>
                                 )}
                             </TableBody>
                         </Table>

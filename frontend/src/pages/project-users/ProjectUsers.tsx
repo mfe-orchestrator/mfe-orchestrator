@@ -4,6 +4,7 @@ import {
     Card,
     CardContent,
     CardTitle,
+    EmptyState,
     Table,
     TableBody,
     TableCell,
@@ -163,7 +164,7 @@ const ProjectUsers: React.FC = () => {
                         {members.length === 0 ? (
                             <Card>
                                 <CardContent>
-                                    <p className="text-center py-8 text-muted-foreground">{t("project_users.no_users")}</p>
+                                    <EmptyState size="sm" description={t("project_users.no_users")} />
                                 </CardContent>
                             </Card>
                         ) : (

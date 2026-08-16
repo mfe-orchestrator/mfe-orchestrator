@@ -164,7 +164,8 @@
         "remove": "Rimuovi",
         "back": "Indietro",
         "saving": "Salvataggio...",
-        "copy": "Copia"
+        "copy": "Copia",
+        "copied": "Copiato"
     },
     "setup": {
         "title": "Configurazione Iniziale",

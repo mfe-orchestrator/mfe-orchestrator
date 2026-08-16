@@ -1,3 +1,4 @@
+import { EmptyState } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { PackageOpen, RadioTower, RefreshCw } from "lucide-react"
 import React, { useCallback } from "react"
@@ -62,11 +63,7 @@ export const Builds: React.FC = () => {
                 {hasMicrofrontends ? (
                     <BuildStatusTable data={data} />
                 ) : (
-                    <div className="flex flex-col items-center gap-2 py-12 text-center">
-                        <PackageOpen className="size-10 text-foreground-secondary" />
-                        <h2 className="text-lg font-medium">{t("builds.empty.title")}</h2>
-                        <p className="text-foreground-secondary">{t("builds.empty.description")}</p>
-                    </div>
+                    <EmptyState size="default" iconVariant="bare" tone="muted" icon={<PackageOpen />} title={t("builds.empty.title")} description={t("builds.empty.description")} />
                 )}
             </ApiStatusHandler>
         </SinglePageLayout>

@@ -1,4 +1,4 @@
-import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, EmptyState, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Edit, PlusCircle, Star, Trash2 } from "lucide-react"
 import { useState } from "react"
@@ -62,13 +62,16 @@ const CodeRepositoryPage = () => {
                 {repositoriesQuery.data?.length === 0 ? (
                     <Card>
                         <CardContent>
-                            <div className="flex flex-col items-center justify-center h-full">
-                                <div className="text-center py-8 text-muted-foreground">{t("codeRepositories.noRepositoriesFound")}</div>
-                                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                                    <PlusCircle />
-                                    {t("codeRepositories.addRepository")}
-                                </Button>
-                            </div>
+                            <EmptyState
+                                size="sm"
+                                description={t("codeRepositories.noRepositoriesFound")}
+                                actions={
+                                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                                        <PlusCircle />
+                                        {t("codeRepositories.addRepository")}
+                                    </Button>
+                                }
+                            />
                         </CardContent>
                     </Card>
                 ) : (

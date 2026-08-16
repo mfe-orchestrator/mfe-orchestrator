@@ -1,4 +1,18 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+    Card,
+    CardContent,
+    EmptyState,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@mfe-orchestrator/design-system"
 import { AlertTriangle, GitBranch } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
@@ -22,9 +36,7 @@ export const MicrofrontendDependencyList: React.FC<MicrofrontendDependencyListPr
         return (
             <Card>
                 <CardContent className="p-0">
-                    <div className="flex flex-col items-center justify-center p-8 text-center">
-                        <p className="text-foreground">{t("dependencies.no_microfrontends")}</p>
-                    </div>
+                    <EmptyState size="sm" description={t("dependencies.no_microfrontends")} />
                 </CardContent>
             </Card>
         )
@@ -71,7 +83,7 @@ export const MicrofrontendDependencyList: React.FC<MicrofrontendDependencyListPr
                             {microfrontend.error ? (
                                 <p className="text-destructive-active text-sm">{microfrontend.error}</p>
                             ) : dependencies.length === 0 ? (
-                                <p className="text-foreground-secondary text-sm">{onlyOutdated ? t("dependencies.all_up_to_date") : t("dependencies.no_dependencies")}</p>
+                                <EmptyState size="sm" description={onlyOutdated ? t("dependencies.all_up_to_date") : t("dependencies.no_dependencies")} />
                             ) : (
                                 <div className="rounded-md border-2 border-border overflow-x-auto">
                                     <Table>

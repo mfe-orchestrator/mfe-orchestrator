@@ -1,4 +1,4 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@mfe-orchestrator/design-system"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, EmptyState } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { BadgeCheck, History, PackageOpen, RefreshCw, UsersRound } from "lucide-react"
 import { useState } from "react"
@@ -165,13 +165,15 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col items-center grow justify-center gap-4 py-12">
-                    <PackageOpen className="h-12 w-12 text-muted-foreground" />
-                    <div className="text-center">
-                        <h2 className="text-xl font-medium">{t("deployments.no_deployments")}</h2>
-                        <p className="text-foreground-secondary">{t("deployments.no_deployments_description")}</p>
-                    </div>
-                </div>
+                <EmptyState
+                    size="default"
+                    iconVariant="bare"
+                    tone="muted"
+                    grow
+                    icon={<PackageOpen />}
+                    title={t("deployments.no_deployments")}
+                    description={t("deployments.no_deployments_description")}
+                />
             )}
         </ApiStatusHandler>
     )

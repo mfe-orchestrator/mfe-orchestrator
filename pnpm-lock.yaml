@@ -197,8 +197,8 @@ importers:
         specifier: ^0.19.13
         version: 0.19.13(react@19.2.8)
       '@mfe-orchestrator/design-system':
-        specifier: ^1.3.0
-        version: 1.3.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-hook-form@7.85.0(react@19.2.8))(react@19.2.8)
+        specifier: ^1.4.1
+        version: 1.4.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-hook-form@7.85.0(react@19.2.8))(react@19.2.8)
       '@react-oauth/google':
         specifier: ^0.13.5
         version: 0.13.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1147,8 +1147,8 @@ packages:
     resolution: {integrity: sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==}
     engines: {node: '>=8'}
 
-  '@mfe-orchestrator/design-system@1.3.0':
-    resolution: {integrity: sha512-PHhUmOfi/cc3S1qY3w/ol6USWgNgwV5OW9R1daliI11FTt1JhdZ9AcrExR3Kz2yCTMJw/zwnwpKv8HYLVlhPBg==, tarball: https://npm.pkg.github.com/download/@mfe-orchestrator/design-system/1.3.0/c581c2ebf8a25ed02f4c0101ea368c5a40bdd508}
+  '@mfe-orchestrator/design-system@1.4.1':
+    resolution: {integrity: sha512-/XeVMYGCt3sHpWNcnlepAO+FOFqvx3h7eANIPMCnfjr321j8ACQ7f4Mt1yTKoF5flv5S3uWI9KJd6GKMessAhw==, tarball: https://npm.pkg.github.com/download/@mfe-orchestrator/design-system/1.4.1/ca26e870f1d28df94497cc4543b209fe3b116214}
     engines: {node: '>=21.0.0'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -5842,7 +5842,7 @@ snapshots:
 
   '@lukeed/ms@2.0.2': {}
 
-  '@mfe-orchestrator/design-system@1.3.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-hook-form@7.85.0(react@19.2.8))(react@19.2.8)':
+  '@mfe-orchestrator/design-system@1.4.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-hook-form@7.85.0(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@radix-ui/react-accordion': 1.2.20(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@radix-ui/react-avatar': 1.2.6(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)

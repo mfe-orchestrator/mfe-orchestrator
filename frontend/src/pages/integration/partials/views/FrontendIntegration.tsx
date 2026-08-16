@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardHeader, CodeBlock, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
@@ -117,9 +117,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
                         <TabsContent value="curl">
                             <h3 className="text-lg font-semibold">{t("integration.fe_integration_tab.curl.title")}</h3>
                             <p className="mb-4">{t("integration.fe_integration_tab.curl.description")}</p>
-                            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
-                                <code>{curlExample}</code>
-                            </pre>
+                            <CodeBlock code={curlExample} wrapperClassName="mb-4" />
                             <p className="mb-4">{t("integration.fe_integration_tab.curl.step2")}</p>
                             <div className="border-2 border-border rounded-md overflow-hidden">
                                 <iframe src={`https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`} className="w-full h-[500px] border-0" title="API Response Preview" />
