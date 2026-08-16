@@ -1,5 +1,6 @@
 import { ClientSession, Schema } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { EnvironmentNotFoundError } from "../errors/EnvironmentNotFoundError"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
@@ -42,7 +43,7 @@ class DeploymentService extends BaseAuthorizedService {
         const environmentIdObj = toObjectId(environmentId)
         const environment = await Environment.findById(environmentIdObj).session(session || null)
         if (!environment) {
-            throw new EntityNotFoundError(environmentId.toString())
+            throw new EnvironmentNotFoundError(environmentId.toString())
         }
 
         const microfrontend = await Microfrontend.find({ projectId: environment.projectId }).session(session || null)

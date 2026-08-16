@@ -9,6 +9,8 @@ import AzureStorageClient from "../client/AzureStorageAccount"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { EnvironmentNotFoundError } from "../errors/EnvironmentNotFoundError"
+import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
@@ -212,7 +214,7 @@ export default class ServeService {
 
         const environment = await Environment.findById(deployment.environmentId)
         if (!environment) {
-            throw new EntityNotFoundError(deployment.environmentId?.toString())
+            throw new EnvironmentNotFoundError(deployment.environmentId?.toString())
         }
 
         const filteredMicrofrontends = deployment.microfrontends?.filter(mfe => mfe.parentIds?.some(parentId => parentId.toString() === microfrontendId?.toString())) || []
@@ -275,7 +277,7 @@ export default class ServeService {
         }
         const environment = await Environment.findById(environmentId)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw new EnvironmentNotFoundError(environmentId.toString())
         }
 
         const microFrontendsAdapted = deployment.microfrontends
@@ -309,7 +311,7 @@ export default class ServeService {
     async getAllByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<GetAllDataDTO> {
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectId, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
         return this.getAllByEnvironmentId(environment._id)
     }
@@ -324,10 +326,10 @@ export default class ServeService {
      * @param projectId The ID of the project
      * @returns Promise with the Environment the referer belongs to
      */
-    private async getEnvironmentByRefererAndProjectIdOrFail(referer: string, projectId: string): Promise<IEnvironment> {
+    private async getEnvironmentByRefererAndProjectIdOrFail(referer: string, projectId: string | Schema.Types.ObjectId): Promise<IEnvironment> {
         const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw EnvironmentNotFoundError.fromDomain(referer, projectId.toString())
         }
         return environment
     }
@@ -354,11 +356,7 @@ export default class ServeService {
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
         }
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId)
-
-        if (!environment) {
-            throw new EntityNotFoundError("Environment")
-        }
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, microfrontend.projectId)
         const deployment = await Deployment.findOne({ environmentId: environment._id, active: true }).sort({ createdAt: -1 })
         if (!deployment) {
             throw new EntityNotFoundError("Active deployment")
@@ -380,7 +378,7 @@ export default class ServeService {
     async getMicrofrontendConfigurationByProjectIdEnvironmentSlugAndMfeSlug(projectId: string, environmentSlug: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectId, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
         return this.getMicrofrontendConfigurationByEnvironmentAndMfeSlug(environment, mfeSlug)
     }
@@ -425,7 +423,7 @@ export default class ServeService {
         }
         const environment = await Environment.findById(environmentId)
         if (!environment) {
-            throw new EntityNotFoundError("Environment")
+            throw new EnvironmentNotFoundError(environmentId.toString())
         }
         return await this.adaptMicrofrontendToServe(deployedMFE, environment.slug, deployment._id)
     }
@@ -467,7 +465,7 @@ export default class ServeService {
     async getGlobalVariablesByProjectIdAndEnvironmentSlug(projectId: string, environmentSlug: string): Promise<IGlobalVariable[]> {
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectId, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
         return this.getGlobalVariablesByEnvironment(environment)
     }
@@ -514,12 +512,12 @@ export default class ServeService {
         const projectIdObj = toObjectId(projectId)
         const environment = await this.findEnvironmentByProjectIdAndSlug(projectIdObj, environmentSlug)
         if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
+            throw new EnvironmentNotFoundError(environmentSlug)
         }
 
         const project = await Project.findOne({ _id: projectIdObj })
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
 
         const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ deployedAt: -1 })
@@ -532,13 +530,10 @@ export default class ServeService {
     async getMicrofrontendFilesByProjectIdAndMicrofrontendSlug(projectId: string, microfrontendSlug: string, filePath: string, referer: string, version?: string): Promise<ServeFileResult> {
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
 
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, projectId)
-        if (!environment) {
-            throw new EntityNotFoundError("Environment")
-        }
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, projectId)
 
         const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
         if (!deployment) {
@@ -720,13 +715,10 @@ export default class ServeService {
         if (!microfrontend) {
             throw new EntityNotFoundError(mfeId)
         }
-        const environment = await this.getEnvironmentFomRefererAndProjectId(referer, microfrontend.projectId)
-        if (!environment) {
-            throw new EntityNotFoundError("Environment")
-        }
+        const environment = await this.getEnvironmentByRefererAndProjectIdOrFail(referer, microfrontend.projectId)
         const project = await Project.findById(environment.projectId)
         if (!project) {
-            throw new EntityNotFoundError("Project")
+            throw new ProjectNotFoundError(environment.projectId.toString())
         }
 
         const deployment = await Deployment.findOne({ environmentId: environment._id }).sort({ createdAt: -1 })
@@ -795,10 +787,34 @@ export default class ServeService {
     getEnvironmentFomRefererAndProjectId(referer: string, projectId: string | Schema.Types.ObjectId) {
         return Environment.findOne({
             projectId: toObjectId(projectId),
-            $or: [{ domains: { $regex: new RegExp(referer, "i") } }, { domains: { $regex: new RegExp(new URL(referer).origin, "i") } }]
+            $or: refererMatchCandidates(referer).map(candidate => ({ domains: { $regex: new RegExp(escapeRegExp(candidate), "i") } }))
         })
     }
 }
+
+/**
+ * The forms of the calling domain a registered domain can be matched against.
+ *
+ * The referer is a full url when the browser sends one and a bare host when getReferer falls back to
+ * the Host header, so parsing has to tolerate both: `new URL("example.com")` throws, which used to
+ * surface as a 500 on every "auto" url requested without a referer (a plain curl, a preload, a
+ * browser under a no-referrer policy).
+ */
+const refererMatchCandidates = (referer: string): string[] => {
+    const parsed = parseUrlOrNull(referer) ?? parseUrlOrNull(`https://${referer}`)
+    const candidates = [referer, parsed?.origin, parsed?.host, parsed?.hostname]
+    return [...new Set(candidates.filter((candidate): candidate is string => Boolean(candidate)))]
+}
+
+const parseUrlOrNull = (value: string): URL | null => {
+    try {
+        return new URL(value)
+    } catch {
+        return null
+    }
+}
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 const getBackendUrl = (): string => {
     return process.env.BACKEND_URL || process.env.FRONTEND_URL + "/api"
@@ -823,7 +839,10 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
         const versionPath = pinnedVersion ? `${VERSION_PATH_SEGMENT}/${pinnedVersion}/` : ""
         const entryPoint = microfrontend.host.entryPoint || "index.js"
         if (environmentSlug) {
-            return `${backendUrl}/serve/mfe/files/auto/${microfrontend.projectId}/${microfrontend.slug}/${versionPath}${entryPoint}`
+            // The environment is already resolved here, so it goes into the url: an "auto" url would make the
+            // browser resolve it again from the referer of the file request, which fails for any host page whose
+            // domain is not registered on the environment even when it asked for that environment explicitly.
+            return `${backendUrl}/serve/mfe/files/${microfrontend.projectId}/${environmentSlug}/${microfrontend.slug}/${versionPath}${entryPoint}`
         } else {
             return `${backendUrl}/serve/mfe/files/${microfrontend._id}/${versionPath}${entryPoint}`
         }

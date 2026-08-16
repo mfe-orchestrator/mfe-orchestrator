@@ -15,6 +15,7 @@ import GitlabClient from "../client/GitlabClient"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
@@ -607,7 +608,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async uploadWithPermissionCheck(microfrontendSlug: string, version: string, projectId: string, file: MultipartFile): Promise<void> {
         const project = await Project.findById(projectId)
         if (!project) {
-            throw new EntityNotFoundError(projectId)
+            throw new ProjectNotFoundError(projectId)
         }
         const microfrontend = await Microfrontend.findOne({
             slug: microfrontendSlug,
