@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage, Card, CardContent, CardDescription, CardHeader } from "@mfe-orchestrator/design-system"
+import { Avatar, AvatarFallback, AvatarImage, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trash2, Upload, User as UserIcon } from "lucide-react"
 import { useRef, useState } from "react"
@@ -74,7 +74,7 @@ export const AvatarSection: React.FC<AvatarSectionProps> = ({ user }) => {
     return (
         <Card className="pt-4">
             <CardHeader>
-                <h2 className="text-lg font-semibold">{t("profile.avatar.title")}</h2>
+                <CardTitle as="h2">{t("profile.avatar.title")}</CardTitle>
                 <CardDescription>{t("profile.avatar.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">

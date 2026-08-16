@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, Checkbox } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox } from "@mfe-orchestrator/design-system"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
@@ -40,7 +40,7 @@ export const MarketingConsentSection: React.FC<MarketingConsentSectionProps> = (
     return (
         <Card className="pt-4">
             <CardHeader>
-                <h2 className="text-lg font-semibold">{t("profile.marketing.title")}</h2>
+                <CardTitle as="h2">{t("profile.marketing.title")}</CardTitle>
                 <CardDescription>{t("profile.marketing.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">

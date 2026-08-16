@@ -1,6 +1,6 @@
-import { Checkbox, CodeBlock, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
+import { Checkbox, CodeBlock, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { AlertTriangle, CheckCircle2, GitBranch, Loader2 } from "lucide-react"
+import { AlertTriangle, CheckCircle2, GitBranch } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
@@ -224,8 +224,8 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
                         ))}
                     </div>
                 ) : planQuery.isPending ? (
-                    <div className="flex items-center justify-center min-h-[120px]">
-                        <Loader2 className="w-8 h-8 animate-spin" />
+                    <div className="flex min-h-[120px]">
+                        <Spinner size={32} label={t("common.loading")} />
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
@@ -241,8 +241,7 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
                         {result ? t("common.close") : t("common.cancel")}
                     </Button>
                     {!result && (
-                        <Button onClick={() => applyMutation.mutate()} disabled={selectedIds.length === 0 || applyMutation.isPending}>
-                            {applyMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                        <Button onClick={() => applyMutation.mutate()} disabled={selectedIds.length === 0} loading={applyMutation.isPending} loadingLabel={t("common.loading")}>
                             {t("integration.fe_integration_tab.integrate_confirm")}
                         </Button>
                     )}

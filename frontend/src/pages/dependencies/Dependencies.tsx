@@ -1,4 +1,4 @@
-import { Card, CardContent, Checkbox } from "@mfe-orchestrator/design-system"
+import { Checkbox, SectionHeader, StatTile } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import { AlertTriangle, GitPullRequestArrow, RefreshCw } from "lucide-react"
 import React, { useMemo, useState } from "react"
@@ -9,20 +9,6 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useDependenciesApi, { MicrofrontendScanTarget } from "@/hooks/apiClients/useDependenciesApi"
 import useProjectStore from "@/store/useProjectStore"
 import { AlignPeerDependenciesDialog, BranchSelection, DependencyAlignmentTable, isOutdated, MicrofrontendDependencyList } from "./partials"
-
-interface SummaryCardProps {
-    label: string
-    value: number | string
-}
-
-const SummaryCard: React.FC<SummaryCardProps> = ({ label, value }) => (
-    <Card>
-        <CardContent className="p-4">
-            <p className="text-sm text-foreground-secondary">{label}</p>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
-        </CardContent>
-    </Card>
-)
 
 /** Branch selected for each microfrontend, falling back to the default branch of its repository */
 const toDefaultBranches = (targets: MicrofrontendScanTarget[]): Record<string, string> =>
@@ -110,7 +96,7 @@ const Dependencies: React.FC = () => {
                 )}
 
                 <section>
-                    <h2 className="text-xl font-medium mb-2 text-foreground-secondary">{t("dependencies.branch_selection_title")}</h2>
+                    <SectionHeader title={t("dependencies.branch_selection_title")} />
                     <BranchSelection
                         targets={targets}
                         selectedBranches={selectedBranches}
@@ -119,31 +105,33 @@ const Dependencies: React.FC = () => {
                 </section>
 
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
-                    <SummaryCard label={t("dependencies.summary_microfrontends")} value={microfrontends.length} />
-                    <SummaryCard label={t("dependencies.summary_packages")} value={uniquePackages.size} />
-                    <SummaryCard label={t("dependencies.summary_outdated")} value={outdatedPackages.size} />
-                    <SummaryCard label={t("dependencies.summary_peer_misaligned")} value={misalignedPeerCount} />
+                    <StatTile size="sm" label={t("dependencies.summary_microfrontends")} value={microfrontends.length} />
+                    <StatTile size="sm" label={t("dependencies.summary_packages")} value={uniquePackages.size} />
+                    <StatTile size="sm" label={t("dependencies.summary_outdated")} value={outdatedPackages.size} />
+                    <StatTile size="sm" label={t("dependencies.summary_peer_misaligned")} value={misalignedPeerCount} />
                 </div>
 
                 <section>
-                    <h2 className="text-xl font-medium mb-2 text-foreground-secondary">{t("dependencies.peer_section_title")}</h2>
+                    <SectionHeader title={t("dependencies.peer_section_title")} />
                     <DependencyAlignmentTable issues={peerDependencyIssues} emptyMessage={t("dependencies.no_peer_issues")} />
                 </section>
 
                 <section>
-                    <h2 className="text-xl font-medium mb-2 text-foreground-secondary">{t("dependencies.shared_section_title")}</h2>
+                    <SectionHeader title={t("dependencies.shared_section_title")} />
                     <p className="text-sm text-foreground-secondary mb-2">{t("dependencies.shared_section_description")}</p>
                     <DependencyAlignmentTable issues={sharedDependencyIssues} emptyMessage={t("dependencies.no_shared_issues")} />
                 </section>
 
                 <section>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                        <h2 className="text-xl font-medium text-foreground-secondary">{t("dependencies.per_microfrontend_title")}</h2>
-                        <label className="flex items-center gap-2 text-sm">
-                            <Checkbox checked={onlyOutdated} onCheckedChange={checked => setOnlyOutdated(checked === true)} />
-                            {t("dependencies.only_outdated")}
-                        </label>
-                    </div>
+                    <SectionHeader
+                        title={t("dependencies.per_microfrontend_title")}
+                        actions={
+                            <label className="flex items-center gap-2 text-sm">
+                                <Checkbox checked={onlyOutdated} onCheckedChange={checked => setOnlyOutdated(checked === true)} />
+                                {t("dependencies.only_outdated")}
+                            </label>
+                        }
+                    />
                     <MicrofrontendDependencyList microfrontends={microfrontends} onlyOutdated={onlyOutdated} />
                 </section>
 

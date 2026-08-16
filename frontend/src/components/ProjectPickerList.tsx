@@ -1,5 +1,5 @@
-import { EmptyState, Input } from "@mfe-orchestrator/design-system"
-import { Check, ChevronRight, FolderPlus, Plus, Search } from "lucide-react"
+import { AddTile, EmptyState, SearchInput } from "@mfe-orchestrator/design-system"
+import { Check, ChevronRight, FolderPlus, Plus } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
@@ -52,13 +52,7 @@ export const ProjectPickerList: React.FC<ProjectPickerListProps> = ({ projects, 
         )
     }
 
-    const searchBox =
-        projects.length > SEARCH_THRESHOLD ? (
-            <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground-secondary" aria-hidden="true" />
-                <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("project.search_placeholder")} className="pl-9" fullWidth autoFocus={autoFocusSearch} />
-            </div>
-        ) : null
+    const searchBox = projects.length > SEARCH_THRESHOLD ? <SearchInput value={search} onValueChange={setSearch} placeholder={t("project.search_placeholder")} autoFocus={autoFocusSearch} /> : null
 
     const noResults = <EmptyState size="sm" description={t("project.no_results")} />
 
@@ -109,16 +103,7 @@ export const ProjectPickerList: React.FC<ProjectPickerListProps> = ({ projects, 
                         })}
                         {onCreateNew && (
                             <li>
-                                <button
-                                    type="button"
-                                    onClick={onCreateNew}
-                                    className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-divider p-3 text-center transition-colors hover:border-primary hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                    <span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary" aria-hidden="true">
-                                        <Plus className="size-7" />
-                                    </span>
-                                    <span className="line-clamp-2 text-sm font-medium text-foreground">{t("project.create_new")}</span>
-                                </button>
+                                <AddTile aspect="square" onClick={onCreateNew} icon={<Plus />} label={t("project.create_new")} />
                             </li>
                         )}
                     </ul>

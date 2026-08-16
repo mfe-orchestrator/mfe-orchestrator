@@ -61,61 +61,59 @@ export const Storages: React.FC = () => {
                 }
             >
                 {storagesQuery.data && storagesQuery.data?.length > 0 ? (
-                    <div className="rounded-md border-2 border-border overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-primary/25">
-                                    <TableHead>{t("storage.name")}</TableHead>
-                                    <TableHead>{t("storage.bucketName")}</TableHead>
-                                    <TableHead>{t("storage.path")}</TableHead>
-                                    <TableHead>{t("common.default")}</TableHead>
-                                    <TableHead />
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {storagesQuery.data?.map(storage => (
-                                    <TableRow key={storage._id} data-testid={`storage-row-${storage.name}`}>
-                                        <TableCell className="font-medium flex items-center gap-4">
-                                            {storage.type === StorageType.AWS && <img src="/img/aws.svg" alt="AWS" className="h-8 w-8" />}
-                                            {storage.type === StorageType.AZURE && <img src="/img/Azure.svg" alt="Azure" className="h-8 w-8" />}
-                                            {storage.type === StorageType.GOOGLE && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-8 w-8" />}
-                                            {storage.name}
-                                        </TableCell>
-                                        <TableCell>
-                                            {storage.type === StorageType.AWS && <>{storage.authConfig.bucketName}</>}
-                                            {storage.type === StorageType.AZURE && <>{storage.authConfig.containerName}</>}
-                                            {storage.type === StorageType.GOOGLE && <>{storage.authConfig.bucketName}</>}
-                                        </TableCell>
-                                        <TableCell>{storage.path}</TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" disabled={setDefaultMutation.isPending} onClick={() => setDefaultMutation.mutate(storage._id)}>
-                                                <Star className={`${storage.default ? "fill-primary/50" : ""}`} />
+                    <Table framed>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{t("storage.name")}</TableHead>
+                                <TableHead>{t("storage.bucketName")}</TableHead>
+                                <TableHead>{t("storage.path")}</TableHead>
+                                <TableHead>{t("common.default")}</TableHead>
+                                <TableHead />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {storagesQuery.data?.map(storage => (
+                                <TableRow key={storage._id} data-testid={`storage-row-${storage.name}`}>
+                                    <TableCell className="font-medium flex items-center gap-4">
+                                        {storage.type === StorageType.AWS && <img src="/img/aws.svg" alt="AWS" className="h-8 w-8" />}
+                                        {storage.type === StorageType.AZURE && <img src="/img/Azure.svg" alt="Azure" className="h-8 w-8" />}
+                                        {storage.type === StorageType.GOOGLE && <img src="/img/GoogleCloud.svg" alt="Google Cloud" className="h-8 w-8" />}
+                                        {storage.name}
+                                    </TableCell>
+                                    <TableCell>
+                                        {storage.type === StorageType.AWS && <>{storage.authConfig.bucketName}</>}
+                                        {storage.type === StorageType.AZURE && <>{storage.authConfig.containerName}</>}
+                                        {storage.type === StorageType.GOOGLE && <>{storage.authConfig.bucketName}</>}
+                                    </TableCell>
+                                    <TableCell>{storage.path}</TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" disabled={setDefaultMutation.isPending} onClick={() => setDefaultMutation.mutate(storage._id)}>
+                                            <Star className={`${storage.default ? "fill-primary/50" : ""}`} />
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)} dataTestId={`storage-edit-${storage.name}`}>
+                                                <Pencil />
                                             </Button>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(storage._id)} dataTestId={`storage-edit-${storage.name}`}>
-                                                    <Pencil />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
-                                                    onClick={() => {
-                                                        setStorageToDelete({ id: storage._id, name: storage.name })
-                                                        setIsDeleteDialogOpen(true)
-                                                    }}
-                                                    dataTestId={`storage-delete-${storage.name}`}
-                                                >
-                                                    <Trash2 />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
+                                                onClick={() => {
+                                                    setStorageToDelete({ id: storage._id, name: storage.name })
+                                                    setIsDeleteDialogOpen(true)
+                                                }}
+                                                dataTestId={`storage-delete-${storage.name}`}
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 ) : (
                     <Card>
                         <CardContent>

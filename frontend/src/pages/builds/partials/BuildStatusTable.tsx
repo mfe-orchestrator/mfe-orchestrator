@@ -39,84 +39,82 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
     }
 
     return (
-        <div className="rounded-md border-2 border-border overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow className="bg-primary/25">
-                        <TableHead className="w-10" />
-                        <TableHead>{t("builds.table.microfrontend")}</TableHead>
-                        <TableHead>{t("builds.table.last_build")}</TableHead>
-                        <TableHead>{t("builds.table.build_ref")}</TableHead>
-                        <TableHead>{t("builds.table.last_built_version")}</TableHead>
-                        {environments.map(environment => (
-                            <TableHead key={environment._id}>
-                                <div className="flex items-center gap-2">
-                                    <span>{environment.name}</span>
-                                    {environment.isProduction && <Badge variant="accent">{t("builds.table.production")}</Badge>}
-                                </div>
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {data.microfrontends.map(row => {
-                        const isExpanded = expandedIds.includes(row.microfrontendId)
-                        const lastBuild = row.builds[0]
+        <Table framed scroll="x">
+            <TableHeader>
+                <TableRow>
+                    <TableHead className="w-10" />
+                    <TableHead>{t("builds.table.microfrontend")}</TableHead>
+                    <TableHead>{t("builds.table.last_build")}</TableHead>
+                    <TableHead>{t("builds.table.build_ref")}</TableHead>
+                    <TableHead>{t("builds.table.last_built_version")}</TableHead>
+                    {environments.map(environment => (
+                        <TableHead key={environment._id}>
+                            <div className="flex items-center gap-2">
+                                <span>{environment.name}</span>
+                                {environment.isProduction && <Badge variant="accent">{t("builds.table.production")}</Badge>}
+                            </div>
+                        </TableHead>
+                    ))}
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {data.microfrontends.map(row => {
+                    const isExpanded = expandedIds.includes(row.microfrontendId)
+                    const lastBuild = row.builds[0]
 
-                        return [
-                            <TableRow key={row.microfrontendId}>
-                                <TableCell>
-                                    <button
-                                        type="button"
-                                        onClick={() => toggleExpanded(row.microfrontendId)}
-                                        aria-expanded={isExpanded}
-                                        aria-label={t(isExpanded ? "builds.table.collapse_history" : "builds.table.expand_history", { name: row.name })}
-                                        className="p-1"
-                                    >
-                                        {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-                                    </button>
+                    return [
+                        <TableRow key={row.microfrontendId}>
+                            <TableCell>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleExpanded(row.microfrontendId)}
+                                    aria-expanded={isExpanded}
+                                    aria-label={t(isExpanded ? "builds.table.collapse_history" : "builds.table.expand_history", { name: row.name })}
+                                    className="p-1"
+                                >
+                                    {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                                </button>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col">
+                                    <span className="font-medium">{row.name}</span>
+                                    <span className="text-xs text-foreground-secondary font-mono">{row.slug}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>{renderLastBuild(row)}</TableCell>
+                            <TableCell>{lastBuild?.ref ? <span className="font-mono text-sm">{lastBuild.ref}</span> : <span className="text-foreground-secondary">—</span>}</TableCell>
+                            <TableCell>
+                                <VersionCell version={row.latestBuiltVersion} />
+                            </TableCell>
+                            {environments.map(environment => (
+                                <TableCell key={environment._id}>
+                                    <VersionCell version={row.versionByEnvironmentId?.[environment._id]} />
                                 </TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium">{row.name}</span>
-                                        <span className="text-xs text-foreground-secondary font-mono">{row.slug}</span>
+                            ))}
+                        </TableRow>,
+                        isExpanded && (
+                            <TableRow key={`${row.microfrontendId}-history`} className={cn("bg-primary/5")}>
+                                <TableCell colSpan={leadingColumns + environments.length}>
+                                    <div className="flex flex-col gap-3 py-2">
+                                        {row.repositoryName && (
+                                            <p className="text-sm text-foreground-secondary">
+                                                {t("builds.table.repository", { name: row.repositoryName })}
+                                                {row.selectedVersion ? ` · ${t("builds.table.selected_version", { version: row.selectedVersion })}` : ""}
+                                            </p>
+                                        )}
+                                        {row.unavailableReason === BuildUnavailableReason.PROVIDER_ERROR ? (
+                                            <p className="text-sm">{t("builds.unavailable.PROVIDER_ERROR")}</p>
+                                        ) : (
+                                            <BuildRunList runs={row.builds} />
+                                        )}
                                     </div>
                                 </TableCell>
-                                <TableCell>{renderLastBuild(row)}</TableCell>
-                                <TableCell>{lastBuild?.ref ? <span className="font-mono text-sm">{lastBuild.ref}</span> : <span className="text-foreground-secondary">—</span>}</TableCell>
-                                <TableCell>
-                                    <VersionCell version={row.latestBuiltVersion} />
-                                </TableCell>
-                                {environments.map(environment => (
-                                    <TableCell key={environment._id}>
-                                        <VersionCell version={row.versionByEnvironmentId?.[environment._id]} />
-                                    </TableCell>
-                                ))}
-                            </TableRow>,
-                            isExpanded && (
-                                <TableRow key={`${row.microfrontendId}-history`} className={cn("bg-primary/5")}>
-                                    <TableCell colSpan={leadingColumns + environments.length}>
-                                        <div className="flex flex-col gap-3 py-2">
-                                            {row.repositoryName && (
-                                                <p className="text-sm text-foreground-secondary">
-                                                    {t("builds.table.repository", { name: row.repositoryName })}
-                                                    {row.selectedVersion ? ` · ${t("builds.table.selected_version", { version: row.selectedVersion })}` : ""}
-                                                </p>
-                                            )}
-                                            {row.unavailableReason === BuildUnavailableReason.PROVIDER_ERROR ? (
-                                                <p className="text-sm">{t("builds.unavailable.PROVIDER_ERROR")}</p>
-                                            ) : (
-                                                <BuildRunList runs={row.builds} />
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        ]
-                    })}
-                </TableBody>
-            </Table>
-        </div>
+                            </TableRow>
+                        )
+                    ]
+                })}
+            </TableBody>
+        </Table>
     )
 }
 

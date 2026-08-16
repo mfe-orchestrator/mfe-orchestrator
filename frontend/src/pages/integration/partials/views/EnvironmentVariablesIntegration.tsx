@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CodeBlock } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardHeader, CardTitle, CodeBlock } from "@mfe-orchestrator/design-system"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
@@ -19,7 +19,7 @@ export const EnvironmentVariablesIntegration = ({ projectId }: { projectId?: str
     return (
         <Card>
             <CardHeader>
-                <h2 className="text-xl font-semibold">{t("integration.env_vars_integration_tab.title")}</h2>
+                <CardTitle as="h2">{t("integration.env_vars_integration_tab.title")}</CardTitle>
                 <p>{t("integration.env_vars_integration_tab.description")}</p>
             </CardHeader>
 

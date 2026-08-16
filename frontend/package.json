@@ -23,7 +23,7 @@
         "@heroicons/react": "^2.2.0",
         "@hookform/resolvers": "^5.7.1",
         "@lottiefiles/dotlottie-react": "^0.19.13",
-        "@mfe-orchestrator/design-system": "^1.4.2",
+        "@mfe-orchestrator/design-system": "^1.5.0",
         "@react-oauth/google": "^0.13.5",
         "@sentry/react": "^10.70.0",
         "@tanstack/react-query": "^5.101.4",

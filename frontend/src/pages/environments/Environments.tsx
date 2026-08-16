@@ -1,4 +1,5 @@
 import {
+    ColorSwatch,
     Dialog,
     DialogContent,
     DialogFooter,
@@ -249,70 +250,68 @@ export default function EnvironmentsPage() {
             >
                 <ApiStatusHandler queries={[environmentQuery]}>
                     <p className="mb-2 text-sm text-foreground-secondary">{t("environment.page.reorder.hint")}</p>
-                    <div className="rounded-md border-2 border-border overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-primary/25">
-                                    <TableHead className="w-10" />
-                                    <TableHead>{t("environment.form.name")}</TableHead>
-                                    <TableHead>{t("environment.form.slug")}</TableHead>
-                                    <TableHead>{t("environment.production")}</TableHead>
-                                    <TableHead>{t("environment.form.domains")}</TableHead>
-                                    <TableHead>{t("environment.page.color")}</TableHead>
-                                    <TableHead />
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orderedEnvironments.map(env => (
-                                    <TableRow
-                                        key={env._id}
-                                        data-testid={`environment-row-${env.slug}`}
-                                        {...getItemProps(env._id)}
-                                        className={cn(draggingId === env._id && "opacity-50", dragOverId === env._id && "outline-2 -outline-offset-2 outline-dashed outline-primary")}
-                                    >
-                                        <TableCell className="px-2">
-                                            <span
-                                                {...getHandleProps(env._id)}
-                                                role="button"
-                                                tabIndex={0}
-                                                aria-label={t("environment.page.reorder.handle", { name: env.name })}
-                                                title={t("environment.page.reorder.handle", { name: env.name })}
-                                                className="flex cursor-grab items-center justify-center rounded-md p-1 text-foreground-secondary hover:bg-primary/15 focus-visible:outline-2 focus-visible:outline-primary active:cursor-grabbing"
+                    <Table framed>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-10" />
+                                <TableHead>{t("environment.form.name")}</TableHead>
+                                <TableHead>{t("environment.form.slug")}</TableHead>
+                                <TableHead>{t("environment.production")}</TableHead>
+                                <TableHead>{t("environment.form.domains")}</TableHead>
+                                <TableHead>{t("environment.page.color")}</TableHead>
+                                <TableHead />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {orderedEnvironments.map(env => (
+                                <TableRow
+                                    key={env._id}
+                                    data-testid={`environment-row-${env.slug}`}
+                                    {...getItemProps(env._id)}
+                                    className={cn(draggingId === env._id && "opacity-50", dragOverId === env._id && "outline-2 -outline-offset-2 outline-dashed outline-primary")}
+                                >
+                                    <TableCell className="px-2">
+                                        <span
+                                            {...getHandleProps(env._id)}
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={t("environment.page.reorder.handle", { name: env.name })}
+                                            title={t("environment.page.reorder.handle", { name: env.name })}
+                                            className="flex cursor-grab items-center justify-center rounded-md p-1 text-foreground-secondary hover:bg-primary/15 focus-visible:outline-2 focus-visible:outline-primary active:cursor-grabbing"
+                                        >
+                                            <GripVertical className="size-4" />
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="font-medium">{env.name}</TableCell>
+                                    <TableCell>{env.slug}</TableCell>
+                                    <TableCell>{env.isProduction ? <Check /> : <X />}</TableCell>
+                                    <TableCell>{env.domains?.join(", ") || "-"}</TableCell>
+                                    <TableCell>
+                                        <ColorSwatch size="lg" color={env.color} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end gap-1">
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(env)} dataTestId={`environment-edit-${env.slug}`}>
+                                                <Pencil />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
+                                                onClick={() => {
+                                                    setCurrentEnvironment(env)
+                                                    setIsDeleteDialogOpen(true)
+                                                }}
+                                                dataTestId={`environment-delete-${env.slug}`}
                                             >
-                                                <GripVertical className="size-4" />
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="font-medium">{env.name}</TableCell>
-                                        <TableCell>{env.slug}</TableCell>
-                                        <TableCell>{env.isProduction ? <Check /> : <X />}</TableCell>
-                                        <TableCell>{env.domains?.join(", ") || "-"}</TableCell>
-                                        <TableCell>
-                                            <div className="w-6 h-6 rounded-full border-2 border-border" style={{ backgroundColor: env.color }} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(env)} dataTestId={`environment-edit-${env.slug}`}>
-                                                    <Pencil />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
-                                                    onClick={() => {
-                                                        setCurrentEnvironment(env)
-                                                        setIsDeleteDialogOpen(true)
-                                                    }}
-                                                    dataTestId={`environment-delete-${env.slug}`}
-                                                >
-                                                    <Trash2 />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </ApiStatusHandler>
             </EnvironmentsGate>
 

@@ -1,4 +1,4 @@
-import { EmptyStateRow, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
+import { EmptyStateRow, Meter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
 import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server } from "lucide-react"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -61,9 +61,8 @@ const CanaryCell: React.FC<{ canary: Microfrontend["canary"] }> = ({ canary }) =
 
     return (
         <div className="flex min-w-[7rem] items-center gap-2">
-            <div className="h-1.5 w-full max-w-20 overflow-hidden rounded-full bg-primary/20">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${percentage}%` }} />
-            </div>
+            {/* animated={false}: in tabella molte barre che si animano insieme distraggono, ed è il comportamento che questa cella aveva già */}
+            <Meter className="max-w-20" value={percentage} label={t("microfrontend.canaryReleaseActive")} animated={false} />
             <span className="whitespace-nowrap text-xs tabular-nums text-foreground-secondary">
                 {percentage}% {t("microfrontend.ofUsers")}
             </span>

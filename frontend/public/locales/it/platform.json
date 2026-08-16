@@ -624,6 +624,7 @@
             "noRepositories": "Questa connessione non espone alcun repository.",
             "noSearchResults": "Nessun repository corrisponde alla ricerca.",
             "searchPlaceholder": "Cerca repository...",
+            "clearSearch": "Cancella la ricerca dei repository",
             "selectAll": "Seleziona tutti",
             "selectedCount": "{{count}} di {{total}} selezionati",
             "alreadyImported": "Già importato",

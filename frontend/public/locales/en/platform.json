@@ -528,6 +528,7 @@
             "noRepositories": "This connection does not expose any repository.",
             "noSearchResults": "No repository matches your search.",
             "searchPlaceholder": "Search repository...",
+            "clearSearch": "Clear the repository search",
             "selectAll": "Select all",
             "selectedCount": "{{count}} of {{total}} selected",
             "alreadyImported": "Already imported",

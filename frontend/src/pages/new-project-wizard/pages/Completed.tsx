@@ -1,3 +1,4 @@
+import { IconTile } from "@mfe-orchestrator/design-system"
 import { PartyPopper } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -10,9 +11,7 @@ const Completed: React.FC<WizardStepProps & { onDone?: () => void }> = ({ projec
 
     return (
         <div data-testid="wizard-completed" className="bg-card border border-border rounded-xl shadow-card mt-8 p-10 flex flex-col items-center text-center gap-5">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <PartyPopper className="size-8 text-primary" />
-            </div>
+            <IconTile size="lg" icon={<PartyPopper />} />
             <div className="flex flex-col gap-2">
                 <h2 className="text-2xl font-semibold text-foreground">{t("newProjectWizard.completed.title")}</h2>
                 <p className="text-foreground-secondary max-w-md">

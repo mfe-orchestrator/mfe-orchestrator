@@ -1,6 +1,6 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input } from "@mfe-orchestrator/design-system"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { AlertTriangle, CheckCircle2, GitBranch, Loader2 } from "lucide-react"
+import { AlertTriangle, CheckCircle2, GitBranch } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
@@ -105,7 +105,7 @@ export const AlignPeerDependenciesDialog: React.FC<AlignPeerDependenciesDialogPr
                     </div>
                 ) : planQuery.isPending ? (
                     <div className="flex items-center justify-center min-h-[120px]">
-                        <Loader2 className="w-8 h-8 animate-spin" />
+                        <Spinner size={32} label={t("common.loading")} />
                     </div>
                 ) : !hasChanges ? (
                     <p className="text-foreground">{t("dependencies.no_peer_issues")}</p>
@@ -140,8 +140,7 @@ export const AlignPeerDependenciesDialog: React.FC<AlignPeerDependenciesDialogPr
                         {result ? t("common.close") : t("common.cancel")}
                     </Button>
                     {!result && (
-                        <Button onClick={() => applyMutation.mutate()} disabled={!hasChanges || applyMutation.isPending || !branchName.trim()}>
-                            {applyMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                        <Button onClick={() => applyMutation.mutate()} disabled={!hasChanges || !branchName.trim()} loading={applyMutation.isPending} loadingLabel={t("common.loading")}>
                             {t("dependencies.align_confirm")}
                         </Button>
                     )}

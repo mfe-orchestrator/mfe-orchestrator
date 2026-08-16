@@ -85,41 +85,39 @@ export const MicrofrontendDependencyList: React.FC<MicrofrontendDependencyListPr
                             ) : dependencies.length === 0 ? (
                                 <EmptyState size="sm" description={onlyOutdated ? t("dependencies.all_up_to_date") : t("dependencies.no_dependencies")} />
                             ) : (
-                                <div className="rounded-md border-2 border-border overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-primary/25">
-                                                <TableHead className="text-foreground">{t("dependencies.package")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.kind")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.declared_range")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.latest_version")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.status_column")}</TableHead>
+                                <Table framed scroll="x">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t("dependencies.package")}</TableHead>
+                                            <TableHead>{t("dependencies.kind")}</TableHead>
+                                            <TableHead>{t("dependencies.declared_range")}</TableHead>
+                                            <TableHead>{t("dependencies.latest_version")}</TableHead>
+                                            <TableHead>{t("dependencies.status_column")}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {dependencies.map(dependency => (
+                                            <TableRow key={`${dependency.kind}-${dependency.name}`}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        {dependency.name}
+                                                        {dependency.deprecated && <Badge variant="destructive">{t("dependencies.deprecated")}</Badge>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{t(`dependencies.kinds.${dependency.kind}`)}</Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <code className="text-sm">{dependency.range}</code>
+                                                </TableCell>
+                                                <TableCell>{dependency.latestVersion || "-"}</TableCell>
+                                                <TableCell>
+                                                    <DependencyStatusBadge status={dependency.status} />
+                                                </TableCell>
                                             </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {dependencies.map(dependency => (
-                                                <TableRow key={`${dependency.kind}-${dependency.name}`}>
-                                                    <TableCell className="font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            {dependency.name}
-                                                            {dependency.deprecated && <Badge variant="destructive">{t("dependencies.deprecated")}</Badge>}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">{t(`dependencies.kinds.${dependency.kind}`)}</Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <code className="text-sm">{dependency.range}</code>
-                                                    </TableCell>
-                                                    <TableCell>{dependency.latestVersion || "-"}</TableCell>
-                                                    <TableCell>
-                                                        <DependencyStatusBadge status={dependency.status} />
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             )}
                         </AccordionContent>
                     </AccordionItem>

@@ -1,4 +1,4 @@
-import { CopyButton, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
+import { CopyableValue, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@mfe-orchestrator/design-system"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
 import { FormProvider, useForm } from "react-hook-form"
@@ -63,12 +63,7 @@ export const CreateApiKeyDialog: React.FC<CreateApiKeyDialogProps> = ({ isCreate
                         )}
                         {showSuccess ? (
                             <div className="my-4 space-y-2">
-                                <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
-                                    <code data-testid="api-key-value" className="flex-1 select-all break-all font-mono text-sm text-foreground">
-                                        {createApiKeyMutation.data.apiKey}
-                                    </code>
-                                    <CopyButton value={createApiKeyMutation.data.apiKey} label={t("apiKeys.copy_to_clipboard")} copiedLabel={t("common.copied")} className="shrink-0" />
-                                </div>
+                                <CopyableValue value={createApiKeyMutation.data.apiKey} copyLabel={t("apiKeys.copy_to_clipboard")} copiedLabel={t("common.copied")} dataTestId="api-key-value" />
                                 <p className="text-xs text-muted-foreground">{t("apiKeys.key_warning")}</p>
                             </div>
                         ) : (

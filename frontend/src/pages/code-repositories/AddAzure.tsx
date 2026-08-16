@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
+import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, NumberedSteps, SelectField } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { CheckCircle2, ExternalLink, Eye, EyeOff, Info } from "lucide-react"
 import { useState } from "react"
@@ -183,31 +183,23 @@ const AddAzureRepositoryPage = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-6 w-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">1</div>
-                                        <div>
-                                            <p className="font-medium">{t("codeRepositories.azure.steps.step1.title")}</p>
-                                            <p className="text-sm text-muted-foreground">{t("codeRepositories.azure.steps.step1.description")}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-6 w-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">2</div>
-                                        <div>
-                                            <p className="font-medium">{t("codeRepositories.azure.steps.step2.title")}</p>
-                                            <p className="text-sm text-muted-foreground">{t("codeRepositories.azure.steps.step2.description")}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-6 w-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">3</div>
-                                        <div>
-                                            <p className="font-medium">{t("codeRepositories.azure.steps.step3.title")}</p>
-                                            <p className="text-sm text-muted-foreground">{t("codeRepositories.azure.steps.step3.description")}</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <NumberedSteps
+                                    tone="primary"
+                                    steps={[
+                                        {
+                                            title: t("codeRepositories.azure.steps.step1.title"),
+                                            description: t("codeRepositories.azure.steps.step1.description")
+                                        },
+                                        {
+                                            title: t("codeRepositories.azure.steps.step2.title"),
+                                            description: t("codeRepositories.azure.steps.step2.description")
+                                        },
+                                        {
+                                            title: t("codeRepositories.azure.steps.step3.title"),
+                                            description: t("codeRepositories.azure.steps.step3.description")
+                                        }
+                                    ]}
+                                />
 
                                 <Button variant="secondary" size="sm" asChild className="w-full">
                                     <a href="https://dev.azure.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">

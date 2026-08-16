@@ -75,65 +75,63 @@ const CodeRepositoryPage = () => {
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="rounded-md border-2 border-border overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-primary/25">
-                                    <TableHead>{t("codeRepositories.columns.name")}</TableHead>
-                                    <TableHead>Default</TableHead>
-                                    <TableHead />
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {repositoriesQuery.data?.map(repository => (
-                                    <TableRow key={repository._id}>
-                                        <TableCell className="font-medium flex items-center gap-4">
-                                            {repository.provider === CodeRepositoryProvider.GITHUB && <img src="/img/GitHub.svg" alt="GitHub" className="h-8 w-8" />}
-                                            {repository.provider === CodeRepositoryProvider.GITLAB && <img src="/img/GitLab.svg" alt="GitLab" className="h-8 w-8" />}
-                                            {repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS && <img src="/img/AzureDevOps.svg" alt="Azure DevOps" className="h-8 w-8" />}
-                                            {repository.name}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" disabled={setDefaultMutation.isPending} onClick={() => setDefaultMutation.mutate(repository._id)}>
-                                                <Star className={`${repository.default ? "fill-primary/50" : ""}`} />
+                    <Table framed>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{t("codeRepositories.columns.name")}</TableHead>
+                                <TableHead>{t("common.default")}</TableHead>
+                                <TableHead />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {repositoriesQuery.data?.map(repository => (
+                                <TableRow key={repository._id}>
+                                    <TableCell className="font-medium flex items-center gap-4">
+                                        {repository.provider === CodeRepositoryProvider.GITHUB && <img src="/img/GitHub.svg" alt="GitHub" className="h-8 w-8" />}
+                                        {repository.provider === CodeRepositoryProvider.GITLAB && <img src="/img/GitLab.svg" alt="GitLab" className="h-8 w-8" />}
+                                        {repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS && <img src="/img/AzureDevOps.svg" alt="Azure DevOps" className="h-8 w-8" />}
+                                        {repository.name}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" disabled={setDefaultMutation.isPending} onClick={() => setDefaultMutation.mutate(repository._id)}>
+                                            <Star className={`${repository.default ? "fill-primary/50" : ""}`} />
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex gap-1 justify-end">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+                                                        navigate(`/code-repositories/azure/${repository._id}`)
+                                                    } else if (repository.provider === CodeRepositoryProvider.GITHUB) {
+                                                        navigate(`/code-repositories/github/${repository._id}`)
+                                                    } else if (repository.provider === CodeRepositoryProvider.GITLAB) {
+                                                        navigate(`/code-repositories/gitlab/${repository._id}`)
+                                                    }
+                                                }}
+                                            >
+                                                <Edit />
                                             </Button>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-1 justify-end">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                                                            navigate(`/code-repositories/azure/${repository._id}`)
-                                                        } else if (repository.provider === CodeRepositoryProvider.GITHUB) {
-                                                            navigate(`/code-repositories/github/${repository._id}`)
-                                                        } else if (repository.provider === CodeRepositoryProvider.GITLAB) {
-                                                            navigate(`/code-repositories/gitlab/${repository._id}`)
-                                                        }
-                                                    }}
-                                                >
-                                                    <Edit />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
-                                                    disabled={deleteRepositoryMutation.isPending}
-                                                    onClick={() => {
-                                                        setRepositoryToDelete({ id: repository._id, name: repository.name })
-                                                        setIsDeleteDialogOpen(true)
-                                                    }}
-                                                >
-                                                    <Trash2 />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
+                                                disabled={deleteRepositoryMutation.isPending}
+                                                onClick={() => {
+                                                    setRepositoryToDelete({ id: repository._id, name: repository.name })
+                                                    setIsDeleteDialogOpen(true)
+                                                }}
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
 
                 <AddRepositoryDialog

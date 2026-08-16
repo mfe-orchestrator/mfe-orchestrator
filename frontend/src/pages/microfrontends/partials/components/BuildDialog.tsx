@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, SelectField } from "@mfe-orchestrator/design-system"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, SelectField, Spinner } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { Loader2 } from "lucide-react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -90,7 +89,7 @@ export function BuildDialog({ open, onOpenChange, microfrontendId, microfrontend
                         </DialogHeader>
 
                         <div className="space-y-2 mt-2 mb-4">
-                            <ApiStatusHandler queries={[branchesQuery]} loadingComponent={<Loader2 className="w-8 h-8 animate-spin" />}>
+                            <ApiStatusHandler queries={[branchesQuery]} loadingComponent={<Spinner size={32} centerScreen={false} label={t("common.loading")} />}>
                                 {branchesQuery.data ? (
                                     <>
                                         {branchesQuery.data.length > 1 ? (

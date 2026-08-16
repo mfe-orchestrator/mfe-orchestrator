@@ -1,5 +1,5 @@
 import { GlobeAltIcon } from "@heroicons/react/24/outline"
-import { Card } from "@mfe-orchestrator/design-system"
+import { Card, IconTile } from "@mfe-orchestrator/design-system"
 import { Badge } from "@/components/atoms"
 import { EnvironmentPreset } from "@/utils/EnviromentsPresets"
 
@@ -16,9 +16,7 @@ export const EnvironmentSet: React.FC<EnvironmentSetProps> = ({ name, environmen
             data-testid={`environment-preset-${name}`}
             className="relative flex-[1_1_240px] cursor-pointer flex gap-4 items-center flex-wrap hover:bg-primary/15"
         >
-            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <GlobeAltIcon className="h-6 w-6 text-primary" />
-            </div>
+            <IconTile size="sm" icon={<GlobeAltIcon />} className="flex-shrink-0" />
             <div className="flex-1">
                 <h4 className="text-normal font-medium text-card-foreground">{name}</h4>
                 <div className="flex flex-wrap gap-2 mt-2">

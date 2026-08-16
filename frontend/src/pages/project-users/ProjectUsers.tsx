@@ -5,6 +5,7 @@ import {
     CardContent,
     CardTitle,
     EmptyState,
+    SectionHeader,
     Table,
     TableBody,
     TableCell,
@@ -149,7 +150,7 @@ const ProjectUsers: React.FC = () => {
                     <Tabs defaultValue="grid" className="space-y-4" iconButtons>
                         <div className="flex items-start justify-between gap-x-6 gap-y-2 flex-wrap">
                             <div className="flex-[1_1_280px] max-w-[600px]">
-                                <h2 className="text-xl font-semibold text-foreground-secondary">{t("project_users.user_count", { count: members.length })}</h2>
+                                <SectionHeader title={t("project_users.user_count", { count: members.length })} />
                             </div>
                             <TabsList>
                                 <TabsTrigger value="grid">
@@ -172,7 +173,7 @@ const ProjectUsers: React.FC = () => {
                                 <TabsContent value="table">
                                     <Card>
                                         <Table>
-                                            <TableHeader>
+                                            <TableHeader tinted={false}>
                                                 <TableRow>
                                                     <TableHead>{t("project_users.user")}</TableHead>
                                                     <TableHead>{t("project_users.role")}</TableHead>
@@ -226,13 +227,10 @@ const ProjectUsers: React.FC = () => {
 
                     {pendingInvites.length > 0 && (
                         <div className="space-y-4" data-testid="pending-invites">
-                            <div className="flex items-center gap-2">
-                                <MailCheck className="h-5 w-5 text-muted-foreground" />
-                                <h2 className="text-xl font-semibold text-foreground-secondary">{t("project_users.pending_invites", { count: pendingInvites.length })}</h2>
-                            </div>
+                            <SectionHeader icon={<MailCheck />} title={t("project_users.pending_invites", { count: pendingInvites.length })} />
                             <Card>
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader tinted={false}>
                                         <TableRow>
                                             <TableHead>{t("project_users.email")}</TableHead>
                                             <TableHead>{t("project_users.role")}</TableHead>

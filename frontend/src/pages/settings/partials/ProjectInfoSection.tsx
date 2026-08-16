@@ -1,37 +1,6 @@
-import { Card, CardContent, CardHeader, CopyButton, Label, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardHeader, CardTitle, CopyableValue, DescriptionItem, DescriptionList } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 import { Project } from "@/hooks/apiClients/useProjectApi"
-
-interface InfoItemProps {
-    label: string
-    value: string
-    isMonospace?: boolean
-    copyable?: boolean
-}
-
-const InfoItem: React.FC<InfoItemProps> = ({ label, value, isMonospace = false, copyable = true }) => {
-    const { t } = useTranslation()
-
-    return (
-        <div className="flex-[1_1_200px] flex flex-col gap-1">
-            <Label className="text-sm text-foreground-secondary">{label}</Label>
-            <div className="flex items-center flex-1 gap-3">
-                <span className={`${isMonospace && "font-mono"} break-all @sm/settings-card:break-normal`}>{value || "-"}</span>
-                {copyable && value && (
-                    <Tooltip delayDuration={300}>
-                        {/* title vuoto: l'etichetta la mostra già il Tooltip, quello nativo si sovrapporrebbe */}
-                        <TooltipTrigger asChild>
-                            <CopyButton value={value} label={t("common.copy")} copiedLabel={t("common.copied")} size="icon" title="" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{t("common.copy")}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                )}
-            </div>
-        </div>
-    )
-}
 
 interface ProjectInfoSectionProps extends Project {
     onUpdateProjectName: (newName: string) => Promise<void>
@@ -40,19 +9,28 @@ interface ProjectInfoSectionProps extends Project {
 export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({ name, slug, _id }) => {
     const { t } = useTranslation()
 
+    const copyProps = { copyLabel: t("common.copy"), copiedLabel: t("common.copied") }
+
     return (
-        <Card className="pt-4 @container/settings-card">
+        <Card className="pt-4">
             <CardHeader>
-                <h2 className="text-lg font-semibold">{t("settings.projectInfo.title")}</h2>
+                <CardTitle as="h2">{t("settings.projectInfo.title")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-                <div className="flex flex-wrap gap-4">
-                    <InfoItem label={t("settings.projectInfo.name")} value={name} copyable={false} />
+                {/* flex-row: le tre voci stanno su una riga che va a capo, non incolonnate */}
+                <DescriptionList className="flex-row flex-wrap">
+                    <DescriptionItem className="flex-[1_1_200px]" label={t("settings.projectInfo.name")}>
+                        {name || "-"}
+                    </DescriptionItem>
 
-                    <InfoItem label={t("settings.projectInfo.slug")} value={slug} />
+                    <DescriptionItem className="flex-[1_1_200px]" label={t("settings.projectInfo.slug")}>
+                        {slug ? <CopyableValue value={slug} {...copyProps} /> : "-"}
+                    </DescriptionItem>
 
-                    <InfoItem label={t("settings.projectInfo.id")} value={_id} />
-                </div>
+                    <DescriptionItem className="flex-[1_1_200px]" label={t("settings.projectInfo.id")}>
+                        {_id ? <CopyableValue value={_id} {...copyProps} /> : "-"}
+                    </DescriptionItem>
+                </DescriptionList>
             </CardContent>
         </Card>
     )
