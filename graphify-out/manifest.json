@@ -1210,8 +1210,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/CodeRepositorySection.tsx": {
-    "mtime": 1786114751.5655699,
-    "ast_hash": "6bd186ea89fcdf1e7896a806d587bec8",
+    "mtime": 1786896600.6333113,
+    "ast_hash": "79da662bde81ccb95dd1bfd1f82f25d1",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/DangerZoneRemoveMicrofrontend.tsx": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/HostingSection.tsx": {
-    "mtime": 1786114751.5624285,
-    "ast_hash": "c030398f7674d07a1c5276a59d6510db",
+    "mtime": 1786896580.248822,
+    "ast_hash": "563f3bd20e8615352ce4667bb6c351a2",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendCard.tsx": {
@@ -1615,8 +1615,8 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1786893722.091098,
-    "ast_hash": "84574cfb5e4854faec384dea58661226",
+    "mtime": 1786895918.7406971,
+    "ast_hash": "39c9e5236938229123beecf50b401ae9",
     "semantic_hash": ""
   },
   "COMMIT_CONVENTIONS.md": {
@@ -2135,8 +2135,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/ReleaseSection.tsx": {
-    "mtime": 1786875420.6520717,
-    "ast_hash": "3103e5a0dcb66041e101655afd963c47",
+    "mtime": 1786896615.363999,
+    "ast_hash": "11f1988cc9f504590653186be6906cb8",
     "semantic_hash": ""
   },
   "backend/src/models/MicrofrontendModel.test.ts": {
