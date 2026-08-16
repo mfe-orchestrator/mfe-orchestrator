@@ -32,6 +32,7 @@ export const HostingSection: React.FC<HostingSectionProps> = ({ storages }) => {
                     <SelectField
                         name="host.type"
                         containerClassName="flex-[1_1_240px]"
+                        className="w-full"
                         label={t("microfrontend.hosting_type")}
                         options={[
                             { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
@@ -48,6 +49,7 @@ export const HostingSection: React.FC<HostingSectionProps> = ({ storages }) => {
                         <SelectField
                             name="host.storageId"
                             containerClassName="flex-[1_1_240px]"
+                            className="w-full"
                             label={t("microfrontend.source")}
                             required
                             options={storages?.map(storage => {

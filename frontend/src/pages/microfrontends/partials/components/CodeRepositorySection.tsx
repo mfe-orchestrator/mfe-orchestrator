@@ -164,6 +164,8 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                     <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
                         <SelectField
                             name="codeRepository.codeRepositoryId"
+                            containerClassName="flex-[1_1_240px]"
+                            className="w-full"
                             label={t("microfrontend.sourceCodeProvider")}
                             options={repositoriesData?.map(repo => {
                                 return {
@@ -178,12 +180,14 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                         {selectedCodeRepositoryId && !forceCreation && (
                             <>
                                 {fetchRepositoriesMutation.isPending ? (
-                                    <Alert className="w-auto">
+                                    <Alert className="flex-[1_1_240px]">
                                         <AlertDescription>{t("common.loading")}...</AlertDescription>
                                     </Alert>
                                 ) : (
                                     <SelectField
                                         name="codeRepository.name" // codeRepository.name - Really good for github, do not know if it is good for other providers
+                                        containerClassName="flex-[1_1_240px]"
+                                        className="w-full"
                                         label={t("microfrontend.select_repository")}
                                         options={[
                                             !isEdit && {
@@ -205,6 +209,8 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                         {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && gitlabGroupsQuery.data?.length > 1 && (
                             <SelectField
                                 name="codeRepository.gitlab.groupPath"
+                                containerClassName="flex-[1_1_240px]"
+                                className="w-full"
                                 label={t("microfrontend.gitlab_group")}
                                 options={gitlabGroupsQuery.data?.map(group => ({
                                     value: group.full_path,
