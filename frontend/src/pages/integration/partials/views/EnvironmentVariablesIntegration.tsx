@@ -1,9 +1,15 @@
 import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 
-export const EnvironmentVariablesIntegration = ({ environmentId }: { environmentId?: string }) => {
+/**
+ * The url is addressed by project, not by environment: the backend resolves which environment
+ * answers from the domain the page asking is served on, so the very same `index.html` can be
+ * promoted from one environment to the next without being edited. Naming an environment here
+ * would bake it into the artifact.
+ */
+export const EnvironmentVariablesIntegration = ({ projectId }: { projectId?: string }) => {
     const { t } = useTranslation()
-    const envVarsUrl = environmentId ? `https://${window.location.host}/api/serve/global-variables/${environmentId}` : ""
+    const envVarsUrl = projectId ? `https://${window.location.host}/api/serve/global-variables/auto/${projectId}` : ""
 
     return (
         <Card>
@@ -20,6 +26,7 @@ export const EnvironmentVariablesIntegration = ({ environmentId }: { environment
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                     <code>{`<script src="${envVarsUrl}/index.js"></script>`}</code>
                 </pre>
+                <p className="mb-4 text-sm text-foreground-secondary">{t("integration.env_vars_integration_tab.javascript_auto_note")}</p>
                 <h4 className="text-md font-semibold mb-3">{t("integration.env_vars_integration_tab.javascript_example")}</h4>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
                     <code>

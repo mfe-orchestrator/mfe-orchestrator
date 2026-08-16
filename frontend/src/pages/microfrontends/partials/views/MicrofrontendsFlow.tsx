@@ -1,6 +1,8 @@
 import { addEdge, applyEdgeChanges, applyNodeChanges, Background, Connection, Controls, Edge, EdgeChange, Node, NodeChange, OnConnectEnd, ReactFlow } from "@xyflow/react"
 import { useCallback, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import { Badge } from "@/components/atoms"
 import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
 import CloneRepositoryPopover from "../components/CloneRepositoryPopover"
@@ -30,6 +32,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
     const [nodes, setNodes] = useState<Node[]>([])
     const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
+    const { t } = useTranslation("platform")
     const navigate = useNavigate()
     const microfrontendApi = useMicrofrontendsApi()
     const { theme } = useThemeStore()
@@ -59,13 +62,19 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 id: mfe._id,
                 data: {
                     label: (
-                        <>
-                            {mfe.name}
+                        <div className="flex flex-col items-center gap-1.5">
+                            <span className="truncate">{mfe.name}</span>
+                            <span className="flex flex-wrap items-center justify-center gap-1">
+                                <Badge variant="outline" title={t("microfrontend.card.version", { version: mfe.version })}>
+                                    {mfe.version}
+                                </Badge>
+                                {mfe.canary?.enabled && <Badge>{t("microfrontend.card.canary")}</Badge>}
+                            </span>
                             {/* nodrag/nopan keep React Flow from hijacking the click; stopPropagation keeps a double click from navigating away. */}
                             <span className="nodrag nopan absolute -right-2.5 -top-2.5" onDoubleClick={event => event.stopPropagation()}>
                                 <CloneRepositoryPopover microfrontend={mfe} iconOnly />
                             </span>
-                        </>
+                        </div>
                     )
                 },
                 position: { x: mfe?.position?.x || col * 250, y: mfe?.position?.y || row * 150 },
@@ -75,7 +84,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
         })
         setNodes(nodes)
         setEdges(edgesList)
-    }, [microfrontends])
+    }, [microfrontends, t])
 
     useEffect(() => {
         if (!hoveredNodeId) {

@@ -4,6 +4,7 @@ import { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import Microfrontend, { IMicrofrontend, MicrofrontendType } from "../models/MicrofrontendModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, supportsModuleFederation } from "../types/MicrofrontendStack"
 import { getBackendUrl } from "../utils/backendUrl"
+import { globalVariablesScriptUrl, injectGlobalVariablesScript } from "../utils/globalVariablesScript"
 import { toObjectId } from "../utils/mongooseUtils"
 import { isDependencyDeclared, PackageManifest, serializePackageJson } from "../utils/packageJsonUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
@@ -12,7 +13,23 @@ import RepositoryFileService, { mapWithConcurrency, REPOSITORY_CONCURRENCY, Repo
 import StackDetectionService, { DetectedStack } from "./StackDetectionService"
 
 const PACKAGE_JSON_PATH = "package.json"
-const COMMIT_MESSAGE = "chore(mfe): wire up module federation"
+const FEDERATION_COMMIT_MESSAGE = "chore(mfe): wire up module federation"
+const RUNTIME_CONFIG_COMMIT_MESSAGE = "chore(mfe): read runtime configuration from the console"
+
+/**
+ * Where the document of an application lives, probed in order. Vite keeps it at the root, the
+ * webpack configs we generate point HtmlWebpackPlugin at the public one, and the first that is
+ * actually there is the one the browser loads.
+ */
+const HTML_CANDIDATES = new Set(["index.html", "public/index.html", "src/index.html"])
+
+const isHtml = (path: string): boolean => HTML_CANDIDATES.has(path)
+
+/**
+ * What the commit is about, so a repository that only gained its runtime configuration script is
+ * not told it was wired up for module federation.
+ */
+const commitMessageFor = (changes: FederationFileChangeDTO[]): string => (changes.every(change => isHtml(change.path)) ? RUNTIME_CONFIG_COMMIT_MESSAGE : FEDERATION_COMMIT_MESSAGE)
 
 export enum FederationIntegrationStatus {
     /** The repository already carries exactly what we would write */
@@ -81,9 +98,6 @@ export interface FederationIntegrationApplyResultDTO {
     results: MicrofrontendIntegrationResultDTO[]
 }
 
-/** The statuses that describe a repository we can actually write to */
-const WRITABLE_STATUSES = new Set([FederationIntegrationStatus.CONFIG_TO_CREATE, FederationIntegrationStatus.CONFIG_TO_REPLACE])
-
 /**
  * Wires module federation into the repositories of a project: every microfrontend that consumes
  * others gets the config declaring them as remotes, plus the packages that config needs.
@@ -139,14 +153,19 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                 return result
             }
 
-            if (!WRITABLE_STATUSES.has(item.status)) {
+            // What decides is the plan itself, not the status: the status describes the module
+            // federation side, and a repository with no remotes to wire can still be owed the
+            // runtime configuration script.
+            if (item.changes.length === 0) {
                 result.error = `Nothing to write: ${item.status}`
                 return result
             }
 
             try {
+                const message = commitMessageFor(item.changes)
+
                 for (const change of item.changes) {
-                    await this.writeChange(target, item.branch, change)
+                    await this.writeChange(target, item.branch, change, message)
                     result.writtenPaths.push(change.path)
                 }
                 result.applied = result.writtenPaths.length > 0
@@ -200,37 +219,46 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             return { ...plan, status: FederationIntegrationStatus.ERROR, error: "Code repository connection not found" }
         }
 
-        if (remotes.length === 0) {
-            return plan
-        }
-
         try {
             const branch = await this.repositoryFiles.getDefaultBranch(target)
             const detected = await this.stackDetection.detect(target, branch)
             const stack = this.resolveStack(microfrontend, detected)
+
+            // Planned on its own, and before anything else, because it has nothing to do with
+            // module federation: a host owes its document the runtime configuration script whether
+            // it consumes a remote or not, and whatever we managed to work out about its stack.
+            const runtimeConfig = await this.buildGlobalVariablesChange(target, branch, microfrontend)
+            const runtimeConfigChanges = runtimeConfig ? [runtimeConfig] : []
+
+            if (remotes.length === 0) {
+                return { ...plan, branch, stack, changes: runtimeConfigChanges }
+            }
 
             if (!supportsModuleFederation(stack.compiler)) {
                 return {
                     ...plan,
                     branch,
                     stack,
+                    changes: runtimeConfigChanges,
                     status: stack.compiler ? FederationIntegrationStatus.RUNTIME_INTEGRATION : FederationIntegrationStatus.STACK_UNKNOWN
                 }
             }
 
             if (!stack.framework) {
-                return { ...plan, branch, stack, status: FederationIntegrationStatus.STACK_UNKNOWN }
+                return { ...plan, branch, stack, changes: runtimeConfigChanges, status: FederationIntegrationStatus.STACK_UNKNOWN }
             }
 
-            const changes = await this.buildChanges(target, branch, microfrontend, stack, remotes, detected)
-            const configChange = changes.find(change => change.path !== PACKAGE_JSON_PATH)
+            const federationChanges = await this.buildChanges(target, branch, microfrontend, stack, remotes, detected)
+            const configChange = federationChanges.find(change => change.path !== PACKAGE_JSON_PATH)
 
             return {
                 ...plan,
                 branch,
                 stack,
-                changes,
-                status: this.statusOf(changes, configChange)
+                changes: [...federationChanges, ...runtimeConfigChanges],
+                // Computed over the federation changes alone: it is what the status is about, and
+                // a document still missing its script tag does not make a config out of date.
+                status: this.statusOf(federationChanges, configChange)
             }
         } catch (error) {
             fastify.log.error(error, `Unable to plan the module federation integration of ${microfrontend.slug}`)
@@ -308,6 +336,46 @@ export class FederationIntegrationService extends BaseAuthorizedService {
     }
 
     /**
+     * The document with the runtime configuration script in it, or nothing when it is already
+     * there or there is no document to write it into.
+     *
+     * This is the counterpart of the two values the bundler config carries: those are baked into
+     * the bundle and need a build to change, whereas the variables this tag brings in are read on
+     * every page load and are edited from the console. The url addresses the project rather than
+     * an environment on purpose, so the artifact stays the same one across a promotion.
+     *
+     * Hosts only. The tag assigns `window.globalConfig`, and there is one window per page: the
+     * host's document already configures every remote loaded into it. A remote's own document is
+     * the one it is served under while it is developed on its own, so writing the tag there would
+     * buy nothing for the deployed application and cost a commit on every repository of the
+     * project.
+     *
+     * Only the first document found is considered: a repository shipping several is shipping one
+     * entry point and some fixtures, and guessing which is which is not this service's job.
+     */
+    private async buildGlobalVariablesChange(target: RepositoryTarget, branch: string, microfrontend: IMicrofrontend): Promise<FederationFileChangeDTO | null> {
+        if (microfrontend.type !== MicrofrontendType.HOST) {
+            return null
+        }
+
+        const url = globalVariablesScriptUrl(getBackendUrl(), microfrontend.projectId.toString())
+
+        for (const path of HTML_CANDIDATES) {
+            const file = await this.repositoryFiles.readFile(target, path, branch)
+
+            if (!file) {
+                continue
+            }
+
+            const proposedContent = injectGlobalVariablesScript(file.raw, url)
+
+            return proposedContent ? { path, currentContent: file.raw, proposedContent } : null
+        }
+
+        return null
+    }
+
+    /**
      * package.json with the packages the config needs added, or nothing when they are all declared.
      * Versions are left to the registry through "latest": pinning one here would fight whatever the
      * project already resolves.
@@ -360,7 +428,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
         }
     }
 
-    private async writeChange(target: RepositoryTarget, branch: string, change: FederationFileChangeDTO): Promise<void> {
+    private async writeChange(target: RepositoryTarget, branch: string, change: FederationFileChangeDTO, message: string): Promise<void> {
         // Re-read to pick up the blob sha GitHub locks the update against, and to tell a creation
         // from an update on the providers that do not hand one out
         const existing = await this.repositoryFiles.readFile(target, change.path, branch)
@@ -369,7 +437,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             path: change.path,
             content: change.proposedContent,
             branch,
-            message: COMMIT_MESSAGE,
+            message,
             existing
         })
     }

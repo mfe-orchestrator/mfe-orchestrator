@@ -19,8 +19,12 @@ export interface IntegrateMicrofrontendsDialogProps {
     onlyMicrofrontendId?: string
 }
 
-/** Only these two mean there is something to write, the rest is there to explain why not */
-const WRITABLE: FederationIntegrationStatus[] = ["CONFIG_TO_CREATE", "CONFIG_TO_REPLACE"]
+/**
+ * What can be committed is what the plan actually carries, not what its status says: the status
+ * describes the module federation side, and a microfrontend with no remotes to wire can still owe
+ * its repository the runtime configuration script.
+ */
+const isWritable = (item: MicrofrontendIntegrationPlan): boolean => item.changes.length > 0
 
 const STATUS_KEYS: Record<FederationIntegrationStatus, string> = {
     ALREADY_INTEGRATED: "status_already_integrated",
@@ -85,7 +89,7 @@ const PlanRow: React.FC<{
     onToggle: (microfrontendId: string) => void
 }> = ({ item, selected, onToggle }) => {
     const { t } = useTranslation()
-    const writable = WRITABLE.includes(item.status)
+    const writable = isWritable(item)
 
     return (
         <div className="rounded-md border-2 border-border p-3">
@@ -144,7 +148,7 @@ export const IntegrateMicrofrontendsDialog: React.FC<IntegrateMicrofrontendsDial
 
     // Everything writable starts ticked, so the common case is one click: the set tracks what the
     // user took out rather than what they put in, which keeps a refreshed plan selected by default
-    const writableItems = shownItems.filter(item => WRITABLE.includes(item.status))
+    const writableItems = shownItems.filter(isWritable)
     const selectedIds = writableItems.map(item => item.microfrontendId).filter(id => !deselected.has(id))
 
     const toggle = (microfrontendId: string) => {
