@@ -19,6 +19,7 @@ import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofronte
 import Project, { IProject } from "../models/ProjectModel"
 import { IStorage, StorageType } from "../models/StorageModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
+import { getBackendUrl } from "../utils/backendUrl"
 import { toObjectId } from "../utils/mongooseUtils"
 import DeploymentService from "./DeploymentService"
 import FederationConfigService, { federationName, IntegrationInstructions } from "./FederationConfigService"
@@ -259,7 +260,9 @@ export default class ServeService {
             compiler: stack.compiler,
             microfrontendSlug: allData.microfrontend.slug,
             exposeSelf: allData.microfrontend.type === MicrofrontendType.HOST,
-            remotes: childs.map((child, index) => ({ name: child.nameToIntegrate || `mfe${index + 1}`, slug: child.slug }))
+            remotes: childs.map((child, index) => ({ name: child.nameToIntegrate || `mfe${index + 1}`, slug: child.slug })),
+            projectId: allData.microfrontend.projectId.toString(),
+            backendUrl: getBackendUrl()
         })
 
         return { ...instructions, stack }
@@ -815,10 +818,6 @@ const parseUrlOrNull = (value: string): URL | null => {
 }
 
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-
-const getBackendUrl = (): string => {
-    return process.env.BACKEND_URL || process.env.FRONTEND_URL + "/api"
-}
 
 /**
  * @param pinnedVersion When set, the version is written into the path of the url.

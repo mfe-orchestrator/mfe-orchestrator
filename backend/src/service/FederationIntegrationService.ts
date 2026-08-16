@@ -3,6 +3,7 @@ import { fastify } from ".."
 import { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import Microfrontend, { IMicrofrontend, MicrofrontendType } from "../models/MicrofrontendModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, supportsModuleFederation } from "../types/MicrofrontendStack"
+import { getBackendUrl } from "../utils/backendUrl"
 import { toObjectId } from "../utils/mongooseUtils"
 import { isDependencyDeclared, PackageManifest, serializePackageJson } from "../utils/packageJsonUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
@@ -278,7 +279,9 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             microfrontendSlug: microfrontend.slug,
             exposeSelf: microfrontend.type === MicrofrontendType.HOST,
             remotes,
-            configPath: detected.configPath
+            configPath: detected.configPath,
+            projectId: microfrontend.projectId.toString(),
+            backendUrl: getBackendUrl()
         })
 
         if (!instructions.config || !instructions.configPath) {
