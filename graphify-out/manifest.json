@@ -229,11 +229,6 @@
     "ast_hash": "dbdf6d3af366ea2c1e39cf8211320e9e",
     "semantic_hash": ""
   },
-  "backend/src/middleware/errorHandler.ts": {
-    "mtime": 1785880209.9862452,
-    "ast_hash": "03670c16b00654e0b68178280c710313",
-    "semantic_hash": "03670c16b00654e0b68178280c710313"
-  },
   "backend/src/models/ApiKeyModel.ts": {
     "mtime": 1785880209.9863915,
     "ast_hash": "ca4b1d77b2fb0d0fd60b05d36c3f78ac",

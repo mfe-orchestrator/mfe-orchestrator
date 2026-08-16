@@ -189,11 +189,8 @@
   "187": "CloneRepositoryPopover.tsx",
   "188": "NpmRegistryClient.ts",
   "189": "BaseAuthorizedService",
-  "190": "StackBadge.tsx",
   "191": "card",
-  "192": "clone",
   "193": "devDependencies",
-  "194": "card",
   "195": "table",
   "196": "form",
   "197": "FederationConfigService",
@@ -202,9 +199,6 @@
   "201": "theme",
   "202": "hostTypes",
   "203": "validation",
-  "205": ".isCanary",
   "206": "deploymentTypes",
-  "207": "DeploymentCanaryUsersController.ts",
-  "208": "DeploymentController.ts",
-  "210": "errorHandler.ts"
+  "207": "DeploymentCanaryUsersController.ts"
 }
