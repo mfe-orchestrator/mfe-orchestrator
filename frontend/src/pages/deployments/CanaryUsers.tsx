@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Switch, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Switch, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { UseQueryResult, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Trash2, UserPlus } from "lucide-react"
 import { useState } from "react"
@@ -26,7 +26,8 @@ export const CanaryUsers: React.FC = () => {
     const notifications = useToastNotificationStore()
 
     const [newUserIds, setNewUserIds] = useState("")
-    const [userToRemove, setUserToRemove] = useState<CanaryUser | undefined>()
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+    const [usersToRemove, setUsersToRemove] = useState<string[]>([])
 
     const query: UseQueryResult<CanaryUser[]> = useQuery({
         queryKey: ["canaryUsers", deploymentId],
@@ -45,24 +46,35 @@ export const CanaryUsers: React.FC = () => {
         }
     })
 
-    // The same endpoint that creates a row also flips one, so enabling and disabling is one call.
+    // The same endpoint that creates a row also flips one, so enabling and disabling is one call —
+    // and because it takes a list, the single row switch and the bulk buttons share it.
     const toggleMutation = useMutation({
-        mutationFn: ({ userId, enabled }: { userId: string; enabled: boolean }) => canaryUsersApi.setCanaryUsers(deploymentId!, [userId], enabled),
-        onSuccess: async () => {
+        mutationFn: ({ userIds, enabled }: { userIds: string[]; enabled: boolean }) => canaryUsersApi.setCanaryUsers(deploymentId!, userIds, enabled),
+        onSuccess: async (_data, { userIds }) => {
             await refresh()
-            notifications.showSuccessNotification({ message: t("deployments.canary_users.updated_success") })
+            notifications.showSuccessNotification({ message: t("deployments.canary_users.updated_success", { count: userIds.length }) })
         }
     })
 
     const removeMutation = useMutation({
-        mutationFn: (userId: string) => canaryUsersApi.deleteCanaryUsers(deploymentId!, [userId]),
-        onSuccess: async () => {
+        mutationFn: (userIds: string[]) => canaryUsersApi.deleteCanaryUsers(deploymentId!, userIds),
+        onSuccess: async (_data, userIds) => {
+            setSelectedUserIds(current => current.filter(userId => !userIds.includes(userId)))
             await refresh()
-            notifications.showSuccessNotification({ message: t("deployments.canary_users.removed_success") })
+            notifications.showSuccessNotification({ message: t("deployments.canary_users.removed_success", { count: userIds.length }) })
         }
     })
 
     const parsedNewUserIds = parseUserIds(newUserIds)
+    const canaryUsers = query.data ?? []
+    // Derived rather than trusted: a row may have disappeared under us since it was ticked.
+    const selectedExistingUserIds = canaryUsers.filter(canaryUser => selectedUserIds.includes(canaryUser.userId)).map(canaryUser => canaryUser.userId)
+    const allSelected = canaryUsers.length > 0 && selectedExistingUserIds.length === canaryUsers.length
+    const bulkPending = toggleMutation.isPending || removeMutation.isPending
+
+    const toggleAll = () => setSelectedUserIds(allSelected ? [] : canaryUsers.map(canaryUser => canaryUser.userId))
+
+    const toggleOne = (userId: string) => setSelectedUserIds(current => (current.includes(userId) ? current.filter(selectedUserId => selectedUserId !== userId) : [...current, userId]))
 
     return (
         <ApiStatusHandler queries={[query]}>
@@ -99,18 +111,44 @@ export const CanaryUsers: React.FC = () => {
 
                 <Card>
                     <CardContent className="pt-6">
+                        {selectedExistingUserIds.length > 0 && (
+                            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-divider bg-muted/40 px-3 py-2">
+                                <span className="mr-auto text-sm text-foreground-secondary">{t("deployments.canary_users.selected_count", { count: selectedExistingUserIds.length })}</span>
+                                <Button variant="secondary" size="sm" disabled={bulkPending} onClick={() => toggleMutation.mutate({ userIds: selectedExistingUserIds, enabled: true })}>
+                                    {t("deployments.canary_users.enable_selected")}
+                                </Button>
+                                <Button variant="secondary" size="sm" disabled={bulkPending} onClick={() => toggleMutation.mutate({ userIds: selectedExistingUserIds, enabled: false })}>
+                                    {t("deployments.canary_users.disable_selected")}
+                                </Button>
+                                <Button variant="destructive" size="sm" disabled={bulkPending} onClick={() => setUsersToRemove(selectedExistingUserIds)}>
+                                    <Trash2 />
+                                    {t("deployments.canary_users.remove_selected")}
+                                </Button>
+                            </div>
+                        )}
+
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/60 hover:bg-muted/60">
+                                    <TableHead className="w-10">
+                                        <Checkbox checked={allSelected} disabled={canaryUsers.length === 0} onCheckedChange={toggleAll} aria-label={t("deployments.canary_users.select_all")} />
+                                    </TableHead>
                                     <TableHead>{t("deployments.canary_users.columns.user")}</TableHead>
                                     <TableHead>{t("deployments.canary_users.columns.status")}</TableHead>
                                     <TableHead className="text-right">{t("common.actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {query.data?.length ? (
-                                    query.data.map(canaryUser => (
+                                {canaryUsers.length ? (
+                                    canaryUsers.map(canaryUser => (
                                         <TableRow key={canaryUser._id} className="border-divider hover:bg-primary/5">
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedUserIds.includes(canaryUser.userId)}
+                                                    onCheckedChange={() => toggleOne(canaryUser.userId)}
+                                                    aria-label={t("deployments.canary_users.select_user", { userId: canaryUser.userId })}
+                                                />
+                                            </TableCell>
                                             <TableCell className="max-w-[24rem] truncate font-medium" title={canaryUser.userId}>
                                                 {canaryUser.userId}
                                             </TableCell>
@@ -119,7 +157,7 @@ export const CanaryUsers: React.FC = () => {
                                                     <Switch
                                                         checked={canaryUser.enabled}
                                                         disabled={toggleMutation.isPending}
-                                                        onCheckedChange={enabled => toggleMutation.mutate({ userId: canaryUser.userId, enabled })}
+                                                        onCheckedChange={enabled => toggleMutation.mutate({ userIds: [canaryUser.userId], enabled })}
                                                         aria-label={t("deployments.canary_users.columns.status")}
                                                     />
                                                     <Badge variant={canaryUser.enabled ? "default" : "outline"}>
@@ -128,7 +166,7 @@ export const CanaryUsers: React.FC = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="secondary" size="sm" onClick={() => setUserToRemove(canaryUser)} aria-label={t("common.delete")}>
+                                                <Button variant="secondary" size="sm" onClick={() => setUsersToRemove([canaryUser.userId])} aria-label={t("common.delete")}>
                                                     <Trash2 />
                                                 </Button>
                                             </TableCell>
@@ -136,7 +174,7 @@ export const CanaryUsers: React.FC = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={3} className="h-24 text-center text-foreground-secondary">
+                                        <TableCell colSpan={4} className="h-24 text-center text-foreground-secondary">
                                             {t("deployments.canary_users.no_users")}
                                         </TableCell>
                                     </TableRow>
@@ -147,16 +185,16 @@ export const CanaryUsers: React.FC = () => {
                 </Card>
 
                 <DeleteConfirmationDialog
-                    isOpen={Boolean(userToRemove)}
-                    onOpenChange={open => !open && setUserToRemove(undefined)}
+                    isOpen={usersToRemove.length > 0}
+                    onOpenChange={open => !open && setUsersToRemove([])}
                     onDelete={async () => {
-                        if (userToRemove) {
-                            await removeMutation.mutateAsync(userToRemove.userId)
+                        if (usersToRemove.length > 0) {
+                            await removeMutation.mutateAsync(usersToRemove)
                         }
                     }}
-                    onDeleteSuccess={() => setUserToRemove(undefined)}
-                    title={t("deployments.canary_users.remove_title")}
-                    description={t("deployments.canary_users.remove_description", { userId: userToRemove?.userId })}
+                    onDeleteSuccess={() => setUsersToRemove([])}
+                    title={t("deployments.canary_users.remove_title", { count: usersToRemove.length })}
+                    description={t("deployments.canary_users.remove_description", { count: usersToRemove.length, userId: usersToRemove[0] })}
                 />
             </SinglePageLayout>
         </ApiStatusHandler>
