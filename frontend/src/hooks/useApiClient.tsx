@@ -234,7 +234,10 @@ export const useApiClient = (options?: IApiClientOptions) => {
     }
 
     return {
-        doRequest
+        doRequest,
+        // Exposed for the callers that cannot go through axios: an SSE stream is read
+        // with fetch, because EventSource cannot carry an Authorization header.
+        getToken
     }
 }
 

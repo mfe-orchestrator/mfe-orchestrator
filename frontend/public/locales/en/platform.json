@@ -300,6 +300,47 @@
             "coming_soon_description": "This feature is still under development and will be available in a future release. Stay tuned!"
         }
     },
+    "builds": {
+        "title": "Builds",
+        "subtitle": "Build status of your microfrontends and the version each environment serves",
+        "refresh": "Refresh",
+        "live": {
+            "connected": "Live updates on",
+            "disconnected": "Live updates unavailable",
+            "last_update": "Last update: {{moment}}"
+        },
+        "empty": {
+            "title": "No microfrontends",
+            "description": "Create a microfrontend to see its build status here."
+        },
+        "table": {
+            "microfrontend": "Microfrontend",
+            "last_build": "Last build",
+            "build_ref": "Tag / branch",
+            "last_built_version": "Last built version",
+            "production": "Production",
+            "no_runs": "No builds",
+            "triggered_by": "started by {{user}}",
+            "open_run": "Open on provider",
+            "repository": "Repository: {{name}}",
+            "selected_version": "selected version: {{version}}",
+            "expand_history": "Show build history for {{name}}",
+            "collapse_history": "Hide build history for {{name}}"
+        },
+        "status": {
+            "QUEUED": "Queued",
+            "RUNNING": "Running",
+            "SUCCESS": "Succeeded",
+            "FAILED": "Failed",
+            "CANCELED": "Canceled",
+            "UNKNOWN": "Unknown"
+        },
+        "unavailable": {
+            "NO_REPOSITORY": "No linked repository",
+            "REPOSITORY_NOT_FOUND": "Linked repository not found",
+            "PROVIDER_ERROR": "Unable to read builds from the provider"
+        }
+    },
     "project_users": {
         "title": "Project Members",
         "subtitle": "Manage your project members",

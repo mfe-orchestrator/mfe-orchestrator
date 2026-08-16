@@ -96,6 +96,20 @@ export interface GitLabBranch {
     web_url: string
 }
 
+export interface GitLabPipeline {
+    id: number
+    project_id: number
+    sha: string
+    /** Tag name when the pipeline was started by a tag push, branch name otherwise. */
+    ref: string
+    status: string
+    source?: string
+    name?: string | null
+    web_url: string
+    created_at: string
+    updated_at: string
+}
+
 class GitLabClient {
     private api: AxiosInstance
 
@@ -167,6 +181,21 @@ class GitLabClient {
             hidden: true,
             raw: false
         })
+    }
+
+    /**
+     * The most recent pipelines of a project, newest first.
+     *
+     * The list endpoint is used on purpose even though it omits `started_at`,
+     * `finished_at` and the triggering user: fetching those would mean one extra
+     * call per pipeline, and this runs on a poll loop. `created_at`/`updated_at`
+     * are close enough for a status screen.
+     */
+    async getPipelines(projectId: string | number, perPage: number): Promise<GitLabPipeline[]> {
+        const res = await this.api.get<GitLabPipeline[]>(`/projects/${projectId}/pipelines`, {
+            params: { per_page: perPage, order_by: "id", sort: "desc" }
+        })
+        return res.data || []
     }
 
     async getBranches(projectId: string | number): Promise<GitLabBranch[]> {

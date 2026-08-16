@@ -249,6 +249,47 @@
             "coming_soon_description": "Questa funzionalità è ancora in fase di sviluppo e sarà disponibile in una prossima versione. Restate sintonizzati!"
         }
     },
+    "builds": {
+        "title": "Build",
+        "subtitle": "Stato delle build dei microfrontend e versione servita da ogni ambiente",
+        "refresh": "Aggiorna",
+        "live": {
+            "connected": "Aggiornamento in tempo reale attivo",
+            "disconnected": "Aggiornamento in tempo reale non disponibile",
+            "last_update": "Ultimo aggiornamento: {{moment}}"
+        },
+        "empty": {
+            "title": "Nessun microfrontend",
+            "description": "Crea un microfrontend per vedere qui lo stato delle sue build."
+        },
+        "table": {
+            "microfrontend": "Microfrontend",
+            "last_build": "Ultima build",
+            "build_ref": "Tag / branch",
+            "last_built_version": "Ultima versione buildata",
+            "production": "Produzione",
+            "no_runs": "Nessuna build",
+            "triggered_by": "avviata da {{user}}",
+            "open_run": "Apri sul provider",
+            "repository": "Repository: {{name}}",
+            "selected_version": "versione selezionata: {{version}}",
+            "expand_history": "Mostra lo storico build di {{name}}",
+            "collapse_history": "Nascondi lo storico build di {{name}}"
+        },
+        "status": {
+            "QUEUED": "In coda",
+            "RUNNING": "In esecuzione",
+            "SUCCESS": "Completata",
+            "FAILED": "Fallita",
+            "CANCELED": "Annullata",
+            "UNKNOWN": "Sconosciuto"
+        },
+        "unavailable": {
+            "NO_REPOSITORY": "Nessun repository collegato",
+            "REPOSITORY_NOT_FOUND": "Repository collegato non trovato",
+            "PROVIDER_ERROR": "Impossibile leggere le build dal provider"
+        }
+    },
     "project_users": {
         "title": "Membri del Progetto",
         "subtitle": "Gestisci i membri del tuo progetto",

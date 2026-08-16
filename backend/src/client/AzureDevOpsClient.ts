@@ -178,6 +178,29 @@ export interface UpsertOrganizationSecretParams {
     variableGroupDescription: string
 }
 
+export interface AzureDevOpsBuild {
+    id: number
+    buildNumber?: string
+    /** none | notStarted | inProgress | completed | cancelling | postponed */
+    status?: string
+    /** Only meaningful once `status` is `completed`. */
+    result?: string
+    /** Fully qualified ref, e.g. `refs/tags/1.2.0`. */
+    sourceBranch?: string
+    sourceVersion?: string
+    queueTime?: string
+    startTime?: string
+    finishTime?: string
+    definition?: { name?: string }
+    requestedFor?: { displayName?: string }
+    _links?: { web?: { href?: string } }
+}
+
+export interface AzureDevOpsBuildsResponse {
+    count: number
+    value: AzureDevOpsBuild[]
+}
+
 class AzureDevOpsClient {
     // Ottieni l'ID utente dal profilo
     async getUserId(token: string) {
@@ -275,6 +298,26 @@ class AzureDevOpsClient {
             }
         })
         return response.data
+    }
+
+    /**
+     * The most recent builds produced from a repository, newest queued first.
+     *
+     * `repositoryType=TfsGit` is mandatory whenever `repositoryId` is passed: Azure
+     * rejects the filter otherwise, since the same id can belong to a GitHub or
+     * Bitbucket connection.
+     */
+    async getBuilds(token: string, organization: string, project: string, repositoryId: string, top: number): Promise<AzureDevOpsBuild[]> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/build/builds?repositoryId=${encodeURIComponent(repositoryId)}&repositoryType=TfsGit&queryOrder=queueTimeDescending&$top=${top}&api-version=7.1`
+        const response = await axios.request<AzureDevOpsBuildsResponse>({
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        })
+
+        return response.data?.value || []
     }
 
     async getBranchCommitId(token: string, organization: string, project: string, repositoryName: string, branchName: string): Promise<string> {
