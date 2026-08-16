@@ -9,6 +9,7 @@ import Storage from "../models/StorageModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import DeploymentCanaryUsersService from "./DeploymentCanaryUsersService"
 
 class DeploymentService extends BaseAuthorizedService {
     async getById(deploymentId: string | Schema.Types.ObjectId): Promise<IDeployment | null> {
@@ -38,6 +39,16 @@ class DeploymentService extends BaseAuthorizedService {
         }
     }
 
+    /**
+     * The deployment the environment is serving right now, which a new one is about to replace: the
+     * active one, or the most recent when none is flagged active.
+     */
+    private async getCurrentDeployment(environmentId: Schema.Types.ObjectId, session?: ClientSession) {
+        return Deployment.findOne({ environmentId })
+            .sort({ active: -1, deployedAt: -1 })
+            .session(session || null)
+    }
+
     async createRaw(environmentId: string | Schema.Types.ObjectId, session?: ClientSession) {
         await this.ensureAccessToEnvironment(environmentId, session)
         const environmentIdObj = toObjectId(environmentId)
@@ -51,6 +62,7 @@ class DeploymentService extends BaseAuthorizedService {
         const storages = await Storage.find({ projectId: environment.projectId }).session(session || null)
 
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
+        const currentDeployment = await this.getCurrentDeployment(environmentIdObj, session)
 
         const deployment = await new Deployment({
             environmentId: environment._id,
@@ -63,17 +75,22 @@ class DeploymentService extends BaseAuthorizedService {
 
         await Deployment.updateMany({ environmentId: environmentIdObj, _id: { $ne: deployment._id } }, { active: false }, { session })
 
+        if (currentDeployment) {
+            await new DeploymentCanaryUsersService(this.user).copyCanaryUsersRaw(currentDeployment._id, deployment._id, session)
+        }
+
         return deployment
     }
 
+    /** Sequential like setCanaryUserMultipleRaw: one session cannot carry two concurrent commands inside a transaction. */
     async createMultipleRaw(environmentIds: (string | Schema.Types.ObjectId)[], session?: ClientSession) {
-        const promises = []
+        const deployments: IDeployment[] = []
 
         for (const environmentId of environmentIds) {
-            promises.push(this.createRaw(environmentId, session))
+            deployments.push(await this.createRaw(environmentId, session))
         }
 
-        return Promise.all(promises)
+        return deployments
     }
 
     async create(environmentId: string | Schema.Types.ObjectId) {
