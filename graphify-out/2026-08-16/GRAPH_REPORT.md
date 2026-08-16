@@ -1,7 +1,7 @@
 # Graph Report - mfe-orchestrator  (2026-08-16)
 
 ## Corpus Check
-- 402 files · ~336,863 words
+- 402 files · ~337,190 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -172,10 +172,12 @@
 - [[_COMMUNITY_CreateApiKeyForm.tsx|CreateApiKeyForm.tsx]]
 - [[_COMMUNITY_project|project]]
 - [[_COMMUNITY_dashboard|dashboard]]
+- [[_COMMUNITY_theme|theme]]
 - [[_COMMUNITY_form|form]]
 - [[_COMMUNITY_environmentVariables|environmentVariables]]
 - [[_COMMUNITY_project|project]]
 - [[_COMMUNITY_platform.json|platform.json]]
+- [[_COMMUNITY_Breaking Changes|Breaking Changes]]
 - [[_COMMUNITY_EmailSenderService|EmailSenderService]]
 - [[_COMMUNITY_environment|environment]]
 - [[_COMMUNITY_settings|settings]]
@@ -190,13 +192,11 @@
 - [[_COMMUNITY_AzureStorageClient|AzureStorageClient]]
 - [[_COMMUNITY_NpmRegistryClient.ts|NpmRegistryClient.ts]]
 - [[_COMMUNITY_BaseAuthorizedService|BaseAuthorizedService]]
+- [[_COMMUNITY_account_activation|account_activation]]
 - [[_COMMUNITY_card|card]]
-- [[_COMMUNITY_BuildStatusService|BuildStatusService]]
-- [[_COMMUNITY_devDependencies|devDependencies]]
 - [[_COMMUNITY_table|table]]
 - [[_COMMUNITY_form|form]]
 - [[_COMMUNITY_FederationConfigService|FederationConfigService]]
-- [[_COMMUNITY_app|app]]
 - [[_COMMUNITY_hostTypes|hostTypes]]
 - [[_COMMUNITY_validation|validation]]
 - [[_COMMUNITY_globalVariablesScript.ts|globalVariablesScript.ts]]
@@ -207,7 +207,7 @@
 1. `toObjectId()` - 102 edges
 2. `Button()` - 62 edges
 3. `useToastNotificationStore` - 60 edges
-4. `microfrontend` - 57 edges
+4. `microfrontend` - 49 edges
 5. `useProjectStore` - 49 edges
 6. `BaseAuthorizedService` - 47 edges
 7. `IMicrofrontend` - 46 edges
@@ -230,8 +230,8 @@
 ## Import Cycles
 - 3-file cycle: `frontend/src/pages/integration/partials/index.ts -> frontend/src/pages/integration/partials/views/index.ts -> frontend/src/pages/integration/partials/views/FrontendIntegration.tsx -> frontend/src/pages/integration/partials/index.ts`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithAuth0Button.tsx -> frontend/src/authentication/components/LoginPage.tsx`
-- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
+- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
 - 3-file cycle: `frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts`
 - 4-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
@@ -279,8 +279,8 @@ Cohesion: 0.05
 Nodes (37): devDependencies, @biomejs/biome, @commitlint/cli, @commitlint/config-conventional, lefthook, turbo, license, packageManager (+29 more)
 
 ### Community 11 - "Project & Environment APIs"
-Cohesion: 0.04
-Nodes (50): microfrontend, add_new, add_new_description, add_your_first_microfrontend, canary_type_random_description, canary_type_session_description, canary_type_user_description, canaryReleaseActive (+42 more)
+Cohesion: 0.05
+Nodes (43): microfrontend, add_new, add_new_description, add_your_first_microfrontend, canary_type_random_description, canary_type_session_description, canary_type_user_description, canaryReleaseActive (+35 more)
 
 ### Community 12 - "Microfrontend Pages & API"
 Cohesion: 0.33
@@ -351,8 +351,8 @@ Cohesion: 0.16
 Nodes (12): EnvironmentValue, GlobalVariableCreateDTO, GlobalVariableUpdateDTO, useGlobalVariablesApi(), EnvironmentVariablesPageInner(), EnvironmentVariableDialog(), EnvironmentVariableDialogProps, EnvironmentValue (+4 more)
 
 ### Community 30 - "Code Repositories API"
-Cohesion: 0.06
-Nodes (36): Additional Types, Backend Layer Scopes, Basic Feature, Best Practices, Branch Naming, Breaking Change, Breaking Changes, Bug Fix (+28 more)
+Cohesion: 0.08
+Nodes (23): Additional Types, Backend Layer Scopes, Best Practices, Branch Naming, Commit Conventions, Commit Message Format, Commit Message Template, Commit Types (+15 more)
 
 ### Community 31 - "Code Repository Service"
 Cohesion: 0.12
@@ -444,7 +444,7 @@ Nodes (32): AuthenticationLayout(), AuthenticationLayoutProps, sizeClasses, Main
 
 ### Community 54 - "Fastify App Bootstrap"
 Cohesion: 0.11
-Nodes (19): [1.2.0] - 2026-07-14, [2.0.0] - 2026-08-04, [2.1.0] - 2026-08-06, [2.2.0] - 2026-08-07, Added, Added, Automated Changelog Generation, Changed (+11 more)
+Nodes (19): [1.2.0] - 2026-07-14, [2.0.0] - 2026-08-04, [2.2.0] - 2026-08-07, [2.3.0] - 2026-08-11, Added, Added, Automated Changelog Generation, Changed (+11 more)
 
 ### Community 55 - "UserModel.ts"
 Cohesion: 0.11
@@ -479,8 +479,8 @@ Cohesion: 0.12
 Nodes (15): Architecture Overview, Authentication & Authorization, Backend Controller Pattern, Backend Key Directories, Backend Service Pattern, Common Implementation Patterns, Critical Rules, Development Workflows (+7 more)
 
 ### Community 63 - "Frontend App Entry & Theme"
-Cohesion: 0.12
-Nodes (16): Anonymous telemetry 📡, Code Quality, Contributing 🤝, Development Guidelines, Development Workflow, Documentation 📚, Environment variables 🔧, How it works (+8 more)
+Cohesion: 0.10
+Nodes (21): Anonymous telemetry 📡, Available Commands, Code Quality, Contributing 🤝, Development Guidelines, Development URLs, Development Workflow, Documentation 📚 (+13 more)
 
 ### Community 64 - "Frontend Base TSConfig"
 Cohesion: 0.17
@@ -528,7 +528,7 @@ Nodes (15): description, integrate_button, integrate_dialog_description, integra
 
 ### Community 77 - "Switch.rhf.tsx"
 Cohesion: 0.06
-Nodes (35): description, success, title, auth, account_activation, already_have_account, confirm_password, create_account (+27 more)
+Nodes (31): auth, already_have_account, confirm_password, create_account, email, email_placeholder, forgot_password, hide_password (+23 more)
 
 ### Community 79 - "AzureDevOpsClient.ts"
 Cohesion: 0.10
@@ -567,8 +567,8 @@ Cohesion: 0.22
 Nodes (4): HOST_TYPE_LABEL_KEYS, HOST_TYPE_ICONS, MicrofrontendsTable(), MicrofrontendsTableProps
 
 ### Community 88 - "IMarket"
-Cohesion: 0.40
-Nodes (5): [2.3.0] - 2026-08-11, Added, Changed, Documentation, Fixed
+Cohesion: 0.22
+Nodes (9): Basic Feature, Breaking Change, Bug Fix, Documentation, Examples, Feature with Scope, Multi-paragraph Commit, Performance Improvement (+1 more)
 
 ### Community 91 - "Switch Component"
 Cohesion: 0.11
@@ -608,7 +608,7 @@ Nodes (3): Cloud Provider Option in Frontend UI, Google Cloud Platform, Google C
 
 ### Community 110 - "Local Installation for development 🛠️"
 Cohesion: 0.40
-Nodes (5): Available Commands, Development URLs, Local Installation for development 🛠️, Prerequisites, Quick Start
+Nodes (5): [2.1.0] - 2026-08-06, Added, Changed, Documentation, Fixed
 
 ### Community 117 - "Start Complete Script"
 Cohesion: 0.22
@@ -635,16 +635,16 @@ Cohesion: 0.07
 Nodes (27): common, actions, active, add, back, cancel, close, configuration (+19 more)
 
 ### Community 132 - "README.md"
-Cohesion: 0.05
-Nodes (37): redeploy, view_canary_users, add_button, add_description, add_title, added_success, columns, disabled (+29 more)
+Cohesion: 0.04
+Nodes (48): redeploy, view_canary_users, add_button, add_description, add_title, added_success, columns, disable_selected (+40 more)
 
 ### Community 133 - "start-backend.sh"
 Cohesion: 0.60
 Nodes (4): log(), mongo_eval(), start-backend.sh script, wait_for()
 
 ### Community 134 - "deployments"
-Cohesion: 0.05
-Nodes (37): redeploy, view_canary_users, add_button, add_description, add_title, added_success, columns, disabled (+29 more)
+Cohesion: 0.04
+Nodes (48): redeploy, view_canary_users, add_button, add_description, add_title, added_success, columns, disable_selected (+40 more)
 
 ### Community 135 - "projectWizardStateMachine.ts"
 Cohesion: 0.50
@@ -707,8 +707,12 @@ Cohesion: 0.11
 Nodes (19): project, create, create_new, create_new_project, description, description_placeholder, name, name_placeholder (+11 more)
 
 ### Community 167 - "dashboard"
-Cohesion: 0.07
-Nodes (30): branch, loadingBranches, selectBranch, title, clearSearch, description, filteredCount_one, filteredCount_other (+22 more)
+Cohesion: 0.11
+Nodes (19): clearSearch, description, filterStatus, noResultsTitle, searchPlaceholder, statusActive, statusAll, statusDisabled (+11 more)
+
+### Community 168 - "theme"
+Cohesion: 0.40
+Nodes (5): theme, dark, light, system, toggle_theme
 
 ### Community 169 - "form"
 Cohesion: 0.11
@@ -723,8 +727,12 @@ Cohesion: 0.11
 Nodes (19): project, create, create_new, create_new_project, description, description_placeholder, name, name_placeholder (+11 more)
 
 ### Community 172 - "platform.json"
-Cohesion: 0.17
-Nodes (11): language, change, english, italian, theme, dark, light, system (+3 more)
+Cohesion: 0.11
+Nodes (18): app, error, name, page_title, generic, not_found, language, change (+10 more)
+
+### Community 173 - "Breaking Changes"
+Cohesion: 0.50
+Nodes (4): Breaking Changes, Option 1: Use `!` in the type/scope prefix, Option 2: Use `BREAKING CHANGE:` footer, Option 3: Both (for emphasis)
 
 ### Community 174 - "EmailSenderService"
 Cohesion: 0.11
@@ -774,17 +782,13 @@ Nodes (15): project_invitation, accept, accept_short, accepted, decline, decline
 Cohesion: 0.27
 Nodes (12): IMicrofrontendStack, FederationConfigRequest, FederationRemote, FRAMEWORK_PROFILES, FrameworkProfile, IntegrationInstructions, REQUIRED_DEV_DEPENDENCIES, MicrofrontendIntegrationPlanDTO (+4 more)
 
+### Community 190 - "account_activation"
+Cohesion: 0.50
+Nodes (4): description, success, title, account_activation
+
 ### Community 191 - "card"
 Cohesion: 0.29
 Nodes (7): build, canary, repository, storage, users, version, card
-
-### Community 192 - "BuildStatusService"
-Cohesion: 0.33
-Nodes (6): setup, description, project_name, project_name_min_length, project_name_placeholder, title
-
-### Community 193 - "devDependencies"
-Cohesion: 0.50
-Nodes (4): tabs, general, hosting, repository
 
 ### Community 195 - "table"
 Cohesion: 0.29
@@ -793,10 +797,6 @@ Nodes (7): table, actions, description, is_production, name, no_environments, sl
 ### Community 196 - "form"
 Cohesion: 0.33
 Nodes (6): cancel, create, create_title, edit_title, update, form
-
-### Community 199 - "app"
-Cohesion: 0.33
-Nodes (6): app, error, name, page_title, generic, not_found
 
 ### Community 202 - "hostTypes"
 Cohesion: 0.50
@@ -819,7 +819,7 @@ Cohesion: 0.40
 Nodes (5): source, assist, actions, enabled, organizeImports
 
 ## Knowledge Gaps
-- **1777 isolated node(s):** `description`, `main`, `start`, `st`, `dev` (+1772 more)
+- **1779 isolated node(s):** `description`, `main`, `start`, `st`, `dev` (+1774 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **43 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -835,7 +835,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 2 inferred relationships involving `toObjectId()` (e.g. with `.getRepositoriesById()` and `.bulkDelete()`) actually correct?**
   _`toObjectId()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `description`, `main`, `start` to the rest of the system?**
-  _1780 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1782 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Deployment Service & Models` be split into smaller, more focused modules?**
   _Cohesion score 0.14022988505747128 - nodes in this community are weakly interconnected._
 - **Should `Frontend Dependencies` be split into smaller, more focused modules?**

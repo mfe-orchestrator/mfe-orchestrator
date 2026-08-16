@@ -1,16 +1,16 @@
 # Graph Report - mfe-orchestrator  (2026-08-16)
 
 ## Corpus Check
-- 402 files · ~337,190 words
+- 402 files · ~338,604 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3493 nodes · 6595 edges · 200 communities (157 shown, 43 thin omitted)
+- 3493 nodes · 6595 edges · 199 communities (156 shown, 43 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 40 edges (avg confidence: 0.73)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9fde2224`
+- Built from commit: `f3b34fe9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,7 +37,6 @@
 - [[_COMMUNITY_Backend Controller Layer|Backend Controller Layer]]
 - [[_COMMUNITY_Tables & Layout Components|Tables & Layout Components]]
 - [[_COMMUNITY_Sidebar & Theme Toggle|Sidebar & Theme Toggle]]
-- [[_COMMUNITY_Storage API Client|Storage API Client]]
 - [[_COMMUNITY_Frontend API Client|Frontend API Client]]
 - [[_COMMUNITY_Auth Wrappers & Context|Auth Wrappers & Context]]
 - [[_COMMUNITY_Project Docs & Tooling|Project Docs & Tooling]]
@@ -230,8 +229,8 @@
 ## Import Cycles
 - 3-file cycle: `frontend/src/pages/integration/partials/index.ts -> frontend/src/pages/integration/partials/views/index.ts -> frontend/src/pages/integration/partials/views/FrontendIntegration.tsx -> frontend/src/pages/integration/partials/index.ts`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithAuth0Button.tsx -> frontend/src/authentication/components/LoginPage.tsx`
-- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
+- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
 - 3-file cycle: `frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts`
 - 4-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
@@ -240,7 +239,7 @@
 - **CI/CD Pipeline (build, dockerize, deploy, e2e)** — _github_workflows_monorepo_build_build_and_test, _github_workflows_docker_build_docker_build, _github_workflows_deploy_deploy_to_server, _github_workflows_e2e_tests_e2e_tests [EXTRACTED 1.00]
 - **Code Quality and Commit Convention Enforcement** — lefthook_pre_commit_hooks, lefthook_commit_msg_commitlint, commit_conventions_conventional_commits, commit_conventions_semantic_versioning, changelog_changelog [INFERRED 0.85]
 
-## Communities (200 total, 43 thin omitted)
+## Communities (199 total, 43 thin omitted)
 
 ### Community 1 - "Frontend Dependencies"
 Cohesion: 0.06
@@ -317,10 +316,6 @@ Nodes (17): Microfrontend, DeploymentMicrofrontendCardProps, MicrofrontendSelect
 ### Community 21 - "Sidebar & Theme Toggle"
 Cohesion: 0.38
 Nodes (4): IMarket, Market, marketSchema, MarketService
-
-### Community 22 - "Storage API Client"
-Cohesion: 0.09
-Nodes (20): Button(), PageHead(), PageHeadProps, GitHubCallbackPage(), AddRepositoryDialogProps, RepositoryProvider, AlignPeerDependenciesDialogProps, NewProjectWizard() (+12 more)
 
 ### Community 23 - "Frontend API Client"
 Cohesion: 0.04
@@ -439,8 +434,8 @@ Cohesion: 0.05
 Nodes (44): project_users, accepted, already_invited, already_member, cannot_invite_self, confirm_remove, confirm_remove_description, confirm_remove_title (+36 more)
 
 ### Community 53 - "Error Handler Middleware"
-Cohesion: 0.09
-Nodes (32): AuthenticationLayout(), AuthenticationLayoutProps, sizeClasses, MainLogo(), MainLogoProps, sizeClasses, PENDING_INVITATIONS_QUERY_KEY, PendingInvitationsList() (+24 more)
+Cohesion: 0.07
+Nodes (39): AuthenticationLayout(), AuthenticationLayoutProps, sizeClasses, MainLogo(), MainLogoProps, sizeClasses, PageHead(), PageHeadProps (+31 more)
 
 ### Community 54 - "Fastify App Bootstrap"
 Cohesion: 0.11
@@ -615,8 +610,8 @@ Cohesion: 0.22
 Nodes (8): API Calls, Architecture, Development Commands, Frontend, Full Documentation, Git Workflow, Project Rules, Quick Reference Rules
 
 ### Community 120 - "Multipart Plugin"
-Cohesion: 0.07
-Nodes (36): ProjectPickerListProps, SwitchProjectButton(), AddUserToProjectDTO, Project, ProjectSummaryDTO, RoleInProject, useProjectApi(), useProjectUserApi() (+28 more)
+Cohesion: 0.06
+Nodes (45): Button(), ProjectPickerListProps, SwitchProjectButton(), AddUserToProjectDTO, Project, ProjectSummaryDTO, RoleInProject, useProjectApi() (+37 more)
 
 ### Community 128 - "canary_users"
 Cohesion: 0.22
@@ -735,8 +730,8 @@ Cohesion: 0.50
 Nodes (4): Breaking Changes, Option 1: Use `!` in the type/scope prefix, Option 2: Use `BREAKING CHANGE:` footer, Option 3: Both (for emphasis)
 
 ### Community 174 - "EmailSenderService"
-Cohesion: 0.11
-Nodes (27): ApiStatusHandler(), ProjectPickerList(), SinglePageHeaderProps, SinglePageLayout(), DeleteConfirmationDialog(), DeleteConfirmationDialogProps, useBuildsApi(), useBuildStatusStream() (+19 more)
+Cohesion: 0.10
+Nodes (31): ApiStatusHandler(), DeleteConfirmationDialog(), DeleteConfirmationDialogProps, useBuildsApi(), useBuildStatusStream(), CanaryUser, useCanaryUsersApi(), CodeRepositoryProvider (+23 more)
 
 ### Community 175 - "environment"
 Cohesion: 0.13
