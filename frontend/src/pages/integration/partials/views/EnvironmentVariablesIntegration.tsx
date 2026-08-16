@@ -1,5 +1,8 @@
 import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Button } from "@/components/atoms"
+import IntegrateMicrofrontendsDialog from "@/pages/integration/partials/components/IntegrateMicrofrontendsDialog"
 
 /**
  * The url is addressed by project, not by environment: the backend resolves which environment
@@ -11,6 +14,8 @@ export const EnvironmentVariablesIntegration = ({ projectId }: { projectId?: str
     const { t } = useTranslation()
     const envVarsUrl = projectId ? `https://${window.location.host}/api/serve/global-variables/auto/${projectId}` : ""
 
+    const [isIntegrateDialogOpen, setIsIntegrateDialogOpen] = useState(false)
+
     return (
         <Card>
             <CardHeader>
@@ -19,6 +24,13 @@ export const EnvironmentVariablesIntegration = ({ projectId }: { projectId?: str
             </CardHeader>
 
             <CardContent className="pt-4">
+                {/* The same tag, written into the document of every host by us instead of by hand. */}
+                <div className="mb-4">
+                    <Button onClick={() => setIsIntegrateDialogOpen(true)}>{t("integration.env_vars_integration_tab.integrate_button")}</Button>
+                </div>
+
+                <IntegrateMicrofrontendsDialog isOpen={isIntegrateDialogOpen} onOpenChange={setIsIntegrateDialogOpen} scope="GLOBAL_VARIABLES" />
+
                 <h3 className="text-lg font-semibold">{t("integration.env_vars_integration_tab.javascript_title")}</h3>
                 <p className="mb-4">
                     {t("integration.env_vars_integration_tab.javascript_description")} <code>window.globalConfig</code>:

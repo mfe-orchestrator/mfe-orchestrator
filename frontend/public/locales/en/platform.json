@@ -58,6 +58,7 @@
             "status_no_remotes": "No remotes to declare",
             "status_stack_unknown": "Stack unknown",
             "status_runtime_integration": "Integrates at runtime",
+            "status_no_document": "No document to write into",
             "status_error": "Error",
             "integrate_one_button": "Integrate only this one"
         },
@@ -69,7 +70,13 @@
             "javascript_auto_note": "The same tag works in every environment: the console resolves which one answers from the domain the page is served on, so promoting a build never means editing this url.",
             "javascript_example": "Usage example",
             "javascript_direct_api_access": "Direct API Access",
-            "javascript_direct_api_access_description": "Fetch variables directly from the API"
+            "javascript_direct_api_access_description": "Fetch variables directly from the API",
+            "integrate_button": "Add the script to my hosts",
+            "integrate_dialog_title": "Add the environment variables script",
+            "integrate_dialog_description": "We write the <script> tag into the document of every host, so the environment variables are available as window.globalConfig before the application starts. This is an integration of its own: it does not touch the module federation config. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
+            "integrate_nothing_to_do": "Nothing to integrate: your host documents already carry the script, or there is no document to write it into.",
+            "integrate_success": "Script added in {{count}} repositories",
+            "integrate_partial": "Script added in {{applied}} repositories, {{failed}} failed"
         },
         "microfrontend_select_label": "Microfrontend",
         "microfrontend_select_placeholder": "Select a microfrontend"
@@ -301,12 +308,23 @@
             "user_id_placeholder": "user-123, user-456",
             "add_button": "Add",
             "added_success": "Users added to the canary users",
-            "updated_success": "Canary user updated",
-            "removed_success": "User removed from the canary users",
+            "updated_success_one": "Canary user updated",
+            "updated_success_other": "{{count}} canary users updated",
+            "removed_success_one": "User removed from the canary users",
+            "removed_success_other": "{{count}} users removed from the canary users",
             "enabled": "Canary",
             "disabled": "Excluded",
-            "remove_title": "Remove canary user",
-            "remove_description": "Remove \"{{userId}}\" from the canary users? They will go back to the stable version."
+            "select_all": "Select all users",
+            "select_user": "Select \"{{userId}}\"",
+            "selected_count_one": "{{count}} user selected",
+            "selected_count_other": "{{count}} users selected",
+            "enable_selected": "Enable",
+            "disable_selected": "Disable",
+            "remove_selected": "Remove",
+            "remove_title_one": "Remove canary user",
+            "remove_title_other": "Remove {{count}} canary users",
+            "remove_description_one": "Remove \"{{userId}}\" from the canary users? They will go back to the stable version.",
+            "remove_description_other": "Remove {{count}} users from the canary users? They will go back to the stable version."
         }
     },
     "builds": {
@@ -604,7 +622,8 @@
             }
         },
         "ofUsers": "of users",
-        "canary_enrolled_users": "Enrolled users"
+        "canary_enrolled_users": "Enrolled users",
+        "canary_none": "No canary"
     },
     "environmentVariables": {
         "title": "Environment Variables",

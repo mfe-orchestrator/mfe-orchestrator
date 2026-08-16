@@ -58,6 +58,7 @@
             "status_no_remotes": "Nessun remote da dichiarare",
             "status_stack_unknown": "Stack sconosciuto",
             "status_runtime_integration": "Si integra a runtime",
+            "status_no_document": "Nessun documento in cui scrivere",
             "status_error": "Errore",
             "integrate_one_button": "Integra solo questo"
         },
@@ -69,7 +70,13 @@
             "javascript_auto_note": "Lo stesso tag funziona in ogni ambiente: la console risolve quale risponde dal dominio su cui la pagina è servita, quindi promuovere una build non richiede mai di modificare questo url.",
             "javascript_example": "Esempio di utilizzo",
             "javascript_direct_api_access": "Accesso diretto API",
-            "javascript_direct_api_access_description": "Recupera le variabili d'ambiente direttamente dall'API"
+            "javascript_direct_api_access_description": "Recupera le variabili d'ambiente direttamente dall'API",
+            "integrate_button": "Aggiungi lo script ai miei host",
+            "integrate_dialog_title": "Aggiungi lo script delle variabili d'ambiente",
+            "integrate_dialog_description": "Scriviamo il tag <script> nel documento di ogni host, così le variabili d'ambiente sono disponibili come window.globalConfig prima che parta l'applicazione. È un'integrazione a sé: non tocca la configurazione di module federation. Controlla cosa cambia, poi scegli cosa committare: la scrittura finisce sul branch predefinito di ogni repository.",
+            "integrate_nothing_to_do": "Niente da integrare: i documenti dei tuoi host contengono già lo script, oppure non c'è un documento in cui scriverlo.",
+            "integrate_success": "Script aggiunto in {{count}} repository",
+            "integrate_partial": "Script aggiunto in {{applied}} repository, {{failed}} falliti"
         },
         "microfrontend_select_label": "Microfrontend",
         "microfrontend_select_placeholder": "Seleziona un microfrontend"
@@ -250,12 +257,23 @@
             "user_id_placeholder": "user-123, user-456",
             "add_button": "Aggiungi",
             "added_success": "Utenti aggiunti agli utenti canary",
-            "updated_success": "Utente canary aggiornato",
-            "removed_success": "Utente rimosso dagli utenti canary",
+            "updated_success_one": "Utente canary aggiornato",
+            "updated_success_other": "{{count}} utenti canary aggiornati",
+            "removed_success_one": "Utente rimosso dagli utenti canary",
+            "removed_success_other": "{{count}} utenti rimossi dagli utenti canary",
             "enabled": "Canary",
             "disabled": "Escluso",
-            "remove_title": "Rimuovi utente canary",
-            "remove_description": "Vuoi rimuovere «{{userId}}» dagli utenti canary? Tornerà a vedere la versione stabile."
+            "select_all": "Seleziona tutti gli utenti",
+            "select_user": "Seleziona «{{userId}}»",
+            "selected_count_one": "{{count}} utente selezionato",
+            "selected_count_other": "{{count}} utenti selezionati",
+            "enable_selected": "Attiva",
+            "disable_selected": "Disattiva",
+            "remove_selected": "Rimuovi",
+            "remove_title_one": "Rimuovi utente canary",
+            "remove_title_other": "Rimuovi {{count}} utenti canary",
+            "remove_description_one": "Vuoi rimuovere «{{userId}}» dagli utenti canary? Tornerà a vedere la versione stabile.",
+            "remove_description_other": "Vuoi rimuovere {{count}} utenti dagli utenti canary? Torneranno a vedere la versione stabile."
         }
     },
     "builds": {
@@ -701,7 +719,8 @@
                 }
             }
         },
-        "canary_enrolled_users": "Utenti selezionati"
+        "canary_enrolled_users": "Utenti selezionati",
+        "canary_none": "Non c'è canary"
     },
     "color_picker": {
         "select_color": "Seleziona un colore"

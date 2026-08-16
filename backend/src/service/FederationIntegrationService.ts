@@ -13,8 +13,6 @@ import RepositoryFileService, { mapWithConcurrency, REPOSITORY_CONCURRENCY, Repo
 import StackDetectionService, { DetectedStack } from "./StackDetectionService"
 
 const PACKAGE_JSON_PATH = "package.json"
-const FEDERATION_COMMIT_MESSAGE = "chore(mfe): wire up module federation"
-const RUNTIME_CONFIG_COMMIT_MESSAGE = "chore(mfe): read runtime configuration from the console"
 
 /**
  * Where the document of an application lives, probed in order. Vite keeps it at the root, the
@@ -23,13 +21,24 @@ const RUNTIME_CONFIG_COMMIT_MESSAGE = "chore(mfe): read runtime configuration fr
  */
 const HTML_CANDIDATES = new Set(["index.html", "public/index.html", "src/index.html"])
 
-const isHtml = (path: string): boolean => HTML_CANDIDATES.has(path)
-
 /**
- * What the commit is about, so a repository that only gained its runtime configuration script is
- * not told it was wired up for module federation.
+ * The two things this service can write, planned and committed one at a time.
+ *
+ * They used to travel together and they should not: module federation is baked into the bundle and
+ * only concerns a microfrontend consuming others, whereas the runtime configuration script is a tag
+ * in the document of a host, read on every page load. Mixing them meant one diff to review, one
+ * commit, and no way to take one without the other.
  */
-const commitMessageFor = (changes: FederationFileChangeDTO[]): string => (changes.every(change => isHtml(change.path)) ? RUNTIME_CONFIG_COMMIT_MESSAGE : FEDERATION_COMMIT_MESSAGE)
+export enum IntegrationScope {
+    MODULE_FEDERATION = "MODULE_FEDERATION",
+    GLOBAL_VARIABLES = "GLOBAL_VARIABLES"
+}
+
+/** Says what the commit is about, so neither integration is described as the other one. */
+const COMMIT_MESSAGES: Record<IntegrationScope, string> = {
+    [IntegrationScope.MODULE_FEDERATION]: "chore(mfe): wire up module federation",
+    [IntegrationScope.GLOBAL_VARIABLES]: "chore(mfe): read runtime configuration from the console"
+}
 
 export enum FederationIntegrationStatus {
     /** The repository already carries exactly what we would write */
@@ -44,6 +53,8 @@ export enum FederationIntegrationStatus {
     STACK_UNKNOWN = "STACK_UNKNOWN",
     /** Web components integrate at runtime, there is no config to write */
     RUNTIME_INTEGRATION = "RUNTIME_INTEGRATION",
+    /** Global variables only: no document of its own to carry the script tag */
+    NO_DOCUMENT = "NO_DOCUMENT",
     ERROR = "ERROR"
 }
 
@@ -114,8 +125,15 @@ export class FederationIntegrationService extends BaseAuthorizedService {
     private readonly stackDetection = new StackDetectionService(this.user)
     private readonly federationConfig = new FederationConfigService()
 
-    /** What integrating the whole project would change, without writing anything. */
-    async getPlan(projectId: string | Schema.Types.ObjectId): Promise<FederationIntegrationPlanDTO> {
+    /** What integrating the whole project would change for one scope, without writing anything. */
+    async getPlan(projectId: string | Schema.Types.ObjectId, scope: IntegrationScope = IntegrationScope.MODULE_FEDERATION): Promise<FederationIntegrationPlanDTO> {
+        if (scope === IntegrationScope.GLOBAL_VARIABLES) {
+            const targets = await this.repositoryFiles.resolveTargets(projectId)
+            const microfrontends = await mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, target => this.planGlobalVariablesFor(target))
+
+            return { projectId: projectId.toString(), microfrontends }
+        }
+
         const [targets, remotesByParent] = await Promise.all([this.repositoryFiles.resolveTargets(projectId), this.resolveRemotesByParent(projectId)])
 
         const microfrontends = await mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, target => this.planFor(target, remotesByParent.get(target.microfrontend._id.toString()) || []))
@@ -128,9 +146,13 @@ export class FederationIntegrationService extends BaseAuthorizedService {
      * recomputed here rather than trusted from the caller, so what lands is what the repository
      * looks like now.
      */
-    async apply(projectId: string | Schema.Types.ObjectId, request: FederationIntegrationApplyRequestDTO): Promise<FederationIntegrationApplyResultDTO> {
+    async apply(
+        projectId: string | Schema.Types.ObjectId,
+        request: FederationIntegrationApplyRequestDTO,
+        scope: IntegrationScope = IntegrationScope.MODULE_FEDERATION
+    ): Promise<FederationIntegrationApplyResultDTO> {
         const selected = new Set(request.microfrontendIds || [])
-        const plan = await this.getPlan(projectId)
+        const plan = await this.getPlan(projectId, scope)
         const targets = await this.repositoryFiles.resolveTargets(projectId)
         const targetById = new Map(targets.map(target => [target.microfrontend._id.toString(), target]))
 
@@ -153,16 +175,13 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                 return result
             }
 
-            // What decides is the plan itself, not the status: the status describes the module
-            // federation side, and a repository with no remotes to wire can still be owed the
-            // runtime configuration script.
             if (item.changes.length === 0) {
                 result.error = `Nothing to write: ${item.status}`
                 return result
             }
 
             try {
-                const message = commitMessageFor(item.changes)
+                const message = COMMIT_MESSAGES[scope]
 
                 for (const change of item.changes) {
                     await this.writeChange(target, item.branch, change, message)
@@ -170,7 +189,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                 }
                 result.applied = result.writtenPaths.length > 0
             } catch (error) {
-                fastify.log.error(error, `Module federation integration failed for ${item.slug}`)
+                fastify.log.error(error, `The ${scope} integration failed for ${item.slug}`)
                 result.error = toErrorMessage(error)
             }
 
@@ -224,14 +243,8 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             const detected = await this.stackDetection.detect(target, branch)
             const stack = this.resolveStack(microfrontend, detected)
 
-            // Planned on its own, and before anything else, because it has nothing to do with
-            // module federation: a host owes its document the runtime configuration script whether
-            // it consumes a remote or not, and whatever we managed to work out about its stack.
-            const runtimeConfig = await this.buildGlobalVariablesChange(target, branch, microfrontend)
-            const runtimeConfigChanges = runtimeConfig ? [runtimeConfig] : []
-
             if (remotes.length === 0) {
-                return { ...plan, branch, stack, changes: runtimeConfigChanges }
+                return { ...plan, branch, stack }
             }
 
             if (!supportsModuleFederation(stack.compiler)) {
@@ -239,13 +252,12 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                     ...plan,
                     branch,
                     stack,
-                    changes: runtimeConfigChanges,
                     status: stack.compiler ? FederationIntegrationStatus.RUNTIME_INTEGRATION : FederationIntegrationStatus.STACK_UNKNOWN
                 }
             }
 
             if (!stack.framework) {
-                return { ...plan, branch, stack, changes: runtimeConfigChanges, status: FederationIntegrationStatus.STACK_UNKNOWN }
+                return { ...plan, branch, stack, status: FederationIntegrationStatus.STACK_UNKNOWN }
             }
 
             const federationChanges = await this.buildChanges(target, branch, microfrontend, stack, remotes, detected)
@@ -255,9 +267,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                 ...plan,
                 branch,
                 stack,
-                changes: [...federationChanges, ...runtimeConfigChanges],
-                // Computed over the federation changes alone: it is what the status is about, and
-                // a document still missing its script tag does not make a config out of date.
+                changes: federationChanges,
                 status: this.statusOf(federationChanges, configChange)
             }
         } catch (error) {
@@ -336,8 +346,9 @@ export class FederationIntegrationService extends BaseAuthorizedService {
     }
 
     /**
-     * The document with the runtime configuration script in it, or nothing when it is already
-     * there or there is no document to write it into.
+     * What writing the runtime configuration script into the document of a microfrontend would
+     * change. No stack detection and no remotes: this integration is a `<script>` tag in an html
+     * file, and none of what module federation needs to know applies to it.
      *
      * This is the counterpart of the two values the bundler config carries: those are baked into
      * the bundle and need a build to change, whereas the variables this tag brings in are read on
@@ -353,26 +364,60 @@ export class FederationIntegrationService extends BaseAuthorizedService {
      * Only the first document found is considered: a repository shipping several is shipping one
      * entry point and some fixtures, and guessing which is which is not this service's job.
      */
-    private async buildGlobalVariablesChange(target: RepositoryTarget, branch: string, microfrontend: IMicrofrontend): Promise<FederationFileChangeDTO | null> {
-        if (microfrontend.type !== MicrofrontendType.HOST) {
-            return null
+    private async planGlobalVariablesFor(target: RepositoryTarget): Promise<MicrofrontendIntegrationPlanDTO> {
+        const { microfrontend } = target
+        const plan: MicrofrontendIntegrationPlanDTO = {
+            microfrontendId: microfrontend._id.toString(),
+            slug: microfrontend.slug,
+            name: microfrontend.name,
+            provider: target.codeRepository?.provider,
+            repositoryName: target.repositoryName,
+            stack: { framework: microfrontend.stack?.framework, compiler: microfrontend.stack?.compiler, source: microfrontend.stack?.source },
+            status: FederationIntegrationStatus.NO_DOCUMENT,
+            remotes: [],
+            changes: []
         }
 
-        const url = globalVariablesScriptUrl(getBackendUrl(), microfrontend.projectId.toString())
+        if (!target.codeRepository) {
+            return { ...plan, status: FederationIntegrationStatus.ERROR, error: "Code repository connection not found" }
+        }
 
-        for (const path of HTML_CANDIDATES) {
-            const file = await this.repositoryFiles.readFile(target, path, branch)
+        if (microfrontend.type !== MicrofrontendType.HOST) {
+            return plan
+        }
 
-            if (!file) {
-                continue
+        try {
+            const branch = await this.repositoryFiles.getDefaultBranch(target)
+            const url = globalVariablesScriptUrl(getBackendUrl(), microfrontend.projectId.toString())
+
+            for (const path of HTML_CANDIDATES) {
+                const file = await this.repositoryFiles.readFile(target, path, branch)
+
+                if (!file) {
+                    continue
+                }
+
+                const proposedContent = injectGlobalVariablesScript(file.raw, url)
+
+                // A document we found but cannot inject into has nowhere the tag would run before
+                // the application, which is the same dead end as having no document at all.
+                if (!proposedContent) {
+                    return { ...plan, branch, status: file.raw.includes(url) ? FederationIntegrationStatus.ALREADY_INTEGRATED : FederationIntegrationStatus.NO_DOCUMENT }
+                }
+
+                return {
+                    ...plan,
+                    branch,
+                    changes: [{ path, currentContent: file.raw, proposedContent }],
+                    status: FederationIntegrationStatus.CONFIG_TO_REPLACE
+                }
             }
 
-            const proposedContent = injectGlobalVariablesScript(file.raw, url)
-
-            return proposedContent ? { path, currentContent: file.raw, proposedContent } : null
+            return { ...plan, branch }
+        } catch (error) {
+            fastify.log.error(error, `Unable to plan the global variables integration of ${microfrontend.slug}`)
+            return { ...plan, status: FederationIntegrationStatus.ERROR, error: toErrorMessage(error) }
         }
-
-        return null
     }
 
     /**
