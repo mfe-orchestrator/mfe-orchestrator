@@ -1615,8 +1615,8 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1786983491.6946344,
-    "ast_hash": "af4bf8a97a5ea0694a9320fc46b1d25f",
+    "mtime": 1786983272.9805584,
+    "ast_hash": "19db5796f2f3239a77b18d099162c1f7",
     "semantic_hash": ""
   },
   "COMMIT_CONVENTIONS.md": {
@@ -1625,8 +1625,8 @@
     "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
   },
   "README.md": {
-    "mtime": 1786983485.0015073,
-    "ast_hash": "68c41c352a561e9de063adbab0577c5b",
+    "mtime": 1786983268.0189385,
+    "ast_hash": "81cf7fd98c584b5823417f9c48f33264",
     "semantic_hash": ""
   },
   "SECURITY.md": {
@@ -1869,6 +1869,11 @@
     "ast_hash": "b1655f3a9fe1f830b48d64282f41f683",
     "semantic_hash": ""
   },
+  "docs/DEPENDENCIES.md": {
+    "mtime": 1786888801.2116537,
+    "ast_hash": "811f61d479327e71a85ea30dff2c57c2",
+    "semantic_hash": ""
+  },
   "e2e/tests/collaboration/invite-existing-user.spec.ts": {
     "mtime": 1786476545.9893718,
     "ast_hash": "a5164961bed2b973742e2e40714e2284",
@@ -1997,6 +2002,21 @@
   "frontend/src/pages/integration/partials/components/StackBadge.tsx": {
     "mtime": 1786470065.4178383,
     "ast_hash": "545150673f390309fe0813fb1278d7b7",
+    "semantic_hash": ""
+  },
+  "docs/REPOSITORY-IMPORT.md": {
+    "mtime": 1786888773.862884,
+    "ast_hash": "b6d23ecfa128fa895dbb86e6a877fc1c",
+    "semantic_hash": ""
+  },
+  "docs/assets/repository-import-action.png": {
+    "mtime": 1786474802.5132427,
+    "ast_hash": "3ad27451d08732550e57ce664622245e",
+    "semantic_hash": ""
+  },
+  "docs/assets/repository-import-dialog.png": {
+    "mtime": 1786474790.671849,
+    "ast_hash": "8893b9681e9e69dc2785048ce272f82b",
     "semantic_hash": ""
   },
   "backend/src/plugins/autorization.test.ts": {
