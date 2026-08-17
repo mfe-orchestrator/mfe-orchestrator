@@ -10,7 +10,7 @@ import { z } from "zod"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import useCodeRepositoriesApi, { AddRepositoryGitlabDTO, GitlabProject } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useCodeRepositoriesApi, { AddRepositoryGitlabDTO, GitlabProject, TestConnectionGitlabDTO } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 const gitlabFormSchema = z.object({
@@ -23,7 +23,7 @@ const gitlabFormSchema = z.object({
 
 type AddGitlabFormValues = z.infer<typeof gitlabFormSchema>
 
-type TestConnectionData = Pick<AddRepositoryGitlabDTO, "name" | "url" | "pat">
+type TestConnectionData = TestConnectionGitlabDTO
 
 const AddGitlabRepositoryPage = () => {
     const { t } = useTranslation()
@@ -69,7 +69,8 @@ const AddGitlabRepositoryPage = () => {
                 testConnectionMutation.mutateAsync({
                     name: data.name,
                     url: data.gitlabData.url,
-                    pat: data.accessToken
+                    pat: data.accessToken,
+                    repositoryId: params.id
                 })
             }
 
@@ -80,11 +81,7 @@ const AddGitlabRepositoryPage = () => {
 
     const testConnectionMutation = useMutation({
         mutationFn: async (data: TestConnectionData) => {
-            // Cast to full DTO with empty groupPath and groupId for test connection
-            const testPayload: AddRepositoryGitlabDTO = {
-                ...data
-            }
-            const out = await repositoryApi.testConnectionGitlab(testPayload)
+            const out = await repositoryApi.testConnectionGitlab(data)
             return out.sort((a, b) => a.full_name.localeCompare(b.full_name))
         },
         onError: (error: unknown) => {
@@ -174,7 +171,7 @@ const AddGitlabRepositoryPage = () => {
                                         disabled={addRepositoryMutation.isPending || testConnectionMutation.isPending || editRepositoryMutation.isPending}
                                         onClick={() => {
                                             const { name, url, pat } = form.getValues()
-                                            testConnectionMutation.mutateAsync({ name, url, pat })
+                                            testConnectionMutation.mutateAsync({ name, url, pat, repositoryId: params.id })
                                         }}
                                     >
                                         {t("codeRepositories.gitlab.testConnection")}

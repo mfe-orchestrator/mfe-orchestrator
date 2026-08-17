@@ -59,7 +59,10 @@ class DeploymentService extends BaseAuthorizedService {
 
         const microfrontend = await Microfrontend.find({ projectId: environment.projectId }).session(session || null)
         const variables = await GlobalVariable.find({ environmentId: environmentIdObj }).session(session || null)
-        const storages = await Storage.find({ projectId: environment.projectId }).session(session || null)
+        // Plain objects, not the documents themselves: the snapshot re-encrypts the credentials it
+        // copies, and doing that through a live Storage document would encrypt the one the caller is
+        // still holding.
+        const storages = (await Storage.find({ projectId: environment.projectId }).session(session || null)).map(storage => storage.toObject())
 
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
         const currentDeployment = await this.getCurrentDeployment(environmentIdObj, session)

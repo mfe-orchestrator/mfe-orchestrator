@@ -15,7 +15,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
     }>("/projects/:projectId/repositories", async (request, reply) => {
         const repositories = await new CodeRepositoryService(request.databaseUser).getByProjectId(request.params.projectId)
-        return reply.send(repositories)
+        return reply.send(repositories.map(repository => repository.toFrontendObject()))
     })
 
     fastify.get<{
@@ -25,7 +25,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
     }>("/repositories/:repositoryId", async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).findById(request.params.repositoryId)
-        return reply.send(repository)
+        return reply.send(repository?.toFrontendObject())
     })
 
     fastify.get<{
@@ -101,7 +101,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
     }>("/repositories/:repositoryId/activate", async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).activate(request.params.repositoryId)
-        return reply.send(repository)
+        return reply.send(repository?.toFrontendObject())
     })
 
     fastify.post<{
@@ -110,7 +110,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
     }>("/repositories/:repositoryId/deactivate", async (request, reply) => {
         const repository = await new CodeRepositoryService(request.databaseUser).deactivate(request.params.repositoryId)
-        return reply.send(repository)
+        return reply.send(repository?.toFrontendObject())
     })
 
     fastify.post<{
@@ -141,7 +141,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
             throw new ProjectHeaderNotFoundError()
         }
         const repository = await new CodeRepositoryService(request.databaseUser).addRepositoryGithub(code, state, projectId, codeRepositoryId)
-        reply.send(repository)
+        reply.send(repository?.toFrontendObject())
     })
 
     fastify.put<{
@@ -158,7 +158,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
         Body: UpdateGithubDTO
     }>("/repositories/:repositoryId/github", async (request, reply) => {
-        reply.send(await new CodeRepositoryService(request.databaseUser).updateGithub(request.params.repositoryId, request.body))
+        reply.send((await new CodeRepositoryService(request.databaseUser).updateGithub(request.params.repositoryId, request.body))?.toFrontendObject())
     })
 
     fastify.put<{
@@ -167,7 +167,7 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
         Body: CreateGitlabRepositoryDto
     }>("/repositories/:repositoryId/gitlab", async (request, reply) => {
-        reply.send(await new CodeRepositoryService(request.databaseUser).editRepositoryGitlab(request.body, request.params.repositoryId))
+        reply.send((await new CodeRepositoryService(request.databaseUser).editRepositoryGitlab(request.body, request.params.repositoryId))?.toFrontendObject())
     })
 
     fastify.post<{
@@ -189,8 +189,8 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send()
     })
 
-    fastify.post<{ Body: { organization: string; pat: string } }>("/repositories/azure/test", async (request, reply) => {
-        const result = await new CodeRepositoryService(request.databaseUser).testConnectionAzure(request.body.organization, request.body.pat)
+    fastify.post<{ Body: { organization: string; pat: string; repositoryId?: string } }>("/repositories/azure/test", async (request, reply) => {
+        const result = await new CodeRepositoryService(request.databaseUser).testConnectionAzure(request.body.organization, request.body.pat, request.body.repositoryId)
         reply.send(result)
     })
 
@@ -203,8 +203,8 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         reply.send()
     })
 
-    fastify.post<{ Body: { url: string; pat: string } }>("/repositories/gitlab/test", async (request, reply) => {
-        const result = await new CodeRepositoryService(request.databaseUser).testConnectionGitlab(request.body.url, request.body.pat)
+    fastify.post<{ Body: { url: string; pat: string; repositoryId?: string } }>("/repositories/gitlab/test", async (request, reply) => {
+        const result = await new CodeRepositoryService(request.databaseUser).testConnectionGitlab(request.body.url, request.body.pat, request.body.repositoryId)
         reply.send(result)
     })
 

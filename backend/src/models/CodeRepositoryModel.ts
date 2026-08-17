@@ -1,4 +1,9 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import { encryptedFields } from "../utils/encryptedFieldsPlugin"
+import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
+
+/** The two fields that are a credential for the provider, and not metadata about the connection. */
+export const CODE_REPOSITORY_SECRET_PATHS = ["accessToken", "refreshToken"]
 
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
@@ -42,6 +47,7 @@ export interface ICodeRepository extends Document<ObjectId> {
     projectId: ObjectId
     createdAt: Date
     updatedAt: Date
+    toFrontendObject: () => Record<string, unknown>
 }
 
 const githubDataSchema = new Schema<IGithubData>({
@@ -150,6 +156,26 @@ const codeRepositorySchema = new Schema<ICodeRepository>(
         timestamps: true
     }
 )
+
+codeRepositorySchema.plugin(encryptedFields, { model: "CodeRepository", paths: CODE_REPOSITORY_SECRET_PATHS })
+
+/**
+ * The connection as the console may see it. The token becomes the placeholder instead of disappearing
+ * because the Azure and GitLab edit screens submit the whole form back: a field that came in as the
+ * placeholder is understood as "the token has not been retyped", and the stored one is kept.
+ */
+codeRepositorySchema.methods.toFrontendObject = function (): Record<string, unknown> {
+    const object = this.toObject()
+    delete object.__v
+
+    for (const path of CODE_REPOSITORY_SECRET_PATHS) {
+        if (object[path]) {
+            object[path] = SECRET_PLACEHOLDER
+        }
+    }
+
+    return object
+}
 
 const CodeRepository = mongoose.model<ICodeRepository>("CodeRepository", codeRepositorySchema)
 export default CodeRepository

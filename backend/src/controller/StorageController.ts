@@ -7,13 +7,13 @@ export default async function storageController(fastify: FastifyInstance) {
     // Get storages by project ID
     fastify.get<{ Params: { projectId: string } }>("/projects/:projectId/storages", async (request, reply) => {
         const storages = await new StorageService(request.databaseUser).getByProjectId(request.params.projectId)
-        return reply.send(storages)
+        return reply.send(storages.map(storage => storage.toFrontendObject()))
     })
 
     // Add storage to project
     fastify.get<{ Params: { storageId: string } }>("/storages/:storageId", async (request, reply) => {
         const storage = await new StorageService(request.databaseUser).getById(request.params.storageId)
-        return reply.send(storage)
+        return reply.send(storage.toFrontendObject())
     })
 
     // Add storage to project
@@ -25,13 +25,13 @@ export default async function storageController(fastify: FastifyInstance) {
         }
 
         const storage = await new StorageService(request.databaseUser).create(projectId, request.body)
-        return reply.send(storage)
+        return reply.send(storage.toFrontendObject())
     })
 
     // Update storage
     fastify.put<{ Body: StorageDTO; Params: { storageId: string } }>("/storages/:storageId", async (request, reply) => {
         const storage = await new StorageService(request.databaseUser).update(request.params.storageId, request.body)
-        return reply.send(storage)
+        return reply.send(storage.toFrontendObject())
     })
 
     // Delete storage
@@ -43,6 +43,6 @@ export default async function storageController(fastify: FastifyInstance) {
     // Set storage as default
     fastify.put<{ Params: { storageId: string } }>("/storages/:storageId/default", async (request, reply) => {
         const storage = await new StorageService(request.databaseUser).makeDefault(request.params.storageId)
-        return reply.send(storage)
+        return reply.send(storage.toFrontendObject())
     })
 }

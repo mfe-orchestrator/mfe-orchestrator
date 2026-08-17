@@ -106,6 +106,10 @@ Auth: `JWT_SECRET`*, `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE`, `AUTH0
 
 Code repositories: `CODE_REPOSITORY_GITHUB_CLIENT_ID`, `CODE_REPOSITORY_GITHUB_CLIENT_SECRET`*
 
+Stored credentials: `SECRETS_ENCRYPTION_KEY`* — encrypts bucket keys and repository tokens at rest,
+see [docs/SECRETS.md](../../docs/SECRETS.md). Back it up apart from the database: without it the
+encrypted credentials cannot be read back.
+
 Dependencies: `NPM_REGISTRY_URL`
 
 Observability: `SENTRY_DSN`, `TELEMETRY_ENABLED`, `TELEMETRY_DISABLED`, `TELEMETRY_ENDPOINT`,

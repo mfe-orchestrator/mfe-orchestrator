@@ -37,7 +37,8 @@ const AddAzureRepositoryPage = () => {
             if (data.azureData?.projectId) {
                 testConnectionMutation.mutateAsync({
                     organization: data.azureData.organization,
-                    pat: data.accessToken
+                    pat: data.accessToken,
+                    repositoryId: params.id
                 })
             }
         },
@@ -135,7 +136,7 @@ const AddAzureRepositoryPage = () => {
                                         variant="secondary"
                                         className="w-full"
                                         disabled={form.formState.isSubmitting || testConnectionMutation.isPending}
-                                        onClick={() => testConnectionMutation.mutateAsync(form.getValues())}
+                                        onClick={() => testConnectionMutation.mutateAsync({ ...form.getValues(), repositoryId: params.id })}
                                     >
                                         {t("codeRepositories.azure.testConnection")}
                                     </Button>

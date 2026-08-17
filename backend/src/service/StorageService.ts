@@ -1,10 +1,32 @@
 import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
-import Storage, { IStorage } from "../models/StorageModel"
+import Storage, { IStorage, STORAGE_SECRET_KEYS } from "../models/StorageModel"
 import { StorageDTO } from "../types/StorageDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
+import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+
+/**
+ * The incoming authConfig with every credential the caller did not retype taken from the stored one.
+ *
+ * The edit form submits all of its fields, and the ones it never disclosed come back as the
+ * placeholder the API sent; without this they would be saved literally and the storage would stop
+ * authenticating. `existing` is undefined on a create, where a placeholder is nothing but a missing
+ * value and the schema validator is left to reject it.
+ */
+export const withUnchangedSecrets = (incoming: StorageDTO, existing?: IStorage): StorageDTO => {
+    const authConfig = { ...(incoming.authConfig as Record<string, unknown>) }
+    const stored = existing?.authConfig as Record<string, unknown> | undefined
+
+    for (const key of STORAGE_SECRET_KEYS) {
+        if (authConfig[key] === SECRET_PLACEHOLDER) {
+            authConfig[key] = stored?.[key]
+        }
+    }
+
+    return { ...incoming, authConfig } as StorageDTO
+}
 
 export class StorageService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IStorage[]> {
@@ -31,7 +53,7 @@ export class StorageService extends BaseAuthorizedService {
         await this.ensureAccessToProject(projectId, session)
 
         const storage = new Storage({
-            ...storageData,
+            ...withUnchangedSecrets(storageData),
             projectId
         })
 
@@ -45,7 +67,11 @@ export class StorageService extends BaseAuthorizedService {
     async updateRaw(storageId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
         const storage = await this.getByIdRaw(storageId, session)
 
-        const updated = await Storage.findByIdAndUpdate(storage._id, { ...storageData, projectId: storage.projectId }, { new: true, runValidators: true, context: "query" }).session(session || null)
+        const updated = await Storage.findByIdAndUpdate(
+            storage._id,
+            { ...withUnchangedSecrets(storageData, storage), projectId: storage.projectId },
+            { new: true, runValidators: true, context: "query" }
+        ).session(session || null)
 
         if (!updated) {
             throw new EntityNotFoundError(storageId)

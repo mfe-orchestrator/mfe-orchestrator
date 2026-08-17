@@ -139,6 +139,11 @@ env:
 envSecrets:
   # Signing key of the JWT tokens - ALWAYS override this in production.
   JWT_SECRET: ""
+  # Encrypts the credentials the console stores for a project (bucket keys,
+  # connection strings, repository tokens). 32 bytes, base64 or hex:
+  # openssl rand -base64 32. Left empty they are stored unencrypted.
+  # Back it up apart from the database. See docs/SECRETS.md.
+  SECRETS_ENCRYPTION_KEY: ""
   NOSQL_DATABASE_PASSWORD: ""
   REDIS_PASSWORD: ""
   EMAIL_SMTP_PASSWORD: ""
