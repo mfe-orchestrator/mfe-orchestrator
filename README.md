@@ -98,18 +98,18 @@ The full documentation lives at
 - **[Quick start](https://mfe-orchestrator.dev/documentation/docs/quick-start)** - zero to rollback in 10 minutes
 - **[Core concepts](https://mfe-orchestrator.dev/documentation/docs/core-concepts)** - projects, environments, deployments and how they relate
 - **[Self-hosting](https://mfe-orchestrator.dev/documentation/docs/self-hosting/docker-compose)** - Docker, Docker Compose, Terraform
+- **[Host integration](https://mfe-orchestrator.dev/documentation/docs/integration/overview)** - Wiring module federation and the global variables script into a host application
+- **[Canary releases](https://mfe-orchestrator.dev/documentation/docs/microfrontends/canary-releases)** - The three strategies, enrolled users and how a version is pinned
+- **[Build status](https://mfe-orchestrator.dev/documentation/docs/deployments/build-status)** - How pipeline runs are read from each provider and streamed to the console
+- **[Repository import](https://mfe-orchestrator.dev/documentation/docs/repositories/import-microfrontends)** - Creating one microfrontend per repository from a code repository connection
+- **[Dependency analysis](https://mfe-orchestrator.dev/documentation/docs/repositories/dependency-analysis)** - How microfrontend dependencies are scanned and peer dependencies aligned
 
 Project reference:
 
 - **[Commit Conventions](COMMIT_CONVENTIONS.md)** - Conventional Commits specification
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
-- **[Host integration](docs/INTEGRATION.md)** - Wiring module federation and the global variables script into a host application
-- **[Canary releases](docs/CANARY.md)** - The three strategies, enrolled users and how a version is pinned
-- **[Build status](docs/BUILDS.md)** - How pipeline runs are read from each provider and streamed to the console
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
-- **[Dependency analysis](docs/DEPENDENCIES.md)** - How microfrontend dependencies are scanned and peer dependencies aligned
-- **[Repository import](docs/REPOSITORY-IMPORT.md)** - Creating one microfrontend per repository from a code repository connection
 
 ## Run with Docker
 

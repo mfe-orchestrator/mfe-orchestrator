@@ -28,10 +28,10 @@ This is a **monorepo** microfrontend orchestrator service with a Fastify backend
 - **i18n**: Complete internationalization with react-i18next
 
 **Key Features**:
-- **Canary deployments**: `CanaryType` (`RANDOM` | `ON_SESSION` | `ON_USER`, default `ON_SESSION`) and `CanaryDeploymentType` (`BASED_ON_VERSION` | `BASED_ON_URL`) in `backend/src/models/MicrofrontendModel.ts`; enrolled canary users in `DeploymentCanaryUsersController.ts`. See `docs/CANARY.md`
-- **Federation integration**: `FederationIntegrationService` replaced the old host injection, which is gone. See `docs/INTEGRATION.md`
+- **Canary deployments**: `CanaryType` (`RANDOM` | `ON_SESSION` | `ON_USER`, default `ON_SESSION`) and `CanaryDeploymentType` (`BASED_ON_VERSION` | `BASED_ON_URL`) in `backend/src/models/MicrofrontendModel.ts`; enrolled canary users in `DeploymentCanaryUsersController.ts`. See https://mfe-orchestrator.dev/documentation/docs/microfrontends/canary-releases
+- **Federation integration**: `FederationIntegrationService` replaced the old host injection, which is gone. See https://mfe-orchestrator.dev/documentation/docs/integration/overview
 - **Environment-free serving**: manifest, global variables and microfrontend config are served both with an environment slug and without it, via the `auto/:projectId` route forms (`ServeController.ts`)
-- **Builds**: build pipeline pages and API. See `docs/BUILDS.md`
+- **Builds**: build pipeline pages and API. See https://mfe-orchestrator.dev/documentation/docs/deployments/build-status
 
 ## Key Patterns & Conventions
 
