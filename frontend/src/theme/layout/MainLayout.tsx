@@ -1,4 +1,4 @@
-import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
+import { Building2, FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
@@ -46,6 +46,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             name: t("integration.sidebar_title"),
             path: "/integration",
             icon: <LinkIcon />
+        },
+        {
+            name: t("organization_users.sidebar_title"),
+            path: "/organization-users",
+            icon: <Building2 />
         },
         {
             name: t("settings.title"),

@@ -1,5 +1,16 @@
 import { APIRequestContext, Browser, expect, test } from "@playwright/test"
-import { AppSession, activateAccountFromEmail, emailDeliveryUnavailable, loginViaApi, newTestUser, openApp, openAppAs, openProjectUsers, registerViaUi } from "../fixtures/appUser"
+import {
+    AppSession,
+    activateAccountFromEmail,
+    createOrganizationViaUi,
+    emailDeliveryUnavailable,
+    loginViaApi,
+    newTestUser,
+    openApp,
+    openAppAs,
+    openProjectUsers,
+    registerViaUi
+} from "../fixtures/appUser"
 
 /**
  * Creazione di un nuovo progetto, dal punto di vista di un account appena nato.
@@ -16,6 +27,7 @@ test.describe
     .serial("Project creation", () => {
         const owner = newTestUser("project")
         const projectName = `E2E Progetto ${Date.now()}`
+        const organizationName = `E2E Org ${Date.now()}`
 
         // Sessione e token condivisi tra i test: rifarli ogni volta moltiplica le
         // chiamate e fa scattare il rate limit per IP dell'ambiente.
@@ -51,6 +63,13 @@ test.describe
             await activateAccountFromEmail(page, request, owner)
 
             await context.close()
+        })
+
+        test("given an account without organizations, when it signs in, then it is asked to create one first", async ({ browser }) => {
+            const { page } = await getSession(browser)
+
+            // Un progetto sta dentro un'organizzazione: senza nessuna, la app chiede prima quella.
+            await createOrganizationViaUi(page, organizationName)
         })
 
         test("given an account without projects, when it signs in, then the wizard takes over the dashboard", async ({ browser, request }) => {

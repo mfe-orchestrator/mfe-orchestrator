@@ -4,8 +4,10 @@ import MicrofrontendService from "../service/MicrofrontendService"
 import ProjectService, { ProjectCreateInput } from "../service/ProjectService"
 
 export default async function projectController(fastify: FastifyInstance) {
-    fastify.get("/projects/mine", async (request, reply) => {
-        const projects = await new ProjectService(request.databaseUser).findMine(request.databaseUser._id)
+    // `organizationId` narrows the list to one organization, which is what the app asks for once one
+    // is selected. Left out, it answers with everything the user can reach, across organizations.
+    fastify.get<{ Querystring: { organizationId?: string } }>("/projects/mine", async (request, reply) => {
+        const projects = await new ProjectService(request.databaseUser).findMine(request.databaseUser._id, request.query.organizationId)
         return reply.send(projects)
     })
 

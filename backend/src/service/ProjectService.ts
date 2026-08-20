@@ -18,6 +18,8 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 import UserProjectService from "./UserProjectService"
 
 export interface ProjectCreateInput {
+    /** The organization the project is created in. A project always belongs to exactly one. */
+    organizationId: string
     name: string
     slug: string
     description?: string
@@ -45,26 +47,34 @@ export interface ProjectSummaryDTO {
 export class ProjectService extends BaseAuthorizedService {
     userProjectService = new UserProjectService()
 
-    async findMine(userId: ObjectId): Promise<IProject[]> {
+    /**
+     * The projects the user can open, optionally narrowed to one organization.
+     *
+     * Two ways in, and they are not the same thing: an explicit membership on the project, or
+     * administering the organization that owns it. The second is what keeps a project reachable when
+     * its members leave, and it is why this cannot be a single lookup from UserProject any more.
+     */
+    async findMine(userId: ObjectId, organizationId?: string | Schema.Types.ObjectId): Promise<IProject[]> {
         try {
-            const projects: IProject[] = await UserProject.aggregate([
-                // A pending invitation is not a membership yet: it must be accepted first,
-                // otherwise the project would show up in the switcher as if it were already the user's.
-                { $match: { userId, invitationToken: null } },
-                {
-                    $lookup: {
-                        from: "projects", // ⚠️ nome della collezione Mongo (di default è minuscolo e plurale)
-                        localField: "projectId",
-                        foreignField: "_id",
-                        as: "project"
-                    }
-                },
-                { $unwind: "$project" },
-                { $replaceRoot: { newRoot: "$project" } },
-                { $sort: { name: 1 } }
-            ])
-            return projects
+            // A pending invitation is not a membership yet: it must be accepted first, otherwise the
+            // project would show up in the switcher as if it were already the user's.
+            const memberships = await UserProject.find({ userId: toObjectId(userId), invitationToken: null }, { projectId: 1 }).lean()
+            const administeredOrganizations = await this.getAdministeredOrganizationIds()
+
+            const reachable: Record<string, unknown>[] = [{ _id: { $in: memberships.map(membership => membership.projectId) } }]
+            if (administeredOrganizations.length > 0) {
+                reachable.push({ organizationId: { $in: administeredOrganizations } })
+            }
+
+            const filter: Record<string, unknown> = { $or: reachable }
+            if (organizationId) {
+                filter.organizationId = toObjectId(organizationId)
+            }
+
+            return await Project.find(filter).sort({ name: 1 })
         } catch (error) {
+            if (error instanceof BusinessException) throw error
+
             throw createBusinessException({
                 code: "PROJECT_FETCH_ERROR",
                 message: "Failed to fetch projects",
@@ -115,12 +125,33 @@ export class ProjectService extends BaseAuthorizedService {
     }
 
     async create(projectData: ProjectCreateInput, creatorUserId: ObjectId): Promise<IProject> {
+        // Outside the transaction on purpose: the check reads, and a failing authorization should not
+        // be the reason a transaction is opened at all.
+        await this.ensureCanCreateProjectsIn(projectData.organizationId)
         return runInTransaction(async session => this.createRaw(projectData, creatorUserId, session))
+    }
+
+    /**
+     * Only whoever administers the organization may open a project in it.
+     *
+     * A plain member reaches the projects they were invited to and nothing else, so letting them
+     * create one would be the one way for them to add something to a tenant they only visit.
+     */
+    private async ensureCanCreateProjectsIn(organizationId?: string): Promise<void> {
+        if (!organizationId) {
+            throw createBusinessException({
+                code: "ORGANIZATION_REQUIRED",
+                message: "A project must be created inside an organization",
+                statusCode: 400
+            })
+        }
+        await this.ensureOrganizationAdmin(organizationId)
     }
 
     async createRaw(projectData: ProjectCreateInput, creatorUserId: ObjectId, session?: ClientSession): Promise<IProject> {
         try {
             const project = new Project({
+                organizationId: toObjectId(projectData.organizationId),
                 name: projectData.name,
                 slug: projectData.slug || projectData.name.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-").replaceAll(".", "-"),
                 description: projectData.description,

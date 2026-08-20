@@ -8,6 +8,8 @@ export enum RoleInProject {
 }
 
 export interface Project {
+    /** The organization the project belongs to: a project sits in exactly one. */
+    organizationId: string
     name: string
     slug: string
     description?: string
@@ -36,9 +38,14 @@ interface AddUserToProjectDTO {
 const useProjectApi = () => {
     const apiClient = useApiClient()
 
-    const getMineProjects = async (): Promise<Project[]> => {
+    /**
+     * The projects the user can open. Narrowed to one organization when given, which is what every
+     * screen of the app asks for: it works inside one organization at a time.
+     */
+    const getMineProjects = async (organizationId?: string): Promise<Project[]> => {
         const response = await apiClient.doRequest<Project[]>({
-            url: "/api/projects/mine"
+            url: "/api/projects/mine",
+            params: organizationId ? { organizationId } : undefined
         })
         return response.data
     }

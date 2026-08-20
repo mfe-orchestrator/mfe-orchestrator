@@ -4,6 +4,7 @@ import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepo
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
 import Storage, { STORAGE_SECRET_PATHS } from "../models/StorageModel"
+import { migrateProjectsToOrganizations } from "./organizationMigration"
 import { isSecretEncryptionEnabled } from "./secretCrypto"
 
 /**
@@ -96,6 +97,9 @@ const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> =>
  */
 export const runMigrations = async (logger: FastifyBaseLogger): Promise<void> => {
     try {
+        // First: everything else in the application reads a project through its organization, so a
+        // project still missing one would be invisible to whoever owns it.
+        await migrateProjectsToOrganizations(logger)
         await migrateLegacyCanaryTypes(logger)
         await encryptStoredSecrets(logger)
     } catch (error) {

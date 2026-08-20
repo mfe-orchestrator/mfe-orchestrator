@@ -7,6 +7,7 @@ import RouteWithSuspense from "./components/RouteWithSuspense"
 import AuthWrapper from "./theme/AuthWrapper"
 import FirstStartupWrapper from "./theme/FirstStartupWrapper"
 import MainLayout from "./theme/layout/MainLayout"
+import SelectOrganizationWrapper from "./theme/SelectOrganizationWrapper"
 import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 
 // Lazy load all page components
@@ -19,6 +20,7 @@ const CanaryUsers = lazy(() => import("./pages/deployments/CanaryUsers"))
 const Integration = lazy(() => import("./pages/integration/Integration"))
 const Environments = lazy(() => import("./pages/environments/Environments"))
 const ProjectUsers = lazy(() => import("./pages/project-users/ProjectUsers"))
+const OrganizationUsers = lazy(() => import("./pages/organization-users/OrganizationUsers"))
 const Storages = lazy(() => import("./pages/storages/Storages"))
 const AddStorage = lazy(() => import("./pages/storages/AddStorage"))
 const ApiKeys = lazy(() => import("./pages/api-keys/ApiKeys"))
@@ -36,6 +38,7 @@ const NewProjectWizard = lazy(() => import("./pages/new-project-wizard/NewProjec
 
 const AccountActivation = lazy(() => import("./pages/auth/AccountActivation"))
 const ProjectInvitation = lazy(() => import("./pages/auth/ProjectInvitation"))
+const OrganizationInvitation = lazy(() => import("./pages/auth/OrganizationInvitation"))
 const SignUp = lazy(() => import("./pages/auth/SignUp"))
 const ResetPasswordRequest = lazy(() => import("./pages/auth/ResetPasswordRequest"))
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"))
@@ -46,7 +49,10 @@ const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) 
             <MicrosoftAuthWrapper>
                 <Auth0Wrapper>
                     <AuthWrapper>
-                        <SelectProjectWrapper>{children}</SelectProjectWrapper>
+                        {/* The organization is settled first: it is what scopes the project list underneath. */}
+                        <SelectOrganizationWrapper>
+                            <SelectProjectWrapper>{children}</SelectProjectWrapper>
+                        </SelectOrganizationWrapper>
                     </AuthWrapper>
                 </Auth0Wrapper>
             </MicrosoftAuthWrapper>
@@ -80,6 +86,7 @@ const PrivateProjectRoutes: React.FC = () => {
                 </Route>
                 <Route path="/integration" element={<RouteWithSuspense element={<Integration />} />} />
                 <Route path="/project-users" element={<RouteWithSuspense element={<ProjectUsers />} />} />
+                <Route path="/organization-users" element={<RouteWithSuspense element={<OrganizationUsers />} />} />
                 <Route path="/storages" element={<RouteWithSuspense element={<Storages />} />} />
                 <Route path="/storages/new" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/storages/:id" element={<RouteWithSuspense element={<AddStorage />} />} />
@@ -111,6 +118,7 @@ const Routes: React.FC = () => {
                 <Route path="/reset-password/:token" element={<RouteWithSuspense element={<ResetPassword />} />} />
                 <Route path="/account-activation/:token" element={<RouteWithSuspense element={<AccountActivation />} />} />
                 <Route path="/project-invitation/:token" element={<RouteWithSuspense element={<ProjectInvitation />} />} />
+                <Route path="/organization-invitation/:token" element={<RouteWithSuspense element={<OrganizationInvitation />} />} />
                 <Route path="/" element={<Navigate to="/microfrontends" replace />} />
                 <Route path="*" element={<PrivateRoutes />} />
             </RRDRoutes>

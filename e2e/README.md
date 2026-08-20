@@ -9,7 +9,7 @@ This package contains end-to-end tests for the MFE Orchestrator application.
 
 ### Tests that read real emails
 
-`tests/auth`, `tests/collaboration` and `tests/profile` follow links delivered by email. Mailboxes live on
+`tests/auth`, `tests/collaboration`, `tests/organizations` and `tests/profile` follow links delivered by email. Mailboxes live on
 [testmail.app](https://testmail.app): the app under test sends through its own SMTP and the
 tests read the inbox over the public API, so the same setup works locally and against a
 deployed environment such as `console-dev`.
@@ -36,6 +36,12 @@ the path and reopen it on `BASE_URL`.
 
 Finally, the environment must already contain at least one user: on an empty database the app
 shows the first-startup screen instead of login/registration.
+
+`tests/organizations` covers the organization layer: an account with no organization is asked to
+create one before it can reach a project, and the visibility rules (an owner or an admin reaches
+every project of the organization, a plain member only the ones they were invited to) are asserted
+against the API. Inviting somebody to an organization is answered through the in-app endpoint, so
+those tests behave the same whether or not the invitation email can be delivered.
 
 ### Where the tests run
 

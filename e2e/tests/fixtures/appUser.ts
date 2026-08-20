@@ -218,19 +218,150 @@ export async function getAvatarViaApi(request: APIRequestContext, accessToken: s
 export interface CreatedProject {
     _id: string
     name: string
+    organizationId: string
+}
+
+export interface CreatedOrganization {
+    _id: string
+    name: string
+}
+
+/** Organizzazioni di cui l'utente fa parte: gli inviti in sospeso non ci sono. */
+export async function getMineOrganizationsViaApi(request: APIRequestContext, accessToken: string): Promise<CreatedOrganization[]> {
+    const response = await request.get("/api/organizations/mine", {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(response.ok(), `Lettura organizzazioni fallita (HTTP ${response.status()})`).toBeTruthy()
+    return (await response.json()) as CreatedOrganization[]
+}
+
+/** Crea un'organizzazione via API: chi la crea ne diventa proprietario. */
+export async function createOrganizationViaApi(request: APIRequestContext, accessToken: string, name: string): Promise<CreatedOrganization> {
+    const response = await request.post("/api/organizations", {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER },
+        data: { name }
+    })
+    expect(response.ok(), `Creazione organizzazione fallita (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+    return (await response.json()) as CreatedOrganization
+}
+
+/**
+ * L'organizzazione dell'utente, creandola se non ne ha ancora nessuna.
+ *
+ * Un progetto sta sempre dentro un'organizzazione, quindi un account appena
+ * registrato non ne puo' creare uno prima di averne una.
+ */
+export async function ensureOrganizationViaApi(request: APIRequestContext, accessToken: string, name: string): Promise<CreatedOrganization> {
+    const existing = await getMineOrganizationsViaApi(request, accessToken)
+    return existing[0] ?? (await createOrganizationViaApi(request, accessToken, name))
 }
 
 /**
  * Crea un progetto via API: il wizard di creazione ha gia' i suoi test dedicati,
  * qui serve solo un progetto su cui invitare collaboratori.
+ *
+ * L'organizzazione viene creata al bisogno: il progetto ne richiede una, e i test
+ * che chiamano questa funzione partono da account appena registrati.
  */
-export async function createProjectViaApi(request: APIRequestContext, accessToken: string, name: string): Promise<CreatedProject> {
+export async function createProjectViaApi(request: APIRequestContext, accessToken: string, name: string, organizationId?: string): Promise<CreatedProject> {
+    const organization = organizationId ?? (await ensureOrganizationViaApi(request, accessToken, `${name} org`))._id
     const response = await request.post("/api/projects", {
         headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER },
-        data: { name }
+        data: { name, organizationId: organization }
     })
     expect(response.ok(), `Creazione progetto fallita (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
     return (await response.json()) as CreatedProject
+}
+
+export enum RoleInOrganization {
+    OWNER = "OWNER",
+    ADMIN = "ADMIN",
+    MEMBER = "MEMBER"
+}
+
+/** Etichette del ruolo nella select di invito all'organizzazione (locale `it`). */
+export const organizationRoleLabels: Record<RoleInOrganization, string> = {
+    [RoleInOrganization.OWNER]: "Proprietario",
+    [RoleInOrganization.ADMIN]: "Amministratore",
+    [RoleInOrganization.MEMBER]: "Membro"
+}
+
+/** Invita un utente nell'organizzazione via API. */
+export async function inviteToOrganizationViaApi(request: APIRequestContext, accessToken: string, organizationId: string, email: string, role: RoleInOrganization): Promise<void> {
+    const response = await request.post(`/api/organizations/${organizationId}/users`, {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER },
+        data: { email, role }
+    })
+    expect(response.ok(), `Invito all'organizzazione fallito (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+}
+
+/** Cambia il ruolo di un membro dell'organizzazione via API. */
+export async function setOrganizationRoleViaApi(request: APIRequestContext, accessToken: string, organizationId: string, userId: string, role: RoleInOrganization): Promise<void> {
+    const response = await request.put(`/api/organizations/${organizationId}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER },
+        data: { role }
+    })
+    expect(response.ok(), `Cambio ruolo fallito (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+}
+
+export interface OrganizationMember {
+    _id: string
+    email: string
+    role: RoleInOrganization
+    invitationPending?: boolean
+    projectCount: number
+}
+
+export async function getOrganizationUsersViaApi(request: APIRequestContext, accessToken: string, organizationId: string): Promise<OrganizationMember[]> {
+    const response = await request.get(`/api/organizations/${organizationId}/users`, {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(response.ok(), `Lettura membri dell'organizzazione fallita (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+    return (await response.json()) as OrganizationMember[]
+}
+
+/**
+ * Accetta l'eventuale invito in sospeso all'organizzazione, dall'interno della app.
+ *
+ * Con SMTP configurato l'invito resta in attesa di risposta, senza SMTP il backend
+ * aggiunge il membro direttamente: passando da qui il test si comporta allo stesso
+ * modo nei due ambienti, invece di dipendere dalla posta.
+ */
+export async function acceptOrganizationInvitationIfPending(request: APIRequestContext, accessToken: string, organizationId: string): Promise<void> {
+    const pending = await request.get("/api/users/me/organization-invitations", {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(pending.ok(), `Lettura inviti in sospeso fallita (HTTP ${pending.status()})`).toBeTruthy()
+    const invitations = (await pending.json()) as Array<{ organizationId: string }>
+    if (!invitations.some(invitation => invitation.organizationId === organizationId)) {
+        return
+    }
+
+    const response = await request.post(`/api/users/me/organization-invitations/${organizationId}/accept`, {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+    expect(response.ok(), `Accettazione invito fallita (HTTP ${response.status()}): ${await response.text()}`).toBeTruthy()
+}
+
+/** Legge un progetto via API: serve a provare che l'accesso sia negato o concesso. */
+export async function readProjectViaApi(request: APIRequestContext, accessToken: string, projectId: string) {
+    return request.get(`/api/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${accessToken}`, issuer: ISSUER }
+    })
+}
+
+/**
+ * Crea l'organizzazione dalla schermata di primo avvio.
+ *
+ * Un account senza organizzazioni non vede ne' progetti ne' wizard: la app chiede
+ * prima di crearne una, ed e' da quel form che si passa.
+ */
+export async function createOrganizationViaUi(page: Page, name: string): Promise<void> {
+    await expect(page.getByTestId("organization-name")).toBeVisible({ timeout: 30_000 })
+    await page.getByTestId("organization-name").fill(name)
+    await page.getByTestId("create-organization").click()
+    // Creata e selezionata: il form lascia il posto a quello che veniva coperto.
+    await expect(page.getByTestId("organization-name")).toHaveCount(0, { timeout: 30_000 })
 }
 
 /** Invita un collaboratore via API: la UI di invito ha i suoi test, qui serve solo l'invito in sospeso. */

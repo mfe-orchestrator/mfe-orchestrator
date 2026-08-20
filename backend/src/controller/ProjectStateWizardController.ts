@@ -4,7 +4,7 @@ import ProjectWizardService from "../service/ProjectWizardService"
 
 export default async function projectStateWizardController(fastify: FastifyInstance) {
     fastify.post<{ Body: ProjectCreateInput }>("/projects/wizard", async (request, reply) => {
-        return reply.send(await new ProjectWizardService().createNew(request.body, request.databaseUser._id))
+        return reply.send(await new ProjectWizardService(request.databaseUser).createNew(request.body, request.databaseUser._id))
     })
 
     fastify.put<{
@@ -12,7 +12,7 @@ export default async function projectStateWizardController(fastify: FastifyInsta
             projectId: string
         }
     }>("/projects/wizard/:projectId/next", async (request, reply) => {
-        return reply.send(await new ProjectWizardService().next(request.params.projectId))
+        return reply.send(await new ProjectWizardService(request.databaseUser).next(request.params.projectId))
     })
 
     fastify.put<{
@@ -20,6 +20,6 @@ export default async function projectStateWizardController(fastify: FastifyInsta
             projectId: string
         }
     }>("/projects/wizard/:projectId/prev", async (request, reply) => {
-        return reply.send(await new ProjectWizardService().prev(request.params.projectId))
+        return reply.send(await new ProjectWizardService(request.databaseUser).prev(request.params.projectId))
     })
 }

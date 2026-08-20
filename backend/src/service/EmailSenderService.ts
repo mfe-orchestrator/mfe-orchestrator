@@ -2,8 +2,10 @@ import nodemailer from "nodemailer"
 import path from "path"
 import pug from "pug"
 import { fastify } from ".."
+import { IOrganization } from "../models/OrganizationModel"
 import { IProject } from "../models/ProjectModel"
 import { IUser } from "../models/UserModel"
+import { RoleInOrganization } from "../models/UserOrganizationModel"
 import { RoleInProject } from "../models/UserProjectModel"
 
 class EmailSenderService {
@@ -59,7 +61,30 @@ class EmailSenderService {
         await this.transporter.sendMail(mailOptions)
     }
 
-    private formatRoleName(role: RoleInProject): string {
+    async sendOrganizationInvitationEmail(user: IUser, organization: IOrganization, role: RoleInOrganization, token: string) {
+        const acceptUrl = `${this.config.FRONTEND_URL}/organization-invitation/${token}`
+
+        const emailHtml = pug.renderFile(path.join(__dirname, "../templates/emails/organization-invitation.pug"), {
+            user,
+            organization,
+            role: this.formatRoleName(role),
+            acceptUrl,
+            header: "You're Invited!",
+            headerIcon: "\u{1F465}",
+            footerText: "This invitation link will expire in 5 days."
+        })
+
+        const mailOptions = {
+            from: this.config.EMAIL_SMTP_FROM,
+            to: user.email,
+            subject: `\u{1F389} You're invited to join ${organization.name}`,
+            html: emailHtml
+        }
+
+        await this.transporter.sendMail(mailOptions)
+    }
+
+    private formatRoleName(role: RoleInProject | RoleInOrganization): string {
         return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
     }
 

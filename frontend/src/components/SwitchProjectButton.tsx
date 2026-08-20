@@ -7,6 +7,7 @@ import { Button } from "@/components/atoms"
 import PendingInvitationsList from "@/components/PendingInvitationsList"
 import ProjectPickerList from "@/components/ProjectPickerList"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
+import useOrganizationStore from "@/store/useOrganizationStore"
 import useProjectStore from "@/store/useProjectStore"
 import { setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
 
@@ -16,6 +17,8 @@ const SwitchProjectButton = () => {
     const { project, projects = [], setProject, setProjects } = useProjectStore()
     const projectApi = useProjectApi()
     const navigate = useNavigate()
+    const { organization } = useOrganizationStore()
+    const canCreateProjects = organization?.role === "OWNER" || organization?.role === "ADMIN"
 
     const handleProjectSelect = (selectedProject: Project) => {
         setProject(selectedProject)
@@ -25,7 +28,7 @@ const SwitchProjectButton = () => {
 
     const loadProjects = async () => {
         try {
-            const projects = await projectApi.getMineProjects()
+            const projects = await projectApi.getMineProjects(organization?._id)
             setProjects(projects)
         } catch (error) {
             console.error("Failed to load projects:", error)
@@ -43,7 +46,7 @@ const SwitchProjectButton = () => {
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="primary" size="sm">
+                <Button variant="primary" size="sm" dataTestId="switch-project">
                     <Repeat />
                     <span>{t("project.switch_or_create", { defaultValue: "Switch or create project" })}</span>
                     <Plus />
@@ -58,12 +61,15 @@ const SwitchProjectButton = () => {
                     {/* Accepting turns the invitation into a project, so the list underneath has to be reloaded. */}
                     <PendingInvitationsList className="mb-4" onAccepted={loadProjects} />
                     <ProjectPickerList projects={projects} activeProjectId={project?._id} onSelect={handleProjectSelect} autoFocusSearch className="mb-4" />
-                    <div className="border-t border-divider pt-4">
-                        <Button variant="primary" size="sm" className="w-full" onClick={() => navigate("/project-wizard")}>
-                            <Plus />
-                            <span>{t("project.create_new")}</span>
-                        </Button>
-                    </div>
+                    {/* Creating a project is an administrator's action: a plain member would get a refusal from the API. */}
+                    {canCreateProjects && (
+                        <div className="border-t border-divider pt-4">
+                            <Button variant="primary" size="sm" className="w-full" onClick={() => navigate("/project-wizard")}>
+                                <Plus />
+                                <span>{t("project.create_new")}</span>
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

@@ -1,0 +1,19 @@
+extends base-email
+
+block content
+  p Hello #{user.name || 'there'},
+  p
+    | You've been invited to join the organization 
+    strong #{organization.name}
+    |  as a 
+    strong.accent #{role}
+    | .
+  p Click the button below to accept this invitation and get started:
+  div(style="text-align: center;")
+    a.button(href=acceptUrl) Accept Invitation
+  p.muted
+    | Or copy and paste this link into your browser:
+    br
+    a.link(href=acceptUrl)
+      | #{acceptUrl}
+  p If you didn't request this invitation, you can safely ignore this email.
