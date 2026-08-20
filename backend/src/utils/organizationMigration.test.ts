@@ -14,7 +14,6 @@ interface FakeUser {
     _id: Types.ObjectId
     email: string
     name?: string
-    surname?: string
 }
 
 interface FakeProject {
@@ -30,10 +29,12 @@ interface FakeMembership {
     createdAt: Date
 }
 
-/** The database this migration is run against, rebuilt for every test. */
+/** The database the migration is run against, rebuilt for every test. */
 let users: FakeUser[]
 let projects: FakeProject[]
 let memberships: FakeMembership[]
+/** Organization memberships already stored before the migration runs. */
+let existingMemberships: { userId: Types.ObjectId; organizationId: Types.ObjectId; role: RoleInOrganization; invitationToken?: string }[]
 /** What the migration wrote: organizations opened, memberships created, projects reassigned. */
 let createdOrganizations: { _id: Types.ObjectId; name: string }[]
 let createdMemberships: { userId: string; organizationId: string; role: RoleInOrganization }[]
@@ -61,9 +62,10 @@ const aMembership = (user: FakeUser, project: FakeProject, role: RoleInProject, 
     })
 }
 
-/** A result that can be awaited straight away or sorted first, as the migration does both. */
-const queryResult = <T>(value: T) => ({
-    sort: () => Promise.resolve(value),
+/** A result that can be awaited, sorted or leaned on, as the migration does all three. */
+const queryResult = <T>(value: T): { sort: () => unknown; lean: () => Promise<T>; then: (resolve: (value: T) => unknown) => unknown } => ({
+    sort: () => queryResult(value),
+    lean: () => Promise.resolve(value),
     then: (resolve: (value: T) => unknown) => resolve(value)
 })
 
@@ -79,51 +81,39 @@ describe("migrateProjectsToOrganizations", () => {
         users = []
         projects = []
         memberships = []
+        existingMemberships = []
         createdOrganizations = []
         createdMemberships = []
         assignedProjects = {}
 
         vi.spyOn(Project, "find").mockImplementation((() => queryResult(projects)) as never)
-        vi.spyOn(Project, "updateOne").mockImplementation((({ _id }: { _id: Types.ObjectId }, update: { $set: { organizationId: Types.ObjectId } }) => {
-            assignedProjects[_id.toString()] = update.$set.organizationId.toString()
-            return Promise.resolve({ modifiedCount: 1 })
+
+        vi.spyOn(Project, "bulkWrite").mockImplementation(((operations: { updateOne: { filter: { _id: Types.ObjectId }; update: { $set: { organizationId: Types.ObjectId } } } }[]) => {
+            for (const operation of operations) {
+                assignedProjects[operation.updateOne.filter._id.toString()] = operation.updateOne.update.$set.organizationId.toString()
+            }
+            return Promise.resolve({ modifiedCount: operations.length })
         }) as never)
 
-        vi.spyOn(UserProject, "find").mockImplementation((({ projectId, invitationToken }: { projectId: Types.ObjectId; invitationToken?: null }) =>
-            queryResult(
-                memberships
-                    .filter(membership => membership.projectId.toString() === projectId.toString())
-                    // `invitationToken: null` in a filter means "not pending", the way mongoose reads it
-                    .filter(membership => (invitationToken === null ? !membership.invitationToken : true))
-            )) as never)
-
-        vi.spyOn(User, "findById").mockImplementation(((id: Types.ObjectId) => Promise.resolve(users.find(user => user._id.toString() === id?.toString()) ?? null)) as never)
+        // Every membership of the projects being migrated, in one read.
+        vi.spyOn(UserProject, "find").mockImplementation((() => queryResult(memberships)) as never)
+        vi.spyOn(User, "find").mockImplementation((() => queryResult(users)) as never)
 
         vi.spyOn(Organization, "findOne").mockImplementation((({ name }: { name: string }) => queryResult(createdOrganizations.find(organization => organization.name === name) ?? null)) as never)
 
-        vi.spyOn(UserOrganization, "findOne").mockImplementation((({ userId, organizationId, role }: { userId: Types.ObjectId; organizationId?: Types.ObjectId; role?: RoleInOrganization }) =>
-            queryResult(
-                createdMemberships.find(
-                    membership =>
-                        membership.userId === userId.toString() &&
-                        (organizationId === undefined || membership.organizationId === organizationId.toString()) &&
-                        (role === undefined || membership.role === role)
-                ) ?? null
-            )) as never)
+        vi.spyOn(Organization, "insertMany").mockImplementation(((documents: { _id: Types.ObjectId; name: string }[]) => {
+            createdOrganizations.push(...documents.map(document => ({ _id: document._id, name: document.name })))
+            return Promise.resolve(documents)
+        }) as never)
 
-        vi.spyOn(Organization.prototype, "save").mockImplementation(function (this: { _id: Types.ObjectId; name: string }) {
-            createdOrganizations.push({ _id: this._id, name: this.name })
-            return Promise.resolve(this) as never
-        })
+        // Serves both reads the migration does on this collection: the organizations an account already
+        // owns, and the rows that must not be written over.
+        vi.spyOn(UserOrganization, "find").mockImplementation((() => queryResult(existingMemberships)) as never)
 
-        vi.spyOn(UserOrganization.prototype, "save").mockImplementation(function (this: {
-            userId: Types.ObjectId
-            organizationId: Types.ObjectId
-            role: RoleInOrganization
-        }) {
-            createdMemberships.push({ userId: this.userId.toString(), organizationId: this.organizationId.toString(), role: this.role })
-            return Promise.resolve(this) as never
-        })
+        vi.spyOn(UserOrganization, "insertMany").mockImplementation(((rows: { userId: Types.ObjectId; organizationId: Types.ObjectId; role: RoleInOrganization }[]) => {
+            createdMemberships.push(...rows.map(row => ({ userId: row.userId.toString(), organizationId: row.organizationId.toString(), role: row.role })))
+            return Promise.resolve(rows)
+        }) as never)
     })
 
     afterEach(() => {
@@ -189,7 +179,7 @@ describe("migrateProjectsToOrganizations", () => {
         expect(roleOf(secondOwner)).toBe(RoleInOrganization.ADMIN)
     })
 
-    /** The invitee has to be inside the organization, or the project they are invited to would sit in a tenant they do not belong to. */
+    /** L'invitato deve stare dentro l'organizzazione, o il progetto a cui è invitato vivrebbe in un tenant che non lo comprende. */
     it("Given a project with a pending invitation, when it is migrated, then the invitee is already a member of the organization", async () => {
         const owner = aUser("owner@example.com", "Ada")
         const invitee = aUser("invitee@example.com")
@@ -200,6 +190,19 @@ describe("migrateProjectsToOrganizations", () => {
         await migrateProjectsToOrganizations(logger)
 
         expect(roleOf(invitee)).toBe(RoleInOrganization.MEMBER)
+    })
+
+    /** A pending invitation never grants more than plain membership, whatever role it was for. */
+    it("Given a pending invitation to own the project, when it is migrated, then it does not become administration of the organization", async () => {
+        const owner = aUser("owner@example.com", "Ada")
+        const invitedOwner = aUser("invited@example.com")
+        const project = aProject("checkout")
+        aMembership(owner, project, RoleInProject.OWNER)
+        aMembership(invitedOwner, project, RoleInProject.OWNER, { invitationToken: "a-pending-token" })
+
+        await migrateProjectsToOrganizations(logger)
+
+        expect(roleOf(invitedOwner)).toBe(RoleInOrganization.MEMBER)
     })
 
     /** A pending invitation is not a membership, so it cannot be what decides who owns the organization. */
@@ -231,7 +234,7 @@ describe("migrateProjectsToOrganizations", () => {
     it("Given an owner who already has an organization, when a further project of theirs is migrated, then no second organization is opened", async () => {
         const owner = aUser("owner@example.com", "Ada")
         const existingOrganizationId = new Types.ObjectId()
-        createdMemberships.push({ userId: owner._id.toString(), organizationId: existingOrganizationId.toString(), role: RoleInOrganization.OWNER })
+        existingMemberships.push({ userId: owner._id, organizationId: existingOrganizationId, role: RoleInOrganization.OWNER })
         const project = aProject("checkout")
         aMembership(owner, project, RoleInProject.OWNER)
 
@@ -239,6 +242,19 @@ describe("migrateProjectsToOrganizations", () => {
 
         expect(createdOrganizations).toHaveLength(0)
         expect(organizationOf(project)).toBe(existingOrganizationId.toString())
+    })
+
+    /** Whoever already holds a role keeps it: the owner of an organization must not be demoted by one of their own projects. */
+    it("Given a member who already belongs to the organization, when the project is migrated, then their row is left alone", async () => {
+        const owner = aUser("owner@example.com", "Ada")
+        const existingOrganizationId = new Types.ObjectId()
+        existingMemberships.push({ userId: owner._id, organizationId: existingOrganizationId, role: RoleInOrganization.OWNER })
+        const project = aProject("checkout")
+        aMembership(owner, project, RoleInProject.MEMBER)
+
+        await migrateProjectsToOrganizations(logger)
+
+        expect(createdMemberships).toHaveLength(0)
     })
 
     it("Given no project left without an organization, when the migration runs again, then it writes nothing", async () => {

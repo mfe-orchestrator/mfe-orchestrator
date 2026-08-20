@@ -11,6 +11,9 @@ export default fastifyPlugin(
         try {
             if (!fastify.config.NOSQL_DATABASE_URL) {
                 fastify.log.warn("Cannot see MongoDB database URL, will not connect")
+                // Still done: leaving the plugin hanging would time out the boot, so an installation
+                // started without a database would never answer, not even to say it has none.
+                done()
                 return
             }
 
