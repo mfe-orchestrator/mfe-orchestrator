@@ -770,8 +770,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/SwitchProjectButton.tsx": {
-    "mtime": 1787230923.3043985,
-    "ast_hash": "495950b5ae989a68d6dca4a65943e750",
+    "mtime": 1787214550.4228587,
+    "ast_hash": "90eec076cbd2527a5063fec983c9a4f0",
     "semantic_hash": ""
   },
   "frontend/src/components/atoms/button/Button.tsx": {
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "e2e/README.md": {
-    "mtime": 1787230999.9681957,
-    "ast_hash": "4dffd6c78a7ade869a73981274d5522c",
+    "mtime": 1786888775.8028138,
+    "ast_hash": "9e185475d14ef106986c596ffd13f5ed",
     "semantic_hash": ""
   },
   "frontend/index.html": {
@@ -1880,8 +1880,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/appUser.ts": {
-    "mtime": 1787239691.010116,
-    "ast_hash": "b4ee768d28cd0b1ef06873aab1207f34",
+    "mtime": 1787214872.8917074,
+    "ast_hash": "aa9fb3aed994cbecb377b2f119c6c5c9",
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/emailClient.ts": {
@@ -2360,48 +2360,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/organization-users/partials/OrganizationDetailsSection.tsx": {
-    "mtime": 1787231031.4729855,
-    "ast_hash": "948cdecd29745c33ead3908bf5c16d98",
-    "semantic_hash": ""
-  },
-  "backend/src/service/BaseAuthorizedService.test.ts": {
-    "mtime": 1787230788.5293467,
-    "ast_hash": "722e8ae8d5cb9ed0e14cf0b7740a4727",
-    "semantic_hash": ""
-  },
-  "backend/src/service/OrganizationService.test.ts": {
-    "mtime": 1787230788.5307007,
-    "ast_hash": "35239f7ff6ea8e668f107992c66440d2",
-    "semantic_hash": ""
-  },
-  "backend/src/service/ProjectService.test.ts": {
-    "mtime": 1787239718.7475536,
-    "ast_hash": "e7ee657c2a39d9f40e39c993db09039e",
-    "semantic_hash": ""
-  },
-  "backend/src/service/UserOrganizationService.test.ts": {
-    "mtime": 1787230788.5356407,
-    "ast_hash": "64171f540cb667263ce8cba0748a7797",
-    "semantic_hash": ""
-  },
-  "backend/src/service/UserProjectService.test.ts": {
-    "mtime": 1787230788.5343657,
-    "ast_hash": "16bb61ec81e7f727e30422bc4677407d",
-    "semantic_hash": ""
-  },
-  "e2e/tests/organizations/organization-members.spec.ts": {
-    "mtime": 1787239691.0144963,
-    "ast_hash": "7abce4d9586f1e0602f9258ac48ba6b1",
-    "semantic_hash": ""
-  },
-  "e2e/tests/organizations/organization-switch.spec.ts": {
-    "mtime": 1787239691.0144963,
-    "ast_hash": "d68fdbdf6c6b52a33697b51eeabd00ed",
-    "semantic_hash": ""
-  },
-  "e2e/tests/organizations/organization-visibility.spec.ts": {
-    "mtime": 1787239691.016944,
-    "ast_hash": "626b8591870362fac5ea6bc4b755e1af",
+    "mtime": 1787215160.8671677,
+    "ast_hash": "7e47c6b5d9bddd46c5ca568a4c9acc46",
     "semantic_hash": ""
   }
 }
