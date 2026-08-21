@@ -665,13 +665,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1787303721.852149,
-    "ast_hash": "fa173b1bd8765154adbfb2481fe8fe98",
+    "mtime": 1787304596.7974644,
+    "ast_hash": "08a99d7e04381fe7538fb0de22d15c16",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1787303721.8514805,
-    "ast_hash": "b49773e839a51ce3c72f086c8c5b5ed3",
+    "mtime": 1787304596.7969198,
+    "ast_hash": "61760d26f08aeddf2fcdc1048c0e92cc",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -685,8 +685,8 @@
     "semantic_hash": ""
   },
   "frontend/src/Routes.tsx": {
-    "mtime": 1787214649.025222,
-    "ast_hash": "e80c9279b629976d0cd823cd64570743",
+    "mtime": 1787304564.4258718,
+    "ast_hash": "0b0d74c4cf0f091fdc7ca4745b5da08d",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.ts": {
@@ -775,8 +775,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/atoms/button/Button.tsx": {
-    "mtime": 1786113955.8587296,
-    "ast_hash": "ec7cba2e51e2308e4f40af6018d8f558",
+    "mtime": 1787304693.6916156,
+    "ast_hash": "ddb788d576d41ee2fd3b3f95b2d8313c",
     "semantic_hash": ""
   },
   "frontend/src/components/atoms/button/index.ts": {
@@ -1450,13 +1450,13 @@
     "semantic_hash": ""
   },
   "frontend/src/theme/layout/Header.tsx": {
-    "mtime": 1787214497.0063438,
-    "ast_hash": "63c0f56521e6f54a878cff201cecdd0c",
+    "mtime": 1787304615.986139,
+    "ast_hash": "5839ca2c3dde1bd7a68cc721ae2e6071",
     "semantic_hash": ""
   },
   "frontend/src/theme/layout/MainLayout.tsx": {
-    "mtime": 1787214649.0343323,
-    "ast_hash": "6818304fc8cbe58c64225a95fb16f383",
+    "mtime": 1787304564.4248388,
+    "ast_hash": "a1f97e7c715ad7504a7f5a2c73dda2ff",
     "semantic_hash": ""
   },
   "frontend/src/types/ApiResponseDTO.ts": {
@@ -2320,8 +2320,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/SwitchOrganizationButton.tsx": {
-    "mtime": 1787215019.384685,
-    "ast_hash": "f95433c1a65eb62c6ba317c3b795c69a",
+    "mtime": 1787304543.4456978,
+    "ast_hash": "655d8903a4273590b6a7345743526fcb",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useOrganizationApi.ts": {
@@ -2390,18 +2390,23 @@
     "semantic_hash": ""
   },
   "e2e/tests/organizations/organization-members.spec.ts": {
-    "mtime": 1787239691.0144963,
-    "ast_hash": "7abce4d9586f1e0602f9258ac48ba6b1",
+    "mtime": 1787304609.5802116,
+    "ast_hash": "d27d4247f937d85d468c6103ebcd0820",
     "semantic_hash": ""
   },
   "e2e/tests/organizations/organization-switch.spec.ts": {
-    "mtime": 1787239691.0144963,
-    "ast_hash": "d68fdbdf6c6b52a33697b51eeabd00ed",
+    "mtime": 1787304609.5797827,
+    "ast_hash": "6ec788d576ee9c53040cc176f6f73a3c",
     "semantic_hash": ""
   },
   "e2e/tests/organizations/organization-visibility.spec.ts": {
     "mtime": 1787239691.016944,
     "ast_hash": "626b8591870362fac5ea6bc4b755e1af",
+    "semantic_hash": ""
+  },
+  "e2e/tests/organizations/multi-organization-login.spec.ts": {
+    "mtime": 1787304742.4474812,
+    "ast_hash": "ed68960920f9c394174ee25144644990",
     "semantic_hash": ""
   }
 }
