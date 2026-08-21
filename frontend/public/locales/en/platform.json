@@ -193,8 +193,12 @@
         "projectInfo": {
             "title": "Project Information",
             "name": "Name",
+            "nameRequired": "The project name is required",
+            "nameMinLength": "The name must be at least 2 characters long",
+            "description": "Description",
             "slug": "Slug",
-            "id": "ID"
+            "id": "ID",
+            "slugHint": "The slug and the ID cannot be changed: the slug is part of the path where already uploaded bundles are stored."
         },
         "dangerZone": {
             "title": "Danger Zone",
@@ -216,8 +220,8 @@
         },
         "notifications": {
             "projectDeleted": "Project deleted",
-            "projectNameUpdated": "Project name updated",
-            "projectNameUpdateFailed": "Failed to update project name"
+            "projectUpdated": "Project updated",
+            "projectUpdateFailed": "Failed to update project"
         }
     },
     "theme": {

@@ -30,6 +30,20 @@ export interface ProjectSummaryDTO {
     }
 }
 
+/**
+ * Cio che si puo cambiare di un progetto dopo la creazione.
+ *
+ * Lo slug non c'e' di proposito: entra nel percorso fisico dei bundle gia caricati
+ * (`<slug>-<id>/<mfe>/<versione>`), quindi cambiarlo renderebbe irraggiungibile cio che e' gia
+ * stato deployato. Il nome resta una pura etichetta.
+ */
+export interface ProjectUpdateDTO {
+    name?: string
+    /** `null` azzera la descrizione: e' cosi che l'API esprime "nessuna descrizione". */
+    description?: string | null
+    isActive?: boolean
+}
+
 interface AddUserToProjectDTO {
     email: string
     role: RoleInProject
@@ -82,7 +96,7 @@ const useProjectApi = () => {
         return response.data
     }
 
-    const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
+    const updateProject = async (id: string, project: ProjectUpdateDTO): Promise<Project> => {
         const response = await apiClient.doRequest<Project>({
             url: `/api/projects/${id}`,
             method: "PUT",
