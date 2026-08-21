@@ -196,11 +196,22 @@ export class ProjectService extends BaseAuthorizedService {
                 })
             }
 
+            // One field at a time rather than a spread of the request body. The route carries no
+            // schema, so a spread would write whatever the caller decides to send: `slug` included,
+            // and that one is part of the path already uploaded bundles live under
+            // (`<slug>-<id>/<microfrontend>/<version>`). Moving it would orphan every deployed file.
             // biome-ignore lint/suspicious/noExplicitAny: updateData needs to support MongoDB update operators dynamically
-            const updateData: any = { ...projectData }
-            if (updateData.description === null) {
+            const updateData: any = {}
+            if (projectData.name !== undefined) {
+                updateData.name = projectData.name
+            }
+            if (projectData.isActive !== undefined) {
+                updateData.isActive = projectData.isActive
+            }
+            if (projectData.description === null) {
                 updateData.$unset = { description: 1 }
-                delete updateData.description
+            } else if (projectData.description !== undefined) {
+                updateData.description = projectData.description
             }
 
             const updated = await Project.findByIdAndUpdate(projectId, updateData, {

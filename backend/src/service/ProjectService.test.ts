@@ -139,3 +139,64 @@ describe("findMine", () => {
         expect(await namesOf(user)).toEqual([])
     })
 })
+
+/** The protected gate the update goes through, surfaced so the spy has something to type against. */
+interface WithAuthorizationGate {
+    ensureAccessToProject: () => Promise<void>
+}
+
+describe("update", () => {
+    /** What the service actually asks mongo to write, which is the whole point of these tests. */
+    let written: Record<string, unknown> | undefined
+
+    beforeEach(() => {
+        written = undefined
+        // The route carries no body schema, so authorization is the only gate before the write: stub
+        // it open and watch what comes out the other side.
+        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "ensureAccessToProject").mockResolvedValue(undefined)
+        vi.spyOn(Project, "findByIdAndUpdate").mockImplementation(((_id: unknown, update: Record<string, unknown>) => {
+            written = update
+            return Promise.resolve({ name: "whatever" })
+        }) as never)
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    const update = (input: Record<string, unknown>) => new ProjectService(aUser()).update(String(newId()), input as never)
+
+    it("Given a new name, when the project is updated, then the name is written", async () => {
+        await update({ name: "Checkout" })
+
+        expect(written).toEqual({ name: "Checkout" })
+    })
+
+    /**
+     * The slug is part of the path already uploaded bundles live under, so it must survive a rename
+     * even when the caller explicitly asks for a new one.
+     */
+    it("Given a slug in the request body, when the project is updated, then the slug is not written", async () => {
+        await update({ name: "Checkout", slug: "something-else" })
+
+        expect(written).toEqual({ name: "Checkout" })
+    })
+
+    it("Given an organization in the request body, when the project is updated, then the project is not moved to it", async () => {
+        await update({ name: "Checkout", organizationId: String(newId()) })
+
+        expect(written).toEqual({ name: "Checkout" })
+    })
+
+    it("Given a null description, when the project is updated, then the description is unset", async () => {
+        await update({ description: null })
+
+        expect(written).toEqual({ $unset: { description: 1 } })
+    })
+
+    it("Given only a description, when the project is updated, then the name is left alone", async () => {
+        await update({ description: "the checkout flow" })
+
+        expect(written).toEqual({ description: "the checkout flow" })
+    })
+})

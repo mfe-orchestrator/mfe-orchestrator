@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify"
 import EnvironmentService from "../service/EnvironmentService"
 import MicrofrontendService from "../service/MicrofrontendService"
-import ProjectService, { ProjectCreateInput } from "../service/ProjectService"
+import ProjectService, { ProjectCreateInput, ProjectUpdateInput } from "../service/ProjectService"
 
 export default async function projectController(fastify: FastifyInstance) {
     // `organizationId` narrows the list to one organization, which is what the app asks for once one
@@ -52,13 +52,15 @@ export default async function projectController(fastify: FastifyInstance) {
 
     // Update project
     fastify.put<{
-        Body: Partial<ProjectCreateInput> & { description?: string | null }
+        Body: ProjectUpdateInput
         Params: {
             projectId: string
         }
     }>("/projects/:projectId", async (request, reply) => {
         const project = await new ProjectService(request.databaseUser).update(request.params.projectId, request.body)
-        return reply.send({ success: true, data: project })
+        // The updated project itself, like every other endpoint here: this was the one route wrapping
+        // its answer in an envelope, and nothing ever read it that way.
+        return reply.send(project)
     })
 
     // Delete project
