@@ -11,7 +11,7 @@ import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import NewProjectWizard from "@/pages/new-project-wizard/NewProjectWizard"
 import useOrganizationStore from "@/store/useOrganizationStore"
 import useProjectStore from "@/store/useProjectStore"
-import { getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
+import { clearProjectIdInLocalStorage, getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
 
 interface SelectProjectFormProps {
     /** Left out for a member who may not create projects in this organization. */
@@ -108,17 +108,34 @@ const SelectProjectWrapper: React.FC<React.PropsWithChildren> = props => {
         // previous answer.
         queryKey: ["projects-mine", organization?._id],
         queryFn: async () => {
+            const organizationId = organization?._id
             try {
-                const projects = await projectApi.getMineProjects(organization?._id)
-                projectStore.setProjects(projects)
-                if (projects.length === 1) {
-                    projectStore.setProject(projects[0])
-                    setProjectIdInLocalStorage(projects[0]._id)
+                const projects = await projectApi.getMineProjects(organizationId)
+
+                // Invalidating "projects-mine" matches by prefix, so the query of the organization being
+                // left behind is put back in flight as well. Its answer must no longer decide anything:
+                // it would hand the app a project belonging to a tenant the user has already left, and
+                // write it back over the one just chosen.
+                if (organizationId !== useOrganizationStore.getState().organization?._id) {
+                    return projects
                 }
-                //Here we have several projects
-                const projectId = getProjectIdFromLocalStorage()
-                if (projectId) {
-                    projectStore.setProject(projects.find(p => p._id === projectId))
+
+                projectStore.setProjects(projects)
+
+                // What gets to survive a refetch, in order: the project already in use, then the one
+                // remembered from a previous visit, and only then the single candidate there is nothing
+                // to ask about. Read fresh, because a refetch runs long after this closure was built.
+                const active = useProjectStore.getState().project
+                const rememberedId = getProjectIdFromLocalStorage()
+                const selected = projects.find(project => project._id === active?._id) ?? projects.find(project => project._id === rememberedId) ?? (projects.length === 1 ? projects[0] : undefined)
+
+                // Anything that is not in this organization is dropped instead of carried over, which
+                // leaves the picker to ask. Forgetting it too keeps the next visit from restoring it.
+                projectStore.setProject(selected)
+                if (selected) {
+                    setProjectIdInLocalStorage(selected._id)
+                } else {
+                    clearProjectIdInLocalStorage()
                 }
 
                 return projects
