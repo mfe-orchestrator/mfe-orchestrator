@@ -1,4 +1,4 @@
-import { Building2, FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
+import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
@@ -16,6 +16,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         setIsSidebarCollapsed(!isSidebarCollapsed)
     }
 
+    // Solo voci di progetto: il livello organizzazione vive nell'header, dal suo menu.
     const mainNavItems = [
         {
             name: "Microfrontends",
@@ -46,11 +47,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             name: t("integration.sidebar_title"),
             path: "/integration",
             icon: <LinkIcon />
-        },
-        {
-            name: t("organization_users.sidebar_title"),
-            path: "/organization-users",
-            icon: <Building2 />
         },
         {
             name: t("settings.title"),

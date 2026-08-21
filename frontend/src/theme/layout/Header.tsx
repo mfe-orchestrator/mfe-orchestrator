@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 import SwitchOrganizationButton from "@/components/SwitchOrganizationButton"
 import SwitchProjectButton from "@/components/SwitchProjectButton"
 import useOrganizationStore from "@/store/useOrganizationStore"
@@ -14,7 +15,10 @@ const Header: React.FC = () => {
             <h1 className="flex min-w-0 items-center gap-1 text-lg font-semibold text-foreground-secondary">
                 {organization && (
                     <>
-                        <span className="hidden truncate text-base font-normal sm:inline">{organization.name}</span>
+                        {/* Cliccabile: e' la strada breve verso l'organizzazione, che dalla sidebar non passa piu. */}
+                        <Link to="/organization" className="hidden truncate text-base font-normal hover:text-foreground hover:underline sm:inline" data-testid="header-organization-link">
+                            {organization.name}
+                        </Link>
                         <ChevronRight className="hidden size-4 shrink-0 sm:inline" aria-hidden="true" />
                     </>
                 )}

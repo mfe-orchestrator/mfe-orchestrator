@@ -86,7 +86,9 @@ const PrivateProjectRoutes: React.FC = () => {
                 </Route>
                 <Route path="/integration" element={<RouteWithSuspense element={<Integration />} />} />
                 <Route path="/project-users" element={<RouteWithSuspense element={<ProjectUsers />} />} />
-                <Route path="/organization-users" element={<RouteWithSuspense element={<OrganizationUsers />} />} />
+                <Route path="/organization" element={<RouteWithSuspense element={<OrganizationUsers />} />} />
+                {/* La pagina stava qui: i link e i preferiti che puntano al vecchio percorso restano validi. */}
+                <Route path="/organization-users" element={<Navigate to="/organization" replace />} />
                 <Route path="/storages" element={<RouteWithSuspense element={<Storages />} />} />
                 <Route path="/storages/new" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/storages/:id" element={<RouteWithSuspense element={<AddStorage />} />} />

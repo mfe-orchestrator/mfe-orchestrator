@@ -18,7 +18,7 @@ import {
 } from "../fixtures/appUser"
 
 /**
- * Pagina /organization-users: chi appartiene all'organizzazione e con quale ruolo.
+ * Pagina /organization: chi appartiene all'organizzazione e con quale ruolo.
  *
  * Il progetto viene creato via API prima di aprire la sessione, altrimenti la app mostra
  * il wizard di primo avvio al posto delle rotte e la pagina non viene mai renderizzata.
@@ -48,7 +48,7 @@ test.describe
         /** Apre la pagina membri e aspetta che abbia finito di caricare: e' un chunk lazy dentro ApiStatusHandler. */
         const openOrganizationUsers = async (browser: Browser) => {
             const { page } = await getSession(browser)
-            await page.goto("/organization-users")
+            await page.goto("/organization")
             await expect(page.getByTestId(`organization-member-${owner.email}`)).toBeVisible({ timeout: 30_000 })
             return page
         }

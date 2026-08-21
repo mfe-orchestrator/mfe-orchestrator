@@ -1232,6 +1232,9 @@
         "create": "Crea organizzazione",
         "create_new": "Crea nuova organizzazione",
         "created": "Organizzazione creata",
+        "menu_title": "Organizzazione",
+        "settings": "Impostazioni organizzazione",
+        "switch": "Cambia organizzazione",
         "switch_or_create": "Cambia o crea organizzazione",
         "switch_desc": "Seleziona l'organizzazione in cui lavorare o creane una nuova.",
         "name_label": "Nome",
@@ -1269,7 +1272,6 @@
         "pending_count_one": "Sei stato invitato a un'organizzazione"
     },
     "organization_users": {
-        "sidebar_title": "Organizzazione",
         "title": "Membri dell'organizzazione",
         "subtitle": "Gestisci chi appartiene a {{organization}} e con quale ruolo",
         "user_count": "{{count}} membri",

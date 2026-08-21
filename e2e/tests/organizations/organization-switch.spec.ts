@@ -47,6 +47,8 @@ test.describe
         const switchTo = async (browser: Browser, organizationId: string) => {
             const { page } = await getSession(browser)
             await page.getByTestId("switch-organization").click()
+            // Il pulsante apre il menu dell'organizzazione: la lista sta dietro "Cambia organizzazione".
+            await page.getByTestId("organization-switch-action").click()
             await page.getByTestId(`organization-option-${organizationId}`).click()
             await expect(page.getByTestId(`organization-option-${organizationId}`)).toHaveCount(0, { timeout: 30_000 })
             return page

@@ -1213,6 +1213,9 @@
         "create": "Create organization",
         "create_new": "Create new organization",
         "created": "Organization created",
+        "menu_title": "Organization",
+        "settings": "Organization settings",
+        "switch": "Switch organization",
         "switch_or_create": "Switch or create organization",
         "switch_desc": "Select the organization to work in or create a new one.",
         "name_label": "Name",
@@ -1250,7 +1253,6 @@
         "pending_count_one": "You've been invited to an organization"
     },
     "organization_users": {
-        "sidebar_title": "Organization",
         "title": "Organization members",
         "subtitle": "Manage who belongs to {{organization}} and with which role",
         "user_count": "{{count}} members",
