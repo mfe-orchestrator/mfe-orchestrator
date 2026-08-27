@@ -8,15 +8,17 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    Input,
+    SearchInput,
     Select,
     SelectContent,
+    SelectControl,
     SelectItem,
     SelectTrigger,
-    SelectValue
+    SelectValue,
+    Spinner
 } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CircleCheck, DownloadCloud, Loader2, Search, X } from "lucide-react"
+import { CircleCheck, DownloadCloud } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
@@ -124,8 +126,7 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
 
                 <div className="mt-2 flex flex-col gap-3">
                     {codeRepositories.length > 1 && (
-                        <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium text-foreground-secondary">{t("microfrontend.sourceCodeProvider")}</span>
+                        <SelectControl label={t("microfrontend.sourceCodeProvider")}>
                             <Select
                                 value={codeRepositoryId}
                                 onValueChange={value => {
@@ -144,13 +145,14 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </SelectControl>
                     )}
 
                     {repositoriesQuery.isPending ? (
                         <div className="flex items-center justify-center gap-2 py-10 text-sm text-foreground-secondary">
-                            <Loader2 className="size-4 animate-spin" />
-                            {t("microfrontend.import.loading")}
+                            <Spinner size={16} centerScreen={false} label={t("microfrontend.import.loading")} />
+                            {/* aria-hidden: lo Spinner annuncia già lo stesso testo nella sua live region */}
+                            <span aria-hidden="true">{t("microfrontend.import.loading")}</span>
                         </div>
                     ) : repositoriesQuery.isError ? (
                         <Alert variant="destructive">
@@ -162,20 +164,13 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
                         </Alert>
                     ) : (
                         <>
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground-secondary" aria-hidden="true" />
-                                <Input placeholder={t("microfrontend.import.searchPlaceholder")} className="pl-9 pr-9" fullWidth value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                                {searchTerm && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setSearchTerm("")}
-                                        aria-label={t("microfrontend.dashboard.clearSearch")}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-foreground-secondary transition-colors hover:bg-primary/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    >
-                                        <X className="size-4" />
-                                    </button>
-                                )}
-                            </div>
+                            <SearchInput
+                                placeholder={t("microfrontend.import.searchPlaceholder")}
+                                value={searchTerm}
+                                onValueChange={setSearchTerm}
+                                onClear={() => setSearchTerm("")}
+                                clearLabel={t("microfrontend.import.clearSearch")}
+                            />
 
                             <div className="flex items-center justify-between gap-2">
                                 <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground-secondary">
@@ -228,8 +223,8 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
                     <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={importMutation.isPending}>
                         {t("common.cancel")}
                     </Button>
-                    <Button type="button" onClick={() => importMutation.mutate()} disabled={importMutation.isPending || selectedRepositoryIds.length === 0}>
-                        {importMutation.isPending ? <Loader2 className="animate-spin" /> : <DownloadCloud />}
+                    <Button type="button" onClick={() => importMutation.mutate()} loading={importMutation.isPending} loadingLabel={t("common.loading")} disabled={selectedRepositoryIds.length === 0}>
+                        {!importMutation.isPending && <DownloadCloud />}
                         {t("microfrontend.import.import", { count: selectedRepositoryIds.length })}
                     </Button>
                 </DialogFooter>

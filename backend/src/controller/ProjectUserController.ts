@@ -6,6 +6,7 @@ import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import Project from "../models/ProjectModel"
 import User, { UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
+import UserOrganizationService from "../service/UserOrganizationService"
 import UserProjectService from "../service/UserProjectService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { toObjectId } from "../utils/mongooseUtils"
@@ -171,12 +172,13 @@ export default async function projectUserController(fastify: FastifyInstance) {
             throw new EntityNotFoundError("User is not a member of this project")
         }
 
-        // Clean up users that were only created to be invited and never accepted
+        // Clean up users that were only created to be invited and never accepted. The organization
+        // membership was created by this very invitation, so it goes first: the account is dropped
+        // only once nothing at all points at it any more.
         if (user.status === UserStatus.INVITED) {
-            const remaining = await UserProject.countDocuments({ userId: toObjectId(userId) })
-            if (remaining === 0) {
-                await User.findByIdAndDelete(toObjectId(userId))
-            }
+            const userOrganizationService = new UserOrganizationService(request.databaseUser)
+            await userOrganizationService.pruneImplicitMembership(userId, project.organizationId)
+            await userOrganizationService.deleteUserIfOnlyEverInvited(toObjectId(userId))
         }
 
         return reply.status(204).send()

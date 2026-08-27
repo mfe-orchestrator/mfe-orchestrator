@@ -8,6 +8,8 @@ export enum RoleInProject {
 }
 
 export interface Project {
+    /** The organization the project belongs to: a project sits in exactly one. */
+    organizationId: string
     name: string
     slug: string
     description?: string
@@ -28,6 +30,20 @@ export interface ProjectSummaryDTO {
     }
 }
 
+/**
+ * Cio che si puo cambiare di un progetto dopo la creazione.
+ *
+ * Lo slug non c'e' di proposito: entra nel percorso fisico dei bundle gia caricati
+ * (`<slug>-<id>/<mfe>/<versione>`), quindi cambiarlo renderebbe irraggiungibile cio che e' gia
+ * stato deployato. Il nome resta una pura etichetta.
+ */
+export interface ProjectUpdateDTO {
+    name?: string
+    /** `null` azzera la descrizione: e' cosi che l'API esprime "nessuna descrizione". */
+    description?: string | null
+    isActive?: boolean
+}
+
 interface AddUserToProjectDTO {
     email: string
     role: RoleInProject
@@ -36,9 +52,14 @@ interface AddUserToProjectDTO {
 const useProjectApi = () => {
     const apiClient = useApiClient()
 
-    const getMineProjects = async (): Promise<Project[]> => {
+    /**
+     * The projects the user can open. Narrowed to one organization when given, which is what every
+     * screen of the app asks for: it works inside one organization at a time.
+     */
+    const getMineProjects = async (organizationId?: string): Promise<Project[]> => {
         const response = await apiClient.doRequest<Project[]>({
-            url: "/api/projects/mine"
+            url: "/api/projects/mine",
+            params: organizationId ? { organizationId } : undefined
         })
         return response.data
     }
@@ -75,7 +96,7 @@ const useProjectApi = () => {
         return response.data
     }
 
-    const updateProject = async (id: string, project: Partial<Project>): Promise<Project> => {
+    const updateProject = async (id: string, project: ProjectUpdateDTO): Promise<Project> => {
         const response = await apiClient.doRequest<Project>({
             url: `/api/projects/${id}`,
             method: "PUT",

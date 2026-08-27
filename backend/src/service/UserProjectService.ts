@@ -4,6 +4,7 @@ import { fastify } from ".."
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
+import Organization from "../models/OrganizationModel"
 import Project, { IProject } from "../models/ProjectModel"
 import User, { IUser, IUserDocument, UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
@@ -11,6 +12,7 @@ import UserService, { recordLogin } from "../service/UserService"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
+import UserOrganizationService from "./UserOrganizationService"
 
 const INVITATION_TTL_DAYS = 5
 const INVITATION_TTL_MS = INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000
@@ -41,6 +43,13 @@ interface IPendingInvitation {
     projectId: string
     projectName: string
     projectDescription?: string
+    /**
+     * The organization the project belongs to. Carried along because the app works inside one
+     * organization at a time: accepting an invitation to a project of another one has to move the user
+     * there, or they would accept it and then not find the project.
+     */
+    organizationId: string
+    organizationName?: string
     role: RoleInProject
     invitedAt: Date
     expiresAt?: Date
@@ -48,9 +57,11 @@ interface IPendingInvitation {
 class UserProjectService extends BaseAuthorizedService {
     emailSenderService = new EmailSenderService()
     userService = new UserService()
+    userOrganizationService = new UserOrganizationService()
 
     async addUserToProjectByEmail(projectId: string | Schema.Types.ObjectId, email: string, role: RoleInProject): Promise<IUserProject | undefined> {
         const projectIdObj = toObjectId(projectId)
+        await this.ensureAccessToProject(projectIdObj)
         const project = await Project.findById(projectIdObj)
         if (!project) {
             throw new ProjectNotFoundError(projectIdObj.toString())
@@ -72,6 +83,12 @@ class UserProjectService extends BaseAuthorizedService {
                 false
             )
         }
+
+        // Being invited to a project means being let into the organization that owns it: without a
+        // membership there the invitee would accept an invitation to a project sitting in a tenant
+        // they do not belong to. The row is created as a plain member, which on its own grants
+        // nothing — only the projects they are invited to are reachable.
+        await this.userOrganizationService.ensureMembership(user._id, project.organizationId)
 
         // A user can only have one relationship per project
         const existing = await UserProject.findOne({ userId: toObjectId(user._id), projectId: projectIdObj })
@@ -175,6 +192,7 @@ class UserProjectService extends BaseAuthorizedService {
     }
 
     async resendInvitation(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId): Promise<IUserProject> {
+        await this.ensureAccessToProject(projectId)
         const project = await Project.findById(projectId)
         if (!project) {
             throw new ProjectNotFoundError(projectId.toString())
@@ -218,21 +236,30 @@ class UserProjectService extends BaseAuthorizedService {
             invitationToken: { $ne: null },
             // Expired invitations can no longer be accepted, so they are not offered at all
             $or: [{ inviationTokenExpiresAt: null }, { inviationTokenExpiresAt: { $gt: new Date() } }]
-        }).populate<{ projectId: IProject | null }>("projectId", "name description")
+        }).populate<{ projectId: IProject | null }>("projectId", "name description organizationId")
 
-        return userProjects
-            .filter(up => Boolean(up.projectId))
-            .map<IPendingInvitation>(up => {
-                const project = up.projectId as unknown as IProject
-                return {
-                    projectId: project._id.toString(),
-                    projectName: project.name,
-                    projectDescription: project.description,
-                    role: up.role,
-                    invitedAt: up.createdAt,
-                    expiresAt: up.inviationTokenExpiresAt
-                }
-            })
+        const pending = userProjects.filter(up => Boolean(up.projectId))
+
+        // One query for all of them: the switcher needs the organization name beside the project name,
+        // and a lookup per invitation would be a query per row of a list that is usually one row long.
+        const organizationIds = pending.map(up => (up.projectId as unknown as IProject).organizationId)
+        const organizations = await Organization.find({ _id: { $in: organizationIds } }, { name: 1 }).lean()
+        const organizationNameById = new Map(organizations.map(organization => [organization._id.toString(), organization.name]))
+
+        return pending.map<IPendingInvitation>(up => {
+            const project = up.projectId as unknown as IProject
+            const organizationId = project.organizationId?.toString()
+            return {
+                projectId: project._id.toString(),
+                projectName: project.name,
+                projectDescription: project.description,
+                organizationId,
+                organizationName: organizationNameById.get(organizationId),
+                role: up.role,
+                invitedAt: up.createdAt,
+                expiresAt: up.inviationTokenExpiresAt
+            }
+        })
     }
 
     /** Accepts an invitation from inside the app: being signed in already proves the identity, so no token is needed. */
@@ -276,6 +303,13 @@ class UserProjectService extends BaseAuthorizedService {
 
         if (!result?.deletedCount) {
             throw createBusinessException({ code: "INVITATION_NOT_FOUND", message: "No pending invitation for this project", statusCode: 404 })
+        }
+
+        // The organization membership was a side effect of this invitation, so declining takes it back
+        // as well — unless the user has other projects there, or a role of their own in it.
+        const project = await Project.findById(toObjectId(projectId), { organizationId: 1 })
+        if (project && user) {
+            await this.userOrganizationService.pruneImplicitMembership(user._id, project.organizationId)
         }
     }
 
@@ -342,6 +376,7 @@ class UserProjectService extends BaseAuthorizedService {
     }
 
     async getProjectUsers(projectId: string | Schema.Types.ObjectId): Promise<IUserInProject[] | undefined> {
+        await this.ensureAccessToProject(projectId)
         // Verify project exists
         const project = await Project.findById(projectId)
         if (!project) {

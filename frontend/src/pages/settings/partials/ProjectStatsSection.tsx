@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardHeader, CardTitle, StatTile } from "@mfe-orchestrator/design-system"
 import { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/atoms"
 
-interface StatCardProps {
+interface ProjectStat {
     icon: ReactNode
     title: string
     value: number | string
@@ -13,29 +13,8 @@ interface StatCardProps {
     href?: string
 }
 
-const StatCard = ({ icon, title, value, buttonText, onAction, href }: StatCardProps) => {
-    const { t } = useTranslation()
-    const buttonTestReal = buttonText || t("settings.stats.viewAll")
-    return (
-        <div className="p-3 bg-muted rounded-md border-2 border-border flex-[1_0_180px] lg:flex-[1_0_280px]">
-            <div className="flex flex-col gap-2 h-full">
-                <div>
-                    <div className="flex items-center gap-2 border-b border-divider pb-2">
-                        <div className="text-foreground [&>svg]:w-4 [&>svg]:h-4">{icon}</div>
-                        <h3 className="text-base text-foreground font-medium">{title}</h3>
-                    </div>
-                    <p className="text-5xl text-foreground-secondary text-center mt-3">{value}</p>
-                </div>
-                <Button variant="link" onClick={onAction} asChild={!!href} className="self-end -me-2 -mb-1 min-w-[unset]">
-                    {href ? <Link to={href}>{buttonTestReal}</Link> : buttonTestReal}
-                </Button>
-            </div>
-        </div>
-    )
-}
-
 interface ProjectStatsSectionProps {
-    stats: StatCardProps[]
+    stats: ProjectStat[]
 }
 
 export function ProjectStatsSection({ stats }: ProjectStatsSectionProps) {
@@ -44,12 +23,25 @@ export function ProjectStatsSection({ stats }: ProjectStatsSectionProps) {
     return (
         <Card>
             <CardHeader className="border-none">
-                <h2 className="text-lg font-semibold">{t("settings.stats.title")}</h2>
+                <CardTitle as="h2">{t("settings.stats.title")}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="flex flex-wrap items-center gap-4">
                     {stats.map((stat, index) => (
-                        <StatCard key={index} icon={stat.icon} title={stat.title} value={stat.value} buttonText={stat.buttonText} onAction={stat.onAction} href={stat.href} />
+                        <StatTile
+                            key={index}
+                            size="lg"
+                            labelAs="h3"
+                            className="flex-[1_0_180px] lg:flex-[1_0_280px]"
+                            icon={stat.icon}
+                            label={stat.title}
+                            value={stat.value}
+                            action={
+                                <Button variant="link" onClick={stat.onAction} asChild={!!stat.href} className="-me-2 -mb-1 min-w-[unset]">
+                                    {stat.href ? <Link to={stat.href}>{stat.buttonText || t("settings.stats.viewAll")}</Link> : stat.buttonText || t("settings.stats.viewAll")}
+                                </Button>
+                            }
+                        />
                     ))}
                 </div>
             </CardContent>

@@ -8,7 +8,8 @@ interface ProjectState {
     projects?: Project[]
     environments?: EnvironmentDTO[]
     environment?: EnvironmentDTO
-    setProject: (project: Project) => void
+    /** Cleared with no argument when the organization changes: the project belonged to the previous one. */
+    setProject: (project?: Project) => void
     setProjects: (projects: Project[]) => void
     setEnvironments: (environments: EnvironmentDTO[]) => void
     setEnvironment: (environment: EnvironmentDTO) => void
@@ -17,7 +18,7 @@ interface ProjectState {
 const useProjectStore = create<ProjectState>()(
     devtools(
         (set, get) => ({
-            setProject: (project: Project) => {
+            setProject: (project?: Project) => {
                 set({ project })
             },
             setProjects: (projects: Project[]) => {

@@ -1,5 +1,7 @@
 # Microfrontend Orchestrator AI Coding Instructions
 
+> `.cursorrules` in the repo root is the source of truth. This file mirrors it - when they disagree, `.cursorrules` wins, and any change here should be made there too.
+
 This is a **monorepo** microfrontend orchestrator service with a Fastify backend and React frontend for managing microfrontends across multiple environments.
 
 ## Architecture Overview
@@ -19,11 +21,17 @@ This is a **monorepo** microfrontend orchestrator service with a Fastify backend
 - **Database**: MongoDB with Mongoose, Redis for caching
 
 **Frontend (React + TypeScript)**:
-- **UI**: shadcn/ui components with Tailwind CSS
+- **UI**: `@mfe-orchestrator/design-system` components with Tailwind CSS
 - **State**: React Query for server state, Zustand for client state
 - **Routing**: React Router with lazy-loaded pages
 - **Forms**: react-hook-form with TypeScript validation
 - **i18n**: Complete internationalization with react-i18next
+
+**Key Features**:
+- **Canary deployments**: `CanaryType` (`RANDOM` | `ON_SESSION` | `ON_USER`, default `ON_SESSION`) and `CanaryDeploymentType` (`BASED_ON_VERSION` | `BASED_ON_URL`) in `backend/src/models/MicrofrontendModel.ts`; enrolled canary users in `DeploymentCanaryUsersController.ts`. See https://mfe-orchestrator.dev/documentation/docs/microfrontends/canary-releases
+- **Federation integration**: `FederationIntegrationService` replaced the old host injection, which is gone. See https://mfe-orchestrator.dev/documentation/docs/integration/overview
+- **Environment-free serving**: manifest, global variables and microfrontend config are served both with an environment slug and without it, via the `auto/:projectId` route forms (`ServeController.ts`)
+- **Builds**: build pipeline pages and API. See https://mfe-orchestrator.dev/documentation/docs/deployments/build-status
 
 ## Key Patterns & Conventions
 
@@ -85,9 +93,9 @@ When adding new pages:
 - `src/errors/` - Custom error classes for different scenarios
 
 ### Frontend Key Directories  
-- `src/pages/` - All page components (lazy-loaded)
+- `src/pages/` - All page components (lazy-loaded), 17 feature directories including `builds`, `profile`, `dependencies`, `integration`, `templates-library`
 - `src/components/` - Reusable UI components
-- `src/components/ui/` - shadcn/ui base components
+- `src/components/ui/` - Local leftovers only (`DeleteConfirmationDialog`, `Sidebar`); shared UI lives in `@mfe-orchestrator/design-system`
 - `src/store/` - Zustand stores for global state
 - `src/hooks/` - Custom hooks and API functions
 
@@ -105,23 +113,23 @@ When adding new pages:
 **Monorepo Commands**:
 ```bash
 # Development
-pnpm dev              # Start both backend and frontend
-pnpm dev:backend      # Start backend only  
-pnpm dev:frontend     # Start frontend only
+pnpm dev              # Start backend and frontend (turbo)
 
 # Building
 pnpm build            # Build all packages
-pnpm build:backend    # Build backend only
-pnpm build:frontend   # Build frontend only
 
 # Code Quality
 pnpm lint             # Lint all packages with Biome
+pnpm lint:imports     # Remove unused imports repo-wide
 pnpm format           # Format all packages with Biome
 pnpm typecheck        # TypeScript check for all packages
 
 # Testing
-pnpm test             # Run tests in all packages
+pnpm test             # Unit tests in all packages
+pnpm test:e2e         # Playwright end-to-end suite
 ```
+
+There are no per-package `dev:*` / `build:*` scripts - turbo fans the root scripts out to every workspace package (`frontend`, `backend`, `e2e`).
 
 **Local Development**:
 ```bash
@@ -174,7 +182,7 @@ const form = useForm<FormData>({
 2. **Code Quality**: Use Biome for linting/formatting (`pnpm lint`, `pnpm format`)
 3. **Authorization**: Always use service methods for database operations (never direct model access in controllers)
 4. **Error Handling**: Use specific error classes from `src/errors/` 
-5. **UI Components**: Reuse existing shadcn/ui components before creating new ones
+5. **UI Components**: Import from `@mfe-orchestrator/design-system` before creating new ones; do not add to `src/components/ui/`
 6. **Icons**: Only use lucide-react icons
 7. **Routing**: Use React Router (NOT Next.js router)
 8. **Package Manager**: Use pnpm for all dependencies

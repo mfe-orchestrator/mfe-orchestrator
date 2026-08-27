@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
+import { Select, SelectContent, SelectControl, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
 import React from "react"
 import { useTranslation } from "react-i18next"
 import { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -15,11 +15,9 @@ const MicrofrontendSelector: React.FC<MicrofrontendSelectorProps> = ({ microfron
     const { t } = useTranslation()
 
     return (
-        <div className={cn("flex flex-col gap-1 w-full max-w-80", className)}>
-            <span className="text-sm font-medium text-foreground-secondary">{t("integration.microfrontend_select_label")}:</span>
+        <SelectControl label={t("integration.microfrontend_select_label")} id="microfrontend-select" className={cn("w-full max-w-80", className)}>
             <Select
                 value={selectedMicrofrontend?.slug}
-                id="microfrontend-select"
                 onValueChange={value => {
                     onSelect(microfrontends.find(mfe => mfe.slug === value))
                 }}
@@ -47,7 +45,7 @@ const MicrofrontendSelector: React.FC<MicrofrontendSelectorProps> = ({ microfron
                     </SelectContent>
                 )}
             </Select>
-        </div>
+        </SelectControl>
     )
 }
 

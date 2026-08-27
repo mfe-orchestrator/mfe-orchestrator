@@ -1,7 +1,11 @@
 import { FastifyBaseLogger } from "fastify"
-import { QueryFilter } from "mongoose"
+import { Model, QueryFilter } from "mongoose"
+import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepositoryModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
+import Storage, { STORAGE_SECRET_PATHS } from "../models/StorageModel"
+import { migrateProjectsToOrganizations } from "./organizationMigration"
+import { isSecretEncryptionEnabled } from "./secretCrypto"
 
 /**
  * Values the canary type could hold before the three current strategies replaced them. Both were the
@@ -39,6 +43,52 @@ export const migrateLegacyCanaryTypes = async (logger: FastifyBaseLogger): Promi
     }
 }
 
+/** Anything not carrying the marker written by secretCrypto is still a credential in the clear. */
+const NOT_ENCRYPTED = { $exists: true, $not: /^enc:v1:/ }
+
+/**
+ * Rewrites, encrypted, the credentials written before a key was configured.
+ *
+ * Reading them back needs no migration — a value with no marker is handed over untouched — so this is
+ * only about what a dump of the database shows. It is a re-save per document and nothing else: the
+ * save hook is what encrypts, and it skips whatever is already encrypted, which is what makes a second
+ * run cost one empty query per collection.
+ *
+ * Deployments are in here because a deployment freezes a copy of the storages of its project, and the
+ * serve API reads the bucket keys from that copy.
+ */
+const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> => {
+    if (!isSecretEncryptionEnabled()) return
+
+    // The three models have nothing in common but the re-save, so they are walked through the loosest
+    // shape that still gives back documents to save.
+    type SecretHolder = Model<Record<string, unknown>>
+    type SecretFilter = QueryFilter<Record<string, unknown>>
+
+    const anyPlaintextIn = (paths: string[]) => ({ $or: paths.map(path => ({ [path]: NOT_ENCRYPTED })) })
+
+    const collections: Array<[string, SecretHolder, SecretFilter]> = [
+        ["storage", Storage as unknown as SecretHolder, anyPlaintextIn(STORAGE_SECRET_PATHS) as SecretFilter],
+        ["code repository", CodeRepository as unknown as SecretHolder, anyPlaintextIn(CODE_REPOSITORY_SECRET_PATHS) as SecretFilter],
+        // $elemMatch so both halves of the criterion have to be met by the same storage of the
+        // snapshot: spelled out as a dotted path, a snapshot holding one already encrypted credential
+        // beside a plaintext one would satisfy neither half on the element that still needs rewriting.
+        ["deployment", Deployment as unknown as SecretHolder, { storages: { $elemMatch: anyPlaintextIn(STORAGE_SECRET_PATHS) } } as SecretFilter]
+    ]
+
+    for (const [label, model, filter] of collections) {
+        let encrypted = 0
+        for await (const document of model.find(filter).cursor()) {
+            await document.save()
+            encrypted++
+        }
+
+        if (encrypted > 0) {
+            logger.info(`Encrypted the credentials of ${encrypted} ${label} document(s) at rest`)
+        }
+    }
+}
+
 /**
  * Every data migration the application needs, run once the database connection is up.
  *
@@ -47,7 +97,11 @@ export const migrateLegacyCanaryTypes = async (logger: FastifyBaseLogger): Promi
  */
 export const runMigrations = async (logger: FastifyBaseLogger): Promise<void> => {
     try {
+        // First: everything else in the application reads a project through its organization, so a
+        // project still missing one would be invisible to whoever owns it.
+        await migrateProjectsToOrganizations(logger)
         await migrateLegacyCanaryTypes(logger)
+        await encryptStoredSecrets(logger)
     } catch (error) {
         logger.error({ error }, "Error while running data migrations")
     }

@@ -2,6 +2,7 @@ import fastifyEnv from "@fastify/env"
 import dotenv from "dotenv"
 import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyPlugin from "fastify-plugin"
+import { assertSecretEncryptionKeyIsUsable, isSecretEncryptionEnabled } from "../utils/secretCrypto"
 import { TELEMETRY_DEFAULT_ENDPOINT, TELEMETRY_DEFAULT_INTERVAL_HOURS } from "../utils/telemetry"
 
 dotenv.config()
@@ -157,6 +158,12 @@ export default fastifyPlugin(
                     type: "string",
                     default: "/upload-microfrontends"
                 },
+                // 32 bytes, base64 or hex, encrypting the credentials the console stores for a
+                // project: bucket keys, storage connection strings, repository tokens. Unset, they
+                // are written in the clear as before. See docs/SECRETS.md.
+                SECRETS_ENCRYPTION_KEY: {
+                    type: "string"
+                },
                 CODE_REPOSITORY_GITHUB_CLIENT_ID: {
                     type: "string"
                 },
@@ -220,6 +227,15 @@ export default fastifyPlugin(
         /* istanbul ignore next */
         if (NODE_ENVS.find(validName => validName === (process.env.NODE_ENV ?? "prod")) === undefined) {
             throw new Error("NODE_ENV is not valid, it must be one of 'prod', 'test' or 'local', not \"" + process.env.NODE_ENV + '"')
+        }
+
+        // A key of the wrong length has to stop the boot: letting it through would produce an
+        // application that starts and then fails on the first storage it touches, which reads as a
+        // broken bucket rather than as a typo in the environment.
+        assertSecretEncryptionKeyIsUsable()
+
+        if (!isSecretEncryptionEnabled()) {
+            fastify.log.warn("SECRETS_ENCRYPTION_KEY is not set: storage credentials and repository tokens are stored unencrypted. See docs/SECRETS.md")
         }
 
         fastifyEnv(fastify, configOptions, done)

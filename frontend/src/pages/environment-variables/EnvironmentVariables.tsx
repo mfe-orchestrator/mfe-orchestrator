@@ -1,4 +1,4 @@
-import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, EmptyState, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CirclePlus, Pencil, Trash2 } from "lucide-react"
 import React, { useCallback, useState } from "react"
@@ -138,61 +138,60 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                 {!variables || Object.keys(variables).length === 0 ? (
                     <Card>
                         <CardContent className="p-0">
-                            <div className="flex flex-col items-center justify-center p-8 text-center">
-                                <p className="text-foreground mb-2">{t("environmentVariables.noVariables")}</p>
-                                <Button onClick={handleAddNew}>
-                                    <CirclePlus />
-                                    {t("environmentVariables.addVariable")}
-                                </Button>
-                            </div>
+                            <EmptyState
+                                size="sm"
+                                description={t("environmentVariables.noVariables")}
+                                actions={
+                                    <Button onClick={handleAddNew}>
+                                        <CirclePlus />
+                                        {t("environmentVariables.addVariable")}
+                                    </Button>
+                                }
+                            />
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="rounded-md border-2 border-border overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-primary/25">
-                                    <TableHead className="text-foreground">{t("environmentVariables.variable")}</TableHead>
-                                    {environments.map(env => (
-                                        <TableHead key={env.slug} className="text-foreground">
-                                            {env.name}
-                                        </TableHead>
-                                    ))}
-                                    <TableHead />
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {Object.keys(variables).map(variableKey => {
-                                    const variable = variables[variableKey]
-                                    return (
-                                        <TableRow key={variable.key}>
-                                            <TableCell>{variableKey}</TableCell>
-                                            {environments.map(env => {
-                                                const value = variables[variableKey].values.find(v => v.environmentId === env._id)
-                                                return <TableCell key={env.slug}>{value ? <span>{value.value}</span> : <span className="text-foreground/50">-</span>}</TableCell>
-                                            })}
-                                            <TableCell>
-                                                <div className="flex justify-end gap-1">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(variable)} title={t("common.edit")}>
-                                                        <Pencil />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => handleDeleteClick(variable.key)}
-                                                        className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
-                                                        title={t("common.delete")}
-                                                    >
-                                                        <Trash2 />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
+                    <Table framed>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{t("environmentVariables.variable")}</TableHead>
+                                {environments.map(env => (
+                                    <TableHead key={env.slug}>{env.name}</TableHead>
+                                ))}
+                                <TableHead />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Object.keys(variables).map(variableKey => {
+                                const variable = variables[variableKey]
+                                return (
+                                    <TableRow key={variable.key}>
+                                        <TableCell>{variableKey}</TableCell>
+                                        {environments.map(env => {
+                                            const value = variables[variableKey].values.find(v => v.environmentId === env._id)
+                                            return <TableCell key={env.slug}>{value ? <span>{value.value}</span> : <span className="text-foreground/50">-</span>}</TableCell>
+                                        })}
+                                        <TableCell>
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(variable)} title={t("common.edit")}>
+                                                    <Pencil />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleDeleteClick(variable.key)}
+                                                    className="text-destructive hover:bg-destructive/15 hover:text-destructive-active"
+                                                    title={t("common.delete")}
+                                                >
+                                                    <Trash2 />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
                 )}
             </SinglePageLayout>
             <DeleteConfirmationDialog

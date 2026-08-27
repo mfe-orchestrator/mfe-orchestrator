@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
+import { Alert, AlertDescription, Card, CardContent, CardHeader, CardTitle, NumberedSteps, SelectField } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { CheckCircle2, ExternalLink, Eye, EyeOff, Info } from "lucide-react"
 import { useState } from "react"
@@ -10,7 +10,7 @@ import { z } from "zod"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import useCodeRepositoriesApi, { AddRepositoryGitlabDTO, GitlabProject } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useCodeRepositoriesApi, { AddRepositoryGitlabDTO, GitlabProject, TestConnectionGitlabDTO } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 const gitlabFormSchema = z.object({
@@ -23,7 +23,7 @@ const gitlabFormSchema = z.object({
 
 type AddGitlabFormValues = z.infer<typeof gitlabFormSchema>
 
-type TestConnectionData = Pick<AddRepositoryGitlabDTO, "name" | "url" | "pat">
+type TestConnectionData = TestConnectionGitlabDTO
 
 const AddGitlabRepositoryPage = () => {
     const { t } = useTranslation()
@@ -69,7 +69,8 @@ const AddGitlabRepositoryPage = () => {
                 testConnectionMutation.mutateAsync({
                     name: data.name,
                     url: data.gitlabData.url,
-                    pat: data.accessToken
+                    pat: data.accessToken,
+                    repositoryId: params.id
                 })
             }
 
@@ -80,11 +81,7 @@ const AddGitlabRepositoryPage = () => {
 
     const testConnectionMutation = useMutation({
         mutationFn: async (data: TestConnectionData) => {
-            // Cast to full DTO with empty groupPath and groupId for test connection
-            const testPayload: AddRepositoryGitlabDTO = {
-                ...data
-            }
-            const out = await repositoryApi.testConnectionGitlab(testPayload)
+            const out = await repositoryApi.testConnectionGitlab(data)
             return out.sort((a, b) => a.full_name.localeCompare(b.full_name))
         },
         onError: (error: unknown) => {
@@ -174,7 +171,7 @@ const AddGitlabRepositoryPage = () => {
                                         disabled={addRepositoryMutation.isPending || testConnectionMutation.isPending || editRepositoryMutation.isPending}
                                         onClick={() => {
                                             const { name, url, pat } = form.getValues()
-                                            testConnectionMutation.mutateAsync({ name, url, pat })
+                                            testConnectionMutation.mutateAsync({ name, url, pat, repositoryId: params.id })
                                         }}
                                     >
                                         {t("codeRepositories.gitlab.testConnection")}
@@ -238,31 +235,23 @@ const AddGitlabRepositoryPage = () => {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-6 w-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-medium">1</div>
-                                        <div>
-                                            <p className="font-medium">{t("codeRepositories.gitlab.steps.step1.title")}</p>
-                                            <p className="text-sm text-muted-foreground">{t("codeRepositories.gitlab.steps.step1.description")}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-6 w-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-medium">2</div>
-                                        <div>
-                                            <p className="font-medium">{t("codeRepositories.gitlab.steps.step2.title")}</p>
-                                            <p className="text-sm text-muted-foreground">{t("codeRepositories.gitlab.steps.step2.description")}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start gap-3">
-                                        <div className="h-6 w-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-medium">3</div>
-                                        <div>
-                                            <p className="font-medium">{t("codeRepositories.gitlab.steps.step3.title")}</p>
-                                            <p className="text-sm text-muted-foreground">{t("codeRepositories.gitlab.steps.step3.description")}</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <NumberedSteps
+                                    tone="primary"
+                                    steps={[
+                                        {
+                                            title: t("codeRepositories.gitlab.steps.step1.title"),
+                                            description: t("codeRepositories.gitlab.steps.step1.description")
+                                        },
+                                        {
+                                            title: t("codeRepositories.gitlab.steps.step2.title"),
+                                            description: t("codeRepositories.gitlab.steps.step2.description")
+                                        },
+                                        {
+                                            title: t("codeRepositories.gitlab.steps.step3.title"),
+                                            description: t("codeRepositories.gitlab.steps.step3.description")
+                                        }
+                                    ]}
+                                />
 
                                 <Button variant="secondary" size="sm" asChild className="w-full">
                                     <a href={form.watch("url") || "https://gitlab.com"} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">

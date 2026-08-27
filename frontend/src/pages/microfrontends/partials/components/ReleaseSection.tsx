@@ -44,6 +44,7 @@ export const ReleaseSection: React.FC<ReleaseSectionProps> = ({ isEdit, versions
                                 ]}
                                 required
                                 containerClassName="flex-[1_1_240px]"
+                                className="w-full"
                             />
                             {watch("version") === "custom" && (
                                 <TextField
@@ -94,6 +95,7 @@ export const ReleaseSection: React.FC<ReleaseSectionProps> = ({ isEdit, versions
                                     }))}
                                     required
                                     containerClassName="flex-[1_1_240px]"
+                                    className="w-full"
                                 />
                                 <SelectField
                                     name="canary.deploymentType"
@@ -104,6 +106,7 @@ export const ReleaseSection: React.FC<ReleaseSectionProps> = ({ isEdit, versions
                                     }))}
                                     required
                                     containerClassName="flex-[1_1_240px]"
+                                    className="w-full"
                                 />
                             </div>
                             {/* The three types behave in genuinely different ways, and the name of each is not enough to tell them apart. */}

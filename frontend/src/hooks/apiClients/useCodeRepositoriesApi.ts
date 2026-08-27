@@ -17,6 +17,11 @@ export interface AddRepositoryAzureDTO {
 export interface TestConnectionAzureRepositoryAzureDTO {
     pat: string
     organization: string
+    /**
+     * Connessione da cui prendere il token quando non è stato ridigitato. Il backend non restituisce
+     * mai il token, quindi in modifica il campo contiene il segnaposto e non è utilizzabile.
+     */
+    repositoryId?: string
 }
 
 export interface AddRepositoryGitlabDTO {
@@ -26,6 +31,9 @@ export interface AddRepositoryGitlabDTO {
     groupPath?: string
     groupId?: string
 }
+
+/** Come sopra: in modifica il token non c'è, e la connessione si prova con quello già salvato. */
+export type TestConnectionGitlabDTO = Pick<AddRepositoryGitlabDTO, "name" | "url" | "pat"> & { repositoryId?: string }
 
 export enum CodeRepositoryProvider {
     GITHUB = "GITHUB",
@@ -354,7 +362,7 @@ const useCodeRepositoriesApi = () => {
         })
     }
 
-    const testConnectionGitlab = async (data: AddRepositoryGitlabDTO): Promise<GitlabProject[]> => {
+    const testConnectionGitlab = async (data: TestConnectionGitlabDTO): Promise<GitlabProject[]> => {
         const response = await apiClient.doRequest<GitlabProject[]>({
             url: `/api/repositories/gitlab/test`,
             method: "POST",

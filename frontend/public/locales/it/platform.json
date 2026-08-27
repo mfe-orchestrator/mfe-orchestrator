@@ -9,7 +9,10 @@
         "page_title": "{{page}} · {{app}}",
         "error": {
             "generic": "Si è verificato un errore. Riprova più tardi.",
-            "not_found": "Pagina non trovata"
+            "not_found": "Pagina non trovata",
+            "not_found_title": "Ops! Pagina non trovata",
+            "not_found_description": "La pagina che stai cercando non esiste o è stata spostata.",
+            "back_home": "Torna alla home"
         }
     },
     "integration": {
@@ -164,7 +167,8 @@
         "remove": "Rimuovi",
         "back": "Indietro",
         "saving": "Salvataggio...",
-        "copy": "Copia"
+        "copy": "Copia",
+        "copied": "Copiato"
     },
     "setup": {
         "title": "Configurazione Iniziale",
@@ -189,8 +193,12 @@
         "projectInfo": {
             "title": "Informazioni Progetto",
             "name": "Nome",
+            "nameRequired": "Il nome del progetto \u00e8 obbligatorio",
+            "nameMinLength": "Il nome deve contenere almeno 2 caratteri",
+            "description": "Descrizione",
             "slug": "Slug",
             "id": "ID",
+            "slugHint": "Slug e ID non sono modificabili: lo slug fa parte del percorso in cui sono archiviati i bundle gi\u00e0 caricati.",
             "copy": "Copia"
         },
         "dangerZone": {
@@ -213,8 +221,8 @@
         },
         "notifications": {
             "projectDeleted": "Progetto eliminato",
-            "projectNameUpdated": "Nome del progetto aggiornato",
-            "projectNameUpdateFailed": "Impossibile aggiornare il nome del progetto"
+            "projectUpdated": "Progetto aggiornato",
+            "projectUpdateFailed": "Impossibile aggiornare il progetto"
         }
     },
     "theme": {
@@ -554,6 +562,15 @@
                 "confirmation": "Vuoi davvero rimuovere l'immagine del profilo?"
             }
         },
+        "marketing": {
+            "title": "Comunicazioni commerciali",
+            "subtitle": "Decidi se ricevere email con novità e aggiornamenti sul prodotto",
+            "grantedAt": "Consenso prestato il {{date}}",
+            "notifications": {
+                "granted": "Consenso marketing attivato",
+                "withdrawn": "Consenso marketing revocato"
+            }
+        },
         "notifications": {
             "personalDataUpdated": "Dati personali aggiornati"
         }
@@ -611,6 +628,7 @@
             "noRepositories": "Questa connessione non espone alcun repository.",
             "noSearchResults": "Nessun repository corrisponde alla ricerca.",
             "searchPlaceholder": "Cerca repository...",
+            "clearSearch": "Cancella la ricerca dei repository",
             "selectAll": "Seleziona tutti",
             "selectedCount": "{{count}} di {{total}} selezionati",
             "alreadyImported": "Già importato",
@@ -1205,5 +1223,94 @@
             "MAJOR_BEHIND": "Major indietro",
             "UNKNOWN": "Sconosciuto"
         }
+    },
+    "organization": {
+        "select_title": "Seleziona un'organizzazione",
+        "select_desc": "Scegli l'organizzazione in cui lavorare: i progetti che vedi appartengono solo a questa.",
+        "create_title": "Crea la tua organizzazione",
+        "create_desc": "Un'organizzazione raccoglie i tuoi progetti e le persone che vi accedono.",
+        "create": "Crea organizzazione",
+        "create_new": "Crea nuova organizzazione",
+        "created": "Organizzazione creata",
+        "menu_title": "Organizzazione",
+        "settings": "Impostazioni organizzazione",
+        "switch": "Cambia organizzazione",
+        "switch_or_create": "Cambia o crea organizzazione",
+        "switch_desc": "Seleziona l'organizzazione in cui lavorare o creane una nuova.",
+        "name_label": "Nome",
+        "name_placeholder": "Inserisci il nome dell'organizzazione",
+        "name_required": "Il nome dell'organizzazione è obbligatorio",
+        "name_min_length": "Il nome deve contenere almeno 2 caratteri",
+        "description_label": "Descrizione",
+        "description_placeholder": "Inserisci la descrizione dell'organizzazione",
+        "no_organizations": "Nessuna organizzazione",
+        "no_organizations_desc": "Crea la tua prima organizzazione per iniziare a lavorare sui progetti.",
+        "search_placeholder": "Cerca un'organizzazione...",
+        "no_results": "Nessuna organizzazione corrisponde alla ricerca",
+        "updated": "Organizzazione aggiornata",
+        "deleted": "Organizzazione eliminata",
+        "deleting": "Eliminazione...",
+        "details_title": "Dati dell'organizzazione",
+        "id_label": "ID",
+        "danger_zone_title": "Zona di pericolo",
+        "danger_zone_subtitle": "Azioni irreversibili. Procedi con cautela.",
+        "delete_title": "Elimina organizzazione",
+        "delete_description": "L'organizzazione e i suoi membri vengono eliminati. L'operazione non è reversibile.",
+        "delete_blocked": "L'organizzazione contiene ancora {{count}} progetti: eliminali prima di poterla eliminare.",
+        "delete_button": "Elimina organizzazione",
+        "delete_warning": "Questa operazione non è reversibile",
+        "delete_dialog_description": "Stai per eliminare {{organization}} e tutte le sue appartenenze.",
+        "delete_confirmation_hint": "Scrivi {{organization}} per confermare"
+    },
+    "organization_invitation": {
+        "title": "Invito all'organizzazione",
+        "description": "Sei stato invitato a unirti a {{organization}} con il ruolo di {{role}}.",
+        "accept": "Accetta invito",
+        "accepted": "Invito accettato",
+        "declined": "Invito rifiutato",
+        "pending_count": "{{count}} organizzazioni a cui sei stato invitato",
+        "pending_count_one": "Sei stato invitato a un'organizzazione"
+    },
+    "organization_users": {
+        "title": "Membri dell'organizzazione",
+        "subtitle": "Gestisci chi appartiene a {{organization}} e con quale ruolo",
+        "user_count": "{{count}} membri",
+        "user_count_one": "Un membro",
+        "no_users": "Nessun membro in questa organizzazione",
+        "user": "Utente",
+        "email": "Email",
+        "role": "Ruolo",
+        "projects": "Progetti",
+        "project_count": "{{count}} progetti",
+        "project_count_one": "Un progetto",
+        "all_projects": "Tutti i progetti",
+        "select_role": "Seleziona un ruolo",
+        "role_required": "Il ruolo è obbligatorio",
+        "role_updated": "Ruolo aggiornato",
+        "roles": {
+            "owner": "Proprietario",
+            "admin": "Amministratore",
+            "member": "Membro"
+        },
+        "invite_user": "Invita utente",
+        "invite_user_modal_title": "Invita un utente nell'organizzazione",
+        "invite_user_modal_description": "Riceverà un invito via email. Un membro accede solo ai progetti a cui viene invitato.",
+        "send_invitation": "Invia invito",
+        "invite_success": "Invito inviato",
+        "invite_resent": "Invito inviato di nuovo",
+        "invite_revoked": "Invito revocato",
+        "invite_expires": "Scade il",
+        "pending_invites": "{{count}} inviti in attesa",
+        "pending_invites_one": "Un invito in attesa",
+        "resend_invite": "Invia di nuovo",
+        "revoke_invite": "Revoca invito",
+        "cannot_invite_self": "Fai già parte di questa organizzazione",
+        "already_member": "Questo utente è già membro dell'organizzazione",
+        "already_invited": "Questo utente ha già un invito in attesa",
+        "user_removed": "Utente rimosso dall'organizzazione",
+        "confirm_remove_title": "Rimuovi utente",
+        "confirm_remove": "Sei sicuro di voler rimuovere {{name}} dall'organizzazione? Perderà l'accesso a tutti i progetti al suo interno.",
+        "confirm_revoke_title": "Revoca invito",
+        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
     }
 }

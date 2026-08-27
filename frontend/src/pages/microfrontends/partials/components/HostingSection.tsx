@@ -26,10 +26,13 @@ export const HostingSection: React.FC<HostingSectionProps> = ({ storages }) => {
                 <CardDescription>{t("microfrontend.hosting_information_description")}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 pt-3">
-                <div className="flex gap-2 flex-1">
+                {/* I campi descrivono insieme un solo indirizzo: stanno in riga e vanno a capo
+                    solo quando non ci entrano, invece di occupare una riga intera a testa. */}
+                <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
                     <SelectField
                         name="host.type"
-                        containerClassName="flex-1"
+                        containerClassName="flex-[1_1_240px]"
+                        className="w-full"
                         label={t("microfrontend.hosting_type")}
                         options={[
                             { value: "MFE_ORCHESTRATOR_HUB", label: t("microfrontend.mfe_orchestrator_hub") },
@@ -45,7 +48,8 @@ export const HostingSection: React.FC<HostingSectionProps> = ({ storages }) => {
                     {hostType === "CUSTOM_SOURCE" && (
                         <SelectField
                             name="host.storageId"
-                            containerClassName="flex-1"
+                            containerClassName="flex-[1_1_240px]"
+                            className="w-full"
                             label={t("microfrontend.source")}
                             required
                             options={storages?.map(storage => {
@@ -57,11 +61,11 @@ export const HostingSection: React.FC<HostingSectionProps> = ({ storages }) => {
                             })}
                         />
                     )}
+
+                    {hostType === "CUSTOM_URL" && <TextField name="host.url" containerClassName="flex-[1_1_240px]" label={t("microfrontend.custom_url")} placeholder="https://example.com" required />}
+
+                    <TextField name="host.entryPoint" containerClassName="flex-[1_1_240px]" label={t("microfrontend.entry_point")} placeholder="index.js" />
                 </div>
-
-                {hostType === "CUSTOM_URL" && <TextField name="host.url" label={t("microfrontend.custom_url")} placeholder="https://example.com" required />}
-
-                <TextField name="host.entryPoint" label={t("microfrontend.entry_point")} placeholder="index.js" />
             </CardContent>
         </Card>
     )

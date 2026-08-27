@@ -2,12 +2,26 @@ import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { AzureStorageConfig } from "../client/AzureStorageAccount"
 import { GoogleStorageConfig } from "../client/GoogleStorageAccount"
 import { S3ClientConfig } from "../client/S3Buckets"
+import { encryptedFields } from "../utils/encryptedFieldsPlugin"
+import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 
 export enum StorageType {
     AZURE = "AZURE",
     AWS = "AWS",
     GOOGLE = "GOOGLE"
 }
+
+/**
+ * The keys of an authConfig that are a credential rather than an address.
+ *
+ * What is left out is left out on purpose: bucket, container, region, account name, tenant and client
+ * id say which resource is being talked to, not how to prove you may. Keeping them readable is what
+ * lets the list screen name a storage and the edit form come back filled in, and none of them is
+ * usable on its own.
+ */
+export const STORAGE_SECRET_KEYS = ["secretAccessKey", "accountKey", "connectionString", "clientSecret", "jsonKey"] as const
+
+export const STORAGE_SECRET_PATHS = STORAGE_SECRET_KEYS.map(key => `authConfig.${key}`)
 
 export type IStorageAuth =
     | {
@@ -30,6 +44,7 @@ export type IStorage = Document<ObjectId> &
         projectId: ObjectId
         default?: boolean
         path?: string
+        toFrontendObject: () => Record<string, unknown>
     }
 // Main storage schema
 const storageSchema = new Schema<IStorage>(
@@ -106,6 +121,26 @@ const storageSchema = new Schema<IStorage>(
         discriminatorKey: "type"
     }
 )
+
+storageSchema.plugin(encryptedFields, { model: "Storage", paths: STORAGE_SECRET_PATHS })
+
+/**
+ * The storage as the console may see it: everything but the credentials, which are replaced by the
+ * placeholder rather than dropped, so the edit form still comes back with its required fields filled
+ * and submitting it untouched means "keep the key you already have".
+ */
+storageSchema.methods.toFrontendObject = function (): Record<string, unknown> {
+    const object = this.toObject()
+    delete object.__v
+
+    for (const key of STORAGE_SECRET_KEYS) {
+        if (object.authConfig?.[key]) {
+            object.authConfig[key] = SECRET_PLACEHOLDER
+        }
+    }
+
+    return object
+}
 
 const Storage = mongoose.model<IStorage>("Storage", storageSchema)
 export default Storage

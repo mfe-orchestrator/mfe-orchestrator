@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
+import useOrganizationStore from "@/store/useOrganizationStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
 
@@ -23,6 +24,7 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
     const { t } = useTranslation()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
+    const { organization } = useOrganizationStore()
     const [loading, setLoading] = useState(false)
     const form = useForm<MainDataForm>({ defaultValues: { name: project?.name ?? "", description: project?.description ?? "" } })
 
@@ -30,6 +32,9 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
         setLoading(true)
         try {
             const created = await projectApi.createProject({
+                // The project is created inside the organization currently in use: the wizard is only
+                // ever reached from behind the organization picker.
+                organizationId: organization?._id ?? "",
                 name: data.name,
                 slug: slugify(data.name),
                 description: data.description

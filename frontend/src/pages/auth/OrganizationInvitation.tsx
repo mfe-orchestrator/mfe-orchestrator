@@ -1,0 +1,130 @@
+import { IconTile, Spinner } from "@mfe-orchestrator/design-system"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { AxiosError } from "axios"
+import { MailX } from "lucide-react"
+import { FormProvider, useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
+import { useNavigate, useParams } from "react-router-dom"
+import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
+import { setToken } from "@/authentication/tokenUtils"
+import { Button } from "@/components/atoms"
+import TextField from "@/components/input/TextField.rhf"
+import { ApiStatusHandler } from "@/components/organisms"
+import useInvitationApi, { AcceptInvitationDTO } from "@/hooks/apiClients/useInvitationApi"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
+import useUserStore from "@/store/useUserStore"
+
+interface FormValues {
+    password?: string
+    confirmPassword?: string
+}
+
+const ISSUER = "microfrontend.orchestrator.hub"
+
+/** Friendly screen for an invitation link that can't be loaded (404 = token unknown/expired). */
+const InvitationError: React.FC<{ error: unknown }> = ({ error }) => {
+    const { t } = useTranslation()
+    const navigate = useNavigate()
+    const notFound = error instanceof AxiosError && error.response?.status === 404
+
+    return (
+        <div className="flex flex-col items-center gap-4 text-center">
+            {/* tone muted tingerebbe il glifo di grigio: qui l'icona è l'unico accento della schermata */}
+            <IconTile size="md" tone="muted" className="text-primary" icon={<MailX />} />
+            <div>
+                <h3 className="font-semibold text-foreground">{t(notFound ? "project_invitation.not_found_title" : "project_invitation.error_title")}</h3>
+                <p className="mt-1 text-sm text-foreground-secondary">{t(notFound ? "project_invitation.not_found_description" : "project_invitation.error_description")}</p>
+            </div>
+            <Button className="w-full" onClick={() => navigate("/")}>
+                {t("project_invitation.go_to_login")}
+            </Button>
+        </div>
+    )
+}
+
+/** The emailed counterpart of the in-app list: an invitation to the organization itself. */
+const OrganizationInvitation = () => {
+    const { t } = useTranslation()
+    const { token } = useParams<{ token: string }>()
+    const navigate = useNavigate()
+    const notifications = useToastNotificationStore()
+    const userStore = useUserStore()
+    const { getOrganizationInvitation, acceptOrganizationInvitation } = useInvitationApi()
+
+    const form = useForm<FormValues>()
+
+    const invitationQuery = useQuery({
+        queryKey: ["organization-invitation", token],
+        queryFn: () => getOrganizationInvitation(token || ""),
+        enabled: !!token,
+        retry: false
+    })
+
+    const invitation = invitationQuery.data
+
+    const acceptMutation = useMutation({
+        mutationFn: (data: AcceptInvitationDTO) => acceptOrganizationInvitation(token || "", data),
+        onSuccess: response => {
+            setToken(response.accessToken, ISSUER)
+            userStore.setUser(response.user)
+            notifications.showSuccessNotification({ message: t("organization_invitation.accepted") })
+            navigate("/")
+        }
+    })
+
+    const onAccept = (values: FormValues) => {
+        acceptMutation.mutate(invitation?.needsPassword ? { password: values.password } : {})
+    }
+
+    return (
+        <AuthenticationLayout
+            title={t("organization_invitation.title")}
+            description={invitation ? t("organization_invitation.description", { organization: invitation.organizationName, role: invitation.role }) : undefined}
+        >
+            <ApiStatusHandler queries={[invitationQuery]} errorComponent={error => <InvitationError error={error} />}>
+                <FormProvider {...form}>
+                    <form onSubmit={form.handleSubmit(onAccept)}>
+                        <div className="grid gap-4">
+                            {invitation?.needsPassword && (
+                                <>
+                                    <TextField
+                                        name="password"
+                                        label={t("auth.password")}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        dataTestId="invitation-password"
+                                        rules={{
+                                            required: t("common.required_field") as string,
+                                            minLength: { value: 8, message: t("auth.password_min_length") }
+                                        }}
+                                    />
+                                    <TextField
+                                        name="confirmPassword"
+                                        label={t("auth.confirm_password")}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        dataTestId="invitation-confirm-password"
+                                        rules={{
+                                            required: t("common.required_field") as string,
+                                            validate: (value: string) => value === form.getValues("password") || t("auth.passwords_dont_match")
+                                        }}
+                                    />
+                                </>
+                            )}
+
+                            {acceptMutation.isPending ? (
+                                <Spinner />
+                            ) : (
+                                <Button type="submit" className="w-full" dataTestId="accept-invitation">
+                                    {t("organization_invitation.accept")}
+                                </Button>
+                            )}
+                        </div>
+                    </form>
+                </FormProvider>
+            </ApiStatusHandler>
+        </AuthenticationLayout>
+    )
+}
+
+export default OrganizationInvitation

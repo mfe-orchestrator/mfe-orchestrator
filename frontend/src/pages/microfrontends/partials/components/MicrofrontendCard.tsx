@@ -1,4 +1,4 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, DescriptionItem, DescriptionList, Meter } from "@mfe-orchestrator/design-system"
 import { Cog, GitBranch, Hammer, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -41,17 +41,21 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
 
             <CardContent className="flex flex-grow flex-col gap-3 py-3">
                 {hasRepository && (
-                    <dl className="flex flex-col gap-1.5 text-sm">
-                        <div className="flex items-center gap-2">
-                            <dt className="flex items-center gap-2 text-foreground-secondary">
-                                <GitBranch className="size-4 shrink-0" aria-hidden="true" />
-                                <span className="sr-only">{t("microfrontend.card.repository")}</span>
-                            </dt>
-                            <dd className="min-w-0 truncate" title={mfe.codeRepository?.name}>
+                    <DescriptionList orientation="inline">
+                        <DescriptionItem
+                            className="flex-nowrap items-center"
+                            label={
+                                <>
+                                    <GitBranch className="size-4 shrink-0" aria-hidden="true" />
+                                    <span className="sr-only">{t("microfrontend.card.repository")}</span>
+                                </>
+                            }
+                        >
+                            <span className="block truncate" title={mfe.codeRepository?.name}>
                                 {mfe.codeRepository?.name || t("microfrontend.card.repository")}
-                            </dd>
-                        </div>
-                    </dl>
+                            </span>
+                        </DescriptionItem>
+                    </DescriptionList>
                 )}
 
                 {canary && (
@@ -63,18 +67,7 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                             </span>
                             <span className="shrink-0 text-sm font-semibold tabular-nums">{showCanaryShare ? `${canaryPercentage}%` : t("microfrontend.canary_enrolled_users")}</span>
                         </div>
-                        {showCanaryShare && (
-                            <div
-                                className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary/20"
-                                role="progressbar"
-                                aria-valuenow={canaryPercentage}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                                aria-label={t("microfrontend.canaryReleaseActive")}
-                            >
-                                <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${canaryPercentage}%` }} />
-                            </div>
-                        )}
+                        {showCanaryShare && <Meter className="mt-2" value={canaryPercentage} label={t("microfrontend.canaryReleaseActive")} />}
                         {canary.version && (
                             <p className="mt-2 truncate text-xs text-foreground-secondary">
                                 {t("microfrontend.canaryVersion")}: {canary.version}

@@ -1,5 +1,5 @@
-import { Card, SwitchField as Switch } from "@mfe-orchestrator/design-system"
-import { GripVertical, Loader2, PencilIcon, PlusCircle, Save, TrashIcon, X } from "lucide-react"
+import { Card, ColorSwatch, SwitchField as Switch } from "@mfe-orchestrator/design-system"
+import { GripVertical, PencilIcon, PlusCircle, Save, TrashIcon, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -48,11 +48,7 @@ const SingleEnviromentSee: React.FC<SingleEnviromentSeeProps> = ({ environment, 
                         <GripVertical className="size-4" />
                     </span>
                 )}
-                <div
-                    className="w-5 h-5 rounded-full flex-shrink-0 border-2 border-border"
-                    style={{ backgroundColor: environment.color }}
-                    title={t("environment.color_tooltip", { name: environment.name })}
-                />
+                <ColorSwatch size="md" color={environment.color} title={t("environment.color_tooltip", { name: environment.name })} />
                 <div>
                     <div className="flex items-baseline gap-2">
                         <h4 className="font-medium text-foreground">{environment.name}</h4>
@@ -207,56 +203,50 @@ export const EnvironmentList: React.FC<EnvironmentListProps> = ({ environments, 
 
     return (
         <div className="mt-8">
-            {loading ? (
-                <Loader2 className="animate-spin" />
-            ) : (
-                <>
-                    <h3 className="text-sm font-medium uppercase text-foreground-secondary tracking-wide mb-2">{t("environment.your_environments")}</h3>
-                    {environmentList && (
-                        <ul>
-                            {environmentList.map((env, index) => {
-                                const key = env._id || index
-                                const dragId = env._id || String(index)
-                                const isEditing = key === editingId
-                                return (
-                                    <li
-                                        key={key}
-                                        {...(isEditing ? {} : getItemProps(dragId))}
-                                        className={cn("mb-2 last:mb-0 rounded-lg", draggingId === dragId && "opacity-50", dragOverId === dragId && "outline-2 outline-dashed outline-primary")}
-                                    >
-                                        {isEditing ? (
-                                            <SingleEnviromentEdit environment={env} onSubmit={onSaveEnvironment(index)} onCancelEdit={onCancelSingle(index)} />
-                                        ) : (
-                                            <SingleEnviromentSee
-                                                environment={env}
-                                                onDelete={onDeleteSingle(index)}
-                                                onEdit={onEditSingle(index)}
-                                                disableIcons={Boolean(editingId)}
-                                                dragHandleProps={editingId === undefined && environmentList.length > 1 ? getHandleProps(dragId) : undefined}
-                                            />
-                                        )}
-                                    </li>
-                                )
-                            })}
-                        </ul>
-                    )}
-                    {editingId === undefined && (
-                        <div className="flex justify-start gap-2 mt-4">
-                            <Button onClick={onAddEnvironment} disabled={editingId !== undefined} variant="secondary">
-                                <PlusCircle />
-                                {t("environment.add_environment")}
-                            </Button>
-                        </div>
-                    )}
-                    {environmentList && environmentList.length !== 0 && (
-                        <div className="flex justify-end gap-2 mt-4">
-                            <Button onClick={onSaveEnvironmentWrapper} disabled={loading} variant="primary" dataTestId="environments-save">
-                                <Save />
-                                {t("common.save")}
-                            </Button>
-                        </div>
-                    )}
-                </>
+            <h3 className="text-sm font-medium uppercase text-foreground-secondary tracking-wide mb-2">{t("environment.your_environments")}</h3>
+            {environmentList && (
+                <ul>
+                    {environmentList.map((env, index) => {
+                        const key = env._id || index
+                        const dragId = env._id || String(index)
+                        const isEditing = key === editingId
+                        return (
+                            <li
+                                key={key}
+                                {...(isEditing ? {} : getItemProps(dragId))}
+                                className={cn("mb-2 last:mb-0 rounded-lg", draggingId === dragId && "opacity-50", dragOverId === dragId && "outline-2 outline-dashed outline-primary")}
+                            >
+                                {isEditing ? (
+                                    <SingleEnviromentEdit environment={env} onSubmit={onSaveEnvironment(index)} onCancelEdit={onCancelSingle(index)} />
+                                ) : (
+                                    <SingleEnviromentSee
+                                        environment={env}
+                                        onDelete={onDeleteSingle(index)}
+                                        onEdit={onEditSingle(index)}
+                                        disableIcons={Boolean(editingId)}
+                                        dragHandleProps={editingId === undefined && environmentList.length > 1 ? getHandleProps(dragId) : undefined}
+                                    />
+                                )}
+                            </li>
+                        )
+                    })}
+                </ul>
+            )}
+            {editingId === undefined && (
+                <div className="flex justify-start gap-2 mt-4">
+                    <Button onClick={onAddEnvironment} disabled={editingId !== undefined} variant="secondary">
+                        <PlusCircle />
+                        {t("environment.add_environment")}
+                    </Button>
+                </div>
+            )}
+            {environmentList && environmentList.length !== 0 && (
+                <div className="flex justify-end gap-2 mt-4">
+                    <Button onClick={onSaveEnvironmentWrapper} loading={loading} loadingLabel={t("common.saving")} variant="primary" dataTestId="environments-save">
+                        <Save />
+                        {t("common.save")}
+                    </Button>
+                </div>
             )}
         </div>
     )

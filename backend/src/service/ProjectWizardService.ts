@@ -69,7 +69,7 @@ export class ProjectWizardService extends BaseAuthorizedService {
     }
 
     async createNew(newProjectDto: ProjectCreateInput, creatorUserId: ObjectId) {
-        const project = await new ProjectService().create({ ...newProjectDto, isActive: true }, creatorUserId)
+        const project = await new ProjectService(this.getUser()).create({ ...newProjectDto, isActive: true }, creatorUserId)
         const machine = projectWizardStateMachine.getMachine({
             id: project._id.toString()
         })

@@ -14,14 +14,23 @@ This is a **monorepo** microfrontend orchestrator project with:
 
 - **Backend**: Fastify (Node.js/TypeScript) with MongoDB, Redis
 - **Frontend**: React with TypeScript, React Router, TanStack Query, Zustand
-- Uses shadcn/ui components, Tailwind CSS, i18n for internationalization
+- Uses `@mfe-orchestrator/design-system` components, Tailwind CSS, i18n for internationalization
 
 ### Workspace Structure
+
+`pnpm-workspace.yaml` declares three packages: `frontend`, `backend`, `e2e`.
 
 ```
 /
 ├── backend/           # Fastify backend package
 ├── frontend/          # React frontend package
+├── e2e/               # Playwright end-to-end suite package
+├── docs/              # Feature documentation (CANARY, BUILDS, INTEGRATION, ...)
+├── docker/            # Production Docker assets
+├── docker-local/      # Local dev compose stack (MongoDB, Redis)
+├── helm/              # Helm chart
+├── terraform/         # Infrastructure as code
+├── nginx/             # Nginx configuration
 ├── package.json       # Workspace root with shared scripts
 ├── pnpm-workspace.yaml # Workspace configuration
 ├── turbo.json         # Turbo build configuration
@@ -29,6 +38,13 @@ This is a **monorepo** microfrontend orchestrator project with:
 ├── lefthook.yml       # Git hooks configuration
 └── commitlint.config.js # Commit message validation
 ```
+
+### Key Features
+
+- **Canary deployments**: `CanaryType` (`RANDOM` | `ON_SESSION` | `ON_USER`, default `ON_SESSION`) and `CanaryDeploymentType` (`BASED_ON_VERSION` | `BASED_ON_URL`) in `backend/src/models/MicrofrontendModel.ts`; enrolled canary users in `DeploymentCanaryUsersController.ts`. See https://mfe-orchestrator.dev/documentation/docs/microfrontends/canary-releases
+- **Federation integration**: `FederationIntegrationService` replaced the old host injection, which is gone. See https://mfe-orchestrator.dev/documentation/docs/integration/overview
+- **Environment-free serving**: manifest, global variables and microfrontend config are served both with an environment slug and without it, via the `auto/:projectId` route forms (`ServeController.ts`)
+- **Builds**: build pipeline pages and API. See https://mfe-orchestrator.dev/documentation/docs/deployments/build-status
 
 ---
 
@@ -48,7 +64,7 @@ This is a **monorepo** microfrontend orchestrator project with:
 ### Forms & Validation
 
 - Always use **react-hook-form** for forms
-- Use form components from `src/components/ui/form`
+- Use form components from `@mfe-orchestrator/design-system`
 - Use input components from `src/components/input/` (TextField.rhf, SelectField.rhf, etc.)
 - Don't use `onError` callback in `useQuery` hooks
 
@@ -61,8 +77,8 @@ This is a **monorepo** microfrontend orchestrator project with:
 
 ### UI Components
 
-- Always reuse existing **UI elements** from `src/components/ui/`
-- Use components from shadcn/ui library (`@/components/ui/`)
+- Import UI components from `@mfe-orchestrator/design-system`
+- `src/components/ui/` holds only the few local leftovers (`DeleteConfirmationDialog`, `Sidebar`) - do not add to it
 - Use icons from **lucide-react** only
 - Don't create new UI components from scratch - check existing ones first
 
@@ -103,7 +119,7 @@ notifications.showInfoNotification({ message: "message" });
 
 ### Component Structure
 
-- All pages in `src/pages/`
+- All pages in `src/pages/` - 17 feature directories, including `builds`, `profile`, `dependencies`, `integration`, `templates-library`
 - All components in `src/components/`
 - Use TypeScript for all components
 - Use functional components with TypeScript interfaces
@@ -272,23 +288,23 @@ Use these workspace-level commands:
 
 ```bash
 # Development
-pnpm dev              # Start both backend and frontend
-pnpm dev:backend      # Start backend only
-pnpm dev:frontend     # Start frontend only
+pnpm dev              # Start backend and frontend (turbo)
 
 # Building
 pnpm build            # Build all packages
-pnpm build:backend    # Build backend only
-pnpm build:frontend   # Build frontend only
 
 # Code Quality
 pnpm lint             # Lint all packages with Biome
+pnpm lint:imports     # Remove unused imports repo-wide
 pnpm format           # Format all packages with Biome
 pnpm typecheck        # TypeScript check for all packages
 
 # Testing
-pnpm test             # Run tests in all packages
+pnpm test             # Unit tests in all packages
+pnpm test:e2e         # Playwright end-to-end suite
 ```
+
+There are no per-package `dev:*` / `build:*` scripts - turbo fans the root scripts out to every workspace package.
 
 ### TypeScript
 
@@ -454,8 +470,8 @@ Closes: #123
 
 ### Code Style
 
-- Use Prettier for formatting (run `pnpm run prettier`)
-- Use ESLint for linting (run `pnpm run lint`)
+- Use Biome for formatting (run `pnpm format`) - there is no Prettier here
+- Use Biome for linting (run `pnpm lint`) - there is no ESLint here
 - Follow existing code patterns in the codebase
 - Add JSDoc comments for public APIs
 
@@ -475,8 +491,8 @@ Closes: #123
 - Start Docker services first (MongoDB, Redis)
 - Create and configure `.env` file in backend directory
 - Use `pnpm dev` to start both services simultaneously
-- Backend available at `http://localhost:8080`
-- Frontend available at `http://localhost:3000`
+- Backend available at `http://localhost:3000` (Fastify, `PORT` defaults to 3000)
+- Frontend available at `http://localhost:5173` (Vite, proxies `/api/` to `127.0.0.1:3000`)
 
 ### API Documentation
 

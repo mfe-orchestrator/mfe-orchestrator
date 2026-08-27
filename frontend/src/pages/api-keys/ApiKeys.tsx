@@ -79,7 +79,7 @@ export const ApiKeys = () => {
                                 <NoApiKeyPlaceholder onCreate={() => setIsCreateDialogOpen(true)} />
                             ) : (
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader tinted={false}>
                                         <TableRow>
                                             <TableHead>{t("apiKeys.name")}</TableHead>
                                             <TableHead>{t("apiKeys.created")}</TableHead>

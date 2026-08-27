@@ -1,6 +1,6 @@
-import { Input, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
+import { SearchInput, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { CirclePlus, DownloadCloud, LayoutGrid, Search, StretchHorizontal, Workflow, X } from "lucide-react"
+import { CirclePlus, DownloadCloud, LayoutGrid, StretchHorizontal, Workflow } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -106,20 +106,14 @@ const Microfrontends = () => {
                 left={
                     hasMicrofrontends ? (
                         <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
-                            <div className="relative w-full max-w-sm">
-                                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground-secondary" aria-hidden="true" />
-                                <Input placeholder={t("microfrontend.dashboard.searchPlaceholder")} className="pl-9 pr-9" fullWidth value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                                {searchTerm && (
-                                    <button
-                                        type="button"
-                                        onClick={onResetFilters}
-                                        aria-label={t("microfrontend.dashboard.clearSearch")}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-foreground-secondary transition-colors hover:bg-primary/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    >
-                                        <X className="size-4" />
-                                    </button>
-                                )}
-                            </div>
+                            <SearchInput
+                                className="max-w-sm"
+                                placeholder={t("microfrontend.dashboard.searchPlaceholder")}
+                                value={searchTerm}
+                                onValueChange={setSearchTerm}
+                                onClear={onResetFilters}
+                                clearLabel={t("microfrontend.dashboard.clearSearch")}
+                            />
                             <p className="text-sm text-foreground-secondary" aria-live="polite">
                                 {searchTerm ? t("microfrontend.dashboard.filteredCount", { count: filteredCount, total: totalCount }) : t("microfrontend.dashboard.totalCount", { count: totalCount })}
                             </p>

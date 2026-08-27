@@ -130,8 +130,8 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
                             <Button type="button" variant="secondary" onClick={() => setIsInviteModalOpen(false)} disabled={inviteUserMutation.isPending} dataTestId="cancel-invitation">
                                 {t("common.cancel")}
                             </Button>
-                            <Button type="submit" disabled={inviteUserMutation.isPending} dataTestId="send-invitation">
-                                {inviteUserMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : t("project_users.send_invitation")}
+                            <Button type="submit" loading={inviteUserMutation.isPending} loadingLabel={t("common.loading")} dataTestId="send-invitation">
+                                {t("project_users.send_invitation")}
                             </Button>
                         </DialogFooter>
                     </form>

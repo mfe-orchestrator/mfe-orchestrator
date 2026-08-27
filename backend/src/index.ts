@@ -5,8 +5,19 @@ import Fastify from "fastify"
 import path from "path"
 import { AppInstance } from "./types/fastify"
 
+/**
+ * How long a plugin is given to come up.
+ *
+ * Above Fastify's 10s default because the database plugin waits for the data migrations before
+ * declaring itself ready, and a migration that touches every project of an installation can take
+ * longer than that on a remote database. Exceeding the limit does not degrade anything: it makes
+ * `build()` throw, so the process never starts listening and the whole console is down.
+ */
+const PLUGIN_TIMEOUT_MS = 60_000
+
 export const fastify: AppInstance = Fastify({
-    logger: true
+    logger: true,
+    pluginTimeout: PLUGIN_TIMEOUT_MS
 })
 
 export async function build() {

@@ -7,6 +7,7 @@ import {
     getAvatarViaApi,
     getProfileViaApi,
     loginViaApi,
+    marketingOptInEnabled,
     newTestUser,
     openApp,
     openAppAs,
@@ -131,5 +132,40 @@ test.describe
 
             await expect(page.getByTestId("profile-avatar-remove")).toHaveCount(0, { timeout: 30_000 })
             expect(await getAvatarViaApi(request, accessToken)).toBeNull()
+        })
+
+        // Il consenso marketing compare solo dove l'installazione dichiara di
+        // raccoglierlo (`MARKETING_OPT_IN_ENABLED`): altrove la sezione non esiste
+        // e l'endpoint rifiuta comunque la modifica.
+        test("given the marketing opt-in is enabled, when the consent is granted from the profile, then the server records it with its date", async ({ browser, request }) => {
+            test.skip(!(await marketingOptInEnabled(request)), "L'installazione non raccoglie il consenso marketing (MARKETING_OPT_IN_ENABLED)")
+            const page = await openProfile(browser)
+
+            // L'utente si e' registrato senza spuntare il consenso.
+            await expect(page.getByTestId("profile-marketing-consent")).not.toBeChecked()
+            await page.getByTestId("profile-marketing-consent").click()
+
+            await expect.poll(async () => (await getProfileViaApi(request, accessToken)).marketingConsent, { timeout: 30_000 }).toBe(true)
+            // Senza la data e la versione del testo il consenso non e' dimostrabile.
+            const granted = await getProfileViaApi(request, accessToken)
+            expect(granted.marketingConsentAt).toBeTruthy()
+            expect(granted.marketingConsentVersion).toBeTruthy()
+            await expect(page.getByTestId("profile-marketing-consent-date")).toBeVisible()
+        })
+
+        test("given a granted consent, when it is withdrawn from the profile, then the server clears it together with its date", async ({ browser, request }) => {
+            test.skip(!(await marketingOptInEnabled(request)), "L'installazione non raccoglie il consenso marketing (MARKETING_OPT_IN_ENABLED)")
+            const page = await openProfile(browser)
+
+            await expect(page.getByTestId("profile-marketing-consent")).toBeChecked({ timeout: 30_000 })
+            await page.getByTestId("profile-marketing-consent").click()
+
+            await expect.poll(async () => (await getProfileViaApi(request, accessToken)).marketingConsent, { timeout: 30_000 }).toBe(false)
+            // Una data accanto a un consenso revocato leggerebbe come se il
+            // consenso fosse ancora quello prestato quel giorno.
+            const withdrawn = await getProfileViaApi(request, accessToken)
+            expect(withdrawn.marketingConsentAt).toBeUndefined()
+            expect(withdrawn.marketingConsentVersion).toBeUndefined()
+            await expect(page.getByTestId("profile-marketing-consent-date")).toHaveCount(0)
         })
     })

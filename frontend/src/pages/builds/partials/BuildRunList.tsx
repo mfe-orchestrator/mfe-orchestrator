@@ -1,3 +1,4 @@
+import { EmptyState } from "@mfe-orchestrator/design-system"
 import { ExternalLink } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { BuildRun } from "@/hooks/apiClients/useBuildsApi"
@@ -17,7 +18,7 @@ const BuildRunList: React.FC<BuildRunListProps> = ({ runs }) => {
     const { t } = useTranslation()
 
     if (runs.length === 0) {
-        return <p className="text-sm text-foreground-secondary">{t("builds.table.no_runs")}</p>
+        return <EmptyState size="sm" description={t("builds.table.no_runs")} />
     }
 
     return (

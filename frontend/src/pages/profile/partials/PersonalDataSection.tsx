@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, Label } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, DescriptionItem, DescriptionList } from "@mfe-orchestrator/design-system"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -50,19 +50,20 @@ export const PersonalDataSection: React.FC<PersonalDataSectionProps> = ({ user }
     return (
         <Card className="pt-4">
             <CardHeader>
-                <h2 className="text-lg font-semibold">{t("profile.personalData.title")}</h2>
+                <CardTitle as="h2">{t("profile.personalData.title")}</CardTitle>
                 <CardDescription>{t("profile.personalData.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
                 <FormProvider {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <div className="flex flex-col gap-1 mb-4">
-                            <Label className="text-sm text-foreground-secondary">{t("profile.personalData.email")}</Label>
-                            <span className="break-all" data-testid="profile-email">
-                                {user.email}
-                            </span>
-                            <p className="text-sm text-foreground-secondary m-0">{t("profile.personalData.emailNotEditable")}</p>
-                        </div>
+                        <DescriptionList className="mb-4">
+                            <DescriptionItem label={t("profile.personalData.email")} hint={t("profile.personalData.emailNotEditable")}>
+                                {/* Il testid resta sul valore: l'asserzione e2e confronta il testo con la sola email */}
+                                <span className="break-all" data-testid="profile-email">
+                                    {user.email}
+                                </span>
+                            </DescriptionItem>
+                        </DescriptionList>
 
                         <div className="flex flex-wrap gap-4">
                             <TextField<FormValues>

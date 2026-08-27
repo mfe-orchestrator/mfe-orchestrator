@@ -6,10 +6,11 @@ import { useNavigate } from "react-router-dom"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 // Hooks & Stores
-import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
+import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { DangerZone, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
 
 export const Settings: React.FC = () => {
     const notifications = useToastNotificationStore()
@@ -27,38 +28,38 @@ export const Settings: React.FC = () => {
 
     const handleDeleteProjectSuccess = async () => {
         notifications.showSuccessNotification({ message: t("settings.notifications.projectDeleted") })
-        queryClient.invalidateQueries({ queryKey: ["projects"] })
+        // Chiave del listato dei progetti: senza prefisso corretto lo switcher continuerebbe a
+        // mostrare il progetto appena eliminato.
+        queryClient.invalidateQueries({ queryKey: ["projects-mine"] })
         setProject(null)
         navigate("/")
     }
 
-    const _updateProjectMutation = useMutation({
-        mutationFn: (projectData: Partial<Project>) => projectApi.updateProject(project._id, projectData)
-    })
-
-    const handleProjectNameUpdate = async (newName: string) => {
-        if (!newName.trim()) return
-
-        try {
-            //await updateProjectName(newName);
-            notifications.showSuccessNotification({
-                message: t("settings.notifications.projectNameUpdated")
-            })
-        } catch (error) {
-            console.error("Failed to update project name:", error)
-            notifications.showErrorNotification({
-                message: t("settings.notifications.projectNameUpdateFailed")
-            })
-            throw error // Re-throw to let the component handle the error
+    const updateProjectMutation = useMutation({
+        mutationFn: (values: ProjectInfoFormValues) =>
+            projectApi.updateProject(project._id, {
+                name: values.name.trim(),
+                // Un campo svuotato vuol dire "nessuna descrizione", che l'API esprime con un null esplicito.
+                description: values.description?.trim() ? values.description : null
+            }),
+        onSuccess: updated => {
+            // Header e switcher leggono lo store, quindi il nuovo nome deve arrivare anche lì.
+            setProject({ ...project, name: updated.name, description: updated.description })
+            queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
+            queryClient.invalidateQueries({ queryKey: ["projects-mine"] })
+            notifications.showSuccessNotification({ message: t("settings.notifications.projectUpdated") })
+        },
+        onError: () => {
+            notifications.showErrorNotification({ message: t("settings.notifications.projectUpdateFailed") })
         }
-    }
+    })
 
     const projectData = projectQuery.data?.project
 
     return (
         <ApiStatusHandler queries={[projectQuery]}>
             <SinglePageLayout title={t("settings.title")} description={t("settings.subtitle")}>
-                {projectData && <ProjectInfoSection {...projectData} onUpdateProjectName={handleProjectNameUpdate} />}
+                {projectData && <ProjectInfoSection {...projectData} onUpdate={values => updateProjectMutation.mutate(values)} isUpdating={updateProjectMutation.isPending} />}
 
                 <ProjectStatsSection
                     stats={[

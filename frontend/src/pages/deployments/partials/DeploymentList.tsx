@@ -1,4 +1,4 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@mfe-orchestrator/design-system"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, DescriptionItem, DescriptionList, EmptyState, SectionHeader } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { BadgeCheck, History, PackageOpen, RefreshCw, UsersRound } from "lucide-react"
 import { useState } from "react"
@@ -41,10 +41,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                 <div>
                     {deployments.filter(deployment => deployment.active) !== null && (
                         <section className="mb-8">
-                            <h2 className="text-xl font-medium mb-1 text-foreground-secondary flex items-center gap-2">
-                                <BadgeCheck />
-                                <span>{t("deployments.active_deployments")}</span>
-                            </h2>
+                            <SectionHeader icon={<BadgeCheck />} title={t("deployments.active_deployments")} />
                             <div>
                                 <Accordion type="single" defaultValue={deployments.find(deployment => deployment.active)?._id} collapsible>
                                     {deployments
@@ -71,16 +68,13 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                     {deployment.variables.length > 0 && (
                                                         <div className="mt-4">
                                                             <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
-                                                            <ul>
+                                                            <DescriptionList orientation="inline">
                                                                 {deployment.variables.map(variable => (
-                                                                    <li key={variable._id} className="mb-1 last-of-type:mb-0">
-                                                                        <div className="flex gap-1 items-start flex-wrap">
-                                                                            <span className="font-medium text-foreground-secondary">{variable.key} :</span>
-                                                                            <span className="hyphens-auto max-w-full">{variable.value}</span>
-                                                                        </div>
-                                                                    </li>
+                                                                    <DescriptionItem key={variable._id} label={variable.key}>
+                                                                        {variable.value}
+                                                                    </DescriptionItem>
                                                                 ))}
-                                                            </ul>
+                                                            </DescriptionList>
                                                         </div>
                                                     )}
                                                     <div className="mt-8">
@@ -99,10 +93,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
 
                     {deployments.filter(deployment => !deployment.active) !== null && (
                         <section>
-                            <h2 className="text-xl font-medium mb-1 text-foreground-secondary flex items-center gap-2">
-                                <History />
-                                <span>{t("deployments.history")}</span>
-                            </h2>
+                            <SectionHeader icon={<History />} title={t("deployments.history")} />
                             <Accordion type="single" collapsible>
                                 {deployments
                                     .filter(deployment => !deployment.active)
@@ -128,16 +119,13 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                 {deployment.variables.length > 0 && (
                                                     <div className="mt-4">
                                                         <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
-                                                        <ul>
+                                                        <DescriptionList orientation="inline">
                                                             {deployment.variables.map(variable => (
-                                                                <li key={variable._id} className="mb-1 last-of-type:mb-0">
-                                                                    <div className="flex gap-1 items-start flex-wrap">
-                                                                        <span className="font-medium text-foreground-secondary">{variable.key} :</span>
-                                                                        <span className="hyphens-auto max-w-full">{variable.value}</span>
-                                                                    </div>
-                                                                </li>
+                                                                <DescriptionItem key={variable._id} label={variable.key}>
+                                                                    {variable.value}
+                                                                </DescriptionItem>
                                                             ))}
-                                                        </ul>
+                                                        </DescriptionList>
                                                     </div>
                                                 )}
                                                 <div className="flex gap-2 mt-8">
@@ -165,13 +153,15 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col items-center grow justify-center gap-4 py-12">
-                    <PackageOpen className="h-12 w-12 text-muted-foreground" />
-                    <div className="text-center">
-                        <h2 className="text-xl font-medium">{t("deployments.no_deployments")}</h2>
-                        <p className="text-foreground-secondary">{t("deployments.no_deployments_description")}</p>
-                    </div>
-                </div>
+                <EmptyState
+                    size="default"
+                    iconVariant="bare"
+                    tone="muted"
+                    grow
+                    icon={<PackageOpen />}
+                    title={t("deployments.no_deployments")}
+                    description={t("deployments.no_deployments_description")}
+                />
             )}
         </ApiStatusHandler>
     )

@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
+import { ColorSwatch, Select, SelectContent, SelectControl, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
 import React from "react"
 import { useTranslation } from "react-i18next"
 import { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
@@ -13,8 +13,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
     const { t } = useTranslation()
 
     return (
-        <div className="flex flex-col gap-1 w-full max-w-40 flex-shrink-0">
-            <span className="text-sm font-medium text-foreground-secondary">{t("deployments.environment_select")}:</span>
+        <SelectControl label={t("deployments.environment_select")} className="w-full max-w-40 flex-shrink-0">
             <Select
                 value={selectedEnvironment?._id}
                 onValueChange={value => {
@@ -25,7 +24,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                     <SelectValue>
                         {selectedEnvironment ? (
                             <div className="flex items-center gap-2">
-                                <span className="w-4 h-4 rounded-full border-2 border-border" style={{ backgroundColor: selectedEnvironment.color }} />
+                                <ColorSwatch size="sm" color={selectedEnvironment.color} />
                                 <span>{selectedEnvironment.slug}</span>
                             </div>
                         ) : (
@@ -38,7 +37,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                         {environments.map(environment => (
                             <SelectItem key={environment._id} value={environment._id}>
                                 <div className="flex items-center gap-2">
-                                    <span className="w-4 h-4 rounded-full border-2 border-border" style={{ backgroundColor: environment.color }} />
+                                    <ColorSwatch size="sm" color={environment.color} />
                                     <span>{environment.slug}</span>
                                 </div>
                             </SelectItem>
@@ -46,7 +45,7 @@ const EnvironmentSelector: React.FC<EnvironmentSelectorProps> = ({ selectedEnvir
                     </SelectContent>
                 )}
             </Select>
-        </div>
+        </SelectControl>
     )
 }
 

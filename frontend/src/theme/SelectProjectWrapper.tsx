@@ -6,13 +6,16 @@ import AuthenticationLayout from "@/authentication/components/AuthenticationLayo
 import { ApiStatusHandler } from "@/components/organisms"
 import PendingInvitationsList, { usePendingInvitationsQuery } from "@/components/PendingInvitationsList"
 import ProjectPickerList from "@/components/ProjectPickerList"
+import SwitchOrganizationButton from "@/components/SwitchOrganizationButton"
 import useProjectApi, { Project } from "@/hooks/apiClients/useProjectApi"
 import NewProjectWizard from "@/pages/new-project-wizard/NewProjectWizard"
+import useOrganizationStore from "@/store/useOrganizationStore"
 import useProjectStore from "@/store/useProjectStore"
-import { getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
+import { clearProjectIdInLocalStorage, getProjectIdFromLocalStorage, setProjectIdInLocalStorage } from "@/utils/localStorageUtils"
 
 interface SelectProjectFormProps {
-    onCreateNewProject: () => void
+    /** Left out for a member who may not create projects in this organization. */
+    onCreateNewProject?: () => void
 }
 
 const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ onCreateNewProject }) => {
@@ -31,12 +34,18 @@ const SelectProjectForm: React.FC<SelectProjectFormProps> = ({ onCreateNewProjec
             {/* Invitations come first: they are the only thing on this screen that still needs an answer. */}
             <PendingInvitationsList className="mb-4" />
             <ProjectPickerList projects={projectStore.projects ?? []} onSelect={onSelectProject} onCreateNew={onCreateNewProject} variant="grid" autoFocusSearch />
+            {/* The only way out of this screen for a member of an organization that has nothing shared
+                with them yet: the app header, where the switcher normally lives, is not rendered here. */}
+            <div className="mt-4 flex justify-center border-t border-divider pt-4">
+                <SwitchOrganizationButton />
+            </div>
         </AuthenticationLayout>
     )
 }
 
 const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children }) => {
     const projectStore = useProjectStore()
+    const { organization } = useOrganizationStore()
     const queryClient = useQueryClient()
     const [firstRunComplete, setFirstRunComplete] = useState(false)
     const [isCreatingProject, setIsCreatingProject] = useState(false)
@@ -60,7 +69,11 @@ const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children
     // step 1 already sets the active project in the store.
     // A pending invitation is a way in as well, so it takes precedence over the wizard:
     // otherwise the only screen offered would be "create a project".
-    const isFirstRun = !hasProjects && !hasPendingInvitations && !firstRunComplete
+    // Only whoever administers the organization can open a project in it, so a plain member with
+    // nothing shared with them yet is shown the picker's empty state instead of a wizard that would
+    // fail on submit.
+    const canCreateProjects = organization?.role === "OWNER" || organization?.role === "ADMIN"
+    const isFirstRun = !hasProjects && !hasPendingInvitations && !firstRunComplete && canCreateProjects
 
     // The picker can also reach the wizard, which this component has to render itself:
     // until a project is active it shadows the routed pages, so navigating there would show nothing.
@@ -81,27 +94,48 @@ const SelectProjectWrapperInner: React.FC<React.PropsWithChildren> = ({ children
         return <>{children}</>
     }
 
-    return <SelectProjectForm onCreateNewProject={() => setIsCreatingProject(true)} />
+    return <SelectProjectForm onCreateNewProject={canCreateProjects ? () => setIsCreatingProject(true) : undefined} />
 }
 
 const SelectProjectWrapper: React.FC<React.PropsWithChildren> = props => {
     const projectApi = useProjectApi()
     const projectStore = useProjectStore()
 
+    const { organization } = useOrganizationStore()
+
     const projectsQuery = useQuery({
-        queryKey: ["projects-mine"],
+        // Keyed on the organization: switching tenant has to fetch its projects, not reuse the
+        // previous answer.
+        queryKey: ["projects-mine", organization?._id],
         queryFn: async () => {
+            const organizationId = organization?._id
             try {
-                const projects = await projectApi.getMineProjects()
-                projectStore.setProjects(projects)
-                if (projects.length === 1) {
-                    projectStore.setProject(projects[0])
-                    setProjectIdInLocalStorage(projects[0]._id)
+                const projects = await projectApi.getMineProjects(organizationId)
+
+                // Invalidating "projects-mine" matches by prefix, so the query of the organization being
+                // left behind is put back in flight as well. Its answer must no longer decide anything:
+                // it would hand the app a project belonging to a tenant the user has already left, and
+                // write it back over the one just chosen.
+                if (organizationId !== useOrganizationStore.getState().organization?._id) {
+                    return projects
                 }
-                //Here we have several projects
-                const projectId = getProjectIdFromLocalStorage()
-                if (projectId) {
-                    projectStore.setProject(projects.find(p => p._id === projectId))
+
+                projectStore.setProjects(projects)
+
+                // What gets to survive a refetch, in order: the project already in use, then the one
+                // remembered from a previous visit, and only then the single candidate there is nothing
+                // to ask about. Read fresh, because a refetch runs long after this closure was built.
+                const active = useProjectStore.getState().project
+                const rememberedId = getProjectIdFromLocalStorage()
+                const selected = projects.find(project => project._id === active?._id) ?? projects.find(project => project._id === rememberedId) ?? (projects.length === 1 ? projects[0] : undefined)
+
+                // Anything that is not in this organization is dropped instead of carried over, which
+                // leaves the picker to ask. Forgetting it too keeps the next visit from restoring it.
+                projectStore.setProject(selected)
+                if (selected) {
+                    setProjectIdInLocalStorage(selected._id)
+                } else {
+                    clearProjectIdInLocalStorage()
                 }
 
                 return projects

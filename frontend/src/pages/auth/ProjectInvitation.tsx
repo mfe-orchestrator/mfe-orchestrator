@@ -1,4 +1,4 @@
-import { Spinner } from "@mfe-orchestrator/design-system"
+import { IconTile, Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import { MailX } from "lucide-react"
@@ -29,9 +29,8 @@ const InvitationError: React.FC<{ error: unknown }> = ({ error }) => {
 
     return (
         <div className="flex flex-col items-center gap-4 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                <MailX className="size-6 text-primary" />
-            </div>
+            {/* tone muted tingerebbe il glifo di grigio: qui l'icona è l'unico accento della schermata */}
+            <IconTile size="md" tone="muted" className="text-primary" icon={<MailX />} />
             <div>
                 <h3 className="font-semibold text-foreground">{t(notFound ? "project_invitation.not_found_title" : "project_invitation.error_title")}</h3>
                 <p className="mt-1 text-sm text-foreground-secondary">{t(notFound ? "project_invitation.not_found_description" : "project_invitation.error_description")}</p>

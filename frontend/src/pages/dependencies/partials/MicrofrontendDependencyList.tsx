@@ -1,4 +1,18 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+    Card,
+    CardContent,
+    EmptyState,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@mfe-orchestrator/design-system"
 import { AlertTriangle, GitBranch } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
@@ -22,9 +36,7 @@ export const MicrofrontendDependencyList: React.FC<MicrofrontendDependencyListPr
         return (
             <Card>
                 <CardContent className="p-0">
-                    <div className="flex flex-col items-center justify-center p-8 text-center">
-                        <p className="text-foreground">{t("dependencies.no_microfrontends")}</p>
-                    </div>
+                    <EmptyState size="sm" description={t("dependencies.no_microfrontends")} />
                 </CardContent>
             </Card>
         )
@@ -71,43 +83,41 @@ export const MicrofrontendDependencyList: React.FC<MicrofrontendDependencyListPr
                             {microfrontend.error ? (
                                 <p className="text-destructive-active text-sm">{microfrontend.error}</p>
                             ) : dependencies.length === 0 ? (
-                                <p className="text-foreground-secondary text-sm">{onlyOutdated ? t("dependencies.all_up_to_date") : t("dependencies.no_dependencies")}</p>
+                                <EmptyState size="sm" description={onlyOutdated ? t("dependencies.all_up_to_date") : t("dependencies.no_dependencies")} />
                             ) : (
-                                <div className="rounded-md border-2 border-border overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-primary/25">
-                                                <TableHead className="text-foreground">{t("dependencies.package")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.kind")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.declared_range")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.latest_version")}</TableHead>
-                                                <TableHead className="text-foreground">{t("dependencies.status_column")}</TableHead>
+                                <Table framed scroll="x">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>{t("dependencies.package")}</TableHead>
+                                            <TableHead>{t("dependencies.kind")}</TableHead>
+                                            <TableHead>{t("dependencies.declared_range")}</TableHead>
+                                            <TableHead>{t("dependencies.latest_version")}</TableHead>
+                                            <TableHead>{t("dependencies.status_column")}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {dependencies.map(dependency => (
+                                            <TableRow key={`${dependency.kind}-${dependency.name}`}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        {dependency.name}
+                                                        {dependency.deprecated && <Badge variant="destructive">{t("dependencies.deprecated")}</Badge>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{t(`dependencies.kinds.${dependency.kind}`)}</Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <code className="text-sm">{dependency.range}</code>
+                                                </TableCell>
+                                                <TableCell>{dependency.latestVersion || "-"}</TableCell>
+                                                <TableCell>
+                                                    <DependencyStatusBadge status={dependency.status} />
+                                                </TableCell>
                                             </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {dependencies.map(dependency => (
-                                                <TableRow key={`${dependency.kind}-${dependency.name}`}>
-                                                    <TableCell className="font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            {dependency.name}
-                                                            {dependency.deprecated && <Badge variant="destructive">{t("dependencies.deprecated")}</Badge>}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">{t(`dependencies.kinds.${dependency.kind}`)}</Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <code className="text-sm">{dependency.range}</code>
-                                                    </TableCell>
-                                                    <TableCell>{dependency.latestVersion || "-"}</TableCell>
-                                                    <TableCell>
-                                                        <DependencyStatusBadge status={dependency.status} />
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             )}
                         </AccordionContent>
                     </AccordionItem>

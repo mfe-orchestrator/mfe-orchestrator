@@ -12,8 +12,15 @@ import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
+import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+
+/**
+ * The value only if the user actually typed one. The edit screens submit the token field back exactly
+ * as it was handed to them, and what they were handed is the placeholder, never the token.
+ */
+const retypedSecret = (value?: string): string | undefined => (value && value !== SECRET_PLACEHOLDER ? value : undefined)
 
 export const deploySecretName = "MICROFRONTEND_ORCHESTRATOR_API_KEY"
 export const azureDevOpsVariableGroupName = "MFE_ORCHESTRATOR_SECRETS"
@@ -123,6 +130,31 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             return false
         }
         return !repositories.some(repository => repository.name === name)
+    }
+
+    /**
+     * The token to authenticate a call with: the one just typed in, or the one already stored when the
+     * form sent the placeholder back — which is what the edit screens do, since the API never hands
+     * them the real token to begin with.
+     */
+    private async resolveAccessToken(pat: string | undefined, repositoryId?: string): Promise<string> {
+        const typed = retypedSecret(pat)
+        if (typed) return typed
+
+        if (!repositoryId) {
+            throw new BusinessException({
+                code: "MISSING_ACCESS_TOKEN",
+                message: "No access token was provided and no repository to take the stored one from",
+                statusCode: 400
+            })
+        }
+
+        const repository = await this.findById(repositoryId)
+        if (!repository) {
+            throw new EntityNotFoundError(repositoryId)
+        }
+
+        return repository.accessToken
     }
 
     async getByProjectId(projectId: string): Promise<ICodeRepository[]> {
@@ -477,7 +509,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         }
 
         repository.name = body.name
-        repository.accessToken = body.pat
+        repository.accessToken = retypedSecret(body.pat) ?? repository.accessToken
         repository.gitlabData = undefined
         repository.githubData = undefined
         repository.azureData = {
@@ -490,8 +522,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return out
     }
 
-    async testConnectionAzure(organization: string, pat: string) {
-        return new AzureDevOpsClient().getProjects(pat, organization)
+    async testConnectionAzure(organization: string, pat: string, repositoryId?: string) {
+        return new AzureDevOpsClient().getProjects(await this.resolveAccessToken(pat, repositoryId), organization)
     }
 
     async addRepositoryGitlab(body: CreateGitlabRepositoryDto, projectId: string) {
@@ -539,7 +571,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         }
 
         repository.name = body.name
-        repository.accessToken = body.pat
+        repository.accessToken = retypedSecret(body.pat) ?? repository.accessToken
         repository.gitlabData = {
             url: body.url,
             groupId: body.groupId,
@@ -552,8 +584,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return out
     }
 
-    async testConnectionGitlab(url: string, pat: string) {
-        return new GitLabClient(url, pat).getGroups()
+    async testConnectionGitlab(url: string, pat: string, repositoryId?: string) {
+        return new GitLabClient(url, await this.resolveAccessToken(pat, repositoryId)).getGroups()
     }
 
     async getAzureRepositories(repositoryId: string, projectId: string): Promise<RepositoryData[]> {

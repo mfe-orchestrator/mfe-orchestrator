@@ -40,7 +40,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (!microfrontend) {
             return null
         }
-        this.ensureAccessToMicrofrontend(microfrontend)
+        await this.ensureAccessToMicrofrontend(microfrontend)
         return microfrontend
     }
 

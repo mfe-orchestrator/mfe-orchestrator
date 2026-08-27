@@ -21,7 +21,7 @@ Packaging the chart for distribution:
 
 ```bash
 helm package helm/mfe-orchestrator          # -> mfe-orchestrator-<version>.tgz
-helm install mfe-orchestrator mfe-orchestrator-0.1.0.tgz -f my-values.yaml
+helm install mfe-orchestrator mfe-orchestrator-<version>.tgz -f my-values.yaml
 ```
 
 Useful commands:
@@ -81,11 +81,17 @@ Precedence, from lowest to highest: `env` → `envSecrets` → `existingConfigMa
 
 ### Variables shipped in `values.yaml`
 
-Core: `NODE_ENV`, `PORT`, `HOST`, `LOG_LEVEL`, `FRONTEND_URL`, `BACKEND_URL`, `ALLOWED_ORIGINS`,
-`ALLOWED_SERVE_ORIGINS`, `MICROFRONTEND_HOST_FOLDER`, `REGISTRATION_ALLOWED`, `ALLOW_EMBEDDED_LOGIN`
+Core: `NODE_ENV`, `PORT`, `FRONTEND_URL`, `BACKEND_URL`, `ALLOWED_ORIGINS`,
+`ALLOWED_SERVE_ORIGINS`, `MICROFRONTEND_HOST_FOLDER`, `REGISTRATION_ALLOWED`,
+`ALLOW_EMBEDDED_LOGIN`, `RATE_LIMIT_MAX`, `MARKETING_OPT_IN_ENABLED`,
+`MARKETING_OPT_IN_VERSION`
+
+`RATE_LIMIT_MAX` ships commented out in `values.yaml` on purpose: it is validated as
+`type: number`, and an empty value fails that validation and keeps the container from
+starting. Uncomment it only to set a real number (the application default is `100`).
 
 MongoDB: `NOSQL_DATABASE_URL`, `NOSQL_DATABASE_NAME`, `NOSQL_DATABASE_USERNAME`,
-`NOSQL_DATABASE_PASSWORD`*, plus the legacy `NOSQL_DB_URL`, `NOSQL_DB_DATABASE`, `NOSQL_DB_PASSWORD`*
+`NOSQL_DATABASE_PASSWORD`*
 
 Redis: `REDIS_URL`, `REDIS_PASSWORD`*
 
@@ -93,18 +99,34 @@ SMTP: `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_SMTP_SECURE`, `EMAIL_SMTP_USE
 `EMAIL_SMTP_FROM`, `EMAIL_SMTP_PASSWORD`*
 
 Auth: `JWT_SECRET`*, `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE`, `AUTH0_SCOPE`,
-`AZURE_ENTRAID_TENANT_ID`, `AZURE_ENTRAID_CLIENT_ID`, `AZURE_ENTRAID_CLIENT_SECRET`*,
-`AZURE_ENTRAID_REDIRECT_URI`, `AZURE_ENTRAID_AUTHORITY`, `AZURE_ENTRAID_SCOPES`,
-`AZURE_ENTRAID_API_AUDIENCE`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`*, `GOOGLE_REDIRECT_URI`,
+`AZURE_ENTRAID_TENANT_ID`, `AZURE_ENTRAID_CLIENT_ID`, `AZURE_ENTRAID_REDIRECT_URI`,
+`AZURE_ENTRAID_AUTHORITY`, `AZURE_ENTRAID_SCOPES`, `AZURE_ENTRAID_API_AUDIENCE`,
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`*, `GOOGLE_REDIRECT_URI`,
 `GOOGLE_AUTH_SCOPE`, `GOOGLE_AUTH_HOSTED_DOMAIN`, `GOOGLE_API_AUDIENCE`
 
 Code repositories: `CODE_REPOSITORY_GITHUB_CLIENT_ID`, `CODE_REPOSITORY_GITHUB_CLIENT_SECRET`*
+
+Stored credentials: `SECRETS_ENCRYPTION_KEY`* — encrypts bucket keys and repository tokens at rest,
+see [docs/SECRETS.md](../../docs/SECRETS.md). Back it up apart from the database: without it the
+encrypted credentials cannot be read back.
+
+Dependencies: `NPM_REGISTRY_URL`
 
 Observability: `SENTRY_DSN`, `TELEMETRY_ENABLED`, `TELEMETRY_DISABLED`, `TELEMETRY_ENDPOINT`,
 `TELEMETRY_INTERVAL_HOURS`, `DO_NOT_TRACK`
 
 `*` lives under `envSecrets`. The meaning and defaults of each variable are documented in the
 [root README](../../README.md#environment-variables-) and in the comments of `values.yaml`.
+
+### Image version
+
+`image.tag` defaults to the chart's `appVersion`, so a plain install runs the version the chart
+was released with. Override it to pin a different one:
+
+```yaml
+image:
+  tag: "3.1.0"
+```
 
 ## Storage
 
@@ -170,6 +192,8 @@ helm install mfe-orchestrator ./helm/mfe-orchestrator \
 | `image.tag`                    | `""`                     | Image tag, defaults to the chart `appVersion`            |
 | `image.pullPolicy`             | `IfNotPresent`           | Image pull policy                                        |
 | `imagePullSecrets`             | `[]`                     | Pull secrets for private registries                      |
+| `nameOverride`                 | `""`                     | Override the chart name in the generated names           |
+| `fullnameOverride`             | `""`                     | Override the full resource name entirely                 |
 | `env`                          | see `values.yaml`        | Plain environment variables                              |
 | `envSecrets`                   | see `values.yaml`        | Sensitive environment variables                          |
 | `existingSecret`               | `[]`                     | Existing Secrets injected with `envFrom`                 |
@@ -181,19 +205,25 @@ helm install mfe-orchestrator ./helm/mfe-orchestrator \
 | `persistence.accessModes`      | `[ReadWriteOnce]`        | PVC access modes                                         |
 | `persistence.size`             | `8Gi`                    | PVC size                                                 |
 | `persistence.mountPath`        | `""`                     | Mount point, defaults to `MICROFRONTEND_HOST_FOLDER`     |
+| `persistence.subPath`          | `""`                     | Sub path of the volume to mount                          |
+| `persistence.annotations`      | `{}`                     | Annotations added to the PVC                             |
 | `service.type`                 | `ClusterIP`              | Service type                                             |
 | `service.port`                 | `80`                     | Service port                                             |
 | `service.nodePort`             | `""`                     | Node port when `service.type` is `NodePort`              |
+| `service.annotations`          | `{}`                     | Annotations added to the Service                         |
 | `ingress.enabled`              | `false`                  | Create an Ingress                                        |
 | `ingress.className`            | `""`                     | Ingress class                                            |
 | `ingress.hosts`                | `mfe-orchestrator.local` | Ingress hosts and paths                                  |
 | `ingress.tls`                  | `[]`                     | Ingress TLS configuration                                |
 | `serviceAccount.create`        | `true`                   | Create a ServiceAccount                                  |
+| `serviceAccount.automount`     | `true`                   | Automount the API credentials in the pod                 |
 | `resources`                    | `{}`                     | Container resource requests/limits                       |
 | `livenessProbe.enabled`        | `true`                   | HTTP liveness probe on `/api/echo`                       |
 | `readinessProbe.enabled`       | `true`                   | HTTP readiness probe on `/api/echo`                      |
 | `startupProbe.enabled`         | `false`                  | HTTP startup probe on `/api/echo`                        |
 | `autoscaling.enabled`          | `false`                  | Create a HorizontalPodAutoscaler                         |
+| `autoscaling.minReplicas`      | `1`                      | Lower bound of the HorizontalPodAutoscaler               |
+| `autoscaling.maxReplicas`      | `5`                      | Upper bound of the HorizontalPodAutoscaler               |
 | `restartOnConfigChange`        | `true`                   | Roll the pods when env ConfigMap/Secret change           |
 | `strategy`                     | `RollingUpdate`          | Deployment strategy                                      |
 | `podAnnotations` / `podLabels` | `{}`                     | Extra pod metadata                                       |

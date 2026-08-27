@@ -159,61 +159,71 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
 
             {codeRepositoryEnabled && (
                 <CardContent className="flex flex-col gap-2 pt-3">
-                    <SelectField
-                        name="codeRepository.codeRepositoryId"
-                        label={t("microfrontend.sourceCodeProvider")}
-                        options={repositoriesData?.map(repo => {
-                            return {
-                                value: repo._id,
-                                label: `${repo.name}`,
-                                icon: logoMap[repo.provider as keyof typeof logoMap]
-                            }
-                        })}
-                        required
-                    />
-
-                    {selectedCodeRepositoryId && !forceCreation && (
-                        <>
-                            {fetchRepositoriesMutation.isPending ? (
-                                <Alert>
-                                    <AlertDescription>{t("common.loading")}...</AlertDescription>
-                                </Alert>
-                            ) : (
-                                <SelectField
-                                    name="codeRepository.name" // codeRepository.name - Really good for github, do not know if it is good for other providers
-                                    label={t("microfrontend.select_repository")}
-                                    options={[
-                                        !isEdit && {
-                                            value: "create_new",
-                                            label: t("microfrontend.create_new_repository")
-                                        },
-                                        ...fetchedRepositories.map(repo => ({
-                                            value: repo.name + "",
-                                            label: repo.name
-                                        }))
-                                    ].filter(Boolean)}
-                                    placeholder={t("microfrontend.select_repository_placeholder")}
-                                    onValueChange={onRepositorySelected}
-                                />
-                            )}
-                        </>
-                    )}
-
-                    {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && gitlabGroupsQuery.data?.length > 1 && (
+                    {/* Provider, repository e gruppo indicano insieme dove sta il codice: stanno in riga
+                        e vanno a capo solo quando non ci entrano, invece di occupare tre righe intere. */}
+                    <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
                         <SelectField
-                            name="codeRepository.gitlab.groupPath"
-                            label={t("microfrontend.gitlab_group")}
-                            options={gitlabGroupsQuery.data?.map(group => ({
-                                value: group.full_path,
-                                label: group.full_name
-                            }))}
-                            onValueChange={selectedGroup => {
-                                const groupId = gitlabGroupsQuery.data?.find(group => group.full_path === selectedGroup)?.id
-                                setValue("codeRepository.gitlab.groupId", groupId)
-                                checkAvailability(selectedRepositoryName, selectedGroup, groupId)
-                            }}
+                            name="codeRepository.codeRepositoryId"
+                            containerClassName="flex-[1_1_240px]"
+                            className="w-full"
+                            label={t("microfrontend.sourceCodeProvider")}
+                            options={repositoriesData?.map(repo => {
+                                return {
+                                    value: repo._id,
+                                    label: `${repo.name}`,
+                                    icon: logoMap[repo.provider as keyof typeof logoMap]
+                                }
+                            })}
+                            required
                         />
-                    )}
+
+                        {selectedCodeRepositoryId && !forceCreation && (
+                            <>
+                                {fetchRepositoriesMutation.isPending ? (
+                                    <Alert className="flex-[1_1_240px]">
+                                        <AlertDescription>{t("common.loading")}...</AlertDescription>
+                                    </Alert>
+                                ) : (
+                                    <SelectField
+                                        name="codeRepository.name" // codeRepository.name - Really good for github, do not know if it is good for other providers
+                                        containerClassName="flex-[1_1_240px]"
+                                        className="w-full"
+                                        label={t("microfrontend.select_repository")}
+                                        options={[
+                                            !isEdit && {
+                                                value: "create_new",
+                                                label: t("microfrontend.create_new_repository")
+                                            },
+                                            ...fetchedRepositories.map(repo => ({
+                                                value: repo.name + "",
+                                                label: repo.name
+                                            }))
+                                        ].filter(Boolean)}
+                                        placeholder={t("microfrontend.select_repository_placeholder")}
+                                        onValueChange={onRepositorySelected}
+                                    />
+                                )}
+                            </>
+                        )}
+
+                        {selectedCodeRepositoryId && repositoriesData?.find?.(repo => repo._id === selectedCodeRepositoryId)?.provider === "GITLAB" && gitlabGroupsQuery.data?.length > 1 && (
+                            <SelectField
+                                name="codeRepository.gitlab.groupPath"
+                                containerClassName="flex-[1_1_240px]"
+                                className="w-full"
+                                label={t("microfrontend.gitlab_group")}
+                                options={gitlabGroupsQuery.data?.map(group => ({
+                                    value: group.full_path,
+                                    label: group.full_name
+                                }))}
+                                onValueChange={selectedGroup => {
+                                    const groupId = gitlabGroupsQuery.data?.find(group => group.full_path === selectedGroup)?.id
+                                    setValue("codeRepository.gitlab.groupId", groupId)
+                                    checkAvailability(selectedRepositoryName, selectedGroup, groupId)
+                                }}
+                            />
+                        )}
+                    </div>
 
                     {(selectedRepositoryId === "create_new" || forceCreation) && (
                         <>

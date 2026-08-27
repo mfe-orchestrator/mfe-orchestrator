@@ -16,6 +16,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         setIsSidebarCollapsed(!isSidebarCollapsed)
     }
 
+    // Solo voci di progetto: il livello organizzazione vive nell'header, dal suo menu.
     const mainNavItems = [
         {
             name: "Microfrontends",

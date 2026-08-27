@@ -1,3 +1,4 @@
+import { CodeBlock } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { ApiStatusHandler } from "@/components/organisms"
@@ -48,21 +49,23 @@ export const CodeIntegration: React.FC<CodeIntegrationProps> = ({ microfrontendI
                     ) : (
                         <>
                             {instructions.installCommand && (
-                                <div>
-                                    <p className="mb-2">{t("integration.fe_integration_tab.install_step")}</p>
-                                    <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
-                                        <code>{instructions.installCommand}</code>
-                                    </pre>
-                                </div>
+                                <CodeBlock
+                                    label={t("integration.fe_integration_tab.install_step")}
+                                    code={instructions.installCommand}
+                                    copyable
+                                    copyLabel={t("common.copy")}
+                                    copiedLabel={t("common.copied")}
+                                />
                             )}
 
                             {instructions.code && (
-                                <div>
-                                    <p className="mb-2">{t("integration.fe_integration_tab.config_step", { path: instructions.configPath })}</p>
-                                    <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
-                                        <code>{instructions.code}</code>
-                                    </pre>
-                                </div>
+                                <CodeBlock
+                                    label={t("integration.fe_integration_tab.config_step", { path: instructions.configPath })}
+                                    code={instructions.code}
+                                    copyable
+                                    copyLabel={t("common.copy")}
+                                    copiedLabel={t("common.copied")}
+                                />
                             )}
                         </>
                     )}

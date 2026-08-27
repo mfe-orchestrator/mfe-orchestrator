@@ -1,4 +1,20 @@
-import { Card, CardContent, CardHeader, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CodeBlock,
+    Select,
+    SelectContent,
+    SelectControl,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger
+} from "@mfe-orchestrator/design-system"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
@@ -48,7 +64,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
     return (
         <Card>
             <CardHeader className="border-none">
-                <h2 className="text-xl font-semibold">{t("integration.fe_integration_tab.title")}</h2>
+                <CardTitle as="h2">{t("integration.fe_integration_tab.title")}</CardTitle>
                 <p>{t("integration.fe_integration_tab.description")}</p>
             </CardHeader>
 
@@ -76,8 +92,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
 
                         <TabsContent value="federation">
                             <div className="flex gap-2 flex-wrap items-end mb-4">
-                                <div className="flex flex-col gap-1 w-full max-w-60">
-                                    <span className="text-sm font-medium text-foreground-secondary">{t("integration.fe_integration_tab.framework_label")}:</span>
+                                <SelectControl label={t("integration.fe_integration_tab.framework_label")} className="w-full max-w-60">
                                     <Select value={framework ?? AUTO} onValueChange={value => setFramework(value === AUTO ? undefined : (value as MicrofrontendFramework))}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue />
@@ -91,10 +106,9 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                </div>
+                                </SelectControl>
 
-                                <div className="flex flex-col gap-1 w-full max-w-60">
-                                    <span className="text-sm font-medium text-foreground-secondary">{t("integration.fe_integration_tab.compiler_label")}:</span>
+                                <SelectControl label={t("integration.fe_integration_tab.compiler_label")} className="w-full max-w-60">
                                     <Select value={compiler ?? AUTO} onValueChange={value => setCompiler(value === AUTO ? undefined : (value as MicrofrontendCompiler))}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue />
@@ -108,7 +122,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                </div>
+                                </SelectControl>
                             </div>
 
                             <CodeIntegration microfrontendId={selectedMicrofrontend._id} deploymentId={activeDeployment._id} framework={framework} compiler={compiler} />
@@ -117,9 +131,7 @@ export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO 
                         <TabsContent value="curl">
                             <h3 className="text-lg font-semibold">{t("integration.fe_integration_tab.curl.title")}</h3>
                             <p className="mb-4">{t("integration.fe_integration_tab.curl.description")}</p>
-                            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm mb-4">
-                                <code>{curlExample}</code>
-                            </pre>
+                            <CodeBlock code={curlExample} copyable copyLabel={t("common.copy")} copiedLabel={t("common.copied")} wrapperClassName="mb-4" />
                             <p className="mb-4">{t("integration.fe_integration_tab.curl.step2")}</p>
                             <div className="border-2 border-border rounded-md overflow-hidden">
                                 <iframe src={`https://${window.location.host}/api/serve/all/${activeDeployment.environmentId}`} className="w-full h-[500px] border-0" title="API Response Preview" />
