@@ -3,7 +3,7 @@ import { FastifyInstance, FastifyRequest } from "fastify"
 import fastifyPlugin from "fastify-plugin"
 import jwt, { JwtPayload } from "jsonwebtoken"
 import AuthenticationError from "../errors/AuthenticationError"
-import ApiKey from "../models/ApiKeyModel"
+import ApiKey, { ApiKeyStatus, IApiKeyDocument } from "../models/ApiKeyModel"
 import UserModel, { getSecret, ISSUER } from "../models/UserModel"
 import UserService, { FEDERATED_LOGIN_WINDOW_MS, recordLogin } from "../service/UserService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
@@ -205,27 +205,52 @@ export const getFederatedAuthenticationMoment = (authToken: string): Date | unde
     return typeof seconds === "number" ? new Date(seconds * 1000) : undefined
 }
 
-const checkApiKey = async (fastify: FastifyInstance, request: FastifyRequest): Promise<string> => {
+/**
+ * The key is stored hashed, so it cannot be looked up: every candidate has to be
+ * compared with bcrypt until one matches.
+ */
+const findMatching = async (candidates: IApiKeyDocument[], apiKey: string): Promise<IApiKeyDocument | undefined> => {
+    for (const candidate of candidates) {
+        if (await candidate.compareApiKey(apiKey)) {
+            return candidate
+        }
+    }
+    return undefined
+}
+
+/**
+ * Resolves an API key to the project it belongs to, rejecting a key that is revoked
+ * or past its expiry.
+ *
+ * Both conditions are part of the query rather than checked afterwards: the loop below
+ * runs one bcrypt comparison per candidate, so narrowing the set is what keeps the cost
+ * down as an installation accumulates keys.
+ *
+ * A key that fails only because it is revoked or expired is looked up a second time, and
+ * only to name the reason: "not found" sends whoever configured the pipeline looking for a
+ * key that is sitting right there. The caller already holds the key, so saying why it was
+ * refused tells them nothing they did not have.
+ */
+export const checkApiKey = async (request: FastifyRequest): Promise<string> => {
     const apiKey = request.headers["api-key"] || (request.query as Record<string, unknown>)["apiKey"]
     if (!apiKey || typeof apiKey !== "string") {
         throw new AuthenticationError("API key not found")
     }
 
-    const keys = await ApiKey.find()
-    let apiKeyFromDb = undefined
-    for (const candidateApiKey of keys) {
-        const match = await candidateApiKey.compareApiKey(apiKey)
-        if (match) {
-            apiKeyFromDb = candidateApiKey
-            break
-        }
+    const usable = await ApiKey.find({ status: ApiKeyStatus.ACTIVE, expiresAt: { $gt: new Date() } })
+    const apiKeyFromDb = await findMatching(usable, apiKey)
+
+    if (apiKeyFromDb) {
+        return apiKeyFromDb.projectId.toString()
     }
 
-    if (!apiKeyFromDb) {
+    const refused = await findMatching(await ApiKey.find({ $or: [{ status: { $ne: ApiKeyStatus.ACTIVE } }, { expiresAt: { $lte: new Date() } }] }), apiKey)
+
+    if (!refused) {
         throw new AuthenticationError("API key not found")
     }
 
-    return apiKeyFromDb.projectId.toString()
+    throw new AuthenticationError(refused.status !== ApiKeyStatus.ACTIVE ? "API key revoked" : `API key expired on ${refused.expiresAt.toISOString()}`)
 }
 
 export default fastifyPlugin(
@@ -240,7 +265,7 @@ export default fastifyPlugin(
 
             if (authMethod === AuthenticationMethod.API_KEY) {
                 fastify.log.debug("Authorization is API Key")
-                const projectId = await checkApiKey(fastify, request)
+                const projectId = await checkApiKey(request)
                 request.headers["project-id"] = projectId
                 return
             }

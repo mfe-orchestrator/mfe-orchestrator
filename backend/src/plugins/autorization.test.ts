@@ -1,13 +1,20 @@
-import { FastifyInstance } from "fastify"
+import { FastifyInstance, FastifyRequest } from "fastify"
 import jwt from "jsonwebtoken"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Reached through UserService, which reads the app instance from the entry point:
 // importing that entry point would start the server.
 vi.mock("..", () => ({ fastify: { log: { warn: vi.fn() } } }))
 
+const apiKeyFind = vi.fn()
+vi.mock("../models/ApiKeyModel", async importOriginal => {
+    const original = await importOriginal<typeof import("../models/ApiKeyModel")>()
+    return { ...original, default: { find: (...args: unknown[]) => apiKeyFind(...args) } }
+})
+
+import { ApiKeyStatus } from "../models/ApiKeyModel"
 import { getSecret, ISSUER } from "../models/UserModel"
-import { getFederatedAuthenticationMoment, resolveAuthentication } from "./autorization"
+import { checkApiKey, getFederatedAuthenticationMoment, resolveAuthentication } from "./autorization"
 
 const ENTRA_TENANT_ID = "11111111-2222-3333-4444-555555555555"
 const entraIssuer = (tenantId: string) => `https://login.microsoftonline.com/${tenantId}/v2.0`
@@ -85,5 +92,69 @@ describe("getFederatedAuthenticationMoment", () => {
         const withoutTimestamps = jwt.sign({ email: "member@example.com" }, "any-key", { noTimestamp: true })
 
         expect(getFederatedAuthenticationMoment(withoutTimestamps)).toBeUndefined()
+    })
+})
+
+describe("checkApiKey", () => {
+    const PROJECT_ID = "6890f0b1c2d3e4f5a6b7c8d9"
+    const aRequest = (apiKey?: string) => ({ headers: apiKey ? { "api-key": apiKey } : {}, query: {} }) as unknown as FastifyRequest
+
+    /**
+     * The stored key is a bcrypt hash, so the stub matches on the plaintext it was built
+     * with rather than pretending to hash anything.
+     */
+    const aStoredKey = (plaintext: string, overrides: { status?: ApiKeyStatus; expiresAt?: Date } = {}) => ({
+        projectId: PROJECT_ID,
+        status: overrides.status ?? ApiKeyStatus.ACTIVE,
+        expiresAt: overrides.expiresAt ?? new Date(Date.now() + 60_000),
+        compareApiKey: (candidate: string) => Promise.resolve(candidate === plaintext)
+    })
+
+    /** Answers each query the way Mongo would, so the filter itself is what is under test. */
+    const storing = (...keys: ReturnType<typeof aStoredKey>[]) => {
+        apiKeyFind.mockImplementation((filter: Record<string, unknown> = {}) => {
+            const now = new Date()
+            const usable = filter.status === ApiKeyStatus.ACTIVE
+            return Promise.resolve(keys.filter(key => (key.status === ApiKeyStatus.ACTIVE && key.expiresAt > now) === usable))
+        })
+    }
+
+    beforeEach(() => apiKeyFind.mockReset())
+
+    it("given an active key inside its expiry, when it is checked, then the project it belongs to is returned", async () => {
+        storing(aStoredKey("a-live-key"))
+
+        await expect(checkApiKey(aRequest("a-live-key"))).resolves.toBe(PROJECT_ID)
+    })
+
+    it("given a revoked key, when it is checked, then it is refused as revoked", async () => {
+        storing(aStoredKey("a-revoked-key", { status: ApiKeyStatus.INACTIVE }))
+
+        await expect(checkApiKey(aRequest("a-revoked-key"))).rejects.toThrow("API key revoked")
+    })
+
+    it("given a key past its expiry, when it is checked, then it is refused as expired", async () => {
+        storing(aStoredKey("a-stale-key", { expiresAt: new Date(Date.now() - 60_000) }))
+
+        await expect(checkApiKey(aRequest("a-stale-key"))).rejects.toThrow(/API key expired on/)
+    })
+
+    it("given a key nobody issued, when it is checked, then it is refused without naming a reason", async () => {
+        storing(aStoredKey("a-live-key"))
+
+        await expect(checkApiKey(aRequest("a-key-we-never-issued"))).rejects.toThrow("API key not found")
+    })
+
+    it("given no key at all in the request, when it is checked, then the database is not even consulted", async () => {
+        storing(aStoredKey("a-live-key"))
+
+        await expect(checkApiKey(aRequest())).rejects.toThrow("API key not found")
+        expect(apiKeyFind).not.toHaveBeenCalled()
+    })
+
+    it("given a revoked key and a live one, when the live one is checked, then the revoked one does not shadow it", async () => {
+        storing(aStoredKey("a-revoked-key", { status: ApiKeyStatus.INACTIVE }), aStoredKey("a-live-key"))
+
+        await expect(checkApiKey(aRequest("a-live-key"))).resolves.toBe(PROJECT_ID)
     })
 })
