@@ -4,9 +4,9 @@ description: Microfrontend Orchestrator - JSON based configuration, versioning a
 type: application
 
 # Chart version: bumped on every change to the chart itself.
-version: 0.1.2
+version: 0.2.0
 # Version of the mfe-orchestrator image shipped by default (see values.yaml image.tag).
-appVersion: "3.1.0"
+appVersion: "4.0.0"
 
 home: https://github.com/mfe-orchestrator/mfe-orchestrator
 sources:
