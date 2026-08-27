@@ -114,6 +114,8 @@
         "recover_password": "Recupera Password",
         "recover_password_description": "Inserisci la tua email per recuperare la password",
         "recover_password_success": "Se esiste un account con questa email, riceverai un link per reimpostare la password",
+        "recover_password_email_not_configured": "Questa installazione non ha un server email configurato: il reset della password non è disponibile. Contatta un amministratore.",
+        "recover_password_error": "Non è stato possibile inviare il link per reimpostare la password. Riprova.",
         "recover_password_button": "Recupera Password",
         "no_account": "Non hai un account?",
         "already_have_account": "Hai già un account?",

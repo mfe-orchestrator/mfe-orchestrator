@@ -16,7 +16,19 @@ interface IErrorResponse {
     message?: string
     violations?: IViolations[]
     title?: string
+    error?: {
+        code?: string
+        message?: string
+    }
 }
+
+/**
+ * The `code` of a BusinessException raised by the backend, which wraps it in
+ * `{ success: false, error: { code, message } }`. It is the stable half of that
+ * payload: the message alongside it is an English string written for the log, so a
+ * screen that wants to say something of its own keys off the code and translates it.
+ */
+export const errorCodeOf = (error?: Error): string | undefined => (error as AxiosError<IErrorResponse>)?.response?.data?.error?.code
 
 export interface IClientRequestMetadataExtended extends IClientRequestMetadata {
     silent?: boolean

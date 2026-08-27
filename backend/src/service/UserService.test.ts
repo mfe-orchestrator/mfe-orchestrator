@@ -168,6 +168,60 @@ describe("saveAvatar", () => {
     })
 })
 
+describe("requestPasswordReset", () => {
+    const anExistingUser = () => ({ email: "someone@example.com", save: vi.fn().mockResolvedValue(undefined) })
+
+    const userServiceWith = (canSendEmails: boolean, sendResetPasswordEmail = vi.fn().mockResolvedValue(undefined)) =>
+        new UserService({ canSendEmails: () => canSendEmails, sendResetPasswordEmail } as unknown as EmailService)
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it("given an installation with SMTP, when a reset is requested, then the token is stored and the link is sent", async () => {
+        const user = anExistingUser()
+        vi.spyOn(User, "findOne").mockResolvedValue(user as never)
+        const sendResetPasswordEmail = vi.fn().mockResolvedValue(undefined)
+
+        await userServiceWith(true, sendResetPasswordEmail).requestPasswordReset(user.email)
+
+        expect(user.save).toHaveBeenCalledOnce()
+        expect(sendResetPasswordEmail).toHaveBeenCalledWith(user.email, expect.any(String))
+    })
+
+    it("given an installation without SMTP, when a reset is requested, then it is refused instead of reporting success", async () => {
+        const user = anExistingUser()
+        vi.spyOn(User, "findOne").mockResolvedValue(user as never)
+
+        const request = userServiceWith(false).requestPasswordReset(user.email)
+
+        await expect(request).rejects.toBeInstanceOf(BusinessException)
+        await expect(request).rejects.toMatchObject({ code: "EMAIL_NOT_CONFIGURED" })
+    })
+
+    /**
+     * A token nobody can receive is a credential left on the account for its full hour:
+     * refusing has to happen before the write, not after the send has failed.
+     */
+    it("given an installation without SMTP, when a reset is requested, then no token is left on the account", async () => {
+        const user = anExistingUser()
+        vi.spyOn(User, "findOne").mockResolvedValue(user as never)
+
+        await expect(userServiceWith(false).requestPasswordReset(user.email)).rejects.toThrow()
+
+        expect(user.save).not.toHaveBeenCalled()
+    })
+
+    it("given an installation without SMTP, when a reset is requested, then no delivery is attempted", async () => {
+        vi.spyOn(User, "findOne").mockResolvedValue(anExistingUser() as never)
+        const sendResetPasswordEmail = vi.fn().mockResolvedValue(undefined)
+
+        await expect(userServiceWith(false, sendResetPasswordEmail).requestPasswordReset("someone@example.com")).rejects.toThrow()
+
+        expect(sendResetPasswordEmail).not.toHaveBeenCalled()
+    })
+})
+
 describe("getAvatar", () => {
     const userId = new Types.ObjectId() as unknown as IUser["_id"]
     const userService = new UserService({} as EmailService)
