@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify"
+import { createBusinessException } from "../errors/BusinessException"
 import OrganizationService from "../service/OrganizationService"
 import ProjectService from "../service/ProjectService"
 import UserService from "../service/UserService"
@@ -21,6 +22,26 @@ export function StartupController(fastify: FastifyInstance) {
     })
 
     fastify.post<{ Body: StartupUserRegistrationDTO }>("/startup/registration", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (req, res) => {
+        // The route has to stay public - on an empty installation there is nobody to authenticate
+        // as - so what closes it is the only state it exists for: no users yet. Without this it
+        // stayed open forever, and called against a populated installation it created another user
+        // with an organization and a project of their own.
+        //
+        // REGISTRATION_ALLOWED deliberately does not gate this one: with registration turned off
+        // and no users, an installation could never be set up at all. It gates the ordinary
+        // registration route instead - or rather it is supposed to, which is a separate matter.
+        //
+        // This is a check followed by a write, so two calls racing on a genuinely empty
+        // installation could both get through. That window is the first setup itself, and it is
+        // the installer's own; what it cannot do any more is stay open afterwards.
+        if (await userService.existsAtLeastOneUser()) {
+            throw createBusinessException({
+                code: "INSTALLATION_ALREADY_SET_UP",
+                message: "This installation already has a user: first-startup registration is closed",
+                statusCode: 409
+            })
+        }
+
         const registeredUser = await userService.register(
             {
                 email: req.body.email,
