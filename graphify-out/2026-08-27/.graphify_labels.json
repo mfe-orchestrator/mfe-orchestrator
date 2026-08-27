@@ -199,7 +199,6 @@
   "197": "FederationConfigService",
   "198": "[3.1.0] - 2026-08-16",
   "199": "curl",
-  "200": "EnvironmentHeaderNotFoundError",
   "202": "EmailSenderService",
   "203": "validation",
   "204": "GoogleStorageClient",
@@ -209,6 +208,5 @@
   "210": "assist",
   "211": "[2.1.0] - 2026-08-06",
   "213": "[3.0.0] - 2026-08-16",
-  "214": "[Unreleased]",
   "215": "Scopes (Optional)"
 }

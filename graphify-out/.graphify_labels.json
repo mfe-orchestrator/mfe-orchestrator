@@ -199,14 +199,21 @@
   "197": "FederationConfigService",
   "198": "[3.1.0] - 2026-08-16",
   "199": "curl",
+  "200": "EmailSenderService",
+  "201": "delete",
   "202": "EmailSenderService",
   "203": "validation",
   "204": "GoogleStorageClient",
+  "205": "MicrofrontendsTable.tsx",
   "206": "personalData",
   "207": "Examples",
   "208": "[1.0.0] - 2025-12-07",
+  "209": "error",
   "210": "assist",
   "211": "[2.1.0] - 2026-08-06",
+  "212": "[3.1.0] - 2026-08-16",
   "213": "[3.0.0] - 2026-08-16",
-  "215": "Scopes (Optional)"
+  "214": "roles",
+  "215": "Scopes (Optional)",
+  "216": "AuthenticationError"
 }

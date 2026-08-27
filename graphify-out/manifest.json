@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/EnvironmentService.ts": {
-    "mtime": 1787812331.36058,
-    "ast_hash": "c6b6bdd89421b051b363d9ee41e8c84b",
+    "mtime": 1787827549.0501533,
+    "ast_hash": "08aeb87f55d3d25323dd2d02adfe9db4",
     "semantic_hash": ""
   },
   "backend/src/service/GlobalVariablesService.ts": {
@@ -1905,7 +1905,7 @@
     "semantic_hash": ""
   },
   "e2e/tests/fixtures/projectResources.ts": {
-    "mtime": 1787812331.3764102,
+    "mtime": 1787827597.4566233,
     "ast_hash": "94a93a3801e72986e31d25af79ac454e",
     "semantic_hash": ""
   },
@@ -2482,6 +2482,16 @@
   "e2e/screens/organization-switcher.png": {
     "mtime": 1787819015.8876002,
     "ast_hash": "4a87bf9b8aefad994241c110b7ffb474",
+    "semantic_hash": ""
+  },
+  "backend/src/service/EnvironmentService.test.ts": {
+    "mtime": 1787827583.9616425,
+    "ast_hash": "5a0b71d255d9db416ef5fab17a7d1fd4",
+    "semantic_hash": ""
+  },
+  "e2e/tests/screenshots-account.spec.ts": {
+    "mtime": 1787827616.7482066,
+    "ast_hash": "cce61127e178081fb2777468018421e6",
     "semantic_hash": ""
   }
 }
