@@ -90,6 +90,24 @@ describe("StartupController", () => {
         expect(createProject).not.toHaveBeenCalled()
     })
 
+    it("Given a project name with several spaces, when the first registration is posted, then every space is in the slug", async () => {
+        existsAtLeastOneUser.mockResolvedValue(false)
+
+        await app.inject({ method: "POST", url: "/startup/registration", payload: { ...aRegistration, project: "My Cool Storefront App" } })
+
+        // Each replace was hitting only the first occurrence, so this used to be stored as
+        // "my-cool storefront app" - and the slug cannot be corrected afterwards.
+        expect(createProject.mock.calls[0][0]).toMatchObject({ slug: "my-cool-storefront-app" })
+    })
+
+    it("Given a project name with underscores and dots, when the first registration is posted, then all of them become hyphens", async () => {
+        existsAtLeastOneUser.mockResolvedValue(false)
+
+        await app.inject({ method: "POST", url: "/startup/registration", payload: { ...aRegistration, project: "v1.2.3_rc_beta" } })
+
+        expect(createProject.mock.calls[0][0]).toMatchObject({ slug: "v1-2-3-rc-beta" })
+    })
+
     it("Given an installation with no users, when it is asked whether one exists, then it says no", async () => {
         existsAtLeastOneUser.mockResolvedValue(false)
 

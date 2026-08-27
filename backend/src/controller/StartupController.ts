@@ -66,7 +66,11 @@ export function StartupController(fastify: FastifyInstance) {
             {
                 organizationId: organization._id.toString(),
                 name: req.body.project,
-                slug: req.body.project.toLowerCase().replace(" ", "-").replace("_", "-").replace(".", "-"),
+                // replaceAll, not replace: each of these was replacing only the first occurrence,
+                // so "My Cool Storefront App" was stored as "my-cool storefront app" - literal
+                // spaces included - and the slug is read-only afterwards because the uploaded
+                // bundles live under `<slug>-<id>/`.
+                slug: req.body.project.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-").replaceAll(".", "-"),
                 description: req.body.project
             },
             registeredUser._id
