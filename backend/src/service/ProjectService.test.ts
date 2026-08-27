@@ -12,6 +12,7 @@ import { IUser } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject from "../models/UserProjectModel"
 import ProjectService from "./ProjectService"
+import UserProjectService from "./UserProjectService"
 
 /**
  * The id flavour the service signatures speak: mongoose's schema type, not the runtime one the driver
@@ -198,5 +199,53 @@ describe("update", () => {
         await update({ description: "the checkout flow" })
 
         expect(written).toEqual({ description: "the checkout flow" })
+    })
+})
+
+/**
+ * The slug a project is created with, which is the one thing about it that cannot be corrected
+ * afterwards: it is part of the `<slug>-<id>/` path the uploaded bundles live under, so the console
+ * shows it read-only and the update route refuses it on purpose.
+ */
+describe("createRaw", () => {
+    let saved: { name?: string; slug?: string }
+
+    const create = async (name: string, slug?: string) => {
+        await new ProjectService(aUser()).createRaw({ organizationId: newId().toString(), name, slug }, newId())
+        return saved
+    }
+
+    beforeEach(() => {
+        saved = {}
+        // `new Project(...)` builds a real document without touching a database; intercepting save
+        // is what lets the test read the slug the service decided on.
+        vi.spyOn(Project.prototype, "save").mockImplementation(async function (this: { name?: string; slug?: string; _id: ObjectId }) {
+            saved = { name: this.name, slug: this.slug }
+            return this
+        } as never)
+        vi.spyOn(UserProjectService.prototype, "addUserToProject").mockResolvedValue(undefined as never)
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it("given no slug, when a project is created, then it is derived from the name with the shared helper", async () => {
+        // Derived by `slugify`, not by hand: three `replace` calls on literals used to leave
+        // "my-cool storefront app" here, spaces included.
+        expect(await create("My Cool Storefront App")).toMatchObject({ slug: "my-cool-storefront-app" })
+    })
+
+    it("given a name with consecutive separators, when a project is created, then the hyphens collapse", async () => {
+        expect(await create("Acme  Storefront")).toMatchObject({ slug: "acme-storefront" })
+        expect(await create("v1.2.3_rc")).toMatchObject({ slug: "v1-2-3-rc" })
+    })
+
+    it("given a slug of its own, when a project is created, then that one is kept", async () => {
+        expect(await create("Acme Storefront", "legacy-path")).toMatchObject({ slug: "legacy-path" })
+    })
+
+    it("given a blank slug, when a project is created, then it falls back to the name", async () => {
+        expect(await create("Acme Storefront", "   ")).toMatchObject({ slug: "acme-storefront" })
     })
 })

@@ -90,22 +90,25 @@ describe("StartupController", () => {
         expect(createProject).not.toHaveBeenCalled()
     })
 
-    it("Given a project name with several spaces, when the first registration is posted, then every space is in the slug", async () => {
+    it("Given a project name, when the first registration is posted, then the slug is left to the service", async () => {
         existsAtLeastOneUser.mockResolvedValue(false)
 
         await app.inject({ method: "POST", url: "/startup/registration", payload: { ...aRegistration, project: "My Cool Storefront App" } })
 
-        // Each replace was hitting only the first occurrence, so this used to be stored as
-        // "my-cool storefront app" - and the slug cannot be corrected afterwards.
-        expect(createProject.mock.calls[0][0]).toMatchObject({ slug: "my-cool-storefront-app" })
+        // The controller used to derive the slug itself, with three `replace` calls that each hit
+        // only the first occurrence. The rule now lives in one place, on `slugify`, so what this
+        // asserts is that the controller no longer has an opinion about it.
+        const created = createProject.mock.calls[0][0]
+        expect(created.name).toBe("My Cool Storefront App")
+        expect(created.slug).toBeUndefined()
     })
 
-    it("Given a project name with underscores and dots, when the first registration is posted, then all of them become hyphens", async () => {
+    it("Given a project name, when the first registration is posted, then the organization is named after it too", async () => {
         existsAtLeastOneUser.mockResolvedValue(false)
 
-        await app.inject({ method: "POST", url: "/startup/registration", payload: { ...aRegistration, project: "v1.2.3_rc_beta" } })
+        await app.inject({ method: "POST", url: "/startup/registration", payload: { ...aRegistration, project: "Acme" } })
 
-        expect(createProject.mock.calls[0][0]).toMatchObject({ slug: "v1-2-3-rc-beta" })
+        expect(createOrganization.mock.calls[0][0]).toMatchObject({ name: "Acme" })
     })
 
     it("Given an installation with no users, when it is asked whether one exists, then it says no", async () => {

@@ -14,6 +14,7 @@ import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
+import { slugify } from "../utils/slugUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import UserProjectService from "./UserProjectService"
 
@@ -21,7 +22,8 @@ export interface ProjectCreateInput {
     /** The organization the project is created in. A project always belongs to exactly one. */
     organizationId: string
     name: string
-    slug: string
+    /** Left out, it is derived from the name with the same helper the organization uses. */
+    slug?: string
     description?: string
     isActive?: boolean
 }
@@ -153,7 +155,7 @@ export class ProjectService extends BaseAuthorizedService {
             const project = new Project({
                 organizationId: toObjectId(projectData.organizationId),
                 name: projectData.name,
-                slug: projectData.slug || projectData.name.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-").replaceAll(".", "-"),
+                slug: projectData.slug?.trim() || slugify(projectData.name),
                 description: projectData.description,
                 isActive: projectData.isActive ?? true
             })
