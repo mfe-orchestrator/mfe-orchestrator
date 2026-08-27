@@ -135,8 +135,8 @@
     "semantic_hash": ""
   },
   "backend/src/controller/StartupController.ts": {
-    "mtime": 1787812331.3537037,
-    "ast_hash": "40ac2aa09cf70f6f2fe9a777b373b103",
+    "mtime": 1787836624.448103,
+    "ast_hash": "62bd590d77843fba2baf0fccf226923f",
     "semantic_hash": ""
   },
   "backend/src/controller/StorageController.ts": {
@@ -290,8 +290,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/UserModel.ts": {
-    "mtime": 1787812331.35666,
-    "ast_hash": "6dee1ec94c3f16ad74d9cda4a413b62b",
+    "mtime": 1787839687.6980627,
+    "ast_hash": "315305703a3a63fdd91c68e28e24d415",
     "semantic_hash": ""
   },
   "backend/src/models/UserProjectModel.ts": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.ts": {
-    "mtime": 1787812331.3624375,
-    "ast_hash": "f377b9950055c62a244990fadc151e1d",
+    "mtime": 1787836745.5406547,
+    "ast_hash": "8428ef890654578268a22a38ebe2add1",
     "semantic_hash": ""
   },
   "backend/src/service/ProjectWizardService.ts": {
@@ -2375,8 +2375,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.test.ts": {
-    "mtime": 1787812331.3621619,
-    "ast_hash": "a264f15b4197b0626b82e08b3076fe1c",
+    "mtime": 1787836714.0796459,
+    "ast_hash": "9f10027453e062f8e92e21bd61561cb6",
     "semantic_hash": ""
   },
   "backend/src/service/UserOrganizationService.test.ts": {
@@ -2490,8 +2490,78 @@
     "semantic_hash": ""
   },
   "e2e/tests/screenshots-account.spec.ts": {
-    "mtime": 1787827616.7482066,
-    "ast_hash": "cce61127e178081fb2777468018421e6",
+    "mtime": 1787828604.4520817,
+    "ast_hash": "a1f7caf888c3773e6b12ef79ab2fc229",
+    "semantic_hash": ""
+  },
+  "backend/src/controller/StartupController.test.ts": {
+    "mtime": 1787836654.592467,
+    "ast_hash": "2859ff452b66aa9812c4a1f369c27d37",
+    "semantic_hash": ""
+  },
+  "backend/src/utils/slugUtils.test.ts": {
+    "mtime": 1787836638.134785,
+    "ast_hash": "581c14a9acbf1abdf654ceb5fb225654",
+    "semantic_hash": ""
+  },
+  "e2e/tests/screenshots-first-startup.spec.ts": {
+    "mtime": 1787834208.8809936,
+    "ast_hash": "272fbcce7eb5a373f53fd7f872622b83",
+    "semantic_hash": ""
+  },
+  "e2e/screens/account-activation.png": {
+    "mtime": 1787828413.52478,
+    "ast_hash": "6c035adebdfc00bd99952e10595419e3",
+    "semantic_hash": ""
+  },
+  "e2e/screens/first-startup-sso.png": {
+    "mtime": 1787834243.4627979,
+    "ast_hash": "9ba32df535c36fa7ddc4d496ee388c55",
+    "semantic_hash": ""
+  },
+  "e2e/screens/first-startup.png": {
+    "mtime": 1787834212.0698988,
+    "ast_hash": "43a194943e4e36fbb874b9b27c477c2f",
+    "semantic_hash": ""
+  },
+  "e2e/screens/invitation-not-found.png": {
+    "mtime": 1787828442.3093526,
+    "ast_hash": "0239fb2b26625c24160c4dc0d63e62cf",
+    "semantic_hash": ""
+  },
+  "e2e/screens/organization-invitation.png": {
+    "mtime": 1787828465.0417414,
+    "ast_hash": "cd5d7d0d5cb89850df3371edd6a0444b",
+    "semantic_hash": ""
+  },
+  "e2e/screens/profile-avatar.png": {
+    "mtime": 1787828610.241666,
+    "ast_hash": "16e0db17e6fce89e23aa967e1c2467e0",
+    "semantic_hash": ""
+  },
+  "e2e/screens/profile-marketing-consent.png": {
+    "mtime": 1787828610.2846732,
+    "ast_hash": "c76a2c0830451e0fd346ceb92de902dd",
+    "semantic_hash": ""
+  },
+  "e2e/screens/profile.png": {
+    "mtime": 1787828610.1925511,
+    "ast_hash": "3c699e66b8ce05d919ead743cb58bffe",
+    "semantic_hash": ""
+  },
+  "e2e/screens/project-invitation.png": {
+    "mtime": 1787828440.4481864,
+    "ast_hash": "773e676a5f0ddc82bd67c22eae3a4281",
+    "semantic_hash": ""
+  },
+  "e2e/screens/reset-password-request.png": {
+    "mtime": 1787828415.7182763,
+    "ast_hash": "3c316b44e989bafb68b14c859d4259ec",
+    "semantic_hash": ""
+  },
+  "backend/src/models/UserModel.test.ts": {
+    "mtime": 1787839741.7853043,
+    "ast_hash": "d61cef7bbd0fa8edf2fb89a938e9a449",
     "semantic_hash": ""
   }
 }

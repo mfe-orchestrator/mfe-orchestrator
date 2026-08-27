@@ -290,8 +290,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/UserModel.ts": {
-    "mtime": 1787812331.35666,
-    "ast_hash": "6dee1ec94c3f16ad74d9cda4a413b62b",
+    "mtime": 1787839687.6980627,
+    "ast_hash": "315305703a3a63fdd91c68e28e24d415",
     "semantic_hash": ""
   },
   "backend/src/models/UserProjectModel.ts": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/UserService.ts": {
-    "mtime": 1787812331.3646004,
-    "ast_hash": "d9168799a18f75cecc500857dcbd0b2a",
+    "mtime": 1787840120.4791021,
+    "ast_hash": "27238a4e50a21fbf966da44146b91a9c",
     "semantic_hash": ""
   },
   "backend/src/types/ApiKeyDTO.ts": {
@@ -665,13 +665,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1787812331.3857484,
-    "ast_hash": "08a99d7e04381fe7538fb0de22d15c16",
+    "mtime": 1787840077.9539957,
+    "ast_hash": "184a505b4a92e896cf98c5835fdb9917",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1787812331.3859773,
-    "ast_hash": "61760d26f08aeddf2fcdc1048c0e92cc",
+    "mtime": 1787840084.3148067,
+    "ast_hash": "7485226bb48c2f4fc9a6c81b88bab183",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -950,8 +950,8 @@
     "semantic_hash": "8068517932c8ee3cd4833219e5b5c115"
   },
   "frontend/src/hooks/apiClients/useUserApi.ts": {
-    "mtime": 1787812331.3949654,
-    "ast_hash": "afe2c5ff6eec71c192f7793b077c288f",
+    "mtime": 1787840066.1577725,
+    "ast_hash": "69286570100e641a3f244d4afc0cc974",
     "semantic_hash": ""
   },
   "frontend/src/hooks/use-mobile.tsx": {
@@ -960,8 +960,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/useApiClient.tsx": {
-    "mtime": 1787812331.3953125,
-    "ast_hash": "d9264ad2723ff53f90f56ce71b555636",
+    "mtime": 1787840066.1571312,
+    "ast_hash": "1205c4f63f225f7e5577eafdc264c251",
     "semantic_hash": ""
   },
   "frontend/src/hooks/useDragAndDropOrder.ts": {
@@ -1025,8 +1025,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/auth/ResetPasswordRequest.tsx": {
-    "mtime": 1787812331.3975835,
-    "ast_hash": "cd014ec8579aea91dbec4e7f451f9571",
+    "mtime": 1787840066.1581662,
+    "ast_hash": "72eafad45b1a91b531f64c9438c4b35b",
     "semantic_hash": ""
   },
   "frontend/src/pages/auth/SignUp.tsx": {
@@ -1615,8 +1615,8 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1787812897.7507467,
-    "ast_hash": "856af4dca1981ea497ae83883888eba8",
+    "mtime": 1787844149.587563,
+    "ast_hash": "987ec6bd304f1aec1d429a5ca3362efc",
     "semantic_hash": ""
   },
   "COMMIT_CONVENTIONS.md": {
@@ -1625,8 +1625,8 @@
     "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
   },
   "README.md": {
-    "mtime": 1787812331.3462412,
-    "ast_hash": "68c41c352a561e9de063adbab0577c5b",
+    "mtime": 1787844162.4082563,
+    "ast_hash": "2b046d407f7be9f08c39b7d2673a31f4",
     "semantic_hash": ""
   },
   "SECURITY.md": {
@@ -2005,8 +2005,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/UserService.test.ts": {
-    "mtime": 1787812331.3644311,
-    "ast_hash": "3fcba0ff1cc4f1bf130138163749e574",
+    "mtime": 1787840097.7924278,
+    "ast_hash": "a1b1ef5e2abdf928b5e6d14ccd7112a5",
     "semantic_hash": ""
   },
   "backend/vitest.config.mts": {
@@ -2557,6 +2557,11 @@
   "e2e/screens/reset-password-request.png": {
     "mtime": 1787828415.7182763,
     "ast_hash": "3c316b44e989bafb68b14c859d4259ec",
+    "semantic_hash": ""
+  },
+  "backend/src/models/UserModel.test.ts": {
+    "mtime": 1787839741.7853043,
+    "ast_hash": "d61cef7bbd0fa8edf2fb89a938e9a449",
     "semantic_hash": ""
   }
 }
