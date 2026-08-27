@@ -29,7 +29,7 @@ import { toObjectId } from "../utils/mongooseUtils"
 import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
-import { deploySecretName } from "./CodeRepositoryService"
+import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
 
 const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
@@ -164,7 +164,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
             name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + microfrontend.slug,
             role: ApiKeyRole.MANAGER,
-            expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+            expiresAt: deployKeyExpiry()
         })
 
         await githubClient.upsertRepositorySecret({

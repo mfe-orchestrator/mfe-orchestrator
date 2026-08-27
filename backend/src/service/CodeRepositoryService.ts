@@ -23,6 +23,16 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 const retypedSecret = (value?: string): string | undefined => (value && value !== SECRET_PLACEHOLDER ? value : undefined)
 
 export const deploySecretName = "MICROFRONTEND_ORCHESTRATOR_API_KEY"
+
+/**
+ * How long a deploy key the platform creates for itself stays valid.
+ *
+ * Spelled out unit by unit on purpose: this was `3600 * 1000 * 365` in four places, which
+ * is 365 *hours* — the keys expired after fifteen days while every page said a year.
+ */
+export const deployKeyLifetimeMs = 365 * 24 * 60 * 60 * 1000
+
+export const deployKeyExpiry = () => new Date(Date.now() + deployKeyLifetimeMs)
 export const azureDevOpsVariableGroupName = "MFE_ORCHESTRATOR_SECRETS"
 
 export interface CodeRepositoryCreateInput {
@@ -215,7 +225,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             {
                 name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - GitLab - " + repository.name,
                 role: ApiKeyRole.MANAGER,
-                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+                expiresAt: deployKeyExpiry()
             },
             session
         )
@@ -246,7 +256,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             {
                 name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + repository.name,
                 role: ApiKeyRole.MANAGER,
-                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+                expiresAt: deployKeyExpiry()
             },
             session
         )
@@ -281,7 +291,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             {
                 name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Azure DevOps - " + repository.name,
                 role: ApiKeyRole.MANAGER,
-                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+                expiresAt: deployKeyExpiry()
             },
             session
         )
