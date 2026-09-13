@@ -35,7 +35,7 @@
         "@google-cloud/storage": "^7.22.0",
         "@redis/client": "^6.2.1",
         "@sentry/node": "^10.70.0",
-        "adm-zip": "^0.6.0",
+        "adm-zip": "^0.6.1",
         "axios": "^1.19.0",
         "bcryptjs": "^3.0.3",
         "dotenv": "^17.4.2",
