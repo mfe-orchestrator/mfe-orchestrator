@@ -799,7 +799,7 @@
       "label": "fs",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L11",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_fs",
       "community": 210,
@@ -809,7 +809,7 @@
       "label": "path",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L13",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_path",
       "community": 210,
@@ -819,7 +819,7 @@
       "label": "DOCS_DIR",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L15",
+      "source_location": "L13",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_docs_dir",
       "community": 210,
@@ -829,7 +829,7 @@
       "label": "OUTPUT",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L16",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_output",
       "community": 210,
@@ -839,7 +839,7 @@
       "label": "listMarkdownFiles()",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L19",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_listmarkdownfiles",
       "community": 210,
@@ -849,7 +849,7 @@
       "label": "splitFrontmatter()",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L26",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_splitfrontmatter",
       "community": 210,
@@ -859,7 +859,7 @@
       "label": "cleanBody()",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L42",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_cleanbody",
       "community": 210,
@@ -869,7 +869,7 @@
       "label": "toUrl()",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L49",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_tourl",
       "community": 210,
@@ -879,7 +879,7 @@
       "label": "anchorOf()",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L55",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_anchorof",
       "community": 210,
@@ -889,7 +889,7 @@
       "label": "toSections()",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L63",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_tosections",
       "community": 210,
@@ -899,7 +899,7 @@
       "label": "index",
       "file_type": "code",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L95",
+      "source_location": "L93",
       "_origin": "ast",
       "id": "backend_scripts_build_docs_index_index",
       "community": 210,
@@ -17662,7 +17662,7 @@
       "source_location": "L308",
       "_origin": "ast",
       "id": "biome_assist",
-      "community": 165,
+      "community": 200,
       "norm_label": "assist"
     },
     {
@@ -17672,7 +17672,7 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "biome_assist_enabled",
-      "community": 165,
+      "community": 200,
       "norm_label": "enabled"
     },
     {
@@ -17682,7 +17682,7 @@
       "source_location": "L310",
       "_origin": "ast",
       "id": "biome_assist_actions",
-      "community": 165,
+      "community": 200,
       "norm_label": "actions"
     },
     {
@@ -17692,7 +17692,7 @@
       "source_location": "L310",
       "_origin": "ast",
       "id": "biome_actions_source",
-      "community": 165,
+      "community": 200,
       "norm_label": "source"
     },
     {
@@ -17702,7 +17702,7 @@
       "source_location": "L310",
       "_origin": "ast",
       "id": "biome_source_organizeimports",
-      "community": 165,
+      "community": 200,
       "norm_label": "organizeimports"
     },
     {
@@ -32154,7 +32154,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_components_ui_deleteconfirmationdialog",
-      "community": 80,
+      "community": 110,
       "norm_label": "deleteconfirmationdialog.tsx"
     },
     {
@@ -32164,7 +32164,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "frontend_src_components_ui_deleteconfirmationdialog_deleteconfirmationdialogprops",
-      "community": 80,
+      "community": 110,
       "norm_label": "deleteconfirmationdialogprops"
     },
     {
@@ -32174,7 +32174,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "frontend_src_components_ui_deleteconfirmationdialog_deleteconfirmationdialog",
-      "community": 80,
+      "community": 110,
       "norm_label": "deleteconfirmationdialog()"
     },
     {
@@ -32564,7 +32564,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usecanaryusersapi",
-      "community": 80,
+      "community": 110,
       "norm_label": "usecanaryusersapi.ts"
     },
     {
@@ -32574,7 +32574,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usecanaryusersapi_canaryuser",
-      "community": 80,
+      "community": 110,
       "norm_label": "canaryuser"
     },
     {
@@ -32584,7 +32584,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usecanaryusersapi_usecanaryusersapi",
-      "community": 80,
+      "community": 110,
       "norm_label": "usecanaryusersapi()"
     },
     {
@@ -33294,7 +33294,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usemarketapi",
-      "community": 234,
+      "community": 80,
       "norm_label": "usemarketapi.ts"
     },
     {
@@ -33304,7 +33304,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usemarketapi_market",
-      "community": 234,
+      "community": 80,
       "norm_label": "market"
     },
     {
@@ -33314,7 +33314,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usemarketapi_usemarketapi",
-      "community": 234,
+      "community": 80,
       "norm_label": "usemarketapi()"
     },
     {
@@ -33324,7 +33324,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usemcpclientsapi",
-      "community": 80,
+      "community": 110,
       "norm_label": "usemcpclientsapi.ts"
     },
     {
@@ -33334,7 +33334,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usemcpclientsapi_mcpclient",
-      "community": 80,
+      "community": 110,
       "norm_label": "mcpclient"
     },
     {
@@ -33344,7 +33344,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usemcpclientsapi_usemcpclientsapi",
-      "community": 80,
+      "community": 110,
       "norm_label": "usemcpclientsapi()"
     },
     {
@@ -33864,7 +33864,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi",
-      "community": 200,
+      "community": 32,
       "norm_label": "usestorageapi.ts"
     },
     {
@@ -33884,7 +33884,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_googleauthconfig",
-      "community": 200,
+      "community": 32,
       "norm_label": "googleauthconfig"
     },
     {
@@ -33894,7 +33894,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_googlestorageconfig",
-      "community": 200,
+      "community": 32,
       "norm_label": "googlestorageconfig"
     },
     {
@@ -33904,7 +33904,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_azureauthconfig",
-      "community": 200,
+      "community": 32,
       "norm_label": "azureauthconfig"
     },
     {
@@ -33914,7 +33914,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_azurestorageconfig",
-      "community": 200,
+      "community": 32,
       "norm_label": "azurestorageconfig"
     },
     {
@@ -33924,7 +33924,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_s3clientconfig",
-      "community": 200,
+      "community": 32,
       "norm_label": "s3clientconfig"
     },
     {
@@ -33934,7 +33934,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_storagetype",
-      "community": 200,
+      "community": 32,
       "norm_label": "storagetype"
     },
     {
@@ -33944,7 +33944,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_istorageauth",
-      "community": 200,
+      "community": 32,
       "norm_label": "istorageauth"
     },
     {
@@ -33954,7 +33954,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_createstoragedto",
-      "community": 200,
+      "community": 32,
       "norm_label": "createstoragedto"
     },
     {
@@ -33964,7 +33964,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "frontend_src_hooks_apiclients_usestorageapi_usestorageapi",
-      "community": 200,
+      "community": 32,
       "norm_label": "usestorageapi()"
     },
     {
@@ -35344,7 +35344,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_deployments_canaryusers",
-      "community": 80,
+      "community": 110,
       "norm_label": "canaryusers.tsx"
     },
     {
@@ -35354,7 +35354,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "frontend_src_pages_deployments_canaryusers_parseuserids",
-      "community": 80,
+      "community": 110,
       "norm_label": "parseuserids()"
     },
     {
@@ -35364,7 +35364,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "frontend_src_pages_deployments_canaryusers_canaryusers",
-      "community": 80,
+      "community": 110,
       "norm_label": "canaryusers()"
     },
     {
@@ -36144,7 +36144,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_mcp_clients_mcpclients",
-      "community": 80,
+      "community": 110,
       "norm_label": "mcpclients.tsx"
     },
     {
@@ -36154,7 +36154,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "frontend_src_pages_mcp_clients_mcpclients_mcpclients",
-      "community": 80,
+      "community": 110,
       "norm_label": "mcpclients()"
     },
     {
@@ -37014,7 +37014,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "frontend_src_pages_new_project_wizard_newprojectwizard_newprojectwizard",
-      "community": 8,
+      "community": 32,
       "norm_label": "newprojectwizard()"
     },
     {
@@ -37954,7 +37954,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_addstorage",
-      "community": 200,
+      "community": 32,
       "norm_label": "addstorage.tsx"
     },
     {
@@ -37964,7 +37964,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_addstorage_storageauthfieldsprops",
-      "community": 200,
+      "community": 32,
       "norm_label": "storageauthfieldsprops"
     },
     {
@@ -37974,7 +37974,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_addstorage_storageauthfields",
-      "community": 200,
+      "community": 32,
       "norm_label": "storageauthfields()"
     },
     {
@@ -37984,7 +37984,7 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_addstorage_storageformprops",
-      "community": 200,
+      "community": 32,
       "norm_label": "storageformprops"
     },
     {
@@ -37994,7 +37994,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_addstorage_storageform",
-      "community": 200,
+      "community": 32,
       "norm_label": "storageform()"
     },
     {
@@ -38004,7 +38004,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_addstorage_addstorage",
-      "community": 200,
+      "community": 32,
       "norm_label": "addstorage()"
     },
     {
@@ -38014,7 +38014,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_storages",
-      "community": 200,
+      "community": 32,
       "norm_label": "storages.tsx"
     },
     {
@@ -38024,7 +38024,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "frontend_src_pages_storages_storages_storages",
-      "community": 200,
+      "community": 32,
       "norm_label": "storages()"
     },
     {
@@ -38034,7 +38034,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_templateslibrary",
-      "community": 234,
+      "community": 80,
       "norm_label": "templateslibrary.tsx"
     },
     {
@@ -38044,7 +38044,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_templateslibrary_templateslibrary",
-      "community": 234,
+      "community": 80,
       "norm_label": "templateslibrary()"
     },
     {
@@ -38054,7 +38054,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_blanktemplatecard",
-      "community": 234,
+      "community": 80,
       "norm_label": "blanktemplatecard.tsx"
     },
     {
@@ -38064,7 +38064,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_blanktemplatecard_blanktemplatecardprops",
-      "community": 234,
+      "community": 80,
       "norm_label": "blanktemplatecardprops"
     },
     {
@@ -38074,7 +38074,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_blanktemplatecard_blanktemplatecard",
-      "community": 234,
+      "community": 80,
       "norm_label": "blanktemplatecard()"
     },
     {
@@ -38084,7 +38084,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_fetchdatatemplatecard",
-      "community": 234,
+      "community": 80,
       "norm_label": "fetchdatatemplatecard.tsx"
     },
     {
@@ -38094,7 +38094,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_fetchdatatemplatecard_fetchdatatemplatecardprops",
-      "community": 234,
+      "community": 80,
       "norm_label": "fetchdatatemplatecardprops"
     },
     {
@@ -38104,7 +38104,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_fetchdatatemplatecard_fetchdatatemplatecard",
-      "community": 234,
+      "community": 80,
       "norm_label": "fetchdatatemplatecard()"
     },
     {
@@ -38114,7 +38114,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_templatecard",
-      "community": 234,
+      "community": 80,
       "norm_label": "templatecard.tsx"
     },
     {
@@ -38124,7 +38124,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_templatecard_templatecardprops",
-      "community": 234,
+      "community": 80,
       "norm_label": "templatecardprops"
     },
     {
@@ -38134,7 +38134,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_templatecard_templatecard",
-      "community": 234,
+      "community": 80,
       "norm_label": "templatecard()"
     },
     {
@@ -38144,7 +38144,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_pages_templates_library_partials_index",
-      "community": 234,
+      "community": 80,
       "norm_label": "index.ts"
     },
     {
@@ -38234,7 +38234,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "frontend_src_store_useprojectstore",
-      "community": 46,
+      "community": 198,
       "norm_label": "useprojectstore.ts"
     },
     {
@@ -38254,7 +38254,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "frontend_src_store_useprojectstore_useprojectstore",
-      "community": 46,
+      "community": 32,
       "norm_label": "useprojectstore"
     },
     {
@@ -43568,7 +43568,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L55",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_anchorof",
@@ -43578,7 +43578,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L42",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_cleanbody",
@@ -43588,7 +43588,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L15",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_docs_dir",
@@ -43598,7 +43598,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L11",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_fs",
@@ -43608,7 +43608,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L95",
+      "source_location": "L93",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_index",
@@ -43618,7 +43618,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L19",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_listmarkdownfiles",
@@ -43628,7 +43628,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L16",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_output",
@@ -43638,7 +43638,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L13",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_path",
@@ -43648,7 +43648,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L26",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_splitfrontmatter",
@@ -43658,7 +43658,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L63",
+      "source_location": "L61",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_tosections",
@@ -43668,10 +43668,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L49",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index",
       "target": "backend_scripts_build_docs_index_tourl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/scripts/build-docs-index.js",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "backend_scripts_build_docs_index_tosections",
+      "target": "backend_scripts_build_docs_index_splitfrontmatter",
       "confidence_score": 1.0
     },
     {
@@ -43682,17 +43693,6 @@
       "source_location": "L65",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index_tosections",
-      "target": "backend_scripts_build_docs_index_splitfrontmatter",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L67",
-      "weight": 1.0,
-      "source": "backend_scripts_build_docs_index_tosections",
       "target": "backend_scripts_build_docs_index_cleanbody",
       "confidence_score": 1.0
     },
@@ -43701,7 +43701,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L66",
+      "source_location": "L64",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index_tosections",
       "target": "backend_scripts_build_docs_index_tourl",
@@ -43712,7 +43712,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/scripts/build-docs-index.js",
-      "source_location": "L86",
+      "source_location": "L84",
       "weight": 1.0,
       "source": "backend_scripts_build_docs_index_tosections",
       "target": "backend_scripts_build_docs_index_anchorof",
@@ -48781,7 +48781,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/controller/McpController.test.ts",
-      "source_location": "L28",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "backend_src_controller_mcpcontroller_test",
       "target": "backend_src_service_oauthtokenservice",
@@ -48792,7 +48792,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/controller/McpController.test.ts",
-      "source_location": "L28",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "backend_src_controller_mcpcontroller_test",
       "target": "backend_src_service_oauthtokenservice_signmcpaccesstoken",
@@ -48803,7 +48803,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/controller/McpController.test.ts",
-      "source_location": "L29",
+      "source_location": "L28",
       "weight": 1.0,
       "source": "backend_src_controller_mcpcontroller_test",
       "target": "backend_src_utils_apikeycredentialcache",
@@ -48814,7 +48814,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/controller/McpController.test.ts",
-      "source_location": "L29",
+      "source_location": "L28",
       "weight": 1.0,
       "source": "backend_src_controller_mcpcontroller_test",
       "target": "backend_src_utils_apikeycredentialcache_clearapikeycredentialcache",
@@ -68295,7 +68295,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/ApiKeyService.ts",
-      "source_location": "L5",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "backend_src_service_apikeyservice",
       "target": "backend_src_utils_apikeycredentialcache",
@@ -68306,7 +68306,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/ApiKeyService.ts",
-      "source_location": "L5",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "backend_src_service_apikeyservice",
       "target": "backend_src_utils_apikeycredentialcache_invalidateapikeycredential",
@@ -68317,7 +68317,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/ApiKeyService.ts",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "backend_src_service_apikeyservice",
       "target": "backend_src_utils_mongooseutils",
@@ -68328,7 +68328,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/ApiKeyService.ts",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "backend_src_service_apikeyservice",
       "target": "backend_src_utils_mongooseutils_toobjectid",
@@ -68339,7 +68339,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/ApiKeyService.ts",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "backend_src_service_apikeyservice",
       "target": "backend_src_utils_runintransaction",
@@ -68350,7 +68350,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/ApiKeyService.ts",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "backend_src_service_apikeyservice",
       "target": "backend_src_utils_runintransaction_runintransaction",
@@ -80245,7 +80245,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_mongooseutils",
@@ -80256,7 +80256,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_mongooseutils_toobjectid",
@@ -80267,7 +80267,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_oauthconfig",
@@ -80278,7 +80278,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_oauthconfig_getoauthconfig",
@@ -80289,7 +80289,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_oauthconfig_oauthconfig",
@@ -80300,7 +80300,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_pkce",
@@ -80311,7 +80311,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_pkce_generateopaquetoken",
@@ -80322,7 +80322,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/src/service/OAuthTokenService.ts",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "backend_src_service_oauthtokenservice",
       "target": "backend_src_utils_pkce_hashopaquetoken",
@@ -108164,7 +108164,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/Routes.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "frontend_src_routes",
       "target": "frontend_src_pages_oauth_oauthresume",
@@ -108175,7 +108175,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/Routes.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "frontend_src_routes",
       "target": "frontend_src_pages_oauth_oauthresume_readoauthresume",
@@ -108586,7 +108586,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/Routes.tsx",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "frontend_src_routes",
       "target": "frontend_src_theme_authwrapper",
@@ -108597,7 +108597,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/Routes.tsx",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "frontend_src_routes",
       "target": "frontend_src_theme_authwrapper_authwrapper",
@@ -137384,5 +137384,5 @@
       "source_file": "lefthook.yml"
     }
   ],
-  "built_at_commit": "775974373264fd6a9f315bafd40ff955bb7cc5e1"
+  "built_at_commit": "ca2146a1dd0b3599c46ff55aaa1aeaa331c49880"
 }

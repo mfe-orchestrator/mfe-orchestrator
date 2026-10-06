@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/ApiKeyService.ts": {
-    "mtime": 1791319669.1873832,
-    "ast_hash": "ed6b4dea739268ad3543f2127b3be03b",
+    "mtime": 1791319133.9524343,
+    "ast_hash": "45a8a3a01a61e82ff9f70a2348003723",
     "semantic_hash": ""
   },
   "backend/src/service/BaseAuthorizedService.ts": {
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "frontend/src/Routes.tsx": {
-    "mtime": 1791319669.1880698,
-    "ast_hash": "584d755936d925faa1e39edcebbc0a4d",
+    "mtime": 1791315795.0576482,
+    "ast_hash": "2ffd13e712198d2fd59a0a6e537f2be6",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.ts": {
@@ -1525,13 +1525,13 @@
     "semantic_hash": "8a139cd3e81693ff9868b2f1dfdede86"
   },
   "terraform/main.tf": {
-    "mtime": 1791319607.564652,
-    "ast_hash": "c3af614174cbea976855b8bc9db99d09",
-    "semantic_hash": ""
+    "mtime": 1785880210.0224195,
+    "ast_hash": "729cee23093910da1adc7af3bda46e54",
+    "semantic_hash": "729cee23093910da1adc7af3bda46e54"
   },
   "terraform/modules/microfronted-orchestrator-hub.tf": {
-    "mtime": 1791319623.747036,
-    "ast_hash": "f6e116cf2f90884924235b6d00b12f83",
+    "mtime": 1787812885.5747614,
+    "ast_hash": "14b322fa62bec17dd1f1a40e58c8db82",
     "semantic_hash": ""
   },
   "terraform/modules/mongo.tf": {
@@ -1545,14 +1545,14 @@
     "semantic_hash": "32111f5c7e0d7505c61109dcd6e56a2d"
   },
   "terraform/modules/redis.tf": {
-    "mtime": 1791319623.7584264,
-    "ast_hash": "b456dfd894a8a8570830e907be519d5c",
-    "semantic_hash": ""
+    "mtime": 1785880210.0227287,
+    "ast_hash": "baf89ddeb0ed3b0178cf2e3455c35246",
+    "semantic_hash": "baf89ddeb0ed3b0178cf2e3455c35246"
   },
   "terraform/modules/variables.tf": {
-    "mtime": 1791319607.5713964,
-    "ast_hash": "381384012605e6ace4bd0cc7529f6cfd",
-    "semantic_hash": ""
+    "mtime": 1785880210.022793,
+    "ast_hash": "f0f15984a47dd940aa9150cdc8fe1f3f",
+    "semantic_hash": "f0f15984a47dd940aa9150cdc8fe1f3f"
   },
   "terraform/network.tf": {
     "mtime": 1785880210.0228603,
@@ -2560,8 +2560,8 @@
     "semantic_hash": ""
   },
   ".omc/state/idle-notif-cooldown.json": {
-    "mtime": 1791319202.5539227,
-    "ast_hash": "629be9317446a086e90098d6005b88f7",
+    "mtime": 1791318606.8987243,
+    "ast_hash": "1649e00d03ee277c23bde9cfbd73ff2e",
     "semantic_hash": ""
   },
   ".omc/state/read-budget-warnings.json": {
@@ -2570,23 +2570,23 @@
     "semantic_hash": ""
   },
   ".omc/state/sessions/a2240524-d375-4ecc-b9be-15ee08f405a2/last-tool-error-state.json": {
-    "mtime": 1791319616.1002605,
-    "ast_hash": "106873a8615bee32d5b2aacec484daf6",
+    "mtime": 1791317195.515342,
+    "ast_hash": "815d3c4745ed07c71d4e8bcbae4886bd",
     "semantic_hash": ""
   },
   ".omc/state/sessions/a2240524-d375-4ecc-b9be-15ee08f405a2/mission-state.json": {
-    "mtime": 1791319191.3877947,
-    "ast_hash": "f0dd7a57b7a79e49fa8142f8eef4ad00",
+    "mtime": 1791318627.2788644,
+    "ast_hash": "f38fcb2f3b2b192d9daf5a1617535807",
     "semantic_hash": ""
   },
   ".omc/state/sessions/a2240524-d375-4ecc-b9be-15ee08f405a2/pre-tool-advisory-throttle.json": {
-    "mtime": 1791319668.2184837,
-    "ast_hash": "ff0296045c52c30cadda0815e17f647e",
+    "mtime": 1791319028.6828837,
+    "ast_hash": "79777b89609dfe90d2bfc41350469dca",
     "semantic_hash": ""
   },
   ".omc/state/sessions/a2240524-d375-4ecc-b9be-15ee08f405a2/subagent-tracking-state.json": {
-    "mtime": 1791319191.3798954,
-    "ast_hash": "c1b71cb32838221c1feb0ef7b1fc8d52",
+    "mtime": 1791318627.275246,
+    "ast_hash": "2a68f22a4b98fb4b228697040f07e5c8",
     "semantic_hash": ""
   },
   ".omc/state/sessions/f9661e7c-01fd-4ed0-84d2-e150f27740e6/last-tool-error-state.json": {
@@ -2620,8 +2620,8 @@
     "semantic_hash": ""
   },
   "backend/scripts/build-docs-index.js": {
-    "mtime": 1791319751.3182209,
-    "ast_hash": "f1c5957cad29aef67aa9e932f3dbc234",
+    "mtime": 1791316143.487715,
+    "ast_hash": "79af46744982d118fee95bae1d0d11f0",
     "semantic_hash": ""
   },
   "backend/src/.omc/state/sessions/f9661e7c-01fd-4ed0-84d2-e150f27740e6/pre-tool-advisory-throttle.json": {
@@ -2650,13 +2650,13 @@
     "semantic_hash": ""
   },
   "backend/src/controller/McpController.test.ts": {
-    "mtime": 1791319669.189254,
-    "ast_hash": "156984e56fa6b20320307af288d62ed4",
+    "mtime": 1791318885.7895217,
+    "ast_hash": "dc96c8c437cf69f3f69ae26211a2e384",
     "semantic_hash": ""
   },
   "backend/src/controller/McpController.ts": {
-    "mtime": 1791319669.187434,
-    "ast_hash": "7902018ae72180778489fa15124d5da0",
+    "mtime": 1791318742.8321505,
+    "ast_hash": "1c0320f575377941f1c867a91b0173fa",
     "semantic_hash": ""
   },
   "backend/src/controller/OAuthController.ts": {
@@ -2775,8 +2775,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/OAuthTokenService.ts": {
-    "mtime": 1791319669.187569,
-    "ast_hash": "15e35851e3563bd69b36f755df42d6a3",
+    "mtime": 1791316972.0997965,
+    "ast_hash": "3f3a39a194c127bf413762d6f0aaa4bd",
     "semantic_hash": ""
   },
   "backend/src/service/assistant/.omc/state/sessions/f9661e7c-01fd-4ed0-84d2-e150f27740e6/pre-tool-advisory-throttle.json": {
@@ -2830,8 +2830,8 @@
     "semantic_hash": ""
   },
   "backend/src/utils/clientMetadataFetcher.ts": {
-    "mtime": 1791319669.187816,
-    "ast_hash": "738cd26dea2570f299aa27e4e68555ab",
+    "mtime": 1791317830.871851,
+    "ast_hash": "37beb84607b30735b35b7a9cfa13d6a0",
     "semantic_hash": ""
   },
   "backend/src/utils/eventStream.ts": {
@@ -2982,11 +2982,6 @@
   "backend/src/utils/apiKeyCredentialCache.ts": {
     "mtime": 1791318697.763954,
     "ast_hash": "ec147c2a26bfb76f9f7690454aba4871",
-    "semantic_hash": ""
-  },
-  "terraform/variables.tf": {
-    "mtime": 1791319607.5569706,
-    "ast_hash": "2717e95e379ce3312eb351a983d5da4c",
     "semantic_hash": ""
   }
 }
