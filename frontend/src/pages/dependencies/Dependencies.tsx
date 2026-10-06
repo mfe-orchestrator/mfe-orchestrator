@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { AlertTriangle, GitPullRequestArrow, RefreshCw } from "lucide-react"
 import React, { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import AskAssistantButton from "@/components/assistant/AskAssistantButton"
 import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
@@ -77,6 +78,13 @@ const Dependencies: React.FC = () => {
                 description={t("dependencies.description")}
                 right={
                     <div className="flex flex-wrap gap-2">
+                        {report && (
+                            <AskAssistantButton
+                                label={t("assistant.actions.explain_dependencies")}
+                                question={t("assistant.questions.explain_dependencies")}
+                                dataTestId="assistant-explain-dependencies"
+                            />
+                        )}
                         <Button variant="secondary" onClick={onRescan} disabled={reportQuery.isFetching}>
                             <RefreshCw className={reportQuery.isFetching ? "animate-spin" : undefined} />
                             {hasPendingBranchChanges ? t("dependencies.rescan_pending") : t("dependencies.rescan")}

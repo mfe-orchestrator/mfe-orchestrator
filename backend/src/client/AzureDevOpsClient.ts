@@ -1,4 +1,5 @@
 import axios from "axios"
+import { BuildJobLogDTO, MAX_FAILED_JOB_LOG_BYTES, MAX_FAILED_JOBS } from "../types/BuildStatusDTO"
 
 export interface AzureAccessTokenResponse {
     access_token: string
@@ -318,6 +319,35 @@ class AzureDevOpsClient {
         })
 
         return response.data?.value || []
+    }
+
+    /**
+     * Plain-text logs of the failed tasks of a build.
+     *
+     * Azure keeps one log per timeline record: the timeline says which records
+     * failed and which log each one wrote.
+     */
+    async getFailedJobLogs(token: string, organization: string, project: string, buildId: string): Promise<BuildJobLogDTO[]> {
+        const headers = { Authorization: `Bearer ${token}` }
+        const baseUrl = `https://dev.azure.com/${organization}/${project}/_apis/build/builds/${encodeURIComponent(buildId)}`
+
+        const timeline = await axios.request<{ records?: { name: string; type: string; result?: string; log?: { id: number } }[] }>({
+            url: `${baseUrl}/timeline?api-version=7.1`,
+            headers
+        })
+        const failedRecords = (timeline.data?.records || []).filter(record => record.type === "Task" && record.result === "failed" && record.log?.id !== undefined).slice(0, MAX_FAILED_JOBS)
+
+        return Promise.all(
+            failedRecords.map(async record => {
+                const log = await axios.request<string>({
+                    url: `${baseUrl}/logs/${record.log?.id}?api-version=7.1`,
+                    headers: { ...headers, Accept: "text/plain" },
+                    responseType: "text",
+                    maxContentLength: MAX_FAILED_JOB_LOG_BYTES
+                })
+                return { name: record.name, log: log.data }
+            })
+        )
     }
 
     async getBranchCommitId(token: string, organization: string, project: string, repositoryName: string, branchName: string): Promise<string> {

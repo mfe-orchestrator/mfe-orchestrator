@@ -105,7 +105,7 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                                         {row.unavailableReason === BuildUnavailableReason.PROVIDER_ERROR ? (
                                             <p className="text-sm">{t("builds.unavailable.PROVIDER_ERROR")}</p>
                                         ) : (
-                                            <BuildRunList runs={row.builds} />
+                                            <BuildRunList runs={row.builds} microfrontendId={row.microfrontendId} microfrontendName={row.name} />
                                         )}
                                     </div>
                                 </TableCell>

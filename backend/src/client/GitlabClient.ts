@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios"
+import { BuildJobLogDTO, MAX_FAILED_JOB_LOG_BYTES, MAX_FAILED_JOBS } from "../types/BuildStatusDTO"
 
 /** Safety net so a misbehaving pagination cursor cannot turn a repository listing into an endless loop. */
 const maxRepositoryPages = 50
@@ -196,6 +197,24 @@ class GitLabClient {
             params: { per_page: perPage, order_by: "id", sort: "desc" }
         })
         return res.data || []
+    }
+
+    /** Plain-text traces of the failed jobs of a pipeline. */
+    async getFailedJobLogs(projectId: string | number, pipelineId: string): Promise<BuildJobLogDTO[]> {
+        const jobs = await this.api.get<{ id: number; name: string }[]>(`/projects/${projectId}/pipelines/${encodeURIComponent(pipelineId)}/jobs`, {
+            params: { "scope[]": "failed", per_page: 100 }
+        })
+
+        return Promise.all(
+            (jobs.data || []).slice(0, MAX_FAILED_JOBS).map(async job => {
+                const trace = await this.api.get<string>(`/projects/${projectId}/jobs/${job.id}/trace`, {
+                    maxContentLength: MAX_FAILED_JOB_LOG_BYTES,
+                    // The trace is raw text: keep it as is, axios would try to parse JSON otherwise
+                    transformResponse: [data => data]
+                })
+                return { name: job.name, log: trace.data }
+            })
+        )
     }
 
     async getBranches(projectId: string | number): Promise<GitLabBranch[]> {

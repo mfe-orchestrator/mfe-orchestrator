@@ -1,11 +1,14 @@
 import { EmptyState } from "@mfe-orchestrator/design-system"
 import { ExternalLink } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { BuildRun } from "@/hooks/apiClients/useBuildsApi"
+import AskAssistantButton from "@/components/assistant/AskAssistantButton"
+import { BuildRun, BuildStatus } from "@/hooks/apiClients/useBuildsApi"
 import BuildStatusBadge from "./BuildStatusBadge"
 
 interface BuildRunListProps {
     runs: BuildRun[]
+    microfrontendId: string
+    microfrontendName: string
 }
 
 const formatMoment = (value?: string) => (value ? new Date(value).toLocaleString() : "—")
@@ -14,7 +17,7 @@ const formatMoment = (value?: string) => (value ? new Date(value).toLocaleString
  * The recent runs of a single microfrontend, newest first, as shown in the row the
  * user expanded.
  */
-const BuildRunList: React.FC<BuildRunListProps> = ({ runs }) => {
+const BuildRunList: React.FC<BuildRunListProps> = ({ runs, microfrontendId, microfrontendName }) => {
     const { t } = useTranslation()
 
     if (runs.length === 0) {
@@ -35,6 +38,15 @@ const BuildRunList: React.FC<BuildRunListProps> = ({ runs }) => {
                             {t("builds.table.open_run")}
                             <ExternalLink className="size-3.5" />
                         </a>
+                    )}
+                    {run.status === BuildStatus.FAILED && (
+                        <AskAssistantButton
+                            size="sm"
+                            variant="ghost"
+                            label={t("assistant.actions.explain_build")}
+                            question={t("assistant.questions.explain_build", { name: microfrontendName, microfrontendId, runId: run.id, ref: run.ref || "—" })}
+                            dataTestId={`assistant-explain-build-${run.id}`}
+                        />
                     )}
                 </li>
             ))}

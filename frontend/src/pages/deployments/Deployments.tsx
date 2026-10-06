@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Rocket } from "lucide-react"
 import React from "react"
 import { useTranslation } from "react-i18next"
+import AskAssistantButton from "@/components/assistant/AskAssistantButton"
 import { Button } from "@/components/atoms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
@@ -38,6 +39,13 @@ export const Deployments: React.FC = () => {
                                 <Rocket />
                                 {t("deployments.deploy_button")}
                             </Button>
+                            {projectStore.environment?._id && (
+                                <AskAssistantButton
+                                    label={t("assistant.actions.analyze_deployments")}
+                                    question={t("assistant.questions.analyze_deployments", { environment: projectStore.environment.name, environmentId: projectStore.environment._id })}
+                                    dataTestId="assistant-analyze-deployments"
+                                />
+                            )}
                         </>
                     )}
                 </div>

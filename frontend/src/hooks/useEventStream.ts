@@ -37,7 +37,7 @@ interface ParsedFrame {
  * a frame made only of those yields no data, which is how heartbeats stay invisible
  * to the caller.
  */
-const parseFrame = (frame: string): ParsedFrame => {
+export const parseFrame = (frame: string): ParsedFrame => {
     let event: string | undefined
     const dataLines: string[] = []
 
@@ -61,7 +61,7 @@ const parseFrame = (frame: string): ParsedFrame => {
  * A read can end mid-frame, so the trailing partial frame stays in the buffer until
  * the bytes that finish it arrive.
  */
-const drainFrames = (buffer: string, onFrame: (frame: string) => void): string => {
+export const drainFrames = (buffer: string, onFrame: (frame: string) => void): string => {
     let rest = buffer
     let separatorIndex = rest.indexOf("\n\n")
 

@@ -8,7 +8,7 @@ import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../mode
 import Deployment from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend, { IMicrofrontend } from "../models/MicrofrontendModel"
-import { BuildRunDTO, BuildStatus, BuildUnavailableReason, MicrofrontendBuildStatusDTO, ProjectBuildStatusDTO } from "../types/BuildStatusDTO"
+import { BuildJobLogDTO, BuildRunDTO, BuildStatus, BuildUnavailableReason, MicrofrontendBuildStatusDTO, ProjectBuildStatusDTO } from "../types/BuildStatusDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
@@ -193,6 +193,46 @@ class BuildStatusService extends BaseAuthorizedService {
         })
         snapshotCache.set(key, { fetchedAtMs: Date.now(), snapshot })
         return snapshot
+    }
+
+    /**
+     * Logs of the failed jobs of one run of a microfrontend, read live from its CI provider.
+     *
+     * Not cached and not part of the snapshot: logs are large and only ever asked for one
+     * run at a time, when somebody wants to know why it failed.
+     */
+    async getFailedRunLogs(projectId: string, microfrontendId: string, runId: string): Promise<BuildJobLogDTO[]> {
+        const microfrontend = await Microfrontend.findById(toObjectId(microfrontendId))
+        // A microfrontend of another project is reported as missing: the caller asked about this one.
+        if (!microfrontend || microfrontend.projectId.toString() !== projectId) {
+            throw new Error("Microfrontend not found in this project")
+        }
+        await this.ensureAccessToMicrofrontend(microfrontend)
+
+        const codeRepositoryId = microfrontend.codeRepository?.enabled ? microfrontend.codeRepository.codeRepositoryId : undefined
+        const repository = codeRepositoryId ? await CodeRepository.findById(codeRepositoryId) : null
+        if (!repository) {
+            throw new Error("The microfrontend has no code repository connected")
+        }
+
+        if (repository.provider === CodeRepositoryProvider.GITHUB) {
+            const repositoryName = microfrontend.codeRepository?.name
+            if (!repositoryName) return []
+            return new GithubClient().getFailedJobLogs(repository.accessToken, repositoryName, runId, repository.githubData?.organizationId, repository.githubData?.userName)
+        }
+
+        const repositoryId = microfrontend.codeRepository?.repositoryId
+        if (!repositoryId) return []
+
+        if (repository.provider === CodeRepositoryProvider.GITLAB) {
+            return new GitlabClient(repository.gitlabData?.url || "", repository.accessToken).getFailedJobLogs(repositoryId, runId)
+        }
+
+        if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS && repository.azureData) {
+            return new AzureDevOpsClient().getFailedJobLogs(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, runId)
+        }
+
+        return []
     }
 
     private async fetchSnapshot(projectId: string): Promise<ProjectBuildStatusDTO> {

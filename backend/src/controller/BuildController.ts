@@ -1,7 +1,7 @@
-import { OutgoingHttpHeaders } from "node:http"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import BuildStatusService from "../service/BuildStatusService"
+import { openEventStream, sendEvent } from "../utils/eventStream"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 /**
@@ -21,31 +21,6 @@ const POLL_INTERVAL_MS = 15_000
 const HEARTBEAT = ": ping\n\n"
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-/**
- * Starts a Server-Sent Events response on the raw socket.
- *
- * The headers Fastify and its plugins already staged on the reply (CORS, helmet)
- * are copied over: writing straight to `reply.raw` skips the serialisation path
- * where they would otherwise be applied, and dropping them would break the console
- * whenever it is served from a different origin than the API.
- */
-const openEventStream = (reply: FastifyReply) => {
-    reply.hijack()
-    reply.raw.writeHead(200, {
-        ...reply.getHeaders(),
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        // Without this nginx buffers the response and nothing reaches the browser
-        // until the connection is closed.
-        "X-Accel-Buffering": "no"
-    } as OutgoingHttpHeaders)
-}
-
-const sendEvent = (reply: FastifyReply, event: string, payload: unknown) => {
-    reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`)
-}
 
 export default async function buildController(fastify: FastifyInstance) {
     fastify.get("/builds", async (request, reply) => {

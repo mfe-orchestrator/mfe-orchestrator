@@ -1,6 +1,7 @@
 import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import AssistantPanel from "@/components/assistant/AssistantPanel"
 import { Sidebar } from "@/components/ui/Sidebar/Sidebar"
 import Header from "./Header"
 
@@ -66,6 +67,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {/* Page Content */}
                 <main className="flex-grow p-3 pb-0">{children}</main>
             </div>
+
+            <AssistantPanel />
         </div>
     )
 }

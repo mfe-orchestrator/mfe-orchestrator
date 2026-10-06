@@ -1,6 +1,7 @@
 import axios from "axios"
 import sodium from "libsodium-wrappers"
 import { CodeRepositoryType } from "../models/CodeRepositoryModel"
+import { BuildJobLogDTO, MAX_FAILED_JOB_LOG_BYTES, MAX_FAILED_JOBS } from "../types/BuildStatusDTO"
 
 /** Safety net so a misbehaving pagination cursor cannot turn a repository listing into an endless loop. */
 const maxRepositoryPages = 50
@@ -641,6 +642,41 @@ class GithubClient {
         })
 
         return response.data?.workflow_runs || []
+    }
+
+    /**
+     * Plain-text logs of the jobs of a run that did not succeed.
+     *
+     * The logs endpoint answers with a redirect to a short-lived download URL on
+     * another host; axios follows it and drops the Authorization header on the way,
+     * which is what that URL expects.
+     */
+    async getFailedJobLogs(accessToken: string, repositoryName: string, runId: string, orgName?: string, userName?: string): Promise<BuildJobLogDTO[]> {
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "application/vnd.github.v3+json",
+            "User-Agent": "MFE-Orchestrator"
+        }
+        const baseUrl = this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)
+
+        const jobsResponse = await axios.request<{ jobs?: { id: number; name: string; conclusion?: string | null }[] }>({
+            url: `${baseUrl}/actions/runs/${encodeURIComponent(runId)}/jobs`,
+            params: { per_page: 100 },
+            headers
+        })
+        const failedJobs = (jobsResponse.data?.jobs || []).filter(job => job.conclusion === "failure" || job.conclusion === "timed_out").slice(0, MAX_FAILED_JOBS)
+
+        return Promise.all(
+            failedJobs.map(async job => {
+                const logResponse = await axios.request<string>({
+                    url: `${baseUrl}/actions/jobs/${job.id}/logs`,
+                    headers,
+                    responseType: "text",
+                    maxContentLength: MAX_FAILED_JOB_LOG_BYTES
+                })
+                return { name: job.name, log: logResponse.data }
+            })
+        )
     }
 
     async getBranchCommitSha(accessToken: string, repositoryName: string, branchName: string, orgName?: string, userName?: string): Promise<string> {

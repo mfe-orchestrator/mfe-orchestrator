@@ -67,6 +67,17 @@ export interface BuildStatusEnvironmentDTO {
     isProduction: boolean
 }
 
+/** A matrix build can fail dozens of jobs at once; the first few say why, the rest repeat it. */
+export const MAX_FAILED_JOBS = 5
+/** Guard against multi-megabyte logs being held in memory just to keep their last lines. */
+export const MAX_FAILED_JOB_LOG_BYTES = 20 * 1024 * 1024
+
+/** The log of one job of a run, as plain text. Only failed jobs are ever read. */
+export interface BuildJobLogDTO {
+    name: string
+    log: string
+}
+
 export interface ProjectBuildStatusDTO {
     projectId: string
     /** When this snapshot was read from the providers, not when it was sent. */

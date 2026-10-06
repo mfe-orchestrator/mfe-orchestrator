@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import PageHead from "@/components/PageHead"
+import { ProjectDraft } from "@/hooks/apiClients/useAssistantApi"
 import { Project } from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import CodeRepositories from "./pages/CodeRepositories"
@@ -36,6 +37,7 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onComplete }) => {
     const [stepIndex, setStepIndex] = useState(0)
     const [completed, setCompleted] = useState(false)
     const [project, setProject] = useState<Project>()
+    const [draft, setDraft] = useState<ProjectDraft>()
 
     const goNext = () => setStepIndex(i => Math.min(i + 1, STEPS.length - 1))
     const goBack = () => setStepIndex(i => Math.max(i - 1, 0))
@@ -51,9 +53,9 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({ onComplete }) => {
     const renderStep = () => {
         switch (stepIndex) {
             case 0:
-                return <MainData project={project} onCreated={onCreated} onNext={goNext} isFirst />
+                return <MainData project={project} onCreated={onCreated} onNext={goNext} isFirst draft={draft} onDraft={setDraft} />
             case 1:
-                return <Environments project={project} onNext={goNext} onBack={goBack} />
+                return <Environments project={project} onNext={goNext} onBack={goBack} draft={draft} />
             case 2:
                 return <Hosting project={project} onNext={goNext} onBack={goBack} onSkip={goNext} />
             case 3:

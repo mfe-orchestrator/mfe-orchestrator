@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react"
 import { Link } from "react-router-dom"
+import AssistantToggleButton from "@/components/assistant/AssistantToggleButton"
 import SwitchOrganizationButton from "@/components/SwitchOrganizationButton"
 import SwitchProjectButton from "@/components/SwitchProjectButton"
 import useOrganizationStore from "@/store/useOrganizationStore"
@@ -27,6 +28,7 @@ const Header: React.FC = () => {
             <div className="flex shrink-0 items-center gap-2">
                 <SwitchOrganizationButton />
                 <SwitchProjectButton />
+                <AssistantToggleButton />
             </div>
         </header>
     )

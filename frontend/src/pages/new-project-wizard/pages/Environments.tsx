@@ -8,7 +8,7 @@ import { WizardStepProps } from "./wizardShared"
  * bulk create) from the Environments feature, so it stays consistent with the
  * standalone environment setup.
  */
-const Environments: React.FC<WizardStepProps> = ({ onNext, onBack }) => {
+const Environments: React.FC<WizardStepProps> = ({ onNext, onBack, draft }) => {
     const { t } = useTranslation()
 
     return (
@@ -27,7 +27,7 @@ const Environments: React.FC<WizardStepProps> = ({ onNext, onBack }) => {
                 )}
             </div>
 
-            <NoEnvironmentPlaceholder onSaveSuccess={() => onNext()} notifyOnSuccess={false} />
+            <NoEnvironmentPlaceholder onSaveSuccess={() => onNext()} notifyOnSuccess={false} initialEnvironments={draft?.environments} />
         </div>
     )
 }
