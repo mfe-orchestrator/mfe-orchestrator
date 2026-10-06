@@ -20,6 +20,19 @@ export default defineConfig(({ mode }) => ({
                 target: "http://127.0.0.1:3000/",
                 changeOrigin: true,
                 rewrite: (path: string) => path.replace(/^\/api/, "")
+            },
+            // OAuth discovery for MCP clients: served at the origin root, path kept as is
+            "/.well-known/oauth-protected-resource": {
+                target: "http://127.0.0.1:3000/",
+                changeOrigin: true
+            },
+            "/.well-known/oauth-authorization-server": {
+                target: "http://127.0.0.1:3000/",
+                changeOrigin: true
+            },
+            "/.well-known/openid-configuration": {
+                target: "http://127.0.0.1:3000/",
+                changeOrigin: true
             }
         }
     },

@@ -12,11 +12,35 @@ import UserOrganization, { ORGANIZATION_ADMIN_ROLES, RoleInOrganization } from "
 import UserProject from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
 
-export default abstract class BaseAuthorizedService {
-    protected user?: IUser
+/**
+ * Who a service acts for.
+ *
+ * A console session is the user, with everything the user can reach. A MCP access token is bound
+ * to the single project chosen at consent: `restrictedToProjectId` carries that binding, and every
+ * check below narrows to it, so a token can never be pointed at another project of the same user.
+ */
+export type AuthorizedPrincipal = IUser & {
+    restrictedToProjectId?: string
+    /**
+     * Set when an MCP client authenticated with a project API key rather than as a user. There is
+     * no person behind it, hence no membership to look up: it reaches its own project and nothing
+     * else. `_id` and `email` are synthetic (the key's id, `api-key:<id>`), only ever used in error
+     * messages; no service reachable from the MCP tools writes the acting user anywhere.
+     */
+    apiKeyId?: string
+}
 
-    public constructor(user?: IUser) {
+export default abstract class BaseAuthorizedService {
+    protected user?: AuthorizedPrincipal
+
+    public constructor(user?: AuthorizedPrincipal) {
         this.user = user
+    }
+
+    /** True when the principal is confined to one project and this one is not it. */
+    private isOutsideRestriction(projectId: string | Schema.Types.ObjectId | ObjectId): boolean {
+        const restrictedTo = this.user?.restrictedToProjectId
+        return Boolean(restrictedTo) && String(projectId) !== String(restrictedTo)
     }
 
     /**
@@ -77,8 +101,11 @@ export default abstract class BaseAuthorizedService {
      * @returns Promise<boolean> True if user has access, false otherwise
      */
     protected async hasAccessToProject(projectId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<boolean> {
-        if (!this.user) {
+        if (!this.user || this.isOutsideRestriction(projectId)) {
             return false
+        }
+        if (this.user.apiKeyId) {
+            return Boolean(this.user.restrictedToProjectId)
         }
 
         // Check if user is directly associated with the project.
@@ -102,7 +129,10 @@ export default abstract class BaseAuthorizedService {
         if (!project) {
             return false
         }
-        return this.isOrganizationAdmin(project.organizationId, session)
+        // The membership lookup itself, not the guarded one below: a project-bound principal still
+        // reaches its own project through the organization it administers.
+        const role = await this.findRoleInOrganization(project.organizationId, session)
+        return Boolean(role && ORGANIZATION_ADMIN_ROLES.includes(role))
     }
 
     /**
@@ -112,6 +142,15 @@ export default abstract class BaseAuthorizedService {
      * being invited to an organization must not already grant what belonging to it grants.
      */
     protected async getRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
+        // A project-bound principal acts inside its project only: organization level operations
+        // (members, invitations, other projects) are out of its reach whatever the user's role.
+        if (this.user?.restrictedToProjectId) {
+            return undefined
+        }
+        return this.findRoleInOrganization(organizationId, session)
+    }
+
+    private async findRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
         if (!this.user) {
             return undefined
         }
@@ -164,7 +203,7 @@ export default abstract class BaseAuthorizedService {
      * invitation.
      */
     protected async getAdministeredOrganizationIds(session?: ClientSession): Promise<ObjectId[]> {
-        if (!this.user) {
+        if (!this.user || this.user.restrictedToProjectId) {
             return []
         }
 

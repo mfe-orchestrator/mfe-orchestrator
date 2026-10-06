@@ -45,6 +45,9 @@ interface FakeOrganizationMembership {
 const anOrganization = () => newId()
 const aUser = (): IUser => ({ _id: newId(), email: "someone@example.com" }) as unknown as IUser
 
+/** The principal a MCP access token resolves to: the same user, confined to one project. */
+const boundTo = (user: IUser, projectId: ObjectId) => ({ ...user, restrictedToProjectId: String(projectId) })
+
 let projectMemberships: FakeProjectMembership[]
 let organizationMemberships: FakeOrganizationMembership[]
 let projects: { _id: ObjectId; organizationId: ObjectId }[]
@@ -169,6 +172,79 @@ describe("access to a project and to an organization", () => {
 
         it("Given a project that does not exist, when access is checked, then it is denied", async () => {
             expect(await new AccessProbe(aUser()).canOpenProject(newId())).toBe(false)
+        })
+    })
+
+    describe("a principal bound to one project", () => {
+        it("Given a member of two projects bound to the first, when the second is checked, then it is denied", async () => {
+            const user = aUser()
+            const bound = newId()
+            const other = newId()
+            const organizationId = anOrganization()
+            projects.push({ _id: bound, organizationId }, { _id: other, organizationId })
+            projectMemberships.push({ userId: user._id, projectId: bound, role: RoleInProject.MEMBER }, { userId: user._id, projectId: other, role: RoleInProject.MEMBER })
+
+            const probe = new AccessProbe(boundTo(user, bound))
+            expect(await probe.canOpenProject(bound)).toBe(true)
+            expect(await probe.canOpenProject(other)).toBe(false)
+        })
+
+        it("Given an organization owner bound to one of its projects, when that project is checked, then it is still reached through the organization", async () => {
+            const user = aUser()
+            const projectId = newId()
+            const organizationId = anOrganization()
+            projects.push({ _id: projectId, organizationId })
+            organizationMemberships.push({ userId: user._id, organizationId, role: RoleInOrganization.OWNER })
+
+            expect(await new AccessProbe(boundTo(user, projectId)).canOpenProject(projectId)).toBe(true)
+        })
+
+        it("Given an organization owner bound to one project, when organization level access is checked, then it is denied", async () => {
+            const user = aUser()
+            const projectId = newId()
+            const organizationId = anOrganization()
+            projects.push({ _id: projectId, organizationId })
+            organizationMemberships.push({ userId: user._id, organizationId, role: RoleInOrganization.OWNER })
+
+            const probe = new AccessProbe(boundTo(user, projectId))
+            expect(await probe.belongsTo(organizationId)).toBe(false)
+            expect(await probe.administers(organizationId)).toBe(false)
+            expect(await probe.administeredOrganizations()).toEqual([])
+        })
+    })
+
+    describe("a principal standing for a project API key", () => {
+        /** As the MCP endpoint builds it: no user behind it, only the key's project. */
+        const anApiKeyPrincipal = (projectId: ObjectId) => {
+            const apiKeyId = newId()
+            return { _id: apiKeyId, email: `api-key:${apiKeyId}`, apiKeyId: String(apiKeyId), restrictedToProjectId: String(projectId) } as unknown as IUser
+        }
+
+        it("Given a key of a project, when that project is checked, then it is reached without any membership", async () => {
+            const projectId = newId()
+            projects.push({ _id: projectId, organizationId: anOrganization() })
+
+            expect(await new AccessProbe(anApiKeyPrincipal(projectId)).canOpenProject(projectId)).toBe(true)
+        })
+
+        it("Given a key of a project, when another project of the same organization is checked, then it is denied", async () => {
+            const organizationId = anOrganization()
+            const own = newId()
+            const other = newId()
+            projects.push({ _id: own, organizationId }, { _id: other, organizationId })
+
+            expect(await new AccessProbe(anApiKeyPrincipal(own)).canOpenProject(other)).toBe(false)
+        })
+
+        it("Given a key of a project, when organization level access is checked, then it is denied", async () => {
+            const organizationId = anOrganization()
+            const projectId = newId()
+            projects.push({ _id: projectId, organizationId })
+
+            const probe = new AccessProbe(anApiKeyPrincipal(projectId))
+            expect(await probe.belongsTo(organizationId)).toBe(false)
+            expect(await probe.administers(organizationId)).toBe(false)
+            expect(await probe.administeredOrganizations()).toEqual([])
         })
     })
 

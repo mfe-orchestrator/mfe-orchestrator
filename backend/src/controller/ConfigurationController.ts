@@ -1,15 +1,22 @@
 import { FastifyInstance } from "fastify"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import ConfigResponseDTO from "../types/ConfigResponseDTO"
+import { getOAuthConfig } from "../utils/oauthConfig"
 
 export default async function configurationController(fastify: FastifyInstance) {
     fastify.get("/configuration", { config: { authMethod: AuthenticationMethod.PUBLIC } }, async (request, reply) => {
         const config = fastify.config
+        const oauthConfig = getOAuthConfig()
         const response: ConfigResponseDTO = {
             canSendEmail: Boolean(config.EMAIL_SMTP_HOST),
             canRegister: Boolean(config.REGISTRATION_ALLOWED) && Boolean(config.ALLOW_EMBEDDED_LOGIN),
             allowEmbeddedLogin: Boolean(config.ALLOW_EMBEDDED_LOGIN),
             marketingOptInEnabled: Boolean(config.MARKETING_OPT_IN_ENABLED),
+            mcp: {
+                enabled: oauthConfig.enabled,
+                url: oauthConfig.enabled ? oauthConfig.resource : ""
+            },
+            assistantEnabled: Boolean(config.ANTHROPIC_API_KEY),
             frontendUrl: config.FRONTEND_URL,
             providers: {},
             codeRepository: {

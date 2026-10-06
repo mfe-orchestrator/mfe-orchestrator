@@ -12,6 +12,7 @@
         "test:watch": "vitest",
         "lint": "biome lint --write ./src",
         "format": "biome format --write ./src",
+        "docs:index": "node ./scripts/build-docs-index.js",
         "typecheck": "pnpm exec tsc --noEmit && pnpm exec tsc --noEmit -p tsconfig.test.json"
     },
     "keywords": [],
@@ -19,6 +20,7 @@
     "license": "Apache-2.0",
     "packageManager": "pnpm@10.19.0",
     "dependencies": {
+        "@anthropic-ai/sdk": "^0.131.0",
         "@aws-sdk/client-s3": "^3.1107.0",
         "@aws-sdk/s3-request-presigner": "^3.1107.0",
         "@azure/identity": "^4.13.1",
@@ -33,6 +35,8 @@
         "@fastify/swagger": "^9.8.1",
         "@fastify/swagger-ui": "^6.1.1",
         "@google-cloud/storage": "^7.22.0",
+        "@modelcontextprotocol/node": "2.1.1",
+        "@modelcontextprotocol/server": "2.3.1",
         "@redis/client": "^6.2.1",
         "@sentry/node": "^10.70.0",
         "adm-zip": "^0.6.0",
@@ -44,6 +48,7 @@
         "fastify-plugin": "^6.0.0",
         "fs-extra": "^11.4.0",
         "isomorphic-git": "^1.41.3",
+        "jose": "6.2.12",
         "jsonwebtoken": "^9.0.3",
         "libsodium-wrappers": "^0.8.4",
         "mongoose": "^9.9.2",
@@ -52,7 +57,8 @@
         "pug": "^3.0.4",
         "typescript": "^7.0.2",
         "typescript-eslint": "^8.67.0",
-        "xstate": "^5.32.5"
+        "xstate": "^5.32.5",
+        "zod": "4.6.5"
     },
     "devDependencies": {
         "@types/adm-zip": "^0.5.8",

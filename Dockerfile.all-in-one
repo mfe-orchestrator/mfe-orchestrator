@@ -126,7 +126,8 @@ ENV NODE_ENV=prod \
     NOSQL_DATABASE_NAME=microfrontend-orchestrator \
     REDIS_URL=redis://127.0.0.1:6379 \
     MICROFRONTEND_HOST_FOLDER=/data/microfrontends \
-    MONGO_REPLICA_SET=rs0
+    MONGO_REPLICA_SET=rs0 \
+    TRUST_PROXY=127.0.0.1
 
 # Single volume with everything that must survive the container: database,
 # Redis dump, uploaded microfrontends and the generated JWT secret.

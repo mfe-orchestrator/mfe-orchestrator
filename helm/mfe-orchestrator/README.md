@@ -112,6 +112,15 @@ encrypted credentials cannot be read back.
 
 Dependencies: `NPM_REGISTRY_URL`
 
+Remote MCP server: `MCP_ENABLED`, `MCP_API_KEY_ENABLED`, `MCP_RATE_LIMIT_MAX`, `MCP_DCR_ENABLED`, `MCP_CIMD_ENABLED`, `CIMD_ALLOWED_HOSTS`,
+`OAUTH_ISSUER_URL`, `MCP_RESOURCE_URL`, `TRUST_PROXY` — see [docs/MCP.md](../../docs/MCP.md). With
+`MCP_ENABLED` the backend refuses to start without `FRONTEND_URL` and without a `JWT_SECRET` of at
+least 32 bytes (`openssl rand -hex 32`). Behind an ingress, set `TRUST_PROXY` to the hops you run
+(e.g. `loopback,10.0.0.0/8` for the in-pod nginx plus ingress pods in the pod CIDR, or `2`):
+otherwise every client is seen with the ingress controller's IP and shares one rate limit bucket. Behind an ingress
+the discovery documents must reach the pod too: the default `path: /` already routes
+`/.well-known/oauth-*` there.
+
 Observability: `SENTRY_DSN`, `TELEMETRY_ENABLED`, `TELEMETRY_DISABLED`, `TELEMETRY_ENDPOINT`,
 `TELEMETRY_INTERVAL_HOURS`, `DO_NOT_TRACK`
 

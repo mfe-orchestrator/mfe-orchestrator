@@ -2,6 +2,7 @@ import { ClientSession, DeleteResult } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ApiKey, { ApiKeyRole, ApiKeyStatus, IApiKey, IApiKeyDocument } from "../models/ApiKeyModel"
 import { ApiKeyDTO } from "../types/ApiKeyDTO"
+import { invalidateApiKeyCredential } from "../utils/apiKeyCredentialCache"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
@@ -33,7 +34,8 @@ export class ApiKeyService extends BaseAuthorizedService {
     }
 
     async setStatusRaw(apiKeyId: string, status: ApiKeyStatus, session?: ClientSession) {
-        const apiKey = await ApiKey.findById(apiKeyId, { session })
+        // Options third: as the second argument the session was read as a projection, and revoking failed
+        const apiKey = await ApiKey.findById(apiKeyId, null, { session })
         if (!apiKey) {
             throw new EntityNotFoundError(apiKeyId)
         }
@@ -45,6 +47,9 @@ export class ApiKeyService extends BaseAuthorizedService {
         if (!updated) {
             throw new EntityNotFoundError(apiKeyId)
         }
+
+        // The MCP endpoint remembers valid keys for up to a minute: a revoked one must not linger there
+        await invalidateApiKeyCredential(apiKeyId)
 
         return updated
     }
@@ -61,6 +66,8 @@ export class ApiKeyService extends BaseAuthorizedService {
         }
 
         await this.ensureAccessToProject(apiKey.projectId)
-        return await ApiKey.deleteOne({ _id: apiKeyObjectId })
+        const result = await ApiKey.deleteOne({ _id: apiKeyObjectId })
+        await invalidateApiKeyCredential(apiKeyId)
+        return result
     }
 }

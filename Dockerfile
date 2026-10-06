@@ -20,6 +20,11 @@ RUN apk add --update nodejs npm && \
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
     PNPM_CONFIG_UPDATE_NOTIFIER=false
 
+# Every request reaches the backend through the nginx of this image, from the
+# loopback: trusting that one hop gives the backend the real client IP for its
+# per-IP rate limits, and an X-Forwarded-For sent by the client cannot spoof it.
+ENV TRUST_PROXY=127.0.0.1
+
 # Create application directories
 RUN mkdir -p /var/www/frontend /var/www/backend
 

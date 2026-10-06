@@ -37,6 +37,19 @@ application at your own instance:
 
   --set env.REDIS_URL="redis://my-redis:6379"
 {{- end }}
+{{- if and .Values.ingress.enabled (not (get (.Values.env | default dict) "TRUST_PROXY")) }}
+
+NOTE: the ingress is enabled but env.TRUST_PROXY is not set. The backend only
+trusts the nginx inside the pod, so every client is seen with the ingress
+controller's IP and shares one rate limit bucket. Trust the ingress hop too, e.g.
+
+  --set env.TRUST_PROXY="loopback\,10.0.0.0/8"
+{{- end }}
+{{- if and (get (.Values.env | default dict) "MCP_ENABLED") (not (get (.Values.env | default dict) "FRONTEND_URL")) }}
+
+WARNING: env.MCP_ENABLED is set without env.FRONTEND_URL: the backend will not
+start, as MCP clients have to be sent to the console's consent page.
+{{- end }}
 {{- if not (get (.Values.envSecrets | default dict) "JWT_SECRET") }}
 {{- if not .Values.existingSecret }}
 

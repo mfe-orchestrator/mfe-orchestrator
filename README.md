@@ -110,6 +110,7 @@ Project reference:
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
+- **[Remote MCP server](docs/MCP.md)** - Letting AI clients (Claude, Cursor, VS Code) use the console through OAuth, one project at a time
 
 ## Run with Docker
 
@@ -262,7 +263,7 @@ falling back to it.
 | `JWT_SECRET`                           | `your-secret-key`                                                                                 | Secret key for JWT generation and validation.                   |
 | `AUTH0_DOMAIN`                         | _(empty)_                                                                                         | Auth0 tenant domain.                                            |
 | `AUTH0_CLIENT_ID`                      | _(empty)_                                                                                         | Client ID of the Auth0 application.                             |
-| `AUTH0_AUDIENCE`                       | _(empty)_                                                                                         | API Audience configured in Auth0.                               |
+| `AUTH0_AUDIENCE`                       | _(empty)_                                                                                         | API Audience configured in Auth0. Required for Auth0 login: the backend verifies the token's signature, issuer and audience. |
 | `AUTH0_SCOPE`                          | `openid profile email`                                                                            | OAuth scopes (space-separated)                                  |
 | `AZURE_ENTRAID_TENANT_ID`              | _(empty)_                                                                                         | Azure Entra ID tenant ID.                                       |
 | `AZURE_ENTRAID_CLIENT_ID`              | _(empty)_                                                                                         | Client ID of the registered Azure application.                  |
@@ -293,6 +294,15 @@ falling back to it.
 | `GOOGLE_API_AUDIENCE`                  | _(empty)_                                                                                         | Protected API identifier for Google.                            |
 | `NPM_REGISTRY_URL`                     | `https://registry.npmjs.org`                                                                      | Registry queried by the dependency analysis for published versions. |
 | `SENTRY_DSN`                           | _(empty)_                                                                                         | Sentry DSN. Leave empty to disable error reporting.             |
+| `MCP_ENABLED`                          | `false`                                                                                           | Turns on the remote MCP server and its OAuth endpoints. Requires `FRONTEND_URL` and your own `JWT_SECRET` of at least 32 bytes (`openssl rand -hex 32`). See [docs/MCP.md](docs/MCP.md). |
+| `MCP_API_KEY_ENABLED`                  | `true`                                                                                            | Lets MCP clients that cannot do OAuth authenticate with a project API key (`Authorization: Bearer <key>` or `api-key` header). See [docs/MCP.md](docs/MCP.md#fallback-a-project-api-key). |
+| `MCP_RATE_LIMIT_MAX`                   | `120`                                                                                             | MCP requests per minute for each OAuth grant or API key.        |
+| `MCP_DCR_ENABLED`                      | `true`                                                                                            | Lets MCP clients register themselves (RFC 7591).                |
+| `MCP_CIMD_ENABLED`                     | `true`                                                                                            | Accepts MCP clients identified by a metadata document URL.      |
+| `CIMD_ALLOWED_HOSTS`                   | _(any)_                                                                                           | Comma separated hosts allowed to publish client metadata documents. Clients from listed hosts show as verified on the consent page; with no list every CIMD client is marked unverified. |
+| `OAUTH_ISSUER_URL`                     | _(empty, falls back to `BACKEND_URL`)_                                                            | Issuer of the MCP access tokens.                                |
+| `MCP_RESOURCE_URL`                     | _(empty, falls back to the issuer + `/mcp`)_                                                      | Public URL of the MCP endpoint.                                 |
+| `TRUST_PROXY`                          | `127.0.0.1` _(in the Docker images)_                                                              | Proxies trusted for `X-Forwarded-For`: `true`, a hop count, or a comma separated list of addresses/CIDRs (`loopback`, `uniquelocal` work too). Behind a Kubernetes ingress add its hop, e.g. `loopback,10.0.0.0/8` or `2`, or every client shares one rate limit bucket. |
 
 ## Anonymous telemetry 📡
 

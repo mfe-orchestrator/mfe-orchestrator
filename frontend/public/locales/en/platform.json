@@ -121,7 +121,8 @@
         "already_have_account": "Already have an account?",
         "create_account": "Create Account",
         "or_continue_with": "Or continue with",
-        "recover": "Recover it"
+        "recover": "Recover it",
+        "microsoft_login_failed": "Microsoft sign-in failed. Please try again."
     },
     "project": {
         "name": "Name",
@@ -190,7 +191,9 @@
             "environments": "Environments",
             "apiKeys": "API Keys",
             "storages": "Storages",
-            "codeRepositories": "Code Repositories"
+            "codeRepositories": "Code Repositories",
+            "mcpClients": "AI assistants",
+            "manage": "Manage"
         },
         "projectInfo": {
             "title": "Project Information",
@@ -1141,6 +1144,28 @@
             "start_deploying": "Start deploying your microfrontends",
             "go_to_dashboard": "Go to dashboard",
             "add_microfrontend": "Add microfrontend"
+        },
+        "ai_draft": {
+            "title": "Describe the project and let the assistant draft it",
+            "description": "Describe what you want to build in your own words: the assistant proposes a name, a description and the environments. You review everything before confirming each step.",
+            "placeholder": "E.g. A customer portal made of three React microfrontends, with development, staging and production environments, bundles on AWS S3 and code on GitHub.",
+            "submit": "Generate a proposal",
+            "loading": "Preparing the proposal…",
+            "error": "I could not generate a proposal. You can fill in the fields by hand.",
+            "applied_title": "Proposal applied",
+            "applied_environments": "Environments proposed for the next step: {{environments}}.",
+            "suggested_storage": "Suggested storage: {{storage}}.",
+            "suggested_repository": "Suggested repository: {{repository}}.",
+            "storage": {
+                "AWS_S3": "AWS S3",
+                "GOOGLE_CLOUD_STORAGE": "Google Cloud Storage",
+                "AZURE_BLOB_STORAGE": "Azure Blob Storage"
+            },
+            "repository": {
+                "GITHUB": "GitHub",
+                "GITLAB": "GitLab",
+                "AZURE_DEV_OPS": "Azure DevOps"
+            }
         }
     },
     "dependencies": {
@@ -1295,5 +1320,141 @@
         "confirm_remove": "Are you sure you want to remove {{name}} from the organization? They will lose access to every project in it.",
         "confirm_revoke_title": "Revoke invitation",
         "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?"
+    },
+    "oauth": {
+        "consent": {
+            "title": "Connect {{client}}",
+            "description": "An AI assistant is asking to access one of your projects.",
+            "redirectHost": "After you decide, you will be sent to",
+            "warnings": {
+                "unverified": "Unverified application",
+                "localhost": "Local application",
+                "custom_scheme": "Custom link scheme",
+                "redirect_host_mismatch": "Redirect address differs from publisher"
+            },
+            "selectProject": "Choose the project to share",
+            "noProjects": "You have no project available to share.",
+            "allowChanges": "Allow changes",
+            "allowChangesDescription": "Without this, the assistant can only read the project. With it, it can also change it and deploy.",
+            "viewerReadOnly": "Your role in this project only allows reading.",
+            "signedInAs": "Signed in as {{email}}",
+            "signOut": "Sign out",
+            "approve": "Approve",
+            "deny": "Deny",
+            "approveFailed": "The request could not be approved. Please try again.",
+            "denyFailed": "The request could not be denied. Please try again.",
+            "publishedBy": "Published by {{host}}",
+            "redirectHostMismatchDetail": "This application was published by {{clientHost}} but will send you to {{redirectHost}}. Approve only if you recognize and trust both."
+        },
+        "error": {
+            "title": "Connection failed",
+            "codes": {
+                "invalid_client": {
+                    "title": "Unknown application",
+                    "description": "The application that started this request is not recognized."
+                },
+                "invalid_redirect_uri": {
+                    "title": "Invalid redirect address",
+                    "description": "The application asked to be sent to an address that is not allowed."
+                },
+                "invalid_request": {
+                    "title": "Request not valid",
+                    "description": "This request is invalid, expired or belongs to another account. Start the connection again from your assistant."
+                },
+                "server_error": {
+                    "title": "Something went wrong",
+                    "description": "An unexpected error occurred. Please try again."
+                }
+            }
+        }
+    },
+    "mcpClients": {
+        "title": "AI assistants",
+        "description": "Manage the AI assistants connected to this project",
+        "disabled_title": "AI assistants are not enabled",
+        "disabled_description": "The MCP server is turned off on this installation. Contact an administrator to enable it.",
+        "connect_title": "Connect an AI assistant",
+        "connect_description": "Add this URL as a remote MCP server in your AI assistant, then sign in and approve access.",
+        "copy_url": "Copy MCP server URL",
+        "no_clients": "No connected assistants",
+        "no_clients_desc": "Assistants you approve will appear here.",
+        "client": "Assistant",
+        "user": "User",
+        "access": "Access",
+        "access_read": "Read only",
+        "access_write": "Read and write",
+        "connected": "Connected on",
+        "last_used": "Last used",
+        "never": "Never",
+        "revoke_aria": "Revoke access for {{name}}",
+        "revoke_title": "Revoke access",
+        "confirm_revoke": "Revoke access for \"{{name}}\"? It will stop working immediately.",
+        "revoked": "Access revoked",
+        "connect_login_hint": "Claude.ai, ChatGPT and Gemini can connect with just this URL: they will ask you to sign in and approve access.",
+        "apiKey": {
+            "title": "Alternative: connect with an API key",
+            "description": "For clients that do not support login, authenticate with a project API key.",
+            "createLink": "Create an API key",
+            "roleNote": "The role of the key decides whether the assistant is read-only or can make changes.",
+            "claudeCode": "Claude Code",
+            "geminiCli": "Gemini CLI (~/.gemini/settings.json)",
+            "cursor": "Cursor (mcp.json)",
+            "copySnippet": "Copy snippet"
+        }
+    },
+    "assistant": {
+        "title": "Assistant",
+        "open": "Open the assistant",
+        "close": "Close the assistant",
+        "shortcut": "Assistant (⌘J / Ctrl+J)",
+        "new_conversation": "New conversation",
+        "placeholder": "Ask something about the project…",
+        "send": "Send",
+        "stop": "Stop",
+        "disclaimer": "Answers are generated by AI and may contain mistakes. The assistant reads the project's data but never changes anything.",
+        "empty_title": "How can I help?",
+        "empty_description": "I can read the microfrontends, builds, deployments, environments and variables of this project, and search the documentation.",
+        "thinking": "Thinking…",
+        "looking_up": "Looking up: {{what}}",
+        "tools": {
+            "list_microfrontends": "microfrontends",
+            "list_environments": "environments",
+            "get_build_status": "build status",
+            "get_failed_build_logs": "build logs",
+            "list_deployments": "deployments",
+            "get_environment_variables": "environment variables",
+            "get_dependency_report": "dependencies",
+            "search_docs": "documentation",
+            "list_templates": "templates"
+        },
+        "errors": {
+            "generic": "I could not answer. Please try again shortly.",
+            "rate_limited": "Too many questions in a short time. Wait a minute and try again.",
+            "disabled": "The assistant is not enabled on this installation.",
+            "refusal": "I can't help with this request.",
+            "incomplete": "The answer is incomplete: try a more specific question.",
+            "stopped": "Answer stopped."
+        },
+        "suggestions": {
+            "overview": "Give me an overview of the project",
+            "canary": "How do canary releases work?",
+            "storage": "How do I connect an S3 bucket?",
+            "builds": "Are there failed builds? Why?",
+            "deployments": "What changed in the latest deployment?",
+            "dependencies": "Are there conflicts between shared dependencies?",
+            "variables": "Is any environment missing variables?"
+        },
+        "actions": {
+            "explain_build": "Explain the failure",
+            "analyze_deployments": "Analyze the latest deployment",
+            "explain_dependencies": "Analyze the conflicts",
+            "check_variables": "Check the variables"
+        },
+        "questions": {
+            "explain_build": "Why did build {{runId}} (ref {{ref}}) of microfrontend {{name}} (id {{microfrontendId}}) fail? Read the logs of the failed jobs, explain the cause and suggest a fix.",
+            "analyze_deployments": "Compare the latest deployment of environment {{environment}} (id {{environmentId}}) with the previous one: which versions and variables changed, and is there anything to check?",
+            "explain_dependencies": "Analyze the shared dependencies and misaligned peer dependencies across the microfrontends: which conflicts are risky and which should I tackle first?",
+            "check_variables": "Compare the environment variables across the project's environments: are any defined in one environment and missing from another, production in particular?"
+        }
     }
 }

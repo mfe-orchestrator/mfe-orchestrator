@@ -2,6 +2,7 @@ import fastifyEnv from "@fastify/env"
 import dotenv from "dotenv"
 import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyPlugin from "fastify-plugin"
+import { assertMcpConfigurationIsUsable } from "../utils/oauthConfig"
 import { assertSecretEncryptionKeyIsUsable, isSecretEncryptionEnabled } from "../utils/secretCrypto"
 import { TELEMETRY_DEFAULT_ENDPOINT, TELEMETRY_DEFAULT_INTERVAL_HOURS } from "../utils/telemetry"
 
@@ -204,6 +205,59 @@ export default fastifyPlugin(
                 TELEMETRY_INTERVAL_HOURS: {
                     type: "number",
                     default: TELEMETRY_DEFAULT_INTERVAL_HOURS
+                },
+                // Remote MCP server and the OAuth authorization server in front of it. Off until
+                // the operator turns it on: see docs/MCP.md.
+                MCP_ENABLED: {
+                    type: "boolean",
+                    default: false
+                },
+                // Overrides for when the public URLs cannot be derived from BACKEND_URL/FRONTEND_URL.
+                OAUTH_ISSUER_URL: {
+                    type: "string"
+                },
+                MCP_RESOURCE_URL: {
+                    type: "string"
+                },
+                // Dynamic client registration (RFC 7591) and client metadata documents: both on by
+                // default, as every MCP client in circulation relies on one or the other.
+                MCP_DCR_ENABLED: {
+                    type: "boolean",
+                    default: true
+                },
+                MCP_CIMD_ENABLED: {
+                    type: "boolean",
+                    default: true
+                },
+                // Lets clients that cannot do OAuth use a project API key on /mcp instead.
+                MCP_API_KEY_ENABLED: {
+                    type: "boolean",
+                    default: true
+                },
+                // MCP requests per minute for each grant or API key, on top of RATE_LIMIT_MAX per IP.
+                MCP_RATE_LIMIT_MAX: {
+                    type: "number",
+                    default: 120
+                },
+                // Comma separated hosts allowed to publish a client metadata document. Empty: any.
+                CIMD_ALLOWED_HOSTS: {
+                    type: "string"
+                },
+                // Read before this plugin runs (Fastify takes it at construction), listed here so
+                // the schema documents every variable the backend reads.
+                TRUST_PROXY: {
+                    type: "string"
+                },
+                // Turns the console assistant on. Unset, the assistant is hidden and its
+                // endpoints answer 404: nothing about the installation is sent anywhere.
+                ANTHROPIC_API_KEY: {
+                    type: "string"
+                },
+                // Assistant questions per IP per minute. Each one is a paid model call, so
+                // the ceiling is separate from, and lower than, RATE_LIMIT_MAX.
+                ASSISTANT_RATE_LIMIT_MAX: {
+                    type: "number",
+                    default: 20
                 }
             }
         }
@@ -233,6 +287,9 @@ export default fastifyPlugin(
         // application that starts and then fails on the first storage it touches, which reads as a
         // broken bucket rather than as a typo in the environment.
         assertSecretEncryptionKeyIsUsable()
+
+        // Same reasoning: a MCP server signing with the public fallback secret must not come up at all.
+        assertMcpConfigurationIsUsable()
 
         if (!isSecretEncryptionEnabled()) {
             fastify.log.warn("SECRETS_ENCRYPTION_KEY is not set: storage credentials and repository tokens are stored unencrypted. See docs/SECRETS.md")

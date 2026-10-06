@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { GitBranch, HardDrive, Key, Server, Users } from "lucide-react"
+import { Bot, GitBranch, HardDrive, Key, Server, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 // Components
@@ -86,6 +86,13 @@ export const Settings: React.FC = () => {
                             title: t("settings.stats.apiKeys"),
                             value: projectQuery.data?.count?.apiKeys,
                             href: "/api-keys"
+                        },
+                        {
+                            icon: <Bot />,
+                            title: t("settings.stats.mcpClients"),
+                            value: "—",
+                            buttonText: t("settings.stats.manage"),
+                            href: "/mcp-clients"
                         },
                         {
                             icon: <GitBranch />,

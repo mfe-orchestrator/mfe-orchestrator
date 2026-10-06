@@ -47,6 +47,13 @@ services:
       # data: see docs/TELEMETRY.md for the exact payload.
       # Uncomment the line below to turn it off.
       # TELEMETRY_DISABLED: "true"
+      # Remote MCP server for AI clients (Claude, Cursor, VS Code). Needs
+      # FRONTEND_URL (the public URL of the console) and a JWT_SECRET of your
+      # own: at least 32 bytes, generate it with `openssl rand -hex 32` (the
+      # backend refuses to start on a placeholder or a short one). See docs/MCP.md.
+      # MCP_ENABLED: "true"
+      # FRONTEND_URL: https://console.example.com
+      # JWT_SECRET: <output of openssl rand -hex 32>
     volumes:
       - upload_microfrontends:/upload-microfrontends
     depends_on:

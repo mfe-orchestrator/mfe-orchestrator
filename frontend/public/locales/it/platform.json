@@ -121,7 +121,8 @@
         "already_have_account": "Hai già un account?",
         "create_account": "Crea Account",
         "or_continue_with": "Oppure continua con",
-        "recover": "Recuperala"
+        "recover": "Recuperala",
+        "microsoft_login_failed": "Accesso con Microsoft non riuscito. Riprova."
     },
     "project": {
         "name": "Nome",
@@ -190,17 +191,19 @@
             "environments": "Ambienti",
             "apiKeys": "API Keys",
             "storages": "Storages",
-            "codeRepositories": "Repository Codice"
+            "codeRepositories": "Repository Codice",
+            "mcpClients": "Assistenti AI",
+            "manage": "Gestisci"
         },
         "projectInfo": {
             "title": "Informazioni Progetto",
             "name": "Nome",
-            "nameRequired": "Il nome del progetto \u00e8 obbligatorio",
+            "nameRequired": "Il nome del progetto è obbligatorio",
             "nameMinLength": "Il nome deve contenere almeno 2 caratteri",
             "description": "Descrizione",
             "slug": "Slug",
             "id": "ID",
-            "slugHint": "Slug e ID non sono modificabili: lo slug fa parte del percorso in cui sono archiviati i bundle gi\u00e0 caricati.",
+            "slugHint": "Slug e ID non sono modificabili: lo slug fa parte del percorso in cui sono archiviati i bundle già caricati.",
             "copy": "Copia"
         },
         "dangerZone": {
@@ -1160,6 +1163,28 @@
             "start_deploying": "Inizia a deployare i tuoi microfrontend",
             "go_to_dashboard": "Vai alla dashboard",
             "add_microfrontend": "Aggiungi microfrontend"
+        },
+        "ai_draft": {
+            "title": "Descrivi il progetto e lascia fare all'assistente",
+            "description": "Scrivi a parole cosa vuoi costruire: l'assistente propone nome, descrizione e ambienti. Potrai rivedere tutto prima di confermare ogni passaggio.",
+            "placeholder": "Es. Un portale clienti fatto di tre microfrontend React, con ambienti di sviluppo, collaudo e produzione, bundle su AWS S3 e codice su GitHub.",
+            "submit": "Genera una proposta",
+            "loading": "Sto preparando la proposta…",
+            "error": "Non sono riuscito a generare una proposta. Puoi compilare i campi a mano.",
+            "applied_title": "Proposta applicata",
+            "applied_environments": "Ambienti proposti per il passaggio successivo: {{environments}}.",
+            "suggested_storage": "Storage consigliato: {{storage}}.",
+            "suggested_repository": "Repository consigliato: {{repository}}.",
+            "storage": {
+                "AWS_S3": "AWS S3",
+                "GOOGLE_CLOUD_STORAGE": "Google Cloud Storage",
+                "AZURE_BLOB_STORAGE": "Azure Blob Storage"
+            },
+            "repository": {
+                "GITHUB": "GitHub",
+                "GITLAB": "GitLab",
+                "AZURE_DEV_OPS": "Azure DevOps"
+            }
         }
     },
     "dependencies": {
@@ -1314,5 +1339,141 @@
         "confirm_remove": "Sei sicuro di voler rimuovere {{name}} dall'organizzazione? Perderà l'accesso a tutti i progetti al suo interno.",
         "confirm_revoke_title": "Revoca invito",
         "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
+    },
+    "oauth": {
+        "consent": {
+            "title": "Collega {{client}}",
+            "description": "Un assistente AI chiede di accedere a uno dei tuoi progetti.",
+            "redirectHost": "Dopo la tua scelta verrai reindirizzato a",
+            "warnings": {
+                "unverified": "Applicazione non verificata",
+                "localhost": "Applicazione locale",
+                "custom_scheme": "Schema di link personalizzato",
+                "redirect_host_mismatch": "Indirizzo di reindirizzamento diverso dall'editore"
+            },
+            "selectProject": "Scegli il progetto da condividere",
+            "noProjects": "Non hai progetti disponibili da condividere.",
+            "allowChanges": "Consenti modifiche",
+            "allowChangesDescription": "Senza questa opzione l'assistente può solo leggere il progetto. Con questa opzione può anche modificarlo e fare deploy.",
+            "viewerReadOnly": "Il tuo ruolo in questo progetto consente solo la lettura.",
+            "signedInAs": "Accesso effettuato come {{email}}",
+            "signOut": "Esci",
+            "approve": "Approva",
+            "deny": "Nega",
+            "approveFailed": "Non è stato possibile approvare la richiesta. Riprova.",
+            "denyFailed": "Non è stato possibile negare la richiesta. Riprova.",
+            "publishedBy": "Pubblicata da {{host}}",
+            "redirectHostMismatchDetail": "Questa applicazione è pubblicata da {{clientHost}} ma ti reindirizzerà a {{redirectHost}}. Approva solo se riconosci e ti fidi di entrambi."
+        },
+        "error": {
+            "title": "Connessione non riuscita",
+            "codes": {
+                "invalid_client": {
+                    "title": "Applicazione sconosciuta",
+                    "description": "L'applicazione che ha avviato la richiesta non è riconosciuta."
+                },
+                "invalid_redirect_uri": {
+                    "title": "Indirizzo di reindirizzamento non valido",
+                    "description": "L'applicazione ha chiesto di essere reindirizzata a un indirizzo non consentito."
+                },
+                "invalid_request": {
+                    "title": "Richiesta non valida",
+                    "description": "La richiesta non è valida, è scaduta o appartiene a un altro account. Riavvia la connessione dal tuo assistente."
+                },
+                "server_error": {
+                    "title": "Qualcosa è andato storto",
+                    "description": "Si è verificato un errore imprevisto. Riprova."
+                }
+            }
+        }
+    },
+    "mcpClients": {
+        "title": "Assistenti AI",
+        "description": "Gestisci gli assistenti AI collegati a questo progetto",
+        "disabled_title": "Gli assistenti AI non sono abilitati",
+        "disabled_description": "Il server MCP è disattivato in questa installazione. Contatta un amministratore per abilitarlo.",
+        "connect_title": "Collega un assistente AI",
+        "connect_description": "Aggiungi questo URL come server MCP remoto nel tuo assistente AI, poi accedi e approva l'accesso.",
+        "copy_url": "Copia l'URL del server MCP",
+        "no_clients": "Nessun assistente collegato",
+        "no_clients_desc": "Gli assistenti che approvi compariranno qui.",
+        "client": "Assistente",
+        "user": "Utente",
+        "access": "Accesso",
+        "access_read": "Sola lettura",
+        "access_write": "Lettura e scrittura",
+        "connected": "Collegato il",
+        "last_used": "Ultimo utilizzo",
+        "never": "Mai",
+        "revoke_aria": "Revoca l'accesso di {{name}}",
+        "revoke_title": "Revoca accesso",
+        "confirm_revoke": "Revocare l'accesso di \"{{name}}\"? Smetterà di funzionare immediatamente.",
+        "revoked": "Accesso revocato",
+        "connect_login_hint": "Claude.ai, ChatGPT e Gemini si collegano con il solo URL: ti chiederanno di accedere e approvare l'accesso.",
+        "apiKey": {
+            "title": "Alternativa: collegati con una API key",
+            "description": "Per i client che non supportano il login, autenticati con una API key del progetto.",
+            "createLink": "Crea una API key",
+            "roleNote": "Il ruolo della chiave decide se l'assistente è in sola lettura o può fare modifiche.",
+            "claudeCode": "Claude Code",
+            "geminiCli": "Gemini CLI (~/.gemini/settings.json)",
+            "cursor": "Cursor (mcp.json)",
+            "copySnippet": "Copia lo snippet"
+        }
+    },
+    "assistant": {
+        "title": "Assistente",
+        "open": "Apri l'assistente",
+        "close": "Chiudi l'assistente",
+        "shortcut": "Assistente (⌘J / Ctrl+J)",
+        "new_conversation": "Nuova conversazione",
+        "placeholder": "Chiedi qualcosa sul progetto…",
+        "send": "Invia",
+        "stop": "Interrompi",
+        "disclaimer": "Le risposte sono generate da un'intelligenza artificiale e possono contenere errori. L'assistente legge i dati del progetto ma non modifica nulla.",
+        "empty_title": "Come posso aiutarti?",
+        "empty_description": "Posso leggere microfrontend, build, deploy, ambienti e variabili di questo progetto e cercare nella documentazione.",
+        "thinking": "Sto pensando…",
+        "looking_up": "Sto consultando: {{what}}",
+        "tools": {
+            "list_microfrontends": "microfrontend",
+            "list_environments": "ambienti",
+            "get_build_status": "stato delle build",
+            "get_failed_build_logs": "log della build",
+            "list_deployments": "deploy",
+            "get_environment_variables": "variabili d'ambiente",
+            "get_dependency_report": "dipendenze",
+            "search_docs": "documentazione",
+            "list_templates": "template"
+        },
+        "errors": {
+            "generic": "Non sono riuscito a rispondere. Riprova tra poco.",
+            "rate_limited": "Troppe domande in poco tempo. Attendi un minuto e riprova.",
+            "disabled": "L'assistente non è attivo su questa installazione.",
+            "refusal": "Non posso rispondere a questa richiesta.",
+            "incomplete": "La risposta è incompleta: prova a fare una domanda più specifica.",
+            "stopped": "Risposta interrotta."
+        },
+        "suggestions": {
+            "overview": "Riassumimi lo stato del progetto",
+            "canary": "Come funziona il rilascio canary?",
+            "storage": "Come collego un bucket S3?",
+            "builds": "Ci sono build fallite? Perché?",
+            "deployments": "Cosa è cambiato nell'ultimo deploy?",
+            "dependencies": "Ci sono conflitti tra le dipendenze condivise?",
+            "variables": "Mancano variabili in qualche ambiente?"
+        },
+        "actions": {
+            "explain_build": "Spiega l'errore",
+            "analyze_deployments": "Analizza l'ultimo deploy",
+            "explain_dependencies": "Analizza i conflitti",
+            "check_variables": "Controlla le variabili"
+        },
+        "questions": {
+            "explain_build": "Perché è fallita la build {{runId}} (ref {{ref}}) del microfrontend {{name}} (id {{microfrontendId}})? Leggi i log dei job falliti, spiegami la causa e proponi una correzione.",
+            "analyze_deployments": "Confronta l'ultimo deploy dell'ambiente {{environment}} (id {{environmentId}}) con quello precedente: quali versioni e variabili sono cambiate, e c'è qualcosa da controllare?",
+            "explain_dependencies": "Analizza le dipendenze condivise e i peer dependency non allineati tra i microfrontend: quali conflitti sono rischiosi e da quale conviene partire?",
+            "check_variables": "Confronta le variabili d'ambiente tra gli ambienti del progetto: ce ne sono definite in un ambiente e mancanti in un altro, in particolare in produzione?"
+        }
     }
 }

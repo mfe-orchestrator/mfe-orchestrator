@@ -32,7 +32,13 @@ export default interface GlobalConfigDTO {
     registrationAllowed: boolean
     canSendEmail: boolean
     marketingOptInEnabled: boolean
+    /** True when the backend has an ANTHROPIC_API_KEY: the console then shows the assistant. */
+    assistantEnabled?: boolean
     providers: AuthProvidersConfig
+    mcp: {
+        enabled: boolean
+        url: string
+    }
     codeRepository?: {
         github?: {
             clientId: string

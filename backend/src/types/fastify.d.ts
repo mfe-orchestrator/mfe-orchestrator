@@ -75,6 +75,17 @@ declare module "fastify" {
             DO_NOT_TRACK?: string
             TELEMETRY_ENDPOINT: string
             TELEMETRY_INTERVAL_HOURS: number
+            MCP_ENABLED: boolean
+            OAUTH_ISSUER_URL?: string
+            MCP_RESOURCE_URL?: string
+            MCP_DCR_ENABLED: boolean
+            MCP_CIMD_ENABLED: boolean
+            MCP_API_KEY_ENABLED: boolean
+            MCP_RATE_LIMIT_MAX: number
+            CIMD_ALLOWED_HOSTS?: string
+            TRUST_PROXY?: string
+            ANTHROPIC_API_KEY?: string
+            ASSISTANT_RATE_LIMIT_MAX: number
         }
         telemetry: TelemetryRuntimeConfiguration
     }

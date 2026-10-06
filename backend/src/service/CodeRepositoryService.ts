@@ -204,7 +204,9 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         repository.default = true
         await repository.save()
 
-        await CodeRepository.updateMany({ _id: { $ne: toObjectId(repositoryId) } }, { default: false })
+        // Scoped to the project: unscoped, making one repository the default cleared the flag on
+        // every other project's repositories too, a write reaching outside the caller's project.
+        await CodeRepository.updateMany({ _id: { $ne: toObjectId(repositoryId) }, projectId: repository.projectId }, { default: false })
     }
 
     async injectSecretsToDeployOnGitlabRaw(repository: ICodeRepository, session?: ClientSession) {

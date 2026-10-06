@@ -4,6 +4,7 @@ import Auth0Wrapper from "./authentication/Auth0AuthWrapper"
 import GoogleAuthWrapper from "./authentication/GoogleAuthWrapper"
 import MicrosoftAuthWrapper from "./authentication/MicrosoftAuthWrapper"
 import RouteWithSuspense from "./components/RouteWithSuspense"
+import { readOAuthResume } from "./pages/oauth/oauthResume"
 import AuthWrapper from "./theme/AuthWrapper"
 import FirstStartupWrapper from "./theme/FirstStartupWrapper"
 import MainLayout from "./theme/layout/MainLayout"
@@ -23,6 +24,9 @@ const ProjectUsers = lazy(() => import("./pages/project-users/ProjectUsers"))
 const OrganizationUsers = lazy(() => import("./pages/organization-users/OrganizationUsers"))
 const Storages = lazy(() => import("./pages/storages/Storages"))
 const AddStorage = lazy(() => import("./pages/storages/AddStorage"))
+const McpClients = lazy(() => import("./pages/mcp-clients/McpClients"))
+const OAuthConsent = lazy(() => import("./pages/oauth/OAuthConsent"))
+const OAuthError = lazy(() => import("./pages/oauth/OAuthError"))
 const ApiKeys = lazy(() => import("./pages/api-keys/ApiKeys"))
 const EnvironmentVariables = lazy(() => import("./pages/environment-variables/EnvironmentVariables"))
 const CodeRepositories = lazy(() => import("./pages/code-repositories/CodeRepositories"))
@@ -43,22 +47,43 @@ const SignUp = lazy(() => import("./pages/auth/SignUp"))
 const ResetPasswordRequest = lazy(() => import("./pages/auth/ResetPasswordRequest"))
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"))
 
-const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
+const LoginOnlyWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
     return (
         <GoogleAuthWrapper>
             <MicrosoftAuthWrapper>
                 <Auth0Wrapper>
-                    <AuthWrapper>
-                        {/* The organization is settled first: it is what scopes the project list underneath. */}
-                        <SelectOrganizationWrapper>
-                            <SelectProjectWrapper>{children}</SelectProjectWrapper>
-                        </SelectOrganizationWrapper>
-                    </AuthWrapper>
+                    <AuthWrapper>{children}</AuthWrapper>
                 </Auth0Wrapper>
             </MicrosoftAuthWrapper>
         </GoogleAuthWrapper>
     )
 }
+
+const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
+    return (
+        <LoginOnlyWrapper>
+            {/* The organization is settled first: it is what scopes the project list underneath. */}
+            <SelectOrganizationWrapper>
+                <SelectProjectWrapper>{children}</SelectProjectWrapper>
+            </SelectOrganizationWrapper>
+        </LoginOnlyWrapper>
+    )
+}
+
+/** The consent screen picks its own project, so it must not wait for the console's organization/project selection. */
+const OAuthRoutes: React.FC = () => {
+    return (
+        <LoginOnlyWrapper>
+            <RRDRoutes>
+                <Route path="/oauth/consent" element={<RouteWithSuspense element={<OAuthConsent />} />} />
+                <Route path="/oauth/error" element={<RouteWithSuspense element={<OAuthError />} />} />
+            </RRDRoutes>
+        </LoginOnlyWrapper>
+    )
+}
+
+/** Safety net: a login that lands on "/" instead of the consent page resumes the pending consent. */
+const RootRedirect: React.FC = () => <Navigate to={readOAuthResume() ?? "/microfrontends"} replace />
 
 const PrivateRoutes: React.FC = () => {
     return (
@@ -93,6 +118,7 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/storages/new" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/storages/:id" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/api-keys" element={<RouteWithSuspense element={<ApiKeys />} />} />
+                <Route path="/mcp-clients" element={<RouteWithSuspense element={<McpClients />} />} />
                 <Route path="/settings" element={<RouteWithSuspense element={<Settings />} />} />
                 <Route path="/profile" element={<RouteWithSuspense element={<Profile />} />} />
                 <Route path="/environments" element={<RouteWithSuspense element={<Environments />} />} />
@@ -121,7 +147,8 @@ const Routes: React.FC = () => {
                 <Route path="/account-activation/:token" element={<RouteWithSuspense element={<AccountActivation />} />} />
                 <Route path="/project-invitation/:token" element={<RouteWithSuspense element={<ProjectInvitation />} />} />
                 <Route path="/organization-invitation/:token" element={<RouteWithSuspense element={<OrganizationInvitation />} />} />
-                <Route path="/" element={<Navigate to="/microfrontends" replace />} />
+                <Route path="/oauth/*" element={<OAuthRoutes />} />
+                <Route path="/" element={<RootRedirect />} />
                 <Route path="*" element={<PrivateRoutes />} />
             </RRDRoutes>
         </FirstStartupWrapper>
