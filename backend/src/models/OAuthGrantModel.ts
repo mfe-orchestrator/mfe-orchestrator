@@ -31,6 +31,17 @@ export interface IOAuthGrant extends Document<ObjectId> {
     projectId?: Schema.Types.ObjectId
     clientId: string
     scopes: string[]
+    /**
+     * Set at consent when write access was given under the wording that mentions creating projects.
+     * Grants approved before that wording existed lack it, and cannot create projects until the user
+     * reconnects the client: what they approved said nothing about it.
+     */
+    canCreateProjects?: boolean
+    /**
+     * The projects the client created itself through `project_create`, also listed in `projectIds`.
+     * They are added to every request even when the access token was minted before they existed.
+     */
+    createdProjectIds?: Schema.Types.ObjectId[]
     lastUsedAt?: Date
     revokedAt?: Date
     revokedReason?: OAuthGrantRevocationReason
@@ -68,6 +79,15 @@ const oauthGrantSchema = new Schema<IOAuthGrant>(
         scopes: {
             type: [String],
             required: true
+        },
+        canCreateProjects: {
+            type: Boolean,
+            required: false
+        },
+        createdProjectIds: {
+            type: [Schema.Types.ObjectId],
+            ref: "Project",
+            required: false
         },
         lastUsedAt: {
             type: Date,

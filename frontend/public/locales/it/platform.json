@@ -1353,7 +1353,7 @@
             },
             "noProjects": "Non hai progetti disponibili da condividere.",
             "allowChanges": "Consenti modifiche",
-            "allowChangesDescription": "Senza questa opzione l'assistente può solo leggere il progetto. Con questa opzione può anche modificarlo e fare deploy.",
+            "allowChangesDescription": "Senza questa opzione l'assistente può solo leggere il progetto. Con questa opzione può anche modificarlo, fare deploy e creare nuovi progetti nelle organizzazioni dei progetti che condividi, se le amministri: i progetti che crea vengono condivisi con lui.",
             "signedInAs": "Accesso effettuato come {{email}}",
             "signOut": "Esci",
             "approve": "Approva",

@@ -19,7 +19,7 @@ type Row = Record<string, unknown> & { _id: Types.ObjectId }
 
 /**
  * Just enough of a MongoDB collection for the queries the service runs: equality (ids compared as
- * strings), `null` for "missing", `$gt`, `$in` and `$or`. Each fake answers like mongoose would,
+ * strings), `null` for "missing", `$gt`, `$in`, `$exists`, `$size` and `$or`. Each fake answers like mongoose would,
  * so what is under test is the filter the service writes, not a mock's canned answer.
  */
 const matches = (row: Record<string, unknown>, filter: Record<string, unknown>): boolean =>
@@ -32,6 +32,8 @@ const matches = (row: Record<string, unknown>, filter: Record<string, unknown>):
         }
         const operators = condition as Record<string, unknown>
         if ("$gt" in operators) return value !== undefined && (value as Date) > (operators.$gt as Date)
+        if ("$exists" in operators) return (value !== undefined) === operators.$exists
+        if ("$size" in operators) return Array.isArray(value) && value.length === operators.$size
         if ("$in" in operators) return (operators.$in as unknown[]).some(candidate => (Array.isArray(value) ? value.map(String).includes(String(candidate)) : String(candidate) === String(value)))
         return String(value) === String(condition)
     })

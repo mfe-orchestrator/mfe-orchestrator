@@ -1334,7 +1334,7 @@
             },
             "noProjects": "You have no project available to share.",
             "allowChanges": "Allow changes",
-            "allowChangesDescription": "Without this, the assistant can only read the project. With it, it can also change it and deploy.",
+            "allowChangesDescription": "Without this, the assistant can only read the project. With it, it can also change it, deploy, and create new projects in the organizations of the projects you share, if you administer them: the projects it creates are shared with it.",
             "signedInAs": "Signed in as {{email}}",
             "signOut": "Sign out",
             "approve": "Approve",

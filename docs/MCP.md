@@ -36,7 +36,8 @@ Two scopes, chosen on the consent page:
   integration plans.
 - `mfe:write` — everything the console does inside a project, **deploy and rollback included**:
   create and edit microfrontends and environments, trigger builds, import repositories, change
-  global variables, apply dependency alignments and integrations.
+  global variables, apply dependency alignments and integrations. It also allows **creating
+  projects** (see below), which the consent page says next to "Allow changes".
 
 The role caps each project separately. `mfe:write` can be granted when at least one picked project
 lets the user write; on a project where the user is a **VIEWER** every write tool is refused with an
@@ -56,9 +57,25 @@ takes write access away from their clients immediately.
   left, the grant is revoked.
 - Grants created before multi-project consent (a single project) keep working unchanged.
 
+## Creating a project
+
+`project_create` (`mfe:write`) creates a project in one of the organizations `organizations_list`
+returns, that is an organization that already contains a shared project. The user has to administer
+it (owner or admin), as in the console. The user becomes the project's owner and the project is
+added to the grant at once, so the client can go on with `projectId` and set up environments and
+microfrontends, even with an access token minted before the project existed. An organization the
+user administers but shared nothing from stays out of reach, and a project API key cannot create
+projects: there is no user to own them.
+
+- Only grants approved since the consent page mentions project creation can use it. A client
+  connected earlier gets an error asking to reconnect: its user never agreed to it.
+- One connection creates at most 10 projects, so an agent stuck in a loop cannot fill a tenant.
+- Every creation is logged with the `mcp_grant_project_created` audit tag (grant, client,
+  organization, project).
+
 Left out on purpose: API keys, scaffolding a repository from a template, creating or editing
-storages and repository connections (their input is a secret), projects, organizations, members,
-invitations, the user profile, bundle upload and the canvas layout.
+storages and repository connections (their input is a secret), deleting projects, organizations,
+members, invitations, the user profile, bundle upload and the canvas layout.
 
 ## Fallback: a project API key
 
@@ -70,7 +87,7 @@ console. For a client that cannot do OAuth (a script, a CI job, a client without
 - The key reaches its own project and nothing else (`projectId` can always be left out);
   organization-level operations are denied.
 - A `VIEWER` key gets `mfe:read`, a `MANAGER` key gets `mfe:read` and `mfe:write` (deploy and
-  rollback included). The same tools stay excluded as for OAuth.
+  rollback included), except `project_create`. The same tools stay excluded as for OAuth.
 - Revoked and expired keys are refused, exactly as on the API key routes.
 - A valid key is remembered for up to 60 seconds (in Redis when configured, in memory otherwise),
   so the bcrypt check is not repeated on every call. Revoking or deleting the key in the console

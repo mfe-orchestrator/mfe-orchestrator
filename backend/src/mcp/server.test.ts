@@ -54,7 +54,7 @@ describe("MCP tool registry", () => {
 
     it("given the tools left out of v1, when the registry is searched, then none of them is there", () => {
         const excluded =
-            /api_?key|project_(create|delete)|organization_(create|update|delete)|member|invit|user_profile|profile|upload|position|dimension|storage_(create|update)|code_repository_(create|update|add)|scaffold/
+            /api_?key|project_delete|organization_(create|update|delete)|member|invit|user_profile|profile|upload|position|dimension|storage_(create|update)|code_repository_(create|update|add)|scaffold/
         expect(MCP_TOOLS.map(tool => tool.name).filter(name => excluded.test(name))).toEqual([])
     })
 

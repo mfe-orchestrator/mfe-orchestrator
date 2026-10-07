@@ -63,12 +63,39 @@ export const createGrant = async (grant: { userId: Id; projectIds: Id[]; clientI
         projectIds: grant.projectIds.map(projectId => toObjectId(projectId)),
         clientId: grant.clientId,
         scopes: grant.scopes,
+        // The consent page tells whoever allows changes that projects can be created as well
+        canCreateProjects: grant.scopes.includes(MCP_SCOPE_WRITE),
         expiresAt,
         purgeAt: new Date(expiresAt.getTime() + GRANT_RETENTION_MS)
     })
     // A client someone actually authorized is no longer a candidate for the unused-client cleanup
     await OAuthClient.updateOne({ clientId: grant.clientId }, { $unset: { unusedExpiresAt: 1 } })
     return created
+}
+
+/** How many projects one connection may create: an agent stuck in a loop must not fill a tenant. */
+export const MAX_PROJECTS_CREATED_PER_GRANT = 10
+
+/** Why a grant may not create a project right now, or undefined when it may. */
+export const projectCreationRefusal = async (grantId: Id): Promise<"reconsent" | "limit" | "inactive" | undefined> => {
+    const grant = await OAuthGrant.findById(toObjectId(grantId), { canCreateProjects: 1, createdProjectIds: 1, revokedAt: 1, expiresAt: 1 })
+    if (!grant || !isActive(grant)) return "inactive"
+    if (!grant.canCreateProjects) return "reconsent"
+    if ((grant.createdProjectIds?.length ?? 0) >= MAX_PROJECTS_CREATED_PER_GRANT) return "limit"
+    return undefined
+}
+
+/**
+ * Shares the project a client just created through `project_create` with its grant. Only a live
+ * grant, allowed to create and under its cap, is extended; false means the project was created but
+ * the connection does not reach it (the grant was revoked while the call ran, typically).
+ */
+export const addProjectToGrant = async (grantId: Id, projectId: Id): Promise<boolean> => {
+    const result = await OAuthGrant.updateOne(
+        { _id: toObjectId(grantId), revokedAt: null, canCreateProjects: true, [`createdProjectIds.${MAX_PROJECTS_CREATED_PER_GRANT - 1}`]: { $exists: false } },
+        { $addToSet: { projectIds: toObjectId(projectId), createdProjectIds: toObjectId(projectId) } }
+    )
+    return result.matchedCount === 1
 }
 
 /** Revokes a grant and everything that proves it. Revoking twice keeps the first reason. */
@@ -124,10 +151,17 @@ export const authenticateGrant = async (expected: { grantId: string; userId: str
     }
 
     if (!grant.projectIds || grant.projectIds.length === 0) {
-        await OAuthGrant.updateOne({ _id: grant._id }, { projectIds: grantProjectIds.map(projectId => toObjectId(projectId)), $unset: { projectId: 1 } })
+        // Conditional: a concurrent request may have added a project to the new shape meanwhile
+        await OAuthGrant.updateOne(
+            { _id: grant._id, $or: [{ projectIds: { $exists: false } }, { projectIds: { $size: 0 } }] },
+            { projectIds: grantProjectIds.map(projectId => toObjectId(projectId)), $unset: { projectId: 1 } }
+        )
     }
 
-    const requested = expected.projectIds ?? grantProjectIds
+    // A token names the projects of its grant when it was minted; those the client created since
+    // then are its own and join right away, without waiting for the next refresh.
+    const createdByClient = (grant.createdProjectIds ?? []).map(String).filter(projectId => grantProjectIds.includes(projectId))
+    const requested = expected.projectIds ? [...new Set([...expected.projectIds, ...createdByClient])] : grantProjectIds
     const projects: SharedProject[] = []
     for (const projectId of requested) {
         const role = await resolveProjectRole(grant.userId, projectId)

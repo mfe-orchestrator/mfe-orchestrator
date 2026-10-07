@@ -23,8 +23,9 @@ import { repositoryTools } from "./tools/repositoryTools"
  * Parity with the console, minus what v1 leaves out on purpose: API keys (creating or showing one
  * hands a long-lived credential to the client), scaffolding a repository from a template (it pushes
  * an API key into the new repository), creating or editing storages and repository connections
- * (their input is a secret), and everything above the project (projects, organizations, members,
- * invitations, the user profile), bundle upload and the canvas layout.
+ * (their input is a secret), and everything else above the project (deleting projects, managing
+ * organizations, members, invitations, the user profile), bundle upload and the canvas layout.
+ * Creating a project is the exception: `project_create` adds the new project to the grant.
  */
 export const MCP_TOOLS: McpToolDefinition[] = [...organizationTools, ...projectTools, ...microfrontendTools, ...environmentTools, ...repositoryTools, ...configurationTools]
 
