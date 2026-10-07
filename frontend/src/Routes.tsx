@@ -70,13 +70,18 @@ const AuthenticationWrapper: React.FC<React.PropsWithChildren> = ({ children }) 
     )
 }
 
-/** The consent screen picks its own project, so it must not wait for the console's organization/project selection. */
+/**
+ * The consent screen picks its own project, so it must not wait for the console's organization/project selection.
+ *
+ * Mounted under "/oauth/*": these paths are matched against what is left after that prefix, so
+ * they must stay relative. "/oauth/consent" here would match nothing and leave a blank page.
+ */
 const OAuthRoutes: React.FC = () => {
     return (
         <LoginOnlyWrapper>
             <RRDRoutes>
-                <Route path="/oauth/consent" element={<RouteWithSuspense element={<OAuthConsent />} />} />
-                <Route path="/oauth/error" element={<RouteWithSuspense element={<OAuthError />} />} />
+                <Route path="consent" element={<RouteWithSuspense element={<OAuthConsent />} />} />
+                <Route path="error" element={<RouteWithSuspense element={<OAuthError />} />} />
             </RRDRoutes>
         </LoginOnlyWrapper>
     )
