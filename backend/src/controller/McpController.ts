@@ -3,7 +3,7 @@ import { createMcpHandler } from "@modelcontextprotocol/server"
 import { FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from "fastify"
 import { authenticateMcpRequest, buildWwwAuthenticate, MCP_CONTEXT_KEY, McpAuthenticationResult } from "../mcp/authentication"
 import { createMcpServer } from "../mcp/server"
-import { credentialBucket, credentialLogFields, McpToolContext } from "../mcp/toolDefinition"
+import { credentialBucket, credentialLogFields, McpSession } from "../mcp/toolDefinition"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { getOAuthConfig } from "../utils/oauthConfig"
 
@@ -22,15 +22,15 @@ export default async function mcpController(fastify: FastifyInstance) {
 
     const handler = createMcpHandler(
         ({ authInfo }) => {
-            const context = authInfo?.extra?.[MCP_CONTEXT_KEY] as McpToolContext | undefined
-            if (!context) {
+            const session = authInfo?.extra?.[MCP_CONTEXT_KEY] as McpSession | undefined
+            if (!session) {
                 // Unreachable: the route below never calls the handler without authentication
                 throw new Error("MCP request reached the server without an authenticated context")
             }
-            return createMcpServer(context, {
-                onToolError: (tool, error) => fastify.log.warn({ err: error, tool, projectId: context.projectId, ...credentialLogFields(context.credential) }, "MCP tool failed"),
-                // One audit line per call, naming the grant or the API key that made it
-                onToolCall: (tool, outcome) => fastify.log.info({ audit: "mcp_tool_call", tool, outcome, projectId: context.projectId, ...credentialLogFields(context.credential) }, "MCP tool call")
+            return createMcpServer(session, {
+                onToolError: (tool, error, projectId) => fastify.log.warn({ err: error, tool, projectId, ...credentialLogFields(session.credential) }, "MCP tool failed"),
+                // One audit line per call, naming the project it acted on and the grant or the API key that made it
+                onToolCall: (tool, outcome, projectId) => fastify.log.info({ audit: "mcp_tool_call", tool, outcome, projectId, ...credentialLogFields(session.credential) }, "MCP tool call")
             })
         },
         { onerror: error => fastify.log.warn({ err: error }, "MCP request rejected") }
@@ -66,7 +66,7 @@ export default async function mcpController(fastify: FastifyInstance) {
                 timeWindow: "1 minute",
                 keyGenerator: request => {
                     const authentication = authentications.get(request)
-                    return authentication ? `mcp:${credentialBucket(authentication.context.credential)}` : `mcp:ip:${request.ip}`
+                    return authentication ? `mcp:${credentialBucket(authentication.session.credential)}` : `mcp:ip:${request.ip}`
                 }
             }) as preHandlerAsyncHookHandler
         )

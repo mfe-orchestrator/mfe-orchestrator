@@ -2,8 +2,9 @@
 
 The console can expose its features to AI clients (Claude, Claude Code, Cursor, VS Code and any other
 client speaking the [Model Context Protocol](https://modelcontextprotocol.io)) through a remote MCP
-server. The client connects with OAuth: the user signs in to the console as usual, chooses **one
-project** and whether the client may change things, and the client only ever acts inside that project.
+server. The client connects with OAuth: the user signs in to the console as usual, picks **one or
+more projects** (grouped by organization) and whether the client may change things, and the client
+only ever acts inside the projects picked.
 
 It is off by default.
 
@@ -37,8 +38,23 @@ Two scopes, chosen on the consent page:
   create and edit microfrontends and environments, trigger builds, import repositories, change
   global variables, apply dependency alignments and integrations.
 
-A project **VIEWER** can only grant `mfe:read`. The cap is applied again on every request, so
-demoting a member takes write access away from their clients immediately.
+The role caps each project separately. `mfe:write` can be granted when at least one picked project
+lets the user write; on a project where the user is a **VIEWER** every write tool is refused with an
+explicit error, whatever the grant says. Roles are read again on every request, so demoting a member
+takes write access away from their clients immediately.
+
+## Several projects in one connection
+
+- `projects_list` returns the shared projects with their organization and the user's role;
+  `organizations_list` and `organization_get` describe the organizations that contain them (names
+  and shared projects only: never members, never projects that were not shared).
+- Every other tool takes an optional `projectId`. With a single shared project it can be left out;
+  with more than one it is required, and a call without it answers with a message pointing at
+  `projects_list`. Every id passed to a tool (microfrontend, environment, deployment, ...) is checked
+  against the project the call picked.
+- A project the user loses access to drops out of the connection on the next request; when none is
+  left, the grant is revoked.
+- Grants created before multi-project consent (a single project) keep working unchanged.
 
 Left out on purpose: API keys, scaffolding a repository from a template, creating or editing
 storages and repository connections (their input is a secret), projects, organizations, members,
@@ -51,7 +67,8 @@ console. For a client that cannot do OAuth (a script, a CI job, a client without
 `/mcp` also accepts a **project API key** (Settings → API keys), either as
 `Authorization: Bearer <key>` or as an `api-key: <key>` header.
 
-- The key reaches its own project and nothing else; organization-level operations are denied.
+- The key reaches its own project and nothing else (`projectId` can always be left out);
+  organization-level operations are denied.
 - A `VIEWER` key gets `mfe:read`, a `MANAGER` key gets `mfe:read` and `mfe:write` (deploy and
   rollback included). The same tools stay excluded as for OAuth.
 - Revoked and expired keys are refused, exactly as on the API key routes.
@@ -98,10 +115,12 @@ claude mcp add --transport http mfe-orchestrator https://<your console>/api/mcp 
 
 ## Revoking access
 
-Settings → MCP clients lists the clients connected to the project. A project OWNER (or an
-organization admin) sees and can revoke everyone's; other members see and revoke their own. A
-revocation takes effect on the client's next request. A grant also ends by itself when the user
-loses access to the project, after 30 days without use, and in any case after 90 days.
+Settings → MCP clients lists the clients that include the current project, with the other shared
+projects the viewer can see. A project OWNER (or an organization admin) sees and can revoke everyone's
+grants that include their project; other members see and revoke their own. A revocation removes the
+whole grant, all its projects, and takes effect on the client's next request. A grant also ends by
+itself when the user loses access to all its projects, after 30 days without use, and in any case
+after 90 days.
 
 ## How it works
 

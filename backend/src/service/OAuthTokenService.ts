@@ -14,7 +14,8 @@ export interface McpAccessTokenClaims {
     userId: string
     clientId: string
     grantId: string
-    projectId: string
+    /** The projects the grant shares (claim `project_ids`) */
+    projectIds: string[]
     scopes: string[]
     /** Seconds since epoch, as in `exp` */
     expiresAt: number
@@ -34,7 +35,7 @@ export const signMcpAccessToken = async (claims: Omit<McpAccessTokenClaims, "exp
     const token = await new SignJWT({
         client_id: claims.clientId,
         grant_id: claims.grantId,
-        project_id: claims.projectId,
+        project_ids: claims.projectIds,
         scope: claims.scopes.join(" ")
     })
         .setProtectedHeader({ alg: "HS256", typ: MCP_ACCESS_TOKEN_TYPE })
@@ -61,14 +62,25 @@ export const verifyMcpAccessToken = async (token: string, config: OAuthConfig = 
             typ: MCP_ACCESS_TOKEN_TYPE,
             algorithms: ["HS256"]
         })
-        if (!payload.sub || typeof payload.grant_id !== "string" || typeof payload.project_id !== "string" || typeof payload.client_id !== "string" || !payload.exp) {
+        // `project_id` is what tokens said before a grant could share several projects: such a token
+        // lives at most 15 minutes, read it as a one-element list until it expires
+        const projectIds = Array.isArray(payload.project_ids) ? payload.project_ids : typeof payload.project_id === "string" ? [payload.project_id] : undefined
+        if (
+            !payload.sub ||
+            typeof payload.grant_id !== "string" ||
+            !projectIds ||
+            projectIds.length === 0 ||
+            projectIds.some(projectId => typeof projectId !== "string") ||
+            typeof payload.client_id !== "string" ||
+            !payload.exp
+        ) {
             throw new Error("Missing claims")
         }
         return {
             userId: payload.sub,
             clientId: payload.client_id,
             grantId: payload.grant_id,
-            projectId: payload.project_id,
+            projectIds: projectIds as string[],
             scopes: typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : [],
             expiresAt: payload.exp
         }

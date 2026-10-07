@@ -27,7 +27,9 @@ const matches = (row: Record<string, unknown>, filter: Record<string, unknown>):
         if (key === "$or") return (condition as Record<string, unknown>[]).some(alternative => matches(row, alternative))
         const value = row[key]
         if (condition === null) return value === undefined || value === null
-        if (condition instanceof Types.ObjectId || typeof condition !== "object") return String(value) === String(condition)
+        if (condition instanceof Types.ObjectId || typeof condition !== "object") {
+            return Array.isArray(value) ? value.map(String).includes(String(condition)) : String(value) === String(condition)
+        }
         const operators = condition as Record<string, unknown>
         if ("$gt" in operators) return value !== undefined && (value as Date) > (operators.$gt as Date)
         if ("$in" in operators) return (operators.$in as unknown[]).some(candidate => (Array.isArray(value) ? value.map(String).includes(String(candidate)) : String(candidate) === String(value)))
@@ -135,10 +137,11 @@ describe("OAuthAuthorizationService", () => {
     afterEach(() => vi.restoreAllMocks())
 
     /** Walks the happy path up to the code, as the browser would. */
-    const authorizeAndApprove = async (user: IUser, projectId: string, scopes = ["mfe:read", "mfe:write"]) => {
+    const authorizeAndApprove = async (user: IUser, projectIdOrIds: string | string[], scopes = ["mfe:read", "mfe:write"]) => {
+        const projectIds = Array.isArray(projectIdOrIds) ? projectIdOrIds : [projectIdOrIds]
         const handle = handleOf(await service().startAuthorization(anAuthorizationQuery()))
         await service().getRequestForConsent(handle, user)
-        const { redirectTo } = await service().approve(handle, user, { projectId, scopes })
+        const { redirectTo } = await service().approve(handle, user, { projectIds, scopes })
         return new URL(redirectTo).searchParams.get("code") as string
     }
 
@@ -199,7 +202,7 @@ describe("OAuthAuthorizationService", () => {
             expect(consent).toEqual({
                 client: { name: "Claude Code", registrationType: "dcr", redirectHost: "127.0.0.1:33418", clientIdHost: null, warnings: ["unverified", "localhost"] },
                 scopes: ["mfe:read", "mfe:write"],
-                projects: [{ id: projectId, name: "Storefront", organizationName: "", role: RoleInProject.MEMBER }],
+                projects: [{ id: projectId, name: "Storefront", organizationId: String(projects[0].organizationId), organizationName: "", role: RoleInProject.MEMBER }],
                 user: { email: "member@example.com" }
             })
         })
@@ -239,7 +242,7 @@ describe("OAuthAuthorizationService", () => {
             const handle = handleOf(await service().startAuthorization(anAuthorizationQuery()))
             await service().getRequestForConsent(handle, user)
 
-            const redirect = new URL((await service().approve(handle, user, { projectId, scopes: ["mfe:read"] })).redirectTo)
+            const redirect = new URL((await service().approve(handle, user, { projectIds: [projectId], scopes: ["mfe:read"] })).redirectTo)
 
             expect(redirect.searchParams.get("code")).toBeTruthy()
             expect(redirect.searchParams.get("state")).toBe("client-state")
@@ -247,12 +250,60 @@ describe("OAuthAuthorizationService", () => {
             expect(requests).toHaveLength(0)
         })
 
+        it("given two projects, VIEWER on one and MEMBER on the other, when read and write are approved, then the grant keeps both scopes over both projects", async () => {
+            const user = aUser()
+            const viewed = aProjectWithMember(user, RoleInProject.VIEWER)
+            const worked = aProjectWithMember(user, RoleInProject.MEMBER)
+
+            await authorizeAndApprove(user, [viewed, worked])
+
+            expect(grants[0].scopes).toEqual(["mfe:read", "mfe:write"])
+            expect((grants[0].projectIds as Types.ObjectId[]).map(String)).toEqual([viewed, worked])
+        })
+
+        it("given only VIEWER projects, when read and write are approved, then the grant only carries read", async () => {
+            const user = aUser()
+
+            await authorizeAndApprove(user, [aProjectWithMember(user, RoleInProject.VIEWER), aProjectWithMember(user, RoleInProject.VIEWER)])
+
+            expect(grants[0].scopes).toEqual(["mfe:read"])
+        })
+
+        it("given one reachable project and one that is not, when approving both, then nothing is granted", async () => {
+            const user = aUser()
+            const handle = handleOf(await service().startAuthorization(anAuthorizationQuery()))
+            await service().getRequestForConsent(handle, user)
+
+            await expect(service().approve(handle, user, { projectIds: [aProjectWithMember(user, RoleInProject.MEMBER), new Types.ObjectId().toString()], scopes: ["mfe:read"] })).rejects.toThrow(
+                /cannot be chosen/
+            )
+            expect(grants).toHaveLength(0)
+        })
+
+        it("given no project at all, when approving, then it is refused", async () => {
+            const user = aUser()
+            const handle = handleOf(await service().startAuthorization(anAuthorizationQuery()))
+            await service().getRequestForConsent(handle, user)
+
+            await expect(service().approve(handle, user, { projectIds: [], scopes: ["mfe:read"] })).rejects.toThrow(/at least one project/)
+        })
+
+        it("given more projects than a grant may share, when approving, then it is refused before any lookup", async () => {
+            const user = aUser()
+            const handle = handleOf(await service().startAuthorization(anAuthorizationQuery()))
+            await service().getRequestForConsent(handle, user)
+            const tooMany = Array.from({ length: 51 }, () => new Types.ObjectId().toString())
+
+            await expect(service().approve(handle, user, { projectIds: tooMany, scopes: ["mfe:read"] })).rejects.toThrow(/at most 50 projects/)
+            expect(grants).toHaveLength(0)
+        })
+
         it("given a project the user cannot reach, when approving for it, then it is refused", async () => {
             const user = aUser()
             const handle = handleOf(await service().startAuthorization(anAuthorizationQuery()))
             await service().getRequestForConsent(handle, user)
 
-            await expect(service().approve(handle, user, { projectId: new Types.ObjectId().toString(), scopes: ["mfe:read"] })).rejects.toThrow(/cannot be chosen/)
+            await expect(service().approve(handle, user, { projectIds: [new Types.ObjectId().toString()], scopes: ["mfe:read"] })).rejects.toThrow(/cannot be chosen/)
             expect(grants).toHaveLength(0)
         })
 
@@ -289,7 +340,7 @@ describe("OAuthAuthorizationService", () => {
             const claims = await verifyMcpAccessToken(tokens.access_token, config)
 
             expect(tokens).toMatchObject({ token_type: "Bearer", expires_in: 900, scope: "mfe:read mfe:write" })
-            expect(claims).toMatchObject({ userId: user._id.toString(), projectId, clientId: CLIENT_ID, scopes: ["mfe:read", "mfe:write"] })
+            expect(claims).toMatchObject({ userId: user._id.toString(), projectIds: [projectId], clientId: CLIENT_ID, scopes: ["mfe:read", "mfe:write"] })
         })
 
         it("given an authorize request without redirect_uri, when the code is exchanged without one, then it is accepted", async () => {
@@ -298,7 +349,7 @@ describe("OAuthAuthorizationService", () => {
             const projectId = aProjectWithMember(user, RoleInProject.MEMBER)
             const handle = handleOf(await service().startAuthorization(anAuthorizationQuery({ redirect_uri: undefined })))
             await service().getRequestForConsent(handle, user)
-            const code = new URL((await service().approve(handle, user, { projectId, scopes: ["mfe:read"] })).redirectTo).searchParams.get("code") as string
+            const code = new URL((await service().approve(handle, user, { projectIds: [projectId], scopes: ["mfe:read"] })).redirectTo).searchParams.get("code") as string
 
             await expect(exchange(code, { redirect_uri: undefined })).resolves.toMatchObject({ token_type: "Bearer" })
         })
@@ -365,6 +416,35 @@ describe("OAuthAuthorizationService", () => {
 
             await expect(service().refresh({ client_id: CLIENT_ID, refresh_token: tokens.refresh_token })).rejects.toThrow(/no longer valid/)
             expect(grants[0].revokedReason).toBe(OAuthGrantRevocationReason.MEMBERSHIP_LOST)
+        })
+
+        it("given a two-project grant, when the user loses one project, then refreshing keeps the grant for the other", async () => {
+            const user = aUser()
+            const kept = aProjectWithMember(user, RoleInProject.MEMBER)
+            const lost = aProjectWithMember(user, RoleInProject.MEMBER)
+            const tokens = await exchange(await authorizeAndApprove(user, [kept, lost]))
+            projectMemberships.splice(1, 1)
+
+            const refreshed = await service().refresh({ client_id: CLIENT_ID, refresh_token: tokens.refresh_token })
+
+            expect(refreshed.access_token).toBeTruthy()
+            expect(grants[0].revokedAt).toBeUndefined()
+        })
+
+        it("given a grant stored with a single projectId, when the client refreshes, then it keeps working and is rewritten as projectIds", async () => {
+            const user = aUser()
+            const projectId = aProjectWithMember(user, RoleInProject.MEMBER)
+            const tokens = await exchange(await authorizeAndApprove(user, projectId))
+            // As written before grants spanned several projects
+            grants[0].projectId = new Types.ObjectId(projectId)
+            delete grants[0].projectIds
+
+            const refreshed = await service().refresh({ client_id: CLIENT_ID, refresh_token: tokens.refresh_token })
+            const claims = await verifyMcpAccessToken(refreshed.access_token, config)
+
+            expect(claims.projectIds).toEqual([projectId])
+            expect((grants[0].projectIds as Types.ObjectId[]).map(String)).toEqual([projectId])
+            expect(grants[0].projectId).toBeUndefined()
         })
 
         it("given a refresh token, when the client revokes it, then the grant is revoked", async () => {

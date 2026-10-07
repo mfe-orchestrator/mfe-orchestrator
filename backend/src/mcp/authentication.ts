@@ -7,12 +7,12 @@ import { authenticateGrant } from "../service/OAuthGrantService"
 import { verifyMcpAccessToken } from "../service/OAuthTokenService"
 import { CachedApiKeyCredential, cacheApiKeyCredential, getCachedApiKeyCredential, hashApiKey } from "../utils/apiKeyCredentialCache"
 import { getOAuthConfig, MCP_SCOPE_READ, MCP_SCOPE_WRITE, OAuthConfig } from "../utils/oauthConfig"
-import { McpToolContext } from "./toolDefinition"
+import { McpSession } from "./toolDefinition"
 
-/** Where the tool context travels inside the SDK's pass-through `authInfo.extra`. */
+/** Where the session travels inside the SDK's pass-through `authInfo.extra`. */
 export const MCP_CONTEXT_KEY = "mfeOrchestratorContext"
 
-export type McpAuthenticationResult = { authInfo: AuthInfo; context: McpToolContext } | { error: "missing_token" | "invalid_token" }
+export type McpAuthenticationResult = { authInfo: AuthInfo; session: McpSession } | { error: "missing_token" | "invalid_token" }
 
 const readBearer = (authorization: string | undefined): string | undefined => {
     const match = /^Bearer\s+(\S+)\s*$/i.exec(authorization ?? "")
@@ -69,15 +69,17 @@ const authenticateAccessToken = async (token: string, config: OAuthConfig): Prom
     }
 
     const scopes = claims.scopes.filter(scope => authenticated.scopes.includes(scope))
-    const context: McpToolContext = {
-        principal: { ...user.toObject(), restrictedToProjectId: claims.projectId },
-        projectId: claims.projectId,
+    const projectIds = authenticated.projects.map(project => project.projectId)
+    const session: McpSession = {
+        // Membership is still looked up for each project: the set only narrows what the user reaches
+        principal: { ...user.toObject(), restrictedToProjectIds: projectIds },
+        projects: authenticated.projects,
         scopes,
         credential: { kind: "oauth", grantId: claims.grantId, clientId: claims.clientId }
     }
 
     return {
-        context,
+        session,
         authInfo: {
             token,
             clientId: claims.clientId,
@@ -85,7 +87,7 @@ const authenticateAccessToken = async (token: string, config: OAuthConfig): Prom
             expiresAt: claims.expiresAt,
             resource: new URL(config.resource),
             resourceMetadataUrl: config.protectedResourceMetadataUrl,
-            extra: { [MCP_CONTEXT_KEY]: context }
+            extra: { [MCP_CONTEXT_KEY]: session }
         }
     }
 }
@@ -117,17 +119,17 @@ const authenticateApiKey = async (apiKey: string, config: OAuthConfig): Promise<
         _id: new Types.ObjectId(credential.apiKeyId),
         email: `api-key:${credential.apiKeyId}`,
         apiKeyId: credential.apiKeyId,
-        restrictedToProjectId: credential.projectId
-    } as unknown as IUser & { apiKeyId: string; restrictedToProjectId: string }
-    const context: McpToolContext = {
+        restrictedToProjectIds: [credential.projectId]
+    } as unknown as IUser & { apiKeyId: string; restrictedToProjectIds: string[] }
+    const session: McpSession = {
         principal,
-        projectId: credential.projectId,
+        projects: [{ projectId: credential.projectId, role: credential.role }],
         scopes,
         credential: { kind: "api_key", apiKeyId: credential.apiKeyId }
     }
 
     return {
-        context,
+        session,
         authInfo: {
             // The key itself stays out of what the SDK hands around
             token: `api-key:${credential.apiKeyId}`,
@@ -136,7 +138,7 @@ const authenticateApiKey = async (apiKey: string, config: OAuthConfig): Promise<
             expiresAt: Math.floor(credential.expiresAt / 1000),
             resource: new URL(config.resource),
             resourceMetadataUrl: config.protectedResourceMetadataUrl,
-            extra: { [MCP_CONTEXT_KEY]: context }
+            extra: { [MCP_CONTEXT_KEY]: session }
         }
     }
 }

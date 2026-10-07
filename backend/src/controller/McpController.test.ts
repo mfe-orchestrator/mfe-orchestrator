@@ -8,10 +8,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 // instance from the entry point: importing that would start the server.
 vi.mock("..", () => ({ fastify: { log: { warn: vi.fn() } } }))
 
-const grantState = vi.hoisted(() => ({ scopes: ["mfe:read"] as string[] | undefined }))
+/** What the grant check answers: the scopes in force and the shared projects with today's role. */
+const grantState = vi.hoisted(() => ({
+    scopes: ["mfe:read"] as string[] | undefined,
+    projects: [{ projectId: "6890f0b1c2d3e4f5a6b7c8db", role: "MEMBER" }] as { projectId: string; role: string }[]
+}))
 
 vi.mock("../service/OAuthGrantService", () => ({
-    authenticateGrant: async () => (grantState.scopes ? { grant: {}, role: "MEMBER", scopes: grantState.scopes } : undefined)
+    authenticateGrant: async () => (grantState.scopes ? { grant: {}, projects: grantState.projects, scopes: grantState.scopes } : undefined)
 }))
 vi.mock("../models/UserModel", async importOriginal => {
     const original = await importOriginal<typeof import("../models/UserModel")>()
@@ -24,6 +28,8 @@ vi.mock("../models/UserModel", async importOriginal => {
 import { authenticateMcpRequest } from "../mcp/authentication"
 import ApiKey, { ApiKeyRole, ApiKeyStatus } from "../models/ApiKeyModel"
 import Environment from "../models/EnvironmentModel"
+import Organization from "../models/OrganizationModel"
+import Project from "../models/ProjectModel"
 import { getSecret, ISSUER } from "../models/UserModel"
 import { signMcpAccessToken } from "../service/OAuthTokenService"
 import { clearApiKeyCredentialCache } from "../utils/apiKeyCredentialCache"
@@ -42,7 +48,7 @@ const aToken = async (scopes: string[]) =>
             userId: "6890f0b1c2d3e4f5a6b7c8d9",
             clientId: "mcp_client",
             grantId: "6890f0b1c2d3e4f5a6b7c8da",
-            projectId: "6890f0b1c2d3e4f5a6b7c8db",
+            projectIds: grantState.projects.map(project => project.projectId),
             scopes
         })
     ).token
@@ -93,6 +99,7 @@ describe("McpController", () => {
 
     beforeEach(() => {
         grantState.scopes = ["mfe:read"]
+        grantState.projects = [{ projectId: "6890f0b1c2d3e4f5a6b7c8db", role: "MEMBER" }]
         clearApiKeyCredentialCache()
         // No API keys in this installation: a non-JWT bearer is tried as one and found nowhere
         vi.spyOn(ApiKey, "find").mockResolvedValue([] as never)
@@ -168,6 +175,132 @@ describe("McpController", () => {
 
     it("given the configured resource, when the test environment is read back, then it is the one the challenge advertised", () => {
         expect(getOAuthConfig().resource).toBe("https://console.example.com/api/mcp")
+    })
+})
+
+describe("McpController with a grant over several projects", () => {
+    const ORG_ONE = new Types.ObjectId()
+    const ORG_TWO = new Types.ObjectId()
+    const ORG_NOT_SHARED = new Types.ObjectId()
+    const WORKED = new Types.ObjectId().toString()
+    const VIEWED = new Types.ObjectId().toString()
+    const NOT_SHARED = new Types.ObjectId().toString()
+
+    /** Every project and organization of the installation, shared or not: the tools must filter. */
+    const allProjects = [
+        { _id: new Types.ObjectId(WORKED), name: "Checkout", organizationId: ORG_ONE },
+        { _id: new Types.ObjectId(VIEWED), name: "Storefront", organizationId: ORG_TWO },
+        { _id: new Types.ObjectId(NOT_SHARED), name: "Payroll", organizationId: ORG_NOT_SHARED }
+    ]
+    const allOrganizations = [
+        { _id: ORG_ONE, name: "Acme" },
+        { _id: ORG_TWO, name: "Globex" },
+        { _id: ORG_NOT_SHARED, name: "Initech" }
+    ]
+    const inFilter = (filter: Record<string, { $in: unknown[] }>) => (row: { _id: Types.ObjectId }) => filter._id.$in.map(String).includes(String(row._id))
+
+    beforeAll(async () => {
+        for (const [key, value] of Object.entries(ENVIRONMENT)) {
+            previousEnvironment[key] = process.env[key]
+            process.env[key] = value
+        }
+        app = Fastify()
+        await app.register(RateLimit, { global: false })
+        await app.register(mcpController)
+        await app.ready()
+    })
+
+    afterAll(async () => {
+        await app.close()
+        vi.restoreAllMocks()
+    })
+
+    beforeEach(() => {
+        grantState.scopes = ["mfe:read", "mfe:write"]
+        grantState.projects = [
+            { projectId: WORKED, role: "MEMBER" },
+            { projectId: VIEWED, role: "VIEWER" }
+        ]
+        vi.spyOn(Project, "find").mockImplementation(((filter: Record<string, { $in: unknown[] }>) => ({ sort: () => Promise.resolve(allProjects.filter(inFilter(filter))) })) as never)
+        vi.spyOn(Organization, "find").mockImplementation(((filter: Record<string, { $in: unknown[] }>) => ({ sort: () => Promise.resolve(allOrganizations.filter(inFilter(filter))) })) as never)
+    })
+
+    const callTool = async (name: string, args: Record<string, unknown> = {}) => {
+        const response = await callMcp(`Bearer ${await aToken(grantState.scopes ?? [])}`, "tools/call", { name, arguments: args })
+        return readJsonRpc(response.body).result as { isError?: boolean; content: { text: string }[] }
+    }
+
+    it("given two shared projects, when a project tool is called without projectId, then the client is told to pass one", async () => {
+        const result = await callTool("environments_list")
+
+        expect(result.isError).toBe(true)
+        expect(result.content[0].text).toBe("This connection shares 2 projects: pass projectId. Call projects_list to see them.")
+    })
+
+    it("given two shared projects, when a project outside them is named, then it is refused", async () => {
+        const result = await callTool("environments_list", { projectId: NOT_SHARED })
+
+        expect(result.isError).toBe(true)
+        expect(result.content[0].text).toMatch(/is not shared with this connection/)
+    })
+
+    it("given VIEWER on one project, when a write tool targets it, then it is refused with the reason, whatever the grant says", async () => {
+        const result = await callTool("environment_delete", { projectId: VIEWED, environmentId: "6890f0b1c2d3e4f5a6b7c8dd" })
+
+        expect(result.isError).toBe(true)
+        expect(result.content[0].text).toBe(`You are a VIEWER on project ${VIEWED}: environment_delete changes data and is not allowed there.`)
+    })
+
+    it("given MEMBER on the other project, when a write tool targets it, then the role check lets it through", async () => {
+        vi.spyOn(Environment, "findOne").mockImplementation((() => ({ session: () => Promise.resolve(null) })) as never)
+
+        const result = await callTool("environment_delete", { projectId: WORKED, environmentId: "6890f0b1c2d3e4f5a6b7c8dd" })
+
+        // It reaches the service, which does not find the environment: the VIEWER refusal never fired
+        expect(result.content[0].text).toBe("Not found in this project")
+    })
+
+    it("given a picked project, when an id of the other shared project is passed, then it is checked against the picked one and refused", async () => {
+        vi.spyOn(Environment, "findOne").mockImplementation((() => ({ session: () => Promise.resolve({ _id: "6890f0b1c2d3e4f5a6b7c8dd", projectId: VIEWED }) })) as never)
+
+        const result = await callTool("deployments_list", { projectId: WORKED, environmentId: "6890f0b1c2d3e4f5a6b7c8dd" })
+
+        expect(result.content[0].text).toBe("Not found in this project")
+    })
+
+    it("given a write grant with at least one writable project, when the tools are listed, then write tools are there", async () => {
+        expect(await listToolNames(["mfe:read", "mfe:write"])).toContain("deploy")
+    })
+
+    it("given shared projects in two organizations, when the organizations are listed, then only those two come back, with their counts", async () => {
+        const result = await callTool("organizations_list")
+
+        expect(JSON.parse(result.content[0].text)).toEqual([
+            { id: String(ORG_ONE), name: "Acme", sharedProjects: 1 },
+            { id: String(ORG_TWO), name: "Globex", sharedProjects: 1 }
+        ])
+    })
+
+    it("given an organization with no shared project, when it is asked for, then it does not exist for this connection", async () => {
+        const result = await callTool("organization_get", { organizationId: String(ORG_NOT_SHARED) })
+
+        expect(result.isError).toBe(true)
+        expect(result.content[0].text).toBe("Not found in this project")
+    })
+
+    it("given a shared organization, when it is read, then it lists only its shared projects and nothing about members", async () => {
+        const organization = JSON.parse((await callTool("organization_get", { organizationId: String(ORG_TWO) })).content[0].text)
+
+        expect(organization).toEqual({ id: String(ORG_TWO), name: "Globex", projects: [{ id: VIEWED, name: "Storefront", role: "VIEWER" }] })
+    })
+
+    it("given the shared projects, when they are listed, then each carries its organization and the user's role", async () => {
+        const listed = JSON.parse((await callTool("projects_list")).content[0].text)
+
+        expect(listed).toEqual([
+            { id: WORKED, name: "Checkout", organizationId: String(ORG_ONE), organizationName: "Acme", role: "MEMBER" },
+            { id: VIEWED, name: "Storefront", organizationId: String(ORG_TWO), organizationName: "Globex", role: "VIEWER" }
+        ])
     })
 })
 

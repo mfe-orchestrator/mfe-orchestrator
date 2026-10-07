@@ -4,6 +4,14 @@ import useApiClient from "../useApiClient"
 export type OAuthScope = "mfe:read" | "mfe:write"
 export type OAuthClientWarning = "unverified" | "localhost" | "custom_scheme" | "redirect_host_mismatch"
 
+export interface OAuthProject {
+    id: string
+    name: string
+    organizationId: string
+    organizationName: string
+    role: string
+}
+
 export interface OAuthRequestDetails {
     client: {
         name: string
@@ -13,7 +21,7 @@ export interface OAuthRequestDetails {
         warnings: OAuthClientWarning[]
     }
     scopes: string[]
-    projects: { id: string; name: string; organizationName: string; role: string }[]
+    projects: OAuthProject[]
     user: { email: string }
 }
 
@@ -34,7 +42,7 @@ const useOAuthApi = () => {
         return response.data
     }
 
-    const approve = async (handle: string, data: { projectId: string; scopes: OAuthScope[] }): Promise<OAuthDecisionResponse> => {
+    const approve = async (handle: string, data: { projectIds: string[]; scopes: OAuthScope[] }): Promise<OAuthDecisionResponse> => {
         const response = await apiClient.doRequest<OAuthDecisionResponse>({
             url: `/api/oauth/requests/${encodeURIComponent(handle)}/approve`,
             method: "POST",

@@ -1,17 +1,16 @@
 import { Alert, AlertDescription, Badge, Switch } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
 import AuthenticationLayout from "@/authentication/components/AuthenticationLayout"
 import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
-import ProjectPickerList from "@/components/ProjectPickerList"
 import useOAuthApi, { OAuthClientWarning, OAuthScope } from "@/hooks/apiClients/useOAuthApi"
-import { Project } from "@/hooks/apiClients/useProjectApi"
 import useLogout from "@/hooks/useLogout"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import OAuthError from "./OAuthError"
+import OAuthProjectsPicker from "./OAuthProjectsPicker"
 import { clearOAuthResume, saveOAuthResume } from "./oauthResume"
 
 const WARNING_KEYS: Record<OAuthClientWarning, string> = {
@@ -28,7 +27,7 @@ export const OAuthConsent = () => {
     const oauthApi = useOAuthApi()
     const logout = useLogout()
     const notifications = useToastNotificationStore()
-    const [projectId, setProjectId] = useState<string>()
+    const [projectIds, setProjectIds] = useState<string[]>([])
     const [allowChanges, setAllowChanges] = useState(false)
 
     useEffect(() => {
@@ -49,7 +48,7 @@ export const OAuthConsent = () => {
     }
 
     const approveMutation = useMutation({
-        mutationFn: (scopes: OAuthScope[]) => oauthApi.approve(handle, { projectId: projectId ?? "", scopes }),
+        mutationFn: (scopes: OAuthScope[]) => oauthApi.approve(handle, { projectIds, scopes }),
         onSuccess: data => redirect(data.redirectTo),
         onError: () => notifications.showErrorNotification({ message: t("oauth.consent.approveFailed") })
     })
@@ -60,20 +59,16 @@ export const OAuthConsent = () => {
         onError: () => notifications.showErrorNotification({ message: t("oauth.consent.denyFailed") })
     })
 
-    const projects = useMemo<Project[]>(
-        () => requestQuery.data?.projects.map(p => ({ _id: p.id, name: p.name, description: p.organizationName, slug: "", organizationId: "" })) ?? [],
-        [requestQuery.data]
-    )
-
     if (!handle || requestQuery.isError) {
         return <OAuthError code="invalid_request" />
     }
 
     const data = requestQuery.data
-    const selected = data?.projects.find(p => p.id === projectId)
+    const selected = data?.projects.filter(p => projectIds.includes(p.id)) ?? []
     const writeRequested = data?.scopes.includes("mfe:write") ?? false
-    const isViewer = selected?.role?.toUpperCase() === "VIEWER"
-    const canAllowChanges = writeRequested && !isViewer
+    const viewerCount = selected.filter(p => p.role?.toUpperCase() === "VIEWER").length
+    // Writing is possible as soon as one selected project is not VIEWER; the VIEWER ones stay read-only.
+    const canAllowChanges = writeRequested && selected.length > viewerCount
     const busy = approveMutation.isPending || denyMutation.isPending
 
     const onApprove = () => {
@@ -113,13 +108,13 @@ export const OAuthConsent = () => {
                         </div>
 
                         <div>
-                            <p className="mb-2 font-medium">{t("oauth.consent.selectProject")}</p>
-                            {projects.length === 0 ? (
+                            <p className="mb-2 font-medium">{t("oauth.consent.selectProjects")}</p>
+                            {data.projects.length === 0 ? (
                                 <Alert variant="destructive">
                                     <AlertDescription>{t("oauth.consent.noProjects")}</AlertDescription>
                                 </Alert>
                             ) : (
-                                <ProjectPickerList projects={projects} activeProjectId={projectId} onSelect={project => setProjectId(project._id)} />
+                                <OAuthProjectsPicker projects={data.projects} selectedIds={projectIds} onChange={setProjectIds} disabled={busy} />
                             )}
                         </div>
 
@@ -128,7 +123,12 @@ export const OAuthConsent = () => {
                                 <label htmlFor="oauth-allow-changes" className="font-medium">
                                     {t("oauth.consent.allowChanges")}
                                 </label>
-                                <p className="text-sm text-muted-foreground">{isViewer ? t("oauth.consent.viewerReadOnly") : t("oauth.consent.allowChangesDescription")}</p>
+                                <p className="text-sm text-muted-foreground">{t("oauth.consent.allowChangesDescription")}</p>
+                                {viewerCount > 0 && (
+                                    <p className="mt-1 text-sm text-muted-foreground" data-testid="oauth-viewer-note">
+                                        {t("oauth.consent.viewerReadOnly", { count: viewerCount })}
+                                    </p>
+                                )}
                             </div>
                             <Switch id="oauth-allow-changes" checked={allowChanges && canAllowChanges} disabled={!canAllowChanges || busy} onCheckedChange={setAllowChanges} />
                         </div>
@@ -144,7 +144,7 @@ export const OAuthConsent = () => {
                             <Button variant="secondary" onClick={() => denyMutation.mutate()} disabled={busy} dataTestId="oauth-deny">
                                 {t("oauth.consent.deny")}
                             </Button>
-                            <Button onClick={onApprove} disabled={busy || !projectId} dataTestId="oauth-approve">
+                            <Button onClick={onApprove} disabled={busy || projectIds.length === 0} dataTestId="oauth-approve">
                                 {t("oauth.consent.approve")}
                             </Button>
                         </div>

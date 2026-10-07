@@ -1351,11 +1351,9 @@
                 "custom_scheme": "Schema di link personalizzato",
                 "redirect_host_mismatch": "Indirizzo di reindirizzamento diverso dall'editore"
             },
-            "selectProject": "Scegli il progetto da condividere",
             "noProjects": "Non hai progetti disponibili da condividere.",
             "allowChanges": "Consenti modifiche",
             "allowChangesDescription": "Senza questa opzione l'assistente può solo leggere il progetto. Con questa opzione può anche modificarlo e fare deploy.",
-            "viewerReadOnly": "Il tuo ruolo in questo progetto consente solo la lettura.",
             "signedInAs": "Accesso effettuato come {{email}}",
             "signOut": "Esci",
             "approve": "Approva",
@@ -1363,7 +1361,14 @@
             "approveFailed": "Non è stato possibile approvare la richiesta. Riprova.",
             "denyFailed": "Non è stato possibile negare la richiesta. Riprova.",
             "publishedBy": "Pubblicata da {{host}}",
-            "redirectHostMismatchDetail": "Questa applicazione è pubblicata da {{clientHost}} ma ti reindirizzerà a {{redirectHost}}. Approva solo se riconosci e ti fidi di entrambi."
+            "redirectHostMismatchDetail": "Questa applicazione è pubblicata da {{clientHost}} ma ti reindirizzerà a {{redirectHost}}. Approva solo se riconosci e ti fidi di entrambi.",
+            "selectProjects": "Scegli i progetti da condividere",
+            "searchProjects": "Cerca progetti",
+            "noResults": "Nessun progetto corrisponde alla ricerca",
+            "selectAll": "Seleziona tutti",
+            "selectAllIn": "Seleziona tutti i progetti di {{organization}}",
+            "viewerReadOnly_one": "{{count}} progetto selezionato resta in sola lettura a causa del tuo ruolo.",
+            "viewerReadOnly_other": "{{count}} progetti selezionati restano in sola lettura a causa del tuo ruolo."
         },
         "error": {
             "title": "Connessione non riuscita",
@@ -1419,7 +1424,8 @@
             "geminiCli": "Gemini CLI (~/.gemini/settings.json)",
             "cursor": "Cursor (mcp.json)",
             "copySnippet": "Copia lo snippet"
-        }
+        },
+        "projects": "Progetti"
     },
     "assistant": {
         "title": "Assistente",

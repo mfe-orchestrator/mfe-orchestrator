@@ -12,7 +12,7 @@ const CLAIMS = {
     userId: "6890f0b1c2d3e4f5a6b7c8d9",
     clientId: "mcp_client",
     grantId: "6890f0b1c2d3e4f5a6b7c8da",
-    projectId: "6890f0b1c2d3e4f5a6b7c8db",
+    projectIds: ["6890f0b1c2d3e4f5a6b7c8db", "6890f0b1c2d3e4f5a6b7c8dc"],
     scopes: ["mfe:read", "mfe:write"]
 }
 
@@ -41,6 +41,18 @@ describe("MCP access tokens", () => {
         await expect(verifyMcpAccessToken(token, config)).rejects.toThrow(/invalid or expired/)
     })
 
+    it("given a token issued before grants spanned several projects, when it is verified, then its single project is read as a list", async () => {
+        const legacy = await new SignJWT({ client_id: CLAIMS.clientId, grant_id: CLAIMS.grantId, project_id: "6890f0b1c2d3e4f5a6b7c8db", scope: "mfe:read" })
+            .setProtectedHeader({ alg: "HS256", typ: "at+jwt" })
+            .setIssuer(config.issuer)
+            .setAudience(config.resource)
+            .setSubject(CLAIMS.userId)
+            .setExpirationTime("5m")
+            .sign(getMcpAccessTokenKey())
+
+        await expect(verifyMcpAccessToken(legacy, config)).resolves.toMatchObject({ projectIds: ["6890f0b1c2d3e4f5a6b7c8db"] })
+    })
+
     it("given a token from another issuer, when it is verified, then it is rejected", async () => {
         const otherIssuer = getOAuthConfig({ FRONTEND_URL: "https://console.example.com", OAUTH_ISSUER_URL: "https://auth.example.com", MCP_RESOURCE_URL: config.resource })
         const { token } = await signMcpAccessToken(CLAIMS, otherIssuer)
@@ -55,7 +67,7 @@ describe("MCP access tokens", () => {
     })
 
     it("given a token with the right key but without the access token type, when verified, then it is rejected", async () => {
-        const untyped = await new SignJWT({ client_id: CLAIMS.clientId, grant_id: CLAIMS.grantId, project_id: CLAIMS.projectId, scope: "mfe:read" })
+        const untyped = await new SignJWT({ client_id: CLAIMS.clientId, grant_id: CLAIMS.grantId, project_ids: CLAIMS.projectIds, scope: "mfe:read" })
             .setProtectedHeader({ alg: "HS256" })
             .setIssuer(config.issuer)
             .setAudience(config.resource)
@@ -67,7 +79,7 @@ describe("MCP access tokens", () => {
     })
 
     it("given an expired token, when it is verified, then it is rejected", async () => {
-        const expired = await new SignJWT({ client_id: CLAIMS.clientId, grant_id: CLAIMS.grantId, project_id: CLAIMS.projectId, scope: "mfe:read" })
+        const expired = await new SignJWT({ client_id: CLAIMS.clientId, grant_id: CLAIMS.grantId, project_ids: CLAIMS.projectIds, scope: "mfe:read" })
             .setProtectedHeader({ alg: "HS256", typ: "at+jwt" })
             .setIssuer(config.issuer)
             .setAudience(config.resource)

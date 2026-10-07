@@ -1332,11 +1332,9 @@
                 "custom_scheme": "Custom link scheme",
                 "redirect_host_mismatch": "Redirect address differs from publisher"
             },
-            "selectProject": "Choose the project to share",
             "noProjects": "You have no project available to share.",
             "allowChanges": "Allow changes",
             "allowChangesDescription": "Without this, the assistant can only read the project. With it, it can also change it and deploy.",
-            "viewerReadOnly": "Your role in this project only allows reading.",
             "signedInAs": "Signed in as {{email}}",
             "signOut": "Sign out",
             "approve": "Approve",
@@ -1344,7 +1342,14 @@
             "approveFailed": "The request could not be approved. Please try again.",
             "denyFailed": "The request could not be denied. Please try again.",
             "publishedBy": "Published by {{host}}",
-            "redirectHostMismatchDetail": "This application was published by {{clientHost}} but will send you to {{redirectHost}}. Approve only if you recognize and trust both."
+            "redirectHostMismatchDetail": "This application was published by {{clientHost}} but will send you to {{redirectHost}}. Approve only if you recognize and trust both.",
+            "selectProjects": "Choose the projects to share",
+            "searchProjects": "Search projects",
+            "noResults": "No projects match your search",
+            "selectAll": "Select all",
+            "selectAllIn": "Select all projects in {{organization}}",
+            "viewerReadOnly_one": "{{count}} selected project stays read-only because of your role there.",
+            "viewerReadOnly_other": "{{count}} selected projects stay read-only because of your role there."
         },
         "error": {
             "title": "Connection failed",
@@ -1400,7 +1405,8 @@
             "geminiCli": "Gemini CLI (~/.gemini/settings.json)",
             "cursor": "Cursor (mcp.json)",
             "copySnippet": "Copy snippet"
-        }
+        },
+        "projects": "Projects"
     },
     "assistant": {
         "title": "Assistant",

@@ -16,11 +16,11 @@ import { toObjectId } from "../utils/mongooseUtils"
  * Who a service acts for.
  *
  * A console session is the user, with everything the user can reach. A MCP access token is bound
- * to the single project chosen at consent: `restrictedToProjectId` carries that binding, and every
+ * to the projects chosen at consent: `restrictedToProjectIds` carries that binding, and every
  * check below narrows to it, so a token can never be pointed at another project of the same user.
  */
 export type AuthorizedPrincipal = IUser & {
-    restrictedToProjectId?: string
+    restrictedToProjectIds?: string[]
     /**
      * Set when an MCP client authenticated with a project API key rather than as a user. There is
      * no person behind it, hence no membership to look up: it reaches its own project and nothing
@@ -37,10 +37,10 @@ export default abstract class BaseAuthorizedService {
         this.user = user
     }
 
-    /** True when the principal is confined to one project and this one is not it. */
+    /** True when the principal is confined to some projects and this one is not among them. */
     private isOutsideRestriction(projectId: string | Schema.Types.ObjectId | ObjectId): boolean {
-        const restrictedTo = this.user?.restrictedToProjectId
-        return Boolean(restrictedTo) && String(projectId) !== String(restrictedTo)
+        const restrictedTo = this.user?.restrictedToProjectIds
+        return Boolean(restrictedTo) && !restrictedTo!.includes(String(projectId))
     }
 
     /**
@@ -105,7 +105,7 @@ export default abstract class BaseAuthorizedService {
             return false
         }
         if (this.user.apiKeyId) {
-            return Boolean(this.user.restrictedToProjectId)
+            return Boolean(this.user.restrictedToProjectIds?.length)
         }
 
         // Check if user is directly associated with the project.
@@ -144,7 +144,7 @@ export default abstract class BaseAuthorizedService {
     protected async getRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
         // A project-bound principal acts inside its project only: organization level operations
         // (members, invitations, other projects) are out of its reach whatever the user's role.
-        if (this.user?.restrictedToProjectId) {
+        if (this.user?.restrictedToProjectIds) {
             return undefined
         }
         return this.findRoleInOrganization(organizationId, session)
@@ -203,7 +203,7 @@ export default abstract class BaseAuthorizedService {
      * invitation.
      */
     protected async getAdministeredOrganizationIds(session?: ClientSession): Promise<ObjectId[]> {
-        if (!this.user || this.user.restrictedToProjectId) {
+        if (!this.user || this.user.restrictedToProjectIds) {
             return []
         }
 

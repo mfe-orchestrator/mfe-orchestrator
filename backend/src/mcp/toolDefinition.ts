@@ -2,17 +2,37 @@ import { z } from "zod"
 import { AuthorizedPrincipal } from "../service/BaseAuthorizedService"
 import { McpScope } from "../utils/oauthConfig"
 
+/** A project shared with the connection, with the role that caps what can be done on it. */
+export interface McpSharedProject {
+    projectId: string
+    /** The user's project role for an OAuth grant, the key's role (VIEWER/MANAGER) for an API key */
+    role: string
+}
+
 /**
- * Who a tool runs for. The principal is the user restricted to the token's project, so every
- * service a tool calls refuses anything outside it; `projectId` is that same project, which is why
- * no tool takes a project id as input.
+ * Who is calling, for the whole request: the principal confined to the shared projects, those
+ * projects, and the scopes in force. Resolved once by the authentication.
+ */
+export interface McpSession {
+    principal: AuthorizedPrincipal
+    projects: McpSharedProject[]
+    scopes: string[]
+    /** What authenticated the request, for the audit log: an OAuth grant or a project API key. */
+    credential: McpCredential
+}
+
+/**
+ * What one tool call runs with. For a project tool the principal is narrowed to the single project
+ * the call picked (`projectId`), so every id the tool receives (microfrontend, environment,
+ * deployment...) is verified against that project by the services. Organization tools get the
+ * whole session and an empty `projectId`.
  */
 export interface McpToolContext {
     principal: AuthorizedPrincipal
     projectId: string
     scopes: string[]
-    /** What authenticated the request, for the audit log: an OAuth grant or a project API key. */
     credential: McpCredential
+    session: McpSession
 }
 
 export type McpCredential = { kind: "oauth"; grantId: string; clientId: string } | { kind: "api_key"; apiKeyId: string }
@@ -39,6 +59,11 @@ export interface McpToolDefinition<Schema extends z.ZodObject = z.ZodObject> {
     description: string
     /** The scope the token needs for this tool to be listed and callable at all. */
     scope: McpScope
+    /**
+     * Project tools (the default) receive an optional `projectId` input, required when the
+     * connection shares more than one project. Set to false for tools that span the shared projects.
+     */
+    projectScoped?: boolean
     annotations: McpToolAnnotations
     inputSchema: Schema
     run: (args: z.infer<Schema>, context: McpToolContext) => Promise<unknown>

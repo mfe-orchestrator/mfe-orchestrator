@@ -111,6 +111,7 @@ export const McpClients = () => {
                                     <TableHeader tinted={false}>
                                         <TableRow>
                                             <TableHead>{t("mcpClients.client")}</TableHead>
+                                            <TableHead>{t("mcpClients.projects")}</TableHead>
                                             <TableHead>{t("mcpClients.user")}</TableHead>
                                             <TableHead>{t("mcpClients.access")}</TableHead>
                                             <TableHead>{t("mcpClients.connected")}</TableHead>
@@ -122,6 +123,7 @@ export const McpClients = () => {
                                         {clientsQuery.data?.map(client => (
                                             <TableRow key={client.id} data-testid={`mcp-client-row-${client.id}`}>
                                                 <TableCell className="font-medium">{client.clientName}</TableCell>
+                                                <TableCell className="text-muted-foreground">{client.projects?.map(p => p.name).join(", ")}</TableCell>
                                                 <TableCell className="text-muted-foreground">{client.userEmail}</TableCell>
                                                 <TableCell>
                                                     <Badge variant={client.scopes.includes("mfe:write") ? "default" : "outline"}>

@@ -46,7 +46,7 @@ const anOrganization = () => newId()
 const aUser = (): IUser => ({ _id: newId(), email: "someone@example.com" }) as unknown as IUser
 
 /** The principal a MCP access token resolves to: the same user, confined to one project. */
-const boundTo = (user: IUser, projectId: ObjectId) => ({ ...user, restrictedToProjectId: String(projectId) })
+const boundTo = (user: IUser, ...projectIds: ObjectId[]) => ({ ...user, restrictedToProjectIds: projectIds.map(String) })
 
 let projectMemberships: FakeProjectMembership[]
 let organizationMemberships: FakeOrganizationMembership[]
@@ -189,6 +189,29 @@ describe("access to a project and to an organization", () => {
             expect(await probe.canOpenProject(other)).toBe(false)
         })
 
+        it("Given a member of three projects bound to two, when each is checked, then only the two are reached", async () => {
+            const user = aUser()
+            const organizationId = anOrganization()
+            const [first, second, third] = [newId(), newId(), newId()]
+            for (const projectId of [first, second, third]) {
+                projects.push({ _id: projectId, organizationId })
+                projectMemberships.push({ userId: user._id, projectId, role: RoleInProject.MEMBER })
+            }
+
+            const probe = new AccessProbe(boundTo(user, first, second))
+            expect(await probe.canOpenProject(first)).toBe(true)
+            expect(await probe.canOpenProject(second)).toBe(true)
+            expect(await probe.canOpenProject(third)).toBe(false)
+        })
+
+        it("Given a principal bound to a project the user no longer belongs to, when it is checked, then the binding alone does not open it", async () => {
+            const user = aUser()
+            const projectId = newId()
+            projects.push({ _id: projectId, organizationId: anOrganization() })
+
+            expect(await new AccessProbe(boundTo(user, projectId)).canOpenProject(projectId)).toBe(false)
+        })
+
         it("Given an organization owner bound to one of its projects, when that project is checked, then it is still reached through the organization", async () => {
             const user = aUser()
             const projectId = newId()
@@ -217,7 +240,7 @@ describe("access to a project and to an organization", () => {
         /** As the MCP endpoint builds it: no user behind it, only the key's project. */
         const anApiKeyPrincipal = (projectId: ObjectId) => {
             const apiKeyId = newId()
-            return { _id: apiKeyId, email: `api-key:${apiKeyId}`, apiKeyId: String(apiKeyId), restrictedToProjectId: String(projectId) } as unknown as IUser
+            return { _id: apiKeyId, email: `api-key:${apiKeyId}`, apiKeyId: String(apiKeyId), restrictedToProjectIds: [String(projectId)] } as unknown as IUser
         }
 
         it("Given a key of a project, when that project is checked, then it is reached without any membership", async () => {

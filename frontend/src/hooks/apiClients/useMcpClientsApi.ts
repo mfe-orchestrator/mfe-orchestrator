@@ -8,6 +8,7 @@ export interface McpClient {
     registrationType: "dcr" | "cimd"
     userEmail: string
     scopes: string[]
+    projects: { id: string; name: string }[]
     createdAt: string
     lastUsedAt?: string
 }

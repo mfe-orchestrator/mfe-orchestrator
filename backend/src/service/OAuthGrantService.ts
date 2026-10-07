@@ -45,11 +45,22 @@ export const resolveProjectRole = async (userId: Id, projectId: Id): Promise<Rol
  */
 export const capScopesToRole = (scopes: string[], role: RoleInProject): string[] => (role === RoleInProject.VIEWER ? scopes.filter(scope => scope !== MCP_SCOPE_WRITE) : [...scopes])
 
-export const createGrant = async (grant: { userId: Id; projectId: Id; clientId: string; scopes: string[] }, config: OAuthConfig = getOAuthConfig()): Promise<IOAuthGrant> => {
+/** The projects of a grant, whichever shape it was stored in. */
+export const projectIdsOfGrant = (grant: Pick<IOAuthGrant, "projectIds" | "projectId">): string[] => {
+    if (grant.projectIds && grant.projectIds.length > 0) {
+        return grant.projectIds.map(String)
+    }
+    return grant.projectId ? [String(grant.projectId)] : []
+}
+
+/** Mongo filter matching the grants that include a project, in either stored shape. */
+const includesProject = (projectId: Id) => ({ $or: [{ projectIds: toObjectId(projectId) }, { projectId: toObjectId(projectId) }] })
+
+export const createGrant = async (grant: { userId: Id; projectIds: Id[]; clientId: string; scopes: string[] }, config: OAuthConfig = getOAuthConfig()): Promise<IOAuthGrant> => {
     const expiresAt = new Date(Date.now() + config.grantMaxTtlMs)
     const created = await OAuthGrant.create({
         userId: toObjectId(grant.userId),
-        projectId: toObjectId(grant.projectId),
+        projectIds: grant.projectIds.map(projectId => toObjectId(projectId)),
         clientId: grant.clientId,
         scopes: grant.scopes,
         expiresAt,
@@ -72,10 +83,20 @@ const isActive = (grant: IOAuthGrant, now = new Date()) => !grant.revokedAt && g
 /** Writing `lastUsedAt` on every MCP call would be one database write per tool call for nothing. */
 const LAST_USED_RESOLUTION_MS = 60 * 1000
 
+/** A project a grant shares, with the role the user holds on it today. */
+export interface SharedProject {
+    projectId: string
+    role: RoleInProject
+}
+
 export interface AuthenticatedGrant {
     grant: IOAuthGrant
-    role: RoleInProject
-    /** The scopes usable right now: the granted ones, capped by the role the user holds today. */
+    /** The grant's projects the user still reaches, with today's role on each. */
+    projects: SharedProject[]
+    /**
+     * The scopes usable right now. `mfe:write` survives only if at least one project still lets
+     * the user write; the per-project VIEWER cap is applied again when a tool picks its project.
+     */
     scopes: string[]
 }
 
@@ -83,20 +104,38 @@ export interface AuthenticatedGrant {
  * The grant behind a token, if it can still be used.
  *
  * Checked on every MCP request and every refresh, which is what makes revocation immediate: the
- * grant must be live, must match what the token claims, and its user must still reach the
- * project. A user who lost the project loses the grant for good, not just this request.
+ * grant must be live, must match what the token claims, and its user must still reach its
+ * projects. A project the user lost is left out of this request; when none is left the grant is
+ * revoked for good. A grant written before grants could span several projects is rewritten to the
+ * new shape here, the first time it is used.
  */
-export const authenticateGrant = async (expected: { grantId: string; userId: string; projectId: string; clientId: string }): Promise<AuthenticatedGrant | undefined> => {
+export const authenticateGrant = async (expected: { grantId: string; userId: string; clientId: string; projectIds?: string[] }): Promise<AuthenticatedGrant | undefined> => {
     const grant = await OAuthGrant.findById(toObjectId(expected.grantId))
     if (!grant || !isActive(grant)) {
         return undefined
     }
-    if (grant.userId.toString() !== expected.userId || grant.projectId.toString() !== expected.projectId || grant.clientId !== expected.clientId) {
+    const grantProjectIds = projectIdsOfGrant(grant)
+    if (grant.userId.toString() !== expected.userId || grant.clientId !== expected.clientId) {
+        return undefined
+    }
+    // A token can only name projects of its grant
+    if (expected.projectIds && expected.projectIds.some(projectId => !grantProjectIds.includes(projectId))) {
         return undefined
     }
 
-    const role = await resolveProjectRole(grant.userId, grant.projectId)
-    if (!role) {
+    if (!grant.projectIds || grant.projectIds.length === 0) {
+        await OAuthGrant.updateOne({ _id: grant._id }, { projectIds: grantProjectIds.map(projectId => toObjectId(projectId)), $unset: { projectId: 1 } })
+    }
+
+    const requested = expected.projectIds ?? grantProjectIds
+    const projects: SharedProject[] = []
+    for (const projectId of requested) {
+        const role = await resolveProjectRole(grant.userId, projectId)
+        if (role) {
+            projects.push({ projectId, role })
+        }
+    }
+    if (projects.length === 0) {
         await revokeGrant(grant._id.toString(), OAuthGrantRevocationReason.MEMBERSHIP_LOST)
         return undefined
     }
@@ -106,7 +145,8 @@ export const authenticateGrant = async (expected: { grantId: string; userId: str
         await OAuthGrant.updateOne({ _id: grant._id }, { lastUsedAt: now })
     }
 
-    return { grant, role, scopes: capScopesToRole(grant.scopes, role) }
+    const canWriteSomewhere = projects.some(project => project.role !== RoleInProject.VIEWER)
+    return { grant, projects, scopes: canWriteSomewhere ? [...grant.scopes] : capScopesToRole(grant.scopes, RoleInProject.VIEWER) }
 }
 
 export interface McpClientGrantDTO {
@@ -116,6 +156,8 @@ export interface McpClientGrantDTO {
     registrationType: OAuthClientRegistrationType
     userEmail: string
     scopes: string[]
+    /** The grant's projects the person looking can reach themselves: never a name they could not see. */
+    projects: { id: string; name: string }[]
     createdAt: Date
     lastUsedAt?: Date
 }
@@ -131,7 +173,7 @@ export class OAuthGrantService extends BaseAuthorizedService {
         const userId = this.getUser()!._id
         const role = await resolveProjectRole(userId, projectId)
 
-        const filter: Record<string, unknown> = { projectId: toObjectId(projectId), revokedAt: null, expiresAt: { $gt: new Date() } }
+        const filter: Record<string, unknown> = { ...includesProject(projectId), revokedAt: null, expiresAt: { $gt: new Date() } }
         if (role !== RoleInProject.OWNER) {
             filter.userId = toObjectId(userId)
         }
@@ -141,6 +183,14 @@ export class OAuthGrantService extends BaseAuthorizedService {
         const clientById = new Map(clients.map(client => [client.clientId, client]))
         const users = await User.find({ _id: { $in: [...new Set(grants.map(grant => grant.userId.toString()))].map(id => toObjectId(id)) } }, { email: 1 })
         const emailById = new Map(users.map(user => [user._id.toString(), user.email]))
+
+        const allProjectIds = [...new Set(grants.flatMap(grant => projectIdsOfGrant(grant)))]
+        const reachable: string[] = []
+        for (const candidate of allProjectIds) {
+            if (await resolveProjectRole(userId, candidate)) reachable.push(candidate)
+        }
+        const projectDocuments = await Project.find({ _id: { $in: reachable.map(id => toObjectId(id)) } }, { name: 1 })
+        const projectNameById = new Map(projectDocuments.map(project => [project._id.toString(), project.name]))
 
         return grants.map(grant => {
             const client = clientById.get(grant.clientId)
@@ -153,6 +203,9 @@ export class OAuthGrantService extends BaseAuthorizedService {
                 registrationType: client?.registrationType ?? (grant.clientId.startsWith("https://") ? OAuthClientRegistrationType.CIMD : OAuthClientRegistrationType.DCR),
                 userEmail: emailById.get(grant.userId.toString()) ?? "",
                 scopes: grant.scopes,
+                projects: projectIdsOfGrant(grant)
+                    .filter(id => projectNameById.has(id))
+                    .map(id => ({ id, name: projectNameById.get(id) as string })),
                 createdAt: grant.createdAt,
                 lastUsedAt: grant.lastUsedAt
             }
@@ -160,8 +213,9 @@ export class OAuthGrantService extends BaseAuthorizedService {
     }
 
     /**
-     * Revokes a grant from the console. Allowed to whoever owns it and to the project OWNERs; to
-     * anyone else the grant does not exist, so its id reveals nothing.
+     * Revokes a grant from the console. Allowed to whoever owns it and to the OWNERs (organization
+     * admins included) of any project it shares; to anyone else the grant does not exist, so its id
+     * reveals nothing.
      */
     async revoke(grantId: string): Promise<void> {
         const grant = await OAuthGrant.findById(toObjectId(grantId))
@@ -172,9 +226,14 @@ export class OAuthGrantService extends BaseAuthorizedService {
         const userId = this.getUser()!._id.toString()
         const isOwnGrant = grant.userId.toString() === userId
         if (!isOwnGrant) {
-            const canReachProject = await this.hasAccessToProject(grant.projectId)
-            const role = canReachProject ? await resolveProjectRole(userId, grant.projectId) : undefined
-            if (role !== RoleInProject.OWNER) {
+            let ownsOne = false
+            for (const projectId of projectIdsOfGrant(grant)) {
+                if ((await this.hasAccessToProject(projectId)) && (await resolveProjectRole(userId, projectId)) === RoleInProject.OWNER) {
+                    ownsOne = true
+                    break
+                }
+            }
+            if (!ownsOne) {
                 throw new EntityNotFoundError(grantId)
             }
         }

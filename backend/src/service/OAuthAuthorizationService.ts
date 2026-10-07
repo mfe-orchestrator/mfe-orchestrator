@@ -17,7 +17,10 @@ import { getOAuthConfig, MCP_SCOPES, OAuthConfig } from "../utils/oauthConfig"
 import { generateOpaqueToken, hashOpaqueToken, isValidCodeChallenge, verifyPkce } from "../utils/pkce"
 import { describeRedirectHost, matchesRegisteredRedirectUri, RedirectUriWarning, redirectUriWarnings } from "../utils/redirectUriPolicy"
 import OAuthClientService from "./OAuthClientService"
-import { authenticateGrant, capScopesToRole, createGrant, resolveProjectRole, revokeGrant } from "./OAuthGrantService"
+import { authenticateGrant, capScopesToRole, createGrant, projectIdsOfGrant, resolveProjectRole, revokeGrant } from "./OAuthGrantService"
+
+export const MAX_GRANT_PROJECTS = 50
+
 import { consumeRefreshToken, issueRefreshToken, signMcpAccessToken, verifyMcpAccessToken } from "./OAuthTokenService"
 
 /** An authorization code stays in the database this long, to recognise a replay after its expiry. */
@@ -72,7 +75,7 @@ export interface ConsentRequestDTO {
         warnings: ConsentWarning[]
     }
     scopes: string[]
-    projects: { id: string; name: string; organizationName: string; role: RoleInProject }[]
+    projects: { id: string; name: string; organizationId: string; organizationName: string; role: RoleInProject }[]
     user: { email: string }
 }
 
@@ -225,6 +228,7 @@ export class OAuthAuthorizationService {
         return projects.map(project => ({
             id: project._id.toString(),
             name: project.name,
+            organizationId: project.organizationId.toString(),
             organizationName: organizationNames.get(project.organizationId.toString()) ?? "",
             role: administeredIds.has(project.organizationId.toString()) ? RoleInProject.OWNER : (roleByProject.get(project._id.toString()) ?? RoleInProject.VIEWER)
         }))
@@ -232,27 +236,38 @@ export class OAuthAuthorizationService {
 
     /**
      * The user said yes: creates the grant and a single-use code, and answers with where to send
-     * the browser. The scopes are the ones chosen on the page, never more than the client asked
-     * for, and never write for a VIEWER.
+     * the browser. The grant shares every project picked on the page, each of which the user must
+     * reach. The scopes are the ones chosen on the page, never more than the client asked for; write
+     * is kept when at least one picked project lets the user write, and capped again per project
+     * at every call (a VIEWER project stays read-only whatever the grant says).
      */
-    async approve(handle: string, user: IUser, body: { projectId?: unknown; scopes?: unknown }): Promise<{ redirectTo: string }> {
+    async approve(handle: string, user: IUser, body: { projectIds?: unknown; scopes?: unknown }): Promise<{ redirectTo: string }> {
         const handleHash = hashOpaqueToken(handle)
         const request = await OAuthAuthorizationRequest.findOne({ handleHash, boundUserId: user._id, expiresAt: { $gt: new Date() } })
         if (!request) {
             throw new EntityNotFoundError(handle, "Authorization request not found")
         }
 
-        const projectId = asString(body?.projectId)
-        const role = projectId ? await resolveProjectRole(user._id, projectId) : undefined
-        if (!projectId || !role) {
-            throw createBusinessException({ code: "MCP_PROJECT_NOT_ALLOWED", message: "The project cannot be chosen for this client", statusCode: 403 })
+        const projectIds = Array.isArray(body?.projectIds) ? [...new Set(body.projectIds.filter((id): id is string => typeof id === "string" && id.length > 0))] : []
+        // Every MCP call re-reads the role on each shared project, so the set has to stay small
+        if (projectIds.length > MAX_GRANT_PROJECTS) {
+            throw createBusinessException({ code: "MCP_TOO_MANY_PROJECTS", message: `Choose at most ${MAX_GRANT_PROJECTS} projects`, statusCode: 400 })
+        }
+        const roles: RoleInProject[] = []
+        for (const projectId of projectIds) {
+            const role = await resolveProjectRole(user._id, projectId)
+            if (!role) {
+                throw createBusinessException({ code: "MCP_PROJECT_NOT_ALLOWED", message: "One of the projects cannot be chosen for this client", statusCode: 403 })
+            }
+            roles.push(role)
+        }
+        if (projectIds.length === 0) {
+            throw createBusinessException({ code: "MCP_PROJECT_REQUIRED", message: "Choose at least one project", statusCode: 400 })
         }
 
         const chosen = Array.isArray(body?.scopes) ? body.scopes.filter((scope): scope is string => typeof scope === "string") : []
-        const scopes = capScopesToRole(
-            request.scopes.filter(scope => chosen.includes(scope)),
-            role
-        )
+        const requested = request.scopes.filter(scope => chosen.includes(scope))
+        const scopes = roles.some(role => role !== RoleInProject.VIEWER) ? requested : capScopesToRole(requested, RoleInProject.VIEWER)
         if (scopes.length === 0) {
             throw createBusinessException({ code: "MCP_SCOPE_NOT_ALLOWED", message: "Choose at least one permission the client asked for and your role allows", statusCode: 400 })
         }
@@ -263,7 +278,7 @@ export class OAuthAuthorizationService {
             throw new EntityNotFoundError(handle, "Authorization request not found")
         }
 
-        const grant = await createGrant({ userId: user._id, projectId, clientId: request.clientId, scopes }, this.config)
+        const grant = await createGrant({ userId: user._id, projectIds, clientId: request.clientId, scopes }, this.config)
         const code = generateOpaqueToken()
         const now = Date.now()
         await OAuthAuthorizationCode.create({
@@ -305,7 +320,7 @@ export class OAuthAuthorizationService {
         }
     }
 
-    private async issueTokens(grant: { grantId: string; userId: string; projectId: string; clientId: string; scopes: string[] }, parentRefreshTokenId?: string): Promise<TokenResponse> {
+    private async issueTokens(grant: { grantId: string; userId: string; projectIds: string[]; clientId: string; scopes: string[] }, parentRefreshTokenId?: string): Promise<TokenResponse> {
         const access = await signMcpAccessToken(grant, this.config)
         const refreshToken = await issueRefreshToken(grant.grantId, grant.clientId, parentRefreshTokenId, this.config)
         return {
@@ -343,7 +358,7 @@ export class OAuthAuthorizationService {
         this.ensureResourceParameter(params.resource)
 
         const grant = await OAuthGrant.findById(consumed.grantId)
-        const authenticated = grant ? await authenticateGrant({ grantId: grant._id.toString(), userId: grant.userId.toString(), projectId: grant.projectId.toString(), clientId }) : undefined
+        const authenticated = grant ? await authenticateGrant({ grantId: grant._id.toString(), userId: grant.userId.toString(), clientId }) : undefined
         if (!grant || !authenticated) {
             throw new OAuthError("invalid_grant", "The authorization is no longer valid")
         }
@@ -351,7 +366,7 @@ export class OAuthAuthorizationService {
         return this.issueTokens({
             grantId: grant._id.toString(),
             userId: grant.userId.toString(),
-            projectId: grant.projectId.toString(),
+            projectIds: projectIdsOfGrant(grant),
             clientId,
             scopes: authenticated.scopes.filter(scope => consumed.scopes.includes(scope))
         })
@@ -375,7 +390,7 @@ export class OAuthAuthorizationService {
         }
 
         const grant = await OAuthGrant.findById(toObjectId(consumption.grantId))
-        const authenticated = grant ? await authenticateGrant({ grantId: grant._id.toString(), userId: grant.userId.toString(), projectId: grant.projectId.toString(), clientId }) : undefined
+        const authenticated = grant ? await authenticateGrant({ grantId: grant._id.toString(), userId: grant.userId.toString(), clientId }) : undefined
         if (!grant || !authenticated) {
             throw new OAuthError("invalid_grant", "The authorization is no longer valid")
         }
@@ -390,7 +405,7 @@ export class OAuthAuthorizationService {
             scopes = requested
         }
 
-        return this.issueTokens({ grantId: grant._id.toString(), userId: grant.userId.toString(), projectId: grant.projectId.toString(), clientId, scopes }, consumption.tokenId)
+        return this.issueTokens({ grantId: grant._id.toString(), userId: grant.userId.toString(), projectIds: projectIdsOfGrant(grant), clientId, scopes }, consumption.tokenId)
     }
 
     /**

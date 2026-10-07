@@ -15,14 +15,20 @@ export enum OAuthGrantRevocationReason {
 }
 
 /**
- * What a user allowed one MCP client to do on one project.
+ * What a user allowed one MCP client to do on the projects picked at consent.
  *
  * Access and refresh tokens are only proofs of a grant: every MCP request reloads it, so revoking
  * it here takes effect on the next call rather than when the last access token expires.
  */
 export interface IOAuthGrant extends Document<ObjectId> {
     userId: Schema.Types.ObjectId
-    projectId: Schema.Types.ObjectId
+    /** The projects shared with the client, one or more. */
+    projectIds: Schema.Types.ObjectId[]
+    /**
+     * Grants issued before a grant could cover several projects carry this instead. Read through
+     * `projectIdsOfGrant`, and rewritten to `projectIds` the first time such a grant is used.
+     */
+    projectId?: Schema.Types.ObjectId
     clientId: string
     scopes: string[]
     lastUsedAt?: Date
@@ -44,10 +50,15 @@ const oauthGrantSchema = new Schema<IOAuthGrant>(
             required: true,
             index: true
         },
+        projectIds: {
+            type: [Schema.Types.ObjectId],
+            ref: "Project",
+            index: true
+        },
         projectId: {
             type: Schema.Types.ObjectId,
             ref: "Project",
-            required: true,
+            required: false,
             index: true
         },
         clientId: {

@@ -121,7 +121,7 @@ describe("resolveAuthentication", () => {
 
     it("given a MCP access token, when it is presented as a console session, then nothing is resolved", async () => {
         const { token } = await signMcpAccessToken(
-            { userId: "6890f0b1c2d3e4f5a6b7c8d9", clientId: "mcp_client", grantId: "6890f0b1c2d3e4f5a6b7c8da", projectId: "6890f0b1c2d3e4f5a6b7c8db", scopes: ["mfe:read"] },
+            { userId: "6890f0b1c2d3e4f5a6b7c8d9", clientId: "mcp_client", grantId: "6890f0b1c2d3e4f5a6b7c8da", projectIds: ["6890f0b1c2d3e4f5a6b7c8db"], scopes: ["mfe:read"] },
             getOAuthConfig({ FRONTEND_URL: "https://console.example.com" })
         )
 
