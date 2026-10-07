@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1791361982.673676,
-    "ast_hash": "72bfa0286bb4a1c5857dab599fac2eb5",
+    "mtime": 1791368373.6307755,
+    "ast_hash": "6a5065f0b42f47f9d3b5802aa204d514",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1791361982.6800585,
-    "ast_hash": "fe8af1058c9c92b2720fdd92b809397d",
+    "mtime": 1791368373.6203375,
+    "ast_hash": "be88888a6e29ec1322d86f0ff0fc466e",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -2680,13 +2680,13 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/server.test.ts": {
-    "mtime": 1791362245.1134286,
-    "ast_hash": "39a2a64a4cc31dc0a3b29b8d3e59bd96",
+    "mtime": 1791362687.1108253,
+    "ast_hash": "10b5125a042b2150c13470a909826752",
     "semantic_hash": ""
   },
   "backend/src/mcp/server.ts": {
-    "mtime": 1791362134.4743762,
-    "ast_hash": "dce2aea7cfdafe3000b741641e8d1261",
+    "mtime": 1791362650.2289727,
+    "ast_hash": "b6208cf8d02fe3c3ce4a422dde44663c",
     "semantic_hash": ""
   },
   "backend/src/mcp/toolDefinition.ts": {
@@ -2740,8 +2740,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/OAuthGrantModel.ts": {
-    "mtime": 1791361996.9011786,
-    "ast_hash": "6ef619b9456bf6c0be5f06ec9a216762",
+    "mtime": 1791362897.061037,
+    "ast_hash": "24e82bd07bb7852ed756f124ff94f0ae",
     "semantic_hash": ""
   },
   "backend/src/models/OAuthRefreshTokenModel.ts": {
@@ -2750,13 +2750,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/OAuthAuthorizationService.test.ts": {
-    "mtime": 1791362284.5387013,
-    "ast_hash": "bf5d88adabe024c82ef7c7f179d73e29",
+    "mtime": 1791368356.1353984,
+    "ast_hash": "e30a644e2b91ab5b9f2dfc4a88f0585a",
     "semantic_hash": ""
   },
   "backend/src/service/OAuthAuthorizationService.ts": {
-    "mtime": 1791362077.8168375,
-    "ast_hash": "2db5ce5f32f7f8df2065702c205f3048",
+    "mtime": 1791362568.1922,
+    "ast_hash": "4e8ac77c6b16baf03c2ed5f5c4e87a30",
     "semantic_hash": ""
   },
   "backend/src/service/OAuthClientService.ts": {
@@ -2765,8 +2765,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/OAuthGrantService.ts": {
-    "mtime": 1791362043.8960972,
-    "ast_hash": "0b41cbb2f19f31632651c0698abb8813",
+    "mtime": 1791362897.069746,
+    "ast_hash": "3c46d542b30fdd20b19f5af3a1f1a80c",
     "semantic_hash": ""
   },
   "backend/src/service/OAuthTokenService.test.ts": {
@@ -2975,8 +2975,8 @@
     "semantic_hash": ""
   },
   "docs/MCP.md": {
-    "mtime": 1791362306.5668433,
-    "ast_hash": "91cb9f98ea01a6e49b1eebf2039010b1",
+    "mtime": 1791368373.6418822,
+    "ast_hash": "c87428ae02dd2c706b22ae51e1dd0208",
     "semantic_hash": ""
   },
   "backend/src/utils/apiKeyCredentialCache.ts": {
@@ -2990,8 +2990,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/organizationTools.ts": {
-    "mtime": 1791362284.535303,
-    "ast_hash": "c624b4a10b919e25c0fecfd070ab73df",
+    "mtime": 1791368356.1443639,
+    "ast_hash": "4481b902ea13213a26a5de5e7de563c2",
     "semantic_hash": ""
   },
   "frontend/.omc/state/sessions/a2240524-d375-4ecc-b9be-15ee08f405a2/pre-tool-advisory-throttle.json": {
@@ -3005,8 +3005,18 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/oauth/OAuthProjectsPicker.tsx": {
-    "mtime": 1791361982.6614487,
-    "ast_hash": "961ea8cecf8c2737ac53b185eecee357",
+    "mtime": 1791362568.1920936,
+    "ast_hash": "cb4390b1c8d616d481c1c4ea0f2f6c61",
+    "semantic_hash": ""
+  },
+  "backend/src/mcp/tools/organizationTools.test.ts": {
+    "mtime": 1791368356.1448078,
+    "ast_hash": "972073f2e1c191eb4cd686646904efa9",
+    "semantic_hash": ""
+  },
+  "backend/src/service/OAuthGrantService.test.ts": {
+    "mtime": 1791368253.653781,
+    "ast_hash": "298a3a09caec20b9f31557b328513314",
     "semantic_hash": ""
   }
 }

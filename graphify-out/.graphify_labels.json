@@ -220,12 +220,21 @@
   "218": "status",
   "219": "Sidebar.tsx",
   "220": "setup",
+  "221": "DependencyStatusBadge.tsx",
+  "222": "useAssistantChat.ts",
   "223": "Git Workflow Integration",
+  "224": "MicrofrontendDependencyList.tsx",
   "225": "RouteWithSuspense.tsx",
   "226": "readOAuthResume",
   "227": "autorization.test.ts",
+  "228": "ProjectService.test.ts",
   "229": "AssistantService.test.ts",
   "230": "[1.0.0] - 2025-12-07",
+  "231": "globalVariablesScript.ts",
+  "232": "README.md",
   "233": "RouteWithSuspense.tsx",
-  "234": "TemplatesLibrary.tsx"
+  "234": "TemplatesLibrary.tsx",
+  "235": "AssistantMessageText.tsx",
+  "236": "AzureStorageClient",
+  "238": "Git Workflow Integration"
 }
