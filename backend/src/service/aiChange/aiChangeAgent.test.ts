@@ -2,8 +2,8 @@ import { execFileSync, spawnSync } from "node:child_process"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import type Anthropic from "@anthropic-ai/sdk"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { LlmClient, LlmProvider, LlmTurnRequest, LlmTurnResult } from "../llm"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
 import { AI_CHANGE_LIMITS, AiChangeToolbox, runAiChangeAgent } from "./aiChangeAgent"
 
@@ -121,25 +121,23 @@ describe.skipIf(!hasGit)("AiChangeToolbox", () => {
     })
 })
 
-/** A client that answers with the scripted messages in order, and records what it was sent. */
-const scriptedClient = (responses: Partial<Anthropic.Beta.BetaMessage>[]) => {
-    const sent: Anthropic.Beta.MessageCreateParams[] = []
-    const client = {
-        beta: {
-            messages: {
-                stream: (params: Anthropic.Beta.MessageCreateParams) => {
-                    sent.push(structuredClone(params))
-                    const next = responses.shift()
-                    if (!next) throw new Error("No scripted response left")
-                    return { finalMessage: async () => ({ usage: { input_tokens: 10, output_tokens: 5 }, ...next }) }
-                }
-            }
+/** A model that answers with the scripted turns in order, and records what it was sent. */
+const scriptedClient = (turns: Pick<LlmTurnResult, "stopReason" | "text" | "toolCalls">[]) => {
+    const sent: LlmTurnRequest[] = []
+    const client: LlmClient = {
+        provider: LlmProvider.ANTHROPIC,
+        json: async () => null,
+        turn: async request => {
+            sent.push(structuredClone({ ...request, signal: undefined }))
+            const next = turns.shift()
+            if (!next) throw new Error("No scripted turn left")
+            return { ...next, usage: { inputTokens: 10, outputTokens: 5 }, message: { role: "assistant", text: next.text, toolCalls: next.toolCalls } }
         }
     }
-    return { client: client as unknown as Anthropic, sent }
+    return { client, sent }
 }
 
-const toolUse = (id: string, name: string, input: Record<string, unknown>) => ({ type: "tool_use" as const, id, name, input })
+const toolUse = (id: string, name: string, input: Record<string, unknown>) => ({ id, name, input })
 
 describe.skipIf(!hasGit)("runAiChangeAgent", () => {
     let dir: string
@@ -169,8 +167,8 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
 
     it("Given an agent that writes a file then finishes, when it runs, then the working copy holds the change and the summary comes back", async () => {
         const { client, sent } = scriptedClient([
-            { stop_reason: "tool_use", content: [toolUse("1", "write_file", { path: "src/pages/NotFound.tsx", content: "export const NotFound = () => null\n" })] },
-            { stop_reason: "tool_use", content: [toolUse("2", "finish", { summary: "Added src/pages/NotFound.tsx" })] }
+            { stopReason: "tool_use", text: "", toolCalls: [toolUse("1", "write_file", { path: "src/pages/NotFound.tsx", content: "export const NotFound = () => null\n" })] },
+            { stopReason: "tool_use", text: "", toolCalls: [toolUse("2", "finish", { summary: "Added src/pages/NotFound.tsx" })] }
         ])
         const { events, tokens, hooks: agentHooks } = hooks()
 
@@ -180,7 +178,8 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         expect((await workingCopy.changes()).map(change => change.path)).toEqual(["src/pages/NotFound.tsx"])
         expect(events).toEqual(["write_file src/pages/NotFound.tsx", "finish"])
         expect(tokens()).toBe(20)
-        const firstPrompt = sent[0].messages[0].content as string
+        const firstMessage = sent[0].messages[0]
+        const firstPrompt = firstMessage.role === "user" ? firstMessage.text : ""
         expect(firstPrompt).toContain("We use TypeScript strict.")
         expect(firstPrompt).toContain("Pages live in src/pages.")
         expect(firstPrompt).toContain("<request>\nAdd a 404 page\n</request>")
@@ -188,19 +187,19 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
 
     it("Given a tool call that fails, when it runs, then the error goes back to the model as a tool result and the run goes on", async () => {
         const { client, sent } = scriptedClient([
-            { stop_reason: "tool_use", content: [toolUse("1", "read_file", { path: "../../etc/passwd" })] },
-            { stop_reason: "end_turn", content: [{ type: "text", text: "Nothing to do.", citations: null }] }
+            { stopReason: "tool_use", text: "", toolCalls: [toolUse("1", "read_file", { path: "../../etc/passwd" })] },
+            { stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }
         ])
 
         const result = await runAiChangeAgent(client, workingCopy, input, hooks().hooks)
 
         expect(result.stopReason).toBe("end_turn")
-        const toolResult = (sent[1].messages[2].content as Anthropic.Beta.BetaToolResultBlockParam[])[0]
-        expect(toolResult).toMatchObject({ tool_use_id: "1", is_error: true })
+        const toolMessage = sent[1].messages[2]
+        expect(toolMessage.role === "tool" && toolMessage.results[0]).toMatchObject({ callId: "1", isError: true })
     })
 
     it("Given a write cut off by max_tokens, when it runs, then the write is not executed", async () => {
-        const { client } = scriptedClient([{ stop_reason: "max_tokens", content: [toolUse("1", "write_file", { path: "src/App.tsx", content: "export const App = (" })] }])
+        const { client } = scriptedClient([{ stopReason: "max_tokens", text: "", toolCalls: [toolUse("1", "write_file", { path: "src/App.tsx", content: "export const App = (" })] }])
 
         const result = await runAiChangeAgent(client, workingCopy, input, hooks().hooks)
 

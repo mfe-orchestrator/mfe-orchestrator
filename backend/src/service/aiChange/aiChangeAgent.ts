@@ -1,8 +1,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
-import Anthropic from "@anthropic-ai/sdk"
 import { isProtectedPath, isSecretPath, resolveInsideWorkingCopy, WorkspacePathError } from "../../utils/workspacePaths"
-import { ASSISTANT_FALLBACK_BETA, ASSISTANT_MODEL } from "../assistant/AssistantService"
+import { LlmClient, LlmMessage, LlmTool, LlmToolResult } from "../llm"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
 
 export const AI_CHANGE_LIMITS = {
@@ -68,11 +67,11 @@ const describeInput = (input: AiChangeAgentInput) =>
         .filter(Boolean)
         .join("\n\n")
 
-const tools: Anthropic.Beta.BetaTool[] = [
+const tools: LlmTool[] = [
     {
         name: "list_files",
         description: `Lists the files tracked by git, optionally only those under a folder. At most ${AI_CHANGE_LIMITS.maxListedFiles} paths.`,
-        input_schema: {
+        inputSchema: {
             type: "object",
             properties: { prefix: { type: "string", description: "Folder to list, e.g. 'src/components'. Leave out for the whole repository." } },
             additionalProperties: false
@@ -81,7 +80,7 @@ const tools: Anthropic.Beta.BetaTool[] = [
     {
         name: "read_file",
         description: `Returns the content of a text file of the repository (at most ${AI_CHANGE_LIMITS.maxReadBytes} bytes), as it is now, your own edits included.`,
-        input_schema: {
+        inputSchema: {
             type: "object",
             properties: { path: { type: "string", description: "Path relative to the repository root, e.g. 'src/App.tsx'." } },
             required: ["path"],
@@ -91,7 +90,7 @@ const tools: Anthropic.Beta.BetaTool[] = [
     {
         name: "search",
         description: `Finds a literal text (case-insensitive) in the tracked text files and returns the matching lines with their path and line number, at most ${AI_CHANGE_LIMITS.maxSearchMatches}.`,
-        input_schema: {
+        inputSchema: {
             type: "object",
             properties: {
                 text: { type: "string", description: "Literal text to look for, not a regular expression." },
@@ -104,7 +103,7 @@ const tools: Anthropic.Beta.BetaTool[] = [
     {
         name: "write_file",
         description: "Creates a file or replaces the whole content of an existing one. Always pass the complete new content.",
-        input_schema: {
+        inputSchema: {
             type: "object",
             properties: {
                 path: { type: "string", description: "Path relative to the repository root." },
@@ -117,7 +116,7 @@ const tools: Anthropic.Beta.BetaTool[] = [
     {
         name: "delete_file",
         description: "Deletes a file of the repository.",
-        input_schema: {
+        inputSchema: {
             type: "object",
             properties: { path: { type: "string", description: "Path relative to the repository root." } },
             required: ["path"],
@@ -127,7 +126,7 @@ const tools: Anthropic.Beta.BetaTool[] = [
     {
         name: "finish",
         description: "Ends the work. The summary becomes the description of the pull request.",
-        input_schema: {
+        inputSchema: {
             type: "object",
             properties: { summary: { type: "string", description: "What changed and why, then what the reviewer should check." } },
             required: ["summary"],
@@ -295,56 +294,32 @@ export const describeToolCall = (name: string, input: unknown): string => {
  * Runs the agent on a prepared working copy until it calls finish or runs out of rounds. It only
  * ever touches files inside the working copy; reading the resulting changes is up to the caller.
  */
-export const runAiChangeAgent = async (client: Anthropic, workingCopy: GitWorkingCopy, input: AiChangeAgentInput, hooks: AiChangeAgentHooks, signal?: AbortSignal): Promise<AiChangeAgentResult> => {
+export const runAiChangeAgent = async (client: LlmClient, workingCopy: GitWorkingCopy, input: AiChangeAgentInput, hooks: AiChangeAgentHooks, signal?: AbortSignal): Promise<AiChangeAgentResult> => {
     const toolbox = new AiChangeToolbox(workingCopy)
-    const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: describeInput(input) }]
+    const messages: LlmMessage[] = [{ role: "user", text: describeInput(input) }]
 
     for (let round = 0; round < AI_CHANGE_LIMITS.maxRounds; round++) {
-        const message = await client.beta.messages
-            .stream(
-                {
-                    model: ASSISTANT_MODEL,
-                    max_tokens: AI_CHANGE_LIMITS.maxTokensPerTurn,
-                    output_config: { effort: "high" },
-                    cache_control: { type: "ephemeral" },
-                    betas: [ASSISTANT_FALLBACK_BETA],
-                    fallbacks: "default",
-                    system: SYSTEM_PROMPT,
-                    tools,
-                    messages
-                },
-                { signal }
-            )
-            .finalMessage()
+        const result = await client.turn({ system: SYSTEM_PROMPT, tools, messages, maxTokens: AI_CHANGE_LIMITS.maxTokensPerTurn, effort: "high", signal })
+        await hooks.onUsage(result.usage)
 
-        await hooks.onUsage({ inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens })
-
-        if (message.stop_reason === "refusal") return { summary: "", stopReason: "refusal" }
-
-        for (const block of message.content) {
-            if (block.type === "text" && block.text.trim()) await hooks.onEvent("text", block.text.trim().slice(0, 1_000))
-        }
-
-        const toolUses = message.content.filter((block): block is Anthropic.Beta.BetaToolUseBlock => block.type === "tool_use")
-        if (toolUses.length === 0) {
-            const text = message.content.flatMap(block => (block.type === "text" ? [block.text] : [])).join("\n")
-            return { summary: toolbox.summary ?? text, stopReason: message.stop_reason === "max_tokens" ? "max_tokens" : "end_turn" }
-        }
+        if (result.stopReason === "refusal") return { summary: "", stopReason: "refusal" }
+        if (result.text.trim()) await hooks.onEvent("text", result.text.trim().slice(0, 1_000))
         // A tool input cut off by max_tokens can look like valid JSON: a truncated write_file would save half a file.
-        if (message.stop_reason === "max_tokens") return { summary: toolbox.summary ?? "", stopReason: "max_tokens" }
+        if (result.stopReason === "max_tokens") return { summary: toolbox.summary ?? "", stopReason: "max_tokens" }
+        if (result.toolCalls.length === 0) return { summary: toolbox.summary ?? result.text, stopReason: "end_turn" }
 
-        messages.push({ role: "assistant", content: message.content })
-        const results: Anthropic.Beta.BetaToolResultBlockParam[] = []
+        messages.push(result.message)
+        const results: LlmToolResult[] = []
         // One at a time: writes and reads of the same file must happen in the order the model asked for.
-        for (const toolUse of toolUses) {
-            await hooks.onEvent("tool", describeToolCall(toolUse.name, toolUse.input))
+        for (const call of result.toolCalls) {
+            await hooks.onEvent("tool", describeToolCall(call.name, call.input))
             try {
-                results.push({ type: "tool_result", tool_use_id: toolUse.id, content: await toolbox.run(toolUse.name, toolUse.input) })
+                results.push({ callId: call.id, name: call.name, content: await toolbox.run(call.name, call.input) })
             } catch (error) {
-                results.push({ type: "tool_result", tool_use_id: toolUse.id, is_error: true, content: error instanceof Error ? error.message : String(error) })
+                results.push({ callId: call.id, name: call.name, isError: true, content: error instanceof Error ? error.message : String(error) })
             }
         }
-        messages.push({ role: "user", content: results })
+        messages.push({ role: "tool", results })
 
         if (toolbox.summary !== undefined) return { summary: toolbox.summary, stopReason: "finished" }
     }

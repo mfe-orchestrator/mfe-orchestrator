@@ -1,13 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk"
 import AssistantDisabledError from "../../errors/AssistantDisabledError"
 import { IUser } from "../../models/UserModel"
 import { AssistantChatRequestDTO, AssistantProjectDraftDTO } from "../../types/AssistantDTO"
 import BaseAuthorizedService from "../BaseAuthorizedService"
+import { getLlmClient, LlmConfiguration, LlmMessage } from "../llm"
 import { assistantToolDefinitions, runAssistantTool } from "./assistantTools"
 
-export const ASSISTANT_MODEL = "claude-opus-5-5"
-/** Server-side fallback when the model declines: the API reroutes by refusal category, no model list to keep up. */
-export const ASSISTANT_FALLBACK_BETA = "server-side-fallback-2026-07-01"
 const MAX_TOKENS = 16_000
 /** Upper bound on model ↔ tool round-trips for one question, so a confused turn cannot loop forever. */
 const MAX_TOOL_ROUNDS = 8
@@ -80,6 +77,10 @@ const toSlug = (value: string) =>
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "")
 
+/** Providers that enforce the schema loosely can still answer with something else: check the shape that is read. */
+const isProjectDraft = (value: unknown): value is AssistantProjectDraftDTO =>
+    Boolean(value) && typeof value === "object" && typeof (value as AssistantProjectDraftDTO).name === "string" && Array.isArray((value as AssistantProjectDraftDTO).environments)
+
 /** The schema fixes the shape, not the formats: slugs and colors are normalised before they reach the environment form. */
 const sanitizeDraft = (draft: AssistantProjectDraftDTO): AssistantProjectDraftDTO => ({
     ...draft,
@@ -91,19 +92,6 @@ const sanitizeDraft = (draft: AssistantProjectDraftDTO): AssistantProjectDraftDT
         }))
         .filter(environment => environment.slug)
 })
-
-let client: Anthropic | undefined
-
-/** One client per process, created on first use so an installation without a key never builds one. */
-export const getClient = (apiKey?: string): Anthropic => {
-    if (!apiKey) {
-        throw new AssistantDisabledError()
-    }
-    if (!client) {
-        client = new Anthropic({ apiKey })
-    }
-    return client
-}
 
 const describeContext = ({ context }: AssistantChatRequestDTO, projectId: string) =>
     [
@@ -118,11 +106,11 @@ const describeContext = ({ context }: AssistantChatRequestDTO, projectId: string
         .join("\n")
 
 class AssistantService extends BaseAuthorizedService {
-    private readonly apiKey?: string
-
-    constructor(user: IUser | undefined, apiKey?: string) {
+    constructor(
+        user: IUser | undefined,
+        private readonly config: LlmConfiguration
+    ) {
         super(user)
-        this.apiKey = apiKey
     }
 
     /**
@@ -130,7 +118,7 @@ class AssistantService extends BaseAuthorizedService {
      * once the SSE headers are out, an access error can no longer become an HTTP status.
      */
     async ensureCanChat(projectId: string): Promise<void> {
-        getClient(this.apiKey)
+        getLlmClient(this.config)
         await this.ensureAccessToProject(projectId)
     }
 
@@ -148,57 +136,43 @@ class AssistantService extends BaseAuthorizedService {
         if (!user) {
             throw new AssistantDisabledError()
         }
-        const anthropic = getClient(this.apiKey)
+        const llm = getLlmClient(this.config)
 
         const history = request.messages.slice(0, -1)
         const last = request.messages[request.messages.length - 1]
-        const messages: Anthropic.Beta.BetaMessageParam[] = [
-            ...history.map(message => ({ role: message.role, content: message.content })),
-            { role: "user", content: `${describeContext(request, projectId)}\n\n${last.content}` }
+        const messages: LlmMessage[] = [
+            ...history.map((message): LlmMessage => (message.role === "user" ? { role: "user", text: message.content } : { role: "assistant", text: message.content, toolCalls: [] })),
+            { role: "user", text: `${describeContext(request, projectId)}\n\n${last.content}` }
         ]
 
         let emittedText = false
         for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-            const stream = anthropic.beta.messages.stream(
-                {
-                    model: ASSISTANT_MODEL,
-                    max_tokens: MAX_TOKENS,
-                    output_config: { effort: "medium" },
-                    cache_control: { type: "ephemeral" },
-                    betas: [ASSISTANT_FALLBACK_BETA],
-                    fallbacks: "default",
-                    system: CHAT_SYSTEM_PROMPT,
-                    tools: assistantToolDefinitions,
-                    messages
-                },
-                { signal }
-            )
             // Each round is a new message: without a break its text would run into the previous one.
             let roundHasText = false
-            stream.on("text", delta => {
-                if (!roundHasText && emittedText) handlers.onText("\n\n")
-                roundHasText = true
-                emittedText = true
-                handlers.onText(delta)
+            const result = await llm.turn({
+                system: CHAT_SYSTEM_PROMPT,
+                tools: assistantToolDefinitions,
+                messages,
+                maxTokens: MAX_TOKENS,
+                effort: "medium",
+                signal,
+                onText: delta => {
+                    if (!roundHasText && emittedText) handlers.onText("\n\n")
+                    roundHasText = true
+                    emittedText = true
+                    handlers.onText(delta)
+                }
             })
 
-            const message = await stream.finalMessage()
-
-            if (message.stop_reason === "refusal") return "refusal"
-            // pause_turn only comes from server tools, which this assistant does not use; anything
-            // other than a tool call is the end of the answer.
-            const toolUses = message.content.filter((block): block is Anthropic.Beta.BetaToolUseBlock => block.type === "tool_use")
-            if (toolUses.length === 0) {
-                return message.stop_reason === "max_tokens" ? "max_tokens" : "end_turn"
-            }
+            if (result.stopReason === "refusal") return "refusal"
             // A tool input cut off by max_tokens can still look like a valid object: never run it.
-            if (message.stop_reason === "max_tokens") return "max_tokens"
+            if (result.stopReason === "max_tokens") return "max_tokens"
+            if (result.toolCalls.length === 0) return "end_turn"
 
-            messages.push({ role: "assistant", content: message.content })
-            for (const toolUse of toolUses) handlers.onToolCall(toolUse.name)
-            const results = await Promise.all(toolUses.map(toolUse => runAssistantTool(toolUse, { user, projectId })))
-            // All results of one turn go back in a single message, or the model learns to stop calling tools in parallel.
-            messages.push({ role: "user", content: results })
+            messages.push(result.message)
+            for (const call of result.toolCalls) handlers.onToolCall(call.name)
+            // All results of one turn go back together, or the model learns to stop calling tools in parallel.
+            messages.push({ role: "tool", results: await Promise.all(result.toolCalls.map(call => runAssistantTool(call, { user, projectId }))) })
         }
 
         return "max_tool_rounds"
@@ -209,28 +183,14 @@ class AssistantService extends BaseAuthorizedService {
         if (!this.getUser()) {
             throw new AssistantDisabledError()
         }
-        const anthropic = getClient(this.apiKey)
-
-        const message = await anthropic.beta.messages.create({
-            model: ASSISTANT_MODEL,
-            max_tokens: MAX_TOKENS,
-            output_config: { effort: "low", format: { type: "json_schema", schema: PROJECT_DRAFT_SCHEMA } },
-            betas: [ASSISTANT_FALLBACK_BETA],
-            fallbacks: "default",
+        const draft = await getLlmClient(this.config).json({
             system: DRAFT_SYSTEM_PROMPT,
-            messages: [{ role: "user", content: `locale: ${locale || "en"}\n\n${description}` }]
+            user: `locale: ${locale || "en"}\n\n${description}`,
+            schema: PROJECT_DRAFT_SCHEMA,
+            maxTokens: MAX_TOKENS,
+            effort: "low"
         })
-
-        if (message.stop_reason === "refusal" || message.stop_reason === "max_tokens") {
-            return null
-        }
-        const text = message.content.find((block): block is Anthropic.Beta.BetaTextBlock => block.type === "text")?.text
-        if (!text) return null
-        try {
-            return sanitizeDraft(JSON.parse(text) as AssistantProjectDraftDTO)
-        } catch {
-            return null
-        }
+        return isProjectDraft(draft) ? sanitizeDraft(draft) : null
     }
 }
 

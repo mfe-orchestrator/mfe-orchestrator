@@ -28,7 +28,7 @@ const applyBodySchema = {
  * client cannot start an agent that spends the installation's model budget.
  */
 export default async function aiChangeController(fastify: FastifyInstance) {
-    const service = (request: FastifyRequest) => new AiChangeService(request.databaseUser, fastify.config.ANTHROPIC_API_KEY)
+    const service = (request: FastifyRequest) => new AiChangeService(request.databaseUser, fastify.config)
     const config = { authMethod: AuthenticationMethod.JWT }
 
     // Every request runs a paid agent for minutes, so it shares the assistant's per-user ceiling.

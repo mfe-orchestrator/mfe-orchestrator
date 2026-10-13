@@ -32,21 +32,21 @@ describe("runAssistantTool", () => {
 
         const result = await runAssistantTool(toolUse("list_deployments", { environment_id: "env-9" }), context)
 
-        expect(result.is_error).toBe(true)
+        expect(result.isError).toBe(true)
         expect(getByEnvironmentId).not.toHaveBeenCalled()
     })
 
     it("Given a tool the assistant does not have, when it is called, then an error result is returned", async () => {
         const result = await runAssistantTool(toolUse("delete_everything", {}), context)
 
-        expect(result.is_error).toBe(true)
-        expect(result.tool_use_id).toBe("toolu_1")
+        expect(result.isError).toBe(true)
+        expect(result.callId).toBe("toolu_1")
     })
 
     it("Given a missing required argument, when the tool is called, then an error result names the argument", async () => {
         const result = await runAssistantTool(toolUse("list_deployments", {}), context)
 
-        expect(result.is_error).toBe(true)
+        expect(result.isError).toBe(true)
         expect(result.content).toContain("environment_id")
         expect(getByEnvironmentId).not.toHaveBeenCalled()
     })
@@ -67,7 +67,7 @@ describe("runAssistantTool", () => {
 
         const result = await runAssistantTool(toolUse("list_deployments", { environment_id: "env-1", limit: 1 }), context)
 
-        expect(result.is_error).toBeUndefined()
+        expect(result.isError).toBeUndefined()
         const content = result.content as string
         expect(content).not.toContain("s3-secret")
         expect(content).not.toContain("https://secret.example")
@@ -88,7 +88,7 @@ describe("runAssistantTool", () => {
 
         const result = await runAssistantTool(toolUse("list_deployments", { environment_id: "env-1" }), context)
 
-        expect(result.is_error).toBe(true)
+        expect(result.isError).toBe(true)
         expect(result.content).toBe("User cannot access this environment")
     })
 })

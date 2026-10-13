@@ -5,7 +5,7 @@ AI agent works on a local clone of the microfrontend's repository and proposes t
 Nothing reaches the repository until the user approves it: then the console commits the approved
 files on a new branch, pushes it and opens a pull request (a merge request on GitLab).
 
-It is available when the console assistant is on (`ANTHROPIC_API_KEY`) and the microfrontend has a
+It is available when an [AI provider](AI-PROVIDERS.md) is configured and the microfrontend has a
 code repository connected (GitHub, GitLab or Azure DevOps).
 
 ## How it works

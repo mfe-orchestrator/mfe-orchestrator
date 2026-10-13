@@ -82,7 +82,7 @@ describe("AiChangeService", () => {
         vi.clearAllMocks()
     })
 
-    const service = () => new AiChangeService(user, "sk-test")
+    const service = () => new AiChangeService(user, { ANTHROPIC_API_KEY: "sk-test" })
 
     it("Given a viewer, when a change is requested, then it is refused before anything is created", async () => {
         role = RoleInProject.VIEWER

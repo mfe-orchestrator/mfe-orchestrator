@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk"
 import { FastifyInstance, FastifyRequest } from "fastify"
 import { createBusinessException } from "../errors/BusinessException"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import AssistantService from "../service/assistant/AssistantService"
+import { isRateLimitError } from "../service/llm"
 import { AssistantChatRequestDTO, AssistantProjectDraftRequestDTO } from "../types/AssistantDTO"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { openEventStream, sendEvent } from "../utils/eventStream"
@@ -83,7 +83,7 @@ export default async function assistantController(fastify: FastifyInstance) {
             throw createBusinessException({ code: "ASSISTANT_INVALID_CONVERSATION", message: "The last message must come from the user" })
         }
 
-        const service = new AssistantService(request.databaseUser, fastify.config.ANTHROPIC_API_KEY)
+        const service = new AssistantService(request.databaseUser, fastify.config)
         await service.ensureCanChat(projectId)
 
         openEventStream(reply)
@@ -114,7 +114,7 @@ export default async function assistantController(fastify: FastifyInstance) {
         } catch (error) {
             if (!abortController.signal.aborted) {
                 fastify.log.error({ err: error, projectId }, "Assistant chat failed")
-                sendEvent(reply, "error", { code: error instanceof Anthropic.RateLimitError ? "RATE_LIMITED" : "ASSISTANT_ERROR" })
+                sendEvent(reply, "error", { code: isRateLimitError(error) ? "RATE_LIMITED" : "ASSISTANT_ERROR" })
             }
         } finally {
             clearInterval(heartbeat)
@@ -127,7 +127,7 @@ export default async function assistantController(fastify: FastifyInstance) {
         "/assistant/project-draft",
         { schema: { body: draftBodySchema }, config: { authMethod: AuthenticationMethod.JWT, rateLimit } },
         async (request, reply) => {
-            const draft = await new AssistantService(request.databaseUser, fastify.config.ANTHROPIC_API_KEY).draftProject(request.body.description, request.body.locale)
+            const draft = await new AssistantService(request.databaseUser, fastify.config).draftProject(request.body.description, request.body.locale)
             if (!draft) {
                 throw createBusinessException({ code: "ASSISTANT_NO_DRAFT", message: "The model returned no usable draft", statusCode: 422 })
             }

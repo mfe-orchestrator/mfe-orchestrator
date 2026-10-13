@@ -8,8 +8,8 @@ import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import { toObjectId } from "../../utils/mongooseUtils"
 import { withRepositoryLock } from "../../utils/repositoryLock"
 import { isProtectedPath } from "../../utils/workspacePaths"
-import { getClient } from "../assistant/AssistantService"
 import BaseAuthorizedService from "../BaseAuthorizedService"
+import { getLlmClient, LlmClient, LlmConfiguration } from "../llm"
 import { toErrorMessage } from "../RepositoryFileService"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
@@ -71,7 +71,7 @@ const timestamp = (date = new Date()) => date.toISOString().replace(/[-:]/g, "")
 export class AiChangeService extends BaseAuthorizedService {
     constructor(
         user: ConstructorParameters<typeof BaseAuthorizedService>[0],
-        private readonly apiKey?: string
+        private readonly config: LlmConfiguration
     ) {
         super(user)
     }
@@ -106,7 +106,7 @@ export class AiChangeService extends BaseAuthorizedService {
     }
 
     async create(microfrontendId: string, input: AiChangeCreateInput): Promise<IAiChangeRequest> {
-        const client = getClient(this.apiKey)
+        const client = getLlmClient(this.config)
         const microfrontend = await this.getMicrofrontend(microfrontendId)
         await this.ensureCanChangeProject(microfrontend.projectId)
         const workspace = await new RepositoryWorkspaceService(this.user).open(microfrontendId)
@@ -136,7 +136,7 @@ export class AiChangeService extends BaseAuthorizedService {
     }
 
     /** The job: lock the working copy, reset it, let the agent work, store what changed, reset again. */
-    private async process(id: string, client: ReturnType<typeof getClient>): Promise<void> {
+    private async process(id: string, client: LlmClient): Promise<void> {
         const request = await AiChangeRequest.findById(id)
         if (!request) return
         const microfrontend = await Microfrontend.findById(request.microfrontendId)

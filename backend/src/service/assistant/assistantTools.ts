@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk"
 import { IUser } from "../../models/UserModel"
 import BuildStatusService from "../BuildStatusService"
 import DeploymentService from "../DeploymentService"
 import EnvironmentService from "../EnvironmentService"
 import GlobalVariablesService from "../GlobalVariablesService"
+import { LlmTool, LlmToolCall, LlmToolResult } from "../llm"
 import MarketService from "../MarketService"
 import MicrofrontendDependencyService from "../MicrofrontendDependencyService"
 import MicrofrontendService from "../MicrofrontendService"
@@ -73,11 +73,11 @@ const readOptionalNumber = (input: Record<string, unknown>, key: string): number
 }
 
 interface AssistantTool {
-    definition: Anthropic.Beta.BetaTool
+    definition: LlmTool
     run: (input: Record<string, unknown>, context: AssistantToolContext) => Promise<unknown>
 }
 
-const noInput: Anthropic.Beta.BetaTool.InputSchema = { type: "object", properties: {}, additionalProperties: false }
+const noInput: LlmTool["inputSchema"] = { type: "object", properties: {}, additionalProperties: false }
 
 const tools: AssistantTool[] = [
     {
@@ -85,7 +85,7 @@ const tools: AssistantTool[] = [
             name: "list_microfrontends",
             description:
                 "Lists the microfrontends of the current project with their id, slug, selected version, type, framework, how they are hosted, canary settings and parent microfrontends. Use it to resolve a name the user mentions into an id.",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async (_input, { user, projectId }) => {
             const microfrontends = await new MicrofrontendService(user).getByProjectId(projectId)
@@ -111,7 +111,7 @@ const tools: AssistantTool[] = [
             name: "get_project_context",
             description:
                 "Returns the notes the team wrote for AI agents: the context of the current project (conventions, domain, rules) and the context of each microfrontend that has one. Read it when the question depends on how this team works.",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async (_input, { user, projectId }) => new ProjectService(user).getContext(projectId)
     },
@@ -119,7 +119,7 @@ const tools: AssistantTool[] = [
         definition: {
             name: "list_environments",
             description: "Lists the environments of the current project (id, name, slug, whether it is production, domains), in their configured order.",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async (_input, { user, projectId }) => {
             const environments = await new EnvironmentService(user).getByProjectId(projectId)
@@ -137,7 +137,7 @@ const tools: AssistantTool[] = [
             name: "get_build_status",
             description:
                 "Returns the CI status of every microfrontend of the project: the latest runs (id, status, ref, commit, start/end time, link), the latest version that reached the platform and the version each environment currently serves.",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async (_input, { user, projectId }) => new BuildStatusService(user).getByProjectId(projectId)
     },
@@ -145,7 +145,7 @@ const tools: AssistantTool[] = [
         definition: {
             name: "get_failed_build_logs",
             description: `Downloads the logs of the failed jobs of one CI run of a microfrontend. Each log is cut to its last ${MAX_LOG_CHARS_PER_JOB} characters, where the error usually is; "truncated" says when that happened. Get run ids from get_build_status.`,
-            input_schema: {
+            inputSchema: {
                 type: "object",
                 properties: {
                     microfrontend_id: { type: "string", description: "Id of the microfrontend, as returned by list_microfrontends or get_build_status." },
@@ -169,7 +169,7 @@ const tools: AssistantTool[] = [
         definition: {
             name: "list_deployments",
             description: `Lists the most recent deployments of an environment, newest first: when they happened, whether they are the active one, the version of every microfrontend they shipped and the keys of the variables they carried. Defaults to ${DEFAULT_DEPLOYMENTS}, at most ${MAX_DEPLOYMENTS}.`,
-            input_schema: {
+            inputSchema: {
                 type: "object",
                 properties: {
                     environment_id: { type: "string", description: "Id of the environment, as returned by list_environments." },
@@ -211,7 +211,7 @@ const tools: AssistantTool[] = [
         definition: {
             name: "get_environment_variables",
             description: "Lists the keys of the environment variables of the project and, for each key, the environments it is defined in. Values are never returned.",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async (_input, { user, projectId }) => {
             const [variables, environments] = await Promise.all([new GlobalVariablesService(user).getAllByProjectId(projectId), new EnvironmentService(user).getByProjectId(projectId)])
@@ -233,7 +233,7 @@ const tools: AssistantTool[] = [
             name: "get_dependency_report",
             description:
                 "Scans the package.json of every microfrontend and returns the packages whose version ranges disagree across microfrontends (peer and shared dependencies) with the suggested range, plus the microfrontends whose package.json could not be read. Slow: call it once per question.",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async (_input, { user, projectId }) => {
             const report = await new MicrofrontendDependencyService(user).getReport(projectId)
@@ -256,7 +256,7 @@ const tools: AssistantTool[] = [
             name: "search_docs",
             description:
                 "Searches the MFE Orchestrator documentation (written in English) and returns the best matching sections with their URL. Use it for any how-to or concept question, and cite the URL of the sections you relied on.",
-            input_schema: {
+            inputSchema: {
                 type: "object",
                 properties: {
                     query: { type: "string", description: "Keywords in English, e.g. 'canary release percentage' or 'connect S3 bucket'." }
@@ -276,7 +276,7 @@ const tools: AssistantTool[] = [
         definition: {
             name: "list_templates",
             description: "Lists the microfrontend templates of the templates library (slug, name, framework, compiler, type, description, whether they are coming soon).",
-            input_schema: noInput
+            inputSchema: noInput
         },
         run: async () => {
             const templates = await new MarketService().getAll()
@@ -295,24 +295,23 @@ const tools: AssistantTool[] = [
 
 const toolsByName = new Map(tools.map(tool => [tool.definition.name, tool]))
 
-export const assistantToolDefinitions: Anthropic.Beta.BetaTool[] = tools.map(tool => tool.definition)
+export const assistantToolDefinitions: LlmTool[] = tools.map(tool => tool.definition)
 
 /**
- * Runs one tool call and turns whatever happens into a tool_result.
+ * Runs one tool call and turns whatever happens into a tool result.
  *
- * Failures go back to the model as `is_error` results instead of aborting the turn: an
+ * Failures go back to the model as error results instead of aborting the turn: an
  * access error or an unreachable CI provider is something it can explain to the user.
  */
-export const runAssistantTool = async (block: Anthropic.Beta.BetaToolUseBlock, context: AssistantToolContext): Promise<Anthropic.Beta.BetaToolResultBlockParam> => {
-    const tool = toolsByName.get(block.name)
+export const runAssistantTool = async (call: LlmToolCall, context: AssistantToolContext): Promise<LlmToolResult> => {
+    const tool = toolsByName.get(call.name)
     if (!tool) {
-        return { type: "tool_result", tool_use_id: block.id, is_error: true, content: `Unknown tool "${block.name}"` }
+        return { callId: call.id, name: call.name, isError: true, content: `Unknown tool "${call.name}"` }
     }
     try {
-        const input = block.input && typeof block.input === "object" ? (block.input as Record<string, unknown>) : {}
-        const result = await tool.run(input, context)
-        return { type: "tool_result", tool_use_id: block.id, content: JSON.stringify(result ?? null) }
+        const result = await tool.run(call.input, context)
+        return { callId: call.id, name: call.name, content: JSON.stringify(result ?? null) }
     } catch (error) {
-        return { type: "tool_result", tool_use_id: block.id, is_error: true, content: error instanceof Error ? error.message : String(error) }
+        return { callId: call.id, name: call.name, isError: true, content: error instanceof Error ? error.message : String(error) }
     }
 }

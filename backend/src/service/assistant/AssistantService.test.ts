@@ -27,7 +27,7 @@ const fakeStream = (message: { stop_reason: string; content: unknown[] }) => ({
             if (block.type === "text" && block.text) listener(block.text)
         }
     },
-    finalMessage: async () => message
+    finalMessage: async () => ({ usage: { input_tokens: 0, output_tokens: 0 }, ...message })
 })
 
 const user = { _id: "user-1" } as unknown as IUser
@@ -41,7 +41,7 @@ describe("AssistantService", () => {
     })
 
     it("Given no API key, when a question is asked, then the assistant reports itself disabled", async () => {
-        await expect(new AssistantService(user, undefined).ensureCanChat("project-1")).rejects.toMatchObject({ code: "ASSISTANT_DISABLED" })
+        await expect(new AssistantService(user, {}).ensureCanChat("project-1")).rejects.toMatchObject({ code: "ASSISTANT_DISABLED" })
     })
 
     it("Given a question that needs data, when answered, then the tool runs on the request's project and its result goes back to the model", async () => {
@@ -52,7 +52,7 @@ describe("AssistantService", () => {
 
         const texts: string[] = []
         const toolCalls: string[] = []
-        const stopReason = await new AssistantService(user, "test-key").chat(
+        const stopReason = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
             "project-1",
             { messages: [{ role: "user", content: "Which environments do I have?" }], context: { page: "/environments" } },
             { onText: delta => texts.push(delta), onToolCall: name => toolCalls.push(name) }
@@ -78,7 +78,11 @@ describe("AssistantService", () => {
     it("Given a refusal, when answered, then no tool runs and the refusal is reported", async () => {
         stream.mockReturnValueOnce(fakeStream({ stop_reason: "refusal", content: [{ type: "tool_use", id: "toolu_1", name: "list_environments", input: {} }] }))
 
-        const stopReason = await new AssistantService(user, "test-key").chat("project-1", { messages: [{ role: "user", content: "..." }] }, { onText: () => undefined, onToolCall: () => undefined })
+        const stopReason = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
+            "project-1",
+            { messages: [{ role: "user", content: "..." }] },
+            { onText: () => undefined, onToolCall: () => undefined }
+        )
 
         expect(stopReason).toBe("refusal")
         expect(getEnvironments).not.toHaveBeenCalled()
@@ -88,7 +92,11 @@ describe("AssistantService", () => {
         getEnvironments.mockResolvedValue([])
         stream.mockImplementation(() => fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "list_environments", input: {} }] }))
 
-        const stopReason = await new AssistantService(user, "test-key").chat("project-1", { messages: [{ role: "user", content: "loop" }] }, { onText: () => undefined, onToolCall: () => undefined })
+        const stopReason = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
+            "project-1",
+            { messages: [{ role: "user", content: "loop" }] },
+            { onText: () => undefined, onToolCall: () => undefined }
+        )
 
         expect(stopReason).toBe("max_tool_rounds")
         expect(stream).toHaveBeenCalledTimes(8)
@@ -105,7 +113,7 @@ describe("AssistantService", () => {
         }
         create.mockResolvedValue({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(draft) }] })
 
-        await expect(new AssistantService(user, "test-key").draftProject("A portal on AWS, code on GitHub", "en")).resolves.toEqual(draft)
+        await expect(new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).draftProject("A portal on AWS, code on GitHub", "en")).resolves.toEqual(draft)
         expect(create.mock.calls[0][0].output_config.format.type).toBe("json_schema")
     })
 })

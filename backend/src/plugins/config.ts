@@ -2,6 +2,7 @@ import fastifyEnv from "@fastify/env"
 import dotenv from "dotenv"
 import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyPlugin from "fastify-plugin"
+import { LlmConfiguration, resolveLlmProvider } from "../service/llm"
 import { assertMcpConfigurationIsUsable } from "../utils/oauthConfig"
 import { assertSecretEncryptionKeyIsUsable, isSecretEncryptionEnabled } from "../utils/secretCrypto"
 import { TELEMETRY_DEFAULT_ENDPOINT, TELEMETRY_DEFAULT_INTERVAL_HOURS } from "../utils/telemetry"
@@ -248,10 +249,55 @@ export default fastifyPlugin(
                 TRUST_PROXY: {
                     type: "string"
                 },
-                // Turns the console assistant on. Unset, the assistant is hidden and its
-                // endpoints answer 404: nothing about the installation is sent anywhere.
+                // The model behind the assistant and the AI code changes: anthropic, azure-foundry,
+                // gemini or azure-openai. Unset, an ANTHROPIC_API_KEY alone turns Claude on; with
+                // neither, AI is off, its endpoints answer 404 and nothing is sent anywhere.
+                AI_PROVIDER: {
+                    type: "string"
+                },
                 ANTHROPIC_API_KEY: {
                     type: "string"
+                },
+                // Defaults to claude-opus-5-5.
+                ANTHROPIC_MODEL: {
+                    type: "string"
+                },
+                // Claude on Microsoft Foundry: the resource name (https://<resource>.services.ai.azure.com).
+                AZURE_FOUNDRY_RESOURCE: {
+                    type: "string"
+                },
+                AZURE_FOUNDRY_API_KEY: {
+                    type: "string"
+                },
+                // The deployment name of the Claude model on Foundry. Defaults to claude-opus-5-5.
+                AZURE_FOUNDRY_MODEL: {
+                    type: "string"
+                },
+                GEMINI_API_KEY: {
+                    type: "string"
+                },
+                // Required with gemini: Gemini models are retired often, so none is assumed.
+                GEMINI_MODEL: {
+                    type: "string"
+                },
+                // Azure OpenAI: https://<resource>.openai.azure.com/
+                AZURE_OPENAI_ENDPOINT: {
+                    type: "string"
+                },
+                AZURE_OPENAI_API_KEY: {
+                    type: "string"
+                },
+                // The deployment of the GPT model, which is also the model name.
+                AZURE_OPENAI_DEPLOYMENT: {
+                    type: "string"
+                },
+                AZURE_OPENAI_API_VERSION: {
+                    type: "string"
+                },
+                // True for reasoning deployments (o-series, GPT-5): the effort is sent as reasoning_effort.
+                AZURE_OPENAI_REASONING: {
+                    type: "boolean",
+                    default: false
                 },
                 // Assistant questions per IP per minute. Each one is a paid model call, so
                 // the ceiling is separate from, and lower than, RATE_LIMIT_MAX.
@@ -306,6 +352,10 @@ export default fastifyPlugin(
 
         // Same reasoning: a MCP server signing with the public fallback secret must not come up at all.
         assertMcpConfigurationIsUsable()
+
+        // A provider named without its credentials fails here, not at the first question. Read from
+        // the environment like the checks above: fastify.config is only filled in by fastifyEnv below.
+        resolveLlmProvider(process.env as LlmConfiguration)
 
         if (!isSecretEncryptionEnabled()) {
             fastify.log.warn("SECRETS_ENCRYPTION_KEY is not set: storage credentials and repository tokens are stored unencrypted. See docs/SECRETS.md")
