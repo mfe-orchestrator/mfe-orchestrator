@@ -87,10 +87,7 @@
   "85": "GoogleStorageClient",
   "86": "McpController.ts",
   "87": "codeRepositoryUtils.ts",
-  "88": "EnvironmentController.ts",
-  "89": "AssistantService.test.ts",
   "90": "AzureStorageClient",
-  "91": "AccessProbe",
   "92": "autorization.test.ts",
   "93": "vitest.config.mts"
 }

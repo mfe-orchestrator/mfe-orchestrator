@@ -235,5 +235,21 @@
   "233": "RouteWithSuspense.tsx",
   "234": "TemplatesLibrary.tsx",
   "235": "Scopes (Optional)",
-  "236": "curl"
+  "236": "curl",
+  "237": "NpmRegistryClient.ts",
+  "238": "RepositoryWorkspaceService.ts",
+  "239": "telemetry.ts",
+  "240": "CodeRepositoryProvider",
+  "241": "repositoryLock.ts",
+  "242": "MicrofrontendsTable.tsx",
+  "243": "status",
+  "244": "GoogleStorageClient",
+  "245": "[1.0.0] - 2025-12-07",
+  "246": "error",
+  "247": "AzureStorageClient",
+  "248": ".buildManifestChange",
+  "249": "theme",
+  "250": "DeploymentController.ts",
+  "251": "build",
+  "252": "projectWizardStateMachine.ts"
 }

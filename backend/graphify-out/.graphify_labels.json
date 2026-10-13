@@ -87,7 +87,12 @@
   "85": "GoogleStorageClient",
   "86": "McpController.ts",
   "87": "codeRepositoryUtils.ts",
+  "88": "OrganizationService.test.ts",
+  "89": "AssistantService.test.ts",
   "90": "AzureStorageClient",
+  "91": "BuildJobLogDTO",
   "92": "autorization.test.ts",
-  "93": "vitest.config.mts"
+  "93": "vitest.config.mts",
+  "94": "S3BucketClient",
+  "95": "LlmConfiguration"
 }
