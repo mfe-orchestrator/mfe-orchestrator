@@ -206,6 +206,14 @@
             "slugHint": "Slug e ID non sono modificabili: lo slug fa parte del percorso in cui sono archiviati i bundle già caricati.",
             "copy": "Copia"
         },
+        "projectContext": {
+            "title": "Contesto AI del progetto",
+            "subtitle": "Note per gli agenti AI (client MCP e assistente della console) valide per tutto il progetto: dominio, convenzioni, regole condivise dai microfrontend.",
+            "label": "Contesto",
+            "placeholder": "## Dominio\nPortale clienti per ...\n\n## Convenzioni\n- TypeScript strict\n- ...",
+            "hint": "Supporta Markdown. Gli agenti lo leggono con il tool context_get insieme al contesto di ogni microfrontend.",
+            "tooLong": "Il contesto può contenere al massimo {{max}} caratteri"
+        },
         "dangerZone": {
             "title": "Zona Pericolosa",
             "subtitle": "Queste azioni sono irreversibili. Sii certo di quello che fai.",
@@ -227,7 +235,9 @@
         "notifications": {
             "projectDeleted": "Progetto eliminato",
             "projectUpdated": "Progetto aggiornato",
-            "projectUpdateFailed": "Impossibile aggiornare il progetto"
+            "projectUpdateFailed": "Impossibile aggiornare il progetto",
+            "contextUpdated": "Contesto del progetto aggiornato",
+            "contextUpdateFailed": "Impossibile aggiornare il contesto del progetto"
         }
     },
     "theme": {
@@ -709,7 +719,9 @@
             "general": "Generale",
             "hosting": "Hosting",
             "repository": "Repository",
-            "danger_zone": "Zona Pericolosa"
+            "danger_zone": "Zona Pericolosa",
+            "context": "Contesto AI",
+            "aiChange": "Modifica con AI"
         },
         "canary_release": "Distribuzione canary",
         "canary_settings": "Impostazioni Canary",
@@ -780,7 +792,111 @@
             }
         },
         "canary_enrolled_users": "Utenti selezionati",
-        "canary_none": "Non c'è canary"
+        "canary_none": "Non c'è canary",
+        "context": {
+            "title": "Contesto AI del microfrontend",
+            "subtitle": "Note per gli agenti AI su questo microfrontend; quello che vale per tutti va nel contesto del progetto, nelle Impostazioni.",
+            "label": "Contesto",
+            "placeholder": "## Responsabilità\nGestisce ...\n\n## Note\n- ...",
+            "hint": "Supporta Markdown, massimo 20.000 caratteri."
+        },
+        "aiChange": {
+            "title": "Modifica con AI",
+            "description": "Descrivi la modifica che vuoi. L'agente legge il repository insieme al contesto AI del progetto e di questo microfrontend, poi propone le modifiche. Non viene pubblicato nulla finché non approvi: all'approvazione le modifiche vengono committate su un nuovo branch e viene aperta una pull request.",
+            "prompt_label": "Cosa vuoi cambiare?",
+            "prompt_placeholder": "es. Aggiungi una pagina 404 con un link per tornare alla home",
+            "prompt_required": "Descrivi la modifica che vuoi",
+            "prompt_counter": "{{count}} / {{max}}",
+            "base_branch_label": "Branch di partenza",
+            "base_branch_placeholder": "Lascia vuoto per usare il branch predefinito del repository",
+            "generate": "Genera proposta",
+            "status": {
+                "PENDING": "In coda",
+                "RUNNING": "In lavorazione",
+                "PROPOSED": "Proposta pronta",
+                "APPLYING": "In applicazione",
+                "APPLIED": "Applicata",
+                "DISCARDED": "Scartata",
+                "FAILED": "Non riuscita"
+            },
+            "status_description": {
+                "PENDING": "La richiesta è in coda e partirà a breve.",
+                "RUNNING": "L'agente sta lavorando sul repository.",
+                "APPLYING": "Commit delle modifiche, push del branch e apertura della pull request in corso."
+            },
+            "events": {
+                "queued": "Richiesta in coda",
+                "waiting-for-repository": "In attesa che il repository sia libero",
+                "preparing": "Preparazione del repository",
+                "working": "L'agente è al lavoro",
+                "proposed": "Proposta pronta",
+                "no-changes": "L'agente ha finito senza modificare alcun file",
+                "applied": "Modifiche applicate"
+            },
+            "progress_log": "Avanzamento dell'agente",
+            "progress_empty": "Ancora nessuna attività.",
+            "show_progress_log": "Mostra il registro di avanzamento dell'agente",
+            "show_prompt": "Mostra la richiesta completa",
+            "request_meta": "{{date}} · branch di partenza {{branch}}",
+            "summary": "Riepilogo",
+            "proposal_warning": "Controlla questa proposta prima di applicarla",
+            "failed_title": "La richiesta non è andata a buon fine",
+            "try_again": "Riprova",
+            "applied_title": "Modifiche applicate",
+            "branch": "Branch",
+            "open_pull_request": "Apri la pull request",
+            "pull_request": "Pull request",
+            "opens_new_tab": "(si apre in una nuova scheda)",
+            "pull_request_error_title": "Il branch è stato pubblicato, ma non è stato possibile aprire la pull request: aprila a mano",
+            "discarded_description": "Questa proposta è stata scartata: non è stato pubblicato nulla.",
+            "no_changes_title": "Niente da modificare",
+            "no_changes_description": "L'agente non ha modificato alcun file.",
+            "files_title": "Modifiche proposte",
+            "files_selected": "{{selected}} file su {{total}} selezionati",
+            "include_file": "Includi",
+            "action": {
+                "create": "Nuovo",
+                "update": "Modificato",
+                "delete": "Eliminato"
+            },
+            "show_diff": "Mostra le modifiche a {{path}}",
+            "hide_diff": "Nascondi le modifiche a {{path}}",
+            "apply": "Applica e apri la pull request",
+            "apply_runs_ci": "Applicando, un nuovo branch viene pubblicato sul repository e la sua CI parte subito, con i segreti del repository: controlla il diff prima di confermare.",
+            "discard": "Scarta",
+            "applied_success": "Modifiche applicate e pull request aperta",
+            "discarded_success": "Proposta scartata",
+            "usage": "Token usati: {{input}} in ingresso, {{output}} in uscita",
+            "history_title": "Richieste precedenti",
+            "history_description": "Le ultime richieste fatte su questo microfrontend. Selezionane una per vederla.",
+            "history_empty": "Ancora nessuna richiesta.",
+            "open_request": "Apri la richiesta: {{prompt}}",
+            "diff": {
+                "caption": "Modifiche a {{path}}",
+                "old_line_number": "Riga originale",
+                "new_line_number": "Riga nuova",
+                "content": "Contenuto",
+                "added_line": "Aggiunta",
+                "removed_line": "Rimossa",
+                "unchanged_line": "Invariata",
+                "hidden_lines_one": "{{count}} riga invariata nascosta",
+                "hidden_lines_other": "{{count}} righe invariate nascoste",
+                "too_big": "Questo file è troppo grande per mostrarne le modifiche.",
+                "no_differences": "Nessuna differenza nel contenuto."
+            },
+            "errors": {
+                "generic": "Qualcosa è andato storto.",
+                "create": "Non è stato possibile avviare la richiesta.",
+                "apply": "Non è stato possibile applicare le modifiche.",
+                "load": "Non è stato possibile caricare la richiesta.",
+                "history": "Non è stato possibile caricare le richieste precedenti.",
+                "ASSISTANT_DISABLED": "La modifica con AI non è attiva su questa installazione.",
+                "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare questo microfrontend con l'AI.",
+                "WORKSPACE_NO_REPOSITORY": "Questo microfrontend non ha un repository di codice collegato.",
+                "AI_CHANGE_CONFLICT": "Questi file sono cambiati sul branch di partenza dopo la proposta: {{files}}. Richiedi di nuovo la modifica.",
+                "AI_CHANGE_NOT_PROPOSED": "Questa richiesta non è più in attesa di approvazione."
+            }
+        }
     },
     "color_picker": {
         "select_color": "Seleziona un colore"

@@ -239,6 +239,18 @@ class GitLabClient {
         return res.data
     }
 
+    /** Opens a merge request and returns its web URL. */
+    async createMergeRequest(projectId: string | number, request: { sourceBranch: string; targetBranch: string; title: string; description: string }): Promise<string> {
+        const res = await this.api.post<{ web_url: string }>(`/projects/${projectId}/merge_requests`, {
+            source_branch: request.sourceBranch,
+            target_branch: request.targetBranch,
+            title: request.title,
+            description: request.description,
+            remove_source_branch: true
+        })
+        return res.data.web_url
+    }
+
     /**
      * Reads a text file from a project. Returns null when the file does not exist on the ref.
      */

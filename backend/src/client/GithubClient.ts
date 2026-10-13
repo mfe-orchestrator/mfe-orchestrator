@@ -783,6 +783,39 @@ class GithubClient {
         }
     }
 
+    /** Opens a pull request and returns its web URL. */
+    async createPullRequest({
+        accessToken,
+        orgName,
+        userName,
+        repositoryName,
+        head,
+        base,
+        title,
+        body
+    }: {
+        accessToken: string
+        orgName?: string
+        userName?: string
+        repositoryName: string
+        head: string
+        base: string
+        title: string
+        body: string
+    }): Promise<string> {
+        const response = await axios.request<{ html_url: string }>({
+            method: "POST",
+            url: `${this.getRepositoryBaseUrlBase(repositoryName, orgName, userName)}/pulls`,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            },
+            data: { head, base, title, body }
+        })
+        return response.data.html_url
+    }
+
     async updateFileContent({ accessToken, orgName, userName, repositoryName, path, content, message, branch, sha }: GithubUpdateFileDTO): Promise<void> {
         await axios.request({
             method: "PUT",

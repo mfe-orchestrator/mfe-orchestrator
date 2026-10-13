@@ -579,6 +579,33 @@ class AzureDevOpsClient {
         }
     }
 
+    /** Opens a pull request and returns its web URL. */
+    async createPullRequest(
+        token: string,
+        organization: string,
+        project: string,
+        repositoryId: string,
+        request: { sourceBranch: string; targetBranch: string; title: string; description: string }
+    ): Promise<string> {
+        const response = await axios.request<{ pullRequestId: number; repository: { name: string; project: { name: string } } }>({
+            method: "POST",
+            url: `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}/pullrequests?api-version=7.1`,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: {
+                sourceRefName: `refs/heads/${request.sourceBranch}`,
+                targetRefName: `refs/heads/${request.targetBranch}`,
+                title: request.title,
+                // Azure DevOps caps the description at 4000 characters.
+                description: request.description.slice(0, 4000)
+            }
+        })
+        const { pullRequestId, repository } = response.data
+        return `https://dev.azure.com/${organization}/${encodeURIComponent(repository.project.name)}/_git/${encodeURIComponent(repository.name)}/pullrequest/${pullRequestId}`
+    }
+
     /**
      * Pushes a single file change, an edit by default or an addition when `changeType` says so.
      * When `branchName` does not exist yet, Azure DevOps creates it from `baseCommitId` as part

@@ -9,6 +9,9 @@ log() {
 }
 
 MICROFRONTEND_HOST_FOLDER="${MICROFRONTEND_HOST_FOLDER:-/data/microfrontends}"
+# Local clones of the repositories edited with AI: a cache, but kept on the volume
+# so a restart does not mean cloning everything again.
+REPOSITORIES_FOLDER="${REPOSITORIES_FOLDER:-/data/repositories}"
 SECRETS_DIR=/data/secrets
 JWT_SECRET_FILE="${SECRETS_DIR}/jwt_secret"
 
@@ -16,12 +19,12 @@ JWT_SECRET_FILE="${SECRETS_DIR}/jwt_secret"
 # user mounts a host directory. Only the directories are chowned, not their
 # content: the files inside are already owned by the service that wrote them,
 # and a recursive chown on a large database would slow down every start.
-mkdir -p /data/db /data/redis "${MICROFRONTEND_HOST_FOLDER}" "${SECRETS_DIR}"
+mkdir -p /data/db /data/redis "${MICROFRONTEND_HOST_FOLDER}" "${REPOSITORIES_FOLDER}" "${SECRETS_DIR}"
 chown mongodb:mongodb /data/db
 chown redis:redis /data/redis
-chown mfe:mfe "${MICROFRONTEND_HOST_FOLDER}" "${SECRETS_DIR}"
+chown mfe:mfe "${MICROFRONTEND_HOST_FOLDER}" "${REPOSITORIES_FOLDER}" "${SECRETS_DIR}"
 chmod 700 "${SECRETS_DIR}"
-export MICROFRONTEND_HOST_FOLDER
+export MICROFRONTEND_HOST_FOLDER REPOSITORIES_FOLDER
 
 # Without a JWT secret the backend falls back to a hardcoded one, which means
 # anybody could forge a token for this installation. A random secret is

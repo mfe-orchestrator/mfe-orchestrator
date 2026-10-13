@@ -247,6 +247,9 @@ falling back to it.
 | `REGISTRATION_ALLOWED`                 | `true`                                                                                            | If `true`, allows new user registration.                        |
 | `ALLOW_EMBEDDED_LOGIN`                 | `true`                                                                                            | If `true`, enables the login system within the application.     |
 | `MICROFRONTEND_HOST_FOLDER`            | `/upload-microfrontends`                                                                          | Folder containing the host microfrontends.                      |
+| `REPOSITORIES_FOLDER`                  | `/repositories` (`/data/repositories` in the all-in-one image)                                    | Where repositories are cloned to be edited with AI. A cache.    |
+| `REPOSITORIES_MAX_SIZE_MB`             | `500`                                                                                             | Repositories bigger than this on disk are refused.              |
+| `REPOSITORIES_EVICT_AFTER_DAYS`        | `14`                                                                                              | Clones not used for this many days are deleted.                 |
 | `NOSQL_DATABASE_URL`                   | `mongodb://localhost:27017/microfrontend-orchestrator`                                            | MongoDB database connection URL.                                |
 | `NOSQL_DATABASE_NAME`                  | `microfrontend-orchestrator`                                                                      | MongoDB database name.                                          |
 | `NOSQL_DATABASE_USERNAME`              | `root`                                                                                            | MongoDB username.                                               |

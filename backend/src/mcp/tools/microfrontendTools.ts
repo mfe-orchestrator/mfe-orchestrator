@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendType } from "../../models/MicrofrontendModel"
+import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import CodeRepositoryService from "../../service/CodeRepositoryService"
 import MicrofrontendService from "../../service/MicrofrontendService"
 import StackDetectionService from "../../service/StackDetectionService"
@@ -26,6 +27,7 @@ const microfrontendFields = {
         .regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes")
         .max(100),
     description: z.string().max(2000).optional(),
+    context: z.string().max(CONTEXT_MAX_LENGTH).optional().describe("Markdown notes for AI agents about this microfrontend, replaced as a whole"),
     version: z.string().min(1).max(100),
     type: z.enum(MicrofrontendType).optional(),
     path: z.string().max(500).optional(),

@@ -7,6 +7,7 @@ vi.mock("..", () => ({
     fastify: { log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }, config: {} }
 }))
 
+import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
@@ -199,6 +200,48 @@ describe("update", () => {
         await update({ description: "the checkout flow" })
 
         expect(written).toEqual({ description: "the checkout flow" })
+    })
+
+    it("Given a context, when the project is updated, then the context is written", async () => {
+        await update({ context: "## Conventions\n- strict TypeScript" })
+
+        expect(written).toEqual({ context: "## Conventions\n- strict TypeScript" })
+    })
+
+    it("Given a null description and a null context, when the project is updated, then both are unset", async () => {
+        await update({ description: null, context: null })
+
+        expect(written).toEqual({ $unset: { description: 1, context: 1 } })
+    })
+})
+
+describe("getContext", () => {
+    let microfrontendFilter: Record<string, unknown> | undefined
+
+    beforeEach(() => {
+        microfrontendFilter = undefined
+        vi.spyOn(ProjectService.prototype, "findById").mockResolvedValue({ _id: newId(), name: "Portal", context: "shared rules" } as never)
+        vi.spyOn(Microfrontend, "find").mockImplementation(((filter: Record<string, unknown>) => {
+            microfrontendFilter = filter
+            return { sort: () => Promise.resolve([{ _id: newId(), slug: "catalog", name: "Catalog", context: "catalog rules" }]) }
+        }) as never)
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it("Given a project and a microfrontend with a context, when the context is read, then both come back", async () => {
+        const context = await new ProjectService(aUser()).getContext(String(newId()))
+
+        expect(context.project).toMatchObject({ name: "Portal", context: "shared rules" })
+        expect(context.microfrontends).toEqual([expect.objectContaining({ slug: "catalog", context: "catalog rules" })])
+    })
+
+    it("Given microfrontends without a context, when the context is read, then they are left out by the query", async () => {
+        await new ProjectService(aUser()).getContext(String(newId()))
+
+        expect(microfrontendFilter).toMatchObject({ context: { $nin: [null, ""] } })
     })
 })
 

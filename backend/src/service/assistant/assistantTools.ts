@@ -7,6 +7,7 @@ import GlobalVariablesService from "../GlobalVariablesService"
 import MarketService from "../MarketService"
 import MicrofrontendDependencyService from "../MicrofrontendDependencyService"
 import MicrofrontendService from "../MicrofrontendService"
+import ProjectService from "../ProjectService"
 import { searchDocs } from "./docsSearch"
 
 /**
@@ -104,6 +105,15 @@ const tools: AssistantTool[] = [
                 description: microfrontend.description
             }))
         }
+    },
+    {
+        definition: {
+            name: "get_project_context",
+            description:
+                "Returns the notes the team wrote for AI agents: the context of the current project (conventions, domain, rules) and the context of each microfrontend that has one. Read it when the question depends on how this team works.",
+            input_schema: noInput
+        },
+        run: async (_input, { user, projectId }) => new ProjectService(user).getContext(projectId)
     },
     {
         definition: {

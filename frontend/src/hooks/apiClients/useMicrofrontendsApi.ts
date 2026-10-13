@@ -85,6 +85,8 @@ export interface Microfrontend {
         }
     }
     description?: string
+    /** Markdown per gli agenti AI su questo solo microfrontend */
+    context?: string
     createdAt?: Date
     updatedAt?: Date
     parentIds?: string[]

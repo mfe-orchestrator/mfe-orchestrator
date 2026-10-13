@@ -9,7 +9,8 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { DangerZone, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import { DangerZone, ProjectContextSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
 
 export const Settings: React.FC = () => {
@@ -54,12 +55,25 @@ export const Settings: React.FC = () => {
         }
     })
 
+    const updateContextMutation = useMutation({
+        mutationFn: (values: ProjectContextFormValues) => projectApi.updateProject(project._id, { context: values.context.trim() ? values.context : null }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
+            notifications.showSuccessNotification({ message: t("settings.notifications.contextUpdated") })
+        },
+        onError: () => {
+            notifications.showErrorNotification({ message: t("settings.notifications.contextUpdateFailed") })
+        }
+    })
+
     const projectData = projectQuery.data?.project
 
     return (
         <ApiStatusHandler queries={[projectQuery]}>
             <SinglePageLayout title={t("settings.title")} description={t("settings.subtitle")}>
                 {projectData && <ProjectInfoSection {...projectData} onUpdate={values => updateProjectMutation.mutate(values)} isUpdating={updateProjectMutation.isPending} />}
+
+                {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
 
                 <ProjectStatsSection
                     stats={[

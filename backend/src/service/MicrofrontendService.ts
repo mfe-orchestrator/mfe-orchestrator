@@ -31,6 +31,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
 import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
+import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
 
 const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
 export class MicrofrontendService extends BaseAuthorizedService {
@@ -589,19 +590,24 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendIdObj.toString())
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
-        return await Microfrontend.findByIdAndDelete(microfrontendIdObj)
+        const deleted = await Microfrontend.findByIdAndDelete(microfrontendIdObj)
+        await forgetMicrofrontends([microfrontend])
+        return deleted
     }
 
     async bulkDelete(ids: string[]): Promise<number> {
+        const microfrontends: IMicrofrontend[] = []
         for (const id of ids) {
             const microfrontend = await this.getById(id)
             if (!microfrontend) {
                 throw new EntityNotFoundError(id)
             }
             await this.ensureAccessToMicrofrontend(microfrontend)
+            microfrontends.push(microfrontend)
         }
 
         const result = await Microfrontend.deleteMany({ _id: { $in: ids.map(toObjectId) } })
+        await forgetMicrofrontends(microfrontends)
         return result.deletedCount
     }
 

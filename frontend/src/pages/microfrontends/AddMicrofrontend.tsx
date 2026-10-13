@@ -6,6 +6,7 @@ import { FieldErrors, FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import * as z from "zod"
+import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Button } from "@/components/atoms"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
@@ -14,9 +15,10 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, ReleaseSection } from "@/pages/microfrontends/partials/components"
+import { AiChangeSection, CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, ReleaseSection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import { FetchDataTemplateCard } from "../templates-library/partials/"
 
 // Define form schema with validation
@@ -26,6 +28,7 @@ const formSchema = z
         slug: z.string().min(3).max(50),
         name: z.string().min(3).max(100),
         description: z.string().optional(),
+        context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
         version: z.string().min(1, "Version is required"),
         customVersion: z.string().optional(),
         continuousDeployment: z.boolean().default(false),
@@ -95,14 +98,16 @@ const formSchema = z
 type FormValues = z.infer<typeof formSchema>
 
 /** Tabs that own validated fields, in the order they are shown: the first one with an error is the one we jump to. */
-const FORM_TABS = ["general", "hosting", "repository"] as const
+const FORM_TABS = ["general", "context", "hosting", "repository"] as const
 
-type FormTab = (typeof FORM_TABS)[number] | "danger"
+type FormTab = (typeof FORM_TABS)[number] | "aiChange" | "danger"
 
 const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
     general: ["name", "slug", "description"],
+    context: ["context"],
     hosting: ["host"],
     repository: ["codeRepository"],
+    aiChange: [],
     danger: []
 }
 
@@ -128,6 +133,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const navigate = useNavigate()
     const template = searchParams.get("template")
     const [activeTab, setActiveTab] = useState<FormTab>("general")
+    const assistantEnabled = useAssistantEnabled()
 
     const getStandardHost = () => {
         const standardHost = {
@@ -152,6 +158,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             slug: "",
             name: "",
             description: "",
+            context: "",
             version: "1.0.0",
             host: getStandardHost(),
             ...(repositories && repositories.length > 0
@@ -217,6 +224,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     }
 
     const hasRepositories = Boolean(repositories && repositories.length > 0)
+    const showAiChange = isEdit && Boolean(frontend?.codeRepository?.enabled) && assistantEnabled
 
     /** A tab is flagged when any of the fields it owns failed validation, so an error is never hidden behind an inactive tab. */
     const tabHasErrors = (tab: FormTab) => TAB_FIELDS[tab].some(field => Boolean(form.formState.errors[field]))
@@ -240,6 +248,10 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                 {t("microfrontend.tabs.general")}
                                 {tabHasErrors("general") && <ErrorDot />}
                             </TabsTrigger>
+                            <TabsTrigger value="context" className="flex-1">
+                                {t("microfrontend.tabs.context")}
+                                {tabHasErrors("context") && <ErrorDot />}
+                            </TabsTrigger>
                             <TabsTrigger value="hosting" className="flex-1">
                                 {t("microfrontend.tabs.hosting")}
                                 {tabHasErrors("hosting") && <ErrorDot />}
@@ -248,6 +260,11 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                 <TabsTrigger value="repository" className="flex-1">
                                     {t("microfrontend.tabs.repository")}
                                     {tabHasErrors("repository") && <ErrorDot />}
+                                </TabsTrigger>
+                            )}
+                            {showAiChange && (
+                                <TabsTrigger value="aiChange" className="flex-1">
+                                    {t("microfrontend.tabs.aiChange")}
                                 </TabsTrigger>
                             )}
                             {isEdit && (
@@ -295,6 +312,26 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                             </Card>
                         </TabsContent>
 
+                        <TabsContent value="context" forceMount>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="mb-0">{t("microfrontend.context.title")}</CardTitle>
+                                    <CardDescription>{t("microfrontend.context.subtitle")}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="pt-3">
+                                    <TextareaField
+                                        name="context"
+                                        label={t("microfrontend.context.label")}
+                                        placeholder={t("microfrontend.context.placeholder")}
+                                        description={t("microfrontend.context.hint")}
+                                        rows={14}
+                                        className="font-mono text-sm"
+                                        dataTestId="microfrontend-context"
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
                         <TabsContent value="hosting" forceMount>
                             <HostingSection storages={storages} />
                         </TabsContent>
@@ -302,6 +339,13 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                         {hasRepositories && (
                             <TabsContent value="repository" forceMount>
                                 <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
+                            </TabsContent>
+                        )}
+
+                        {/* Not force-mounted: it polls the backend, and its inputs are not part of this form. */}
+                        {showAiChange && id && (
+                            <TabsContent value="aiChange">
+                                <AiChangeSection microfrontendId={id} />
                             </TabsContent>
                         )}
 

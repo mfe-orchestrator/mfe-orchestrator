@@ -226,6 +226,18 @@ persistence:
   subPath: ""
 
 ## ---------------------------------------------------------------------------
+## Local clones of the repositories edited with AI
+## ---------------------------------------------------------------------------
+## A cache: every use resets the clone to the remote and a missing one is cloned
+## again, so it does not need to be shared between replicas. emptyDir by default;
+## point existingClaim at a PVC to keep the clones across restarts.
+repositories:
+  mountPath: /repositories
+  # Upper bound of the emptyDir. Also see env.REPOSITORIES_MAX_SIZE_MB, the cap per repository.
+  sizeLimit: 10Gi
+  existingClaim: ""
+
+## ---------------------------------------------------------------------------
 ## Service and ingress
 ## ---------------------------------------------------------------------------
 service:

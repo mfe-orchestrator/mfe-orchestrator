@@ -85,6 +85,9 @@ declare module "fastify" {
             CIMD_ALLOWED_HOSTS?: string
             TRUST_PROXY?: string
             ANTHROPIC_API_KEY?: string
+            REPOSITORIES_FOLDER: string
+            REPOSITORIES_MAX_SIZE_MB: number
+            REPOSITORIES_EVICT_AFTER_DAYS: number
             ASSISTANT_RATE_LIMIT_MAX: number
         }
         telemetry: TelemetryRuntimeConfiguration

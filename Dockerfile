@@ -26,7 +26,7 @@ ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
 ENV TRUST_PROXY=127.0.0.1
 
 # Create application directories
-RUN mkdir -p /var/www/frontend /var/www/backend
+RUN mkdir -p /var/www/frontend /var/www/backend /repositories
 
 # Copy Nginx configuration
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf

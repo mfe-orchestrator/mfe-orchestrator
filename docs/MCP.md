@@ -44,6 +44,19 @@ lets the user write; on a project where the user is a **VIEWER** every write too
 explicit error, whatever the grant says. Roles are read again on every request, so demoting a member
 takes write access away from their clients immediately.
 
+## Project context
+
+Every project and every microfrontend can carry a **context**: free markdown the team writes for AI
+agents (domain, conventions, rules). The project one is edited in Settings → Project AI context, the
+microfrontend one in the "AI context" tab of the microfrontend. Both are limited to 20,000 characters.
+
+- `context_get` (`mfe:read`) returns the project context together with the context of every
+  microfrontend that has one. The server instructions ask clients to call it before working on a
+  project.
+- `project_update` and `microfrontend_update` (`mfe:write`) change them; `null` removes the project
+  context.
+- The console assistant reads the same notes through its `get_project_context` tool.
+
 ## Several projects in one connection
 
 - `projects_list` returns the shared projects with their organization and the user's role;

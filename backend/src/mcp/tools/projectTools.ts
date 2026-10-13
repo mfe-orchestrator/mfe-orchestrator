@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import MarketService from "../../service/MarketService"
 import ProjectService from "../../service/ProjectService"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
@@ -15,14 +16,25 @@ export const projectTools = [
         run: (_args, { principal, projectId }) => new ProjectService(principal).getSummary(projectId)
     }),
     defineTool({
+        name: "context_get",
+        title: "Get project context",
+        description:
+            "The notes the team wrote for AI agents: the context of the project (conventions, domain, rules shared by every microfrontend) and the context of each microfrontend that has one. Read it before working on the project or on its code.",
+        scope: MCP_SCOPE_READ,
+        annotations: READ_ONLY,
+        inputSchema: NO_INPUT,
+        run: (_args, { principal, projectId }) => new ProjectService(principal).getContext(projectId)
+    }),
+    defineTool({
         name: "project_update",
         title: "Update project",
-        description: "Renames the project or changes its description. Pass description null to remove it.",
+        description: "Renames the project or changes its description or its context (markdown notes for AI agents, replaced as a whole). Pass description or context null to remove it.",
         scope: MCP_SCOPE_WRITE,
         annotations: { ...WRITE, idempotentHint: true },
         inputSchema: z.object({
             name: z.string().min(1).max(255).optional(),
-            description: z.string().max(2000).nullable().optional()
+            description: z.string().max(2000).nullable().optional(),
+            context: z.string().max(CONTEXT_MAX_LENGTH).nullable().optional()
         }),
         run: (args, { principal, projectId }) => new ProjectService(principal).update(projectId, args)
     }),

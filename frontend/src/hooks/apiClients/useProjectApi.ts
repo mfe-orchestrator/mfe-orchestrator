@@ -13,6 +13,8 @@ export interface Project {
     name: string
     slug: string
     description?: string
+    /** Markdown per gli agenti AI (client MCP, assistente della console) */
+    context?: string
     createdAt?: string
     updatedAt?: string
     _id: string
@@ -41,6 +43,8 @@ export interface ProjectUpdateDTO {
     name?: string
     /** `null` azzera la descrizione: e' cosi che l'API esprime "nessuna descrizione". */
     description?: string | null
+    /** `null` azzera il contesto, come per la descrizione. */
+    context?: string | null
     isActive?: boolean
 }
 

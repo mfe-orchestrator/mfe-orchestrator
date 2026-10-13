@@ -1,4 +1,5 @@
 {{- $env := deepCopy (.Values.env | default dict) -}}
+{{- $_ := set $env "REPOSITORIES_FOLDER" .Values.repositories.mountPath -}}
 {{- if .Values.persistence.enabled -}}
 {{- /* Keep the application in sync with where the volume is actually mounted. */ -}}
 {{- $_ := set $env "MICROFRONTEND_HOST_FOLDER" (include "mfe-orchestrator.microfrontendFolder" .) -}}

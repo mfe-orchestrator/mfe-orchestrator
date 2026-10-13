@@ -17,6 +17,7 @@ import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import UserProjectService from "./UserProjectService"
+import { prepareProjectCleanup } from "./workspace/workspaceCleanup"
 
 export interface ProjectCreateInput {
     /** The organization the project is created in. A project always belongs to exactly one. */
@@ -31,7 +32,15 @@ export interface ProjectCreateInput {
 export interface ProjectUpdateInput {
     name?: string
     description?: string | null
+    /** `null` removes it, like the description. */
+    context?: string | null
     isActive?: boolean
+}
+
+/** Everything the team wrote for AI agents in one project: the shared context and the one of each microfrontend that has it. */
+export interface ProjectContextDTO {
+    project: { id: string; name: string; context?: string }
+    microfrontends: { id: string; slug: string; name: string; context: string }[]
 }
 
 export interface ProjectSummaryDTO {
@@ -126,6 +135,24 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
+    async getContext(projectId: string): Promise<ProjectContextDTO> {
+        const projectIdObj = toObjectId(projectId)
+        const project = await this.findById(projectIdObj)
+        if (!project) {
+            throw new ProjectNotFoundError(projectId)
+        }
+        const microfrontends = await Microfrontend.find({ projectId: projectIdObj, context: { $nin: [null, ""] } }, { slug: 1, name: 1, context: 1 }).sort({ slug: 1 })
+        return {
+            project: { id: project._id.toString(), name: project.name, context: project.context || undefined },
+            microfrontends: microfrontends.map(microfrontend => ({
+                id: microfrontend._id.toString(),
+                slug: microfrontend.slug,
+                name: microfrontend.name,
+                context: microfrontend.context as string
+            }))
+        }
+    }
+
     async create(projectData: ProjectCreateInput, creatorUserId: ObjectId): Promise<IProject> {
         // Outside the transaction on purpose: the check reads, and a failing authorization should not
         // be the reason a transaction is opened at all.
@@ -210,10 +237,12 @@ export class ProjectService extends BaseAuthorizedService {
             if (projectData.isActive !== undefined) {
                 updateData.isActive = projectData.isActive
             }
-            if (projectData.description === null) {
-                updateData.$unset = { description: 1 }
-            } else if (projectData.description !== undefined) {
-                updateData.description = projectData.description
+            for (const field of ["description", "context"] as const) {
+                if (projectData[field] === null) {
+                    updateData.$unset = { ...updateData.$unset, [field]: 1 }
+                } else if (projectData[field] !== undefined) {
+                    updateData[field] = projectData[field]
+                }
             }
 
             const updated = await Project.findByIdAndUpdate(projectId, updateData, {
@@ -245,7 +274,11 @@ export class ProjectService extends BaseAuthorizedService {
     }
 
     async delete(projectId: string): Promise<DeleteResult> {
-        return runInTransaction(session => this.deleteRaw(projectId, session))
+        await this.ensureAccessToProject(projectId)
+        const cleanup = await prepareProjectCleanup(projectId)
+        const result = await runInTransaction(session => this.deleteRaw(projectId, session))
+        await cleanup()
+        return result
     }
 
     async deleteRaw(projectId: string, session?: ClientSession): Promise<DeleteResult> {

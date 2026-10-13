@@ -258,6 +258,22 @@ export default fastifyPlugin(
                 ASSISTANT_RATE_LIMIT_MAX: {
                     type: "number",
                     default: 20
+                },
+                // Where the repositories behind the microfrontends are cloned to be edited with AI,
+                // as <org>/<project>/<microfrontend>. A cache: deleting it only costs a new clone.
+                REPOSITORIES_FOLDER: {
+                    type: "string",
+                    default: "/repositories"
+                },
+                // A repository bigger than this on disk is refused, and removed, after the clone.
+                REPOSITORIES_MAX_SIZE_MB: {
+                    type: "number",
+                    default: 500
+                },
+                // Working copies not used for this many days are deleted.
+                REPOSITORIES_EVICT_AFTER_DAYS: {
+                    type: "number",
+                    default: 14
                 }
             }
         }

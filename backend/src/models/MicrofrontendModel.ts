@@ -1,5 +1,6 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
+import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
 export enum MicrofrontendType {
     HOST = "HOST",
@@ -63,6 +64,8 @@ export interface IMicrofrontend extends Document<ObjectId> {
     host: IHostMicrofrontend
     codeRepository?: ICodeRepositoryMicrofrontend
     description?: string
+    /** Markdown for AI agents about this microfrontend only; the project context covers what they share. */
+    context?: string
     createdAt: Date
     updatedAt: Date
 
@@ -256,6 +259,11 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         description: {
             type: String,
             trim: true
+        },
+        context: {
+            type: String,
+            trim: true,
+            maxlength: CONTEXT_MAX_LENGTH
         },
         version: {
             type: String,

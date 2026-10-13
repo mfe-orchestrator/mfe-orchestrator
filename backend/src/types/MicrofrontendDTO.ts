@@ -8,6 +8,8 @@ interface MicrofrontendDTO {
     url: string
     environment: string
     version?: string
+    /** Markdown for AI agents about this microfrontend */
+    context?: string
     /** Slug of the marketplace template the repository was scaffolded from */
     template?: string
     stack?: MicrofrontendStackDTO

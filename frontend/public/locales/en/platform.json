@@ -205,6 +205,14 @@
             "id": "ID",
             "slugHint": "The slug and the ID cannot be changed: the slug is part of the path where already uploaded bundles are stored."
         },
+        "projectContext": {
+            "title": "Project AI context",
+            "subtitle": "Notes for AI agents (MCP clients and the console assistant) that apply to the whole project: domain, conventions, rules shared by the microfrontends.",
+            "label": "Context",
+            "placeholder": "## Domain\nCustomer portal for ...\n\n## Conventions\n- Strict TypeScript\n- ...",
+            "hint": "Markdown is supported. Agents read it with the context_get tool, together with the context of each microfrontend.",
+            "tooLong": "The context can be at most {{max}} characters long"
+        },
         "dangerZone": {
             "title": "Danger Zone",
             "subtitle": "These actions are irreversible. Please be certain.",
@@ -226,7 +234,9 @@
         "notifications": {
             "projectDeleted": "Project deleted",
             "projectUpdated": "Project updated",
-            "projectUpdateFailed": "Failed to update project"
+            "projectUpdateFailed": "Failed to update project",
+            "contextUpdated": "Project context updated",
+            "contextUpdateFailed": "Could not update the project context"
         }
     },
     "theme": {
@@ -613,7 +623,9 @@
             "general": "General",
             "hosting": "Hosting",
             "repository": "Repository",
-            "danger_zone": "Danger Zone"
+            "danger_zone": "Danger Zone",
+            "context": "AI context",
+            "aiChange": "Edit with AI"
         },
         "canary_release": "Canary Release",
         "canary_settings": "Canary Settings",
@@ -683,7 +695,111 @@
         },
         "ofUsers": "of users",
         "canary_enrolled_users": "Enrolled users",
-        "canary_none": "No canary"
+        "canary_none": "No canary",
+        "context": {
+            "title": "Microfrontend AI context",
+            "subtitle": "Notes for AI agents about this microfrontend; what applies to all of them belongs in the project context, in Settings.",
+            "label": "Context",
+            "placeholder": "## Responsibility\nHandles ...\n\n## Notes\n- ...",
+            "hint": "Markdown is supported, at most 20,000 characters."
+        },
+        "aiChange": {
+            "title": "Edit with AI",
+            "description": "Describe the change you want. The agent reads the repository together with the AI context of the project and of this microfrontend, then proposes the edits. Nothing is pushed until you approve: on approval the changes are committed on a new branch and a pull request is opened.",
+            "prompt_label": "What should change?",
+            "prompt_placeholder": "e.g. Add a 404 page with a link back to the home page",
+            "prompt_required": "Describe the change you want",
+            "prompt_counter": "{{count}} / {{max}}",
+            "base_branch_label": "Base branch",
+            "base_branch_placeholder": "Leave empty to use the repository's default branch",
+            "generate": "Generate proposal",
+            "status": {
+                "PENDING": "Queued",
+                "RUNNING": "Working",
+                "PROPOSED": "Proposal ready",
+                "APPLYING": "Applying",
+                "APPLIED": "Applied",
+                "DISCARDED": "Discarded",
+                "FAILED": "Failed"
+            },
+            "status_description": {
+                "PENDING": "The request is queued and will start shortly.",
+                "RUNNING": "The agent is working on the repository.",
+                "APPLYING": "Committing the changes, pushing the branch and opening the pull request."
+            },
+            "events": {
+                "queued": "Request queued",
+                "waiting-for-repository": "Waiting for the repository to be free",
+                "preparing": "Preparing the repository",
+                "working": "The agent is working",
+                "proposed": "Proposal ready",
+                "no-changes": "The agent finished without changing any file",
+                "applied": "Changes applied"
+            },
+            "progress_log": "Agent progress",
+            "progress_empty": "No activity yet.",
+            "show_progress_log": "Show the agent's progress log",
+            "show_prompt": "Show the full request",
+            "request_meta": "{{date}} · base branch {{branch}}",
+            "summary": "Summary",
+            "proposal_warning": "Check this proposal before applying it",
+            "failed_title": "The request failed",
+            "try_again": "Try again",
+            "applied_title": "Changes applied",
+            "branch": "Branch",
+            "open_pull_request": "Open the pull request",
+            "pull_request": "Pull request",
+            "opens_new_tab": "(opens in a new tab)",
+            "pull_request_error_title": "The branch was pushed, but the pull request could not be opened: open it by hand",
+            "discarded_description": "This proposal was discarded: nothing was pushed.",
+            "no_changes_title": "Nothing to change",
+            "no_changes_description": "The agent did not change any file.",
+            "files_title": "Proposed changes",
+            "files_selected": "{{selected}} of {{total}} files selected",
+            "include_file": "Include",
+            "action": {
+                "create": "New",
+                "update": "Modified",
+                "delete": "Deleted"
+            },
+            "show_diff": "Show the changes to {{path}}",
+            "hide_diff": "Hide the changes to {{path}}",
+            "apply": "Apply and open pull request",
+            "apply_runs_ci": "Applying publishes a new branch to the repository and its CI starts right away, with the repository secrets: review the diff before confirming.",
+            "discard": "Discard",
+            "applied_success": "Changes applied and pull request opened",
+            "discarded_success": "Proposal discarded",
+            "usage": "Tokens used: {{input}} input, {{output}} output",
+            "history_title": "Previous requests",
+            "history_description": "The latest requests made on this microfrontend. Select one to see it.",
+            "history_empty": "No requests yet.",
+            "open_request": "Open the request: {{prompt}}",
+            "diff": {
+                "caption": "Changes to {{path}}",
+                "old_line_number": "Original line",
+                "new_line_number": "New line",
+                "content": "Content",
+                "added_line": "Added",
+                "removed_line": "Removed",
+                "unchanged_line": "Unchanged",
+                "hidden_lines_one": "{{count}} unchanged line hidden",
+                "hidden_lines_other": "{{count}} unchanged lines hidden",
+                "too_big": "This file is too big to show the changes.",
+                "no_differences": "No differences in the content."
+            },
+            "errors": {
+                "generic": "Something went wrong.",
+                "create": "Could not start the request.",
+                "apply": "Could not apply the changes.",
+                "load": "Could not load the request.",
+                "history": "Could not load the previous requests.",
+                "ASSISTANT_DISABLED": "AI editing is not enabled on this installation.",
+                "AI_CHANGE_FORBIDDEN": "You do not have permission to edit this microfrontend with AI.",
+                "WORKSPACE_NO_REPOSITORY": "This microfrontend has no linked code repository.",
+                "AI_CHANGE_CONFLICT": "These files changed on the base branch after the proposal: {{files}}. Ask for the change again.",
+                "AI_CHANGE_NOT_PROPOSED": "This request is no longer waiting for approval."
+            }
+        }
     },
     "environmentVariables": {
         "title": "Environment Variables",
