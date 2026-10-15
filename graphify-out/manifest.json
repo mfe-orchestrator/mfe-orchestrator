@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "backend/src/plugins/config.ts": {
-    "mtime": 1791929640.0631611,
-    "ast_hash": "9586fe5b7ec6a4b5fee72e0f1b080214",
+    "mtime": 1792095405.9867795,
+    "ast_hash": "97a5ad5fbd5d9f44622506e06bc4f37f",
     "semantic_hash": ""
   },
   "backend/src/plugins/cors.ts": {
@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "backend/src/types/fastify.d.ts": {
-    "mtime": 1791929629.0528822,
-    "ast_hash": "b7f5baa470d3c94f902a528f4e5aacec",
+    "mtime": 1792095441.518134,
+    "ast_hash": "fe09b435647c19cd9617797d914cfb01",
     "semantic_hash": ""
   },
   "backend/src/types/index.ts": {
@@ -3120,8 +3120,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/llm/azureOpenAiProvider.ts": {
-    "mtime": 1791929726.6016521,
-    "ast_hash": "3e5f85d3cae144cdc32ad91f58fee38d",
+    "mtime": 1792095629.535008,
+    "ast_hash": "4f17e09173ebef5520b5df5561486bfa",
     "semantic_hash": ""
   },
   "backend/src/service/llm/geminiProvider.ts": {
@@ -3130,13 +3130,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/llm/index.ts": {
-    "mtime": 1791929726.601105,
-    "ast_hash": "334c87e18a2020a57b4794168d18f578",
+    "mtime": 1792095630.6427436,
+    "ast_hash": "2f583dee6adbc3527c086ceadd4bff2c",
     "semantic_hash": ""
   },
   "backend/src/service/llm/providers.test.ts": {
-    "mtime": 1791929845.6210186,
-    "ast_hash": "b3bf7af182b6ce7c5079eb3b7a84c8da",
+    "mtime": 1792095632.8505456,
+    "ast_hash": "8a03d464efbc12f1cefa471f048b6350",
     "semantic_hash": ""
   },
   "backend/src/service/llm/types.ts": {
@@ -3145,8 +3145,8 @@
     "semantic_hash": ""
   },
   "docs/AI-PROVIDERS.md": {
-    "mtime": 1791929833.3112,
-    "ast_hash": "ff777ca922fca12e8e33f0023307486d",
+    "mtime": 1792095412.5797696,
+    "ast_hash": "e41f399b75a31944926133fab9d4d082",
     "semantic_hash": ""
   }
 }
