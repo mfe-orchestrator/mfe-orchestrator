@@ -1,5 +1,5 @@
 import type { GoogleGenAI } from "@google/genai"
-import type { AzureOpenAI } from "openai"
+import type OpenAI from "openai"
 import { describe, expect, it, vi } from "vitest"
 import { AnthropicLlmClient, ClaudeClient } from "./anthropicProvider"
 import { AzureOpenAiLlmClient } from "./azureOpenAiProvider"
@@ -29,7 +29,7 @@ describe("resolveLlmProvider", () => {
 
     it("Given a provider without its variables, then it names what is missing", () => {
         expect(() => resolveLlmProvider({ AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com" })).toThrow(
-            "AI_PROVIDER=azure-openai needs AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT, AZURE_OPENAI_API_VERSION"
+            "AI_PROVIDER=azure-openai needs AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT"
         )
         expect(isLlmEnabled({ AI_PROVIDER: "gemini", GEMINI_API_KEY: "k" })).toBe(false)
     })
@@ -125,44 +125,86 @@ describe("GeminiLlmClient", () => {
 })
 
 describe("AzureOpenAiLlmClient", () => {
-    const fakeAzure = (choice: Record<string, unknown>) => {
-        const stream = vi.fn((_body: unknown) => ({ on: vi.fn(), finalChatCompletion: async () => ({ choices: [choice], usage: { prompt_tokens: 5, completion_tokens: 6 } }) }))
-        return { client: { chat: { completions: { stream, create: vi.fn() } } } as unknown as AzureOpenAI, stream }
+    const fakeAzure = (response: Record<string, unknown>) => {
+        const stream = vi.fn((_body: unknown) => ({
+            on: vi.fn(),
+            finalResponse: async () => ({ status: "completed", incomplete_details: null, usage: { input_tokens: 5, output_tokens: 6 }, ...response })
+        }))
+        const create = vi.fn(async (_body: unknown) => ({ status: "completed", incomplete_details: null, ...response }))
+        return { client: { responses: { stream, create } } as unknown as OpenAI, stream, create }
     }
-    const toolCallChoice = {
-        finish_reason: "tool_calls",
-        message: { role: "assistant", content: null, tool_calls: [{ id: "call_9", type: "function", function: { name: "read_file", arguments: '{"path":"a.ts"}' } }] }
-    }
+    const message = (text: string) => ({ type: "message", id: "msg_1", role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: [] }] })
+    const reasoningItem = { type: "reasoning", id: "rs_1", summary: [], encrypted_content: "enc" }
+    const toolCallItem = { type: "function_call", id: "fc_1", call_id: "call_9", name: "read_file", arguments: '{"path":"a.ts"}', status: "completed" }
+    /** What finalResponse() hands back: the SDK adds parsed values the API rejects as input. */
+    const parsedBySdk = (items: Record<string, unknown>[]) =>
+        items.map(item =>
+            item.type === "function_call"
+                ? { ...item, parsed_arguments: null }
+                : item.type === "message"
+                  ? { ...item, content: (item.content as Record<string, unknown>[]).map(part => ({ ...part, parsed: null })) }
+                  : item
+        )
 
-    it("Given a tool call, when the conversation goes on, then the arguments are parsed and each result becomes a tool message", async () => {
-        const { client, stream } = fakeAzure(toolCallChoice)
+    it("Given a tool call, when the conversation goes on, then the output items are replayed without the SDK's parsed values and each result becomes a function_call_output", async () => {
+        const { client, stream } = fakeAzure({ output: parsedBySdk([reasoningItem, { type: "reasoning", id: "rs_2", summary: [] }, message("Let me look."), toolCallItem]) })
         const llm = new AzureOpenAiLlmClient(client, "gpt-deployment", false)
 
         const first = await llm.turn(request([{ role: "user", text: "hi" }]))
         await llm.turn(request([{ role: "user", text: "hi" }, first.message, { role: "tool", results: [{ callId: "call_9", name: "read_file", content: "boom", isError: true }] }]))
 
-        expect(first).toMatchObject({ stopReason: "tool_use", toolCalls: [{ id: "call_9", name: "read_file", input: { path: "a.ts" } }], usage: { inputTokens: 5, outputTokens: 6 } })
-        const body = (stream.mock.calls[1] as unknown as [{ model: string; messages: Record<string, unknown>[] }])[0]
-        expect(body.model).toBe("gpt-deployment")
-        expect(body.messages[0]).toEqual({ role: "system", content: "You edit code." })
-        expect(body.messages[2]).toMatchObject({ role: "assistant", tool_calls: toolCallChoice.message.tool_calls })
-        expect(body.messages[3]).toEqual({ role: "tool", tool_call_id: "call_9", content: "Error: boom" })
+        expect(first).toMatchObject({
+            text: "Let me look.",
+            stopReason: "tool_use",
+            toolCalls: [{ id: "call_9", name: "read_file", input: { path: "a.ts" } }],
+            usage: { inputTokens: 5, outputTokens: 6 }
+        })
+        const body = (stream.mock.calls[1] as unknown as [{ model: string; instructions: string; store: boolean; tools: Record<string, unknown>[]; input: Record<string, unknown>[] }])[0]
+        expect(body).toMatchObject({ model: "gpt-deployment", instructions: "You edit code.", store: false })
+        expect(body.tools[0]).toMatchObject({ type: "function", name: "read_file", parameters: tool.inputSchema })
+        expect(body.input).toEqual([{ role: "user", content: "hi" }, reasoningItem, message("Let me look."), toolCallItem, { type: "function_call_output", call_id: "call_9", output: "Error: boom" }])
     })
 
-    it("Given a reasoning deployment, then the effort is sent; otherwise it is not, since other models reject it", async () => {
-        const reasoning = fakeAzure({ finish_reason: "stop", message: { role: "assistant", content: "ok" } })
-        const plain = fakeAzure({ finish_reason: "stop", message: { role: "assistant", content: "ok" } })
+    it("Given a reasoning deployment, then the effort is sent and the reasoning comes back encrypted; otherwise neither, since other models reject it", async () => {
+        const reasoning = fakeAzure({ output: [message("ok")] })
+        const plain = fakeAzure({ output: [message("ok")] })
 
-        await new AzureOpenAiLlmClient(reasoning.client, "gpt-5", true).turn(request([{ role: "user", text: "hi" }]))
+        await new AzureOpenAiLlmClient(reasoning.client, "gpt-6", true).turn(request([{ role: "user", text: "hi" }]))
         await new AzureOpenAiLlmClient(plain.client, "gpt-4-1", false).turn(request([{ role: "user", text: "hi" }]))
 
-        expect(reasoning.stream.mock.calls[0][0]).toMatchObject({ reasoning_effort: "high" })
-        expect(plain.stream.mock.calls[0][0]).not.toHaveProperty("reasoning_effort")
+        expect(reasoning.stream.mock.calls[0][0]).toMatchObject({ reasoning: { effort: "high" }, include: ["reasoning.encrypted_content"] })
+        expect(plain.stream.mock.calls[0][0]).not.toHaveProperty("reasoning")
+        expect(plain.stream.mock.calls[0][0]).not.toHaveProperty("include")
     })
 
-    it("Given the content filter stops the answer, then it is a refusal", async () => {
-        const { client } = fakeAzure({ finish_reason: "content_filter", message: { role: "assistant", content: "" } })
+    it.each([
+        [{ status: "incomplete", incomplete_details: { reason: "content_filter" }, output: [] }, "refusal"],
+        [{ output: [{ ...message(""), content: [{ type: "refusal", refusal: "no" }] }] }, "refusal"],
+        [{ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output: [message("half")] }, "max_tokens"],
+        [{ output: [message("done")] }, "end_turn"]
+    ])("Given the response %j, then the stop reason is %s", async (response, stopReason) => {
+        const { client } = fakeAzure(response)
 
-        expect((await new AzureOpenAiLlmClient(client, "gpt", false).turn(request([{ role: "user", text: "hi" }]))).stopReason).toBe("refusal")
+        expect((await new AzureOpenAiLlmClient(client, "gpt", false).turn(request([{ role: "user", text: "hi" }]))).stopReason).toBe(stopReason)
+    })
+
+    it("Given a failed response, then the turn throws instead of ending as if the model had finished", async () => {
+        const { client } = fakeAzure({ status: "failed", error: { code: "server_error", message: "boom" }, output: [] })
+
+        await expect(new AzureOpenAiLlmClient(client, "gpt", false).turn(request([{ role: "user", text: "hi" }]))).rejects.toThrow("Azure OpenAI response failed: boom")
+    })
+
+    it("Given a JSON request, then the schema is enforced and only a completed answer is parsed", async () => {
+        const answered = fakeAzure({ output: [message('{"name":"x"}')] })
+        const cut = fakeAzure({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output: [message('{"na')] })
+        const json = { system: "s", user: "u", schema: { type: "object" }, maxTokens: 100, effort: "low" as const }
+
+        expect(await new AzureOpenAiLlmClient(answered.client, "gpt", true).json(json)).toEqual({ name: "x" })
+        expect(await new AzureOpenAiLlmClient(cut.client, "gpt", true).json(json)).toBeNull()
+        expect(answered.create.mock.calls[0][0]).toMatchObject({
+            store: false,
+            reasoning: { effort: "low" },
+            text: { format: { type: "json_schema", name: "answer", schema: { type: "object" }, strict: true } }
+        })
     })
 })

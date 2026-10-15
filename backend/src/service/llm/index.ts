@@ -1,7 +1,7 @@
 import AnthropicFoundry from "@anthropic-ai/foundry-sdk"
 import Anthropic from "@anthropic-ai/sdk"
 import { GoogleGenAI } from "@google/genai"
-import { AzureOpenAI } from "openai"
+import OpenAI from "openai"
 import AssistantDisabledError from "../../errors/AssistantDisabledError"
 import { AnthropicLlmClient } from "./anthropicProvider"
 import { AzureOpenAiLlmClient } from "./azureOpenAiProvider"
@@ -26,7 +26,6 @@ export interface LlmConfiguration {
     AZURE_OPENAI_ENDPOINT?: string
     AZURE_OPENAI_API_KEY?: string
     AZURE_OPENAI_DEPLOYMENT?: string
-    AZURE_OPENAI_API_VERSION?: string
     AZURE_OPENAI_REASONING?: boolean
 }
 
@@ -35,7 +34,7 @@ const REQUIRED: Record<LlmProvider, (keyof LlmConfiguration)[]> = {
     [LlmProvider.ANTHROPIC]: ["ANTHROPIC_API_KEY"],
     [LlmProvider.AZURE_FOUNDRY]: ["AZURE_FOUNDRY_RESOURCE", "AZURE_FOUNDRY_API_KEY"],
     [LlmProvider.GEMINI]: ["GEMINI_API_KEY", "GEMINI_MODEL"],
-    [LlmProvider.AZURE_OPENAI]: ["AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_DEPLOYMENT", "AZURE_OPENAI_API_VERSION"]
+    [LlmProvider.AZURE_OPENAI]: ["AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_DEPLOYMENT"]
 }
 
 /**
@@ -81,12 +80,8 @@ export const createLlmClient = (config: LlmConfiguration): LlmClient | undefined
             return new GeminiLlmClient(new GoogleGenAI({ apiKey: config.GEMINI_API_KEY }), config.GEMINI_MODEL!)
         case LlmProvider.AZURE_OPENAI:
             return new AzureOpenAiLlmClient(
-                new AzureOpenAI({
-                    endpoint: config.AZURE_OPENAI_ENDPOINT,
-                    apiKey: config.AZURE_OPENAI_API_KEY,
-                    apiVersion: config.AZURE_OPENAI_API_VERSION,
-                    deployment: config.AZURE_OPENAI_DEPLOYMENT
-                }),
+                // The v1 endpoint takes no api-version and the API key as a bearer token.
+                new OpenAI({ baseURL: new URL("openai/v1/", config.AZURE_OPENAI_ENDPOINT!.replace(/\/?$/, "/")).toString(), apiKey: config.AZURE_OPENAI_API_KEY }),
                 config.AZURE_OPENAI_DEPLOYMENT!,
                 Boolean(config.AZURE_OPENAI_REASONING)
             )

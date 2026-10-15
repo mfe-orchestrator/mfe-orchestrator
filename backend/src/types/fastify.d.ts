@@ -95,7 +95,6 @@ declare module "fastify" {
             AZURE_OPENAI_ENDPOINT?: string
             AZURE_OPENAI_API_KEY?: string
             AZURE_OPENAI_DEPLOYMENT?: string
-            AZURE_OPENAI_API_VERSION?: string
             AZURE_OPENAI_REASONING?: boolean
             REPOSITORIES_FOLDER: string
             REPOSITORIES_MAX_SIZE_MB: number

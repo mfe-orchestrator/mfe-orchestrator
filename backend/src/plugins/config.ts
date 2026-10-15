@@ -291,10 +291,7 @@ export default fastifyPlugin(
                 AZURE_OPENAI_DEPLOYMENT: {
                     type: "string"
                 },
-                AZURE_OPENAI_API_VERSION: {
-                    type: "string"
-                },
-                // True for reasoning deployments (o-series, GPT-5): the effort is sent as reasoning_effort.
+                // True for reasoning deployments (o-series, GPT-5 and later): the effort is sent as reasoning.effort.
                 AZURE_OPENAI_REASONING: {
                     type: "boolean",
                     default: false
