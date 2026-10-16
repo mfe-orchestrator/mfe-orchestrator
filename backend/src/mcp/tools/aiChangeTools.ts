@@ -116,15 +116,13 @@ export const aiChangeTools = [
     defineTool({
         name: "ai_change_apply",
         title: "Apply AI code change",
-        description: "Commits a PROPOSED change on a new branch of the microfrontend's repository, pushes it and opens a pull request. Files listed in excludePaths are left out.",
+        description:
+            "Commits a PROPOSED change on a new branch of the microfrontend's repository, pushes it and opens a pull request. Every proposed file is committed: they depend on each other, so a proposal cannot be applied in part.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         annotations: DESTRUCTIVE_EXTERNAL,
-        inputSchema: z.object({
-            changeId,
-            excludePaths: z.array(z.string().min(1).max(1_000)).max(100).optional().describe("Paths of proposed files to leave out of the commit")
-        }),
-        run: async (args, { principal }) => toChangeView(await service(principal).apply(args.changeId, { excludePaths: args.excludePaths }))
+        inputSchema: z.object({ changeId }),
+        run: async (args, { principal }) => toChangeView(await service(principal).apply(args.changeId))
     }),
     defineTool({
         name: "ai_change_discard",

@@ -192,8 +192,7 @@ class DetailResolver {
     private async aiChange(id: string): Promise<ConfirmationDetail[]> {
         const change = await new AiChangeService(this.principal, fastify.config).get(id).catch(() => undefined)
         if (!change) return [{ label: "ai_change", value: id }]
-        const excluded = new Set(Array.isArray(this.args.excludePaths) ? this.args.excludePaths.map(String) : [])
-        const files = (change.files ?? []).filter(file => !excluded.has(file.path)).map(file => `${file.action} ${file.path}`)
+        const files = (change.files ?? []).map(file => `${file.action} ${file.path}`)
         const microfrontend = await this.microfrontendLabel(String(change.microfrontendId)).catch(() => undefined)
         return [
             { label: "microfrontend", value: microfrontend ?? String(change.microfrontendId) },

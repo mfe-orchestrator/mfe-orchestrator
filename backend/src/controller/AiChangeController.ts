@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from "fastify"
-import AiChangeService, { AiChangeApplyInput, AiChangeCreateInput } from "../service/aiChange/AiChangeService"
+import AiChangeService, { AiChangeCreateInput } from "../service/aiChange/AiChangeService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
 const createBodySchema = {
@@ -12,12 +12,11 @@ const createBodySchema = {
     }
 }
 
+// A proposal is applied whole: its files depend on each other, so none can be left out.
 const applyBodySchema = {
     type: "object",
     additionalProperties: false,
-    properties: {
-        excludePaths: { type: "array", maxItems: 100, items: { type: "string", maxLength: 1_000 } }
-    }
+    properties: {}
 }
 
 /**
@@ -49,8 +48,8 @@ export default async function aiChangeController(fastify: FastifyInstance) {
 
     fastify.get<{ Params: { id: string } }>("/ai-changes/:id", { config }, async (request, reply) => reply.send(await service(request).get(request.params.id)))
 
-    fastify.post<{ Params: { id: string }; Body: AiChangeApplyInput }>("/ai-changes/:id/apply", { schema: { body: applyBodySchema }, config }, async (request, reply) =>
-        reply.send(await service(request).apply(request.params.id, request.body ?? {}))
+    fastify.post<{ Params: { id: string }; Body: Record<string, never> }>("/ai-changes/:id/apply", { schema: { body: applyBodySchema }, config }, async (request, reply) =>
+        reply.send(await service(request).apply(request.params.id))
     )
 
     fastify.post<{ Params: { id: string } }>("/ai-changes/:id/discard", { config }, async (request, reply) => reply.send(await service(request).discard(request.params.id)))

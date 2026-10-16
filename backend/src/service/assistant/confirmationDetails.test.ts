@@ -171,7 +171,7 @@ describe("describeConfirmation", () => {
         ])
     })
 
-    it("Given an AI change, when described, then its microfrontend, a summary of the prompt and the files it would write are shown, minus the excluded ones", async () => {
+    it("Given an AI change, when described, then its microfrontend, a summary of the prompt and every file it would write are shown", async () => {
         aiChange.mockResolvedValue({
             microfrontendId: CHECKOUT,
             prompt: `Add a coupon field ${"x".repeat(300)}`,
@@ -181,14 +181,14 @@ describe("describeConfirmation", () => {
             ]
         })
 
-        const details = await describeConfirmation(toolNamed("ai_change_apply"), { changeId: CHANGE, excludePaths: ["src/secret.ts"] }, context)
+        const details = await describeConfirmation(toolNamed("ai_change_apply"), { changeId: CHANGE }, context)
 
         expect(details[1]).toEqual({ label: "microfrontend", value: "Checkout 1.1.0 (https://cdn.example.com/checkout)" })
         expect(details[2].label).toBe("prompt")
         expect(details[2].value.startsWith("Add a coupon field")).toBe(true)
         expect(details[2].value.length).toBeLessThanOrEqual(201)
-        expect(details[3]).toEqual({ label: "files", value: "create src/Coupon.tsx" })
-        expect(details[4]).toEqual({ label: "excludePaths", value: "src/secret.ts" })
+        expect(details[3]).toEqual({ label: "files", value: "create src/Coupon.tsx\nupdate src/secret.ts" })
+        expect(details).toHaveLength(4)
     })
 
     it("Given an AI job, when its apply is described, then the prompt and the file count of each repository it would commit are shown", async () => {

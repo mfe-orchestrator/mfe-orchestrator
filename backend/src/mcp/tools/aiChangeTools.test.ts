@@ -164,12 +164,12 @@ describe("AI change tools", () => {
     })
 
     describe("ai_change_apply", () => {
-        it("given a proposal, when applied, then the excluded paths reach the service and the pull request comes back", async () => {
+        it("given a proposal, when applied, then the whole change reaches the service and the pull request comes back", async () => {
             applyChange.mockResolvedValue({ ...changeDocument("APPLIED"), pullRequestUrl: "https://github.com/acme/cart/pull/7" })
 
-            const result = await run("ai_change_apply", { changeId: CHANGE, excludePaths: ["README.md"] })
+            const result = await run("ai_change_apply", { changeId: CHANGE })
 
-            expect(applyChange).toHaveBeenCalledWith(CHANGE, { excludePaths: ["README.md"] })
+            expect(applyChange).toHaveBeenCalledWith(CHANGE)
             expect(result).toMatchObject({ status: "APPLIED", pullRequestUrl: "https://github.com/acme/cart/pull/7" })
         })
 

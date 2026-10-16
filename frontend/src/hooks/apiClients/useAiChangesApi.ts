@@ -83,11 +83,12 @@ const useAiChangesApi = () => {
         return response.data
     }
 
-    const apply = async (id: string, excludePaths?: string[], metadata?: IClientRequestMetadataExtended): Promise<AiChangeRequest> => {
-        const response = await apiClient.doRequest<AiChangeRequest, { excludePaths?: string[] }>({
+    /** Applies the whole proposal: its files depend on each other, so none can be left out. */
+    const apply = async (id: string, metadata?: IClientRequestMetadataExtended): Promise<AiChangeRequest> => {
+        const response = await apiClient.doRequest<AiChangeRequest, Record<string, never>>({
             url: `/api/ai-changes/${id}/apply`,
             method: "POST",
-            data: { excludePaths },
+            data: {},
             ...metadata
         })
         return response.data

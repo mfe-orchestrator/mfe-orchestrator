@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, Spinner, Textarea } from "@mfe-orchestrator/design-system"
+import { Alert, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Spinner, Textarea } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import { format } from "date-fns"
@@ -64,13 +64,12 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
     const { t } = useTranslation()
     const aiChangesApi = useAiChangesApi()
     const notifications = useToastNotificationStore()
-    const [excluded, setExcluded] = useState<Set<string>>(new Set())
     const [expanded, setExpanded] = useState<Set<string>>(() => new Set(request.files.slice(0, 1).map(file => file.path)))
     const idPrefix = useId()
 
     const applyMutation = useMutation({
         mutationFn: () =>
-            aiChangesApi.apply(request._id, excluded.size > 0 ? [...excluded] : undefined, {
+            aiChangesApi.apply(request._id, {
                 customErrorMessage: error => {
                     const code = errorCodeOf(error)
                     if (code === "AI_CHANGE_CONFLICT") return t("microfrontend.aiChange.errors.AI_CHANGE_CONFLICT", { files: conflictsOf(error).join(", ") })
@@ -94,7 +93,6 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
     })
 
     const busy = applyMutation.isPending || discardMutation.isPending
-    const selectedCount = request.files.length - excluded.size
 
     const toggle = (set: Set<string>, path: string) => {
         const next = new Set(set)
@@ -125,21 +123,16 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold">{t("microfrontend.aiChange.files_title")}</h4>
-                <span className="text-xs text-muted-foreground">{t("microfrontend.aiChange.files_selected", { selected: selectedCount, total: request.files.length })}</span>
+                <span className="text-xs text-muted-foreground">{t("microfrontend.aiChange.files_count", { count: request.files.length })}</span>
             </div>
             <ul className="flex flex-col gap-2">
                 {request.files.map(file => {
-                    const checkboxId = `${idPrefix}-file-${file.path}`
                     const diffId = `${idPrefix}-diff-${file.path}`
                     const isExpanded = expanded.has(file.path)
                     return (
                         <li key={file.path} className="overflow-hidden rounded-md border border-divider">
                             <div className="flex items-center gap-2 bg-muted/40 px-3 py-2">
-                                <Checkbox id={checkboxId} checked={!excluded.has(file.path)} disabled={busy} onCheckedChange={() => setExcluded(current => toggle(current, file.path))} />
-                                <Label htmlFor={checkboxId} className="min-w-0 flex-1 cursor-pointer break-all font-mono text-xs">
-                                    <span className="sr-only">{t("microfrontend.aiChange.include_file")} </span>
-                                    {file.path}
-                                </Label>
+                                <span className="min-w-0 flex-1 break-all font-mono text-xs">{file.path}</span>
                                 <Badge variant={ACTION_VARIANT[file.action]}>{t(`microfrontend.aiChange.action.${file.action}`)}</Badge>
                                 <Button
                                     type="button"
@@ -168,7 +161,7 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
                     <Trash2 aria-hidden="true" />
                     {t("microfrontend.aiChange.discard")}
                 </Button>
-                <Button type="button" disabled={busy || selectedCount === 0} onClick={() => applyMutation.mutate()}>
+                <Button type="button" disabled={busy} onClick={() => applyMutation.mutate()}>
                     {applyMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <GitBranch aria-hidden="true" />}
                     {t("microfrontend.aiChange.apply")}
                 </Button>

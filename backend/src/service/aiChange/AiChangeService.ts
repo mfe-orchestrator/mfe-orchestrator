@@ -12,11 +12,6 @@ export interface AiChangeCreateInput {
     baseBranch?: string
 }
 
-export interface AiChangeApplyInput {
-    /** Proposed files the user unticked: they are left out of the commit. */
-    excludePaths?: string[]
-}
-
 /**
  * Code changes to a microfrontend proposed by an AI agent and applied as a pull request.
  *
@@ -89,13 +84,14 @@ export class AiChangeService extends AiChangeBaseService {
     }
 
     /**
-     * Commits the approved files on a new branch, pushes it and opens a pull request, the files
-     * listed in `excludePaths` left out. Refused while a follow-up is refining the proposal.
+     * Commits every file of the proposal on a new branch, pushes it and opens a pull request. The
+     * files depend on each other, so a proposal is applied whole. Refused while a follow-up is
+     * refining the proposal.
      */
-    async apply(id: string, input: AiChangeApplyInput = {}): Promise<IAiChangeRequest> {
+    async apply(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)
         await this.ensureCanChangeProject(request.projectId)
-        const files = this.filesToCommit(request, input.excludePaths)
+        const files = this.filesToCommit(request)
         await ensureNotBeingRefined(request)
 
         // The status flip is the guard against a double click: only one apply leaves PROPOSED.

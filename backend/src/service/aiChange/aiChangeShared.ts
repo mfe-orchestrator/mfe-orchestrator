@@ -83,9 +83,8 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
     }
 
     /** The files of a proposal that will be committed, refused when none is left or one cannot be. */
-    protected filesToCommit(request: IAiChangeRequest, excludePaths: string[] = []): IAiChangeFile[] {
-        const excluded = new Set(excludePaths)
-        const files = request.files.filter(file => !excluded.has(file.path))
+    protected filesToCommit(request: IAiChangeRequest): IAiChangeFile[] {
+        const files = request.files
         if (files.length === 0) {
             throw createBusinessException({ code: "AI_CHANGE_NOTHING_TO_APPLY", message: "No file left to commit", statusCode: 400 })
         }

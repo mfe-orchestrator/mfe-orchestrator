@@ -134,15 +134,18 @@ describe("AiChangeService", () => {
         expect(updates.at(-1)).toMatchObject({ status: AiChangeStatus.PROPOSED })
     })
 
-    it("Given an approved proposal with one file unticked, when it is applied, then only the others are committed on an ai/ branch and a pull request is opened", async () => {
+    it("Given an approved proposal, when it is applied, then all its files are committed on an ai/ branch and a pull request is opened", async () => {
         vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal() as never)
         vi.spyOn(AiChangeRequest, "findOneAndUpdate").mockResolvedValue({ status: AiChangeStatus.APPLYING } as never)
 
-        const applied = await service().apply(new Types.ObjectId().toString(), { excludePaths: ["src/App.tsx"] })
+        const applied = await service().apply(new Types.ObjectId().toString())
 
         const pushed = workingCopy.commitAndPush.mock.calls[0][0]
         expect(pushed.branch).toMatch(/^ai\/catalog-\d{8}-\d{6}$/)
-        expect(pushed.files).toEqual([{ path: "src/pages/NotFound.tsx", action: "create", content: "export const NotFound = () => null\n" }])
+        expect(pushed.files).toEqual([
+            { path: "src/pages/NotFound.tsx", action: "create", content: "export const NotFound = () => null\n" },
+            { path: "src/App.tsx", action: "update", content: "new app\n" }
+        ])
         expect(pushed.message).toBe("Add a 404 page\n\nAdded the page")
         expect(pushed.author).toEqual({ name: "Ada", email: "ada@example.com" })
         expect(workspaceService.openPullRequest).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ sourceBranch: pushed.branch, targetBranch: "main", title: "Add a 404 page" }))
