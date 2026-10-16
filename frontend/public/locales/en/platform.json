@@ -565,7 +565,9 @@
             "storage": "Storage",
             "version": "Version {{version}}",
             "users": "{{count}} user{{count, plural, =1 {} other {s}}}",
-            "build": "Build"
+            "build": "Build",
+            "workingAgents_one": "One agent at work",
+            "workingAgents_other": "{{count}} agents at work"
         },
         "no_microfrontends_found": "No Microfrontends Found",
         "no_microfrontends_found_description": "No microfrontends have been registered yet. Once they're added, they'll appear here. You can create a new one to get started.",

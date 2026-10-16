@@ -2,7 +2,9 @@ import { Handle, type Node, type NodeProps, Position } from "@xyflow/react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
 import { CanaryType, type Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { cn } from "@/utils/styleUtils"
 import CloneRepositoryPopover from "../components/CloneRepositoryPopover"
+import WorkingAgentsIndicator, { useWorkingAgents } from "../components/WorkingAgentsIndicator"
 import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS } from "../labels"
 
 /**
@@ -29,6 +31,7 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
     const { t } = useTranslation("platform")
     const { microfrontend } = data
     const canary = microfrontend.canary?.enabled ? microfrontend.canary : undefined
+    const agents = useWorkingAgents(microfrontend._id)
 
     // A share for the two strategies that split traffic, and who for the one that does not.
     const canaryLabel = canary && (canary.type === CanaryType.ON_USER ? t("microfrontend.canary_enrolled_users") : `${Math.min(100, Math.max(0, canary.percentage ?? 0))}%`)
@@ -47,7 +50,12 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
         : undefined
 
     return (
-        <div className="w-60 overflow-hidden rounded-lg border-2 border-border bg-card text-left shadow-sm transition-colors group-[.is-highlighted]:border-primary">
+        <div
+            className={cn(
+                "w-60 overflow-hidden rounded-lg border-2 border-border bg-card text-left shadow-sm transition-colors group-[.is-highlighted]:border-primary",
+                agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none"
+            )}
+        >
             <Handle type="target" position={Position.Top} className={HANDLE_CLASS} />
 
             <div className="flex items-start gap-2 px-3 pt-2.5">
@@ -78,6 +86,7 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
                         </span>
                     </Badge>
                 )}
+                <WorkingAgentsIndicator agents={agents} compact className="ml-auto" />
             </div>
 
             <Handle type="source" position={Position.Bottom} className={HANDLE_CLASS} />

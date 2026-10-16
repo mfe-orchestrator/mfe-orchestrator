@@ -459,4 +459,32 @@ describe("AiChangeJobService", () => {
             await vi.waitFor(() => expect(applyClaimed).toHaveBeenCalledTimes(2))
         })
     })
+
+    describe("working", () => {
+        it("Given two jobs on the catalog and a change on the cart alone, when the project is asked, then each microfrontend counts its agents", async () => {
+            vi.spyOn(AiChangeJob, "find").mockResolvedValue([{ microfrontendIds: [catalog._id, cart._id] }, { microfrontendIds: [catalog._id] }] as never)
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ microfrontendId: cart._id }] as never)
+
+            const working = await service().working(projectId)
+
+            expect(working).toEqual(
+                expect.arrayContaining([
+                    { microfrontendId: String(catalog._id), agents: 2 },
+                    { microfrontendId: String(cart._id), agents: 2 }
+                ])
+            )
+            // Only what is running and still alive: a job's own requests are counted through the job.
+            const [jobFilter] = (AiChangeJob.find as unknown as ReturnType<typeof vi.fn>).mock.calls[0]
+            expect(jobFilter).toMatchObject({ status: { $in: [AiJobStatus.PENDING, AiJobStatus.RUNNING] }, updatedAt: { $gt: expect.any(Date) } })
+            const [requestFilter] = (AiChangeRequest.find as unknown as ReturnType<typeof vi.fn>).mock.calls[0]
+            expect(requestFilter).toMatchObject({ jobId: { $exists: false }, status: { $in: [AiChangeStatus.PENDING, AiChangeStatus.RUNNING] } })
+        })
+
+        it("Given nothing running, when the project is asked, then no microfrontend is listed", async () => {
+            vi.spyOn(AiChangeJob, "find").mockResolvedValue([] as never)
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
+
+            expect(await service().working(projectId)).toEqual([])
+        })
+    })
 })

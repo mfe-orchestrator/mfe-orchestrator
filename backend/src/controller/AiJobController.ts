@@ -58,6 +58,9 @@ export default async function aiJobController(fastify: FastifyInstance) {
         reply.send(await service(request).list(projectIdOf(request), ["true", "1"].includes(request.query.active ?? "")))
     )
 
+    // Every user's agents, not only the caller's: the microfrontend list shows who is being worked on.
+    fastify.get("/ai-jobs/working", { config }, async (request, reply) => reply.send(await service(request).working(projectIdOf(request))))
+
     fastify.get<{ Params: { id: string } }>("/ai-jobs/:id", { config }, async (request, reply) => reply.send(await service(request).get(request.params.id)))
 
     fastify.get<{ Params: { id: string } }>("/ai-jobs/:id/chain", { config }, async (request, reply) => reply.send(await service(request).chain(request.params.id)))

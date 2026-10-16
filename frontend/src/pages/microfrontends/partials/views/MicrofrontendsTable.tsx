@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, HostedOn, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { BuildDialog, CloneRepositoryPopover } from "@/pages/microfrontends/partials/components"
+import { BuildDialog, CloneRepositoryPopover, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
+import { cn } from "@/utils/styleUtils"
 import { HOST_TYPE_LABEL_KEYS } from "../labels"
 
 interface MicrofrontendsTableProps {
@@ -85,12 +86,18 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
 
     const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false)
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
+    const agents = useWorkingAgents(mfe._id)
 
     return (
-        <TableRow className="border-divider hover:bg-primary/5">
+        <TableRow className={cn("border-divider hover:bg-primary/5", agents > 0 && "bg-primary/5")}>
             {/* Capped so a long name or slug cannot push the action column out of view. */}
-            <TableCell className="max-w-[16rem] truncate font-medium" title={mfe.name}>
-                {mfe.name}
+            <TableCell className="max-w-[16rem] font-medium">
+                <div className="flex items-center gap-2">
+                    <span className="truncate" title={mfe.name}>
+                        {mfe.name}
+                    </span>
+                    <WorkingAgentsIndicator agents={agents} compact />
+                </div>
             </TableCell>
             <TableCell className="max-w-[14rem] truncate text-foreground-secondary" title={mfe.slug}>
                 {mfe.slug}

@@ -5,8 +5,10 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { cn } from "@/utils/styleUtils"
 import BuildDialog from "./BuildDialog"
 import CloneRepositoryPopover from "./CloneRepositoryPopover"
+import WorkingAgentsIndicator, { useWorkingAgents } from "./WorkingAgentsIndicator"
 
 interface MicrofrontendCardProps {
     mfe: Microfrontend
@@ -24,9 +26,10 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
     // as "nobody sees it".
     const showCanaryShare = Boolean(canary) && canary?.type !== CanaryType.ON_USER
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
+    const agents = useWorkingAgents(mfe._id)
 
     return (
-        <Card className="flex h-full flex-col transition-colors duration-200 hover:border-primary">
+        <Card className={cn("flex h-full flex-col transition-colors duration-200 hover:border-primary", agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none")}>
             <CardHeader className="flex-row items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <CardTitle className="mb-0 truncate" title={mfe.name}>
@@ -35,6 +38,7 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                     <p className="truncate text-sm text-foreground-secondary" title={mfe.slug}>
                         {mfe.slug}
                     </p>
+                    <WorkingAgentsIndicator agents={agents} className="mt-2 max-w-full" />
                 </div>
                 <Badge className="shrink-0">{mfe.version}</Badge>
             </CardHeader>

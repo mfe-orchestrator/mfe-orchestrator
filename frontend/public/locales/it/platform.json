@@ -661,7 +661,9 @@
             "storage": "Storage",
             "version": "Versione {{version}}",
             "users": "{{count}} utente{{count, plural, =1 {} other {i}}}",
-            "build": "Build"
+            "build": "Build",
+            "workingAgents_one": "Un agente al lavoro",
+            "workingAgents_other": "{{count}} agenti al lavoro"
         },
         "no_microfrontends_found": "Nessun microfrontend trovato",
         "no_microfrontends_found_description": "Nessun microfrontend è stato ancora registrato. Una volta aggiunti, verranno visualizzati qui. Puoi crearne uno nuovo per iniziare.",

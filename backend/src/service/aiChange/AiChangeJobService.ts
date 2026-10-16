@@ -76,6 +76,12 @@ export interface AiJobView {
     updatedAt: Date
 }
 
+/** The agents at work on one microfrontend: the console animates its card while any is. */
+export interface AiWorkingAgentsView {
+    microfrontendId: string
+    agents: number
+}
+
 /** A repository the job is about to work on. */
 interface JobRepository {
     microfrontend: IMicrofrontend
@@ -581,6 +587,28 @@ export class AiChangeJobService extends AiChangeBaseService {
         const jobs = await Promise.all((await AiChangeJob.find(filter, { events: 0 }).sort({ createdAt: -1 }).limit(LISTED_JOBS)).map(job => this.failIfStale(job)))
         const views = await this.views(jobs, false)
         return active ? views.filter(view => ACTIVE_JOB_STATUSES.includes(view.status) || view.repositories.some(repository => repository.status === AiChangeStatus.PROPOSED)) : views
+    }
+
+    /**
+     * How many agents are working on each microfrontend of the project right now, whoever started them:
+     * a job counts on every repository it works on, a change asked from the microfrontend page on its own.
+     * A job is fresh by its own date, its requests are not touched while it runs.
+     */
+    async working(projectId: string): Promise<AiWorkingAgentsView[]> {
+        await this.ensureAccessToProject(toObjectId(projectId))
+        const fresh = { $gt: new Date(Date.now() - STALE_AFTER_MS) }
+        const [jobs, requests] = await Promise.all([
+            AiChangeJob.find({ projectId: toObjectId(projectId), status: { $in: ACTIVE_JOB_STATUSES }, updatedAt: fresh }, { microfrontendIds: 1 }),
+            AiChangeRequest.find(
+                { projectId: toObjectId(projectId), jobId: { $exists: false }, status: { $in: [AiChangeStatus.PENDING, AiChangeStatus.RUNNING] }, updatedAt: fresh },
+                { microfrontendId: 1 }
+            )
+        ])
+        const agents = new Map<string, number>()
+        for (const id of [...jobs.flatMap(job => job.microfrontendIds), ...requests.map(request => request.microfrontendId)]) {
+            agents.set(String(id), (agents.get(String(id)) ?? 0) + 1)
+        }
+        return [...agents].map(([microfrontendId, count]) => ({ microfrontendId, agents: count }))
     }
 
     /**

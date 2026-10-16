@@ -51,6 +51,11 @@ export interface AiJob {
     updatedAt: string
 }
 
+export interface AiWorkingAgents {
+    microfrontendId: string
+    agents: number
+}
+
 export type CreateAiJobDTO = { prompt: string; scope: "global" } | { prompt: string; scope: "selection"; microfrontendIds: string[] }
 
 export interface FollowUpAiJobDTO {
@@ -110,6 +115,15 @@ const useAiJobsApi = () => {
         return response.data
     }
 
+    /** How many agents of anyone in the project are at work on each microfrontend; those with none are left out. */
+    const working = async (metadata?: IClientRequestMetadataExtended): Promise<AiWorkingAgents[]> => {
+        const response = await apiClient.doRequest<AiWorkingAgents[]>({
+            url: "/api/ai-jobs/working",
+            ...metadata
+        })
+        return response.data
+    }
+
     const apply = async (id: string, metadata?: IClientRequestMetadataExtended): Promise<AiJob> => {
         const response = await apiClient.doRequest<AiJob>({
             url: `/api/ai-jobs/${id}/apply`,
@@ -127,6 +141,7 @@ const useAiJobsApi = () => {
         get,
         chain,
         list,
+        working,
         apply
     }
 }
