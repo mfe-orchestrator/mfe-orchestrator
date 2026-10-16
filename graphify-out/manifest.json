@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792155706.978895,
-    "ast_hash": "badf7dd3ca4405758aba36b2b4e3625b",
+    "mtime": 1792157080.678412,
+    "ast_hash": "155187f55a1512e3d6547463e3256915",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792155705.8366086,
-    "ast_hash": "257002e6f963f2340f7aa1ac31a36a4d",
+    "mtime": 1792157080.6768034,
+    "ast_hash": "cefa8b42bee3f8d479769f76496e91b0",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "frontend/src/Routes.tsx": {
-    "mtime": 1791360193.5614955,
-    "ast_hash": "92bb0a6ba7f3681627c081471ac50ba7",
+    "mtime": 1792157031.6688037,
+    "ast_hash": "da23919ed5e781b5f99a1fbc30d70c09",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.ts": {
@@ -1180,8 +1180,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/AddMicrofrontend.tsx": {
-    "mtime": 1792149841.8778577,
-    "ast_hash": "cce9b263aee226f0ed7c4f3b31887592",
+    "mtime": 1792157089.68562,
+    "ast_hash": "0cc7f63b18b4bc256d5ea45dbe92443a",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/Microfrontends.tsx": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendCard.tsx": {
-    "mtime": 1792155724.900834,
-    "ast_hash": "5dcd58918ec95c71721b740428667161",
+    "mtime": 1792157064.4114943,
+    "ast_hash": "7b5cb4b6b4b68e7c2ce61765dbbcb2a8",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendsEmptyState.tsx": {
@@ -1230,8 +1230,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/index.ts": {
-    "mtime": 1792155703.3532295,
-    "ast_hash": "3c514dc42b1dbe4b0e504794c5b10054",
+    "mtime": 1792156952.7043798,
+    "ast_hash": "2d26bec26d0bd5968ffed84efe583edc",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/labels.ts": {
@@ -1250,8 +1250,8 @@
     "semantic_hash": "1f0f72273838ef4112e228507973cfcf"
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsTable.tsx": {
-    "mtime": 1792155724.9303007,
-    "ast_hash": "3cca77bf211dde91339f1118f9d311c4",
+    "mtime": 1792157080.6362724,
+    "ast_hash": "975ede50defbfec5164b577aa0dc73ab",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/index.ts": {
@@ -2130,8 +2130,8 @@
     "semantic_hash": ""
   },
   "backend/src/utils/migrations.ts": {
-    "mtime": 1787812331.367427,
-    "ast_hash": "c96b8bdbcedfbc917883be22a778ffd9",
+    "mtime": 1792156959.9943213,
+    "ast_hash": "185d4bd8e62d10e93afa3b40fb2c89ed",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendFlowNode.tsx": {
@@ -2410,8 +2410,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/screenshots-microfrontend.spec.ts": {
-    "mtime": 1787820866.9561315,
-    "ast_hash": "1d013de8bda61c104d1e4964c2bce4ad",
+    "mtime": 1792157088.3580053,
+    "ast_hash": "9a82daf664d4a059e823a60fb5b0b955",
     "semantic_hash": ""
   },
   "e2e/tests/screenshots-organizations.spec.ts": {
@@ -3045,13 +3045,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/aiChangeAgent.test.ts": {
-    "mtime": 1792154739.6775634,
-    "ast_hash": "8cd35674b1d77da842a95d2b1d6d4c13",
+    "mtime": 1792157138.5959506,
+    "ast_hash": "9e55cd0d5cff1640be8af9987d292cb4",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/aiChangeAgent.ts": {
-    "mtime": 1792154561.174223,
-    "ast_hash": "a39008faebc109fb18928802d7b237ed",
+    "mtime": 1792157121.8998158,
+    "ast_hash": "4e80a51009419be007b0419079036da3",
     "semantic_hash": ""
   },
   "backend/src/service/workspace/GitWorkingCopy.test.ts": {
@@ -3104,14 +3104,9 @@
     "ast_hash": "2762cc663ca28ac45585de2e27b84664",
     "semantic_hash": ""
   },
-  "frontend/src/pages/microfrontends/partials/components/AiChangeSection.tsx": {
-    "mtime": 1792155437.6456573,
-    "ast_hash": "7bf067520364a63a5ad2e6a2c7400f76",
-    "semantic_hash": ""
-  },
   "docs/AI-CODE-CHANGES.md": {
-    "mtime": 1791929833.2962494,
-    "ast_hash": "cec596ef5d11faafe480af225d65d052",
+    "mtime": 1792157136.4840133,
+    "ast_hash": "338b5815ce6656281e45a6e1c6b03ab0",
     "semantic_hash": ""
   },
   "backend/src/service/llm/anthropicProvider.ts": {
@@ -3250,8 +3245,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/AssistantConversationModel.ts": {
-    "mtime": 1792154578.9693537,
-    "ast_hash": "54b8a7ba3e104ced385b0856595d28e3",
+    "mtime": 1792156945.6509347,
+    "ast_hash": "103e539faaf343c093b181dd159e7162",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/AiChangeJobService.test.ts": {
@@ -3270,13 +3265,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/assistant/conversations.test.ts": {
-    "mtime": 1792155162.2675912,
-    "ast_hash": "2605fa6ee2b87e22642842c5782c1211",
+    "mtime": 1792157045.9425058,
+    "ast_hash": "d03b9de5f57abe9b7851df8781472a67",
     "semantic_hash": ""
   },
   "backend/src/service/assistant/conversations.ts": {
-    "mtime": 1792155335.3684826,
-    "ast_hash": "d950e12c59a97d476c4bf24ef8b2074a",
+    "mtime": 1792157045.942887,
+    "ast_hash": "eb4042aa28c8c490885a86b3fdc25ca2",
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AnswerUsage.tsx": {
@@ -3295,8 +3290,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AssistantJobThread.tsx": {
-    "mtime": 1792154532.3142755,
-    "ast_hash": "7eb22774c5b533baafcb40c81cc62588",
+    "mtime": 1792157031.6693385,
+    "ast_hash": "6a9694bceb3e5b3c026b627c1343c0c5",
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AssistantNewJobDialog.tsx": {
@@ -3327,6 +3322,26 @@
   "frontend/src/pages/microfrontends/partials/components/WorkingAgentsIndicator.tsx": {
     "mtime": 1792155747.623754,
     "ast_hash": "24551abee7c06eb2d962ce081a95436c",
+    "semantic_hash": ""
+  },
+  "backend/src/utils/migrations.test.ts": {
+    "mtime": 1792156987.6586719,
+    "ast_hash": "d8fef6b1627ae32fed5d5f05eaa8b1b6",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/partials/components/AiChangeWorkspace.tsx": {
+    "mtime": 1792157015.8262928,
+    "ast_hash": "952cf047002e2cd44a1804c6a9629f3a",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/partials/components/MicrofrontendHeader.tsx": {
+    "mtime": 1792157089.685611,
+    "ast_hash": "a0fa6bccff8c34ddd44ed7017d4fc8e1",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/MicrofrontendAiWorkspace.tsx": {
+    "mtime": 1792157030.4073327,
+    "ast_hash": "70ac86cf502b97c326376eafc5bc5849",
     "semantic_hash": ""
   }
 }

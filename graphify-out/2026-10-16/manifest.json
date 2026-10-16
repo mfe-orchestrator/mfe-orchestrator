@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792155437.651647,
-    "ast_hash": "3f9fc5141817a870a98355467a7fd099",
+    "mtime": 1792155706.978895,
+    "ast_hash": "badf7dd3ca4405758aba36b2b4e3625b",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792155442.2743886,
-    "ast_hash": "ec607617476c183a16f2d79c3343d1d9",
+    "mtime": 1792155705.8366086,
+    "ast_hash": "257002e6f963f2340f7aa1ac31a36a4d",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendCard.tsx": {
-    "mtime": 1787812331.4054708,
-    "ast_hash": "06f32bf905a63f8a42955a0b702269ef",
+    "mtime": 1792155724.900834,
+    "ast_hash": "5dcd58918ec95c71721b740428667161",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendsEmptyState.tsx": {
@@ -1230,8 +1230,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/index.ts": {
-    "mtime": 1791928666.7113721,
-    "ast_hash": "a60d1140ee8d8886eefb44fb11513ba2",
+    "mtime": 1792156952.7043798,
+    "ast_hash": "2d26bec26d0bd5968ffed84efe583edc",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/labels.ts": {
@@ -1250,8 +1250,8 @@
     "semantic_hash": "1f0f72273838ef4112e228507973cfcf"
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsTable.tsx": {
-    "mtime": 1787812331.4065351,
-    "ast_hash": "4ceb1db21a631c234362b7a584ea36d4",
+    "mtime": 1792155724.9303007,
+    "ast_hash": "3cca77bf211dde91339f1118f9d311c4",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/index.ts": {
@@ -2130,13 +2130,13 @@
     "semantic_hash": ""
   },
   "backend/src/utils/migrations.ts": {
-    "mtime": 1787812331.367427,
-    "ast_hash": "c96b8bdbcedfbc917883be22a778ffd9",
+    "mtime": 1792156959.9943213,
+    "ast_hash": "185d4bd8e62d10e93afa3b40fb2c89ed",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendFlowNode.tsx": {
-    "mtime": 1787812331.4061542,
-    "ast_hash": "11536b49cde9acf2fc481f75367eca6f",
+    "mtime": 1792155724.9235585,
+    "ast_hash": "d9dfb2d6f23b2be402f8f8aea37691e1",
     "semantic_hash": ""
   },
   "frontend/public/img/logo.png": {
@@ -3104,11 +3104,6 @@
     "ast_hash": "2762cc663ca28ac45585de2e27b84664",
     "semantic_hash": ""
   },
-  "frontend/src/pages/microfrontends/partials/components/AiChangeSection.tsx": {
-    "mtime": 1792155437.6456573,
-    "ast_hash": "7bf067520364a63a5ad2e6a2c7400f76",
-    "semantic_hash": ""
-  },
   "docs/AI-CODE-CHANGES.md": {
     "mtime": 1791929833.2962494,
     "ast_hash": "cec596ef5d11faafe480af225d65d052",
@@ -3240,8 +3235,8 @@
     "semantic_hash": ""
   },
   "backend/src/controller/AiJobController.ts": {
-    "mtime": 1792154621.9081197,
-    "ast_hash": "2e246ee4f47e4857d7553894ce99a2a9",
+    "mtime": 1792155747.623684,
+    "ast_hash": "cb41843e33dd20500c5aa901f024ac38",
     "semantic_hash": ""
   },
   "backend/src/models/AiChangeJobModel.ts": {
@@ -3250,18 +3245,18 @@
     "semantic_hash": ""
   },
   "backend/src/models/AssistantConversationModel.ts": {
-    "mtime": 1792154578.9693537,
-    "ast_hash": "54b8a7ba3e104ced385b0856595d28e3",
+    "mtime": 1792156945.6509347,
+    "ast_hash": "103e539faaf343c093b181dd159e7162",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/AiChangeJobService.test.ts": {
-    "mtime": 1792154739.6796908,
-    "ast_hash": "17e6c078fc285f23779e4500833bb863",
+    "mtime": 1792155624.752235,
+    "ast_hash": "2d8f30d8476ba9b6e37a7005a6c9feb9",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/AiChangeJobService.ts": {
-    "mtime": 1792154739.6810102,
-    "ast_hash": "e0c9e57cce2909c6772121ab46a024a9",
+    "mtime": 1792155608.6799533,
+    "ast_hash": "3f2c4ea586362055ede5cf71c4439f84",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/aiChangeShared.ts": {
@@ -3270,13 +3265,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/assistant/conversations.test.ts": {
-    "mtime": 1792155162.2675912,
-    "ast_hash": "2605fa6ee2b87e22642842c5782c1211",
+    "mtime": 1792156976.3854356,
+    "ast_hash": "d093fa8e6785e81f0240467c8be4dc5f",
     "semantic_hash": ""
   },
   "backend/src/service/assistant/conversations.ts": {
-    "mtime": 1792155335.3684826,
-    "ast_hash": "d950e12c59a97d476c4bf24ef8b2074a",
+    "mtime": 1792156959.993655,
+    "ast_hash": "c2093729136167b79e2d344dfe2567eb",
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AnswerUsage.tsx": {
@@ -3310,8 +3305,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useAiJobsApi.ts": {
-    "mtime": 1792149741.6731844,
-    "ast_hash": "40be480b5ca78080157b75ac393fb9c9",
+    "mtime": 1792155701.130552,
+    "ast_hash": "40ddead243cb6fb3d8e85bf185c60162",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/AiChangeProgress.tsx": {
@@ -3322,6 +3317,26 @@
   "frontend/src/store/useAssistantJobsStore.ts": {
     "mtime": 1792154553.7917418,
     "ast_hash": "284d7835ee2ad3d43ec43a9def7ddba5",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/partials/components/WorkingAgentsIndicator.tsx": {
+    "mtime": 1792155747.623754,
+    "ast_hash": "24551abee7c06eb2d962ce081a95436c",
+    "semantic_hash": ""
+  },
+  "backend/src/utils/migrations.test.ts": {
+    "mtime": 1792156987.6586719,
+    "ast_hash": "d8fef6b1627ae32fed5d5f05eaa8b1b6",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/partials/components/AiChangeWorkspace.tsx": {
+    "mtime": 1792157005.045854,
+    "ast_hash": "acd06d2371bb11f0625e68a834863448",
+    "semantic_hash": ""
+  },
+  "frontend/src/pages/microfrontends/partials/components/MicrofrontendHeader.tsx": {
+    "mtime": 1792156922.8537064,
+    "ast_hash": "d981b4f6fdab4be6b7d7be48e568c287",
     "semantic_hash": ""
   }
 }
