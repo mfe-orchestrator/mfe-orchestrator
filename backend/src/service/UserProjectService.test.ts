@@ -7,7 +7,7 @@ vi.mock("..", () => ({
 }))
 
 import Project from "../models/ProjectModel"
-import User, { IUser } from "../models/UserModel"
+import User, { IUser, UserStatus } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import UserOrganizationService from "./UserOrganizationService"
@@ -24,7 +24,9 @@ const ORGANIZATION_ID = newId()
 
 const aUser = (email: string): IUser => ({ _id: newId(), email }) as unknown as IUser
 
-let projectMemberships: { userId: ObjectId; projectId: ObjectId; role: RoleInProject; invitationToken?: string }[]
+type ProjectMembership = { _id?: ObjectId; userId: ObjectId; projectId: ObjectId; role: RoleInProject; invitationToken?: string; save?: () => Promise<unknown> }
+
+let projectMemberships: ProjectMembership[]
 let organizationMemberships: { userId: ObjectId; organizationId: ObjectId; role: RoleInOrganization }[]
 let createdProjectMemberships: { userId: string; role: RoleInProject }[]
 let deletedInvitations: number
@@ -120,6 +122,161 @@ describe("UserProjectService", () => {
 
             await expect(new UserProjectService(invitee).declineMyInvitation(PROJECT_ID)).rejects.toThrow(/no pending invitation/i)
             expect(prune).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("member management", () => {
+        let owner: IUser
+        let member: IUser
+        let viewer: IUser
+        let invitedStatusById: Map<string, UserStatus>
+        let deletedMembershipIds: string[]
+
+        /** A membership row the service can change and save, as a mongoose document would be. */
+        const joins = (user: IUser, role: RoleInProject, invitationToken?: string): ProjectMembership => {
+            const membership: ProjectMembership = { _id: newId(), userId: user._id, projectId: PROJECT_ID, role, invitationToken }
+            membership.save = () => Promise.resolve(membership)
+            projectMemberships.push(membership)
+            return membership
+        }
+
+        const roleOf = (user: IUser) => projectMemberships.find(membership => sameId(membership.userId, user._id))?.role
+
+        beforeEach(() => {
+            owner = aUser("owner@example.com")
+            member = aUser("member@example.com")
+            viewer = aUser("viewer@example.com")
+            joins(owner, RoleInProject.OWNER)
+            joins(member, RoleInProject.MEMBER)
+            joins(viewer, RoleInProject.VIEWER)
+            invitedStatusById = new Map()
+            deletedMembershipIds = []
+
+            vi.spyOn(User, "findById").mockImplementation(((id: unknown) => thenable({ _id: id, status: invitedStatusById.get(String(id)) ?? UserStatus.ACTIVE })) as never)
+            vi.spyOn(UserProject, "countDocuments").mockImplementation(((filter: { userId: { $ne: unknown } }) =>
+                Promise.resolve(
+                    projectMemberships.filter(membership => membership.role === RoleInProject.OWNER && !membership.invitationToken && !sameId(membership.userId, filter.userId.$ne)).length
+                )) as never)
+            vi.spyOn(UserProject, "deleteOne").mockImplementation(((filter: { _id: unknown }) => {
+                deletedMembershipIds.push(String(filter._id))
+                return Promise.resolve({ deletedCount: 1 })
+            }) as never)
+        })
+
+        it("Given a project owner, when they change a member's role, then the new role is saved", async () => {
+            const saved = await new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.VIEWER)
+
+            expect(saved.role).toBe(RoleInProject.VIEWER)
+            expect(roleOf(member)).toBe(RoleInProject.VIEWER)
+        })
+
+        it("Given a project owner, when they remove a member, then the membership is deleted", async () => {
+            const membership = projectMemberships.find(candidate => sameId(candidate.userId, member._id))!
+
+            await new UserProjectService(owner).removeUserFromProject(PROJECT_ID, member._id)
+
+            expect(deletedMembershipIds).toEqual([String(membership._id)])
+        })
+
+        /** The assistant runs its tools with a principal bound to the project: the organization role still counts there. */
+        it("Given an organization administrator outside the project and bound to it, when they change a role, then it is allowed as for an owner", async () => {
+            const admin = aUser("admin@example.com")
+            organizationMemberships.push({ userId: admin._id, organizationId: ORGANIZATION_ID, role: RoleInOrganization.ADMIN })
+
+            await new UserProjectService({ ...admin, restrictedToProjectIds: [String(PROJECT_ID)] }).updateUserRole(PROJECT_ID, member._id, RoleInProject.OWNER)
+
+            expect(roleOf(member)).toBe(RoleInProject.OWNER)
+        })
+
+        it.each([
+            ["MEMBER", () => member],
+            ["VIEWER", () => viewer]
+        ])("Given a %s, when they try to make themselves an owner, then it is refused and nothing changes", async (_role, actor) => {
+            const before = roleOf(actor())
+
+            await expect(new UserProjectService(actor()).updateUserRole(PROJECT_ID, actor()._id, RoleInProject.OWNER)).rejects.toMatchObject({
+                code: "PROJECT_OWNER_REQUIRED",
+                statusCode: 403
+            })
+            expect(roleOf(actor())).toBe(before)
+        })
+
+        it("Given a member, when they try to remove the owner, then it is refused and nothing is deleted", async () => {
+            await expect(new UserProjectService(member).removeUserFromProject(PROJECT_ID, owner._id)).rejects.toMatchObject({ code: "PROJECT_OWNER_REQUIRED" })
+            expect(deletedMembershipIds).toHaveLength(0)
+        })
+
+        /** An invitation hands out a role: a MEMBER could otherwise bring in an OWNER, or rewrite a pending invitation's role. */
+        it("Given a member, when they invite somebody or resend an invitation, then it is refused before anything is written", async () => {
+            const invited = aUser("invited@example.com")
+            joins(invited, RoleInProject.VIEWER, "token")
+            const ensureMembership = vi.spyOn(UserOrganizationService.prototype, "ensureMembership").mockResolvedValue({} as never)
+
+            await expect(new UserProjectService(member).addUserToProjectByEmail(PROJECT_ID, "new@example.com", RoleInProject.OWNER)).rejects.toMatchObject({ code: "PROJECT_OWNER_REQUIRED" })
+            await expect(new UserProjectService(member).addUserToProjectByEmail(PROJECT_ID, invited.email, RoleInProject.OWNER)).rejects.toMatchObject({ code: "PROJECT_OWNER_REQUIRED" })
+            await expect(new UserProjectService(member).resendInvitation(PROJECT_ID, invited._id)).rejects.toMatchObject({ code: "PROJECT_OWNER_REQUIRED" })
+            expect(ensureMembership).not.toHaveBeenCalled()
+            expect(roleOf(invited)).toBe(RoleInProject.VIEWER)
+            expect(createdProjectMemberships).toHaveLength(0)
+        })
+
+        it("Given an owner whose own owner invitation is still pending, when they change a role, then it is refused", async () => {
+            const invited = aUser("invited@example.com")
+            joins(invited, RoleInProject.OWNER, "pending-token")
+
+            await expect(new UserProjectService(invited).updateUserRole(PROJECT_ID, member._id, RoleInProject.VIEWER)).rejects.toThrow(/cannot access this project/i)
+        })
+
+        it("Given someone outside the project, when they try to change a role or remove a member, then it is refused", async () => {
+            const stranger = aUser("stranger@example.com")
+
+            await expect(new UserProjectService(stranger).updateUserRole(PROJECT_ID, member._id, RoleInProject.OWNER)).rejects.toThrow(/cannot access this project/i)
+            await expect(new UserProjectService(stranger).removeUserFromProject(PROJECT_ID, member._id)).rejects.toThrow(/cannot access this project/i)
+            expect(roleOf(member)).toBe(RoleInProject.MEMBER)
+            expect(deletedMembershipIds).toHaveLength(0)
+        })
+
+        it("Given the last owner, when they demote themselves, then it is refused", async () => {
+            await expect(new UserProjectService(owner).updateUserRole(PROJECT_ID, owner._id, RoleInProject.MEMBER)).rejects.toMatchObject({ code: "PROJECT_LAST_OWNER", statusCode: 400 })
+            expect(roleOf(owner)).toBe(RoleInProject.OWNER)
+        })
+
+        it("Given the last owner, when they are removed, then it is refused", async () => {
+            await expect(new UserProjectService(owner).removeUserFromProject(PROJECT_ID, owner._id)).rejects.toMatchObject({ code: "PROJECT_LAST_OWNER" })
+            expect(deletedMembershipIds).toHaveLength(0)
+        })
+
+        /** Until accepted, an invited owner owns nothing: they cannot stand in for the last real one. */
+        it("Given another owner whose invitation is still pending, when the only accepted owner is demoted, then it is refused", async () => {
+            joins(aUser("invited@example.com"), RoleInProject.OWNER, "pending-token")
+
+            await expect(new UserProjectService(owner).updateUserRole(PROJECT_ID, owner._id, RoleInProject.VIEWER)).rejects.toMatchObject({ code: "PROJECT_LAST_OWNER" })
+        })
+
+        it("Given a second accepted owner, when the first one is demoted, then it is allowed", async () => {
+            joins(aUser("second-owner@example.com"), RoleInProject.OWNER)
+
+            await new UserProjectService(owner).updateUserRole(PROJECT_ID, owner._id, RoleInProject.MEMBER)
+
+            expect(roleOf(owner)).toBe(RoleInProject.MEMBER)
+        })
+
+        it("Given a user who is not in the project, when their role is changed, then it is not found", async () => {
+            await expect(new UserProjectService(owner).updateUserRole(PROJECT_ID, aUser("nobody@example.com")._id, RoleInProject.VIEWER)).rejects.toThrow(/not a member of this project/i)
+        })
+
+        /** An account that only existed to be invited would otherwise linger, attached to nothing. */
+        it("Given a revoked invitation of a user who never signed up, when removed, then their organization membership and account are cleaned up", async () => {
+            const invited = aUser("invited@example.com")
+            joins(invited, RoleInProject.MEMBER, "pending-token")
+            invitedStatusById.set(String(invited._id), UserStatus.INVITED)
+            const prune = vi.spyOn(UserOrganizationService.prototype, "pruneImplicitMembership").mockResolvedValue(undefined)
+            const dropAccount = vi.spyOn(UserOrganizationService.prototype, "deleteUserIfOnlyEverInvited").mockResolvedValue(undefined)
+
+            await new UserProjectService(owner).removeUserFromProject(PROJECT_ID, invited._id)
+
+            expect(prune).toHaveBeenCalledWith(invited._id, ORGANIZATION_ID)
+            expect(dropAccount).toHaveBeenCalledTimes(1)
         })
     })
 })

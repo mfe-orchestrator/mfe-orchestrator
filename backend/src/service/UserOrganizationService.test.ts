@@ -7,6 +7,7 @@ vi.mock("..", () => ({
 }))
 
 import { BusinessException } from "../errors/BusinessException"
+import Organization from "../models/OrganizationModel"
 import Project from "../models/ProjectModel"
 import User, { IUser, UserStatus } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
@@ -143,6 +144,49 @@ describe("UserOrganizationService", () => {
         })
     })
 
+    describe("addUserToOrganizationByEmail", () => {
+        const invitee = { _id: newId(), email: "invitee@example.com" }
+
+        beforeEach(() => {
+            vi.spyOn(Organization, "findById").mockImplementation((() => thenable({ _id: ORGANIZATION_ID, name: "Acme" })) as never)
+            vi.spyOn(User, "findOne").mockImplementation((() => thenable(invitee)) as never)
+        })
+
+        /** Consistent with updateRole: an admin handing out ownership would make the distinction meaningless. */
+        it("Given an admin, when they invite somebody as owner, then it is refused and nobody is invited", async () => {
+            const admin = aUser()
+            aMembership(admin._id, RoleInOrganization.ADMIN)
+
+            await expect(new UserOrganizationService(admin).addUserToOrganizationByEmail(ORGANIZATION_ID, invitee.email, RoleInOrganization.OWNER)).rejects.toMatchObject({
+                code: "ORGANIZATION_OWNER_REQUIRED"
+            })
+            expect(createdMemberships).toHaveLength(0)
+        })
+
+        it("Given an admin, when they re-invite somebody whose pending invitation makes them owner, then the role is not rewritten", async () => {
+            const admin = aUser()
+            aMembership(admin._id, RoleInOrganization.ADMIN)
+            const pending = aMembership(invitee._id as ObjectId, RoleInOrganization.OWNER, "token")
+
+            await expect(new UserOrganizationService(admin).addUserToOrganizationByEmail(ORGANIZATION_ID, invitee.email, RoleInOrganization.MEMBER)).rejects.toMatchObject({
+                code: "ORGANIZATION_OWNER_REQUIRED"
+            })
+            expect(pending.role).toBe(RoleInOrganization.OWNER)
+            expect(pending.save).not.toHaveBeenCalled()
+        })
+
+        it("Given an owner, when they invite somebody as owner, then the membership is created", async () => {
+            const owner = aUser()
+            aMembership(owner._id, RoleInOrganization.OWNER)
+            const service = new UserOrganizationService(owner)
+            vi.spyOn(service.emailSenderService, "canSendEmails").mockReturnValue(false)
+
+            await service.addUserToOrganizationByEmail(ORGANIZATION_ID, invitee.email, RoleInOrganization.OWNER)
+
+            expect(createdMemberships).toEqual([{ userId: String(invitee._id), organizationId: String(ORGANIZATION_ID), role: RoleInOrganization.OWNER }])
+        })
+    })
+
     describe("updateRole", () => {
         const codeOf = async (promise: Promise<unknown>) => {
             try {
@@ -210,6 +254,17 @@ describe("UserOrganizationService", () => {
             aMembership(owner._id, RoleInOrganization.OWNER)
 
             await expect(new UserOrganizationService(owner).removeUser(ORGANIZATION_ID, owner._id)).rejects.toThrow(/last owner/i)
+        })
+
+        it("Given an admin, when they try to remove an owner, then it is refused even though another owner remains", async () => {
+            const admin = aUser()
+            const owner = aUser()
+            aMembership(admin._id, RoleInOrganization.ADMIN)
+            aMembership(owner._id, RoleInOrganization.OWNER)
+            aMembership(aUser()._id, RoleInOrganization.OWNER)
+
+            await expect(new UserOrganizationService(admin).removeUser(ORGANIZATION_ID, owner._id)).rejects.toMatchObject({ code: "ORGANIZATION_OWNER_REQUIRED" })
+            expect(deletedFilters).toHaveLength(0)
         })
 
         /**

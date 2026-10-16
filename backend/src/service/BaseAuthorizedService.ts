@@ -150,7 +150,11 @@ export default abstract class BaseAuthorizedService {
         return this.findRoleInOrganization(organizationId, session)
     }
 
-    private async findRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
+    /**
+     * The organization role as stored, ignoring the project binding of the principal. Only for checks
+     * about a project the principal is bound to, where an organization administrator acts as an owner.
+     */
+    protected async findRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
         if (!this.user) {
             return undefined
         }
