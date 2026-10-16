@@ -40,7 +40,8 @@ const microfrontendFields = {
             storageId: objectId("Id of a storage of this project").optional(),
             entryPoint: z.string().max(500).optional()
         })
-        .optional(),
+        .optional()
+        .describe("Where the bundle is served from. Omit it to use the project's default storage, or the MFE Orchestrator hub when the project has none"),
     codeRepository: z
         .object({
             enabled: z.boolean(),

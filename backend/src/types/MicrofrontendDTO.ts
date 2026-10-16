@@ -1,4 +1,4 @@
-import { CanaryDeploymentType, CanaryType } from "../models/MicrofrontendModel"
+import { CanaryDeploymentType, CanaryType, IHostMicrofrontend } from "../models/MicrofrontendModel"
 import { MicrofrontendStackDTO } from "./MicrofrontendStack"
 
 interface MicrofrontendDTO {
@@ -17,6 +17,8 @@ interface MicrofrontendDTO {
     createdAt?: Date
     updatedAt?: Date
     parentIds?: string[]
+    /** Omitted on create: the project's default hosting is used */
+    host?: IHostMicrofrontend
     codeRepository: {
         enabled: boolean
         codeRepositoryId: string

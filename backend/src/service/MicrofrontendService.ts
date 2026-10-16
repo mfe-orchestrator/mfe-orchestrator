@@ -20,7 +20,7 @@ import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
 import { IMarket } from "../models/MarketModel"
-import Microfrontend, { HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
@@ -142,8 +142,23 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         return await Microfrontend.create({
             ...microfrontend,
+            host: microfrontend.host ?? (await this.defaultHost(projectIdObj)),
             projectId: projectIdObj
         } as unknown as IMicrofrontend)
+    }
+
+    /**
+     * The hosting the console preselects for a new microfrontend: the project's default storage,
+     * or the MFE Orchestrator hub when it has none. Applied when a caller (the assistant, an MCP
+     * client) creates one without saying where it is served from.
+     */
+    private async defaultHost(projectId: ReturnType<typeof toObjectId>): Promise<IHostMicrofrontend> {
+        const entryPoint = "assets/remoteEntry.js"
+        const storage = await Storage.findOne({ projectId, default: true }, { _id: 1 })
+        if (!storage) {
+            return { type: HostedOn.MFE_ORCHESTRATOR_HUB, entryPoint }
+        }
+        return { type: HostedOn.CUSTOM_SOURCE, storageId: storage._id as unknown as IHostMicrofrontend["storageId"], entryPoint }
     }
     async gitHubInjectApiKey(codeRepository: ICodeRepository, microfrontend: MicrofrontendDTO) {
         if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
