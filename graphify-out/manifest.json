@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "backend/src/client/AzureDevOpsClient.ts": {
-    "mtime": 1791927951.179553,
-    "ast_hash": "d10247141795861d0c7787c36027250e",
+    "mtime": 1792183137.9225624,
+    "ast_hash": "d7e4306a6cbcc90d9c16628642a30b97",
     "semantic_hash": ""
   },
   "backend/src/client/AzureStorageAccount.ts": {
@@ -370,8 +370,8 @@
     "semantic_hash": "6c489d61c3ff5e246f7e6987f4b5ae30"
   },
   "backend/src/service/CodeRepositoryService.ts": {
-    "mtime": 1791316089.419195,
-    "ast_hash": "7c3c2a28ed70e31294e8131a976b828c",
+    "mtime": 1792183137.923072,
+    "ast_hash": "abb43e726572caa86be4410904b79f9b",
     "semantic_hash": ""
   },
   "backend/src/service/DeploymentCanaryUsersService.ts": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.ts": {
-    "mtime": 1791928195.3730676,
-    "ast_hash": "8882126113dfa6c62d5a81a60924d476",
+    "mtime": 1792183123.4008837,
+    "ast_hash": "d0200b5c97f5113e10b7e47f580e9a94",
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.ts": {
@@ -500,8 +500,8 @@
     "semantic_hash": "978c409a893a40189619d3051c4ad22b"
   },
   "backend/src/types/MicrofrontendDTO.ts": {
-    "mtime": 1791926051.6930268,
-    "ast_hash": "044bd4a844081e202745a618d260f718",
+    "mtime": 1792183121.1839762,
+    "ast_hash": "13401f41d56888d412caffc4b96e07d3",
     "semantic_hash": ""
   },
   "backend/src/types/MicrofrontendUploadDTO.ts": {
@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792157080.678412,
-    "ast_hash": "155187f55a1512e3d6547463e3256915",
+    "mtime": 1792183173.008596,
+    "ast_hash": "ea51c1fb01840fbe4f2dd1064e4d49fe",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792157080.6768034,
-    "ast_hash": "cefa8b42bee3f8d479769f76496e91b0",
+    "mtime": 1792183173.009242,
+    "ast_hash": "e03837397f7298eb991945311b299cd8",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -875,8 +875,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useCodeRepositoriesApi.ts": {
-    "mtime": 1787812331.3928602,
-    "ast_hash": "72cf79c86fb105769753bb860fa6f1b0",
+    "mtime": 1792183172.991815,
+    "ast_hash": "132e3733a3126d11767b7a5786744eeb",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useDeploymentsApi.ts": {
@@ -955,8 +955,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/useApiClient.tsx": {
-    "mtime": 1787840066.1571312,
-    "ast_hash": "1205c4f63f225f7e5577eafdc264c251",
+    "mtime": 1792183172.9715822,
+    "ast_hash": "06896c4c5800060e35bc11d9c18bf249",
     "semantic_hash": ""
   },
   "frontend/src/hooks/useDragAndDropOrder.ts": {
@@ -1030,8 +1030,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/code-repositories/AddAzure.tsx": {
-    "mtime": 1787812331.3984246,
-    "ast_hash": "924719ded73fa9a9192717ad43b8bae7",
+    "mtime": 1792183173.0079703,
+    "ast_hash": "3eba6886a4d557d0711904b4cb0bcc21",
     "semantic_hash": ""
   },
   "frontend/src/pages/code-repositories/AddGitHub.tsx": {
@@ -2700,8 +2700,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/microfrontendTools.ts": {
-    "mtime": 1792097479.6673474,
-    "ast_hash": "972235e4ddd5b1976349d64f83757c43",
+    "mtime": 1792183124.521173,
+    "ast_hash": "ad6b70ad7183a20ea301f62bb8654d17",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectTools.ts": {
@@ -3330,8 +3330,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/AiChangeWorkspace.tsx": {
-    "mtime": 1792157497.563524,
-    "ast_hash": "e389b6f242d0b063da523653d2af5d5d",
+    "mtime": 1792158182.6480618,
+    "ast_hash": "ca5f225516089fda8d5444c3ad8dfbe5",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendHeader.tsx": {
@@ -3342,6 +3342,16 @@
   "frontend/src/pages/microfrontends/MicrofrontendAiWorkspace.tsx": {
     "mtime": 1792157497.5639691,
     "ast_hash": "50ab821e2527a76a9b02af57df44df43",
+    "semantic_hash": ""
+  },
+  "backend/src/client/AzureDevOpsClient.test.ts": {
+    "mtime": 1792183224.1524975,
+    "ast_hash": "0e5c784ad82d5a651e71bca9cd3053a0",
+    "semantic_hash": ""
+  },
+  "backend/src/service/MicrofrontendService.defaultHost.test.ts": {
+    "mtime": 1792183225.2519724,
+    "ast_hash": "ace387d9e01f4da0e2aa14896f1138f8",
     "semantic_hash": ""
   }
 }

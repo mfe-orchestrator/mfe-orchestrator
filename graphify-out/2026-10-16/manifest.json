@@ -1180,8 +1180,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/AddMicrofrontend.tsx": {
-    "mtime": 1792157089.68562,
-    "ast_hash": "0cc7f63b18b4bc256d5ea45dbe92443a",
+    "mtime": 1792157507.8824015,
+    "ast_hash": "7d4c0d1c0f47b1d36081ba17652c5fa9",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/Microfrontends.tsx": {
@@ -2405,8 +2405,8 @@
     "semantic_hash": ""
   },
   "e2e/tests/screenshots-canary.spec.ts": {
-    "mtime": 1787818903.4534817,
-    "ast_hash": "51b1d3863178d38f080cb0f7fd01ff85",
+    "mtime": 1792157513.0640209,
+    "ast_hash": "08a2d282226071daa78cf6f8e035e474",
     "semantic_hash": ""
   },
   "e2e/tests/screenshots-microfrontend.spec.ts": {
@@ -3330,18 +3330,18 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/AiChangeWorkspace.tsx": {
-    "mtime": 1792157015.8262928,
-    "ast_hash": "952cf047002e2cd44a1804c6a9629f3a",
+    "mtime": 1792157497.563524,
+    "ast_hash": "e389b6f242d0b063da523653d2af5d5d",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendHeader.tsx": {
-    "mtime": 1792157089.685611,
-    "ast_hash": "a0fa6bccff8c34ddd44ed7017d4fc8e1",
+    "mtime": 1792157497.5643723,
+    "ast_hash": "e47f683343e5264a35a73c0d1e5d78cb",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/MicrofrontendAiWorkspace.tsx": {
-    "mtime": 1792157030.4073327,
-    "ast_hash": "70ac86cf502b97c326376eafc5bc5849",
+    "mtime": 1792157497.5639691,
+    "ast_hash": "50ab821e2527a76a9b02af57df44df43",
     "semantic_hash": ""
   }
 }
