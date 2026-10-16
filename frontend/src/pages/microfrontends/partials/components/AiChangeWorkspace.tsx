@@ -189,7 +189,10 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
             <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                        <CardTitle className="mb-0 break-words">{firstLine(request.prompt)}</CardTitle>
+                        {/* A prompt is often one long line: clamp it, the whole text is one click away under "Show the full request". */}
+                        <CardTitle className="mb-0 line-clamp-3 break-words text-base leading-snug" title={firstLine(request.prompt)}>
+                            {firstLine(request.prompt)}
+                        </CardTitle>
                         <CardDescription>
                             {t("microfrontend.aiChange.request_meta", {
                                 date: format(new Date(request.createdAt), "PPp", { locale: themeStore.getLocale() }),
