@@ -1,6 +1,7 @@
 import { useAuth0 } from "@auth0/auth0-react"
 import { useMsal } from "@azure/msal-react"
 import { deleteToken } from "@/authentication/tokenUtils"
+import useAssistantJobsStore from "@/store/useAssistantJobsStore"
 import useAssistantStore from "@/store/useAssistantStore"
 import useUserStore from "@/store/useUserStore"
 
@@ -49,8 +50,9 @@ const useLogout = () => {
             console.error("Error during logout:", error)
         } finally {
             clearUser()
-            // The conversations are kept in the browser: the next person signing in here must not see them.
+            // The conversations and the job tabs are kept in the browser: the next person signing in here must not see them.
             useAssistantStore.getState().clearAll()
+            useAssistantJobsStore.getState().clearAll()
         }
     }
 

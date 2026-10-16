@@ -1,8 +1,10 @@
 import { fastify } from "../.."
 import { McpToolContext, McpToolDefinition } from "../../mcp/toolDefinition"
+import { AiChangeStatus } from "../../models/AiChangeRequestModel"
 import { IDeployment } from "../../models/DeploymentModel"
 import { IMicrofrontend } from "../../models/MicrofrontendModel"
 import { ApiKeyService } from "../ApiKeyService"
+import AiChangeJobService from "../aiChange/AiChangeJobService"
 import AiChangeService from "../aiChange/AiChangeService"
 import CodeRepositoryService from "../CodeRepositoryService"
 import DeploymentService from "../DeploymentService"
@@ -179,6 +181,8 @@ class DetailResolver {
                 return each("code_repository", async id => (await new CodeRepositoryService(this.principal).findById(id))?.name)
             case "changeId":
                 return this.aiChange(String(value))
+            case "jobId":
+                return this.aiJob(String(value))
             default:
                 return [{ label: key, value: rawValue(value) }]
         }
@@ -196,6 +200,16 @@ class DetailResolver {
             { label: "prompt", value: clip(change.prompt ?? "") },
             ...(files.length ? [{ label: "files", value: lines(files) }] : [])
         ]
+    }
+
+    /** An AI job: what was asked, and per repository how many files its proposal would commit. */
+    private async aiJob(id: string): Promise<ConfirmationDetail[]> {
+        const job = await new AiChangeJobService(this.principal, fastify.config).get(id).catch(() => undefined)
+        if (!job) return [{ label: "jobId", value: id }]
+        const proposed = job.repositories
+            .filter(repository => repository.status === AiChangeStatus.PROPOSED && repository.files.length > 0)
+            .map(repository => `${repository.microfrontendName || repository.microfrontendSlug}: ${repository.files.length} ${repository.files.length === 1 ? "file" : "files"}`)
+        return [{ label: "prompt", value: clip(job.prompt) }, ...(proposed.length ? [{ label: "microfrontends", value: lines(proposed) }] : [])]
     }
 
     /** Per environment: what the new deployment changes compared to the one served now, or all it serves when there is none. */

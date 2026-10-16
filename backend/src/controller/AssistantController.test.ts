@@ -10,6 +10,8 @@ const ensureCanChat = vi.fn()
 const takeConfirmation = vi.fn()
 const chat = vi.fn()
 const draftProject = vi.fn()
+const saveUsage = vi.fn()
+const conversations = vi.hoisted(() => ({ listConversations: vi.fn(), getConversation: vi.fn(), saveConversation: vi.fn(), deleteConversation: vi.fn() }))
 
 vi.mock("../service/assistant/AssistantService", () => ({
     default: class {
@@ -19,6 +21,10 @@ vi.mock("../service/assistant/AssistantService", () => ({
         draftProject = draftProject
     }
 }))
+
+vi.mock("../models/AssistantUsageModel", () => ({ default: { create: (...args: unknown[]) => saveUsage(...args) } }))
+
+vi.mock("../service/assistant/conversations", () => conversations)
 
 const question = { messages: [{ role: "user", content: "Why did the build fail?" }], context: { page: "/builds" } }
 
@@ -30,9 +36,15 @@ describe("AssistantController", () => {
         takeConfirmation.mockReset()
         chat.mockReset()
         draftProject.mockReset()
+        saveUsage.mockReset().mockResolvedValue({})
+        Object.values(conversations).forEach(mock => mock.mockReset().mockResolvedValue(undefined))
 
         app = Fastify()
         app.decorate("config", { ANTHROPIC_API_KEY: "test-key", ASSISTANT_RATE_LIMIT_MAX: 20 } as never)
+        app.decorateRequest("databaseUser", null as never)
+        app.addHook("onRequest", async request => {
+            request.databaseUser = { _id: "user-1" } as never
+        })
         await app.register(errorHandler)
         await app.register(assistantController)
     })
@@ -137,6 +149,25 @@ describe("AssistantController", () => {
         expect(response.body).toContain('event: done\ndata: {"stopReason":"end_turn","wrote":true}')
     })
 
+    it("Given an answer, when it ends, then its tokens are saved for the project", async () => {
+        const usage = { inputTokens: 1200, cachedInputTokens: 800, outputTokens: 150 }
+        chat.mockResolvedValue({ stopReason: "end_turn", wrote: false, usage })
+
+        await app.inject({ method: "POST", url: "/assistant/chat", headers: { "project-id": "64b7f0c2a1b2c3d4e5f60718" }, payload: question })
+
+        expect(saveUsage).toHaveBeenCalledWith(expect.objectContaining({ projectId: "64b7f0c2a1b2c3d4e5f60718", stopReason: "end_turn", ...usage }))
+    })
+
+    it("Given the usage cannot be saved, when the answer ends, then the stream still closes with done and no error", async () => {
+        chat.mockResolvedValue({ stopReason: "end_turn", wrote: false, usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 } })
+        saveUsage.mockRejectedValue(new Error("mongo down"))
+
+        const response = await app.inject({ method: "POST", url: "/assistant/chat", headers: { "project-id": "project-1" }, payload: question })
+
+        expect(response.body).toContain("event: done")
+        expect(response.body).not.toContain("event: error")
+    })
+
     it("Given an expired or already answered confirmation, when it is sent, then it fails with an HTTP error before any stream", async () => {
         takeConfirmation.mockRejectedValue(createBusinessException({ code: "ASSISTANT_ACTION_NOT_FOUND", message: "This confirmation has expired or was already answered", statusCode: 409 }))
 
@@ -198,5 +229,56 @@ describe("AssistantController", () => {
         expect((await ask()).statusCode).toBe(429)
 
         await limited.close()
+    })
+
+    describe("conversations", () => {
+        const headers = { "project-id": "64b7f0c2a1b2c3d4e5f60718" }
+
+        it("Given a project, when the history is asked for, then it lists the user's conversations there", async () => {
+            conversations.listConversations.mockResolvedValue([{ id: "conversation-1", title: "Why did the build fail?", updatedAt: "2026-10-16T10:00:00.000Z" }])
+
+            const response = await app.inject({ method: "GET", url: "/assistant/conversations", headers })
+
+            expect(response.statusCode).toBe(200)
+            expect(conversations.listConversations).toHaveBeenCalledWith("user-1", headers["project-id"])
+            expect(response.json()).toHaveLength(1)
+        })
+
+        it("Given an installation without the assistant, when the history is asked for, then it answers 404", async () => {
+            ensureCanChat.mockRejectedValue(new AssistantDisabledError())
+
+            const response = await app.inject({ method: "GET", url: "/assistant/conversations", headers })
+
+            expect(response.statusCode).toBe(404)
+            expect(conversations.listConversations).not.toHaveBeenCalled()
+        })
+
+        it("Given a conversation, when it is saved, then it is stored for the user and project", async () => {
+            const messages = [{ id: "m1", role: "user", content: "Why did the build fail?" }]
+
+            const response = await app.inject({ method: "PUT", url: "/assistant/conversations/conversation-1", headers, payload: { messages } })
+
+            expect(response.statusCode).toBe(204)
+            expect(conversations.saveConversation).toHaveBeenCalledWith("user-1", headers["project-id"], "conversation-1", messages)
+        })
+
+        it("Given an id that is not a plain token, when a conversation is saved, then the schema rejects it", async () => {
+            const response = await app.inject({ method: "PUT", url: "/assistant/conversations/bad$id!!", headers, payload: { messages: [{ id: "m1", role: "user", content: "Hi" }] } })
+
+            expect(response.statusCode).toBe(400)
+            expect(conversations.saveConversation).not.toHaveBeenCalled()
+        })
+
+        it("Given a conversation, when it is opened and then deleted, then both act on that id for the user", async () => {
+            conversations.getConversation.mockResolvedValue({ id: "conversation-1", title: "t", updatedAt: "2026-10-16T10:00:00.000Z", messages: [] })
+
+            const opened = await app.inject({ method: "GET", url: "/assistant/conversations/conversation-1", headers })
+            const deleted = await app.inject({ method: "DELETE", url: "/assistant/conversations/conversation-1", headers })
+
+            expect(opened.statusCode).toBe(200)
+            expect(conversations.getConversation).toHaveBeenCalledWith("user-1", headers["project-id"], "conversation-1")
+            expect(deleted.statusCode).toBe(204)
+            expect(conversations.deleteConversation).toHaveBeenCalledWith("user-1", headers["project-id"], "conversation-1")
+        })
     })
 })

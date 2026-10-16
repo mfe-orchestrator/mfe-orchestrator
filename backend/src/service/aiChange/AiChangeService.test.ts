@@ -29,6 +29,7 @@ import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
 import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
+import AiChangeJobService from "./AiChangeJobService"
 import AiChangeService from "./AiChangeService"
 
 type WithGates = { ensureAccessToProject: () => Promise<void>; ensureAccessToMicrofrontend: () => Promise<void>; isOrganizationAdmin: () => Promise<boolean> }
@@ -75,6 +76,7 @@ describe("AiChangeService", () => {
         vi.spyOn(AiChangeRequest, "findByIdAndUpdate").mockImplementation(((_id: unknown, update: Record<string, unknown>) => Promise.resolve({ ...update })) as never)
         workingCopy.blobOid.mockImplementation(async (_commit: string, file: string) => (file === "src/App.tsx" ? "app-blob" : undefined))
         workingCopy.commitAndPush.mockResolvedValue("new-commit")
+        vi.spyOn(AiChangeRequest, "exists").mockResolvedValue(null as never)
     })
 
     afterEach(() => {
@@ -90,6 +92,19 @@ describe("AiChangeService", () => {
 
         await expect(service().create(microfrontendId.toString(), { prompt: "Add a 404 page" })).rejects.toMatchObject({ statusCode: 403 })
         expect(create).not.toHaveBeenCalled()
+    })
+
+    it("Given a member, when a change is requested, then it runs as a job on that repository alone and its request comes back", async () => {
+        const request = { _id: new Types.ObjectId(), jobId: new Types.ObjectId(), status: AiChangeStatus.PENDING }
+        const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [request] } as never)
+
+        const created = await service().create(microfrontendId.toString(), { prompt: "Add a 404 page", baseBranch: " develop " })
+
+        expect(created).toBe(request)
+        expect(start).toHaveBeenCalledWith(
+            { projectId, prompt: "Add a 404 page", scope: "selection", repositories: [{ microfrontend: expect.objectContaining({ slug: "catalog" }), baseBranch: "develop" }] },
+            expect.anything()
+        )
     })
 
     it("Given a viewer who administers the organization, when a proposal is discarded, then it is allowed", async () => {
@@ -132,6 +147,28 @@ describe("AiChangeService", () => {
         expect(pushed.author).toEqual({ name: "Ada", email: "ada@example.com" })
         expect(workspaceService.openPullRequest).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ sourceBranch: pushed.branch, targetBranch: "main", title: "Add a 404 page" }))
         expect(applied).toMatchObject({ status: AiChangeStatus.APPLIED, pullRequestUrl: "https://github.com/acme/catalog/pull/7", commit: "new-commit" })
+    })
+
+    it("Given a follow-up refining the proposal, when it is applied, then it is refused without claiming or pushing", async () => {
+        vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal() as never)
+        vi.spyOn(AiChangeRequest, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
+        const claim = vi.spyOn(AiChangeRequest, "findOneAndUpdate")
+
+        await expect(service().apply(new Types.ObjectId().toString())).rejects.toMatchObject({ code: "AI_JOB_FOLLOW_UP_RUNNING", statusCode: 409 })
+        expect(claim).not.toHaveBeenCalled()
+        expect(workingCopy.commitAndPush).not.toHaveBeenCalled()
+    })
+
+    it("Given the other repositories of its job, when a claimed proposal is applied, then the description names them", async () => {
+        const claimed = proposal({ status: AiChangeStatus.APPLYING })
+        type WithApplyClaimed = { applyClaimed: (request: unknown, files: unknown, related: string[]) => Promise<unknown> }
+
+        await (service() as unknown as WithApplyClaimed).applyClaimed(claimed, claimed.files, ["Cart: https://github.com/acme/cart/pull/3", "Checkout"])
+
+        expect(workspaceService.openPullRequest).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ description: expect.stringContaining("Part of a change across 3 repositories:\n- Cart: https://github.com/acme/cart/pull/3\n- Checkout") })
+        )
     })
 
     it("Given an apply that crashed after naming its branch, when it is applied again, then the same branch is reused", async () => {

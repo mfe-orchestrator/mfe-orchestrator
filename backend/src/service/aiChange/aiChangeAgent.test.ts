@@ -5,7 +5,7 @@ import path from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { LlmClient, LlmProvider, LlmTurnRequest, LlmTurnResult } from "../llm"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
-import { AI_CHANGE_LIMITS, AiChangeToolbox, runAiChangeAgent } from "./aiChangeAgent"
+import { AI_CHANGE_LIMITS, AiChangeToolbox, agentLimitsFor, runAiChangeAgent } from "./aiChangeAgent"
 
 const hasGit = spawnSync("git", ["--version"]).status === 0
 
@@ -37,7 +37,7 @@ describe.skipIf(!hasGit)("AiChangeToolbox", () => {
         })
         fs.writeFileSync(path.join(os.tmpdir(), "outside-the-repo.txt"), "other tenant")
         fs.symlinkSync(path.join(os.tmpdir(), "outside-the-repo.txt"), path.join(dir, "escape"))
-        toolbox = new AiChangeToolbox(new GitWorkingCopy(dir, "http://unused", { username: "", password: "" }))
+        toolbox = new AiChangeToolbox([{ slug: "shop", workingCopy: new GitWorkingCopy(dir, "http://unused", { username: "", password: "" }) }])
     })
 
     afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
@@ -121,6 +121,99 @@ describe.skipIf(!hasGit)("AiChangeToolbox", () => {
     })
 })
 
+describe("agentLimitsFor", () => {
+    it("Given more repositories, then rounds and written bytes grow with them up to their ceiling", () => {
+        expect(agentLimitsFor(1)).toEqual({ maxRounds: 40, maxWrittenBytes: 500_000 })
+        expect(agentLimitsFor(2)).toEqual({ maxRounds: 60, maxWrittenBytes: 1_000_000 })
+        expect(agentLimitsFor(10)).toEqual({ maxRounds: 120, maxWrittenBytes: 2_000_000 })
+    })
+})
+
+describe.skipIf(!hasGit)("AiChangeToolbox on several repositories", () => {
+    let catalog: string
+    let cart: string
+    let toolbox: AiChangeToolbox
+
+    beforeEach(() => {
+        catalog = makeRepository({ "src/price.ts": "export const formatPrice = (value: number) => `${value}`\n", "README.md": "# catalog\n" })
+        cart = makeRepository({ "src/Cart.tsx": "import { formatPrice } from '@shop/catalog'\n", ".env": "formatPrice=secret\n" })
+        const workingCopy = (dir: string) => new GitWorkingCopy(dir, "http://unused", { username: "", password: "" })
+        toolbox = new AiChangeToolbox([
+            { slug: "catalog", workingCopy: workingCopy(catalog) },
+            { slug: "cart", workingCopy: workingCopy(cart) }
+        ])
+    })
+
+    afterEach(() => {
+        fs.rmSync(catalog, { recursive: true, force: true })
+        fs.rmSync(cart, { recursive: true, force: true })
+    })
+
+    it("Given no prefix, when the files are listed, then the repositories are listed", async () => {
+        expect(await toolbox.run("list_files", {})).toBe('catalog/ (2 files)\ncart/ (2 files)\nList one with prefix, e.g. "catalog/src".')
+    })
+
+    it("Given a repository folder, when the files are listed, then its files come back under its slug", async () => {
+        expect(await toolbox.run("list_files", { prefix: "cart/src" })).toBe("cart/src/Cart.tsx")
+        expect(await toolbox.run("list_files", { prefix: "catalog" })).toBe("catalog/README.md\ncatalog/src/price.ts")
+    })
+
+    it("Given a text used in two repositories, when it is searched, then both match under their slug and secrets stay out", async () => {
+        expect(await toolbox.run("search", { text: "formatPrice" })).toBe(
+            "catalog/src/price.ts:1: export const formatPrice = (value: number) => `${value}`\ncart/src/Cart.tsx:1: import { formatPrice } from '@shop/catalog'"
+        )
+        expect(await toolbox.run("search", { text: "formatPrice", prefix: "cart" })).toBe("cart/src/Cart.tsx:1: import { formatPrice } from '@shop/catalog'")
+    })
+
+    it("Given a path under a slug, when it is written and read back, then it lands in that repository only", async () => {
+        await expect(toolbox.run("write_file", { path: "cart/src/Total.tsx", content: "export const Total = () => null\n" })).resolves.toBe("Created cart/src/Total.tsx.")
+
+        expect(fs.existsSync(path.join(cart, "src/Total.tsx"))).toBe(true)
+        expect(fs.existsSync(path.join(catalog, "src/Total.tsx"))).toBe(false)
+        expect(await toolbox.run("read_file", { path: "cart/src/Total.tsx" })).toBe("export const Total = () => null\n")
+    })
+
+    it("Given a path without a known slug, when it is read, then it is refused", async () => {
+        await expect(toolbox.run("read_file", { path: "src/Cart.tsx" })).rejects.toThrow(/slug of a repository: catalog, cart/)
+    })
+
+    it("Given a slug followed by a climb, when it is written, then nothing is written in the other repository", async () => {
+        await expect(toolbox.run("write_file", { path: `catalog/../${path.basename(cart)}/src/x.ts`, content: "x" })).rejects.toThrow(/outside the repository/)
+    })
+
+    it("Given the file limit reached in one repository, when the other is written, then it is still allowed", async () => {
+        for (let index = 0; index < AI_CHANGE_LIMITS.maxChangedFiles; index++) {
+            await toolbox.run("write_file", { path: `catalog/src/generated/file-${index}.ts`, content: "x" })
+        }
+
+        await expect(toolbox.run("write_file", { path: "catalog/src/one-more.ts", content: "x" })).rejects.toThrow(/At most/)
+        await expect(toolbox.run("write_file", { path: "cart/src/one-more.ts", content: "x" })).resolves.toMatch(/Created/)
+    })
+
+    it("Given a follow-up whose parent changed as many files as allowed, when a new file is written, then it is refused but the parent's files can still be edited", async () => {
+        const previousChanges = Array.from({ length: AI_CHANGE_LIMITS.maxChangedFiles }, (_, index) => ({ path: `src/generated/file-${index}.ts`, bytes: 10 }))
+        const seeded = new AiChangeToolbox([{ slug: "catalog", workingCopy: new GitWorkingCopy(catalog, "http://unused", { username: "", password: "" }), previousChanges }])
+
+        await expect(seeded.run("write_file", { path: "src/one-more.ts", content: "x" })).rejects.toThrow(/At most/)
+        await expect(seeded.run("write_file", { path: "src/generated/file-0.ts", content: "y" })).resolves.toMatch(/Created/)
+    })
+
+    it("Given a follow-up whose parent wrote most of the byte budget, when more is written, then the parent's bytes count", async () => {
+        const seeded = new AiChangeToolbox([
+            { slug: "catalog", workingCopy: new GitWorkingCopy(catalog, "http://unused", { username: "", password: "" }), previousChanges: [{ path: "a.ts", bytes: 450_000 }] }
+        ])
+
+        await expect(seeded.run("write_file", { path: "b.ts", content: "x".repeat(60_000) })).rejects.toThrow(/500000 bytes/)
+    })
+
+    it("Given two repositories, when more than their byte budget is written, then it is refused", async () => {
+        const chunk = "x".repeat(400_000)
+        for (const file of ["catalog/a.ts", "catalog/b.ts"]) await toolbox.run("write_file", { path: file, content: chunk })
+
+        await expect(toolbox.run("write_file", { path: "cart/c.ts", content: chunk })).rejects.toThrow(/1000000 bytes/)
+    })
+})
+
 /** A model that answers with the scripted turns in order, and records what it was sent. */
 const scriptedClient = (turns: Pick<LlmTurnResult, "stopReason" | "text" | "toolCalls">[]) => {
     const sent: LlmTurnRequest[] = []
@@ -142,12 +235,11 @@ const toolUse = (id: string, name: string, input: Record<string, unknown>) => ({
 describe.skipIf(!hasGit)("runAiChangeAgent", () => {
     let dir: string
     let workingCopy: GitWorkingCopy
-    const input = {
+    const input = () => ({
         prompt: "Add a 404 page",
-        baseBranch: "main",
         project: { name: "Shop", context: "We use TypeScript strict." },
-        microfrontend: { name: "Catalog", slug: "catalog", framework: "REACT", context: "Pages live in src/pages." }
-    }
+        repositories: [{ baseBranch: "main", workingCopy, microfrontend: { name: "Catalog", slug: "catalog", framework: "REACT", context: "Pages live in src/pages." } }]
+    })
     const hooks = () => {
         const events: string[] = []
         let tokens = 0
@@ -172,7 +264,7 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         ])
         const { events, tokens, hooks: agentHooks } = hooks()
 
-        const result = await runAiChangeAgent(client, workingCopy, input, agentHooks)
+        const result = await runAiChangeAgent(client, input(), agentHooks)
 
         expect(result).toEqual({ summary: "Added src/pages/NotFound.tsx", stopReason: "finished" })
         expect((await workingCopy.changes()).map(change => change.path)).toEqual(["src/pages/NotFound.tsx"])
@@ -191,7 +283,7 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
             { stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }
         ])
 
-        const result = await runAiChangeAgent(client, workingCopy, input, hooks().hooks)
+        const result = await runAiChangeAgent(client, input(), hooks().hooks)
 
         expect(result.stopReason).toBe("end_turn")
         const toolMessage = sent[1].messages[2]
@@ -201,9 +293,57 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
     it("Given a write cut off by max_tokens, when it runs, then the write is not executed", async () => {
         const { client } = scriptedClient([{ stopReason: "max_tokens", text: "", toolCalls: [toolUse("1", "write_file", { path: "src/App.tsx", content: "export const App = (" })] }])
 
-        const result = await runAiChangeAgent(client, workingCopy, input, hooks().hooks)
+        const result = await runAiChangeAgent(client, input(), hooks().hooks)
 
         expect(result.stopReason).toBe("max_tokens")
         expect(await workingCopy.changes()).toEqual([])
+    })
+
+    it("Given two repositories and an earlier request, when it runs, then the prompt lists both repositories and the chain, and paths start with a slug", async () => {
+        const cartDir = makeRepository({ "src/Cart.tsx": "export const Cart = () => null\n" })
+        try {
+            const { client, sent } = scriptedClient([
+                { stopReason: "tool_use", text: "", toolCalls: [toolUse("1", "write_file", { path: "cart/src/Cart.tsx", content: "export const Cart = () => 'cart'\n" })] },
+                { stopReason: "tool_use", text: "", toolCalls: [toolUse("2", "finish", { summary: "Cart shows its name" })] }
+            ])
+            const twoRepositories = {
+                ...input(),
+                repositories: [
+                    ...input().repositories,
+                    { baseBranch: "develop", workingCopy: new GitWorkingCopy(cartDir, "http://unused", { username: "", password: "" }), microfrontend: { name: "Cart", slug: "cart" } }
+                ],
+                previousRequests: [{ prompt: "Add a cart page", summary: "Added src/Cart.tsx" }]
+            }
+
+            const result = await runAiChangeAgent(client, twoRepositories, hooks().hooks)
+
+            expect(result).toEqual({ summary: "Cart shows its name", stopReason: "finished" })
+            expect(fs.readFileSync(path.join(cartDir, "src/Cart.tsx"), "utf8")).toBe("export const Cart = () => 'cart'\n")
+            expect(await workingCopy.changes()).toEqual([])
+            const firstMessage = sent[0].messages[0]
+            const firstPrompt = firstMessage.role === "user" ? firstMessage.text : ""
+            expect(firstPrompt).toContain(
+                "<repositories>\n<repository>\nname: Catalog\nslug: catalog\nframework: REACT\nbase_branch: main\n<microfrontend_context>\nPages live in src/pages.\n</microfrontend_context>\n</repository>"
+            )
+            expect(firstPrompt).toContain("<repository>\nname: Cart\nslug: cart\nbase_branch: develop\n</repository>\n</repositories>")
+            expect(firstPrompt).toContain(
+                "<previous_requests>\n<previous_request>\n<prompt>\nAdd a cart page\n</prompt>\n<summary>\nAdded src/Cart.tsx\n</summary>\n</previous_request>\n</previous_requests>"
+            )
+            expect(firstPrompt).toContain("summarise the WHOLE change")
+            expect(sent[0].system).toContain("SEVERAL microfrontends")
+        } finally {
+            fs.rmSync(cartDir, { recursive: true, force: true })
+        }
+    })
+
+    it("Given one repository, then the prompt keeps the single microfrontend form", async () => {
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+
+        await runAiChangeAgent(client, input(), hooks().hooks)
+
+        const firstMessage = sent[0].messages[0]
+        expect(firstMessage.role === "user" && firstMessage.text.startsWith("<microfrontend>\nname: Catalog\nslug: catalog\nframework: REACT\nbase_branch: main\n</microfrontend>")).toBe(true)
+        expect(sent[0].system).toContain("ONE microfrontend")
+        expect(sent[0].system).not.toContain("SEVERAL")
     })
 })

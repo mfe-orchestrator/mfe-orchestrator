@@ -4,7 +4,7 @@
     "description": "Backend service for micro-frontend orchestrator",
     "main": "index.js",
     "scripts": {
-        "start": "nodemon --exec tsx ./src/index.ts",
+        "start": "nodemon --watch src --ext ts,json --exec tsx ./src/index.ts",
         "st": "tsx ./src/index.ts",
         "dev": "pnpm run start",
         "build": "tsc && node ./postbuild.js",

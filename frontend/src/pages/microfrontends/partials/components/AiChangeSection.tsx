@@ -5,29 +5,22 @@ import { format } from "date-fns"
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, GitBranch, RotateCcw, Sparkles, Trash2 } from "lucide-react"
 import { useEffect, useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useSearchParams } from "react-router-dom"
+import AnswerUsage from "@/components/assistant/AnswerUsage"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
-import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeEvent, AiChangeFile, AiChangeRequest, AiChangeStatus } from "@/hooks/apiClients/useAiChangesApi"
+import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus } from "@/hooks/apiClients/useAiChangesApi"
 import { errorCodeOf } from "@/hooks/useApiClient"
 import useThemeStore from "@/store/useThemeStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { AiChangeDiff } from "./AiChangeDiff"
+import { ProgressLog, StatusBadge } from "./AiChangeProgress"
 
 const PROMPT_MAX_LENGTH = 8000
 const POLL_INTERVAL_MS = 2000
 
 /** Error codes of the create endpoint that have a message of their own. */
 const CREATE_ERROR_CODES = new Set(["ASSISTANT_DISABLED", "AI_CHANGE_FORBIDDEN", "WORKSPACE_NO_REPOSITORY"])
-
-const STATUS_VARIANT: Record<AiChangeStatus, IBadgeProps["variant"]> = {
-    PENDING: "outline",
-    RUNNING: "outline",
-    APPLYING: "outline",
-    PROPOSED: "accent",
-    APPLIED: "default",
-    DISCARDED: "outline",
-    FAILED: "destructive"
-}
 
 const ACTION_VARIANT: Record<AiChangeFile["action"], IBadgeProps["variant"]> = {
     create: "accent",
@@ -45,9 +38,11 @@ const firstLine = (text: string) =>
 
 const conflictsOf = (error: Error): string[] => (error as AxiosError<{ error?: { details?: { conflicts?: string[] } } }>)?.response?.data?.error?.details?.conflicts ?? []
 
-const StatusBadge: React.FC<{ status: AiChangeStatus }> = ({ status }) => {
+/** Set on the requests of a job over several repositories: the request is one part of a wider change. */
+const JobBadge: React.FC<{ request: AiChangeRequest }> = ({ request }) => {
     const { t } = useTranslation()
-    return <Badge variant={STATUS_VARIANT[status]}>{t(`microfrontend.aiChange.status.${status}`)}</Badge>
+    if (!request.jobId || !request.jobRepositoryCount || request.jobRepositoryCount <= 1) return null
+    return <Badge variant="outline">{t("microfrontend.aiChange.job_badge", { count: request.jobRepositoryCount })}</Badge>
 }
 
 const WarningAlert: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -57,44 +52,6 @@ const WarningAlert: React.FC<{ title: string; children: React.ReactNode }> = ({ 
         <AlertDescription className="whitespace-pre-wrap break-words">{children}</AlertDescription>
     </Alert>
 )
-
-const ProgressLog: React.FC<{ events: AiChangeEvent[]; live: boolean }> = ({ events, live }) => {
-    const { t } = useTranslation()
-    const containerRef = useRef<HTMLDivElement>(null)
-
-    // Newest last, as in a terminal: keep the latest step in view while the agent works.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: a new event is what must trigger the scroll
-    useEffect(() => {
-        if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight
-    }, [events.length])
-
-    return (
-        <div
-            ref={containerRef}
-            role="log"
-            aria-live={live ? "polite" : "off"}
-            aria-label={t("microfrontend.aiChange.progress_log")}
-            className="max-h-64 overflow-auto rounded-md border border-divider bg-muted/40 p-3 text-xs"
-        >
-            {events.length === 0 ? (
-                <p className="text-muted-foreground">{t("microfrontend.aiChange.progress_empty")}</p>
-            ) : (
-                <ol className="flex flex-col gap-1">
-                    {events.map((event, index) => (
-                        <li key={`${event.at}-${index}`} className="flex gap-2">
-                            <time dateTime={event.at} className="shrink-0 font-mono text-muted-foreground">
-                                {format(new Date(event.at), "HH:mm:ss")}
-                            </time>
-                            {event.kind === "info" && <span className="font-medium">{t(`microfrontend.aiChange.events.${event.message}`, { defaultValue: event.message })}</span>}
-                            {event.kind === "tool" && <span className="break-all font-mono text-muted-foreground">{event.message}</span>}
-                            {event.kind === "text" && <span className="whitespace-pre-wrap break-words">{event.message}</span>}
-                        </li>
-                    ))}
-                </ol>
-            )}
-        </div>
-    )
-}
 
 interface ProposalProps {
     request: AiChangeRequest
@@ -246,7 +203,10 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
                             })}
                         </CardDescription>
                     </div>
-                    <StatusBadge status={request.status} />
+                    <div className="flex flex-wrap items-center gap-2">
+                        <JobBadge request={request} />
+                        <StatusBadge status={request.status} />
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 pt-3">
@@ -334,10 +294,18 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
                     )
                 )}
 
-                {finished && (
-                    <p className="text-xs text-muted-foreground">
-                        {t("microfrontend.aiChange.usage", { input: request.usage.inputTokens.toLocaleString(), output: request.usage.outputTokens.toLocaleString() })}
-                    </p>
+                {/* Live while the agent works: the cost of the job grows with every round. */}
+                {(finished || request.usage.inputTokens > 0) && (
+                    <div className="flex flex-col gap-0.5">
+                        <AnswerUsage
+                            usage={{ ...request.usage, cachedInputTokens: request.usage.cachedInputTokens ?? 0 }}
+                            label={t("microfrontend.aiChange.usage_label")}
+                            hint={t("microfrontend.aiChange.usage_hint")}
+                        />
+                        {request.jobRepositoryCount !== undefined && request.jobRepositoryCount > 1 && (
+                            <p className="text-xs text-muted-foreground">{t("microfrontend.aiChange.usage_shared", { count: request.jobRepositoryCount })}</p>
+                        )}
+                    </div>
                 )}
             </CardContent>
         </Card>
@@ -359,10 +327,13 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
     const themeStore = useThemeStore()
     const [prompt, setPrompt] = useState("")
     const [baseBranch, setBaseBranch] = useState("")
-    const [selectedId, setSelectedId] = useState<string>()
+    const [searchParams] = useSearchParams()
+    // A deep link (`?change=<id>`, from a job of the assistant) opens that request instead of the latest one.
+    const linkedId = searchParams.get("change") ?? undefined
+    const [selectedId, setSelectedId] = useState<string | undefined>(linkedId)
     const [submitted, setSubmitted] = useState(false)
     const promptRef = useRef<HTMLTextAreaElement>(null)
-    const autoSelected = useRef(false)
+    const autoSelected = useRef(Boolean(linkedId))
     const promptId = useId()
     const branchId = useId()
 
@@ -379,6 +350,13 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
         enabled: Boolean(selectedId),
         refetchInterval: query => (isActive(query.state.data?.status) ? POLL_INTERVAL_MS : false)
     })
+
+    // Another link followed while the page is open.
+    useEffect(() => {
+        if (!linkedId) return
+        autoSelected.current = true
+        setSelectedId(linkedId)
+    }, [linkedId])
 
     // Back on the tab with work in progress (or a proposal waiting for review): show it straight away.
     useEffect(() => {
@@ -553,6 +531,7 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
                                             <span className="sr-only">{t("microfrontend.aiChange.opens_new_tab")}</span>
                                         </a>
                                     )}
+                                    <JobBadge request={item} />
                                     <StatusBadge status={item.status} />
                                 </li>
                             ))}

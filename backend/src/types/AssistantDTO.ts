@@ -40,3 +40,49 @@ export interface AssistantProjectDraftDTO {
     codeRepository: "NONE" | "GITHUB" | "GITLAB" | "AZURE_DEV_OPS"
     notes: string
 }
+
+/** A message of a saved conversation, as the panel shows it. Tool inputs and results are never kept. */
+export interface AssistantConversationMessageDTO {
+    id: string
+    role: "user" | "assistant"
+    content: string
+    status?: "streaming" | "done" | "error"
+    errorKey?: string
+    tools?: {
+        id: string
+        name: string
+        title: string
+        kind: string
+        status: string
+        summary?: string
+    }[]
+    confirmation?: {
+        actionId: string
+        callId: string
+        name: string
+        title: string
+        details: { label: string; value: string }[]
+        expiresAt: string
+        status: string
+    }
+    usage?: {
+        inputTokens: number
+        cachedInputTokens: number
+        outputTokens: number
+    }
+}
+
+export interface AssistantConversationSaveDTO {
+    messages: AssistantConversationMessageDTO[]
+}
+
+/** An entry of the history: the messages are loaded when the user opens it. */
+export interface AssistantConversationSummaryDTO {
+    id: string
+    title: string
+    updatedAt: Date
+}
+
+export interface AssistantConversationDTO extends AssistantConversationSummaryDTO {
+    messages: AssistantConversationMessageDTO[]
+}

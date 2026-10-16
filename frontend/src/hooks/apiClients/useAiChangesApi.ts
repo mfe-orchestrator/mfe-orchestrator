@@ -39,7 +39,14 @@ export interface AiChangeRequest {
     pullRequestUrl?: string
     pullRequestError?: string
     error?: string
-    usage: { inputTokens: number; outputTokens: number }
+    /** The job that made the request: one run of the agent, possibly over several repositories. */
+    jobId?: string
+    /** The proposal this one starts from, when the job was a follow-up. */
+    parentId?: string
+    /** How many repositories the job works on: above one, its cost is shared with the other requests. */
+    jobRepositoryCount?: number
+    /** The cost of the whole job, the same on each of its requests; updated while the agent works. */
+    usage: { inputTokens: number; cachedInputTokens?: number; outputTokens: number }
     createdAt: string
     updatedAt: string
 }

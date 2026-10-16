@@ -2,8 +2,11 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
-import useAssistantStore, { AssistantRole, AssistantUsage } from "@/store/useAssistantStore"
+import useAssistantJobsStore from "@/store/useAssistantJobsStore"
+import useAssistantStore, { AssistantRole, AssistantUsage, toStored } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
+import useAiJobsApi from "./apiClients/useAiJobsApi"
+import useAssistantApi from "./apiClients/useAssistantApi"
 import useApiClient from "./useApiClient"
 import { drainFrames, parseFrame } from "./useEventStream"
 
@@ -23,6 +26,18 @@ const toUsage = (value: unknown): AssistantUsage | undefined => {
     const usage = value as Partial<AssistantUsage> | undefined
     if (typeof usage?.inputTokens !== "number" || typeof usage.outputTokens !== "number") return undefined
     return { inputTokens: usage.inputTokens, cachedInputTokens: usage.cachedInputTokens ?? 0, outputTokens: usage.outputTokens }
+}
+
+/** Tools that start an agent job: their result carries the `jobId`, and the job gets a tab of its own. */
+const JOB_TOOLS = new Set(["ai_job_start", "ai_job_follow_up", "ai_change_start"])
+
+/** Tools that push proposals: the job tabs showing them poll again to follow the apply. */
+const APPLY_TOOLS = new Set(["ai_job_apply", "ai_change_apply"])
+
+/** The `jobId` of a tool result, when it is an object that has one (a result too long arrives as a string preview). */
+const jobIdOf = (result: unknown): string | undefined => {
+    const jobId = typeof result === "object" && result !== null ? (result as { jobId?: unknown }).jobId : undefined
+    return typeof jobId === "string" ? jobId : undefined
 }
 
 const hasPendingConfirmation = () => useAssistantStore.getState().messages.some(message => message.confirmation?.status === "pending")
@@ -61,8 +76,24 @@ const useAssistantChat = () => {
     const projectStore = useProjectStore()
     const queryClient = useQueryClient()
     const { addMessage, updateMessage, updateTool } = useAssistantStore()
+    const aiJobsApi = useAiJobsApi()
+    const assistantApi = useAssistantApi()
     const [isStreaming, setIsStreaming] = useState(false)
     const abortRef = useRef<AbortController | undefined>(undefined)
+
+    /**
+     * Opens the tab of a job the assistant started, without taking the focus from the chat. The
+     * result only has the job id: the chain the tab belongs to comes with the job.
+     */
+    const openJobTab = async (jobId: string, projectId: string) => {
+        try {
+            const job = await aiJobsApi.get(jobId, { silent: true })
+            useAssistantJobsStore.getState().openJob(projectId, job)
+        } catch (error) {
+            // The answer still says what happened; the tab is a shortcut to it.
+            console.error("Could not open the job tab", error)
+        }
+    }
 
     /**
      * Posts `body` and streams the answer into the message `answerId`. `onRefused` runs when the
@@ -72,6 +103,8 @@ const useAssistantChat = () => {
         const abortController = new AbortController()
         abortRef.current = abortController
         setIsStreaming(true)
+        // The conversation this answer belongs to: switching project or opening another one swaps it.
+        const conversationId = useAssistantStore.getState().conversationId
         // Whether the page behind the panel may now show stale data.
         let wrote = false
 
@@ -125,6 +158,12 @@ const useAssistantChat = () => {
                             .reverse()
                             .find(tool => tool.id === payload.id)
                         if (payload.ok && call && call.kind !== "read") wrote = true
+                        const jobId = payload.ok && call && JOB_TOOLS.has(call.name) ? jobIdOf(payload.result) : undefined
+                        if (jobId && projectStore.project?._id) openJobTab(jobId, projectStore.project._id)
+                        if (payload.ok && call && APPLY_TOOLS.has(call.name)) {
+                            queryClient.invalidateQueries({ queryKey: ["ai-job-chain"] })
+                            queryClient.invalidateQueries({ queryKey: ["ai-job"] })
+                        }
                         updateTool(payload.id, tool => ({
                             ...tool,
                             // A declined call reports back as failed; for the user it was a choice, not an error.
@@ -174,6 +213,14 @@ const useAssistantChat = () => {
             abortRef.current = undefined
             setIsStreaming(false)
             if (wrote) queryClient.invalidateQueries()
+            // Saved after every answer, so that the history can reopen it.
+            const state = useAssistantStore.getState()
+            if (conversationId && state.conversationId === conversationId) {
+                assistantApi
+                    .saveConversation(conversationId, toStored(state.messages))
+                    .then(() => queryClient.invalidateQueries({ queryKey: ["assistant-conversations"] }))
+                    .catch(error => console.error("Could not save the conversation", error))
+            }
         }
     }
 
@@ -185,6 +232,7 @@ const useAssistantChat = () => {
 
         const history = buildHistory(MAX_MESSAGES - 1)
         const answerId = newId()
+        useAssistantStore.getState().ensureConversationId()
         addMessage({ id: newId(), role: "user", content: trimmed })
         addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [] })
 

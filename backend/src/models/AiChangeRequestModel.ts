@@ -34,6 +34,8 @@ export interface IAiChangeEvent {
 
 export interface IAiChangeUsage {
     inputTokens: number
+    /** The part of `inputTokens` read from the prompt cache. */
+    cachedInputTokens: number
     outputTokens: number
 }
 
@@ -41,6 +43,12 @@ export interface IAiChangeRequest extends Document<ObjectId> {
     projectId: Schema.Types.ObjectId
     microfrontendId: Schema.Types.ObjectId
     userId: Schema.Types.ObjectId
+    /** The agent run that produced this request: one job proposes a change on one or more repositories. */
+    jobId?: Schema.Types.ObjectId
+    /** How many repositories the job worked on: its usage is shared among them. */
+    jobRepositoryCount?: number
+    /** The proposal this request refines: the agent started from its files, and this one replaces it once proposed. */
+    parentId?: Schema.Types.ObjectId
     prompt: string
     baseBranch: string
     baseCommit?: string
@@ -54,6 +62,7 @@ export interface IAiChangeRequest extends Document<ObjectId> {
     /** Set when the branch was pushed but the pull request could not be opened. */
     pullRequestError?: string
     error?: string
+    /** The usage of the whole job, the same on every request of it: one agent worked on all its repositories. */
     usage: IAiChangeUsage
     /** Proposals nobody acted upon are removed by a TTL index on this date. */
     expiresAt?: Date
@@ -75,7 +84,7 @@ const fileSchema = new Schema<IAiChangeFile>(
     { _id: false }
 )
 
-const eventSchema = new Schema<IAiChangeEvent>(
+export const aiChangeEventSchema = new Schema<IAiChangeEvent>(
     {
         at: { type: Date, required: true },
         kind: { type: String, enum: ["info", "tool", "text"], required: true },
@@ -89,13 +98,16 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
         projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true, index: true },
         microfrontendId: { type: Schema.Types.ObjectId, ref: "Microfrontend", required: true, index: true },
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        jobId: { type: Schema.Types.ObjectId, ref: "AiChangeJob", index: true },
+        jobRepositoryCount: { type: Number },
+        parentId: { type: Schema.Types.ObjectId, ref: "AiChangeRequest", index: true },
         prompt: { type: String, required: true, maxlength: 8_000 },
         baseBranch: { type: String, required: true },
         baseCommit: { type: String },
         status: { type: String, enum: Object.values(AiChangeStatus), default: AiChangeStatus.PENDING, required: true },
         files: { type: [fileSchema], default: [] },
         summary: { type: String },
-        events: { type: [eventSchema], default: [] },
+        events: { type: [aiChangeEventSchema], default: [] },
         branch: { type: String },
         commit: { type: String },
         pullRequestUrl: { type: String },
@@ -103,6 +115,7 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
         error: { type: String },
         usage: {
             inputTokens: { type: Number, default: 0 },
+            cachedInputTokens: { type: Number, default: 0 },
             outputTokens: { type: Number, default: 0 }
         },
         expiresAt: { type: Date }

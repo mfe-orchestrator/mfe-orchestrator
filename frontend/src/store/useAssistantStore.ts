@@ -77,8 +77,12 @@ interface AssistantState {
     messages: AssistantMessage[]
     /** The project `messages` belong to. */
     projectId?: string
+    /** The id `messages` are saved under on the server, set with the first question. */
+    conversationId?: string
     /** The conversations of the other projects, kept so that coming back to a project resumes it. */
     conversations: Record<string, AssistantMessage[]>
+    /** The ids of the conversations in `conversations`, by project. */
+    conversationIds: Record<string, string>
     /**
      * A question asked from outside the panel (a ✨ button on a page), waiting for the panel
      * to send it. Kept here rather than sent directly so that only the panel talks to the API.
@@ -101,8 +105,12 @@ interface AssistantState {
      * back. Returns whether the project actually changed.
      */
     switchProject: (projectId: string | undefined) => boolean
-    /** Starts a new conversation on the current project. */
+    /** Starts a new conversation on the current project; the one left stays in the history. */
     reset: () => void
+    /** The id of the open conversation, created when it has none yet. */
+    ensureConversationId: () => string
+    /** Shows a conversation of the history in place of the open one. */
+    openConversation: (conversationId: string, messages: AssistantMessage[]) => void
     /** Forgets every conversation: on logout, so the next user of the browser does not see them. */
     clearAll: () => void
 }
@@ -116,13 +124,16 @@ const MAX_STORED_PROJECTS = 20
  * values or the key of an API key just created, which must not sit in the browser's storage. An
  * answer cut by the reload reads as finished, with its unfinished calls marked interrupted.
  */
-const toStored = (messages: AssistantMessage[]): AssistantMessage[] =>
+export const toStored = (messages: AssistantMessage[]): AssistantMessage[] =>
     messages.slice(-MAX_STORED_MESSAGES).map(message => ({
         ...message,
         status: message.status === "streaming" ? "done" : message.status,
         tools: message.tools?.map(({ result: _result, ...tool }) => ({ ...tool, input: {}, status: tool.status === "running" ? "interrupted" : tool.status })),
         confirmation: message.confirmation && { ...message.confirmation, input: {} }
     }))
+
+// Only needs to be unique; crypto.randomUUID would also need a secure context. Matches the server's id pattern.
+const newConversationId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 
 /** `findLastIndex`, which the ES2020 target of the console does not have. */
 const lastIndexWhere = <T>(items: T[], predicate: (item: T) => boolean) => {
@@ -139,6 +150,7 @@ const useAssistantStore = create<AssistantState>()(
                 isOpen: false,
                 messages: [],
                 conversations: {},
+                conversationIds: {},
                 open: () => set({ isOpen: true }),
                 close: () => set({ isOpen: false }),
                 toggle: () => set({ isOpen: !get().isOpen }),
@@ -167,16 +179,36 @@ const useAssistantStore = create<AssistantState>()(
                     const state = get()
                     if (state.projectId === projectId) return false
                     const conversations = { ...state.conversations }
-                    if (state.projectId) conversations[state.projectId] = state.messages
-                    set({ projectId, conversations, messages: (projectId && conversations[projectId]) || [], pendingQuestion: undefined })
+                    const conversationIds = { ...state.conversationIds }
+                    if (state.projectId) {
+                        conversations[state.projectId] = state.messages
+                        if (state.conversationId) conversationIds[state.projectId] = state.conversationId
+                    }
+                    set({
+                        projectId,
+                        conversations,
+                        conversationIds,
+                        messages: (projectId && conversations[projectId]) || [],
+                        conversationId: projectId ? conversationIds[projectId] : undefined,
+                        pendingQuestion: undefined
+                    })
                     return true
                 },
                 reset: () => {
-                    const { projectId, conversations } = get()
+                    const { projectId, conversations, conversationIds } = get()
                     const { [projectId ?? ""]: _dropped, ...others } = conversations
-                    set({ messages: [], conversations: others, pendingQuestion: undefined })
+                    const { [projectId ?? ""]: _droppedId, ...otherIds } = conversationIds
+                    set({ messages: [], conversations: others, conversationIds: otherIds, conversationId: undefined, pendingQuestion: undefined })
                 },
-                clearAll: () => set({ messages: [], conversations: {}, projectId: undefined, pendingQuestion: undefined })
+                ensureConversationId: () => {
+                    const current = get().conversationId
+                    if (current) return current
+                    const conversationId = newConversationId()
+                    set({ conversationId })
+                    return conversationId
+                },
+                openConversation: (conversationId: string, messages: AssistantMessage[]) => set({ conversationId, messages }),
+                clearAll: () => set({ messages: [], conversations: {}, conversationIds: {}, conversationId: undefined, projectId: undefined, pendingQuestion: undefined })
             }),
             {
                 name: "assistant-conversations",
@@ -184,11 +216,18 @@ const useAssistantStore = create<AssistantState>()(
                 // The open conversation is folded into the per-project map: on reload, switchProject picks it back up.
                 partialize: state => {
                     const conversations = { ...state.conversations }
-                    if (state.projectId) conversations[state.projectId] = state.messages
+                    const conversationIds = { ...state.conversationIds }
+                    if (state.projectId) {
+                        conversations[state.projectId] = state.messages
+                        if (state.conversationId) conversationIds[state.projectId] = state.conversationId
+                    }
                     const kept = Object.entries(conversations)
                         .filter(([, messages]) => messages.length > 0)
                         .slice(-MAX_STORED_PROJECTS)
-                    return { conversations: Object.fromEntries(kept.map(([id, messages]) => [id, toStored(messages)])) }
+                    return {
+                        conversations: Object.fromEntries(kept.map(([id, messages]) => [id, toStored(messages)])),
+                        conversationIds: Object.fromEntries(kept.flatMap(([id]) => (conversationIds[id] ? [[id, conversationIds[id]]] : [])))
+                    }
                 }
             }
         ),

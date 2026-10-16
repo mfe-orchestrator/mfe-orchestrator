@@ -11,6 +11,7 @@ const variablesOf = vi.fn()
 const projectById = vi.fn()
 const projectUsers = vi.fn()
 const aiChange = vi.fn()
+const aiJob = vi.fn()
 
 vi.mock("../EnvironmentService", () => ({
     default: class {
@@ -47,6 +48,11 @@ vi.mock("../UserProjectService", () => ({
 vi.mock("../aiChange/AiChangeService", () => ({
     default: class {
         get = aiChange
+    }
+}))
+vi.mock("../aiChange/AiChangeJobService", () => ({
+    default: class {
+        get = aiJob
     }
 }))
 
@@ -101,7 +107,7 @@ describe("describeServedChanges", () => {
 
 describe("describeConfirmation", () => {
     beforeEach(() => {
-        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange]) mock.mockReset()
+        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange, aiJob]) mock.mockReset()
         projectById.mockResolvedValue({ name: "Shop" })
         environments.mockResolvedValue([
             { _id: PRODUCTION, name: "Production" },
@@ -183,6 +189,33 @@ describe("describeConfirmation", () => {
         expect(details[2].value.length).toBeLessThanOrEqual(201)
         expect(details[3]).toEqual({ label: "files", value: "create src/Coupon.tsx" })
         expect(details[4]).toEqual({ label: "excludePaths", value: "src/secret.ts" })
+    })
+
+    it("Given an AI job, when its apply is described, then the prompt and the file count of each repository it would commit are shown", async () => {
+        aiJob.mockResolvedValue({
+            prompt: "Rename the price API",
+            repositories: [
+                { microfrontendName: "Catalog", microfrontendSlug: "catalog", status: "PROPOSED", files: [{ path: "src/a.ts", action: "update" }] },
+                { microfrontendName: "Cart", microfrontendSlug: "cart", status: "PROPOSED", files: [] },
+                { microfrontendName: "Checkout", microfrontendSlug: "checkout", status: "APPLIED", files: [{ path: "src/b.ts", action: "update" }] },
+                {
+                    microfrontendName: "Search",
+                    microfrontendSlug: "search",
+                    status: "PROPOSED",
+                    files: [
+                        { path: "src/c.ts", action: "update" },
+                        { path: "src/d.ts", action: "create" }
+                    ]
+                }
+            ]
+        })
+
+        const details = await describeConfirmation(toolNamed("ai_job_apply"), { jobId: CHANGE }, context)
+
+        expect(details.slice(1)).toEqual([
+            { label: "prompt", value: "Rename the price API" },
+            { label: "microfrontends", value: "Catalog: 1 file\nSearch: 2 files" }
+        ])
     })
 
     it("Given a rollback, when described, then the deployment coming back and what it changes are shown", async () => {

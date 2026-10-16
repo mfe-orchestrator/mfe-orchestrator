@@ -1,16 +1,23 @@
-import { Textarea } from "@mfe-orchestrator/design-system"
-import { ArrowUp, Coins, RotateCcw, Sparkles, Square, X } from "lucide-react"
+import { Tabs, TabsContent, Textarea } from "@mfe-orchestrator/design-system"
+import { ArrowUp, GitBranchPlus, History, RotateCcw, Sparkles, Square, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import useAssistantChat from "@/hooks/useAssistantChat"
-import useAssistantStore, { AssistantMessage, AssistantUsage } from "@/store/useAssistantStore"
+import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobsStore"
+import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
+import AnswerUsage from "./AnswerUsage"
 import AssistantConfirmationCard from "./AssistantConfirmationCard"
+import AssistantHistory from "./AssistantHistory"
+import AssistantJobTabs from "./AssistantJobTabs"
+import AssistantJobThread from "./AssistantJobThread"
 import AssistantMessageText from "./AssistantMessageText"
+import AssistantNewJobDialog from "./AssistantNewJobDialog"
 import AssistantToolCallRow from "./AssistantToolCallRow"
 import useAssistantEnabled from "./useAssistantEnabled"
+import useAssistantJobsWatcher from "./useAssistantJobsWatcher"
 
 const MAX_QUESTION_CHARS = 4_000
 
@@ -22,6 +29,8 @@ const SUGGESTIONS_BY_PAGE: Record<string, string[]> = {
     "/environment-variables": ["variables"]
 }
 const GENERIC_SUGGESTIONS = ["overview", "canary", "storage"]
+
+const NO_TABS: AssistantJobTab[] = []
 
 const suggestionsFor = (pathname: string) => {
     const pageKey = Object.keys(SUGGESTIONS_BY_PAGE).find(prefix => pathname.startsWith(prefix))
@@ -59,28 +68,12 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAns
     )
 }
 
-/** What the answer cost, in tokens: the cached part of the prompt is shown apart, being far cheaper. */
-const AnswerUsage: React.FC<{ usage: AssistantUsage }> = ({ usage }) => {
-    const { t, i18n } = useTranslation()
-    const format = (value: number) => value.toLocaleString(i18n.language)
-    const input =
-        usage.cachedInputTokens > 0
-            ? t("assistant.usage.input_cached", { count: usage.inputTokens, formatted: format(usage.inputTokens), cached: format(usage.cachedInputTokens) })
-            : t("assistant.usage.input", { formatted: format(usage.inputTokens) })
-
-    return (
-        <p className="flex items-center gap-1 text-xs text-foreground-secondary" data-testid="assistant-usage" title={t("assistant.usage.hint")}>
-            <Coins className="size-3" aria-hidden />
-            {input} · {t("assistant.usage.output", { formatted: format(usage.outputTokens) })}
-        </p>
-    )
-}
-
 /**
  * The assistant, docked on the right of every project page.
  *
  * On wide screens it takes a column next to the content, so the page the user is asking
- * about stays visible; on small screens it covers the page. ⌘J / Ctrl+J toggles it.
+ * about stays visible; on small screens it covers the page. ⌘J / Ctrl+J toggles it. Next to the
+ * project conversation, each chain of agent jobs has a tab of its own.
  */
 const AssistantPanel: React.FC = () => {
     const { t } = useTranslation()
@@ -90,11 +83,21 @@ const AssistantPanel: React.FC = () => {
     const pendingQuestion = useAssistantStore(state => state.pendingQuestion)
     const projectId = useProjectStore(state => state.project?._id)
     const { send, answerConfirmation, stop, isStreaming } = useAssistantChat()
+    const jobTabs = useAssistantJobsStore(state => (projectId && state.tabsByProject[projectId]) || NO_TABS)
+    const storedTab = useAssistantJobsStore(state => (projectId && state.activeTabByProject[projectId]) || "project")
+    const setActiveTab = useAssistantJobsStore(state => state.setActiveTab)
+    // A closed (or never restored) chain falls back to the conversation.
+    const activeTab = jobTabs.some(tab => tab.rootJobId === storedTab) ? storedTab : "project"
+    const [newJobOpen, setNewJobOpen] = useState(false)
+    // The saved conversations, shown in place of the open one.
+    const [historyOpen, setHistoryOpen] = useState(false)
     // The turn waits for the user's answer to the card: a new question would leave it hanging.
     const awaitingConfirmation = messages.some(message => message.confirmation?.status === "pending")
     const [draft, setDraft] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
+
+    useAssistantJobsWatcher(projectId, enabled)
 
     useEffect(() => {
         if (!enabled) return
@@ -114,23 +117,28 @@ const AssistantPanel: React.FC = () => {
     // biome-ignore lint/correctness/useExhaustiveDependencies: only a project change must switch the conversation.
     useEffect(() => {
         if (useAssistantStore.getState().switchProject(projectId)) stop()
+        setHistoryOpen(false)
     }, [projectId])
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: send is recreated every render; the pending question is what triggers this.
     useEffect(() => {
         if (!pendingQuestion || isStreaming || awaitingConfirmation) return
         const question = useAssistantStore.getState().takePendingQuestion()
-        if (question) send(question)
+        if (!question) return
+        // Asked from a page: the answer shows in the conversation, wherever the panel was.
+        if (projectId) setActiveTab(projectId, "project")
+        setHistoryOpen(false)
+        send(question)
     }, [pendingQuestion, isStreaming, awaitingConfirmation])
 
     useEffect(() => {
         if (isOpen) inputRef.current?.focus()
     }, [isOpen])
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every change of the conversation, streamed text included.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every change of the conversation, streamed text included, and when it is shown again.
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
-    }, [messages])
+    }, [messages, activeTab])
 
     if (!enabled || !isOpen) return null
 
@@ -149,8 +157,37 @@ const AssistantPanel: React.FC = () => {
             <header className="flex items-center gap-2 border-b border-divider px-4 py-3">
                 <Sparkles className="size-5 text-primary" aria-hidden="true" />
                 <h2 className="flex-1 font-semibold text-foreground">{t("assistant.title")}</h2>
-                {messages.length > 0 && (
-                    <Button variant="ghost" size="icon" aria-label={t("assistant.new_conversation")} onClick={reset} disabled={isStreaming} dataTestId="assistant-reset">
+                {projectId && (
+                    <Button variant="ghost" size="icon" aria-label={t("assistant.jobs.new_job")} title={t("assistant.jobs.new_job")} onClick={() => setNewJobOpen(true)} dataTestId="assistant-new-job">
+                        <GitBranchPlus />
+                    </Button>
+                )}
+                {projectId && activeTab === "project" && (
+                    <Button
+                        variant={historyOpen ? "secondary" : "ghost"}
+                        size="icon"
+                        aria-label={t("assistant.history.open")}
+                        aria-pressed={historyOpen}
+                        title={t("assistant.history.open")}
+                        onClick={() => setHistoryOpen(!historyOpen)}
+                        disabled={isStreaming}
+                        dataTestId="assistant-history-toggle"
+                    >
+                        <History />
+                    </Button>
+                )}
+                {messages.length > 0 && activeTab === "project" && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("assistant.new_conversation")}
+                        onClick={() => {
+                            reset()
+                            setHistoryOpen(false)
+                        }}
+                        disabled={isStreaming}
+                        dataTestId="assistant-reset"
+                    >
                         <RotateCcw />
                     </Button>
                 )}
@@ -159,76 +196,97 @@ const AssistantPanel: React.FC = () => {
                 </Button>
             </header>
 
-            <div ref={scrollRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
-                {messages.length === 0 ? (
-                    <div className="flex flex-col gap-3">
-                        <p className="font-medium text-foreground">{t("assistant.empty_title")}</p>
-                        <p className="text-sm text-foreground-secondary">{t("assistant.empty_description")}</p>
-                        <div className="flex flex-col gap-2">
-                            {suggestionsFor(location.pathname).map(key => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    onClick={() => send(t(`assistant.suggestions.${key}`))}
-                                    className="rounded-md border border-divider px-3 py-2 text-left text-sm text-foreground hover:bg-primary/5"
-                                >
-                                    {t(`assistant.suggestions.${key}`)}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    messages.map(message =>
-                        message.role === "user" ? (
-                            <div key={message.id} className="self-end max-w-[85%] rounded-lg bg-primary/10 px-3 py-2 text-sm text-foreground">
-                                <AssistantMessageText text={message.content} />
-                            </div>
-                        ) : (
-                            <AnswerBubble key={message.id} message={message} isStreaming={isStreaming} onAnswerConfirmation={answerConfirmation} />
-                        )
-                    )
-                )}
-            </div>
+            <Tabs value={activeTab} onValueChange={value => projectId && setActiveTab(projectId, value)} layoutSize="sm" className="flex min-h-0 flex-1 flex-col">
+                {projectId && jobTabs.length > 0 && <AssistantJobTabs projectId={projectId} tabs={jobTabs} />}
 
-            <form
-                className="flex flex-col gap-2 border-t border-divider px-4 py-3"
-                onSubmit={event => {
-                    event.preventDefault()
-                    submit()
-                }}
-            >
-                <div className="flex items-end gap-2">
-                    <Textarea
-                        ref={inputRef}
-                        value={draft}
-                        maxLength={MAX_QUESTION_CHARS}
-                        rows={2}
-                        className="min-h-[44px] resize-none"
-                        disabled={awaitingConfirmation}
-                        placeholder={t(awaitingConfirmation ? "assistant.placeholder_awaiting_confirmation" : "assistant.placeholder")}
-                        aria-label={t("assistant.placeholder")}
-                        dataTestId="assistant-input"
-                        onChange={event => setDraft(event.target.value)}
-                        onKeyDown={event => {
-                            // Enter sends, Shift+Enter goes to a new line, as in any chat.
-                            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                                event.preventDefault()
-                                submit()
-                            }
-                        }}
-                    />
-                    {isStreaming ? (
-                        <Button type="button" variant="secondary" size="icon" aria-label={t("assistant.stop")} onClick={stop} dataTestId="assistant-stop">
-                            <Square />
-                        </Button>
+                <TabsContent value="project" className="mt-0 flex min-h-0 flex-1 flex-col rounded-none">
+                    {historyOpen && projectId ? (
+                        <AssistantHistory projectId={projectId} onOpened={() => setHistoryOpen(false)} />
                     ) : (
-                        <Button type="submit" size="icon" aria-label={t("assistant.send")} disabled={!draft.trim() || awaitingConfirmation} dataTestId="assistant-send">
-                            <ArrowUp />
-                        </Button>
+                        <>
+                            <div ref={scrollRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+                                {messages.length === 0 ? (
+                                    <div className="flex flex-col gap-3">
+                                        <p className="font-medium text-foreground">{t("assistant.empty_title")}</p>
+                                        <p className="text-sm text-foreground-secondary">{t("assistant.empty_description")}</p>
+                                        <div className="flex flex-col gap-2">
+                                            {suggestionsFor(location.pathname).map(key => (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    onClick={() => send(t(`assistant.suggestions.${key}`))}
+                                                    className="rounded-md border border-divider px-3 py-2 text-left text-sm text-foreground hover:bg-primary/5"
+                                                >
+                                                    {t(`assistant.suggestions.${key}`)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    messages.map(message =>
+                                        message.role === "user" ? (
+                                            <div key={message.id} className="self-end max-w-[85%] rounded-lg bg-primary/10 px-3 py-2 text-sm text-foreground">
+                                                <AssistantMessageText text={message.content} />
+                                            </div>
+                                        ) : (
+                                            <AnswerBubble key={message.id} message={message} isStreaming={isStreaming} onAnswerConfirmation={answerConfirmation} />
+                                        )
+                                    )
+                                )}
+                            </div>
+
+                            <form
+                                className="flex flex-col gap-2 border-t border-divider px-4 py-3"
+                                onSubmit={event => {
+                                    event.preventDefault()
+                                    submit()
+                                }}
+                            >
+                                <div className="flex items-end gap-2">
+                                    <Textarea
+                                        ref={inputRef}
+                                        value={draft}
+                                        maxLength={MAX_QUESTION_CHARS}
+                                        rows={2}
+                                        className="min-h-[44px] resize-none"
+                                        disabled={awaitingConfirmation}
+                                        placeholder={t(awaitingConfirmation ? "assistant.placeholder_awaiting_confirmation" : "assistant.placeholder")}
+                                        aria-label={t("assistant.placeholder")}
+                                        dataTestId="assistant-input"
+                                        onChange={event => setDraft(event.target.value)}
+                                        onKeyDown={event => {
+                                            // Enter sends, Shift+Enter goes to a new line, as in any chat.
+                                            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                                                event.preventDefault()
+                                                submit()
+                                            }
+                                        }}
+                                    />
+                                    {isStreaming ? (
+                                        <Button type="button" variant="secondary" size="icon" aria-label={t("assistant.stop")} onClick={stop} dataTestId="assistant-stop">
+                                            <Square />
+                                        </Button>
+                                    ) : (
+                                        <Button type="submit" size="icon" aria-label={t("assistant.send")} disabled={!draft.trim() || awaitingConfirmation} dataTestId="assistant-send">
+                                            <ArrowUp />
+                                        </Button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-foreground-secondary">{t("assistant.disclaimer")}</p>
+                            </form>
+                        </>
                     )}
-                </div>
-                <p className="text-xs text-foreground-secondary">{t("assistant.disclaimer")}</p>
-            </form>
+                </TabsContent>
+
+                {projectId &&
+                    jobTabs.map(tab => (
+                        <TabsContent key={tab.rootJobId} value={tab.rootJobId} className="mt-0 flex min-h-0 flex-1 flex-col rounded-none">
+                            <AssistantJobThread projectId={projectId} tab={tab} />
+                        </TabsContent>
+                    ))}
+            </Tabs>
+
+            {projectId && <AssistantNewJobDialog projectId={projectId} open={newJobOpen} onOpenChange={setNewJobOpen} />}
         </aside>
     )
 }

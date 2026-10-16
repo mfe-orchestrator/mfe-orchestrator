@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FieldErrors, FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -102,6 +102,8 @@ const FORM_TABS = ["general", "context", "hosting", "repository"] as const
 
 type FormTab = (typeof FORM_TABS)[number] | "aiChange" | "danger"
 
+const isFormTab = (value: string | null): value is FormTab => Boolean(value && ([...FORM_TABS, "aiChange", "danger"] as string[]).includes(value))
+
 const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
     general: ["name", "slug", "description"],
     context: ["context"],
@@ -132,7 +134,9 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const microfrontendsApi = useMicrofrontendsApi()
     const navigate = useNavigate()
     const template = searchParams.get("template")
-    const [activeTab, setActiveTab] = useState<FormTab>("general")
+    // `?tab=` opens a tab straight away: the assistant links the diff of a job to `?tab=aiChange`.
+    const linkedTab = searchParams.get("tab")
+    const [activeTab, setActiveTab] = useState<FormTab>(isFormTab(linkedTab) ? linkedTab : "general")
     const assistantEnabled = useAssistantEnabled()
 
     const getStandardHost = () => {
@@ -226,6 +230,15 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const hasRepositories = Boolean(repositories && repositories.length > 0)
     const showAiChange = isEdit && Boolean(frontend?.codeRepository?.enabled) && assistantEnabled
 
+    // Another link followed while the page is open.
+    useEffect(() => {
+        if (isFormTab(linkedTab)) setActiveTab(linkedTab)
+    }, [linkedTab])
+
+    // A linked tab may not exist on this microfrontend (no repository, AI editing off): fall back to the first one.
+    const isTabShown = (tab: FormTab) => (tab === "repository" ? hasRepositories : tab === "aiChange" ? showAiChange : tab === "danger" ? isEdit : true)
+    const shownTab = isTabShown(activeTab) ? activeTab : "general"
+
     /** A tab is flagged when any of the fields it owns failed validation, so an error is never hidden behind an inactive tab. */
     const tabHasErrors = (tab: FormTab) => TAB_FIELDS[tab].some(field => Boolean(form.formState.errors[field]))
 
@@ -242,7 +255,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
 
                     <ReleaseSection isEdit={isEdit} versions={versions} />
 
-                    <Tabs value={activeTab} onValueChange={value => setActiveTab(value as FormTab)} tabsListPosition="fullWidth">
+                    <Tabs value={shownTab} onValueChange={value => setActiveTab(value as FormTab)} tabsListPosition="fullWidth">
                         <TabsList>
                             <TabsTrigger value="general" className="flex-1">
                                 {t("microfrontend.tabs.general")}
