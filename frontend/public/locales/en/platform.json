@@ -626,8 +626,7 @@
             "hosting": "Hosting",
             "repository": "Repository",
             "danger_zone": "Danger Zone",
-            "context": "AI context",
-            "aiChange": "Edit with AI"
+            "context": "AI context"
         },
         "canary_release": "Canary Release",
         "canary_settings": "Canary Settings",
@@ -781,9 +780,6 @@
             "usage_shared_other": "The cost of the whole job, shared among its {{count}} repositories",
             "job_badge_one": "Job · {{count}} repo",
             "job_badge_other": "Job · {{count}} repos",
-            "history_title": "Previous requests",
-            "history_description": "The latest requests made on this microfrontend. Select one to see it.",
-            "history_empty": "No requests yet.",
             "open_request": "Open the request: {{prompt}}",
             "diff": {
                 "caption": "Changes to {{path}}",
@@ -809,7 +805,31 @@
                 "WORKSPACE_NO_REPOSITORY": "This microfrontend has no linked code repository.",
                 "AI_CHANGE_CONFLICT": "These files changed on the base branch after the proposal: {{files}}. Ask for the change again.",
                 "AI_CHANGE_NOT_PROPOSED": "This request is no longer waiting for approval."
-            }
+            },
+            "new_change": "New change",
+            "queue_label": "AI change requests",
+            "groups": {
+                "review": "Awaiting approval",
+                "active": "In progress",
+                "discarded": "Discarded",
+                "history": "Applied and failed"
+            },
+            "group_empty": {
+                "review": "No proposals awaiting approval.",
+                "active": "No agent at work.",
+                "discarded": "No discarded proposals.",
+                "history": "No finished requests yet."
+            },
+            "composer_title": "What do you want to change in {{name}}?",
+            "composer_shortcut": "⌘/Ctrl + Enter to generate the proposal",
+            "advanced_options": "Advanced options"
+        },
+        "workspace": {
+            "back": "All microfrontends",
+            "nav_label": "Microfrontend sections",
+            "nav_ai": "Edit with AI",
+            "nav_settings": "Details & settings",
+            "version": "v{{version}}"
         }
     },
     "environmentVariables": {

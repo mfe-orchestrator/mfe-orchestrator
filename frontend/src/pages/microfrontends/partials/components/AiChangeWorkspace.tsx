@@ -2,7 +2,7 @@ import { Alert, AlertDescription, AlertTitle, Card, CardContent, CardDescription
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import { format } from "date-fns"
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, GitBranch, RotateCcw, Sparkles, Trash2 } from "lucide-react"
+import { AlertTriangle, Archive, CheckCircle2, ChevronDown, ChevronRight, ClipboardCheck, ExternalLink, GitBranch, LoaderCircle, Plus, RotateCcw, Sparkles, Trash2 } from "lucide-react"
 import { useEffect, useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
@@ -13,6 +13,7 @@ import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeReque
 import { errorCodeOf } from "@/hooks/useApiClient"
 import useThemeStore from "@/store/useThemeStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import { cn } from "@/utils/styleUtils"
 import { AiChangeDiff } from "./AiChangeDiff"
 import { ProgressLog, StatusBadge } from "./AiChangeProgress"
 
@@ -305,37 +306,247 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
     )
 }
 
-interface AiChangeSectionProps {
+/** The value of `?change=` that opens the composer instead of a request. */
+const NEW_CHANGE = "new"
+
+/** The queue groups requests by what they wait for: the user's review, the agent, or nothing at all. */
+type QueueGroup = "review" | "active" | "discarded" | "history"
+
+const groupOf = (status: AiChangeStatus): QueueGroup => {
+    if (status === "PROPOSED") return "review"
+    if (isActive(status)) return "active"
+    if (status === "DISCARDED") return "discarded"
+    return "history"
+}
+
+const GROUP_ICON: Record<QueueGroup, React.FC<{ className?: string }>> = {
+    review: ClipboardCheck,
+    active: LoaderCircle,
+    discarded: Trash2,
+    history: Archive
+}
+
+/** What opens when no request is linked: a proposal to review first, then work in progress, otherwise a new request. */
+const defaultSelection = (requests: AiChangeRequest[]) => requests.find(request => request.status === "PROPOSED")?._id ?? requests.find(request => isActive(request.status))?._id ?? NEW_CHANGE
+
+const QueueItem: React.FC<{ request: AiChangeRequest; selected: boolean; onSelect: () => void }> = ({ request, selected, onSelect }) => {
+    const { t } = useTranslation()
+    const themeStore = useThemeStore()
+    return (
+        <li>
+            <button
+                type="button"
+                aria-current={selected ? "true" : undefined}
+                aria-label={t("microfrontend.aiChange.open_request", { prompt: firstLine(request.prompt) })}
+                onClick={onSelect}
+                className={cn(
+                    "flex w-full flex-col gap-1 rounded-md border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    selected ? "border-primary bg-primary/5" : "border-divider hover:border-primary/50 hover:bg-muted/40"
+                )}
+            >
+                <span className="line-clamp-2 break-words text-sm font-medium">{firstLine(request.prompt)}</span>
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <time dateTime={request.createdAt}>{format(new Date(request.createdAt), "PPp", { locale: themeStore.getLocale() })}</time>
+                    {request.files.length > 0 && <span>· {t("microfrontend.aiChange.files_count", { count: request.files.length })}</span>}
+                </span>
+                <span className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={request.status} />
+                    <JobBadge request={request} />
+                </span>
+            </button>
+        </li>
+    )
+}
+
+interface QueueSectionProps {
+    group: QueueGroup
+    requests: AiChangeRequest[]
+    selectedId: string
+    onSelect: (id: string) => void
+}
+
+const QueueSection: React.FC<QueueSectionProps> = ({ group, requests, selectedId, onSelect }) => {
+    const { t } = useTranslation()
+    const headingId = useId()
+    const Icon = GROUP_ICON[group]
+    const heading = (
+        <span className="flex items-center justify-between gap-2">
+            <span id={headingId} className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-secondary">
+                <Icon className={cn("size-3.5", group === "active" && requests.length > 0 && "animate-spin motion-reduce:animate-none")} aria-hidden="true" />
+                {t(`microfrontend.aiChange.groups.${group}`)}
+            </span>
+            <Badge variant={group === "review" && requests.length > 0 ? "accent" : "outline"}>{requests.length}</Badge>
+        </span>
+    )
+    const list =
+        requests.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t(`microfrontend.aiChange.group_empty.${group}`)}</p>
+        ) : (
+            <ul aria-labelledby={headingId} className="flex flex-col gap-1.5">
+                {requests.map(request => (
+                    <QueueItem key={request._id} request={request} selected={request._id === selectedId} onSelect={() => onSelect(request._id)} />
+                ))}
+            </ul>
+        )
+
+    // Applied and failed requests are done with: keep them out of the way unless one of them is open.
+    if (group === "history") {
+        return (
+            <details className="group flex flex-col gap-2" open={requests.some(request => request._id === selectedId) || undefined}>
+                <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{heading}</summary>
+                <div className="mt-2">{list}</div>
+            </details>
+        )
+    }
+
+    return (
+        <section aria-labelledby={headingId} className="flex flex-col gap-2">
+            {heading}
+            {list}
+        </section>
+    )
+}
+
+interface ComposerProps {
+    microfrontendName: string
+    prompt: string
+    baseBranch: string
+    onPromptChange: (value: string) => void
+    onBaseBranchChange: (value: string) => void
+    onSubmit: () => void
+    pending: boolean
+    error?: string
+    promptRef: React.RefObject<HTMLTextAreaElement | null>
+}
+
+const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef }) => {
+    const { t } = useTranslation()
+    const promptId = useId()
+    const branchId = useId()
+
+    return (
+        <form
+            noValidate
+            onSubmit={event => {
+                event.preventDefault()
+                onSubmit()
+            }}
+        >
+            <Card className="border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+                <CardHeader>
+                    <CardTitle className="mb-0 flex items-center gap-2 break-words text-xl">
+                        <Sparkles className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                        {t("microfrontend.aiChange.composer_title", { name: microfrontendName })}
+                    </CardTitle>
+                    <CardDescription>{t("microfrontend.aiChange.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4 pt-3">
+                    <div className="flex flex-col gap-1.5">
+                        <Label htmlFor={promptId} className="sr-only">
+                            {t("microfrontend.aiChange.prompt_label")}
+                        </Label>
+                        <Textarea
+                            id={promptId}
+                            ref={promptRef}
+                            value={prompt}
+                            rows={8}
+                            maxLength={PROMPT_MAX_LENGTH}
+                            required
+                            aria-invalid={Boolean(error)}
+                            aria-describedby={`${promptId}-hint`}
+                            placeholder={t("microfrontend.aiChange.prompt_placeholder")}
+                            disabled={pending}
+                            onChange={event => onPromptChange(event.target.value)}
+                            onKeyDown={event => {
+                                if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                                    event.preventDefault()
+                                    onSubmit()
+                                }
+                            }}
+                            dataTestId="ai-change-prompt"
+                        />
+                        <div id={`${promptId}-hint`} className="flex justify-between gap-2 text-xs">
+                            <span className="text-destructive">{error}</span>
+                            <span className="text-muted-foreground">{t("microfrontend.aiChange.prompt_counter", { count: prompt.length, max: PROMPT_MAX_LENGTH })}</span>
+                        </div>
+                    </div>
+                    {/* Open when a retry brought a branch back, so the user sees where the agent will start from. */}
+                    <details className="text-sm" open={Boolean(baseBranch) || undefined}>
+                        <summary className="cursor-pointer text-muted-foreground">{t("microfrontend.aiChange.advanced_options")}</summary>
+                        <div className="mt-3 flex flex-col gap-1.5">
+                            <Label htmlFor={branchId}>{t("microfrontend.aiChange.base_branch_label")}</Label>
+                            <Input
+                                id={branchId}
+                                value={baseBranch}
+                                placeholder={t("microfrontend.aiChange.base_branch_placeholder")}
+                                disabled={pending}
+                                onChange={event => onBaseBranchChange(event.target.value)}
+                                fullWidth
+                                dataTestId="ai-change-base-branch"
+                            />
+                        </div>
+                    </details>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">{t("microfrontend.aiChange.composer_shortcut")}</span>
+                        <Button type="submit" disabled={pending} dataTestId="ai-change-generate">
+                            {pending ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
+                            {t("microfrontend.aiChange.generate")}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </form>
+    )
+}
+
+interface AiChangeWorkspaceProps {
     microfrontendId: string
+    microfrontendName: string
 }
 
 /**
- * The "Edit with AI" tab. It lives inside the microfrontend edit form, so nothing here may submit it:
- * the inputs are plain controlled components (not registered in the outer form) and every button is `type="button"`.
+ * The "Edit with AI" workspace, the landing screen of a microfrontend: the queue of its requests on one side
+ * (waiting for review, in progress, discarded, done) and the selected one, or a new request, on the other.
+ * The selection lives in `?change=`, so the assistant can link a job straight to its diff.
  */
-export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendId }) => {
+export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfrontendId, microfrontendName }) => {
     const { t } = useTranslation()
     const aiChangesApi = useAiChangesApi()
     const queryClient = useQueryClient()
-    const themeStore = useThemeStore()
     const [prompt, setPrompt] = useState("")
     const [baseBranch, setBaseBranch] = useState("")
-    const [searchParams] = useSearchParams()
-    // A deep link (`?change=<id>`, from a job of the assistant) opens that request instead of the latest one.
-    const linkedId = searchParams.get("change") ?? undefined
-    const [selectedId, setSelectedId] = useState<string | undefined>(linkedId)
     const [submitted, setSubmitted] = useState(false)
+    const [searchParams, setSearchParams] = useSearchParams()
     const promptRef = useRef<HTMLTextAreaElement>(null)
-    const autoSelected = useRef(Boolean(linkedId))
-    const promptId = useId()
-    const branchId = useId()
+    const linkedId = searchParams.get("change") ?? undefined
 
     const historyQueryKey = ["ai-changes", microfrontendId]
 
     const historyQuery = useQuery({
         queryKey: historyQueryKey,
-        queryFn: () => aiChangesApi.getByMicrofrontendId(microfrontendId)
+        queryFn: () => aiChangesApi.getByMicrofrontendId(microfrontendId),
+        // Jobs started from the assistant land here too: keep the queue moving while any agent works.
+        refetchInterval: query => (query.state.data?.some(request => isActive(request.status)) ? POLL_INTERVAL_MS * 2 : false)
     })
+
+    const select = (id: string) =>
+        setSearchParams(
+            current => {
+                const next = new URLSearchParams(current)
+                next.delete("tab")
+                next.set("change", id)
+                return next
+            },
+            { replace: true }
+        )
+
+    // Nothing linked: open what needs attention first. Pinned in the URL, so the selection does not jump when the queue moves.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only the arrival of the queue decides the default
+    useEffect(() => {
+        if (!linkedId && historyQuery.data) select(defaultSelection(historyQuery.data))
+    }, [linkedId, historyQuery.data])
+
+    const selectedId = linkedId && linkedId !== NEW_CHANGE ? linkedId : undefined
 
     const requestQuery = useQuery({
         queryKey: ["ai-change", selectedId],
@@ -344,22 +555,7 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
         refetchInterval: query => (isActive(query.state.data?.status) ? POLL_INTERVAL_MS : false)
     })
 
-    // Another link followed while the page is open.
-    useEffect(() => {
-        if (!linkedId) return
-        autoSelected.current = true
-        setSelectedId(linkedId)
-    }, [linkedId])
-
-    // Back on the tab with work in progress (or a proposal waiting for review): show it straight away.
-    useEffect(() => {
-        if (autoSelected.current || !historyQuery.data) return
-        autoSelected.current = true
-        const latest = historyQuery.data[0]
-        if (latest && (isActive(latest.status) || latest.status === "PROPOSED")) setSelectedId(latest._id)
-    }, [historyQuery.data])
-
-    // The history only shows statuses: refresh it when the polled request settles.
+    // The queue only shows statuses: refresh it when the polled request settles.
     const status = requestQuery.data?.status
     useEffect(() => {
         if (status && !isActive(status)) queryClient.invalidateQueries({ queryKey: ["ai-changes", microfrontendId] })
@@ -379,8 +575,9 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
             ),
         onSuccess: created => {
             queryClient.setQueryData(["ai-change", created._id], created)
-            setSelectedId(created._id)
+            select(created._id)
             setPrompt("")
+            setBaseBranch("")
             setSubmitted(false)
             queryClient.invalidateQueries({ queryKey: historyQueryKey })
         }
@@ -397,11 +594,16 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
         createMutation.mutate()
     }
 
+    const startNew = () => {
+        select(NEW_CHANGE)
+        // The composer mounts with the new selection: focus it on the next frame.
+        requestAnimationFrame(() => promptRef.current?.focus())
+    }
+
     const retry = (request: AiChangeRequest) => {
         setPrompt(request.prompt)
         setBaseBranch(request.baseBranch)
-        promptRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
-        promptRef.current?.focus()
+        startNew()
     }
 
     const onUpdated = (request: AiChangeRequest) => {
@@ -414,126 +616,53 @@ export const AiChangeSection: React.FC<AiChangeSectionProps> = ({ microfrontendI
         queryClient.invalidateQueries({ queryKey: historyQueryKey })
     }
 
-    // Enter in a single-line input would submit the surrounding microfrontend form.
-    const preventFormSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter") {
-            event.preventDefault()
-            generate()
-        }
-    }
+    const requests = historyQuery.data ?? []
+    const groups: QueueGroup[] = ["review", "active", "discarded", "history"]
 
     return (
-        <div className="flex flex-col gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="mb-0">{t("microfrontend.aiChange.title")}</CardTitle>
-                    <CardDescription>{t("microfrontend.aiChange.description")}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4 pt-3">
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={promptId}>
-                            {t("microfrontend.aiChange.prompt_label")}
-                            <span aria-hidden="true"> *</span>
-                        </Label>
-                        <Textarea
-                            id={promptId}
-                            ref={promptRef}
-                            value={prompt}
-                            rows={6}
-                            maxLength={PROMPT_MAX_LENGTH}
-                            // No native `required`: the browser would then block the Save of the surrounding form.
-                            aria-required="true"
-                            aria-invalid={Boolean(promptError)}
-                            aria-describedby={`${promptId}-hint`}
-                            placeholder={t("microfrontend.aiChange.prompt_placeholder")}
-                            disabled={createMutation.isPending}
-                            onChange={event => setPrompt(event.target.value)}
-                            dataTestId="ai-change-prompt"
-                        />
-                        <div id={`${promptId}-hint`} className="flex justify-between gap-2 text-xs">
-                            <span className="text-destructive">{promptError}</span>
-                            <span className="text-muted-foreground">{t("microfrontend.aiChange.prompt_counter", { count: prompt.length, max: PROMPT_MAX_LENGTH })}</span>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={branchId}>{t("microfrontend.aiChange.base_branch_label")}</Label>
-                        <Input
-                            id={branchId}
-                            value={baseBranch}
-                            placeholder={t("microfrontend.aiChange.base_branch_placeholder")}
-                            disabled={createMutation.isPending}
-                            onChange={event => setBaseBranch(event.target.value)}
-                            onKeyDown={preventFormSubmit}
-                            fullWidth
-                            dataTestId="ai-change-base-branch"
-                        />
-                    </div>
-                    <div className="flex justify-end">
-                        <Button type="button" disabled={createMutation.isPending} onClick={generate} dataTestId="ai-change-generate">
-                            {createMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
-                            {t("microfrontend.aiChange.generate")}
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+            <aside aria-label={t("microfrontend.aiChange.queue_label")} className="flex flex-col gap-5 lg:sticky lg:top-4">
+                <Button type="button" variant={linkedId === NEW_CHANGE ? "secondary" : "primary"} onClick={startNew} dataTestId="ai-change-new">
+                    <Plus aria-hidden="true" />
+                    {t("microfrontend.aiChange.new_change")}
+                </Button>
+                {historyQuery.isPending && <Spinner size={24} centerScreen={false} label={t("common.loading")} />}
+                {historyQuery.isError && <p className="text-sm text-destructive">{t("microfrontend.aiChange.errors.history")}</p>}
+                {historyQuery.data &&
+                    groups.map(group => (
+                        <QueueSection key={group} group={group} requests={requests.filter(request => groupOf(request.status) === group)} selectedId={linkedId ?? ""} onSelect={select} />
+                    ))}
+            </aside>
 
-            {selectedId && requestQuery.isPending && (
-                <div className="flex justify-center py-6">
-                    <Spinner size={24} centerScreen={false} label={t("common.loading")} />
-                </div>
-            )}
-            {selectedId && requestQuery.isError && (
-                <Alert variant="destructive">
-                    <AlertDescription>{t("microfrontend.aiChange.errors.load")}</AlertDescription>
-                </Alert>
-            )}
-            {selectedId && requestQuery.data && <RequestView request={requestQuery.data} onRetry={retry} onUpdated={onUpdated} onConflict={onConflict} />}
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="mb-0">{t("microfrontend.aiChange.history_title")}</CardTitle>
-                    <CardDescription>{t("microfrontend.aiChange.history_description")}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-3">
-                    {historyQuery.isPending && <Spinner size={24} centerScreen={false} label={t("common.loading")} />}
-                    {historyQuery.isError && <p className="text-sm text-destructive">{t("microfrontend.aiChange.errors.history")}</p>}
-                    {historyQuery.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("microfrontend.aiChange.history_empty")}</p>}
-                    {Boolean(historyQuery.data?.length) && (
-                        <ul className="flex flex-col divide-y divide-divider">
-                            {historyQuery.data?.map(item => (
-                                <li key={item._id} className={`flex items-center gap-3 py-2 ${item._id === selectedId ? "bg-muted/40" : ""}`}>
-                                    <button
-                                        type="button"
-                                        className="flex min-w-0 flex-1 flex-col items-start gap-0.5 rounded-sm px-2 text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        aria-current={item._id === selectedId ? "true" : undefined}
-                                        aria-label={t("microfrontend.aiChange.open_request", { prompt: firstLine(item.prompt) })}
-                                        onClick={() => setSelectedId(item._id)}
-                                    >
-                                        <span className="w-full truncate text-sm font-medium">{firstLine(item.prompt)}</span>
-                                        <span className="text-xs text-muted-foreground">{format(new Date(item.createdAt), "PPp", { locale: themeStore.getLocale() })}</span>
-                                    </button>
-                                    {item.pullRequestUrl && (
-                                        <a
-                                            href={item.pullRequestUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
-                                        >
-                                            {t("microfrontend.aiChange.pull_request")}
-                                            <ExternalLink className="size-3" aria-hidden="true" />
-                                            <span className="sr-only">{t("microfrontend.aiChange.opens_new_tab")}</span>
-                                        </a>
-                                    )}
-                                    <JobBadge request={item} />
-                                    <StatusBadge status={item.status} />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </CardContent>
-            </Card>
+            {/* First on small screens: the open request matters more than the queue around it. */}
+            <div className="order-first min-w-0 lg:order-none">
+                {(linkedId === NEW_CHANGE || (!linkedId && historyQuery.data?.length === 0)) && (
+                    <Composer
+                        microfrontendName={microfrontendName}
+                        prompt={prompt}
+                        baseBranch={baseBranch}
+                        onPromptChange={setPrompt}
+                        onBaseBranchChange={setBaseBranch}
+                        onSubmit={generate}
+                        pending={createMutation.isPending}
+                        error={promptError}
+                        promptRef={promptRef}
+                    />
+                )}
+                {selectedId && requestQuery.isPending && (
+                    <div className="flex justify-center py-6">
+                        <Spinner size={24} centerScreen={false} label={t("common.loading")} />
+                    </div>
+                )}
+                {selectedId && requestQuery.isError && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{t("microfrontend.aiChange.errors.load")}</AlertDescription>
+                    </Alert>
+                )}
+                {selectedId && requestQuery.data && <RequestView request={requestQuery.data} onRetry={retry} onUpdated={onUpdated} onConflict={onConflict} />}
+            </div>
         </div>
     )
 }
 
-export default AiChangeSection
+export default AiChangeWorkspace

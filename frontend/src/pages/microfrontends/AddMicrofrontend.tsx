@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { FieldErrors, FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import * as z from "zod"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Button } from "@/components/atoms"
@@ -15,7 +15,7 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import { AiChangeSection, CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, ReleaseSection } from "@/pages/microfrontends/partials/components"
+import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, isAiEditAvailable, MicrofrontendHeader, ReleaseSection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
@@ -100,16 +100,15 @@ type FormValues = z.infer<typeof formSchema>
 /** Tabs that own validated fields, in the order they are shown: the first one with an error is the one we jump to. */
 const FORM_TABS = ["general", "context", "hosting", "repository"] as const
 
-type FormTab = (typeof FORM_TABS)[number] | "aiChange" | "danger"
+type FormTab = (typeof FORM_TABS)[number] | "danger"
 
-const isFormTab = (value: string | null): value is FormTab => Boolean(value && ([...FORM_TABS, "aiChange", "danger"] as string[]).includes(value))
+const isFormTab = (value: string | null): value is FormTab => Boolean(value && ([...FORM_TABS, "danger"] as string[]).includes(value))
 
 const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
     general: ["name", "slug", "description"],
     context: ["context"],
     hosting: ["host"],
     repository: ["codeRepository"],
-    aiChange: [],
     danger: []
 }
 
@@ -134,7 +133,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const microfrontendsApi = useMicrofrontendsApi()
     const navigate = useNavigate()
     const template = searchParams.get("template")
-    // `?tab=` opens a tab straight away: the assistant links the diff of a job to `?tab=aiChange`.
+    // `?tab=` opens a tab straight away.
     const linkedTab = searchParams.get("tab")
     const [activeTab, setActiveTab] = useState<FormTab>(isFormTab(linkedTab) ? linkedTab : "general")
     const assistantEnabled = useAssistantEnabled()
@@ -228,15 +227,15 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     }
 
     const hasRepositories = Boolean(repositories && repositories.length > 0)
-    const showAiChange = isEdit && Boolean(frontend?.codeRepository?.enabled) && assistantEnabled
+    const aiAvailable = isEdit && isAiEditAvailable(frontend, assistantEnabled)
 
     // Another link followed while the page is open.
     useEffect(() => {
         if (isFormTab(linkedTab)) setActiveTab(linkedTab)
     }, [linkedTab])
 
-    // A linked tab may not exist on this microfrontend (no repository, AI editing off): fall back to the first one.
-    const isTabShown = (tab: FormTab) => (tab === "repository" ? hasRepositories : tab === "aiChange" ? showAiChange : tab === "danger" ? isEdit : true)
+    // A linked tab may not exist on this microfrontend (no repository): fall back to the first one.
+    const isTabShown = (tab: FormTab) => (tab === "repository" ? hasRepositories : tab === "danger" ? isEdit : true)
     const shownTab = isTabShown(activeTab) ? activeTab : "general"
 
     /** A tab is flagged when any of the fields it owns failed validation, so an error is never hidden behind an inactive tab. */
@@ -247,138 +246,145 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         if (firstTabWithErrors) setActiveTab(firstTabWithErrors)
     }
 
-    return (
-        <SinglePageLayout title={isEdit ? t("microfrontend.edit") : t("microfrontend.add_new")} description={isEdit ? t("microfrontend.edit_description") : t("microfrontend.add_new_description")}>
-            <FormProvider {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-                    <FetchDataTemplateCard slug={template} />
+    // Edit with AI used to be a tab of this page: old links to it open the AI workspace.
+    if (isEdit && linkedTab === "aiChange") {
+        const change = searchParams.get("change")
+        return <Navigate to={`/microfrontend/${id}${change ? `?change=${encodeURIComponent(change)}` : ""}`} replace />
+    }
 
-                    <ReleaseSection isEdit={isEdit} versions={versions} />
+    const content = (
+        <FormProvider {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+                <FetchDataTemplateCard slug={template} />
 
-                    <Tabs value={shownTab} onValueChange={value => setActiveTab(value as FormTab)} tabsListPosition="fullWidth">
-                        <TabsList>
-                            <TabsTrigger value="general" className="flex-1">
-                                {t("microfrontend.tabs.general")}
-                                {tabHasErrors("general") && <ErrorDot />}
-                            </TabsTrigger>
-                            <TabsTrigger value="context" className="flex-1">
-                                {t("microfrontend.tabs.context")}
-                                {tabHasErrors("context") && <ErrorDot />}
-                            </TabsTrigger>
-                            <TabsTrigger value="hosting" className="flex-1">
-                                {t("microfrontend.tabs.hosting")}
-                                {tabHasErrors("hosting") && <ErrorDot />}
-                            </TabsTrigger>
-                            {hasRepositories && (
-                                <TabsTrigger value="repository" className="flex-1">
-                                    {t("microfrontend.tabs.repository")}
-                                    {tabHasErrors("repository") && <ErrorDot />}
-                                </TabsTrigger>
-                            )}
-                            {showAiChange && (
-                                <TabsTrigger value="aiChange" className="flex-1">
-                                    {t("microfrontend.tabs.aiChange")}
-                                </TabsTrigger>
-                            )}
-                            {isEdit && (
-                                <TabsTrigger value="danger" className="flex-1">
-                                    {t("microfrontend.tabs.danger_zone")}
-                                </TabsTrigger>
-                            )}
-                        </TabsList>
+                <ReleaseSection isEdit={isEdit} versions={versions} />
 
-                        {/* forceMount keeps every tab registered: switching tab must not drop the values or re-run the repository lookups. */}
-                        <TabsContent value="general" forceMount>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="mb-0">{t("microfrontend.general_information")}</CardTitle>
-                                    <CardDescription>{t("microfrontend.general_information_description")}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex flex-col gap-2 pt-3">
-                                    <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                        <TextField
-                                            name="name"
-                                            label={t("microfrontend.name")}
-                                            placeholder={t("microfrontend.name_placeholder")}
-                                            textTransform={value => value.replace("  ", " ")}
-                                            required
-                                            onChange={e => {
-                                                const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "-")
-                                                if (!isEdit) {
-                                                    form.setValue("slug", slug)
-                                                    form.setValue("codeRepository.createData.name", slug)
-                                                }
-                                            }}
-                                            containerClassName="flex-[1_1_240px]"
-                                        />
-                                        <TextField
-                                            name="slug"
-                                            disabled={isEdit}
-                                            label={t("microfrontend.slug")}
-                                            placeholder={t("microfrontend.slug_placeholder")}
-                                            required
-                                            containerClassName="flex-[1_1_240px]"
-                                        />
-                                    </div>
-                                    <TextareaField name="description" label={t("microfrontend.description")} placeholder={t("microfrontend.description_placeholder")} />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="context" forceMount>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="mb-0">{t("microfrontend.context.title")}</CardTitle>
-                                    <CardDescription>{t("microfrontend.context.subtitle")}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="pt-3">
-                                    <TextareaField
-                                        name="context"
-                                        label={t("microfrontend.context.label")}
-                                        placeholder={t("microfrontend.context.placeholder")}
-                                        description={t("microfrontend.context.hint")}
-                                        rows={14}
-                                        className="font-mono text-sm"
-                                        dataTestId="microfrontend-context"
-                                    />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="hosting" forceMount>
-                            <HostingSection storages={storages} />
-                        </TabsContent>
-
+                <Tabs value={shownTab} onValueChange={value => setActiveTab(value as FormTab)} tabsListPosition="fullWidth">
+                    <TabsList>
+                        <TabsTrigger value="general" className="flex-1">
+                            {t("microfrontend.tabs.general")}
+                            {tabHasErrors("general") && <ErrorDot />}
+                        </TabsTrigger>
+                        <TabsTrigger value="context" className="flex-1">
+                            {t("microfrontend.tabs.context")}
+                            {tabHasErrors("context") && <ErrorDot />}
+                        </TabsTrigger>
+                        <TabsTrigger value="hosting" className="flex-1">
+                            {t("microfrontend.tabs.hosting")}
+                            {tabHasErrors("hosting") && <ErrorDot />}
+                        </TabsTrigger>
                         {hasRepositories && (
-                            <TabsContent value="repository" forceMount>
-                                <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
-                            </TabsContent>
+                            <TabsTrigger value="repository" className="flex-1">
+                                {t("microfrontend.tabs.repository")}
+                                {tabHasErrors("repository") && <ErrorDot />}
+                            </TabsTrigger>
                         )}
-
-                        {/* Not force-mounted: it polls the backend, and its inputs are not part of this form. */}
-                        {showAiChange && id && (
-                            <TabsContent value="aiChange">
-                                <AiChangeSection microfrontendId={id} />
-                            </TabsContent>
-                        )}
-
                         {isEdit && (
-                            <TabsContent value="danger">
-                                <DangerZoneRemoveMicrofrontend microfrontend={frontend} />
-                            </TabsContent>
+                            <TabsTrigger value="danger" className="flex-1">
+                                {t("microfrontend.tabs.danger_zone")}
+                            </TabsTrigger>
                         )}
-                    </Tabs>
+                    </TabsList>
 
-                    <div className="flex justify-end gap-2">
-                        <Button disabled={form.formState.isSubmitting} type="button" variant="secondary" onClick={() => navigate(-1)}>
-                            {t("common.cancel")}
-                        </Button>
-                        <Button disabled={form.formState.isSubmitting} type="submit">
-                            {t("common.save")}
-                        </Button>
-                    </div>
-                </form>
-            </FormProvider>
+                    {/* forceMount keeps every tab registered: switching tab must not drop the values or re-run the repository lookups. */}
+                    <TabsContent value="general" forceMount>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="mb-0">{t("microfrontend.general_information")}</CardTitle>
+                                <CardDescription>{t("microfrontend.general_information_description")}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-2 pt-3">
+                                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                    <TextField
+                                        name="name"
+                                        label={t("microfrontend.name")}
+                                        placeholder={t("microfrontend.name_placeholder")}
+                                        textTransform={value => value.replace("  ", " ")}
+                                        required
+                                        onChange={e => {
+                                            const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "-")
+                                            if (!isEdit) {
+                                                form.setValue("slug", slug)
+                                                form.setValue("codeRepository.createData.name", slug)
+                                            }
+                                        }}
+                                        containerClassName="flex-[1_1_240px]"
+                                    />
+                                    <TextField
+                                        name="slug"
+                                        disabled={isEdit}
+                                        label={t("microfrontend.slug")}
+                                        placeholder={t("microfrontend.slug_placeholder")}
+                                        required
+                                        containerClassName="flex-[1_1_240px]"
+                                    />
+                                </div>
+                                <TextareaField name="description" label={t("microfrontend.description")} placeholder={t("microfrontend.description_placeholder")} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="context" forceMount>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="mb-0">{t("microfrontend.context.title")}</CardTitle>
+                                <CardDescription>{t("microfrontend.context.subtitle")}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-3">
+                                <TextareaField
+                                    name="context"
+                                    label={t("microfrontend.context.label")}
+                                    placeholder={t("microfrontend.context.placeholder")}
+                                    description={t("microfrontend.context.hint")}
+                                    rows={14}
+                                    className="font-mono text-sm"
+                                    dataTestId="microfrontend-context"
+                                />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="hosting" forceMount>
+                        <HostingSection storages={storages} />
+                    </TabsContent>
+
+                    {hasRepositories && (
+                        <TabsContent value="repository" forceMount>
+                            <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
+                        </TabsContent>
+                    )}
+
+                    {isEdit && (
+                        <TabsContent value="danger">
+                            <DangerZoneRemoveMicrofrontend microfrontend={frontend} />
+                        </TabsContent>
+                    )}
+                </Tabs>
+
+                <div className="flex justify-end gap-2">
+                    <Button disabled={form.formState.isSubmitting} type="button" variant="secondary" onClick={() => navigate(-1)}>
+                        {t("common.cancel")}
+                    </Button>
+                    <Button disabled={form.formState.isSubmitting} type="submit">
+                        {t("common.save")}
+                    </Button>
+                </div>
+            </form>
+        </FormProvider>
+    )
+
+    if (isEdit && frontend) {
+        return (
+            <div className="flex min-h-full flex-col gap-6">
+                <MicrofrontendHeader microfrontend={frontend} active="settings" aiAvailable={aiAvailable} />
+                {content}
+            </div>
+        )
+    }
+
+    return (
+        <SinglePageLayout title={t("microfrontend.add_new")} description={t("microfrontend.add_new_description")}>
+            {content}
         </SinglePageLayout>
     )
 }

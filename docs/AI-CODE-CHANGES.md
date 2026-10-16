@@ -1,6 +1,6 @@
 # Editing a microfrontend with AI
 
-From the **Edit with AI** tab of a microfrontend, a user describes a change ("add a 404 page"). An
+From **Edit with AI**, the screen a microfrontend opens on, a user describes a change ("add a 404 page"). An
 AI agent works on a local clone of the microfrontend's repository and proposes the change as a diff.
 Nothing reaches the repository until the user approves it: then the console commits the approved
 files on a new branch, pushes it and opens a pull request (a merge request on GitLab).

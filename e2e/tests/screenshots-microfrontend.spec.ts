@@ -131,7 +131,7 @@ test("Given a template When the creation form is filled Then it is captured with
 test("Given an existing microfrontend When the hosting type list is opened Then it is captured", async ({ browser }) => {
     const { context, page } = await openConsole(browser, 1_000)
     try {
-        await page.goto(`/microfrontend/${MICROFRONTEND_ID}`)
+        await page.goto(`/microfrontend/${MICROFRONTEND_ID}/settings`)
         await expect(page.getByRole("tab", { name: "Hosting" })).toBeVisible({ timeout: 60_000 })
         await page.waitForTimeout(3_000)
 

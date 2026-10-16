@@ -67,7 +67,7 @@ const RepositoryCard: React.FC<{ repository: AiJobRepository }> = ({ repository 
                 <span>{t("assistant.jobs.files", { count: repository.files.length })}</span>
                 {/* The review happens on the microfrontend page: diff, file selection, apply and discard. */}
                 <Link
-                    to={`/microfrontend/${repository.microfrontendId}?tab=aiChange&change=${repository.requestId}`}
+                    to={`/microfrontend/${repository.microfrontendId}?change=${repository.requestId}`}
                     aria-label={t("assistant.jobs.diff_label", { name: repository.microfrontendName })}
                     className="font-medium text-primary underline-offset-4 hover:underline"
                 >

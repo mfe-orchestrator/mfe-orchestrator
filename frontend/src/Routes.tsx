@@ -14,6 +14,7 @@ import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 // Lazy load all page components
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"))
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"))
+const MicrofrontendAiWorkspace = lazy(() => import("./pages/microfrontends/MicrofrontendAiWorkspace"))
 const Dependencies = lazy(() => import("./pages/dependencies/Dependencies"))
 const Builds = lazy(() => import("./pages/builds/Builds"))
 const Deployments = lazy(() => import("./pages/deployments/Deployments"))
@@ -107,7 +108,8 @@ const PrivateProjectRoutes: React.FC = () => {
             <RRDRoutes>
                 <Route path="/microfrontends" element={<RouteWithSuspense element={<Microfrontends />} />} />
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
-                <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
+                <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<MicrofrontendAiWorkspace />} />} />
+                <Route path="/microfrontend/:id/settings" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/dependencies" element={<RouteWithSuspense element={<Dependencies />} />} />
                 <Route path="/builds" element={<RouteWithSuspense element={<Builds />} />} />
                 <Route path="/deployments">

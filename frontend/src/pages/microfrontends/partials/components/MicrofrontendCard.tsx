@@ -1,13 +1,15 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, DescriptionItem, DescriptionList, Meter } from "@mfe-orchestrator/design-system"
-import { Cog, GitBranch, Hammer, UsersRound } from "lucide-react"
+import { Cog, GitBranch, Hammer, Sparkles, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { cn } from "@/utils/styleUtils"
 import BuildDialog from "./BuildDialog"
 import CloneRepositoryPopover from "./CloneRepositoryPopover"
+import { isAiEditAvailable } from "./MicrofrontendHeader"
 import WorkingAgentsIndicator, { useWorkingAgents } from "./WorkingAgentsIndicator"
 
 interface MicrofrontendCardProps {
@@ -27,6 +29,7 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
     const showCanaryShare = Boolean(canary) && canary?.type !== CanaryType.ON_USER
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
     const agents = useWorkingAgents(mfe._id)
+    const aiAvailable = isAiEditAvailable(mfe, useAssistantEnabled())
 
     return (
         <Card className={cn("flex h-full flex-col transition-colors duration-200 hover:border-primary", agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none")}>
@@ -87,9 +90,9 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
             </CardContent>
 
             <CardFooter className="flex-wrap gap-2 border-t border-divider pt-3">
-                <Button variant="primary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="flex-1">
-                    <Cog />
-                    {t("common.configuration")}
+                <Button variant="primary" size="sm" onClick={() => navigate(aiAvailable ? `/microfrontend/${mfe._id}` : `/microfrontend/${mfe._id}/settings`)} className="flex-1">
+                    {aiAvailable ? <Sparkles /> : <Cog />}
+                    {aiAvailable ? t("microfrontend.workspace.nav_ai") : t("common.configuration")}
                 </Button>
                 {hasRepository && (
                     <Button variant="secondary" size="sm" onClick={() => setIsBuildDialogOpen(true)} className="flex-1">

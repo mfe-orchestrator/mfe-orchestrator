@@ -1,11 +1,12 @@
 import { EmptyStateRow, Meter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
-import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server } from "lucide-react"
+import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server, Sparkles } from "lucide-react"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, HostedOn, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { BuildDialog, CloneRepositoryPopover, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
+import { BuildDialog, CloneRepositoryPopover, isAiEditAvailable, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
 import { cn } from "@/utils/styleUtils"
 import { HOST_TYPE_LABEL_KEYS } from "../labels"
 
@@ -87,6 +88,7 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
     const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false)
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
     const agents = useWorkingAgents(mfe._id)
+    const aiAvailable = isAiEditAvailable(mfe, useAssistantEnabled())
 
     return (
         <TableRow className={cn("border-divider hover:bg-primary/5", agents > 0 && "bg-primary/5")}>
@@ -123,9 +125,9 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
                             {t("microfrontend.card.build")}
                         </Button>
                     )}
-                    <Button variant="secondary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)}>
-                        <Cog />
-                        {t("common.configuration")}
+                    <Button variant={aiAvailable ? "primary" : "secondary"} size="sm" onClick={() => navigate(aiAvailable ? `/microfrontend/${mfe._id}` : `/microfrontend/${mfe._id}/settings`)}>
+                        {aiAvailable ? <Sparkles /> : <Cog />}
+                        {aiAvailable ? t("microfrontend.workspace.nav_ai") : t("common.configuration")}
                     </Button>
                 </div>
                 <BuildDialog open={isBuildDialogOpen} onOpenChange={setIsBuildDialogOpen} microfrontendId={mfe._id} microfrontendName={mfe.name} />

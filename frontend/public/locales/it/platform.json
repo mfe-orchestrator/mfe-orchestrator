@@ -722,8 +722,7 @@
             "hosting": "Hosting",
             "repository": "Repository",
             "danger_zone": "Zona Pericolosa",
-            "context": "Contesto AI",
-            "aiChange": "Modifica con AI"
+            "context": "Contesto AI"
         },
         "canary_release": "Distribuzione canary",
         "canary_settings": "Impostazioni Canary",
@@ -878,9 +877,6 @@
             "usage_shared_other": "Il costo dell'intero job, condiviso tra i suoi {{count}} repository",
             "job_badge_one": "Job · {{count}} repo",
             "job_badge_other": "Job · {{count}} repo",
-            "history_title": "Richieste precedenti",
-            "history_description": "Le ultime richieste fatte su questo microfrontend. Selezionane una per vederla.",
-            "history_empty": "Ancora nessuna richiesta.",
             "open_request": "Apri la richiesta: {{prompt}}",
             "diff": {
                 "caption": "Modifiche a {{path}}",
@@ -906,7 +902,31 @@
                 "WORKSPACE_NO_REPOSITORY": "Questo microfrontend non ha un repository di codice collegato.",
                 "AI_CHANGE_CONFLICT": "Questi file sono cambiati sul branch di partenza dopo la proposta: {{files}}. Richiedi di nuovo la modifica.",
                 "AI_CHANGE_NOT_PROPOSED": "Questa richiesta non è più in attesa di approvazione."
-            }
+            },
+            "new_change": "Nuova modifica",
+            "queue_label": "Richieste di modifica con AI",
+            "groups": {
+                "review": "Da approvare",
+                "active": "In corso",
+                "discarded": "Scartate",
+                "history": "Applicate e non riuscite"
+            },
+            "group_empty": {
+                "review": "Nessuna proposta in attesa di approvazione.",
+                "active": "Nessun agente al lavoro.",
+                "discarded": "Nessuna proposta scartata.",
+                "history": "Ancora nessuna richiesta conclusa."
+            },
+            "composer_title": "Cosa vuoi cambiare in {{name}}?",
+            "composer_shortcut": "⌘/Ctrl + Invio per generare la proposta",
+            "advanced_options": "Opzioni avanzate"
+        },
+        "workspace": {
+            "back": "Tutti i microfrontend",
+            "nav_label": "Sezioni del microfrontend",
+            "nav_ai": "Modifica con AI",
+            "nav_settings": "Info e impostazioni",
+            "version": "v{{version}}"
         }
     },
     "color_picker": {
