@@ -117,7 +117,7 @@ export default async function assistantController(fastify: FastifyInstance) {
         const heartbeat = setInterval(() => reply.raw.write(HEARTBEAT), HEARTBEAT_INTERVAL_MS)
 
         try {
-            const { stopReason, wrote } = await service.chat(
+            const { stopReason, wrote, usage } = await service.chat(
                 projectId,
                 request.body,
                 {
@@ -129,7 +129,9 @@ export default async function assistantController(fastify: FastifyInstance) {
                 abortController.signal,
                 action && confirmation ? { action, approved: confirmation.approved } : undefined
             )
-            sendEvent(reply, "done", { stopReason, wrote })
+            sendEvent(reply, "done", { stopReason, wrote, usage })
+            // One line per answer: what the assistant costs, per user and project.
+            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, ...usage }, "Assistant answer usage")
         } catch (error) {
             if (!abortController.signal.aborted) {
                 fastify.log.error({ err: error, projectId }, "Assistant chat failed")

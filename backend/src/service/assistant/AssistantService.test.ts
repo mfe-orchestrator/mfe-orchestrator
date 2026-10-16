@@ -39,7 +39,7 @@ vi.mock("../EnvironmentService", () => ({
 }))
 
 /** A fake MessageStream: replays the text deltas to the listener, then resolves with the message. */
-const fakeStream = (message: { stop_reason: string; content: unknown[] }) => ({
+const fakeStream = (message: { stop_reason: string; content: unknown[]; usage?: Record<string, number> }) => ({
     on: (_event: string, listener: (delta: string) => void) => {
         for (const block of message.content as { type: string; text?: string }[]) {
             if (block.type === "text" && block.text) listener(block.text)
@@ -92,7 +92,7 @@ describe("AssistantService", () => {
             handlers
         )
 
-        expect(outcome).toEqual({ stopReason: "end_turn", wrote: false })
+        expect(outcome).toMatchObject({ stopReason: "end_turn", wrote: false })
         expect(frames.map(entry => entry.event)).toEqual(["tool_call", "tool_result", "text"])
         expect(frames[0].frame).toEqual({ id: "toolu_1", name: "environments_list", title: "List environments", input: {}, kind: "read" })
         expect(frames[2].frame).toBe("You have one environment: Production.")
@@ -109,6 +109,18 @@ describe("AssistantService", () => {
         expect(toolResultMessage.role).toBe("user")
         expect(toolResultMessage.content[0]).toMatchObject({ type: "tool_result", tool_use_id: "toolu_1" })
         expect(JSON.parse(toolResultMessage.content[0].content)[0]).toMatchObject({ _id: "env-1", name: "Production" })
+    })
+
+    it("Given an answer over several model rounds, then its usage is the sum of every round", async () => {
+        getEnvironments.mockResolvedValue([])
+        const usage = { input_tokens: 10, cache_read_input_tokens: 400, cache_creation_input_tokens: 50, output_tokens: 7 }
+        stream
+            .mockReturnValueOnce(fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }], usage }))
+            .mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "None." }], usage }))
+
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "?" }] }, recordingHandlers().handlers)
+
+        expect(outcome.usage).toEqual({ inputTokens: 920, cachedInputTokens: 800, outputTokens: 14 })
     })
 
     it("Given a refusal, when answered, then no tool runs and the refusal is reported", async () => {
@@ -144,7 +156,7 @@ describe("AssistantService", () => {
         const { frames, handlers } = recordingHandlers()
         const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "Delete staging" }] }, handlers)
 
-        expect(outcome).toEqual({ stopReason: "awaiting_confirmation", wrote: false })
+        expect(outcome).toMatchObject({ stopReason: "awaiting_confirmation", wrote: false })
         expect(stream).toHaveBeenCalledTimes(1)
         expect(deleteEnvironment).not.toHaveBeenCalled()
         expect(frames.map(entry => entry.event)).toEqual(["text", "tool_call", "confirm"])
@@ -168,7 +180,7 @@ describe("AssistantService", () => {
             { action, approved: true }
         )
 
-        expect(outcome).toEqual({ stopReason: "end_turn", wrote: true })
+        expect(outcome).toMatchObject({ stopReason: "end_turn", wrote: true })
         expect(deleteEnvironment).toHaveBeenCalledWith(ENVIRONMENT)
         expect(frames[0]).toEqual({ event: "tool_result", frame: { id: "toolu_1", ok: true, summary: "Done", result: { deleted: true } } })
 
@@ -197,7 +209,7 @@ describe("AssistantService", () => {
             { action, approved: false }
         )
 
-        expect(outcome).toEqual({ stopReason: "end_turn", wrote: false })
+        expect(outcome).toMatchObject({ stopReason: "end_turn", wrote: false })
         expect(deleteEnvironment).not.toHaveBeenCalled()
         const request = stream.mock.calls[0][0]
         expect(request.messages[1].content).toEqual([{ type: "tool_use", id: "toolu_1", name: "environment_delete", input: { environmentId: ENVIRONMENT } }])
@@ -241,7 +253,7 @@ describe("AssistantService", () => {
             const { outcome } = await chatOnce(config, { actionId: confirmOf(first.frames).actionId, approved: true })
 
             expect(first.outcome.stopReason).toBe("awaiting_confirmation")
-            expect(outcome).toEqual({ stopReason: "end_turn", wrote: true })
+            expect(outcome).toMatchObject({ stopReason: "end_turn", wrote: true })
             const sent = stream.mock.calls[1][0].messages
             expect(sent).toHaveLength(3)
             expect(sent[1]).toEqual({ role: "assistant", content: native })

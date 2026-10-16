@@ -61,6 +61,22 @@ describe("AnthropicLlmClient", () => {
         expect(foundry.stream.mock.calls[0][0]).not.toHaveProperty("fallbacks")
     })
 
+    it("Given a prompt partly served from the cache, then the input tokens count the whole prompt and the cached part is reported apart", async () => {
+        const stream = vi.fn((_body: unknown) => ({
+            on: vi.fn(),
+            finalMessage: async () => ({
+                content: [{ type: "text", text: "ok" }],
+                stop_reason: "end_turn",
+                usage: { input_tokens: 20, cache_read_input_tokens: 1_000, cache_creation_input_tokens: 300, output_tokens: 9 }
+            })
+        }))
+        const client = { beta: { messages: { stream, create: vi.fn() } } } as unknown as ClaudeClient
+
+        const result = await new AnthropicLlmClient(LlmProvider.ANTHROPIC, client, "claude-opus-5-5").turn(request([{ role: "user", text: "hi" }]))
+
+        expect(result.usage).toEqual({ inputTokens: 1_320, cachedInputTokens: 1_000, outputTokens: 9 })
+    })
+
     it("Given a turn with thinking and a tool call, when the conversation goes on, then the blocks go back unchanged and the result pairs with the call", async () => {
         const content = [
             { type: "thinking", thinking: "", signature: "sig" },

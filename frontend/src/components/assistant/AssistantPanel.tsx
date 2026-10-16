@@ -1,11 +1,11 @@
 import { Textarea } from "@mfe-orchestrator/design-system"
-import { ArrowUp, RotateCcw, Sparkles, Square, X } from "lucide-react"
+import { ArrowUp, Coins, RotateCcw, Sparkles, Square, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import useAssistantChat from "@/hooks/useAssistantChat"
-import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
+import useAssistantStore, { AssistantMessage, AssistantUsage } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
 import AssistantConfirmationCard from "./AssistantConfirmationCard"
 import AssistantMessageText from "./AssistantMessageText"
@@ -54,7 +54,25 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAns
             {isThinking && <p className="text-foreground-secondary animate-pulse">{t("assistant.thinking")}</p>}
             {message.confirmation && <AssistantConfirmationCard confirmation={message.confirmation} disabled={isStreaming} onAnswer={onAnswerConfirmation} />}
             {message.errorKey && <p className={message.status === "error" ? "text-destructive" : "text-foreground-secondary"}>{t(`assistant.errors.${message.errorKey}`)}</p>}
+            {message.usage && <AnswerUsage usage={message.usage} />}
         </div>
+    )
+}
+
+/** What the answer cost, in tokens: the cached part of the prompt is shown apart, being far cheaper. */
+const AnswerUsage: React.FC<{ usage: AssistantUsage }> = ({ usage }) => {
+    const { t, i18n } = useTranslation()
+    const format = (value: number) => value.toLocaleString(i18n.language)
+    const input =
+        usage.cachedInputTokens > 0
+            ? t("assistant.usage.input_cached", { count: usage.inputTokens, formatted: format(usage.inputTokens), cached: format(usage.cachedInputTokens) })
+            : t("assistant.usage.input", { formatted: format(usage.inputTokens) })
+
+    return (
+        <p className="flex items-center gap-1 text-xs text-foreground-secondary" data-testid="assistant-usage" title={t("assistant.usage.hint")}>
+            <Coins className="size-3" aria-hidden />
+            {input} · {t("assistant.usage.output", { formatted: format(usage.outputTokens) })}
+        </p>
     )
 }
 

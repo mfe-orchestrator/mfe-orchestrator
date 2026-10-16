@@ -6,7 +6,7 @@ import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import { AssistantChatRequestDTO, AssistantProjectDraftDTO } from "../../types/AssistantDTO"
 import { toObjectId } from "../../utils/mongooseUtils"
 import BaseAuthorizedService from "../BaseAuthorizedService"
-import { getLlmClient, LlmConfiguration, LlmMessage, LlmToolResult } from "../llm"
+import { addUsage, getLlmClient, LlmConfiguration, LlmMessage, LlmToolResult, LlmUsage, NO_USAGE } from "../llm"
 import { AssistantToolEvents, AssistantToolRunner, assistantToolDefinitions } from "./assistantActions"
 import { PendingAssistantAction, takePendingAction } from "./pendingActions"
 
@@ -86,6 +86,8 @@ export interface AssistantChatOutcome {
     stopReason: AssistantStopReason
     /** True when a write ran successfully during the turn: the console reloads what it shows. */
     wrote: boolean
+    /** Tokens of every model round of this answer, shown to the user under it. */
+    usage: LlmUsage
 }
 
 /** The user's answer to a destructive action, already taken out of the store. */
@@ -213,6 +215,7 @@ class AssistantService extends BaseAuthorizedService {
         }
 
         let emittedText = false
+        let usage = NO_USAGE
         for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
             // Each round is a new message: without a break its text would run into the previous one.
             let roundHasText = false
@@ -230,23 +233,24 @@ class AssistantService extends BaseAuthorizedService {
                     handlers.onText(delta)
                 }
             })
+            usage = addUsage(usage, result.usage)
 
-            if (result.stopReason === "refusal") return { stopReason: "refusal", wrote }
+            if (result.stopReason === "refusal") return { stopReason: "refusal", wrote, usage }
             // A tool input cut off by max_tokens can still look like a valid object: never run it.
-            if (result.stopReason === "max_tokens") return { stopReason: "max_tokens", wrote }
-            if (result.toolCalls.length === 0) return { stopReason: "end_turn", wrote }
+            if (result.stopReason === "max_tokens") return { stopReason: "max_tokens", wrote, usage }
+            if (result.toolCalls.length === 0) return { stopReason: "end_turn", wrote, usage }
 
             messages.push(result.message)
             // The turn so far, after the user's last message: parked with an action waiting for the user.
             const outcome = await runner.runRound(result.toolCalls, handlers, messages.slice(newestUserMessage + 1))
             wrote ||= outcome.wrote
             // The turn stops here: it carries on once the user has answered the confirmation card.
-            if (outcome.awaitingConfirmation) return { stopReason: "awaiting_confirmation", wrote }
+            if (outcome.awaitingConfirmation) return { stopReason: "awaiting_confirmation", wrote, usage }
             // All results of one turn go back together, or the model learns to stop calling tools in parallel.
             messages.push({ role: "tool", results: outcome.results })
         }
 
-        return { stopReason: "max_tool_rounds", wrote }
+        return { stopReason: "max_tool_rounds", wrote, usage }
     }
 
     /**

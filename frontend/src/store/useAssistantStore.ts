@@ -59,6 +59,16 @@ export interface AssistantMessage {
     tools?: AssistantToolCall[]
     /** Set when the answer stopped to ask the user to confirm a destructive call. */
     confirmation?: AssistantConfirmation
+    /** Tokens the answer cost, every model round summed; set when it finished. */
+    usage?: AssistantUsage
+}
+
+export interface AssistantUsage {
+    /** The whole prompt, the cached part included. */
+    inputTokens: number
+    /** The part of the prompt read from the provider's cache, billed at a fraction of the price. */
+    cachedInputTokens: number
+    outputTokens: number
 }
 
 interface AssistantState {

@@ -21,9 +21,11 @@
  *   what the new deployment changes. `label` is a key the console translates.
  *   Answer it with a new `POST /assistant/chat` carrying the same conversation (it may end with the
  *   assistant's message) and `confirmation: { actionId, approved }`.
- * - `done` `{ stopReason, wrote }`: the turn ended. `stopReason` is `end_turn`, `refusal`,
+ * - `done` `{ stopReason, wrote, usage }`: the turn ended. `stopReason` is `end_turn`, `refusal`,
  *   `max_tokens`, `max_tool_rounds` or `awaiting_confirmation`; `wrote` is true when a write ran
- *   successfully during the turn, so the console reloads its data.
+ *   successfully during the turn, so the console reloads its data; `usage` `{ inputTokens,
+ *   cachedInputTokens, outputTokens }` sums every model round of this answer (`inputTokens`
+ *   includes the cached ones).
  * - `error` `{ code }`: the turn failed (`RATE_LIMITED` or `ASSISTANT_ERROR`).
  *
  * In one model round, reads run in parallel and writes one after the other in the order given.

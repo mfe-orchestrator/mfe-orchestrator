@@ -99,7 +99,11 @@ export class AzureOpenAiLlmClient implements LlmClient {
             text,
             toolCalls,
             stopReason,
-            usage: { inputTokens: response.usage?.input_tokens ?? 0, outputTokens: response.usage?.output_tokens ?? 0 },
+            usage: {
+                inputTokens: response.usage?.input_tokens ?? 0,
+                cachedInputTokens: response.usage?.input_tokens_details?.cached_tokens ?? 0,
+                outputTokens: response.usage?.output_tokens ?? 0
+            },
             message: assistantMessage(text, toolCalls, native)
         }
     }

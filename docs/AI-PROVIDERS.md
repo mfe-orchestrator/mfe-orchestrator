@@ -61,6 +61,10 @@ the input is validated, a **VIEWER** cannot change anything, and errors read the
   dropping the oldest rounds first) and replayed when the user answers, with the real outcome in
   place of the waiting call's result: Gemini and Claude with thinking reject a tool call replayed
   without them.
+- Every answer shows under it the tokens it used, every model round summed: the input (with the
+  part read from the prompt cache, far cheaper) and the output. Each answer is also logged with
+  `audit: "assistant_usage"`, the user, the project and the same counts. Input tokens count the
+  whole prompt on every provider: for Claude the cache reads and writes are added back.
 - Every write the assistant runs, confirmed or refused, is logged with `audit: "assistant_tool_call"`,
   the tool, the project (or the `organizationId` for organization tools), the user, the outcome, the
   `actionId` of a confirmed action on each of its lines, and the arguments reduced to ids and short

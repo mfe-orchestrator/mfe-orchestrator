@@ -1630,6 +1630,12 @@
             "analyze_deployments": "Compare the latest deployment of environment {{environment}} (id {{environmentId}}) with the previous one: which versions and variables changed, and is there anything to check?",
             "explain_dependencies": "Analyze the shared dependencies and misaligned peer dependencies across the microfrontends: which conflicts are risky and which should I tackle first?",
             "check_variables": "Compare the environment variables across the project's environments: are any defined in one environment and missing from another, production in particular?"
+        },
+        "usage": {
+            "input": "{{formatted}} input tokens",
+            "input_cached": "{{formatted}} input tokens ({{cached}} from cache)",
+            "output": "{{formatted}} output",
+            "hint": "Tokens used for this answer, every model step summed. Tokens read from the cache cost far less."
         }
     }
 }

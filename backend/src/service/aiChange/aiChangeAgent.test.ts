@@ -131,7 +131,7 @@ const scriptedClient = (turns: Pick<LlmTurnResult, "stopReason" | "text" | "tool
             sent.push(structuredClone({ ...request, signal: undefined }))
             const next = turns.shift()
             if (!next) throw new Error("No scripted turn left")
-            return { ...next, usage: { inputTokens: 10, outputTokens: 5 }, message: { role: "assistant", text: next.text, toolCalls: next.toolCalls } }
+            return { ...next, usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5 }, message: { role: "assistant", text: next.text, toolCalls: next.toolCalls } }
         }
     }
     return { client, sent }

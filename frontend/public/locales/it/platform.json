@@ -1649,6 +1649,12 @@
             "analyze_deployments": "Confronta l'ultimo deploy dell'ambiente {{environment}} (id {{environmentId}}) con quello precedente: quali versioni e variabili sono cambiate, e c'è qualcosa da controllare?",
             "explain_dependencies": "Analizza le dipendenze condivise e i peer dependency non allineati tra i microfrontend: quali conflitti sono rischiosi e da quale conviene partire?",
             "check_variables": "Confronta le variabili d'ambiente tra gli ambienti del progetto: ce ne sono definite in un ambiente e mancanti in un altro, in particolare in produzione?"
+        },
+        "usage": {
+            "input": "{{formatted}} token in ingresso",
+            "input_cached": "{{formatted}} token in ingresso ({{cached}} dalla cache)",
+            "output": "{{formatted}} in uscita",
+            "hint": "Token usati per questa risposta, sommando tutti i passaggi del modello. I token letti dalla cache costano molto meno."
         }
     }
 }

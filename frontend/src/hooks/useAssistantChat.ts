@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
-import useAssistantStore, { AssistantRole } from "@/store/useAssistantStore"
+import useAssistantStore, { AssistantRole, AssistantUsage } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
 import useApiClient from "./useApiClient"
 import { drainFrames, parseFrame } from "./useEventStream"
@@ -17,6 +17,13 @@ const newId = () => `message-${Date.now()}-${messageCounter++}`
 
 /** 409: the confirmation was already answered, or expired, before this answer reached the server. */
 const ERROR_KEY_BY_STATUS: Record<number, string> = { 404: "disabled", 409: "confirmation_expired", 429: "rate_limited" }
+
+/** The `usage` of a `done` frame, or nothing from a backend that does not send it yet. */
+const toUsage = (value: unknown): AssistantUsage | undefined => {
+    const usage = value as Partial<AssistantUsage> | undefined
+    if (typeof usage?.inputTokens !== "number" || typeof usage.outputTokens !== "number") return undefined
+    return { inputTokens: usage.inputTokens, cachedInputTokens: usage.cachedInputTokens ?? 0, outputTokens: usage.outputTokens }
+}
 
 const hasPendingConfirmation = () => useAssistantStore.getState().messages.some(message => message.confirmation?.status === "pending")
 
@@ -135,6 +142,8 @@ const useAssistantChat = () => {
                     } else if (event === "done") {
                         finished = true
                         if (payload.wrote) wrote = true
+                        const usage = toUsage(payload.usage)
+                        if (usage) updateMessage(answerId, message => ({ ...message, usage }))
                         if (payload.stopReason === "refusal") fail("refusal")
                         else if (payload.stopReason === "end_turn" || payload.stopReason === "awaiting_confirmation") updateMessage(answerId, message => ({ ...message, status: "done" }))
                         else updateMessage(answerId, message => ({ ...message, status: "done", errorKey: "incomplete" }))

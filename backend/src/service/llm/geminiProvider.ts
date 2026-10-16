@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { Content, FinishReason, GoogleGenAI, Part } from "@google/genai"
-import { assistantMessage, LlmClient, LlmJsonRequest, LlmMessage, LlmProvider, LlmToolCall, LlmTurnRequest, LlmTurnResult, toInputObject } from "./types"
+import { assistantMessage, LlmClient, LlmJsonRequest, LlmMessage, LlmProvider, LlmToolCall, LlmTurnRequest, LlmTurnResult, NO_USAGE, toInputObject } from "./types"
 
 /** Finish reasons that mean Gemini declined to answer, not that it ran out of room. */
 const BLOCKED: string[] = [FinishReason.SAFETY, FinishReason.PROHIBITED_CONTENT, FinishReason.BLOCKLIST, FinishReason.SPII, FinishReason.RECITATION]
@@ -55,7 +55,7 @@ export class GeminiLlmClient implements LlmClient {
         const parts: Part[] = []
         let finishReason: string | undefined
         let blocked = false
-        let usage = { inputTokens: 0, outputTokens: 0 }
+        let usage = NO_USAGE
         for await (const chunk of stream) {
             if (chunk.promptFeedback?.blockReason) blocked = true
             const candidate = chunk.candidates?.[0]
@@ -67,6 +67,7 @@ export class GeminiLlmClient implements LlmClient {
             if (chunk.usageMetadata) {
                 usage = {
                     inputTokens: chunk.usageMetadata.promptTokenCount ?? 0,
+                    cachedInputTokens: chunk.usageMetadata.cachedContentTokenCount ?? 0,
                     outputTokens: (chunk.usageMetadata.candidatesTokenCount ?? 0) + (chunk.usageMetadata.thoughtsTokenCount ?? 0)
                 }
             }

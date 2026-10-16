@@ -64,9 +64,20 @@ export interface LlmTurnRequest {
 export type LlmStopReason = "end_turn" | "tool_use" | "max_tokens" | "refusal"
 
 export interface LlmUsage {
+    /** Every input token of the request, the ones read from the prompt cache included. */
     inputTokens: number
+    /** The part of `inputTokens` read from the prompt cache, billed at a fraction of the price. */
+    cachedInputTokens: number
     outputTokens: number
 }
+
+export const NO_USAGE: LlmUsage = { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0 }
+
+export const addUsage = (total: LlmUsage, usage: LlmUsage): LlmUsage => ({
+    inputTokens: total.inputTokens + usage.inputTokens,
+    cachedInputTokens: total.cachedInputTokens + usage.cachedInputTokens,
+    outputTokens: total.outputTokens + usage.outputTokens
+})
 
 export interface LlmTurnResult {
     text: string

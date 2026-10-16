@@ -75,7 +75,13 @@ export class AnthropicLlmClient implements LlmClient {
             text,
             toolCalls,
             stopReason,
-            usage: { inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens },
+            // Claude counts cache reads and writes apart from input_tokens: add them back, so that
+            // inputTokens means the whole prompt on every provider.
+            usage: {
+                inputTokens: message.usage.input_tokens + (message.usage.cache_read_input_tokens ?? 0) + (message.usage.cache_creation_input_tokens ?? 0),
+                cachedInputTokens: message.usage.cache_read_input_tokens ?? 0,
+                outputTokens: message.usage.output_tokens
+            },
             message: assistantMessage(text, toolCalls, message.content)
         }
     }
