@@ -1550,23 +1550,75 @@
         "shortcut": "Assistente (⌘J / Ctrl+J)",
         "new_conversation": "Nuova conversazione",
         "placeholder": "Chiedi qualcosa sul progetto…",
+        "placeholder_awaiting_confirmation": "Conferma o annulla l'azione qui sopra per continuare…",
         "send": "Invia",
         "stop": "Interrompi",
-        "disclaimer": "Le risposte sono generate da un'intelligenza artificiale e possono contenere errori. L'assistente legge i dati del progetto ma non modifica nulla.",
+        "disclaimer": "Le risposte sono generate da un'intelligenza artificiale e possono contenere errori. L'assistente può modificare il progetto: le azioni che eliminano o rimuovono qualcosa vengono eseguite solo dopo la tua conferma.",
         "empty_title": "Come posso aiutarti?",
-        "empty_description": "Posso leggere microfrontend, build, deploy, ambienti e variabili di questo progetto e cercare nella documentazione.",
+        "empty_description": "Posso consultare e modificare microfrontend, build, deploy, ambienti e variabili di questo progetto e cercare nella documentazione.",
         "thinking": "Sto pensando…",
-        "looking_up": "Sto consultando: {{what}}",
-        "tools": {
-            "list_microfrontends": "microfrontend",
-            "list_environments": "ambienti",
-            "get_build_status": "stato delle build",
-            "get_failed_build_logs": "log della build",
-            "list_deployments": "deploy",
-            "get_environment_variables": "variabili d'ambiente",
-            "get_dependency_report": "dipendenze",
-            "search_docs": "documentazione",
-            "list_templates": "template"
+        "tool": {
+            "input": "Input",
+            "result": "Risultato",
+            "copy": "Copia",
+            "copied": "Copiato"
+        },
+        "tool_kind": {
+            "write": "Modifica",
+            "confirm": "Da confermare",
+            "destructive": "Distruttiva"
+        },
+        "tool_status": {
+            "running": "In esecuzione…",
+            "ok": "Completata",
+            "error": "Non riuscita",
+            "awaiting_confirmation": "In attesa della tua conferma",
+            "declined": "Annullata da te",
+            "interrupted": "Interrotta prima dell'esito"
+        },
+        "confirmation": {
+            "title": "Conferma questa azione",
+            "confirm": "Conferma",
+            "cancel": "Annulla",
+            "expires_at": "Puoi rispondere fino alle {{time}}.",
+            "status": {
+                "approved": "Confermata.",
+                "declined": "Annullata.",
+                "expired": "Questa conferma è scaduta o ha già ricevuto una risposta."
+            },
+            "raw_input": "Input inviato dall'assistente",
+            "details": {
+                "project": "Progetto",
+                "organization": "Organizzazione",
+                "environment": "Ambiente",
+                "environments": "Ambienti",
+                "microfrontend": "Microfrontend",
+                "microfrontends": "Microfrontend",
+                "host": "Host",
+                "remote": "Remote",
+                "user": "Utente",
+                "deployment": "Deployment",
+                "api_key": "Chiave API",
+                "mcp_client": "Client MCP",
+                "storage": "Storage",
+                "code_repository": "Repository di codice",
+                "ai_change": "Modifica AI",
+                "prompt": "Richiesta",
+                "files": "File",
+                "changes": "Cosa cambia",
+                "served": "Cosa verrà servito",
+                "no_changes": "Uguale al deployment attivo",
+                "email": "Email",
+                "role": "Ruolo",
+                "name": "Nome",
+                "expiresAt": "Scadenza",
+                "enabled": "Attivo",
+                "userIds": "Id utenti",
+                "key": "Chiave",
+                "scope": "Ambito",
+                "excludePaths": "File esclusi",
+                "description": "Descrizione"
+            }
         },
         "errors": {
             "generic": "Non sono riuscito a rispondere. Riprova tra poco.",
@@ -1574,7 +1626,8 @@
             "disabled": "L'assistente non è attivo su questa installazione.",
             "refusal": "Non posso rispondere a questa richiesta.",
             "incomplete": "La risposta è incompleta: prova a fare una domanda più specifica.",
-            "stopped": "Risposta interrotta."
+            "stopped": "Risposta interrotta.",
+            "confirmation_expired": "La conferma è scaduta o ha già ricevuto una risposta, quindi non è stato fatto nulla. Chiedi di nuovo se vuoi ancora procedere."
         },
         "suggestions": {
             "overview": "Riassumimi lo stato del progetto",

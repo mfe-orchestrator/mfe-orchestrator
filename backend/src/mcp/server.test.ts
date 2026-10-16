@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest"
+import { McpServer } from "@modelcontextprotocol/server"
+import { describe, expect, it, vi } from "vitest"
+import { z } from "zod"
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import UserCannotAccessThisEnvironmentError from "../errors/UserCannotAccessThisEnvironmentError"
 import UserCannotAccessThisProjectError from "../errors/UserCannotAccessThisProjectError"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../utils/oauthConfig"
-import { describeToolError, MCP_TOOLS, NOT_FOUND_IN_PROJECT, registeredInputSchema, selectProject } from "./server"
-import { McpSession } from "./toolDefinition"
+import { createMcpServer, describeToolError, MCP_TOOLS, NOT_FOUND_IN_PROJECT, registeredInputSchema, selectProject } from "./server"
+import { credentialBucket, credentialLogFields, defineTool, McpSession, READ_ONLY } from "./toolDefinition"
 
 const toolNamed = (name: string) => MCP_TOOLS.find(tool => tool.name === name)
 
@@ -55,7 +57,36 @@ describe("MCP tool registry", () => {
     it("given the tools left out of v1, when the registry is searched, then none of them is there", () => {
         const excluded =
             /api_?key|project_delete|organization_(create|update|delete)|member|invit|user_profile|profile|upload|position|dimension|storage_(create|update)|code_repository_(create|update|add)|scaffold/
-        expect(MCP_TOOLS.map(tool => tool.name).filter(name => excluded.test(name))).toEqual([])
+        expect(
+            MCP_TOOLS.filter(tool => !tool.consoleOnly)
+                .map(tool => tool.name)
+                .filter(name => excluded.test(name))
+        ).toEqual([])
+    })
+
+    it("given a console-only tool in the registry, when the MCP server is built, then it is not registered while the others are", () => {
+        const consoleOnly = defineTool({
+            name: "console_only_probe",
+            title: "Probe",
+            description: "",
+            scope: MCP_SCOPE_READ,
+            consoleOnly: true,
+            annotations: READ_ONLY,
+            inputSchema: z.object({}),
+            run: async () => null
+        })
+        const registerTool = vi.spyOn(McpServer.prototype, "registerTool")
+        MCP_TOOLS.push(consoleOnly)
+        try {
+            createMcpServer({ principal: {} as never, projects: [], scopes: [MCP_SCOPE_READ, MCP_SCOPE_WRITE], credential: { kind: "api_key", apiKeyId: "key-1" } })
+        } finally {
+            MCP_TOOLS.pop()
+        }
+
+        const registered = registerTool.mock.calls.map(call => call[0])
+        registerTool.mockRestore()
+        expect(registered).toContain("microfrontends_list")
+        expect(registered).not.toContain("console_only_probe")
     })
 
     it("given the organization tools, when read, then they are read-only and span the shared projects instead of picking one", () => {
@@ -135,5 +166,14 @@ describe("selectProject", () => {
 
     it("given a project outside the shared set, when it is passed, then it is refused", () => {
         expect(() => selectProject(session("a", "b"), "c")).toThrow(/not shared with this connection/)
+    })
+})
+
+describe("credentials", () => {
+    it("given the console assistant's credential, when logged and rate limited, then it is told apart from grants and API keys by the user", () => {
+        expect(credentialLogFields({ kind: "console", userId: "user-1" })).toEqual({ authKind: "console", userId: "user-1" })
+        expect(credentialBucket({ kind: "console", userId: "user-1" })).toBe("user:user-1")
+        expect(credentialBucket({ kind: "api_key", apiKeyId: "key-1" })).toBe("api-key:key-1")
+        expect(credentialBucket({ kind: "oauth", grantId: "grant-1", clientId: "client-1" })).toBe("grant:grant-1")
     })
 })

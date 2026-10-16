@@ -7,7 +7,9 @@ import { Button } from "@/components/atoms"
 import useAssistantChat from "@/hooks/useAssistantChat"
 import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
+import AssistantConfirmationCard from "./AssistantConfirmationCard"
 import AssistantMessageText from "./AssistantMessageText"
+import AssistantToolCallRow from "./AssistantToolCallRow"
 import useAssistantEnabled from "./useAssistantEnabled"
 
 const MAX_QUESTION_CHARS = 4_000
@@ -26,18 +28,31 @@ const suggestionsFor = (pathname: string) => {
     return [...(pageKey ? SUGGESTIONS_BY_PAGE[pageKey] : []), ...GENERIC_SUGGESTIONS].slice(0, 3)
 }
 
-const AnswerBubble: React.FC<{ message: AssistantMessage }> = ({ message }) => {
+interface AnswerBubbleProps {
+    message: AssistantMessage
+    isStreaming: boolean
+    onAnswerConfirmation: (approved: boolean) => void
+}
+
+const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAnswerConfirmation }) => {
     const { t } = useTranslation()
-    const lastTool = message.tools?.[message.tools.length - 1]
+    const tools = message.tools ?? []
+    // A running tool shows its own spinner.
+    const isThinking = message.status === "streaming" && !tools.some(tool => tool.status === "running")
 
     return (
-        <div className="flex flex-col gap-1 text-sm text-foreground">
-            {message.content && <AssistantMessageText text={message.content} />}
-            {message.status === "streaming" && (
-                <p className="text-foreground-secondary animate-pulse">
-                    {lastTool ? t("assistant.looking_up", { what: t(`assistant.tools.${lastTool}`, { defaultValue: lastTool }) }) : t("assistant.thinking")}
-                </p>
+        <div className="flex flex-col gap-2 text-sm text-foreground">
+            {tools.length > 0 && (
+                <div className="flex flex-col gap-1">
+                    {tools.map((tool, index) => (
+                        // The position too: an id is only unique within what one model returned.
+                        <AssistantToolCallRow key={`${index}-${tool.id}`} tool={tool} />
+                    ))}
+                </div>
             )}
+            {message.content && <AssistantMessageText text={message.content} />}
+            {isThinking && <p className="text-foreground-secondary animate-pulse">{t("assistant.thinking")}</p>}
+            {message.confirmation && <AssistantConfirmationCard confirmation={message.confirmation} disabled={isStreaming} onAnswer={onAnswerConfirmation} />}
             {message.errorKey && <p className={message.status === "error" ? "text-destructive" : "text-foreground-secondary"}>{t(`assistant.errors.${message.errorKey}`)}</p>}
         </div>
     )
@@ -56,7 +71,9 @@ const AssistantPanel: React.FC = () => {
     const { isOpen, messages, close, toggle, reset } = useAssistantStore()
     const pendingQuestion = useAssistantStore(state => state.pendingQuestion)
     const projectId = useProjectStore(state => state.project?._id)
-    const { send, stop, isStreaming } = useAssistantChat()
+    const { send, answerConfirmation, stop, isStreaming } = useAssistantChat()
+    // The turn waits for the user's answer to the card: a new question would leave it hanging.
+    const awaitingConfirmation = messages.some(message => message.confirmation?.status === "pending")
     const [draft, setDraft] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -82,10 +99,10 @@ const AssistantPanel: React.FC = () => {
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: send is recreated every render; the pending question is what triggers this.
     useEffect(() => {
-        if (!pendingQuestion || isStreaming) return
+        if (!pendingQuestion || isStreaming || awaitingConfirmation) return
         const question = useAssistantStore.getState().takePendingQuestion()
         if (question) send(question)
-    }, [pendingQuestion, isStreaming])
+    }, [pendingQuestion, isStreaming, awaitingConfirmation])
 
     useEffect(() => {
         if (isOpen) inputRef.current?.focus()
@@ -99,7 +116,7 @@ const AssistantPanel: React.FC = () => {
     if (!enabled || !isOpen) return null
 
     const submit = () => {
-        if (!draft.trim() || isStreaming) return
+        if (!draft.trim() || isStreaming || awaitingConfirmation) return
         send(draft)
         setDraft("")
     }
@@ -148,7 +165,7 @@ const AssistantPanel: React.FC = () => {
                                 <AssistantMessageText text={message.content} />
                             </div>
                         ) : (
-                            <AnswerBubble key={message.id} message={message} />
+                            <AnswerBubble key={message.id} message={message} isStreaming={isStreaming} onAnswerConfirmation={answerConfirmation} />
                         )
                     )
                 )}
@@ -168,7 +185,8 @@ const AssistantPanel: React.FC = () => {
                         maxLength={MAX_QUESTION_CHARS}
                         rows={2}
                         className="min-h-[44px] resize-none"
-                        placeholder={t("assistant.placeholder")}
+                        disabled={awaitingConfirmation}
+                        placeholder={t(awaitingConfirmation ? "assistant.placeholder_awaiting_confirmation" : "assistant.placeholder")}
                         aria-label={t("assistant.placeholder")}
                         dataTestId="assistant-input"
                         onChange={event => setDraft(event.target.value)}
@@ -185,7 +203,7 @@ const AssistantPanel: React.FC = () => {
                             <Square />
                         </Button>
                     ) : (
-                        <Button type="submit" size="icon" aria-label={t("assistant.send")} disabled={!draft.trim()} dataTestId="assistant-send">
+                        <Button type="submit" size="icon" aria-label={t("assistant.send")} disabled={!draft.trim() || awaitingConfirmation} dataTestId="assistant-send">
                             <ArrowUp />
                         </Button>
                     )}

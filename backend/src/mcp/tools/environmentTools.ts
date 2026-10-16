@@ -10,7 +10,7 @@ import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from ".
 const environmentId = objectId("Id of the environment")
 const deploymentId = objectId("Id of the deployment")
 
-const environmentFields = {
+export const environmentFields = {
     name: z.string().min(1).max(255),
     slug: z
         .string()
@@ -134,6 +134,8 @@ export const environmentTools = [
         title: "Set canary users",
         description: "Enrolls users in (or excludes them from) the canary of a deployment. User ids are the ids the host application reports.",
         scope: MCP_SCOPE_WRITE,
+        // Decides which users are served the canary: the assistant asks the user first.
+        requiresConfirmation: true,
         annotations: { ...WRITE, idempotentHint: true },
         inputSchema: z.object({ deploymentId, userIds: z.array(z.string().min(1)).min(1), enabled: z.boolean() }),
         run: (args, { principal }) => new DeploymentCanaryUsersService(principal).setCanaryUserMultipleWithPermissionCheck(args.deploymentId, args.userIds, args.enabled)

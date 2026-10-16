@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { IUser } from "../../models/UserModel"
 import BaseAuthorizedService from "../BaseAuthorizedService"
-import AssistantService from "./AssistantService"
+import AssistantService, { AssistantStreamHandlers } from "./AssistantService"
+import { takePendingAction } from "./pendingActions"
 
 const stream = vi.fn()
 const create = vi.fn()
+const geminiStream = vi.fn()
+const azureStream = vi.fn()
 
 vi.mock("@anthropic-ai/sdk", () => ({
     default: class {
@@ -12,11 +15,26 @@ vi.mock("@anthropic-ai/sdk", () => ({
     }
 }))
 
+vi.mock("@google/genai", async importOriginal => ({
+    ...(await importOriginal<typeof import("@google/genai")>()),
+    GoogleGenAI: class {
+        models = { generateContentStream: geminiStream, generateContent: vi.fn() }
+    }
+}))
+
+vi.mock("openai", () => ({
+    default: class {
+        responses = { stream: azureStream, create: vi.fn() }
+    }
+}))
+
 const getEnvironments = vi.fn()
+const deleteEnvironment = vi.fn()
 
 vi.mock("../EnvironmentService", () => ({
     default: class {
         getByProjectId = getEnvironments
+        deleteSingle = deleteEnvironment
     }
 }))
 
@@ -31,13 +49,30 @@ const fakeStream = (message: { stop_reason: string; content: unknown[] }) => ({
 })
 
 const user = { _id: "user-1" } as unknown as IUser
+const ENVIRONMENT = "bbbbbbbbbbbbbbbbbbbbbbbb"
+
+/** Records every frame the service emits, in order. */
+const recordingHandlers = () => {
+    const frames: { event: string; frame: unknown }[] = []
+    const handlers: AssistantStreamHandlers = {
+        onText: delta => frames.push({ event: "text", frame: delta }),
+        onToolCall: frame => frames.push({ event: "tool_call", frame }),
+        onToolResult: frame => frames.push({ event: "tool_result", frame }),
+        onConfirm: frame => frames.push({ event: "confirm", frame })
+    }
+    return { frames, handlers }
+}
 
 describe("AssistantService", () => {
     beforeEach(() => {
         stream.mockReset()
         create.mockReset()
+        geminiStream.mockReset()
+        azureStream.mockReset()
         getEnvironments.mockReset()
+        deleteEnvironment.mockReset().mockResolvedValue(undefined)
         vi.spyOn(BaseAuthorizedService.prototype as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue(undefined)
+        vi.spyOn(AssistantService.prototype as unknown as { getRoleInProject: () => Promise<string> }, "getRoleInProject").mockResolvedValue("MEMBER")
     })
 
     it("Given no API key, when a question is asked, then the assistant reports itself disabled", async () => {
@@ -47,59 +82,231 @@ describe("AssistantService", () => {
     it("Given a question that needs data, when answered, then the tool runs on the request's project and its result goes back to the model", async () => {
         getEnvironments.mockResolvedValue([{ _id: "env-1", name: "Production", slug: "prod", isProduction: true }])
         stream
-            .mockReturnValueOnce(fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "list_environments", input: {} }] }))
+            .mockReturnValueOnce(fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }] }))
             .mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "You have one environment: Production." }] }))
 
-        const texts: string[] = []
-        const toolCalls: string[] = []
-        const stopReason = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
+        const { frames, handlers } = recordingHandlers()
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
             "project-1",
             { messages: [{ role: "user", content: "Which environments do I have?" }], context: { page: "/environments" } },
-            { onText: delta => texts.push(delta), onToolCall: name => toolCalls.push(name) }
+            handlers
         )
 
-        expect(stopReason).toBe("end_turn")
-        expect(toolCalls).toEqual(["list_environments"])
-        expect(texts.join("")).toBe("You have one environment: Production.")
+        expect(outcome).toEqual({ stopReason: "end_turn", wrote: false })
+        expect(frames.map(entry => entry.event)).toEqual(["tool_call", "tool_result", "text"])
+        expect(frames[0].frame).toEqual({ id: "toolu_1", name: "environments_list", title: "List environments", input: {}, kind: "read" })
+        expect(frames[2].frame).toBe("You have one environment: Production.")
         expect(getEnvironments).toHaveBeenCalledWith("project-1")
 
         const firstRequest = stream.mock.calls[0][0]
         expect(firstRequest.model).toBe("claude-opus-5-5")
         expect(firstRequest.messages[0].content).toContain("page: /environments")
         expect(firstRequest.messages[0].content).toContain("Which environments do I have?")
+        expect(firstRequest.tools.map((tool: { name: string }) => tool.name)).toEqual(expect.arrayContaining(["environments_list", "deploy", "search_docs"]))
 
         const secondRequest = stream.mock.calls[1][0]
         const toolResultMessage = secondRequest.messages[secondRequest.messages.length - 1]
         expect(toolResultMessage.role).toBe("user")
         expect(toolResultMessage.content[0]).toMatchObject({ type: "tool_result", tool_use_id: "toolu_1" })
-        expect(JSON.parse(toolResultMessage.content[0].content)[0]).toMatchObject({ id: "env-1", name: "Production" })
+        expect(JSON.parse(toolResultMessage.content[0].content)[0]).toMatchObject({ _id: "env-1", name: "Production" })
     })
 
     it("Given a refusal, when answered, then no tool runs and the refusal is reported", async () => {
-        stream.mockReturnValueOnce(fakeStream({ stop_reason: "refusal", content: [{ type: "tool_use", id: "toolu_1", name: "list_environments", input: {} }] }))
+        stream.mockReturnValueOnce(fakeStream({ stop_reason: "refusal", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }] }))
 
-        const stopReason = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
-            "project-1",
-            { messages: [{ role: "user", content: "..." }] },
-            { onText: () => undefined, onToolCall: () => undefined }
-        )
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "..." }] }, recordingHandlers().handlers)
 
-        expect(stopReason).toBe("refusal")
+        expect(outcome.stopReason).toBe("refusal")
         expect(getEnvironments).not.toHaveBeenCalled()
     })
 
     it("Given a model that keeps calling tools, when answered, then the loop stops after a bounded number of rounds", async () => {
         getEnvironments.mockResolvedValue([])
-        stream.mockImplementation(() => fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "list_environments", input: {} }] }))
+        stream.mockImplementation(() => fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }] }))
 
-        const stopReason = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
-            "project-1",
-            { messages: [{ role: "user", content: "loop" }] },
-            { onText: () => undefined, onToolCall: () => undefined }
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "loop" }] }, recordingHandlers().handlers)
+
+        expect(outcome.stopReason).toBe("max_tool_rounds")
+        expect(stream).toHaveBeenCalledTimes(16)
+    })
+
+    it("Given a destructive call, when the model makes it, then nothing is deleted and the turn stops waiting for the user's confirmation", async () => {
+        stream.mockReturnValueOnce(
+            fakeStream({
+                stop_reason: "tool_use",
+                content: [
+                    { type: "text", text: "I will delete staging." },
+                    { type: "tool_use", id: "toolu_1", name: "environment_delete", input: { environmentId: ENVIRONMENT } }
+                ]
+            })
         )
 
-        expect(stopReason).toBe("max_tool_rounds")
-        expect(stream).toHaveBeenCalledTimes(8)
+        const { frames, handlers } = recordingHandlers()
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "Delete staging" }] }, handlers)
+
+        expect(outcome).toEqual({ stopReason: "awaiting_confirmation", wrote: false })
+        expect(stream).toHaveBeenCalledTimes(1)
+        expect(deleteEnvironment).not.toHaveBeenCalled()
+        expect(frames.map(entry => entry.event)).toEqual(["text", "tool_call", "confirm"])
+    })
+
+    it("Given an approved confirmation, when the turn resumes, then the action runs and the model carries on from its own call with the outcome", async () => {
+        stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Staging is gone." }] }))
+        const action = { id: "a1", userId: "user-1", projectId: "project-1", tool: "environment_delete", args: { environmentId: ENVIRONMENT }, callId: "toolu_1", createdAt: 0, expiresAt: 0 }
+
+        const { frames, handlers } = recordingHandlers()
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
+            "project-1",
+            {
+                messages: [
+                    { role: "user", content: "Delete staging" },
+                    { role: "assistant", content: "I will delete staging." }
+                ]
+            },
+            handlers,
+            undefined,
+            { action, approved: true }
+        )
+
+        expect(outcome).toEqual({ stopReason: "end_turn", wrote: true })
+        expect(deleteEnvironment).toHaveBeenCalledWith(ENVIRONMENT)
+        expect(frames[0]).toEqual({ event: "tool_result", frame: { id: "toolu_1", ok: true, summary: "Done", result: { deleted: true } } })
+
+        const request = stream.mock.calls[0][0]
+        expect(request.messages).toHaveLength(3)
+        expect(request.messages[0].content).toContain("<console_context>")
+        expect(request.messages[1]).toEqual({
+            role: "assistant",
+            content: [
+                { type: "text", text: "I will delete staging." },
+                { type: "tool_use", id: "toolu_1", name: "environment_delete", input: { environmentId: ENVIRONMENT } }
+            ]
+        })
+        expect(request.messages[2].content[0]).toMatchObject({ type: "tool_result", tool_use_id: "toolu_1", content: 'Done: {"deleted":true}' })
+    })
+
+    it("Given a declined confirmation after a conversation ending with the user, when the turn resumes, then nothing runs and the model is told the user declined", async () => {
+        stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Ok, I left it." }] }))
+        const action = { id: "a1", userId: "user-1", projectId: "project-1", tool: "environment_delete", args: { environmentId: ENVIRONMENT }, callId: "toolu_1", createdAt: 0, expiresAt: 0 }
+
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
+            "project-1",
+            { messages: [{ role: "user", content: "Delete staging" }] },
+            recordingHandlers().handlers,
+            undefined,
+            { action, approved: false }
+        )
+
+        expect(outcome).toEqual({ stopReason: "end_turn", wrote: false })
+        expect(deleteEnvironment).not.toHaveBeenCalled()
+        const request = stream.mock.calls[0][0]
+        expect(request.messages[1].content).toEqual([{ type: "tool_use", id: "toolu_1", name: "environment_delete", input: { environmentId: ENVIRONMENT } }])
+        expect(request.messages[2].content[0]).toMatchObject({ tool_use_id: "toolu_1", content: "The user declined." })
+    })
+
+    /**
+     * A round with a read and a destructive call, then the answer to its confirmation: the resumed
+     * request must carry the provider's own message (thinking, signatures) and every result of the
+     * round, the confirmed call's being the real outcome.
+     */
+    describe("resuming a turn after a confirmation", () => {
+        const chatOnce = async (config: Record<string, string>, confirmation?: { actionId: string; approved: boolean }) => {
+            const service = new AssistantService(user, config)
+            const { frames, handlers } = recordingHandlers()
+            const messages = [{ role: "user" as const, content: "Delete staging" }, ...(confirmation ? [{ role: "assistant" as const, content: "Checking first." }] : [])]
+            const action = confirmation ? await takePendingAction(confirmation.actionId, "user-1", "project-1") : undefined
+            const outcome = await service.chat("project-1", { messages }, handlers, undefined, action && confirmation ? { action, approved: confirmation.approved } : undefined)
+            return { outcome, frames }
+        }
+
+        const confirmOf = (frames: { event: string; frame: unknown }[]) => frames.find(entry => entry.event === "confirm")!.frame as { actionId: string; callId: string }
+
+        beforeEach(() => {
+            getEnvironments.mockResolvedValue([{ _id: ENVIRONMENT, name: "Staging" }])
+        })
+
+        it("Given Claude with thinking, when the turn resumes, then its native content and both results go back, the confirmed one with its outcome", async () => {
+            const native = [
+                { type: "thinking", thinking: "", signature: "sig-claude" },
+                { type: "text", text: "Checking first." },
+                { type: "tool_use", id: "toolu_read", name: "environments_list", input: {} },
+                { type: "tool_use", id: "toolu_delete", name: "environment_delete", input: { environmentId: ENVIRONMENT } }
+            ]
+            stream
+                .mockReturnValueOnce(fakeStream({ stop_reason: "tool_use", content: native }))
+                .mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Done." }] }))
+            const config = { ANTHROPIC_API_KEY: "test-key" }
+
+            const first = await chatOnce(config)
+            const { outcome } = await chatOnce(config, { actionId: confirmOf(first.frames).actionId, approved: true })
+
+            expect(first.outcome.stopReason).toBe("awaiting_confirmation")
+            expect(outcome).toEqual({ stopReason: "end_turn", wrote: true })
+            const sent = stream.mock.calls[1][0].messages
+            expect(sent).toHaveLength(3)
+            expect(sent[1]).toEqual({ role: "assistant", content: native })
+            expect(sent[2].content).toEqual([
+                expect.objectContaining({ type: "tool_result", tool_use_id: "toolu_read", content: expect.stringContaining("Staging") }),
+                expect.objectContaining({ type: "tool_result", tool_use_id: "toolu_delete", content: 'Done: {"deleted":true}' })
+            ])
+        })
+
+        it("Given Gemini with thought signatures and unnumbered calls, when the declined turn resumes, then the signed parts go back and the call is answered as declined", async () => {
+            const parts = [
+                { functionCall: { name: "environments_list", args: {} }, thoughtSignature: "sig-gemini" },
+                { functionCall: { name: "environment_delete", args: { environmentId: ENVIRONMENT } } }
+            ]
+            geminiStream
+                .mockResolvedValueOnce(
+                    (async function* () {
+                        yield { candidates: [{ content: { parts }, finishReason: "STOP" }] }
+                    })()
+                )
+                .mockResolvedValueOnce(
+                    (async function* () {
+                        yield { candidates: [{ content: { parts: [{ text: "Left it." }] }, finishReason: "STOP" }] }
+                    })()
+                )
+            const config = { AI_PROVIDER: "gemini", GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-x" }
+
+            const first = await chatOnce(config)
+            const confirm = confirmOf(first.frames)
+            await chatOnce(config, { actionId: confirm.actionId, approved: false })
+
+            expect(deleteEnvironment).not.toHaveBeenCalled()
+            const contents = geminiStream.mock.calls[1][0].contents
+            expect(contents).toHaveLength(3)
+            expect(contents[1].parts[0]).toMatchObject({ thoughtSignature: "sig-gemini", functionCall: { name: "environments_list" } })
+            expect(contents[1].parts[1].functionCall.id).toBe(confirm.callId)
+            expect(contents[2].parts).toEqual([
+                expect.objectContaining({ functionResponse: expect.objectContaining({ name: "environments_list" }) }),
+                { functionResponse: { id: confirm.callId, name: "environment_delete", response: { output: "The user declined." } } }
+            ])
+        })
+
+        it("Given Azure OpenAI with encrypted reasoning, when the turn resumes, then the reasoning and both calls are replayed with their outputs", async () => {
+            const output = [
+                { type: "reasoning", id: "rs_1", summary: [], encrypted_content: "enc" },
+                { type: "function_call", id: "fc_1", call_id: "call_read", name: "environments_list", arguments: "{}", status: "completed" },
+                { type: "function_call", id: "fc_2", call_id: "call_delete", name: "environment_delete", arguments: JSON.stringify({ environmentId: ENVIRONMENT }), status: "completed" }
+            ]
+            const response = (items: unknown[]) => ({
+                on: vi.fn(),
+                finalResponse: async () => ({ status: "completed", incomplete_details: null, usage: { input_tokens: 0, output_tokens: 0 }, output: items })
+            })
+            azureStream
+                .mockReturnValueOnce(response(output))
+                .mockReturnValueOnce(response([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "Done.", annotations: [] }] }]))
+            const config = { AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com", AZURE_OPENAI_API_KEY: "k", AZURE_OPENAI_DEPLOYMENT: "gpt" }
+
+            const first = await chatOnce(config)
+            await chatOnce(config, { actionId: confirmOf(first.frames).actionId, approved: true })
+
+            const input = azureStream.mock.calls[1][0].input
+            expect(input.slice(1, 4)).toEqual(output)
+            expect(input[4]).toMatchObject({ type: "function_call_output", call_id: "call_read" })
+            expect(input[5]).toEqual({ type: "function_call_output", call_id: "call_delete", output: 'Done: {"deleted":true}' })
+        })
     })
 
     it("Given a project description, when a draft is asked, then the structured answer is parsed", async () => {

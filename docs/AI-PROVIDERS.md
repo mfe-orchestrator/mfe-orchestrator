@@ -34,3 +34,53 @@ with the missing variables in the error.
 
 Authentication is by API key on every provider. The quality of the assistant and above all of
 the code agent depends on the model: the prompts and tools were written and tested with Claude.
+
+## The console assistant
+
+The assistant acts on the project open in the console, for the signed-in user and with that user's
+permissions. Its tools are the [MCP tools](MCP.md) run in process, plus a few it alone has (searching
+the documentation, reading the logs of a failed build, with credentials blanked). The project always
+comes from the console, never from the model, and every tool goes through the same checks as on MCP:
+the input is validated, a **VIEWER** cannot change anything, and errors read the same.
+
+- **Writes** run directly. Tools that need a confirmation do not: every **destructive** one (deleting,
+  deploying, rolling back, committing to a repository), and the writes that hand out access or cannot
+  be undone without being destructive (`requiresConfirmation: true` on the tool: inviting to a project
+  or an organization, resending a project invitation, creating an API key, discarding an AI change,
+  setting canary users). The assistant stops and the panel shows a card, and the action runs only
+  when the user confirms it. The card lists what the action acts on with names instead of ids
+  (users by name and email, organization, project, environments, microfrontends with version and
+  host, API key, MCP client, AI change with its request and files), resolved by the server with the
+  user's own access; a `deploy` card says, per environment, which microfrontend versions, hosts and
+  variables change compared to the active deployment (or everything it will serve on a first
+  deployment). A name that cannot be resolved is shown as the raw value; the input the model sent is
+  one click away. The card expires after 15 minutes and can be answered once; it is bound to the user
+  and the project it was asked in (kept in Redis when configured, in memory otherwise).
+- When a turn stops for a confirmation, what the model said and got back since the user's message is
+  parked with the action (thinking blocks and thought signatures included, up to 400 000 characters,
+  dropping the oldest rounds first) and replayed when the user answers, with the real outcome in
+  place of the waiting call's result: Gemini and Claude with thinking reject a tool call replayed
+  without them.
+- Every write the assistant runs, confirmed or refused, is logged with `audit: "assistant_tool_call"`,
+  the tool, the project (or the `organizationId` for organization tools), the user, the outcome, the
+  `actionId` of a confirmed action on each of its lines, and the arguments reduced to ids and short
+  identifying values (email, role, name, key...): never free text or secrets.
+- Beyond the MCP tools, the assistant also has console-only tools (never offered to MCP clients):
+  deleting the project, project members (inviting, resending invitations, changing roles, removing;
+  only a project owner or an administrator of its organization, and never the last owner), organization settings,
+  creation, deletion and members, API keys (a new key is shown in the panel only, never sent to the
+  model), MCP client connections, bulk creation and deletion of environments, bulk deletion of
+  microfrontends, the canvas layout, creating a microfrontend from a template, and AI code changes.
+  Changing a member's role (in a project or an organization), removing a member and revoking a key or
+  a connection are destructive, so they are confirmed through the card; inviting, resending an
+  invitation and creating a key are confirmed too. Inviting to a project or resending its invitation
+  takes a project owner (or an organization administrator), and inviting an organization owner takes
+  an organization owner, in the console pages as through the assistant.
+- Build logs read by the assistant are redacted before they reach the model: known token formats
+  (GitHub, GitLab, npm, AWS, Slack, JWT), credentials in URLs, `password=`/`token:` assignments,
+  variables named like `*SECRET*`, `*KEY*`, `*TOKEN*`, `*PASSWORD*`, `*PASSWD*`, `*PWD*`, `Bearer`
+  tokens, PEM private keys, Azure `AccountKey=` and `SharedAccessSignature=` values and `sig=` in
+  SAS URLs.
+- Some things stay in the console pages on purpose, because their input or output is a secret that
+  would travel to the model provider: storages, repository connections, the user profile and bundle
+  upload.

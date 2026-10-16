@@ -4,8 +4,16 @@ export interface AssistantChatMessageDTO {
 }
 
 export interface AssistantChatRequestDTO {
-    /** The whole conversation, oldest first; the last message is the user's question. */
+    /**
+     * The whole conversation, oldest first; the last message is the user's question, or, with a
+     * `confirmation`, may be the assistant's message that asked for it.
+     */
     messages: AssistantChatMessageDTO[]
+    /** The user's answer to a `confirm` frame: the turn resumes from the action it names. */
+    confirmation?: {
+        actionId: string
+        approved: boolean
+    }
     /** Where the user is in the console when asking. */
     context?: {
         page?: string

@@ -42,6 +42,15 @@ const chatBodySchema = {
                 environmentId: { type: "string", maxLength: 100 },
                 locale: { type: "string", maxLength: 20 }
             }
+        },
+        confirmation: {
+            type: "object",
+            required: ["actionId", "approved"],
+            additionalProperties: false,
+            properties: {
+                actionId: { type: "string", minLength: 1, maxLength: 100 },
+                approved: { type: "boolean" }
+            }
         }
     }
 }
@@ -70,21 +79,28 @@ export default async function assistantController(fastify: FastifyInstance) {
     }
 
     /**
-     * Answers a question about the current project as a Server-Sent Events stream:
-     * `text` frames carry the answer as it is written, `tool` frames say what is being
-     * looked up, and a final `done` (or `error`) frame closes the stream.
+     * Answers a question about the current project, or carries on after the user answered a
+     * confirmation, as a Server-Sent Events stream: `text` frames carry the answer as it is
+     * written, `tool_call` / `tool_result` frames what the tools do, `confirm` a destructive action
+     * waiting for the user, and a final `done` (or `error`) frame closes the stream. The frames are
+     * described in `service/assistant/assistantActions.ts`.
      */
     fastify.post<{ Body: AssistantChatRequestDTO }>("/assistant/chat", { schema: { body: chatBodySchema }, config: { authMethod: AuthenticationMethod.JWT, rateLimit } }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
         }
-        if (request.body.messages[request.body.messages.length - 1].role !== "user") {
+        const { confirmation } = request.body
+        // Answering a confirmation resumes the assistant's own turn, which may end with its message.
+        if (!confirmation && request.body.messages[request.body.messages.length - 1].role !== "user") {
             throw createBusinessException({ code: "ASSISTANT_INVALID_CONVERSATION", message: "The last message must come from the user" })
         }
 
-        const service = new AssistantService(request.databaseUser, fastify.config)
+        const service = new AssistantService(request.databaseUser, fastify.config, request.log)
         await service.ensureCanChat(projectId)
+        // Taken before the stream opens, so an expired or foreign action is an HTTP error, and only
+        // once: a second answer to the same card finds nothing.
+        const action = confirmation ? await service.takeConfirmation(projectId, confirmation.actionId) : undefined
 
         openEventStream(reply)
 
@@ -101,16 +117,19 @@ export default async function assistantController(fastify: FastifyInstance) {
         const heartbeat = setInterval(() => reply.raw.write(HEARTBEAT), HEARTBEAT_INTERVAL_MS)
 
         try {
-            const stopReason = await service.chat(
+            const { stopReason, wrote } = await service.chat(
                 projectId,
                 request.body,
                 {
                     onText: delta => sendEvent(reply, "text", { delta }),
-                    onToolCall: name => sendEvent(reply, "tool", { name })
+                    onToolCall: frame => sendEvent(reply, "tool_call", frame),
+                    onToolResult: frame => sendEvent(reply, "tool_result", frame),
+                    onConfirm: frame => sendEvent(reply, "confirm", frame)
                 },
-                abortController.signal
+                abortController.signal,
+                action && confirmation ? { action, approved: confirmation.approved } : undefined
             )
-            sendEvent(reply, "done", { stopReason })
+            sendEvent(reply, "done", { stopReason, wrote })
         } catch (error) {
             if (!abortController.signal.aborted) {
                 fastify.log.error({ err: error, projectId }, "Assistant chat failed")

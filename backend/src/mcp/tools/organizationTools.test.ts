@@ -82,6 +82,17 @@ describe("project_create", () => {
         expect(createProject).not.toHaveBeenCalled()
     })
 
+    it("given the console assistant, when a project is created, then the user owns it and no grant is involved", async () => {
+        const context = contextWith({ kind: "console", userId: "user-1" })
+
+        const result = await projectCreate.run({ organizationId: VISIBLE_ORGANIZATION, name: "Checkout" } as never, context)
+
+        expect(result).toMatchObject({ id: NEW_PROJECT, role: "OWNER", sharedWithConnection: false })
+        expect(createProject).toHaveBeenCalledWith({ organizationId: VISIBLE_ORGANIZATION, name: "Checkout", description: undefined }, "user-1")
+        expect(projectCreationRefusal).not.toHaveBeenCalled()
+        expect(addProjectToGrant).not.toHaveBeenCalled()
+    })
+
     it("given a user who does not administer the organization, when a project is created, then the refusal surfaces and the grant is untouched", async () => {
         createProject.mockRejectedValue(new UserCannotAccessThisOrganizationError())
 

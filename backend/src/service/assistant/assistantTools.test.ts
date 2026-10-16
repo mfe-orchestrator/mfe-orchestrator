@@ -1,95 +1,62 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { IUser } from "../../models/UserModel"
-import { redactSecrets, runAssistantTool } from "./assistantTools"
+import { McpToolContext } from "../../mcp/toolDefinition"
+import { assistantOnlyTools, redactSecrets } from "./assistantTools"
 
-const getByEnvironmentId = vi.fn()
-const getEnvironmentById = vi.fn()
+const getFailedRunLogs = vi.fn()
 
-vi.mock("../EnvironmentService", () => ({
+vi.mock("../BuildStatusService", () => ({
     default: class {
-        getById = getEnvironmentById
+        getFailedRunLogs = getFailedRunLogs
     }
 }))
 
-vi.mock("../DeploymentService", () => ({
-    default: class {
-        getByEnvironmentId = getByEnvironmentId
-    }
-}))
+const MICROFRONTEND = "aaaaaaaaaaaaaaaaaaaaaaaa"
+const context = { principal: { _id: "user-1" }, projectId: "project-1" } as unknown as McpToolContext
+const toolNamed = (name: string) => assistantOnlyTools.find(tool => tool.name === name)!
 
-const context = { user: { _id: "user-1" } as unknown as IUser, projectId: "project-1" }
-
-const toolUse = (name: string, input: unknown) => ({ type: "tool_use" as const, id: "toolu_1", name, input, caller: undefined }) as never
-
-describe("runAssistantTool", () => {
+describe("assistant-only tools", () => {
     beforeEach(() => {
-        getByEnvironmentId.mockReset()
-        getEnvironmentById.mockReset().mockResolvedValue({ _id: "env-1", projectId: "project-1" })
+        getFailedRunLogs.mockReset()
     })
 
-    it("Given an environment id of another project, when deployments are listed, then nothing of that project is read", async () => {
-        getEnvironmentById.mockResolvedValue({ _id: "env-9", projectId: "project-2" })
-
-        const result = await runAssistantTool(toolUse("list_deployments", { environment_id: "env-9" }), context)
-
-        expect(result.isError).toBe(true)
-        expect(getByEnvironmentId).not.toHaveBeenCalled()
+    it("Given the tools MCP lacks, when read, then they are console-only reads", () => {
+        for (const tool of assistantOnlyTools) {
+            expect(tool.consoleOnly, tool.name).toBe(true)
+            expect(tool.scope, tool.name).toBe("mfe:read")
+            expect(tool.annotations.readOnlyHint, tool.name).toBe(true)
+        }
     })
 
-    it("Given a tool the assistant does not have, when it is called, then an error result is returned", async () => {
-        const result = await runAssistantTool(toolUse("delete_everything", {}), context)
+    it("Given failed CI jobs echoing credentials, when their logs are read, then the secrets are blanked before anything is returned", async () => {
+        getFailedRunLogs.mockResolvedValue([{ name: "build", log: "export GITHUB_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123456789\nERROR: lint failed" }])
 
-        expect(result.isError).toBe(true)
-        expect(result.callId).toBe("toolu_1")
+        const result = (await toolNamed("get_failed_build_logs").run({ microfrontendId: MICROFRONTEND, runId: "42" } as never, context)) as { job: string; truncated: boolean; log: string }[]
+
+        expect(getFailedRunLogs).toHaveBeenCalledWith("project-1", MICROFRONTEND, "42")
+        expect(result[0]).toMatchObject({ job: "build", truncated: false })
+        expect(result[0].log).not.toContain("ghp_abcdefghijklmnopqrstuvwxyz0123456789")
+        expect(result[0].log).toContain("ERROR: lint failed")
     })
 
-    it("Given a missing required argument, when the tool is called, then an error result names the argument", async () => {
-        const result = await runAssistantTool(toolUse("list_deployments", {}), context)
+    it("Given a long log, when read, then only its end is kept, where the error usually is", async () => {
+        getFailedRunLogs.mockResolvedValue([{ name: "build", log: `${"x".repeat(20_000)}ERROR at the end` }])
 
-        expect(result.isError).toBe(true)
-        expect(result.content).toContain("environment_id")
-        expect(getByEnvironmentId).not.toHaveBeenCalled()
+        const result = (await toolNamed("get_failed_build_logs").run({ microfrontendId: MICROFRONTEND, runId: "42" } as never, context)) as { truncated: boolean; log: string }[]
+
+        expect(result[0].truncated).toBe(true)
+        expect(result[0].log.length).toBe(15_000)
+        expect(result[0].log.endsWith("ERROR at the end")).toBe(true)
     })
 
-    it("Given deployments carrying storages, when they are listed, then credentials never reach the model and only variable keys do", async () => {
-        getByEnvironmentId.mockResolvedValue([
-            {
-                _id: "dep-2",
-                deploymentId: "d2",
-                active: true,
-                deployedAt: "2026-10-01T10:00:00.000Z",
-                microfrontends: [{ _id: "mfe-1", name: "Checkout", slug: "checkout", version: "1.2.0" }],
-                variables: [{ key: "API_URL", value: "https://secret.example" }],
-                storages: [{ authConfig: { secretAccessKey: "s3-secret" } }]
-            },
-            { _id: "dep-1", deploymentId: "d1", active: false, deployedAt: "2026-09-01T10:00:00.000Z" }
-        ])
-
-        const result = await runAssistantTool(toolUse("list_deployments", { environment_id: "env-1", limit: 1 }), context)
-
-        expect(result.isError).toBeUndefined()
-        const content = result.content as string
-        expect(content).not.toContain("s3-secret")
-        expect(content).not.toContain("https://secret.example")
-        expect(JSON.parse(content)).toEqual([
-            {
-                id: "dep-2",
-                deploymentId: "d2",
-                active: true,
-                deployedAt: "2026-10-01T10:00:00.000Z",
-                microfrontends: [{ id: "mfe-1", name: "Checkout", slug: "checkout", version: "1.2.0" }],
-                variableKeys: ["API_URL"]
-            }
-        ])
+    it("Given a log request without a run id, when validated, then the input is refused", () => {
+        expect(toolNamed("get_failed_build_logs").inputSchema.safeParse({ microfrontendId: MICROFRONTEND }).success).toBe(false)
     })
 
-    it("Given a service that throws, when the tool is called, then the failure becomes an error result instead of aborting the turn", async () => {
-        getByEnvironmentId.mockRejectedValue(new Error("User cannot access this environment"))
+    it("Given a question about the platform, when the docs are searched, then sections come back with their URL", async () => {
+        const sections = (await toolNamed("search_docs").run({ query: "canary release" } as never, context)) as { url: string }[]
 
-        const result = await runAssistantTool(toolUse("list_deployments", { environment_id: "env-1" }), context)
-
-        expect(result.isError).toBe(true)
-        expect(result.content).toBe("User cannot access this environment")
+        expect(sections.length).toBeGreaterThan(0)
+        expect(sections[0].url).toMatch(/^https?:\/\//)
     })
 })
 
@@ -110,5 +77,36 @@ describe("redactSecrets", () => {
         }
         expect(redacted).toContain("ERROR in src/main.ts: Cannot find module './app'")
         expect(redacted).toContain("github.com/acme/app.git")
+    })
+
+    it("Given variables, bearer tokens, private keys and Azure storage credentials in a log, when redacted, then each value is blanked and the names stay", () => {
+        const log = [
+            "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "NPM_TOKEN: abc123def456",
+            "DB_PASSWD=hunter2",
+            "MY_PWD = pa55",
+            "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payload'",
+            "-----BEGIN RSA PRIVATE KEY-----",
+            "MIIEowIBAAKCAQEAtopsecretkeymaterial",
+            "-----END RSA PRIVATE KEY-----",
+            "DefaultEndpointsProtocol=https;AccountName=acme;AccountKey=Zm9vYmFyYmF6PT0=;EndpointSuffix=core.windows.net",
+            "Endpoint=sb://acme.servicebus.windows.net/;SharedAccessSignature=SharedAccessSignature sr=x",
+            "GET https://acme.blob.core.windows.net/c/app.js?sv=2024-01-01&sig=AbCdEf%2B123&se=2026",
+            "Build finished in 12s"
+        ].join("\n")
+
+        const redacted = redactSecrets(log)
+
+        for (const secret of ["wJalrXUtnFEMI", "abc123def456", "hunter2", "pa55", "eyJhbGciOiJIUzI1NiJ9", "topsecretkeymaterial", "Zm9vYmFyYmF6PT0", "AbCdEf%2B123"]) {
+            expect(redacted).not.toContain(secret)
+        }
+        expect(redacted).toContain("AWS_SECRET_ACCESS_KEY=[REDACTED]")
+        expect(redacted).toContain("NPM_TOKEN: [REDACTED]")
+        expect(redacted).toContain("Bearer [REDACTED]")
+        expect(redacted).toContain("[REDACTED PRIVATE KEY]")
+        expect(redacted).toContain("AccountName=acme;AccountKey=[REDACTED];EndpointSuffix")
+        expect(redacted).toContain("SharedAccessSignature=[REDACTED]")
+        expect(redacted).toContain("&sig=[REDACTED]&se=2026")
+        expect(redacted).toContain("Build finished in 12s")
     })
 })

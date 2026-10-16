@@ -64,7 +64,7 @@ const microfrontendFields = {
         .optional()
 }
 
-const createSchema = z.object(microfrontendFields)
+export const createSchema = z.object(microfrontendFields)
 const updateSchema = z.object({ microfrontendId, ...createSchema.partial().shape })
 
 /**
@@ -72,7 +72,7 @@ const updateSchema = z.object({ microfrontendId, ...createSchema.partial().shape
  * microfrontend service resolves the code repository by id without an access check, so a foreign
  * repository id would otherwise link this project to another project's credentials.
  */
-const ensureReferencesBelongToProject = async (input: Partial<z.infer<typeof createSchema>>, { principal }: McpToolContext) => {
+export const ensureReferencesBelongToProject = async (input: Partial<z.infer<typeof createSchema>>, { principal }: McpToolContext) => {
     if (input.codeRepository) {
         await new CodeRepositoryService(principal).findById(input.codeRepository.codeRepositoryId)
     }

@@ -105,11 +105,25 @@ describe("GeminiLlmClient", () => {
 
         expect(streamed).toEqual(["Let me look."])
         expect(first).toMatchObject({ text: "Let me look.", stopReason: "tool_use", usage: { inputTokens: 7, outputTokens: 5 } })
-        expect(first.toolCalls).toEqual([{ id: "call_2", name: "read_file", input: { path: "a.ts" } }])
+        const id = first.toolCalls[0].id
+        expect(id).toMatch(/^call_[0-9a-f-]{36}$/)
+        expect(first.toolCalls).toEqual([{ id, name: "read_file", input: { path: "a.ts" } }])
         const contents = (generateContentStream.mock.calls[1] as unknown as [{ contents: { role: string; parts: Record<string, unknown>[] }[] }])[0].contents
         expect(contents[1].role).toBe("model")
-        expect(contents[1].parts[2]).toEqual({ functionCall: { id: "call_2", name: "read_file", args: { path: "a.ts" } }, thoughtSignature: "sig-1" })
-        expect(contents[2]).toEqual({ role: "user", parts: [{ functionResponse: { id: "call_2", name: "read_file", response: { output: "x" } } }] })
+        expect(contents[1].parts[2]).toEqual({ functionCall: { id, name: "read_file", args: { path: "a.ts" } }, thoughtSignature: "sig-1" })
+        expect(contents[2]).toEqual({ role: "user", parts: [{ functionResponse: { id, name: "read_file", response: { output: "x" } } }] })
+    })
+
+    it("Given unnumbered calls in two rounds and a numbered one, then every unnumbered call gets its own id and Gemini's id is kept", async () => {
+        const round = () => [
+            { candidates: [{ content: { parts: [{ functionCall: { name: "read_file", args: {} } }, { functionCall: { id: "g-7", name: "read_file", args: {} } }] }, finishReason: "STOP" }] }
+        ]
+        const first = await new GeminiLlmClient(fakeGemini(round()).client, "gemini-x").turn(request([{ role: "user", text: "hi" }]))
+        const second = await new GeminiLlmClient(fakeGemini(round()).client, "gemini-x").turn(request([{ role: "user", text: "hi" }]))
+
+        expect(first.toolCalls[1].id).toBe("g-7")
+        expect(first.toolCalls[0].id).not.toBe(second.toolCalls[0].id)
+        expect((first.message.native as { functionCall?: { id: string } }[])[0].functionCall?.id).toBe(first.toolCalls[0].id)
     })
 
     it.each([

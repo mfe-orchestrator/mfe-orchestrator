@@ -44,6 +44,16 @@ lets the user write; on a project where the user is a **VIEWER** every write too
 explicit error, whatever the grant says. Roles are read again on every request, so demoting a member
 takes write access away from their clients immediately.
 
+The console's own assistant runs these same tools in process, for the signed-in user and on the
+project open in the console (see [AI providers](AI-PROVIDERS.md#the-console-assistant)). A tool
+defined with `consoleOnly: true` sits in the same registry (`MCP_TOOLS`) but is never registered on
+the MCP server: only the assistant offers it. A tool may also define `presentResult` to keep part of
+its result (a new API key, say) away from the model while the user still sees it; MCP clients always
+get the whole result. The annotations MCP clients see (`destructiveHint`...) stay truthful: whether
+the assistant asks the user before running a tool is `requiresConfirmation`, which defaults to
+`destructiveHint` and is set to true on writes that hand out access or cannot be undone (invitations,
+API key creation, discarding an AI change, canary users).
+
 ## Project context
 
 Every project and every microfrontend can carry a **context**: free markdown the team writes for AI

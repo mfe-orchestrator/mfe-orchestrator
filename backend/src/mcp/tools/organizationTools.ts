@@ -109,7 +109,7 @@ export const organizationTools = [
         }),
         run: async (args, { session, credential }) => {
             // An API key belongs to one project and has no user behind it to own a new one.
-            if (credential.kind !== "oauth") {
+            if (credential.kind === "api_key") {
                 throw createBusinessException({
                     code: "MCP_PROJECT_CREATE_NEEDS_USER",
                     message: "Projects can only be created by a connection authorized by a user, not with a project API key",
@@ -123,8 +123,9 @@ export const organizationTools = [
                 throw new EntityNotFoundError(args.organizationId)
             }
 
-            // Checked before creating, so a refused call leaves no project behind
-            const refusal = await projectCreationRefusal(credential.grantId)
+            // Checked before creating, so a refused call leaves no project behind. The console
+            // assistant has no grant: it acts for the signed-in user, as the console itself does.
+            const refusal = credential.kind === "oauth" ? await projectCreationRefusal(credential.grantId) : undefined
             if (refusal) {
                 throw createBusinessException({ code: "MCP_PROJECT_CREATE_REFUSED", message: CREATION_REFUSALS[refusal], statusCode: 403 })
             }
@@ -144,13 +145,16 @@ export const organizationTools = [
             }
             const projectId = project._id.toString()
 
-            const shared = await addProjectToGrant(credential.grantId, projectId)
-            fastify.log.info(
-                { audit: "mcp_grant_project_created", grantId: credential.grantId, clientId: credential.clientId, organizationId: args.organizationId, projectId, sharedWithConnection: shared },
-                "MCP client created a project"
-            )
-            if (shared) {
-                session.projects.push({ projectId, role: RoleInProject.OWNER })
+            let shared = false
+            if (credential.kind === "oauth") {
+                shared = await addProjectToGrant(credential.grantId, projectId)
+                fastify.log.info(
+                    { audit: "mcp_grant_project_created", grantId: credential.grantId, clientId: credential.clientId, organizationId: args.organizationId, projectId, sharedWithConnection: shared },
+                    "MCP client created a project"
+                )
+                if (shared) {
+                    session.projects.push({ projectId, role: RoleInProject.OWNER })
+                }
             }
 
             return { id: projectId, name: project.name, slug: project.slug, organizationId: args.organizationId, role: RoleInProject.OWNER, sharedWithConnection: shared }

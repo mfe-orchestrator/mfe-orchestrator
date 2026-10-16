@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { Content, FinishReason, GoogleGenAI, Part } from "@google/genai"
 import { assistantMessage, LlmClient, LlmJsonRequest, LlmMessage, LlmProvider, LlmToolCall, LlmTurnRequest, LlmTurnResult, toInputObject } from "./types"
 
@@ -72,11 +73,12 @@ export class GeminiLlmClient implements LlmClient {
         }
 
         const text = parts.flatMap(part => (part.text && !part.thought ? [part.text] : [])).join("")
-        // Gemini does not always number its calls; the id only has to pair a call with its result.
-        const toolCalls: LlmToolCall[] = parts.flatMap((part, index) =>
-            part.functionCall?.name ? [{ id: part.functionCall.id ?? `call_${index}`, name: part.functionCall.name, input: toInputObject(part.functionCall.args) }] : []
+        // Gemini does not always number its calls. The id pairs a call with its result, and the
+        // console tells the calls of a whole conversation apart by it: it must be unique, not an index.
+        const native = parts.map(part => (part.functionCall && !part.functionCall.id ? { ...part, functionCall: { ...part.functionCall, id: `call_${randomUUID()}` } } : part))
+        const toolCalls: LlmToolCall[] = native.flatMap(part =>
+            part.functionCall?.name ? [{ id: part.functionCall.id as string, name: part.functionCall.name, input: toInputObject(part.functionCall.args) }] : []
         )
-        const native = parts.map((part, index) => (part.functionCall && !part.functionCall.id ? { ...part, functionCall: { ...part.functionCall, id: `call_${index}` } } : part))
         const stopReason =
             blocked || (finishReason && BLOCKED.includes(finishReason)) ? "refusal" : finishReason === FinishReason.MAX_TOKENS ? "max_tokens" : toolCalls.length ? "tool_use" : "end_turn"
         return { text, toolCalls, stopReason, usage, message: assistantMessage(text, toolCalls, native) }
