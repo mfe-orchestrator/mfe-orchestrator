@@ -22,11 +22,18 @@ jobs:
     steps:
     - name: 🚀 Deploy to DEV
       uses: appleboy/ssh-action@v1.2.5
+      # The infrastructure configuration takes these as required variables; the infrastructure
+      # repository passes them the same way. Without them `tofu apply` stops asking for a value.
+      env:
+        TF_VAR_nosql_database_url_prod: ${{ secrets.NOSQL_DATABASE_URL_PROD }}
+        TF_VAR_nosql_database_url_dev: ${{ secrets.NOSQL_DATABASE_URL_DEV }}
+        TF_VAR_azure_foundry_api_key: ${{ secrets.AZURE_FOUNDRY_API_KEY }}
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
+        envs: TF_VAR_nosql_database_url_prod,TF_VAR_nosql_database_url_dev,TF_VAR_azure_foundry_api_key
         script: |
           cd ${{ secrets.TERRAFORM_PATH }}
           tofu init
