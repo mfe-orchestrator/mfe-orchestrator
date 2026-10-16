@@ -49,7 +49,7 @@ export const MicrofrontendHeader: React.FC<MicrofrontendHeaderProps> = ({ microf
                     </div>
                 </div>
                 {aiAvailable && (
-                    <nav aria-label={t("microfrontend.workspace.nav_label")} className="flex gap-1 rounded-lg bg-muted p-1">
+                    <nav aria-label={t("microfrontend.workspace.nav_label")} className="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
                         <NavLink to={`/microfrontend/${microfrontend._id}`} end className={navLinkClassName}>
                             <Sparkles className="size-4" aria-hidden="true" />
                             {t("microfrontend.workspace.nav_ai")}

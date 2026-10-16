@@ -337,7 +337,8 @@ const QueueItem: React.FC<{ request: AiChangeRequest; selected: boolean; onSelec
             <button
                 type="button"
                 aria-current={selected ? "true" : undefined}
-                aria-label={t("microfrontend.aiChange.open_request", { prompt: firstLine(request.prompt) })}
+                // The label replaces the content of the button: it has to carry the status the badges show.
+                aria-label={`${t("microfrontend.aiChange.open_request", { prompt: firstLine(request.prompt) })} · ${t(`microfrontend.aiChange.status.${request.status}`)}`}
                 onClick={onSelect}
                 className={cn(
                     "flex w-full flex-col gap-1 rounded-md border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -369,6 +370,13 @@ const QueueSection: React.FC<QueueSectionProps> = ({ group, requests, selectedId
     const { t } = useTranslation()
     const headingId = useId()
     const Icon = GROUP_ICON[group]
+    const containsSelected = requests.some(request => request._id === selectedId)
+    const [historyOpen, setHistoryOpen] = useState(containsSelected)
+
+    // A request of the group opened from elsewhere (a deep link): unfold it. Never fold it back on the user.
+    useEffect(() => {
+        if (containsSelected) setHistoryOpen(true)
+    }, [containsSelected])
     const heading = (
         <span className="flex items-center justify-between gap-2">
             <span id={headingId} className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-secondary">
@@ -392,7 +400,7 @@ const QueueSection: React.FC<QueueSectionProps> = ({ group, requests, selectedId
     // Applied and failed requests are done with: keep them out of the way unless one of them is open.
     if (group === "history") {
         return (
-            <details className="group flex flex-col gap-2" open={requests.some(request => request._id === selectedId) || undefined}>
+            <details open={historyOpen} onToggle={event => setHistoryOpen(event.currentTarget.open)}>
                 <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{heading}</summary>
                 <div className="mt-2">{list}</div>
             </details>
@@ -417,12 +425,23 @@ interface ComposerProps {
     pending: boolean
     error?: string
     promptRef: React.RefObject<HTMLTextAreaElement | null>
+    /** Set when "New change" or "Try again" asked for the composer before it was on screen. */
+    focusOnMount: React.RefObject<boolean>
 }
 
-const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef }) => {
+const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef, focusOnMount }) => {
     const { t } = useTranslation()
     const promptId = useId()
     const branchId = useId()
+    // Read once: tied to the live value, the section would fold while the user clears the branch.
+    const [advancedOpen] = useState(() => Boolean(baseBranch))
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only the mount decides
+    useEffect(() => {
+        if (!focusOnMount.current) return
+        focusOnMount.current = false
+        promptRef.current?.focus()
+    }, [])
 
     return (
         <form
@@ -471,7 +490,7 @@ const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBran
                         </div>
                     </div>
                     {/* Open when a retry brought a branch back, so the user sees where the agent will start from. */}
-                    <details className="text-sm" open={Boolean(baseBranch) || undefined}>
+                    <details className="text-sm" open={advancedOpen || undefined}>
                         <summary className="cursor-pointer text-muted-foreground">{t("microfrontend.aiChange.advanced_options")}</summary>
                         <div className="mt-3 flex flex-col gap-1.5">
                             <Label htmlFor={branchId}>{t("microfrontend.aiChange.base_branch_label")}</Label>
@@ -518,6 +537,7 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
     const [submitted, setSubmitted] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const promptRef = useRef<HTMLTextAreaElement>(null)
+    const focusComposer = useRef(false)
     const linkedId = searchParams.get("change") ?? undefined
 
     const historyQueryKey = ["ai-changes", microfrontendId]
@@ -555,10 +575,15 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
         refetchInterval: query => (isActive(query.state.data?.status) ? POLL_INTERVAL_MS : false)
     })
 
-    // The queue only shows statuses: refresh it when the polled request settles.
+    // The queue only shows statuses: refresh it when the polled request settles, not on every finished request opened.
     const status = requestQuery.data?.status
+    const wasActive = useRef(false)
     useEffect(() => {
-        if (status && !isActive(status)) queryClient.invalidateQueries({ queryKey: ["ai-changes", microfrontendId] })
+        if (isActive(status)) wasActive.current = true
+        else if (status && wasActive.current) {
+            wasActive.current = false
+            queryClient.invalidateQueries({ queryKey: ["ai-changes", microfrontendId] })
+        }
     }, [status, microfrontendId, queryClient])
 
     const createMutation = useMutation({
@@ -575,7 +600,6 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
             ),
         onSuccess: created => {
             queryClient.setQueryData(["ai-change", created._id], created)
-            select(created._id)
             setPrompt("")
             setBaseBranch("")
             setSubmitted(false)
@@ -591,13 +615,14 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
             promptRef.current?.focus()
             return
         }
-        createMutation.mutate()
+        // Navigation goes in the call options: they are skipped once the page is left, the hook-level callback is not.
+        createMutation.mutate(undefined, { onSuccess: created => select(created._id) })
     }
 
     const startNew = () => {
         select(NEW_CHANGE)
-        // The composer mounts with the new selection: focus it on the next frame.
-        requestAnimationFrame(() => promptRef.current?.focus())
+        if (promptRef.current) promptRef.current.focus()
+        else focusComposer.current = true
     }
 
     const retry = (request: AiChangeRequest) => {
@@ -634,8 +659,7 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
                     ))}
             </aside>
 
-            {/* First on small screens: the open request matters more than the queue around it. */}
-            <div className="order-first min-w-0 lg:order-none">
+            <div className="min-w-0">
                 {(linkedId === NEW_CHANGE || (!linkedId && historyQuery.data?.length === 0)) && (
                     <Composer
                         microfrontendName={microfrontendName}
@@ -647,6 +671,7 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
                         pending={createMutation.isPending}
                         error={promptError}
                         promptRef={promptRef}
+                        focusOnMount={focusComposer}
                     />
                 )}
                 {selectedId && requestQuery.isPending && (

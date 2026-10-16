@@ -21,7 +21,7 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
 
     // Links made when every section was a tab of this page: `?tab=hosting` and the like now belong to the details screen.
     const legacyTab = searchParams.get("tab")
-    if (legacyTab && legacyTab !== "aiChange") return <Navigate to={`/microfrontend/${id}/settings?tab=${legacyTab}`} replace />
+    if (legacyTab && legacyTab !== "aiChange") return <Navigate to={`/microfrontend/${id}/settings?tab=${encodeURIComponent(legacyTab)}`} replace />
 
     // Not an ApiStatusHandler: it unmounts its children on every background refetch, and the workspace holds a draft prompt.
     if (frontendQuery.isPending) {
@@ -46,7 +46,8 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
     return (
         <div className="flex min-h-full flex-col gap-6">
             <MicrofrontendHeader microfrontend={microfrontend} active="ai" aiAvailable />
-            <AiChangeWorkspace microfrontendId={id!} microfrontendName={microfrontend.name} />
+            {/* Keyed: the route instance is reused across microfrontends, and a draft must not follow the user to another one. */}
+            <AiChangeWorkspace key={id} microfrontendId={id!} microfrontendName={microfrontend.name} />
         </div>
     )
 }

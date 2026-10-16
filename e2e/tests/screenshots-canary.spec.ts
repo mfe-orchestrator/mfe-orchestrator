@@ -49,7 +49,8 @@ test("Given the docs account When the canary of a microfrontend is configured Th
     const catalogCard = page
         .locator("div")
         .filter({ hasText: /^Product Catalog/ })
-        .filter({ has: page.getByRole("button", { name: "Configuration" }) })
+        // With AI editing on, the main button of a card opens Edit with AI instead of the configuration.
+        .filter({ has: page.getByRole("button", { name: /^(Configuration|Edit with AI)$/ }) })
         .last()
     const cardBox = await catalogCard.boundingBox()
     expect(cardBox, "the Product Catalog card was not found in grid view").not.toBeNull()
@@ -83,7 +84,15 @@ test("Given the docs account When the canary settings section is filled in Then 
         await page.waitForTimeout(2_500)
         await tableView.click()
         await page.waitForTimeout(1_500)
-        await page.getByRole("row").filter({ hasText: name }).getByRole("button", { name: "Configuration" }).click()
+        await page
+            .getByRole("row")
+            .filter({ hasText: name })
+            .getByRole("button", { name: /^(Configuration|Edit with AI)$/ })
+            .click()
+        // With AI editing on, the row lands on the AI workspace: the form is the "Details & settings" screen.
+        const settingsLink = page.getByRole("link", { name: "Details & settings" })
+        await expect(page.getByLabel(/^Version/).or(settingsLink)).toBeVisible({ timeout: 60_000 })
+        if (await settingsLink.isVisible()) await settingsLink.click()
         await expect(page.getByLabel(/^Version/)).toBeVisible({ timeout: 60_000 })
         await page.waitForTimeout(3_500)
     }

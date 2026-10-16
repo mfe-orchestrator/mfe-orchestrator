@@ -383,7 +383,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     }
 
     return (
-        <SinglePageLayout title={t("microfrontend.add_new")} description={t("microfrontend.add_new_description")}>
+        <SinglePageLayout title={isEdit ? t("microfrontend.edit") : t("microfrontend.add_new")} description={isEdit ? t("microfrontend.edit_description") : t("microfrontend.add_new_description")}>
             {content}
         </SinglePageLayout>
     )
