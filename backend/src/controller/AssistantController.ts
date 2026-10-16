@@ -4,7 +4,7 @@ import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import AssistantUsage from "../models/AssistantUsageModel"
 import AssistantService from "../service/assistant/AssistantService"
 import { deleteConversation, getConversation, listConversations, saveConversation } from "../service/assistant/conversations"
-import { isRateLimitError, resolveLlmProvider } from "../service/llm"
+import { isRateLimitError, LlmUsage, resolveLlmProvider } from "../service/llm"
 import { AssistantChatRequestDTO, AssistantConversationSaveDTO, AssistantProjectDraftRequestDTO } from "../types/AssistantDTO"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { openEventStream, sendEvent } from "../utils/eventStream"
@@ -68,8 +68,8 @@ const draftBodySchema = {
     }
 }
 
-/** A saved answer is the model's whole output, far longer than a question. */
-const MAX_SAVED_MESSAGE_CHARS = 64_000
+// Lengths are not bounded here: an oversized field is clipped when stored (see conversations.ts),
+// as rejecting it would stop the conversation from being saved for good. The body limit caps the whole.
 const CONVERSATION_BODY_LIMIT = 4 * 1024 * 1024
 const SHORT_STRING = { type: "string", maxLength: 200 }
 
@@ -94,16 +94,15 @@ const conversationBodySchema = {
                 properties: {
                     id: { type: "string", minLength: 1, maxLength: 100 },
                     role: { type: "string", enum: ["user", "assistant"] },
-                    content: { type: "string", maxLength: MAX_SAVED_MESSAGE_CHARS },
+                    content: { type: "string" },
                     status: { type: "string", enum: ["streaming", "done", "error"] },
                     errorKey: SHORT_STRING,
                     tools: {
                         type: "array",
-                        maxItems: 100,
                         items: {
                             type: "object",
                             required: ["id", "name", "title", "kind", "status"],
-                            properties: { id: SHORT_STRING, name: SHORT_STRING, title: SHORT_STRING, kind: SHORT_STRING, status: SHORT_STRING, summary: { type: "string", maxLength: 2_000 } }
+                            properties: { id: SHORT_STRING, name: SHORT_STRING, title: SHORT_STRING, kind: SHORT_STRING, status: SHORT_STRING, summary: { type: "string" } }
                         }
                     },
                     confirmation: {
@@ -116,8 +115,7 @@ const conversationBodySchema = {
                             title: SHORT_STRING,
                             details: {
                                 type: "array",
-                                maxItems: 50,
-                                items: { type: "object", required: ["label", "value"], properties: { label: SHORT_STRING, value: { type: "string", maxLength: 2_000 } } }
+                                items: { type: "object", required: ["label", "value"], properties: { label: SHORT_STRING, value: { type: "string" } } }
                             },
                             expiresAt: SHORT_STRING,
                             status: SHORT_STRING
@@ -185,6 +183,7 @@ export default async function assistantController(fastify: FastifyInstance) {
         // the stream silent for longer than a proxy's idle timeout; comment frames keep it open.
         const heartbeat = setInterval(() => reply.raw.write(HEARTBEAT), HEARTBEAT_INTERVAL_MS)
 
+        let answered: { stopReason: string; usage: LlmUsage } | undefined
         try {
             const { stopReason, wrote, usage } = await service.chat(
                 projectId,
@@ -199,14 +198,7 @@ export default async function assistantController(fastify: FastifyInstance) {
                 action && confirmation ? { action, approved: confirmation.approved } : undefined
             )
             sendEvent(reply, "done", { stopReason, wrote, usage })
-            // One line and one document per answer: what the assistant costs, per user and project.
-            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, ...usage }, "Assistant answer usage")
-            // The answer has already been sent: a failed write must not turn it into an error frame.
-            try {
-                await AssistantUsage.create({ userId: request.databaseUser?._id, projectId: toObjectId(projectId), provider: resolveLlmProvider(fastify.config), stopReason, ...usage })
-            } catch (error) {
-                fastify.log.error({ err: error, projectId }, "Assistant usage not saved")
-            }
+            answered = { stopReason, usage }
         } catch (error) {
             if (!abortController.signal.aborted) {
                 fastify.log.error({ err: error, projectId }, "Assistant chat failed")
@@ -216,6 +208,20 @@ export default async function assistantController(fastify: FastifyInstance) {
             clearInterval(heartbeat)
         }
         reply.raw.end()
+
+        if (answered) {
+            const { stopReason, usage } = answered
+            // One line and one document per answer: what the assistant costs, per user and project.
+            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, ...usage }, "Assistant answer usage")
+            // Once the stream is closed and not awaited: the browser does not wait on the write, and a failed one cannot become an error frame.
+            void (async () => {
+                try {
+                    await AssistantUsage.create({ userId: request.databaseUser?._id, projectId: toObjectId(projectId), provider: resolveLlmProvider(fastify.config), stopReason, ...usage })
+                } catch (error) {
+                    fastify.log.error({ err: error, projectId }, "Assistant usage not saved")
+                }
+            })()
+        }
     })
 
     /** A first draft of a new project from a free-text description, used to prefill the wizard. */

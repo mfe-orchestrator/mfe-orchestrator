@@ -109,8 +109,11 @@ interface AssistantState {
     reset: () => void
     /** The id of the open conversation, created when it has none yet. */
     ensureConversationId: () => string
-    /** Shows a conversation of the history in place of the open one. */
-    openConversation: (conversationId: string, messages: AssistantMessage[]) => void
+    /**
+     * Shows a conversation of the history in place of the open one. Ignored, returning false, when
+     * the project changed while it loaded or an answer is streaming: it would land in the wrong place.
+     */
+    openConversation: (projectId: string, conversationId: string, messages: AssistantMessage[]) => boolean
     /** Forgets every conversation: on logout, so the next user of the browser does not see them. */
     clearAll: () => void
 }
@@ -207,7 +210,12 @@ const useAssistantStore = create<AssistantState>()(
                     set({ conversationId })
                     return conversationId
                 },
-                openConversation: (conversationId: string, messages: AssistantMessage[]) => set({ conversationId, messages }),
+                openConversation: (projectId: string, conversationId: string, messages: AssistantMessage[]) => {
+                    const state = get()
+                    if (state.projectId !== projectId || state.messages.some(message => message.status === "streaming")) return false
+                    set({ conversationId, messages })
+                    return true
+                },
                 clearAll: () => set({ messages: [], conversations: {}, conversationIds: {}, conversationId: undefined, projectId: undefined, pendingQuestion: undefined })
             }),
             {

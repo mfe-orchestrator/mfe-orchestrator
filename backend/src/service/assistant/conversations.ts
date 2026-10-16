@@ -3,12 +3,22 @@ import { createBusinessException } from "../../errors/BusinessException"
 import AssistantConversation from "../../models/AssistantConversationModel"
 import { AssistantConversationDTO, AssistantConversationMessageDTO, AssistantConversationSummaryDTO } from "../../types/AssistantDTO"
 import { toObjectId } from "../../utils/mongooseUtils"
+import { redactSecrets } from "./assistantTools"
 
 /** How long a conversation is kept after it was last written to. */
 export const CONVERSATION_TTL_MS = 90 * 24 * 60 * 60 * 1000
 /** The history shows the most recent ones only. */
 export const MAX_LISTED_CONVERSATIONS = 50
 const MAX_TITLE_CHARS = 80
+/** Clipped rather than rejected: one oversized field would stop the conversation from being saved at all. */
+const MAX_CONTENT_CHARS = 64_000
+const MAX_FIELD_CHARS = 2_000
+const MAX_TOOLS = 100
+const MAX_DETAILS = 50
+
+const clip = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 1)}…` : value)
+/** Kept for 90 days: an API key or a password the answer repeated is masked, as in the job logs the tools return. */
+const safe = (value: string, max: number) => redactSecrets(clip(value, max))
 
 type UserId = ObjectId | Schema.Types.ObjectId
 
@@ -18,25 +28,33 @@ const conversationNotFound = () => createBusinessException({ code: "ASSISTANT_CO
 
 /**
  * Only the fields the panel shows. Whatever the browser sends, tool inputs and results are never
- * stored: they can carry variable values or the key of an API key just created.
+ * stored: they can carry variable values or the key of an API key just created. What is kept of
+ * the text has secrets masked.
  */
 export const toStoredMessage = (message: AssistantConversationMessageDTO): AssistantConversationMessageDTO =>
     withoutUndefined({
         id: message.id,
         role: message.role,
-        content: message.content,
+        content: safe(message.content, MAX_CONTENT_CHARS),
         // An answer saved while it streamed reads as finished when reopened.
         status: message.status === "streaming" ? "done" : message.status,
         errorKey: message.errorKey,
-        tools: message.tools?.map(tool =>
-            withoutUndefined({ id: tool.id, name: tool.name, title: tool.title, kind: tool.kind, status: tool.status === "running" ? "interrupted" : tool.status, summary: tool.summary })
+        tools: message.tools?.slice(0, MAX_TOOLS).map(tool =>
+            withoutUndefined({
+                id: tool.id,
+                name: tool.name,
+                title: tool.title,
+                kind: tool.kind,
+                status: tool.status === "running" ? "interrupted" : tool.status,
+                summary: tool.summary === undefined ? undefined : safe(tool.summary, MAX_FIELD_CHARS)
+            })
         ),
         confirmation: message.confirmation && {
             actionId: message.confirmation.actionId,
             callId: message.confirmation.callId,
             name: message.confirmation.name,
             title: message.confirmation.title,
-            details: message.confirmation.details.map(({ label, value }) => ({ label, value })),
+            details: message.confirmation.details.slice(0, MAX_DETAILS).map(({ label, value }) => ({ label, value: safe(value, MAX_FIELD_CHARS) })),
             expiresAt: message.confirmation.expiresAt,
             status: message.confirmation.status
         },

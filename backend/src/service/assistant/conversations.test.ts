@@ -58,6 +58,28 @@ describe("conversations", () => {
         expect(stored.tools?.[0].status).toBe("interrupted")
     })
 
+    it("Given an answer longer than what is kept, when it is stored, then it is clipped instead of rejected", () => {
+        const long = { ...answerWithTools, content: "x".repeat(100_000), confirmation: { ...answerWithTools.confirmation!, details: [{ label: "variables", value: "y".repeat(5_000) }] } }
+
+        const stored = toStoredMessage(long)
+
+        expect(stored.content).toHaveLength(64_000)
+        expect(stored.confirmation?.details[0].value).toHaveLength(2_000)
+    })
+
+    it("Given a secret in the answer or in a confirmation card, when it is stored, then it is masked", () => {
+        const withSecrets = {
+            ...answerWithTools,
+            content: "Set NPM_TOKEN=abcdef1234567890 in the pipeline.",
+            confirmation: { ...answerWithTools.confirmation!, details: [{ label: "variables", value: "+ API_KEY = sk-live-123456789" }] }
+        }
+
+        const stored = toStoredMessage(withSecrets)
+
+        expect(stored.content).not.toContain("abcdef1234567890")
+        expect(stored.confirmation?.details[0].value).not.toContain("sk-live-123456789")
+    })
+
     it("Given a conversation, when it is saved, then it is upserted for its user and project, titled by the first question, with a fresh expiry", async () => {
         const before = Date.now()
 

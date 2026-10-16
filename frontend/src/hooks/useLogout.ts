@@ -1,5 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react"
 import { useMsal } from "@azure/msal-react"
+import { useQueryClient } from "@tanstack/react-query"
 import { deleteToken } from "@/authentication/tokenUtils"
 import useAssistantJobsStore from "@/store/useAssistantJobsStore"
 import useAssistantStore from "@/store/useAssistantStore"
@@ -10,6 +11,7 @@ const useLogout = () => {
     const { clearUser } = useUserStore()
     const msal = useMsal()
     const auth0 = useAuth0()
+    const queryClient = useQueryClient()
 
     const handleLogout = async () => {
         try {
@@ -53,6 +55,8 @@ const useLogout = () => {
             // The conversations and the job tabs are kept in the browser: the next person signing in here must not see them.
             useAssistantStore.getState().clearAll()
             useAssistantJobsStore.getState().clearAll()
+            // The history lists the previous user's questions: it must not show from the cache.
+            queryClient.removeQueries({ queryKey: ["assistant-conversations"] })
         }
     }
 

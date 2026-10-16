@@ -8,13 +8,29 @@ import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDial
 import useAssistantApi, { AssistantConversation, AssistantConversationSummary } from "@/hooks/apiClients/useAssistantApi"
 import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
 
-/** The server keeps no tool inputs: the panel's types expect them, empty as after a reload. */
-const toPanelMessages = (conversation: AssistantConversation): AssistantMessage[] =>
-    conversation.messages.map(message => ({
+/**
+ * The server keeps no tool inputs: the panel's types expect them, empty as after a reload. A card
+ * still pending past its expiry can no longer be answered: left pending, it would lock the input.
+ */
+const toPanelMessages = (conversation: AssistantConversation): AssistantMessage[] => {
+    const now = Date.now()
+    const expiredCalls = new Set(
+        conversation.messages.filter(message => message.confirmation?.status === "pending" && new Date(message.confirmation.expiresAt).getTime() <= now).map(message => message.confirmation?.callId)
+    )
+    return conversation.messages.map(message => ({
         ...message,
-        tools: message.tools?.map(tool => ({ ...tool, input: tool.input ?? {} })),
-        confirmation: message.confirmation && { ...message.confirmation, input: message.confirmation.input ?? {} }
+        tools: message.tools?.map(tool => ({
+            ...tool,
+            input: tool.input ?? {},
+            status: tool.status === "awaiting_confirmation" && expiredCalls.has(tool.id) ? "interrupted" : tool.status
+        })),
+        confirmation: message.confirmation && {
+            ...message.confirmation,
+            input: message.confirmation.input ?? {},
+            status: message.confirmation.status === "pending" && expiredCalls.has(message.confirmation.callId) ? "expired" : message.confirmation.status
+        }
     }))
+}
 
 interface AssistantHistoryProps {
     projectId: string
@@ -57,8 +73,7 @@ const AssistantHistory: React.FC<AssistantHistoryProps> = ({ projectId, onOpened
         setOpeningId(id)
         try {
             const conversation = await assistantApi.getConversation(id)
-            useAssistantStore.getState().openConversation(conversation.id, toPanelMessages(conversation))
-            onOpened()
+            if (useAssistantStore.getState().openConversation(projectId, conversation.id, toPanelMessages(conversation))) onOpened()
         } catch (error) {
             // The API client already shows the error: the list stays open.
             console.error("Could not open the conversation", error)
