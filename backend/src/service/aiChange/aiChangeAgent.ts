@@ -82,7 +82,7 @@ const systemPrompt = (
 
 How you work:
 - Explore first: list_files, search and read_file the files that matter before editing. Follow the conventions you find (language, framework, formatting, folder layout, naming).
-- Edit with write_file (always the WHOLE new content of the file) and delete_file. Keep the change as small as the request allows; do not reformat or rewrite code you do not need to touch.
+- Change an existing file with edit_file, one exact snippet at a time: it costs a fraction of rewriting the file. Use write_file (always the WHOLE new content) only for new files or a file rewritten almost entirely, and delete_file to remove one. Keep the change as small as the request allows; do not reformat or rewrite code you do not need to touch.
 - Nothing you write is committed by you: the user reviews your change as a diff, and only if they approve it is it committed on a new branch with a pull request${multipleRepositories ? " in each repository" : ""}. You cannot run commands, install packages, build or test.
 - When you are done call finish with a summary for the pull request: what changed and why, in a few lines, then anything the reviewer should check. ${multipleRepositories ? "Say what changed in each repository. " : ""}Write it in the language of the user's request.
 - If the request cannot be done safely or is unclear, change nothing and explain why in finish.
@@ -183,8 +183,23 @@ const toolsFor = (multipleRepositories: boolean): LlmTool[] => {
             }
         },
         {
+            name: "edit_file",
+            description:
+                "Replaces one exact snippet of an existing file with new text. old_text must appear exactly once in the file as it is now, your own edits included: copy it character for character, with enough surrounding lines to make it unique. Prefer it to write_file for any change to an existing file.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    path: { type: "string", description: filePath },
+                    old_text: { type: "string", description: "The exact text to replace, whitespace and indentation included." },
+                    new_text: { type: "string", description: "The text to put in its place. Empty to remove old_text." }
+                },
+                required: ["path", "old_text", "new_text"],
+                additionalProperties: false
+            }
+        },
+        {
             name: "write_file",
-            description: "Creates a file or replaces the whole content of an existing one. Always pass the complete new content.",
+            description: "Creates a file or replaces the whole content of an existing one. Always pass the complete new content. To change part of an existing file use edit_file.",
             inputSchema: {
                 type: "object",
                 properties: {
@@ -281,6 +296,8 @@ export class AiChangeToolbox {
                 return this.readFile(readString(input, "path")!)
             case "search":
                 return this.search(readString(input, "text")!, readString(input, "prefix", false))
+            case "edit_file":
+                return this.editFile(readString(input, "path")!, readString(input, "old_text")!, readString(input, "new_text")!)
             case "write_file":
                 return this.writeFile(readString(input, "path")!, readString(input, "content")!)
             case "delete_file":
@@ -426,6 +443,44 @@ export class AiChangeToolbox {
         await fs.writeFile(absolute, content, "utf8")
         this.markChanged(repository, relative, bytes)
         return `${existing ? "Updated" : "Created"} ${this.shown(repository, relative)}.`
+    }
+
+    /**
+     * Only `new_text` counts towards the written bytes: the rest of the file was already there.
+     * A secret is refused even though nothing is read back: "found twice" would tell what it holds.
+     */
+    private async editFile(requested: string, oldText: string, newText: string): Promise<string> {
+        const { repository, inside } = this.locate(requested)
+        const { absolute, relative } = await resolveInsideWorkingCopy(repository.workingCopy.dir, inside)
+        const shown = this.shown(repository, relative)
+        if (isSecretPath(relative)) {
+            throw new WorkspacePathError(`"${shown}" may hold credentials and cannot be edited`)
+        }
+        if (!oldText) throw new Error("old_text is empty: use write_file to create a file")
+        const bytes = Buffer.byteLength(newText, "utf8")
+        await this.ensureCanChange(repository, relative, bytes)
+        const existing = await fs.lstat(absolute).catch(() => undefined)
+        if (!existing?.isFile()) {
+            throw new Error(`"${shown}" does not exist: use write_file to create it`)
+        }
+        if (existing.size > AI_CHANGE_LIMITS.maxSearchedFileBytes) {
+            throw new Error(`"${shown}" is ${existing.size} bytes, too big to edit`)
+        }
+        const buffer = await fs.readFile(absolute)
+        if (looksBinary(buffer)) {
+            throw new Error(`"${shown}" is a binary file`)
+        }
+        const content = buffer.toString("utf8")
+        const at = content.indexOf(oldText)
+        if (at === -1) {
+            throw new Error(`old_text was not found in "${shown}": read the file again and copy the text exactly`)
+        }
+        if (content.indexOf(oldText, at + oldText.length) !== -1) {
+            throw new Error(`old_text appears more than once in "${shown}": include more surrounding lines to make it unique`)
+        }
+        await fs.writeFile(absolute, content.slice(0, at) + newText + content.slice(at + oldText.length), "utf8")
+        this.markChanged(repository, relative, bytes)
+        return `Edited ${shown}.`
     }
 
     private async deleteFile(requested: string): Promise<string> {

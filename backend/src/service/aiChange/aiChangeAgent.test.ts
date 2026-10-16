@@ -78,6 +78,37 @@ describe.skipIf(!hasGit)("AiChangeToolbox", () => {
         expect(await toolbox.run("read_file", { path: "src/pages/NotFound.tsx" })).toBe("export const NotFound = () => null\n")
     })
 
+    it("Given a snippet found once, when the file is edited, then only that snippet changes", async () => {
+        await expect(toolbox.run("edit_file", { path: "src/Checkout.tsx", old_text: "() => null", new_text: "() => <form />" })).resolves.toBe("Edited src/Checkout.tsx.")
+
+        expect(await toolbox.run("read_file", { path: "src/Checkout.tsx" })).toBe("export const Checkout = () => <form />\n")
+    })
+
+    it("Given a replacement holding $ patterns, when the file is edited, then it is written literally", async () => {
+        await toolbox.run("edit_file", { path: "README.md", old_text: "shop", new_text: "$& costs $1" })
+
+        expect(await toolbox.run("read_file", { path: "README.md" })).toBe("# $& costs $1\n")
+    })
+
+    it("Given a snippet missing or found twice, when the file is edited, then it is refused and the file is untouched", async () => {
+        fs.writeFileSync(path.join(dir, "src/App.tsx"), "a()\na()\n")
+
+        await expect(toolbox.run("edit_file", { path: "src/App.tsx", old_text: "b()", new_text: "c()" })).rejects.toThrow(/not found/)
+        await expect(toolbox.run("edit_file", { path: "src/App.tsx", old_text: "a()", new_text: "c()" })).rejects.toThrow(/more than once/)
+        expect(fs.readFileSync(path.join(dir, "src/App.tsx"), "utf8")).toBe("a()\na()\n")
+    })
+
+    it("Given a file that does not exist, when it is edited, then it is refused", async () => {
+        await expect(toolbox.run("edit_file", { path: "src/Missing.tsx", old_text: "a", new_text: "b" })).rejects.toThrow(/does not exist/)
+    })
+
+    it("Given a .env file, a CI workflow or a path climbing out, when it is edited, then it is refused", async () => {
+        await expect(toolbox.run("edit_file", { path: ".env", old_text: "API_TOKEN", new_text: "X" })).rejects.toThrow(/credentials/)
+        await expect(toolbox.run("edit_file", { path: ".github/workflows/build.yml", old_text: "push", new_text: "pull_request" })).rejects.toThrow(/CI configuration/)
+        await expect(toolbox.run("edit_file", { path: "../pwned.txt", old_text: "a", new_text: "b" })).rejects.toThrow(/outside the repository/)
+        expect(fs.readFileSync(path.join(dir, ".env"), "utf8")).toBe("API_TOKEN=do-not-read\n")
+    })
+
     it("Given the file limit reached, when one more file is written, then it is refused but the same files can still be edited", async () => {
         for (let index = 0; index < AI_CHANGE_LIMITS.maxChangedFiles; index++) {
             await toolbox.run("write_file", { path: `src/generated/file-${index}.ts`, content: "x" })
