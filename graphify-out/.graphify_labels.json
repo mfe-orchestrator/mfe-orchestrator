@@ -216,6 +216,7 @@
   "214": "roles",
   "215": "Scopes (Optional)",
   "216": "StackDetectionService",
+  "217": ".selectRepositories",
   "219": "workspaceCleanup.ts",
   "220": "confirmationDetails.test.ts",
   "221": "marketing",
