@@ -3275,8 +3275,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/assistant/conversations.ts": {
-    "mtime": 1792155147.7252018,
-    "ast_hash": "5b1ca003ff6c854b0910e0f0649b9085",
+    "mtime": 1792155335.3684826,
+    "ast_hash": "d950e12c59a97d476c4bf24ef8b2074a",
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AnswerUsage.tsx": {
