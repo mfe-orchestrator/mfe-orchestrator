@@ -1,16 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AssistantConversationMessageDTO } from "../../types/AssistantDTO"
-import { CONVERSATION_TTL_MS, deleteConversation, getConversation, saveConversation, toStoredMessage } from "./conversations"
+import { deleteConversation, getConversation, saveConversation, toStoredMessage } from "./conversations"
 
 const updateOne = vi.fn()
 const findOne = vi.fn()
-const deleteOne = vi.fn()
 
 vi.mock("../../models/AssistantConversationModel", () => ({
     default: {
         updateOne: (...args: unknown[]) => updateOne(...args),
-        findOne: (...args: unknown[]) => ({ lean: () => findOne(...args) }),
-        deleteOne: (...args: unknown[]) => deleteOne(...args)
+        findOne: (...args: unknown[]) => ({ lean: () => findOne(...args) })
     }
 }))
 
@@ -39,7 +37,6 @@ describe("conversations", () => {
     beforeEach(() => {
         updateOne.mockReset().mockResolvedValue({})
         findOne.mockReset()
-        deleteOne.mockReset()
     })
 
     it("Given an answer with tool inputs and results, when it is stored, then neither is kept", () => {
@@ -80,16 +77,14 @@ describe("conversations", () => {
         expect(stored.confirmation?.details[0].value).not.toContain("sk-live-123456789")
     })
 
-    it("Given a conversation, when it is saved, then it is upserted for its user and project, titled by the first question, with a fresh expiry", async () => {
-        const before = Date.now()
-
+    it("Given a conversation, when it is saved, then it is upserted for its user and project, titled by the first question, with no expiry", async () => {
         await saveConversation(userId, projectId, "conversation-1", [{ id: "m1", role: "user", content: "  Why did   the build\nfail? " }, answerWithTools])
 
         const [filter, update, options] = updateOne.mock.calls[0]
-        expect(filter).toEqual({ _id: "conversation-1", userId, projectId })
+        expect(filter).toEqual({ _id: "conversation-1", userId, projectId, deletedAt: null })
         expect(options).toEqual({ upsert: true })
         expect(update.$set.title).toBe("Why did the build fail?")
-        expect(update.$set.expiresAt.getTime()).toBeGreaterThanOrEqual(before + CONVERSATION_TTL_MS)
+        expect(update.$set).not.toHaveProperty("expiresAt")
     })
 
     it("Given a long first question, when the conversation is saved, then the title is shortened", async () => {
@@ -98,21 +93,32 @@ describe("conversations", () => {
         expect(updateOne.mock.calls[0][1].$set.title).toHaveLength(80)
     })
 
-    it("Given an id that belongs to another user or project, when it is saved, then it fails as not found", async () => {
+    it("Given an id that belongs to another user or project, or was deleted, when it is saved, then it fails as not found", async () => {
         updateOne.mockRejectedValue(Object.assign(new Error("E11000 duplicate key"), { code: 11000 }))
 
         await expect(saveConversation(userId, projectId, "conversation-1", [{ id: "m1", role: "user", content: "Hi" }])).rejects.toMatchObject({ statusCode: 404 })
     })
 
-    it("Given a conversation of someone else, when it is opened, then it is not found", async () => {
+    it("Given a conversation of someone else, or a deleted one, when it is opened, then it is not found", async () => {
         findOne.mockResolvedValue(null)
 
         await expect(getConversation(userId, projectId, "conversation-1")).rejects.toMatchObject({ statusCode: 404 })
-        expect(findOne.mock.calls[0][0]).toEqual({ _id: "conversation-1", userId, projectId })
+        expect(findOne.mock.calls[0][0]).toEqual({ _id: "conversation-1", userId, projectId, deletedAt: null })
     })
 
-    it("Given no such conversation, when it is deleted, then it is not found", async () => {
-        deleteOne.mockResolvedValue({ deletedCount: 0 })
+    it("Given a conversation, when it is deleted, then it is only marked as deleted and stays in the database", async () => {
+        updateOne.mockResolvedValue({ matchedCount: 1 })
+
+        await deleteConversation(userId, projectId, "conversation-1")
+
+        const [filter, update, options] = updateOne.mock.calls[0]
+        expect(filter).toEqual({ _id: "conversation-1", userId, projectId, deletedAt: null })
+        expect(update.$set.deletedAt).toBeInstanceOf(Date)
+        expect(options).toBeUndefined()
+    })
+
+    it("Given no such conversation, or one already deleted, when it is deleted, then it is not found", async () => {
+        updateOne.mockResolvedValue({ matchedCount: 0 })
 
         await expect(deleteConversation(userId, projectId, "conversation-1")).rejects.toMatchObject({ statusCode: 404 })
     })

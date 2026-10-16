@@ -5,8 +5,6 @@ import { AssistantConversationDTO, AssistantConversationMessageDTO, AssistantCon
 import { toObjectId } from "../../utils/mongooseUtils"
 import { redactSecrets } from "./assistantTools"
 
-/** How long a conversation is kept after it was last written to. */
-export const CONVERSATION_TTL_MS = 90 * 24 * 60 * 60 * 1000
 /** The history shows the most recent ones only. */
 export const MAX_LISTED_CONVERSATIONS = 50
 const MAX_TITLE_CHARS = 80
@@ -17,7 +15,7 @@ const MAX_TOOLS = 100
 const MAX_DETAILS = 50
 
 const clip = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 1)}…` : value)
-/** Kept for 90 days: an API key or a password the answer repeated is masked, as in the job logs the tools return. */
+/** Kept for good: an API key or a password the answer repeated is masked, as in the job logs the tools return. */
 const safe = (value: string, max: number) => redactSecrets(clip(value, max))
 
 type UserId = ObjectId | Schema.Types.ObjectId
@@ -69,7 +67,7 @@ const titleOf = (messages: AssistantConversationMessageDTO[]) => {
 
 /** The user's conversations on the project, most recent first. */
 export const listConversations = async (userId: UserId, projectId: string): Promise<AssistantConversationSummaryDTO[]> => {
-    const conversations = await AssistantConversation.find({ userId, projectId: toObjectId(projectId) }, { title: 1, updatedAt: 1 })
+    const conversations = await AssistantConversation.find({ userId, projectId: toObjectId(projectId), deletedAt: null }, { title: 1, updatedAt: 1 })
         .sort({ updatedAt: -1 })
         .limit(MAX_LISTED_CONVERSATIONS)
         .lean()
@@ -77,24 +75,27 @@ export const listConversations = async (userId: UserId, projectId: string): Prom
 }
 
 export const getConversation = async (userId: UserId, projectId: string, conversationId: string): Promise<AssistantConversationDTO> => {
-    const conversation = await AssistantConversation.findOne({ _id: conversationId, userId, projectId: toObjectId(projectId) }).lean()
+    const conversation = await AssistantConversation.findOne({ _id: conversationId, userId, projectId: toObjectId(projectId), deletedAt: null }).lean()
     if (!conversation) {
         throw conversationNotFound()
     }
     return { id: conversation._id, title: conversation.title, updatedAt: conversation.updatedAt, messages: conversation.messages }
 }
 
-/** Creates the conversation or replaces its messages. A conversation stays with its user and project. */
+/**
+ * Creates the conversation or replaces its messages. A conversation stays with its user and project,
+ * and a deleted one is not brought back.
+ */
 export const saveConversation = async (userId: UserId, projectId: string, conversationId: string, messages: AssistantConversationMessageDTO[]): Promise<void> => {
     const stored = messages.map(toStoredMessage)
     try {
         await AssistantConversation.updateOne(
-            { _id: conversationId, userId, projectId: toObjectId(projectId) },
-            { $set: { messages: stored, title: titleOf(stored), expiresAt: new Date(Date.now() + CONVERSATION_TTL_MS) } },
+            { _id: conversationId, userId, projectId: toObjectId(projectId), deletedAt: null },
+            { $set: { messages: stored, title: titleOf(stored) } },
             { upsert: true }
         )
     } catch (error) {
-        // The id exists for another user or project: the upsert tried to insert it again.
+        // The id exists for another user or project, or was deleted: the upsert tried to insert it again.
         if (error && typeof error === "object" && "code" in error && error.code === 11000) {
             throw conversationNotFound()
         }
@@ -102,9 +103,10 @@ export const saveConversation = async (userId: UserId, projectId: string, conver
     }
 }
 
+/** A logical delete: the conversation leaves the history, the document stays. */
 export const deleteConversation = async (userId: UserId, projectId: string, conversationId: string): Promise<void> => {
-    const { deletedCount } = await AssistantConversation.deleteOne({ _id: conversationId, userId, projectId: toObjectId(projectId) })
-    if (deletedCount === 0) {
+    const { matchedCount } = await AssistantConversation.updateOne({ _id: conversationId, userId, projectId: toObjectId(projectId), deletedAt: null }, { $set: { deletedAt: new Date() } })
+    if (matchedCount === 0) {
         throw conversationNotFound()
     }
 }

@@ -1,5 +1,6 @@
 import { FastifyBaseLogger } from "fastify"
 import { Model, QueryFilter } from "mongoose"
+import AssistantConversation from "../models/AssistantConversationModel"
 import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepositoryModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
@@ -40,6 +41,32 @@ export const migrateLegacyCanaryTypes = async (logger: FastifyBaseLogger): Promi
 
     if (microfrontends.modifiedCount > 0 || deployments.modifiedCount > 0) {
         logger.info(`Migrated legacy canary types on ${microfrontends.modifiedCount} microfrontend(s) and ${deployments.modifiedCount} deployment(s)`)
+    }
+}
+
+/** MongoDB's codes for a collection, or an index, that does not exist. */
+const NAMESPACE_NOT_FOUND = 26
+const INDEX_NOT_FOUND = 27
+
+/**
+ * Removes the expiry the first version of the assistant history had: a TTL index on `expiresAt`,
+ * which made MongoDB delete conversations 90 days after their last answer. Conversations are now only
+ * ever deleted logically, so the index goes and the field with it.
+ *
+ * Mongoose creates the indexes a schema declares but never drops one it no longer declares, hence the
+ * explicit drop. Idempotent: once both are gone, it costs one failed drop and one empty update.
+ */
+export const removeAssistantConversationExpiry = async (logger: FastifyBaseLogger): Promise<void> => {
+    try {
+        await AssistantConversation.collection.dropIndex("expiresAt_1")
+        logger.info("Dropped the expiry index of the assistant conversations")
+    } catch (error) {
+        const code = (error as { code?: unknown } | null)?.code
+        if (code !== NAMESPACE_NOT_FOUND && code !== INDEX_NOT_FOUND) throw error
+    }
+    const { modifiedCount } = await AssistantConversation.collection.updateMany({ expiresAt: { $exists: true } }, { $unset: { expiresAt: "" } })
+    if (modifiedCount > 0) {
+        logger.info(`Removed the expiry date of ${modifiedCount} assistant conversation(s)`)
     }
 }
 
@@ -102,6 +129,7 @@ export const runMigrations = async (logger: FastifyBaseLogger): Promise<void> =>
         await migrateProjectsToOrganizations(logger)
         await migrateLegacyCanaryTypes(logger)
         await encryptStoredSecrets(logger)
+        await removeAssistantConversationExpiry(logger)
     } catch (error) {
         logger.error({ error }, "Error while running data migrations")
     }
