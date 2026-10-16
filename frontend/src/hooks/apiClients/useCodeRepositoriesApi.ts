@@ -321,27 +321,30 @@ const useCodeRepositoriesApi = () => {
         })
     }
 
-    const addRepositoryAzure = async (data: AddRepositoryAzureDTO) => {
+    const addRepositoryAzure = async (data: AddRepositoryAzureDTO, config: IClientRequestMetadataExtended = {}) => {
         await apiClient.doRequest({
             url: `/api/repositories/azure`,
             method: "POST",
-            data
+            data,
+            ...config
         })
     }
 
-    const editRepositoryAzure = async (repositoryId: string, data: AddRepositoryAzureDTO) => {
+    const editRepositoryAzure = async (repositoryId: string, data: AddRepositoryAzureDTO, config: IClientRequestMetadataExtended = {}) => {
         await apiClient.doRequest({
             url: `/api/repositories/${repositoryId}/azure`,
             method: "PUT",
-            data
+            data,
+            ...config
         })
     }
 
-    const testConnectionAzure = async (data: TestConnectionAzureRepositoryAzureDTO): Promise<AzureDevOpsProjectsResponse> => {
+    const testConnectionAzure = async (data: TestConnectionAzureRepositoryAzureDTO, config: IClientRequestMetadataExtended = {}): Promise<AzureDevOpsProjectsResponse> => {
         const response = await apiClient.doRequest<AzureDevOpsProjectsResponse>({
             url: `/api/repositories/azure/test`,
             method: "POST",
-            data
+            data,
+            ...config
         })
         return response.data
     }

@@ -32,14 +32,14 @@ export const errorCodeOf = (error?: Error): string | undefined => (error as Axio
 
 export interface IClientRequestMetadataExtended extends IClientRequestMetadata {
     silent?: boolean
-    customErrorMessage?: string | ((error: Error) => string)
+    customErrorMessage?: string | ((error: Error) => string | undefined)
 }
 
 export interface IClientRequestDataExtended<D> extends IClientRequestData<D>, IClientRequestMetadataExtended {}
 
 export interface IApiClientOptions {
     baseURL?: string
-    customErrorMessage?: string | ((error: Error) => string)
+    customErrorMessage?: string | ((error: Error) => string | undefined)
 }
 
 export const useApiClient = (options?: IApiClientOptions) => {
@@ -216,9 +216,10 @@ export const useApiClient = (options?: IApiClientOptions) => {
         return auth0Auth.isAuthenticated || Boolean(activeAccount)
     }
 
-    const getErrorNotification = (customErrorMessage?: string | ((error: Error) => string), e?: Error): string | React.ReactNode => {
-        if (typeof customErrorMessage === "function") return customErrorMessage(e as Error)
-        if (customErrorMessage) return customErrorMessage
+    // A function that returns nothing hands the error back to the generic message below
+    const getErrorNotification = (customErrorMessage?: string | ((error: Error) => string | undefined), e?: Error): string | React.ReactNode => {
+        const custom = typeof customErrorMessage === "function" ? customErrorMessage(e as Error) : customErrorMessage
+        if (custom) return custom
         if (!e) return "Error"
         const axiosError = e as AxiosError<IErrorResponse>
         const responseData = axiosError?.response?.data

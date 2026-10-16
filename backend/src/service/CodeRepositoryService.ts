@@ -535,7 +535,16 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async testConnectionAzure(organization: string, pat: string, repositoryId?: string) {
-        return new AzureDevOpsClient().getProjects(await this.resolveAccessToken(pat, repositoryId), organization)
+        const client = new AzureDevOpsClient()
+        const token = await this.resolveAccessToken(pat, repositoryId)
+        const projects = await client.getProjects(token, organization)
+        // Saving the connection writes the deploy key into a variable group: a token without that
+        // scope still lists the projects, so it is tried here rather than failing only on save.
+        // A scope applies to the whole token, so any project of the organization tells.
+        if (projects.value[0]) {
+            await client.getVariableGroups(token, organization, projects.value[0].id)
+        }
+        return projects
     }
 
     async addRepositoryGitlab(body: CreateGitlabRepositoryDto, projectId: string) {

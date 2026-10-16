@@ -1,5 +1,9 @@
-import axios from "axios"
+import axios, { AxiosRequestConfig } from "axios"
+import { createBusinessException } from "../errors/BusinessException"
 import { BuildJobLogDTO, MAX_FAILED_JOB_LOG_BYTES, MAX_FAILED_JOBS } from "../types/BuildStatusDTO"
+
+/** Code of the error raised when the token cannot reach the variable groups the deploy key is kept in */
+export const AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED = "AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED"
 
 export interface AzureAccessTokenResponse {
     access_token: string
@@ -407,9 +411,9 @@ class AzureDevOpsClient {
     /**
      * Get all variable groups for a project
      */
-    private async getVariableGroups(token: string, organization: string, projectId: string): Promise<AzureVariableGroupsResponse> {
+    async getVariableGroups(token: string, organization: string, projectId: string): Promise<AzureVariableGroupsResponse> {
         const url = `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups?api-version=7.1-preview.2`
-        const response = await axios.request<AzureVariableGroupsResponse>({
+        const response = await this.variableGroupsRequest<AzureVariableGroupsResponse>({
             url,
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -420,22 +424,35 @@ class AzureDevOpsClient {
     }
 
     /**
+     * Azure answers 401 (or 403) when the token lacks the Variable Groups scope, even though it
+     * reaches the projects: told apart here, or the user only sees a bare "status code 401".
+     */
+    private async variableGroupsRequest<T>(config: AxiosRequestConfig) {
+        try {
+            return await axios.request<T>(config)
+        } catch (error) {
+            if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+                throw createBusinessException({
+                    code: AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED,
+                    message: "The personal access token cannot manage the project's variable groups: it needs the Variable Groups (Read, create & manage) scope"
+                })
+            }
+            throw error
+        }
+    }
+
+    /**
      * Check if a secret exists in the organization's variable group
      */
     async checkOrganizationSecretExists({ accessToken, organization, projectId, secretName, variableGroupName }: CheckOrganizationSecretExistsParams): Promise<boolean> {
-        try {
-            const variableGroup = await this.getVariableGroups(accessToken, organization, projectId)
-            const existingGroup = variableGroup.value.find(g => g.name === variableGroupName)
+        const variableGroup = await this.getVariableGroups(accessToken, organization, projectId)
+        const existingGroup = variableGroup.value.find(g => g.name === variableGroupName)
 
-            if (existingGroup) {
-                return secretName in existingGroup.variables
-            }
-
-            return false
-        } catch (error) {
-            console.error("Error checking Azure DevOps secret:", error)
-            return false
+        if (existingGroup) {
+            return secretName in existingGroup.variables
         }
+
+        return false
     }
 
     /**
@@ -457,7 +474,7 @@ class AzureDevOpsClient {
 
         if (!variableGroup) {
             // Create new variable group with the secret
-            await axios.request<AzureVariableGroup>({
+            await this.variableGroupsRequest<AzureVariableGroup>({
                 method: "POST",
                 url: `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups?api-version=7.1`,
                 headers: {
@@ -493,7 +510,7 @@ class AzureDevOpsClient {
         }
 
         // Update the existing variable group with the new secret
-        await axios.request({
+        await this.variableGroupsRequest({
             method: "PUT",
             url: `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups/${variableGroup.id}?api-version=7.1-preview.2`,
             headers: {

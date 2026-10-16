@@ -1101,7 +1101,8 @@
             "name": "Nome",
             "namePlaceholder": "Inserisci nome connessione",
             "error": {
-                "failedToAdd": "Impossibile aggiungere il repository Azure DevOps"
+                "failedToAdd": "Impossibile aggiungere il repository Azure DevOps",
+                "variableGroupsScope": "Il token accede ai progetti ma non ai loro variable groups: crea un PAT con lo scope Variable Groups (lettura, creazione e gestione)"
             }
         },
         "gitlab": {
