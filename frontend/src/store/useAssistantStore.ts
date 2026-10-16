@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { devtools } from "zustand/middleware"
+import { createJSONStorage, devtools, persist } from "zustand/middleware"
 
 export type AssistantRole = "user" | "assistant"
 
@@ -63,7 +63,12 @@ export interface AssistantMessage {
 
 interface AssistantState {
     isOpen: boolean
+    /** The conversation of the project open in the console. */
     messages: AssistantMessage[]
+    /** The project `messages` belong to. */
+    projectId?: string
+    /** The conversations of the other projects, kept so that coming back to a project resumes it. */
+    conversations: Record<string, AssistantMessage[]>
     /**
      * A question asked from outside the panel (a ✨ button on a page), waiting for the panel
      * to send it. Kept here rather than sent directly so that only the panel talks to the API.
@@ -81,8 +86,33 @@ interface AssistantState {
      * next answer's stream. The latest only, should an id come back in another answer.
      */
     updateTool: (id: string, update: (tool: AssistantToolCall) => AssistantToolCall) => void
+    /**
+     * Shows the conversation of another project, keeping the current one for when the user comes
+     * back. Returns whether the project actually changed.
+     */
+    switchProject: (projectId: string | undefined) => boolean
+    /** Starts a new conversation on the current project. */
     reset: () => void
+    /** Forgets every conversation: on logout, so the next user of the browser does not see them. */
+    clearAll: () => void
 }
+
+/** Kept per project; the server reads at most this many messages anyway. */
+const MAX_STORED_MESSAGES = 40
+const MAX_STORED_PROJECTS = 20
+
+/**
+ * What survives a reload. Tool inputs and results stay in memory only: they can carry variable
+ * values or the key of an API key just created, which must not sit in the browser's storage. An
+ * answer cut by the reload reads as finished, with its unfinished calls marked interrupted.
+ */
+const toStored = (messages: AssistantMessage[]): AssistantMessage[] =>
+    messages.slice(-MAX_STORED_MESSAGES).map(message => ({
+        ...message,
+        status: message.status === "streaming" ? "done" : message.status,
+        tools: message.tools?.map(({ result: _result, ...tool }) => ({ ...tool, input: {}, status: tool.status === "running" ? "interrupted" : tool.status })),
+        confirmation: message.confirmation && { ...message.confirmation, input: {} }
+    }))
 
 /** `findLastIndex`, which the ES2020 target of the console does not have. */
 const lastIndexWhere = <T>(items: T[], predicate: (item: T) => boolean) => {
@@ -94,34 +124,64 @@ const lastIndexWhere = <T>(items: T[], predicate: (item: T) => boolean) => {
 
 const useAssistantStore = create<AssistantState>()(
     devtools(
-        (set, get) => ({
-            isOpen: false,
-            messages: [],
-            open: () => set({ isOpen: true }),
-            close: () => set({ isOpen: false }),
-            toggle: () => set({ isOpen: !get().isOpen }),
-            ask: (question: string) => set({ isOpen: true, pendingQuestion: question }),
-            takePendingQuestion: () => {
-                const question = get().pendingQuestion
-                if (question) set({ pendingQuestion: undefined })
-                return question
-            },
-            addMessage: (message: AssistantMessage) => set({ messages: [...get().messages, message] }),
-            updateMessage: (id: string, update: (message: AssistantMessage) => AssistantMessage) => set({ messages: get().messages.map(message => (message.id === id ? update(message) : message)) }),
-            updateTool: (id: string, update: (tool: AssistantToolCall) => AssistantToolCall) => {
-                const messages = get().messages
-                const messageIndex = lastIndexWhere(messages, message => Boolean(message.tools?.some(tool => tool.id === id)))
-                if (messageIndex < 0) return
-                const tools = messages[messageIndex].tools ?? []
-                const toolIndex = lastIndexWhere(tools, tool => tool.id === id)
-                set({
-                    messages: messages.map((message, index) =>
-                        index === messageIndex ? { ...message, tools: tools.map((tool, position) => (position === toolIndex ? update(tool) : tool)) } : message
-                    )
-                })
-            },
-            reset: () => set({ messages: [], pendingQuestion: undefined })
-        }),
+        persist(
+            (set, get) => ({
+                isOpen: false,
+                messages: [],
+                conversations: {},
+                open: () => set({ isOpen: true }),
+                close: () => set({ isOpen: false }),
+                toggle: () => set({ isOpen: !get().isOpen }),
+                ask: (question: string) => set({ isOpen: true, pendingQuestion: question }),
+                takePendingQuestion: () => {
+                    const question = get().pendingQuestion
+                    if (question) set({ pendingQuestion: undefined })
+                    return question
+                },
+                addMessage: (message: AssistantMessage) => set({ messages: [...get().messages, message] }),
+                updateMessage: (id: string, update: (message: AssistantMessage) => AssistantMessage) =>
+                    set({ messages: get().messages.map(message => (message.id === id ? update(message) : message)) }),
+                updateTool: (id: string, update: (tool: AssistantToolCall) => AssistantToolCall) => {
+                    const messages = get().messages
+                    const messageIndex = lastIndexWhere(messages, message => Boolean(message.tools?.some(tool => tool.id === id)))
+                    if (messageIndex < 0) return
+                    const tools = messages[messageIndex].tools ?? []
+                    const toolIndex = lastIndexWhere(tools, tool => tool.id === id)
+                    set({
+                        messages: messages.map((message, index) =>
+                            index === messageIndex ? { ...message, tools: tools.map((tool, position) => (position === toolIndex ? update(tool) : tool)) } : message
+                        )
+                    })
+                },
+                switchProject: (projectId: string | undefined) => {
+                    const state = get()
+                    if (state.projectId === projectId) return false
+                    const conversations = { ...state.conversations }
+                    if (state.projectId) conversations[state.projectId] = state.messages
+                    set({ projectId, conversations, messages: (projectId && conversations[projectId]) || [], pendingQuestion: undefined })
+                    return true
+                },
+                reset: () => {
+                    const { projectId, conversations } = get()
+                    const { [projectId ?? ""]: _dropped, ...others } = conversations
+                    set({ messages: [], conversations: others, pendingQuestion: undefined })
+                },
+                clearAll: () => set({ messages: [], conversations: {}, projectId: undefined, pendingQuestion: undefined })
+            }),
+            {
+                name: "assistant-conversations",
+                storage: createJSONStorage(() => localStorage),
+                // The open conversation is folded into the per-project map: on reload, switchProject picks it back up.
+                partialize: state => {
+                    const conversations = { ...state.conversations }
+                    if (state.projectId) conversations[state.projectId] = state.messages
+                    const kept = Object.entries(conversations)
+                        .filter(([, messages]) => messages.length > 0)
+                        .slice(-MAX_STORED_PROJECTS)
+                    return { conversations: Object.fromEntries(kept.map(([id, messages]) => [id, toStored(messages)])) }
+                }
+            }
+        ),
         {
             name: "assistant-storage"
         }

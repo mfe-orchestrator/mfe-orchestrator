@@ -1,6 +1,7 @@
 import { useAuth0 } from "@auth0/auth0-react"
 import { useMsal } from "@azure/msal-react"
 import { deleteToken } from "@/authentication/tokenUtils"
+import useAssistantStore from "@/store/useAssistantStore"
 import useUserStore from "@/store/useUserStore"
 
 /** Signs the user out of whichever provider they logged in with and clears the local session. */
@@ -48,6 +49,8 @@ const useLogout = () => {
             console.error("Error during logout:", error)
         } finally {
             clearUser()
+            // The conversations are kept in the browser: the next person signing in here must not see them.
+            useAssistantStore.getState().clearAll()
         }
     }
 

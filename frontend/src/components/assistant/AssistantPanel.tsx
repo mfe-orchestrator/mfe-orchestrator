@@ -90,11 +90,12 @@ const AssistantPanel: React.FC = () => {
         return () => window.removeEventListener("keydown", onKeyDown)
     }, [enabled, toggle])
 
-    // A conversation is about one project: switching project starts a new one.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: only a project change must reset the conversation.
+    // A conversation is about one project: switching project shows that project's conversation,
+    // and the one left behind is there again on the way back. Mounting the panel or a reload
+    // resumes the conversation instead of starting a new one.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only a project change must switch the conversation.
     useEffect(() => {
-        stop()
-        reset()
+        if (useAssistantStore.getState().switchProject(projectId)) stop()
     }, [projectId])
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: send is recreated every render; the pending question is what triggers this.
