@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792239634.11858,
-    "ast_hash": "349ed2bc158d7c2feec052f561785240",
+    "mtime": 1792240632.4443321,
+    "ast_hash": "8f8c676b71b1429b9f2015fc354cd343",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792239634.118842,
-    "ast_hash": "ca375ded7ca6bd1e3909d26a18341533",
+    "mtime": 1792240632.4432461,
+    "ast_hash": "bdb266d5c2dbed2e61a95757bdafccf5",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -835,8 +835,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ui/Sidebar/Sidebar.tsx": {
-    "mtime": 1792238018.6608124,
-    "ast_hash": "accebc964c48c560cbae3f284cca4a56",
+    "mtime": 1792240661.5645726,
+    "ast_hash": "e3ba18ead2feff72fb4400da263d8de0",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/Sidebar/partials/LanguageSelector.tsx": {
@@ -1450,8 +1450,8 @@
     "semantic_hash": ""
   },
   "frontend/src/theme/layout/MainLayout.tsx": {
-    "mtime": 1792239634.1197193,
-    "ast_hash": "21518176c27b2d93608778c74f43bcec",
+    "mtime": 1792240666.0552914,
+    "ast_hash": "028f737d0a368a9c7a5fbb957c29d30a",
     "semantic_hash": ""
   },
   "frontend/src/types/ApiResponseDTO.ts": {
@@ -1950,7 +1950,7 @@
     "semantic_hash": ""
   },
   "backend/src/service/FederationConfigService.ts": {
-    "mtime": 1792239648.5735013,
+    "mtime": 1792240132.9491343,
     "ast_hash": "33c7ba15b68deacfc79005b82d832691",
     "semantic_hash": ""
   },
@@ -2800,7 +2800,7 @@
     "semantic_hash": ""
   },
   "backend/src/service/assistant/docs-index.json": {
-    "mtime": 1792239733.3716583,
+    "mtime": 1792240132.9503083,
     "ast_hash": "14dc8fe624f3ca6df5a14dd999aa7dca",
     "semantic_hash": ""
   },
@@ -3560,8 +3560,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/DomainDetail.tsx": {
-    "mtime": 1792236775.4425592,
-    "ast_hash": "ebf9d556aca437b1459d93718f2e599d",
+    "mtime": 1792240637.4896123,
+    "ast_hash": "915a22c84ef7ce044b34a51d80492468",
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/Domains.tsx": {
@@ -3615,7 +3615,7 @@
     "semantic_hash": ""
   },
   "backend/src/service/FederationConfigService.test.ts": {
-    "mtime": 1792239666.5641942,
+    "mtime": 1792240132.948833,
     "ast_hash": "b407413b2b2c1fc8100a82d8b6c31e00",
     "semantic_hash": ""
   },

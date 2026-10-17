@@ -3380,8 +3380,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/services/AddService.tsx": {
-    "mtime": 1792239681.3438141,
-    "ast_hash": "620da369b7932dc2df8e58f5c12d375d",
+    "mtime": 1792240088.6624622,
+    "ast_hash": "b925fa30000d953c319321dc6a435135",
     "semantic_hash": ""
   },
   "frontend/src/pages/services/ServiceDetail.tsx": {
@@ -3470,13 +3470,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/ServiceService.test.ts": {
-    "mtime": 1792239681.345121,
-    "ast_hash": "e32799e3a985e90025c0b94ebfde625f",
+    "mtime": 1792240088.6622176,
+    "ast_hash": "a668fd8bcb789329fd437b1a4d87868d",
     "semantic_hash": ""
   },
   "backend/src/service/ServiceService.ts": {
-    "mtime": 1792239634.1177492,
-    "ast_hash": "af12b39a2b3382386c5c664468fd073c",
+    "mtime": 1792240088.6619155,
+    "ast_hash": "a914c8f9c5951a1c4de5e7ba1c1a7855",
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.test.ts": {
@@ -3620,8 +3620,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/services/partials/ServiceVariablesFields.tsx": {
-    "mtime": 1792239681.3437119,
-    "ast_hash": "e7ace8a4c7f8eb9c3c7fc65b844e82b1",
+    "mtime": 1792240088.662854,
+    "ast_hash": "cd9180b6eb792c68aeca456a7d5ffe58",
     "semantic_hash": ""
   },
   "frontend/src/pages/services/partials/ServiceVariablesTable.tsx": {
