@@ -48,6 +48,7 @@
   "46": "FederationConfigService",
   "47": "EmailSenderService",
   "48": ".gitHubInjectApiKey",
+  "49": "GlobalVariablesService.ts",
   "50": "Project",
   "51": "CodeRepositoryModel.ts",
   "52": "ProjectService.ts",
@@ -101,5 +102,17 @@
   "100": "assistantTools.test.ts",
   "101": "docsSearch.ts",
   "102": "AccessProbe",
-  "105": ".selectRepositories"
+  "103": "index.ts",
+  "104": "DeploymentCanaryUsersService",
+  "105": ".selectRepositories",
+  "106": "ServiceService.test.ts",
+  "107": "DeploymentService",
+  "108": "EnvironmentController.ts",
+  "109": ".planGlobalVariablesFor",
+  "110": "OrganizationService.test.ts",
+  "111": ".registerVersionWithPermissionCheck",
+  "112": "getOAuthConfig",
+  "113": "AccessProbe",
+  "114": "DeploymentCanaryUsersController.ts",
+  "115": "MicrofrontendService.services.test.ts"
 }

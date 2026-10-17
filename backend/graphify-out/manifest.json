@@ -770,13 +770,13 @@
     "semantic_hash": ""
   },
   "src/mcp/server.test.ts": {
-    "mtime": 1792097158.9682794,
-    "ast_hash": "a91f794c513016e869cd3b1163c9ce66",
+    "mtime": 1792237944.1112726,
+    "ast_hash": "72117668e2255e72720e42dcc6b175a3",
     "semantic_hash": ""
   },
   "src/mcp/server.ts": {
-    "mtime": 1792098409.406729,
-    "ast_hash": "cfec7834ab4dabfae348d078f78f0a9d",
+    "mtime": 1792237858.263577,
+    "ast_hash": "ea822b40936aef70a9b4cf4ea77054b9",
     "semantic_hash": ""
   },
   "src/mcp/toolDefinition.ts": {
@@ -795,8 +795,8 @@
     "semantic_hash": ""
   },
   "src/mcp/tools/microfrontendTools.ts": {
-    "mtime": 1792237421.568533,
-    "ast_hash": "033e40abc26117d8cb0d8280c026ecd0",
+    "mtime": 1792237991.966811,
+    "ast_hash": "c7271c1ec05e1323be1019374383de02",
     "semantic_hash": ""
   },
   "src/mcp/tools/organizationTools.test.ts": {
@@ -995,8 +995,8 @@
     "semantic_hash": ""
   },
   "src/service/assistant/AssistantService.ts": {
-    "mtime": 1792143706.6285462,
-    "ast_hash": "bb1835649b2e6d5b868023127daf505b",
+    "mtime": 1792237858.2643383,
+    "ast_hash": "98c4cf95da3d7b0ee66bfd0e3cde36be",
     "semantic_hash": ""
   },
   "src/service/assistant/assistantTools.test.ts": {
@@ -1395,8 +1395,8 @@
     "semantic_hash": ""
   },
   "src/service/assistant/assistantActions.test.ts": {
-    "mtime": 1792099826.553709,
-    "ast_hash": "566e9f758a8870d0f80a4ff0971e6f9d",
+    "mtime": 1792237944.111749,
+    "ast_hash": "21eb3c1fe63042bae7b94e437e958267",
     "semantic_hash": ""
   },
   "src/service/assistant/assistantActions.ts": {
@@ -1405,13 +1405,13 @@
     "semantic_hash": ""
   },
   "src/service/assistant/confirmationDetails.test.ts": {
-    "mtime": 1792226140.3723218,
-    "ast_hash": "93c8f1ad61cf0ac1305a12aae6c8742a",
+    "mtime": 1792237991.9677527,
+    "ast_hash": "b19e91ec126d1bc1ce8bab12c39ca0c0",
     "semantic_hash": ""
   },
   "src/service/assistant/confirmationDetails.ts": {
-    "mtime": 1792226119.1753016,
-    "ast_hash": "d6ddf7e8d3d9b9021c69b7ca09752770",
+    "mtime": 1792237991.972093,
+    "ast_hash": "24bac58c56ec9b69f429dca6665b2671",
     "semantic_hash": ""
   },
   "src/service/assistant/conversations.test.ts": {
@@ -1507,6 +1507,26 @@
   "src/service/MicrofrontendService.domain.test.ts": {
     "mtime": 1792237276.425339,
     "ast_hash": "f6da59cd88bceeaf6922274f26fd57c8",
+    "semantic_hash": ""
+  },
+  "src/mcp/tools/domainTools.test.ts": {
+    "mtime": 1792237944.110763,
+    "ast_hash": "ae57bd462472e7bc6a2fed02f9893061",
+    "semantic_hash": ""
+  },
+  "src/mcp/tools/domainTools.ts": {
+    "mtime": 1792237991.966387,
+    "ast_hash": "b492ac0b7a619876e332c6ce04ca88ff",
+    "semantic_hash": ""
+  },
+  "src/mcp/tools/serviceTools.test.ts": {
+    "mtime": 1792237991.9677641,
+    "ast_hash": "e8550e9cfac99a5dc21cb65d6ed2ebe3",
+    "semantic_hash": ""
+  },
+  "src/mcp/tools/serviceTools.ts": {
+    "mtime": 1792237991.9666007,
+    "ast_hash": "2f2c11dcd27158cf60f1b6c56da236ad",
     "semantic_hash": ""
   }
 }

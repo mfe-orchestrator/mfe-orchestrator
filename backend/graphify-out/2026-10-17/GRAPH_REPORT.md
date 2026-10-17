@@ -1,11 +1,11 @@
 # Graph Report - backend  (2026-10-17)
 
 ## Corpus Check
-- 302 files · ~245,391 words
+- 302 files · ~245,415 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2377 nodes · 7036 edges · 104 communities (94 shown, 10 thin omitted)
+- 2377 nodes · 7036 edges · 103 communities (93 shown, 10 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.66)
 - Token cost: 0 input · 0 output
 
@@ -59,7 +59,6 @@
 - [[_COMMUNITY_FederationConfigService|FederationConfigService]]
 - [[_COMMUNITY_EmailSenderService|EmailSenderService]]
 - [[_COMMUNITY_.gitHubInjectApiKey|.gitHubInjectApiKey]]
-- [[_COMMUNITY_projectWizardStateMachine.ts|projectWizardStateMachine.ts]]
 - [[_COMMUNITY_Project|Project]]
 - [[_COMMUNITY_CodeRepositoryModel.ts|CodeRepositoryModel.ts]]
 - [[_COMMUNITY_ProjectService.ts|ProjectService.ts]]
@@ -140,7 +139,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (104 total, 10 thin omitted)
+## Communities (103 total, 10 thin omitted)
 
 ### Community 0 - "MicrofrontendService.ts"
 Cohesion: 0.13
@@ -298,10 +297,6 @@ Nodes (10): microfrontendCodeRepositorySchema, httpPathValidator, IServiceEnvVar
 Cohesion: 0.11
 Nodes (14): IDeployment, microfrontend(), clip(), describeConfirmation(), describeMicrofrontend(), describeServed(), describeServedChanges(), DetailResolver (+6 more)
 
-### Community 49 - "projectWizardStateMachine.ts"
-Cohesion: 0.16
-Nodes (10): AnthropicLlmClient, ClaudeClient, GeminiLlmClient, createLlmClient(), isLlmEnabled(), REQUIRED, resolveLlmProvider(), tool (+2 more)
-
 ### Community 50 - "Project"
 Cohesion: 0.15
 Nodes (9): StartupUserRegistrationDTO, createBusinessException(), IProject, Project, IUserProject, UserProject, ProjectService, UserProjectService (+1 more)
@@ -363,8 +358,8 @@ Cohesion: 0.11
 Nodes (27): BuiltService, builtServiceSchema, IBuiltService, IService, Service, resolveDomainId(), comparePrerelease(), ensureValidSlug() (+19 more)
 
 ### Community 65 - "assistantTools.ts"
-Cohesion: 0.16
-Nodes (22): Block, toMessages(), toTools(), AzureOpenAiLlmClient, isRefused(), isReplayable(), outputText(), stopReasonOf() (+14 more)
+Cohesion: 0.10
+Nodes (32): AnthropicLlmClient, Block, ClaudeClient, toMessages(), toTools(), AzureOpenAiLlmClient, isRefused(), isReplayable() (+24 more)
 
 ### Community 66 - "createBusinessException"
 Cohesion: 0.37

@@ -5417,7 +5417,7 @@
       "label": "updateSchema",
       "file_type": "code",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L69",
+      "source_location": "L70",
       "_origin": "ast",
       "id": "src_mcp_tools_microfrontendtools_updateschema",
       "community": 9,
@@ -5427,7 +5427,7 @@
       "label": "ensureReferencesBelongToProject()",
       "file_type": "code",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L76",
+      "source_location": "L77",
       "_origin": "ast",
       "id": "src_mcp_tools_microfrontendtools_ensurereferencesbelongtoproject",
       "community": 5,
@@ -5437,7 +5437,7 @@
       "label": "getExisting()",
       "file_type": "code",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L90",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "src_mcp_tools_microfrontendtools_getexisting",
       "community": 9,
@@ -5447,7 +5447,7 @@
       "label": "microfrontendTools",
       "file_type": "code",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L98",
+      "source_location": "L99",
       "_origin": "ast",
       "id": "src_mcp_tools_microfrontendtools_microfrontendtools",
       "community": 9,
@@ -18960,7 +18960,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_service_llm_anthropicprovider_claudeclient",
-      "community": 49,
+      "community": 65,
       "norm_label": "claudeclient"
     },
     {
@@ -18990,7 +18990,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_service_llm_anthropicprovider_anthropicllmclient",
-      "community": 49,
+      "community": 65,
       "norm_label": "anthropicllmclient"
     },
     {
@@ -19000,7 +19000,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_service_llm_anthropicprovider_anthropicllmclient_constructor",
-      "community": 49,
+      "community": 65,
       "norm_label": ".constructor()"
     },
     {
@@ -19010,7 +19010,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_service_llm_anthropicprovider_anthropicllmclient_fallback",
-      "community": 49,
+      "community": 65,
       "norm_label": ".fallback()"
     },
     {
@@ -19030,7 +19030,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_service_llm_anthropicprovider_anthropicllmclient_json",
-      "community": 49,
+      "community": 65,
       "norm_label": ".json()"
     },
     {
@@ -19190,7 +19190,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_service_llm_geminiprovider_geminillmclient",
-      "community": 49,
+      "community": 65,
       "norm_label": "geminillmclient"
     },
     {
@@ -19200,7 +19200,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_service_llm_geminiprovider_geminillmclient_constructor",
-      "community": 49,
+      "community": 65,
       "norm_label": ".constructor()"
     },
     {
@@ -19230,7 +19230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_service_llm_index",
-      "community": 49,
+      "community": 65,
       "norm_label": "index.ts"
     },
     {
@@ -19250,7 +19250,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_service_llm_index_required",
-      "community": 49,
+      "community": 65,
       "norm_label": "required"
     },
     {
@@ -19260,7 +19260,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_service_llm_index_resolvellmprovider",
-      "community": 49,
+      "community": 65,
       "norm_label": "resolvellmprovider()"
     },
     {
@@ -19270,7 +19270,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_service_llm_index_isllmenabled",
-      "community": 49,
+      "community": 65,
       "norm_label": "isllmenabled()"
     },
     {
@@ -19280,7 +19280,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_service_llm_index_createllmclient",
-      "community": 49,
+      "community": 65,
       "norm_label": "createllmclient()"
     },
     {
@@ -19310,7 +19310,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_service_llm_providers_test",
-      "community": 49,
+      "community": 65,
       "norm_label": "providers.test.ts"
     },
     {
@@ -19320,7 +19320,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_service_llm_providers_test_tool",
-      "community": 49,
+      "community": 65,
       "norm_label": "tool"
     },
     {
@@ -19330,7 +19330,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_service_llm_providers_test_request",
-      "community": 49,
+      "community": 65,
       "norm_label": "request()"
     },
     {
@@ -19350,7 +19350,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_service_llm_types_llmprovider",
-      "community": 49,
+      "community": 65,
       "norm_label": "llmprovider"
     },
     {
@@ -19480,7 +19480,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_service_llm_types_llmclient",
-      "community": 49,
+      "community": 65,
       "norm_label": "llmclient"
     },
     {
@@ -19490,7 +19490,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_service_llm_types_llmclient_turn",
-      "community": 49,
+      "community": 65,
       "norm_label": ".turn()"
     },
     {
@@ -19500,7 +19500,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_service_llm_types_llmclient_json",
-      "community": 49,
+      "community": 65,
       "norm_label": ".json()"
     },
     {
@@ -42315,7 +42315,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L76",
+      "source_location": "L77",
       "weight": 1.0,
       "source": "src_mcp_tools_microfrontendtools",
       "target": "src_mcp_tools_microfrontendtools_ensurereferencesbelongtoproject",
@@ -42325,7 +42325,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L90",
+      "source_location": "L91",
       "weight": 1.0,
       "source": "src_mcp_tools_microfrontendtools",
       "target": "src_mcp_tools_microfrontendtools_getexisting",
@@ -42355,7 +42355,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L98",
+      "source_location": "L99",
       "weight": 1.0,
       "source": "src_mcp_tools_microfrontendtools",
       "target": "src_mcp_tools_microfrontendtools_microfrontendtools",
@@ -42365,7 +42365,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/mcp/tools/microfrontendTools.ts",
-      "source_location": "L69",
+      "source_location": "L70",
       "weight": 1.0,
       "source": "src_mcp_tools_microfrontendtools",
       "target": "src_mcp_tools_microfrontendtools_updateschema",
