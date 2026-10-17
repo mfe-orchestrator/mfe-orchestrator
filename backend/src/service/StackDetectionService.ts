@@ -38,6 +38,25 @@ const FRAMEWORK_MARKERS: { dependency: string; framework: MicrofrontendFramework
     { dependency: "react", framework: MicrofrontendFramework.REACT }
 ]
 
+/**
+ * Dependencies that name an integration model rather than a bundler. They win over the bundler:
+ * the single-spa and micro-lc templates are built with Vite too, and reading them as VITE would
+ * hand out module federation instructions for an app that loads its remotes at runtime.
+ */
+const INTEGRATION_MARKERS: { dependency: string; compiler: MicrofrontendCompiler }[] = [
+    { dependency: "single-spa", compiler: MicrofrontendCompiler.SINGLE_SPA },
+    { dependency: "single-spa-react", compiler: MicrofrontendCompiler.SINGLE_SPA },
+    { dependency: "@micro-lc/orchestrator", compiler: MicrofrontendCompiler.MICRO_LC },
+    { dependency: "@micro-lc/interfaces", compiler: MicrofrontendCompiler.MICRO_LC }
+]
+
+/**
+ * A micro-lc parcel declares no micro-lc package at all: it is a library build in UMD format,
+ * the only one qiankun can evaluate, whose entry is the parcel. Both words in the bundler config
+ * are the signal, so an ordinary UMD library is not taken for a parcel.
+ */
+const isMicrolcParcelConfig = (configContent: string): boolean => /['"]umd['"]/.test(configContent) && /parcel/i.test(configContent)
+
 const COMPILER_MARKERS: { dependency: string; compiler: MicrofrontendCompiler }[] = [
     { dependency: "@originjs/vite-plugin-federation", compiler: MicrofrontendCompiler.VITE },
     { dependency: "vite", compiler: MicrofrontendCompiler.VITE },
@@ -78,6 +97,9 @@ interface PackageManifest {
  * Web components are deliberately never inferred: a Vite project without the federation plugin
  * looks exactly like one that has simply not been integrated yet, which is the case this whole
  * feature exists to fix. That stack only comes from a template or from the user.
+ *
+ * single-spa and micro-lc are inferred, because they leave a clear signal: a dependency on their
+ * packages, or for a micro-lc parcel a UMD library build of its parcel entry.
  */
 export class StackDetectionService extends BaseAuthorizedService {
     private readonly repositoryFiles = new RepositoryFileService(this.user)
@@ -123,7 +145,8 @@ export class StackDetectionService extends BaseAuthorizedService {
         const compilerFromManifest = COMPILER_MARKERS.find(marker => declared.has(marker.dependency))?.compiler
 
         const config = await this.findConfig(target, branch, compilerFromManifest)
-        const compiler = compilerFromManifest || config?.compiler
+        const integration = INTEGRATION_MARKERS.find(marker => declared.has(marker.dependency))?.compiler || (config && isMicrolcParcelConfig(config.raw) ? MicrofrontendCompiler.MICRO_LC : undefined)
+        const compiler = integration || compilerFromManifest || config?.compiler
 
         return {
             framework,
