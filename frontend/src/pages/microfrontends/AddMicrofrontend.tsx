@@ -14,6 +14,7 @@ import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
+import useMarketApi from "@/hooks/apiClients/useMarketApi"
 import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
 import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, isAiEditAvailable, MicrofrontendHeader, ReleaseSection } from "@/pages/microfrontends/partials/components"
@@ -194,6 +195,22 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     })
 
     const notificationToast = useToastNotificationStore()
+
+    // A template knows the file its build is served by (index.js for single-spa, parcel.js for
+    // micro-lc): it replaces the generic default, unless the user already typed one.
+    const { getMarketBySlug } = useMarketApi()
+    const templateQuery = useQuery({
+        queryKey: ["market", template],
+        queryFn: () => getMarketBySlug(template as string),
+        enabled: Boolean(template) && !isEdit
+    })
+    const templateEntryPoint = templateQuery.data?.entryPoint
+
+    useEffect(() => {
+        if (templateEntryPoint && !form.getFieldState("host.entryPoint").isDirty) {
+            form.setValue("host.entryPoint", templateEntryPoint)
+        }
+    }, [templateEntryPoint, form])
 
     const onSubmit = async (data: FormValues) => {
         const dataToSend = {

@@ -53,6 +53,10 @@ export class MicrofrontendService extends BaseAuthorizedService {
             microfrontend.domainId = await resolveDomainId(microfrontend.domainId, projectIdObj)
         }
 
+        // The file the template's build serves the microfrontend by: index.js for a single-spa
+        // application, parcel.js for a micro-lc parcel, remoteEntry.js for webpack
+        let templateEntryPoint: string | undefined
+
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
             if (!codeRepository) {
@@ -76,6 +80,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                 // The template knows the stack the repository was just scaffolded with: keep it,
                 // it is what makes the integration instructions specific to this microfrontend
                 if (template) {
+                    templateEntryPoint = template.entryPoint
                     microfrontend.template = template.slug
                     microfrontend.stack = {
                         framework: parseFramework(template.framework),
@@ -90,18 +95,24 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         return await Microfrontend.create({
             ...microfrontend,
-            host: microfrontend.host ?? (await this.defaultHost(projectIdObj)),
+            host: microfrontend.host ? this.withEntryPoint(microfrontend.host, templateEntryPoint) : await this.defaultHost(projectIdObj, templateEntryPoint),
             projectId: projectIdObj
         } as unknown as IMicrofrontend)
     }
 
+    /** A host given without an entry point gets the template's, when there is one: one given is kept */
+    private withEntryPoint(host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend {
+        return entryPoint && !host.entryPoint ? { ...host, entryPoint } : host
+    }
+
     /**
      * The hosting the console preselects for a new microfrontend: the project's default storage,
-     * or the MFE Orchestrator hub when it has none. Applied when a caller (the assistant, an MCP
-     * client) creates one without saying where it is served from.
+     * or the MFE Orchestrator hub when it has none, with the template's entry point when it was
+     * created from one. Applied when a caller (the assistant, an MCP client) creates one without
+     * saying where it is served from.
      */
-    private async defaultHost(projectId: ReturnType<typeof toObjectId>): Promise<IHostMicrofrontend> {
-        const entryPoint = "assets/remoteEntry.js"
+    private async defaultHost(projectId: ReturnType<typeof toObjectId>, templateEntryPoint?: string): Promise<IHostMicrofrontend> {
+        const entryPoint = templateEntryPoint || "assets/remoteEntry.js"
         const storage = await Storage.findOne({ projectId, default: true }, { _id: 1 })
         if (!storage) {
             return { type: HostedOn.MFE_ORCHESTRATOR_HUB, entryPoint }

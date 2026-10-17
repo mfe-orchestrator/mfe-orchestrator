@@ -54,12 +54,16 @@ vi.mock("isomorphic-git", () => ({
 }))
 
 import { Types } from "mongoose"
+import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import GithubClient from "../client/GithubClient"
+import GitlabClient from "../client/GitlabClient"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
 import { IMarket } from "../models/MarketModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
+import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
+import MarketService from "./MarketService"
 import MicrofrontendService from "./MicrofrontendService"
 import ServiceService from "./ServiceService"
 import TemplateScaffoldService, { replaceFederationName } from "./TemplateScaffoldService"
@@ -268,6 +272,133 @@ describe("TemplateScaffoldService, federation name of a webpack microfrontend te
         await service.injectTemplateGithub("checkout-new", "token", "https://github.com/acme/checkout-new.git", "github", webpackRemote)
 
         expect(committed["webpack.config.ts"]).toBe(remoteFiles["webpack.config.ts"])
+    })
+})
+
+/**
+ * The four single-spa and micro-lc templates as the marketplace declares them, scaffolded through
+ * the real path a microfrontend takes: MicrofrontendService.create, the provider, the pipeline
+ * overlay, the initial commit. Only the network (provider APIs, zip downloads, git push) is mocked.
+ */
+describe("TemplateScaffoldService, single-spa and micro-lc templates through MicrofrontendService.create", () => {
+    const templates = [
+        { slug: "single-spa-host-react", type: "host", compiler: "single-spa", stack: MicrofrontendCompiler.SINGLE_SPA, entryPoint: undefined },
+        { slug: "single-spa-remote-react", type: "remote", compiler: "single-spa", stack: MicrofrontendCompiler.SINGLE_SPA, entryPoint: "index.js" },
+        { slug: "microlc-host-react", type: "host", compiler: "micro-lc", stack: MicrofrontendCompiler.MICRO_LC, entryPoint: undefined },
+        { slug: "microlc-remote-react", type: "remote", compiler: "micro-lc", stack: MicrofrontendCompiler.MICRO_LC, entryPoint: "parcel.js" }
+    ]
+
+    /** One pipeline per folder, each saying where it comes from, so the copied one is identifiable */
+    const pipelineFiles = () => {
+        const files: Record<string, string> = {}
+        for (const type of ["host", "remote"]) {
+            for (const compiler of ["generic", "vite", "webpack", "single-spa", "micro-lc"]) {
+                files[`${type}/${compiler}/github/workflows/build-and-deploy.yml`] = `from: ${type}/${compiler}/github\nslug: %microfrontendSlug%\ndomain: %domain%`
+                files[`${type}/${compiler}/github/dependabot.yml`] = "version: 2"
+                files[`${type}/${compiler}/gitlab/.gitlab-ci.yml`] = `from: ${type}/${compiler}/gitlab\nslug: %microfrontendSlug%`
+                files[`${type}/${compiler}/azure_dev_ops/azure-pipelines.yml`] = `from: ${type}/${compiler}/azure_dev_ops\nslug: %microfrontendSlug%`
+            }
+        }
+        return files
+    }
+
+    const providers = [
+        {
+            provider: CodeRepositoryProvider.GITHUB,
+            pipeline: ".github/workflows/build-and-deploy.yml",
+            folder: "github",
+            connection: { githubData: { userName: "acme" } },
+            stub: () => {
+                vi.spyOn(GithubClient.prototype, "createRepository").mockResolvedValue({
+                    id: 1,
+                    name: "cart",
+                    clone_url: "https://github.com/acme/cart.git",
+                    ssh_url: "git@github.com:acme/cart.git"
+                } as never)
+                // The deploy secret is already there: no API key is minted in a test
+                vi.spyOn(GithubClient.prototype, "checkRepositorySecretExists").mockResolvedValue(true)
+            }
+        },
+        {
+            provider: CodeRepositoryProvider.GITLAB,
+            pipeline: ".gitlab-ci.yml",
+            folder: "gitlab",
+            connection: { gitlabData: { url: "https://gitlab.com", groupPath: "acme" } },
+            stub: () => {
+                vi.spyOn(GitlabClient.prototype, "createRepository").mockResolvedValue({
+                    id: 2,
+                    name: "cart",
+                    http_url_to_repo: "https://gitlab.com/acme/cart.git",
+                    ssh_url_to_repo: "git@gitlab.com:acme/cart.git"
+                } as never)
+            }
+        },
+        {
+            provider: CodeRepositoryProvider.AZURE_DEV_OPS,
+            pipeline: "azure-pipelines.yml",
+            folder: "azure_dev_ops",
+            connection: { azureData: { organization: "acme", projectId: "p" } },
+            stub: () => {
+                vi.spyOn(AzureDevOpsClient.prototype, "createRepository").mockResolvedValue({
+                    id: "r3",
+                    name: "cart",
+                    remoteUrl: "https://dev.azure.com/acme/p/_git/cart",
+                    sshUrl: "git@ssh.dev.azure.com:v3/acme/p/cart"
+                } as never)
+                vi.spyOn(AzureDevOpsClient.prototype, "getRepository").mockResolvedValue({ id: "r3" } as never)
+                vi.spyOn(AzureDevOpsClient.prototype, "createPipeline").mockResolvedValue({
+                    id: 9,
+                    name: "cart",
+                    _links: { web: { href: "https://dev.azure.com/acme/p/_build?definitionId=9" } }
+                } as never)
+            }
+        }
+    ]
+
+    const cases = templates.flatMap(template => providers.map(provider => ({ ...template, ...provider, name: `${template.slug} on ${provider.folder}` })))
+
+    it.each(cases)("given $name, when a microfrontend is created from it, then the $type/$compiler pipeline is copied and the stack and entry point come from the template", async testCase => {
+        const projectId = new Types.ObjectId()
+        const marketEntry = {
+            slug: testCase.slug,
+            type: testCase.type,
+            compiler: testCase.compiler,
+            framework: "React",
+            zipUrl: `https://github.com/mfe-orchestrator/template-${testCase.slug}/archive/refs/heads/main.zip`,
+            ...(testCase.entryPoint ? { entryPoint: testCase.entryPoint } : {})
+        }
+        const template = await templateZip({ "package.json": '{ "name": "example" }', "vite.config.ts": "export default {}" })
+        const pipelines = await pipelinesZip(pipelineFiles())
+        vi.spyOn(TemplateScaffoldService.prototype, "downloadZip").mockImplementation(async prefix => (prefix === "template" ? template : pipelines))
+        vi.spyOn(MarketService.prototype, "getSingle").mockResolvedValue(marketEntry as IMarket)
+        vi.spyOn(CodeRepository, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId, provider: testCase.provider, accessToken: "token", ...testCase.connection } as never)
+        testCase.stub()
+        const write = vi.spyOn(Microfrontend, "create").mockImplementation((async (doc: unknown) => doc) as never)
+        const service = new MicrofrontendService()
+        vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
+
+        await service.create(
+            {
+                name: "Cart",
+                slug: "cart",
+                version: "1.0.0",
+                host: { type: "MFE_ORCHESTRATOR_HUB" },
+                codeRepository: { enabled: true, codeRepositoryId: new Types.ObjectId().toString(), repositoryId: "", createData: { name: "cart", template: testCase.slug } }
+            } as never,
+            projectId.toString()
+        )
+
+        expect(committed[testCase.pipeline]?.split("\n")[0]).toBe(`from: ${testCase.type}/${testCase.compiler}/${testCase.folder}`)
+        expect(committed["package.json"]).toBe('{ "name": "example" }')
+        if (testCase.provider === CodeRepositoryProvider.GITHUB) {
+            // The GitHub overlay is the one place a microfrontend gets its placeholders replaced
+            expect(committed[testCase.pipeline]).toContain("slug: cart")
+        }
+
+        const stored = write.mock.calls[0][0] as unknown as { template: string; stack: object; host: { entryPoint?: string } }
+        expect(stored.template).toBe(testCase.slug)
+        expect(stored.stack).toEqual({ framework: MicrofrontendFramework.REACT, compiler: testCase.stack, source: MicrofrontendStackSource.TEMPLATE })
+        expect(stored.host.entryPoint).toBe(testCase.entryPoint)
     })
 })
 

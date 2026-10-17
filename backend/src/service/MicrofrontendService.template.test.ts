@@ -22,6 +22,7 @@ vi.mock("./TemplateScaffoldService", () => ({
 import { BusinessException } from "../errors/BusinessException"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Microfrontend from "../models/MicrofrontendModel"
+import Storage from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import MicrofrontendService from "./MicrofrontendService"
 
@@ -34,7 +35,7 @@ afterEach(() => {
 })
 
 describe("MicrofrontendService.create from a template", () => {
-    const create = async (template: Record<string, unknown>) => {
+    const create = async (template: Record<string, unknown>, host: Record<string, unknown> | undefined = { type: "MFE_ORCHESTRATOR_HUB" }) => {
         const service = new MicrofrontendService()
         vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
         vi.spyOn(CodeRepository, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId } as never)
@@ -45,7 +46,7 @@ describe("MicrofrontendService.create from a template", () => {
                 name: "Cart",
                 slug: "cart",
                 version: "1.0.0",
-                host: { type: "MFE_ORCHESTRATOR_HUB" },
+                host,
                 codeRepository: { enabled: true, codeRepositoryId: new Types.ObjectId().toString(), repositoryId: "", createData: { name: "cart", template: String(template.slug) } }
             } as unknown as MicrofrontendDTO,
             projectId
@@ -65,5 +66,41 @@ describe("MicrofrontendService.create from a template", () => {
         // The slug names the webpack container; tree-wide placeholders are a service template thing
         expect(createRepository.mock.calls[0][4]).toEqual({ microfrontendSlug: "cart" })
         expect(write).toHaveBeenCalledTimes(1)
+    })
+
+    /** The written document: what the microfrontend is stored with */
+    const written = (write: { mock: { calls: unknown[][] } }) => write.mock.calls[0][0] as unknown as { host: Record<string, unknown>; stack: Record<string, unknown> }
+
+    it.each([
+        ["single-spa-remote-react", "single-spa", "index.js", "SINGLE_SPA"],
+        ["microlc-remote-react", "micro-lc", "parcel.js", "MICRO_LC"]
+    ])("given the %s template, when a microfrontend is created from it, then it is served by the template's entry point with its integration model", async (slug, compiler, entryPoint, stack) => {
+        const write = await create({ slug, type: "remote", compiler, framework: "React", entryPoint })
+
+        expect(written(write).host).toEqual({ type: "MFE_ORCHESTRATOR_HUB", entryPoint })
+        expect(written(write).stack).toMatchObject({ framework: "REACT", compiler: stack, source: "TEMPLATE" })
+    })
+
+    it("given a template with an entry point and no host, when a microfrontend is created from it, then the default hosting gets that entry point", async () => {
+        vi.spyOn(Storage, "findOne").mockResolvedValue(null as never)
+
+        const write = await create({ slug: "microlc-remote-react", type: "remote", compiler: "micro-lc", framework: "React", entryPoint: "parcel.js" }, undefined)
+
+        expect(written(write).host).toEqual({ type: "MFE_ORCHESTRATOR_HUB", entryPoint: "parcel.js" })
+    })
+
+    it("given a host with its own entry point, when a microfrontend is created from a template, then the given one is kept", async () => {
+        const write = await create(
+            { slug: "single-spa-remote-react", type: "remote", compiler: "single-spa", framework: "React", entryPoint: "index.js" },
+            { type: "MFE_ORCHESTRATOR_HUB", entryPoint: "dist/app.js" }
+        )
+
+        expect(written(write).host).toEqual({ type: "MFE_ORCHESTRATOR_HUB", entryPoint: "dist/app.js" })
+    })
+
+    it("given a template without an entry point, when a microfrontend is created from it, then the host is left as given", async () => {
+        const write = await create({ slug: "single-spa-host-react", type: "host", compiler: "single-spa", framework: "React" })
+
+        expect(written(write).host).toEqual({ type: "MFE_ORCHESTRATOR_HUB" })
     })
 })
