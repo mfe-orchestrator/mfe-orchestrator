@@ -1,3 +1,5 @@
+import AdmZip from "adm-zip"
+import axios from "axios"
 import fs from "fs-extra"
 import os from "os"
 import { join } from "path"
@@ -246,5 +248,23 @@ describe("TemplateScaffoldService.createTag", () => {
 
         await expect(new ServiceService().build(String(new Types.ObjectId()), "1.2.0")).rejects.toBeInstanceOf(EntityNotFoundError)
         expect(createTag).not.toHaveBeenCalled()
+    })
+})
+
+describe("TemplateScaffoldService.downloadZip", () => {
+    it("Given a template with an executable file, when it is extracted, then the file stays executable", async () => {
+        const archive = new AdmZip()
+        archive.addFile("template-main/mvnw", Buffer.from("#!/bin/sh\n"), "", 0o755)
+        archive.addFile("template-main/pom.xml", Buffer.from("<project/>"), "", 0o644)
+        vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: archive.toBuffer() })
+
+        const directory = await new TemplateScaffoldService().downloadZip("template", "https://example.com/template.zip")
+
+        try {
+            expect((await fs.stat(join(directory, "template-main", "mvnw"))).mode & 0o111).not.toBe(0)
+            expect((await fs.stat(join(directory, "template-main", "pom.xml"))).mode & 0o111).toBe(0)
+        } finally {
+            await fs.remove(directory)
+        }
     })
 })

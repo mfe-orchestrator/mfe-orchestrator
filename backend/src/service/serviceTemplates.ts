@@ -44,14 +44,14 @@ export const SERVICE_TEMPLATES: IMarket[] = [
         port: 8080,
         livenessPath: "/actuator/health/liveness",
         readinessPath: "/actuator/health/readiness",
-        docsPath: "/swagger-ui.html",
+        docsPath: "/swagger-ui/index.html",
         openApiPath: "/v3/api-docs"
     }),
     serviceTemplate("service-quarkus", "Quarkus", "Quarkus", "Backend service with Java and Quarkus, packaged as a Docker image", {
         port: 8080,
         livenessPath: "/q/health/live",
         readinessPath: "/q/health/ready",
-        docsPath: "/q/swagger-ui",
-        openApiPath: "/q/openapi"
+        docsPath: "/q/swagger-ui/",
+        openApiPath: "/q/openapi.json"
     })
 ]

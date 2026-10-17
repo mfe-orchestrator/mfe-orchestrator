@@ -472,7 +472,8 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
 
         const zip = new AdmZip(Buffer.from(responseDownload.data))
-        zip.extractAllTo(temporaryDirectory, true)
+        // Keep the permissions: an executable such as mvnw must stay executable in the commit
+        zip.extractAllTo(temporaryDirectory, true, true)
 
         return temporaryDirectory
     }

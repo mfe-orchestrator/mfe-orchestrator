@@ -59,8 +59,11 @@ describe("MarketService", () => {
     it.each([
         ["service-node-fastify", { port: 8080, livenessPath: "/health/live", readinessPath: "/health/ready", docsPath: "/docs", openApiPath: "/openapi.json" }],
         ["service-python-fastapi", { port: 8080, livenessPath: "/health/live", readinessPath: "/health/ready", docsPath: "/docs", openApiPath: "/openapi.json" }],
-        ["service-spring-boot", { port: 8080, livenessPath: "/actuator/health/liveness", readinessPath: "/actuator/health/readiness", docsPath: "/swagger-ui.html", openApiPath: "/v3/api-docs" }],
-        ["service-quarkus", { port: 8080, livenessPath: "/q/health/live", readinessPath: "/q/health/ready", docsPath: "/q/swagger-ui", openApiPath: "/q/openapi" }]
+        [
+            "service-spring-boot",
+            { port: 8080, livenessPath: "/actuator/health/liveness", readinessPath: "/actuator/health/readiness", docsPath: "/swagger-ui/index.html", openApiPath: "/v3/api-docs" }
+        ],
+        ["service-quarkus", { port: 8080, livenessPath: "/q/health/live", readinessPath: "/q/health/ready", docsPath: "/q/swagger-ui/", openApiPath: "/q/openapi.json" }]
     ])("Given the %s template, then it declares the port, probes and API docs of its framework", (slug, defaults) => {
         expect(SERVICE_TEMPLATES.find(t => t.slug === slug)?.serviceDefaults).toEqual(defaults)
     })
