@@ -1,0 +1,78 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - development
+  tags:
+    include:
+      - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: Build
+    displayName: '🏗️ Build'
+    jobs:
+      - job: BuildJob
+        displayName: '⚙️ Build and Test'
+        steps:
+          - task: NodeTool@0
+            displayName: '📦 Install Node.js'
+            inputs:
+              versionSpec: '24.x'
+
+          - script: corepack enable
+            displayName: '📦 Enable pnpm (corepack)'
+
+          - task: Cache@2
+            displayName: '💾 Cache node_modules'
+            inputs:
+              key: 'pnpm | "$(Agent.OS)" | pnpm-lock.yaml'
+              path: node_modules
+              restoreKeys: |
+                pnpm | "$(Agent.OS)"
+
+          - script: pnpm i
+            displayName: '📥 Install dependencies'
+
+          - script: pnpm build
+            displayName: '🔨 Build project'
+
+          - task: PublishPipelineArtifact@1
+            displayName: '📤 Publish build artifacts'
+            inputs:
+              targetPath: 'dist'
+              artifact: 'app'
+
+  - stage: Deploy
+    displayName: '🚀 Deploy'
+    dependsOn: Build
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+    variables:
+      - group: MFE_ORCHESTRATOR_SECRETS
+      - name: VERSION
+        value: $[replace(variables['Build.SourceBranch'], 'refs/tags/', '')]
+      - name: MICROFRONTEND_ORCHESTRATOR_DOMAIN_RESOLVED
+        value: $[coalesce(variables['MICROFRONTEND_ORCHESTRATOR_DOMAIN'], '%domain%')]
+    jobs:
+      - job: Deploy
+        displayName: '📦 Upload Microfrontend'
+        steps:
+          - task: DownloadBuildArtifacts@1
+            displayName: '📥 Download build artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'app'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - task: mfe-orchestrator-upload@1
+            displayName: '🚀 Upload to MFE Orchestrator'
+            inputs:
+              apiKey: '$(MICROFRONTEND_ORCHESTRATOR_API_KEY)'
+              microfrontendSlug: '%microfrontendSlug%'
+              filePath: '$(System.ArtifactsDirectory)/app'
+              version: '$(VERSION)'
+              domain: '$(MICROFRONTEND_ORCHESTRATOR_DOMAIN_RESOLVED)'

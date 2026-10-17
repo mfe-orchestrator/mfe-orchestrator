@@ -1,0 +1,83 @@
+stages:
+  - install
+  - lint
+  - build
+  - docker
+
+variables:
+  NODE_VERSION: "24"
+
+# pnpm comes from the packageManager field of package.json, through corepack
+.pnpm_cache:
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+install:
+  stage: install
+  image: node:${NODE_VERSION}
+  extends: .pnpm_cache
+  script:
+    - echo "Dependencies installed"
+  artifacts:
+    paths:
+      - node_modules/
+      - .pnpm-store
+    expire_in: 1 hour
+
+# The template has no test suite: the type check is the gate
+typecheck:
+  stage: lint
+  image: node:${NODE_VERSION}
+  extends: .pnpm_cache
+  dependencies:
+    - install
+  script:
+    - pnpm run typecheck
+
+build:
+  stage: build
+  image: node:${NODE_VERSION}
+  extends: .pnpm_cache
+  dependencies:
+    - install
+  # The single-spa root config reads VITE_MFE_BACKEND_URL, VITE_MFE_PROJECT_ID and the optional
+  # VITE_MFE_ENVIRONMENT at build time (see .env.example). Set them as project
+  # CI/CD variables: those win over the default below, which is this console.
+  variables:
+    VITE_MFE_BACKEND_URL: "%domain%/api"
+  script:
+    - pnpm run build
+    - echo "Build completed successfully"
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 7 days
+  only:
+    - main
+    - develop
+    - tags
+
+# The Dockerfile serves dist/ with nginx, non-root, on port 8080
+docker:
+  stage: docker
+  image: docker:27
+  services:
+    - docker:27-dind
+  dependencies:
+    - build
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" -t "$CI_REGISTRY_IMAGE:latest" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+  only:
+    - tags

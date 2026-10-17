@@ -4,6 +4,7 @@ import fs from "fs-extra"
 import os from "os"
 import { join } from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { parse as parseYaml } from "yaml"
 
 vi.mock("..", () => ({
     fastify: { log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }, config: {} }
@@ -66,7 +67,7 @@ import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource
 import MarketService from "./MarketService"
 import MicrofrontendService from "./MicrofrontendService"
 import ServiceService from "./ServiceService"
-import TemplateScaffoldService, { replaceFederationName } from "./TemplateScaffoldService"
+import TemplateScaffoldService, { placeholderDomain, replaceFederationName } from "./TemplateScaffoldService"
 
 const servicePlaceholders = { "%serviceSlug%": "orders-api", "%domain%": "https://console.example.com" }
 
@@ -138,7 +139,7 @@ describe("TemplateScaffoldService, service templates", () => {
         const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
         const codeRepository = { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository
 
-        await service.injectTemplateGitlab("token", "https://gitlab.com", "orders-api", "acme", codeRepository, "gitlab", serviceTemplate, { placeholders: servicePlaceholders })
+        await service.injectTemplateGitlab("orders-api", "token", "https://gitlab.com", "orders-api", "acme", codeRepository, "gitlab", serviceTemplate, { placeholders: servicePlaceholders })
 
         expectReplacedEverywhere()
     })
@@ -147,7 +148,7 @@ describe("TemplateScaffoldService, service templates", () => {
         const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
         const codeRepository = { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository
 
-        await service.injectTemplateAzureDevOps("token", "orders-api", codeRepository, "azure_dev_ops", serviceTemplate, { placeholders: servicePlaceholders })
+        await service.injectTemplateAzureDevOps("orders-api", "token", "orders-api", codeRepository, "azure_dev_ops", serviceTemplate, { placeholders: servicePlaceholders })
 
         expectReplacedEverywhere()
     })
@@ -179,14 +180,161 @@ describe("TemplateScaffoldService, microfrontend templates", () => {
         expect(committed["src/index.ts"]).toBe('export const name = "%microfrontendSlug%" // %domain%')
     })
 
-    it("given GitLab, when a microfrontend template is scaffolded, then the copied pipeline is committed untouched", async () => {
-        const service = scaffoldWith(await templateZip({ "src/index.ts": "%microfrontendSlug%" }), await pipelinesZip({ "remote/vite/gitlab/.gitlab-ci.yml": "slug: %microfrontendSlug%" }))
+    it("given GitLab, when a microfrontend template is scaffolded, then only the copied pipeline has its placeholders replaced", async () => {
+        const service = scaffoldWith(
+            await templateZip({ "src/index.ts": "%microfrontendSlug% %domain%" }),
+            await pipelinesZip({ "remote/vite/gitlab/.gitlab-ci.yml": "slug: %microfrontendSlug%\nurl: %domain%" })
+        )
         const codeRepository = { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository
 
-        await service.injectTemplateGitlab("token", "https://gitlab.com", "cart", "acme", codeRepository, "gitlab", remoteTemplate)
+        await service.injectTemplateGitlab("cart", "token", "https://gitlab.com", "cart", "acme", codeRepository, "gitlab", remoteTemplate)
 
-        expect(committed[".gitlab-ci.yml"]).toBe("slug: %microfrontendSlug%")
-        expect(committed["src/index.ts"]).toBe("%microfrontendSlug%")
+        expect(committed[".gitlab-ci.yml"]).toBe(`slug: cart\nurl: ${placeholderDomain()}`)
+        expect(committed["src/index.ts"]).toBe("%microfrontendSlug% %domain%")
+    })
+
+    it("given Azure DevOps, when a microfrontend template is scaffolded, then only the copied pipeline has its placeholders replaced", async () => {
+        const service = scaffoldWith(
+            await templateZip({ "src/index.ts": "%microfrontendSlug% %domain%" }),
+            await pipelinesZip({ "remote/vite/azure_dev_ops/azure-pipelines.yml": "slug: %microfrontendSlug%\nurl: %domain%" })
+        )
+        const codeRepository = { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository
+
+        await service.injectTemplateAzureDevOps("cart", "token", "cart", codeRepository, "azure_dev_ops", remoteTemplate)
+
+        expect(committed["azure-pipelines.yml"]).toBe(`slug: cart\nurl: ${placeholderDomain()}`)
+        expect(committed["src/index.ts"]).toBe("%microfrontendSlug% %domain%")
+    })
+})
+
+/**
+ * The real pipelines of mfe-orchestrator/template-pipelines, copied under __fixtures__, scaffolded
+ * on every provider: once the placeholders are in, each one has to be a pipeline the provider can
+ * read and that publishes to the right microfrontend on the right console.
+ */
+describe("TemplateScaffoldService, pipelines of template-pipelines", () => {
+    const fixtures = join(__dirname, "__fixtures__", "template-pipelines")
+    const slug = "checkout-new"
+    /** BACKEND_URL unset: the fallback every provider shares */
+    const domain = "https://console.mfe-orchestrator.dev"
+
+    // biome-ignore lint/suspicious/noExplicitAny: a parsed pipeline is an arbitrarily nested YAML document
+    type Pipeline = Record<string, any>
+    /** The variable list of an Azure DevOps stage, as name to value */
+    const azureVariables = (stage: Pipeline) => Object.fromEntries((stage.variables as { name?: string; value?: string }[]).filter(v => v.name).map(v => [v.name, v.value]))
+    const azureStage = (pipeline: Pipeline, name: string) => (pipeline.stages as Pipeline[]).find(stage => stage.stage === name) as Pipeline
+    const azureUpload = (pipeline: Pipeline) => (azureStage(pipeline, "Deploy").jobs[0].steps as Pipeline[]).find(step => step.task === "mfe-orchestrator-upload@1")?.inputs
+
+    const templates = [
+        {
+            name: "a vite remote",
+            template: { slug: "vite-remote-react", type: "remote", compiler: "vite", framework: "React", zipUrl: "https://example.com/t.zip" } as IMarket,
+            expectedText: [slug, domain],
+            gitlab: (pipeline: Pipeline) => {
+                expect(pipeline.deploy.variables).toEqual({ MICROFRONTEND_SLUG: slug, MICROFRONTEND_ORCHESTRATOR_DOMAIN: domain })
+                // The upload route the console API exposes behind nginx's /api/ prefix
+                expect(pipeline.deploy.script.join("\n")).toContain("${MICROFRONTEND_ORCHESTRATOR_DOMAIN%/}/api/microfrontends/by-slug/${MICROFRONTEND_SLUG}/upload/${CI_COMMIT_TAG}")
+            },
+            azure: (pipeline: Pipeline) => {
+                expect(azureVariables(azureStage(pipeline, "Deploy")).MICROFRONTEND_ORCHESTRATOR_DOMAIN_RESOLVED).toBe(`$[coalesce(variables['MICROFRONTEND_ORCHESTRATOR_DOMAIN'], '${domain}')]`)
+                expect(azureUpload(pipeline)).toMatchObject({ microfrontendSlug: slug, domain: "$(MICROFRONTEND_ORCHESTRATOR_DOMAIN_RESOLVED)" })
+            },
+            github: (pipeline: Pipeline) => {
+                const upload = (pipeline.jobs["build-and-deploy"].steps as Pipeline[]).find(step => String(step.uses).startsWith("mfe-orchestrator-hub/github-action"))?.with
+                expect(upload).toMatchObject({ "microfrontend-slug": slug, domain: `\${{ vars.MICROFRONTEND_ORCHESTRATOR_DOMAIN || '${domain}' }}` })
+            }
+        },
+        {
+            name: "a single-spa host",
+            template: { slug: "single-spa-host-react", type: "host", compiler: "single-spa", framework: "React", zipUrl: "https://example.com/t.zip" } as IMarket,
+            // A host publishes nothing: it only builds against the console API
+            expectedText: [`${domain}/api`],
+            gitlab: (pipeline: Pipeline) => {
+                expect(pipeline.build.variables).toEqual({ VITE_MFE_BACKEND_URL: `${domain}/api` })
+            },
+            azure: (pipeline: Pipeline) => {
+                expect(azureVariables(pipeline).VITE_MFE_BACKEND_URL_RESOLVED).toBe(`$[coalesce(variables['VITE_MFE_BACKEND_URL'], '${domain}/api')]`)
+            },
+            github: (pipeline: Pipeline) => {
+                const build = (pipeline.jobs["build-and-deploy"].steps as Pipeline[]).find(step => step.run === "pnpm build")
+                expect(build?.env.VITE_MFE_BACKEND_URL).toBe(`\${{ vars.VITE_MFE_BACKEND_URL || '${domain}/api' }}`)
+            }
+        }
+    ]
+
+    const providers = [
+        {
+            folder: "gitlab",
+            pipeline: ".gitlab-ci.yml",
+            check: "gitlab" as const,
+            scaffold: (service: TemplateScaffoldService, template: IMarket) =>
+                service.injectTemplateGitlab(
+                    slug,
+                    "token",
+                    "https://gitlab.com",
+                    slug,
+                    "acme",
+                    { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository,
+                    "gitlab",
+                    template
+                )
+        },
+        {
+            folder: "azure_dev_ops",
+            pipeline: "azure-pipelines.yml",
+            check: "azure" as const,
+            scaffold: (service: TemplateScaffoldService, template: IMarket) =>
+                service.injectTemplateAzureDevOps(
+                    slug,
+                    "token",
+                    slug,
+                    { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository,
+                    "azure_dev_ops",
+                    template
+                )
+        },
+        {
+            folder: "github",
+            pipeline: ".github/workflows/build-and-deploy.yml",
+            check: "github" as const,
+            scaffold: (service: TemplateScaffoldService, template: IMarket) => service.injectTemplateGithub(slug, "token", `https://github.com/acme/${slug}.git`, "github", template)
+        }
+    ]
+
+    const cases = templates.flatMap(template => providers.map(provider => ({ ...template, ...provider })))
+
+    beforeEach(() => {
+        vi.stubEnv("BACKEND_URL", "")
+    })
+
+    afterEach(() => {
+        vi.unstubAllEnvs()
+    })
+
+    it.each(cases)("given $name on $folder, when it is scaffolded, then its pipeline has no placeholder left, points at the console and parses as YAML", async testCase => {
+        const pipelines = await fs.mkdtemp(join(workDir, "pipelines-"))
+        await fs.copy(fixtures, join(pipelines, "template-pipelines-main"))
+        const source = await fs.readFile(
+            join(
+                fixtures,
+                testCase.template.type as string,
+                testCase.template.compiler as string,
+                testCase.folder,
+                testCase.folder === "github" ? "workflows/build-and-deploy.yml" : testCase.pipeline
+            ),
+            "utf8"
+        )
+        const service = scaffoldWith(await templateZip({ "package.json": '{ "name": "%microfrontendSlug%" }' }), pipelines)
+
+        await testCase.scaffold(service, testCase.template)
+
+        const committedPipeline = committed[testCase.pipeline]
+        expect(source).toMatch(/%(microfrontendSlug|domain)%/)
+        expect(committedPipeline).not.toMatch(/%[A-Za-z_]+%/)
+        for (const text of testCase.expectedText) expect(committedPipeline).toContain(text)
+        testCase[testCase.check](parseYaml(committedPipeline) as Pipeline)
+        // A microfrontend gets its placeholders replaced in the pipeline only, never in its own files
+        expect(committed["package.json"]).toBe('{ "name": "%microfrontendSlug%" }')
     })
 })
 
@@ -244,7 +392,7 @@ describe("TemplateScaffoldService, federation name of a webpack microfrontend te
         const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
         const codeRepository = { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository
 
-        await service.injectTemplateGitlab("token", "https://gitlab.com", "checkout-new", "acme", codeRepository, "gitlab", webpackRemote, { microfrontendSlug: "checkout-new" })
+        await service.injectTemplateGitlab("checkout-new", "token", "https://gitlab.com", "checkout-new", "acme", codeRepository, "gitlab", webpackRemote, { microfrontendSlug: "checkout-new" })
 
         expectRenamed()
     })
@@ -253,7 +401,7 @@ describe("TemplateScaffoldService, federation name of a webpack microfrontend te
         const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
         const codeRepository = { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository
 
-        await service.injectTemplateAzureDevOps("token", "checkout-new", codeRepository, "azure_dev_ops", webpackRemote, { microfrontendSlug: "checkout-new" })
+        await service.injectTemplateAzureDevOps("checkout-new", "token", "checkout-new", codeRepository, "azure_dev_ops", webpackRemote, { microfrontendSlug: "checkout-new" })
 
         expectRenamed()
     })
@@ -390,10 +538,8 @@ describe("TemplateScaffoldService, single-spa and micro-lc templates through Mic
 
         expect(committed[testCase.pipeline]?.split("\n")[0]).toBe(`from: ${testCase.type}/${testCase.compiler}/${testCase.folder}`)
         expect(committed["package.json"]).toBe('{ "name": "example" }')
-        if (testCase.provider === CodeRepositoryProvider.GITHUB) {
-            // The GitHub overlay is the one place a microfrontend gets its placeholders replaced
-            expect(committed[testCase.pipeline]).toContain("slug: cart")
-        }
+        // The pipeline overlay is the one place a microfrontend gets its placeholders replaced, on every provider
+        expect(committed[testCase.pipeline]).toContain("slug: cart")
 
         const stored = write.mock.calls[0][0] as unknown as { template: string; stack: object; host: { entryPoint?: string } }
         expect(stored.template).toBe(testCase.slug)

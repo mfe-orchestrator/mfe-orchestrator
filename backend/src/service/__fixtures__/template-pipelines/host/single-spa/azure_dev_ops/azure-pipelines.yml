@@ -1,0 +1,104 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - development
+  tags:
+    include:
+      - '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: isTag
+    value: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
+  - name: tagName
+    value: $[replace(variables['Build.SourceBranch'], 'refs/tags/', '')]
+  - name: isCdCiBranch
+    value: $[in(variables['Build.SourceBranch'], 'refs/heads/main', 'refs/heads/develop', 'refs/heads/development')]
+  # The single-spa root config reads these at build time (see .env.example). Define them as
+  # pipeline variables: VITE_MFE_PROJECT_ID is required, the backend url defaults
+  # to this console, VITE_MFE_ENVIRONMENT is optional (left empty, the backend
+  # resolves the environment from the domain the host is served on).
+  - name: VITE_MFE_BACKEND_URL_RESOLVED
+    value: $[coalesce(variables['VITE_MFE_BACKEND_URL'], '%domain%/api')]
+  - name: VITE_MFE_PROJECT_ID_RESOLVED
+    value: $[coalesce(variables['VITE_MFE_PROJECT_ID'], '')]
+  - name: VITE_MFE_ENVIRONMENT_RESOLVED
+    value: $[coalesce(variables['VITE_MFE_ENVIRONMENT'], '')]
+
+stages:
+  - stage: BuildAndDeploy
+    displayName: '🏗️ Build & Deploy'
+    jobs:
+      # One job: the Docker build copies the dist/ this job has just built
+      - job: BuildJob
+        displayName: '⚙️ Build single-spa host and its image'
+        variables:
+          - name: imageName
+            value: ${{ coalesce(variables['imageName'], variables['Build.Repository.Name']) }}
+        steps:
+          - task: NodeTool@0
+            displayName: '📦 Install Node.js'
+            inputs:
+              versionSpec: '24.x'
+
+          # pnpm comes from the packageManager field of package.json
+          - script: corepack enable
+            displayName: '📦 Enable pnpm (corepack)'
+
+          - task: Cache@2
+            displayName: '💾 Cache node_modules'
+            inputs:
+              key: 'pnpm | "$(Agent.OS)" | pnpm-lock.yaml'
+              path: node_modules
+              restoreKeys: |
+                pnpm | "$(Agent.OS)"
+
+          - script: pnpm i --frozen-lockfile
+            displayName: '📥 Install dependencies'
+
+          - script: pnpm build
+            displayName: '🔨 Build project'
+            env:
+              VITE_MFE_BACKEND_URL: $(VITE_MFE_BACKEND_URL_RESOLVED)
+              VITE_MFE_PROJECT_ID: $(VITE_MFE_PROJECT_ID_RESOLVED)
+              VITE_MFE_ENVIRONMENT: $(VITE_MFE_ENVIRONMENT_RESOLVED)
+
+          - publish: $(System.DefaultWorkingDirectory)/dist
+            artifact: app-source
+            displayName: '📦 Publish the build'
+
+          - task: Docker@2
+            condition: or(eq(variables.isTag, true), eq(variables.isCdCiBranch, true))
+            displayName: '🔑 Login to Container Registry'
+            inputs:
+              containerRegistry: '$(CONTAINER_REGISTRY)'
+              command: 'login'
+
+          # The Dockerfile serves dist/ with nginx, non-root, on port 8080
+          - task: Docker@2
+            condition: eq(variables.isTag, true)
+            displayName: '🐳 Build & Push Docker Image (Tag)'
+            inputs:
+              containerRegistry: '$(CONTAINER_REGISTRY)'
+              repository: '$(imageName)'
+              command: 'buildAndPush'
+              Dockerfile: 'Dockerfile'
+              buildContext: '.'
+              tags: |
+                $(tagName)
+                latest
+
+          - task: Docker@2
+            condition: eq(variables.isCdCiBranch, true)
+            displayName: '🐳 Build & Push Docker Image (DEV)'
+            inputs:
+              containerRegistry: '$(CONTAINER_REGISTRY)'
+              repository: '$(imageName)'
+              command: 'buildAndPush'
+              Dockerfile: 'Dockerfile'
+              buildContext: '.'
+              tags: 'dev'

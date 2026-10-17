@@ -26,6 +26,9 @@ const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/arc
 /** What `%domain%` becomes in a scaffolded repository: the console its CI talks back to */
 export const placeholderDomain = () => process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev"
 
+/** The placeholders of a pipeline copied from template-pipelines, the same on every provider */
+const pipelinePlaceholders = (slug: string): Record<string, string> => ({ "%microfrontendSlug%": slug, "%domain%": placeholderDomain() })
+
 /** The repository part of a microfrontend or service DTO, filled in once the repository exists */
 export type CodeRepositoryTarget = MicrofrontendDTO["codeRepository"]
 
@@ -88,7 +91,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             target.cloneUrlHttps = createdRepository.remoteUrl
             target.cloneUrlSsh = createdRepository.sshUrl
             if (template) {
-                await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template, options)
+                await this.injectTemplateAzureDevOps(slug, codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template, options)
                 await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
             }
         } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
@@ -107,7 +110,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             target.cloneUrlHttps = createdRepository.http_url_to_repo
             target.cloneUrlSsh = createdRepository.ssh_url_to_repo
             if (template) {
-                await this.injectTemplateGitlab(codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template, options)
+                await this.injectTemplateGitlab(slug, codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template, options)
             }
         } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
             const githubClient = new GithubClient()
@@ -167,6 +170,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
     }
 
     async injectTemplateGitlab(
+        slug: string,
         accessToken: string,
         baseUrl: string,
         repositoryName: string,
@@ -212,8 +216,9 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
             // Check if the pipeline path exists
             if (await fs.pathExists(pipelinePath)) {
-                // Copy all contents from pipeline path to .github directory
-                await fs.copyFile(pipelinePath, join(tempDir, ".gitlab-ci.yml"))
+                const pipelineFile = join(tempDir, ".gitlab-ci.yml")
+                await fs.copyFile(pipelinePath, pipelineFile)
+                await this.replacePlaceholdersInFile(pipelineFile, pipelinePlaceholders(slug))
 
                 fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
             } else {
@@ -279,7 +284,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         }
     }
 
-    async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket, options?: ScaffoldOptions) {
+    async injectTemplateAzureDevOps(slug: string, accessToken: string, repositoryName: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket, options?: ScaffoldOptions) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
             throw new Error("Template url is not set")
@@ -311,8 +316,9 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
             // Check if the pipeline path exists
             if (await fs.pathExists(pipelinePath)) {
-                // Copy all contents from pipeline path to .github directory
-                await fs.copyFile(pipelinePath, join(tempDir, "azure-pipelines.yml"))
+                const pipelineFile = join(tempDir, "azure-pipelines.yml")
+                await fs.copyFile(pipelinePath, pipelineFile)
+                await this.replacePlaceholdersInFile(pipelineFile, pipelinePlaceholders(slug))
 
                 fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
             } else {
@@ -446,7 +452,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
                 await fs.copy(pipelinePath, githubDir, { overwrite: true })
 
                 // Replace placeholders in all copied files
-                await this.replacePlaceholdersInDirectory(githubDir, { "%microfrontendSlug%": slug, "%domain%": placeholderDomain() })
+                await this.replacePlaceholdersInDirectory(githubDir, pipelinePlaceholders(slug))
 
                 fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
             } else {
@@ -560,32 +566,33 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         }
     }
 
+    /** Replaces each placeholder with its value in `filePath`, unless it is binary (any NUL byte) */
+    async replacePlaceholdersInFile(filePath: string, placeholders: Record<string, string>): Promise<void> {
+        try {
+            const buffer = await fs.readFile(filePath)
+            if (buffer.includes(0)) return
+
+            const content = buffer.toString("utf8")
+            let updatedContent = content
+            for (const [placeholder, value] of Object.entries(placeholders)) {
+                updatedContent = updatedContent.split(placeholder).join(value)
+            }
+
+            if (content !== updatedContent) {
+                await fs.writeFile(filePath, updatedContent, "utf8")
+                fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
+            }
+        } catch (error) {
+            // Skip files that can't be read
+            fastify.log.debug(`Skipping file ${filePath}: ${error}`)
+        }
+    }
+
     /**
      * Replaces each placeholder with its value in every text file under `directory`. The `.git`
      * folder is never entered, and binary files (any NUL byte) are left alone.
      */
     async replacePlaceholdersInDirectory(directory: string, placeholders: Record<string, string>): Promise<void> {
-        const processFile = async (filePath: string) => {
-            try {
-                const buffer = await fs.readFile(filePath)
-                if (buffer.includes(0)) return
-
-                const content = buffer.toString("utf8")
-                let updatedContent = content
-                for (const [placeholder, value] of Object.entries(placeholders)) {
-                    updatedContent = updatedContent.split(placeholder).join(value)
-                }
-
-                if (content !== updatedContent) {
-                    await fs.writeFile(filePath, updatedContent, "utf8")
-                    fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
-                }
-            } catch (error) {
-                // Skip files that can't be read
-                fastify.log.debug(`Skipping file ${filePath}: ${error}`)
-            }
-        }
-
         const processDirectory = async (dir: string) => {
             const items = await fs.readdir(dir)
 
@@ -598,7 +605,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
                         await processDirectory(fullPath)
                     }
                 } else if (stats.isFile()) {
-                    await processFile(fullPath)
+                    await this.replacePlaceholdersInFile(fullPath, placeholders)
                 }
             }
         }
