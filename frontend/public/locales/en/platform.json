@@ -1974,7 +1974,11 @@
             "backend_title": "Backend",
             "backend_description": "The services of this domain",
             "backend_empty": "No services in this domain.",
-            "add_service": "Add service"
+            "add_service": "Add service",
+            "viewOverview": "Overview",
+            "viewFlow": "Diagram view",
+            "viewGrid": "Grid view",
+            "viewTable": "Table view"
         },
         "errors": {
             "slug_taken": "A domain with this name already exists in the project",

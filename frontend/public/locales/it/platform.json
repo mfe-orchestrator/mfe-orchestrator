@@ -1993,7 +1993,11 @@
             "backend_title": "Backend",
             "backend_description": "I servizi di questo dominio",
             "backend_empty": "Nessun servizio in questo dominio.",
-            "add_service": "Aggiungi servizio"
+            "add_service": "Aggiungi servizio",
+            "viewOverview": "Vista panoramica",
+            "viewFlow": "Vista diagramma",
+            "viewGrid": "Vista griglia",
+            "viewTable": "Vista tabella"
         },
         "errors": {
             "slug_taken": "Esiste già un dominio con questo nome nel progetto",
