@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.ts": {
-    "mtime": 1792237222.7143612,
-    "ast_hash": "f468cba38f919ce4e50ad27001ce92e1",
+    "mtime": 1792241259.831083,
+    "ast_hash": "e64a38cedc713c643e337ef388ee06e1",
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.ts": {
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "frontend/src/Routes.tsx": {
-    "mtime": 1792238055.941743,
-    "ast_hash": "9f946776a453dec058ccef27c42151c4",
+    "mtime": 1792240670.4740562,
+    "ast_hash": "2824ce12df0e3e1c818879245521389f",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.ts": {
@@ -1445,13 +1445,13 @@
     "semantic_hash": ""
   },
   "frontend/src/theme/layout/Header.tsx": {
-    "mtime": 1792239634.1196032,
-    "ast_hash": "aa84f8a7056d8a202fb46088eae15e2a",
+    "mtime": 1792240687.5253203,
+    "ast_hash": "a30b0e7e488d70d0f9ce68d7a4377431",
     "semantic_hash": ""
   },
   "frontend/src/theme/layout/MainLayout.tsx": {
-    "mtime": 1792240666.0552914,
-    "ast_hash": "028f737d0a368a9c7a5fbb957c29d30a",
+    "mtime": 1792242442.423001,
+    "ast_hash": "388009efcc5fdc973c1005acd946bf6e",
     "semantic_hash": ""
   },
   "frontend/src/types/ApiResponseDTO.ts": {
@@ -3465,8 +3465,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.template.test.ts": {
-    "mtime": 1792189755.3738265,
-    "ast_hash": "86ab1e264d56d89d465ee7102e189ecb",
+    "mtime": 1792241259.8307917,
+    "ast_hash": "3158e8e2e601fb436eee83e73d4dfbcd",
     "semantic_hash": ""
   },
   "backend/src/service/ServiceService.test.ts": {
@@ -3480,13 +3480,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.test.ts": {
-    "mtime": 1792236765.2689395,
-    "ast_hash": "062a884f0bac1403b549dc5ebb9310dc",
+    "mtime": 1792241259.8313878,
+    "ast_hash": "e2643df8da7034002e056482c9bea512",
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.ts": {
-    "mtime": 1792236725.4050374,
-    "ast_hash": "d58e07aff1f4225793e86774a908d632",
+    "mtime": 1792241259.8317492,
+    "ast_hash": "0cec628d07a2622e2b530d420aec2d54",
     "semantic_hash": ""
   },
   "backend/src/service/workspace/repositoryComponent.ts": {
@@ -3632,6 +3632,11 @@
   "frontend/src/pages/services/partials/serviceVariables.ts": {
     "mtime": 1792239593.3735497,
     "ast_hash": "82c091ff5cfa30d05e58fd32a5424586",
+    "semantic_hash": ""
+  },
+  "backend/src/service/ServeService.nameToIntegrate.test.ts": {
+    "mtime": 1792241259.831211,
+    "ast_hash": "050e29e95fc4aa204e8c4278830acd1c",
     "semantic_hash": ""
   }
 }
