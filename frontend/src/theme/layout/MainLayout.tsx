@@ -1,4 +1,4 @@
-import { Hammer as HammerIcon, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server } from "lucide-react"
+import { FileText, Hammer as HammerIcon, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
@@ -23,7 +23,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
 
     // Solo voci di progetto: il livello organizzazione vive nell'header, dal suo menu, e le pagine
-    // che valgono per tutto il progetto (variabili, impostazioni) nel menu in alto.
+    // che valgono per tutto il progetto (impostazioni) nel menu in alto. Le variabili d'ambiente
+    // valgono solo per i microfrontend, quindi stanno nella loro sezione.
     const mainNavSections: SidebarNavSection[] = [
         {
             title: t("navigation.sections.domains"),
@@ -36,7 +37,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 { name: t("dependencies.sidebar_title"), path: "/dependencies", icon: <PackageIcon /> },
                 { name: t("builds.title"), path: "/builds", icon: <HammerIcon /> },
                 { name: t("deployments.title"), path: "/deployments", icon: <RocketIcon /> },
-                { name: t("integration.sidebar_title"), path: "/integration", icon: <LinkIcon /> }
+                { name: t("integration.sidebar_title"), path: "/integration", icon: <LinkIcon /> },
+                { name: t("environmentVariables.title"), path: "/environment-variables", icon: <FileText /> }
             ]
         },
         {

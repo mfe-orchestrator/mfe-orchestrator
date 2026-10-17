@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, Settings, Sparkles } from "lucide-react"
+import { ChevronRight, Settings, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link, NavLink } from "react-router-dom"
 import { ASSISTANT_PAGE_PATH } from "@/components/assistant/AssistantPanel"
@@ -17,7 +17,6 @@ const HeaderMenu: React.FC = () => {
 
     const items = [
         ...(assistantEnabled ? [{ name: t("assistant.page_title"), path: ASSISTANT_PAGE_PATH, icon: <Sparkles />, dataTestId: "header-menu-assistant" }] : []),
-        { name: t("environmentVariables.title"), path: "/environment-variables", icon: <FileText />, dataTestId: "header-menu-environment-variables" },
         { name: t("settings.title"), path: "/settings", icon: <Settings />, dataTestId: "header-menu-settings" }
     ]
 
