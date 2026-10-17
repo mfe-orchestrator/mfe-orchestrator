@@ -158,6 +158,15 @@ export class ServiceService extends BaseAuthorizedService {
                 })
 
                 if (template) {
+                    // What the form or the API caller left out comes from the template, the platform defaults after it
+                    const defaults = template.serviceDefaults
+                    if (defaults) {
+                        service.port ??= defaults.port
+                        service.livenessPath ??= defaults.livenessPath
+                        service.readinessPath ??= defaults.readinessPath
+                        service.docsPath ??= defaults.docsPath
+                        service.openApiPath ??= defaults.openApiPath
+                    }
                     service.template = template.slug
                     service.stack = {
                         runtime: parseRuntime(template.framework),

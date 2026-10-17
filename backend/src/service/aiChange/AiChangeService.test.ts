@@ -110,7 +110,16 @@ describe("AiChangeService", () => {
     })
 
     it("Given a service, when a change is requested on it, then the job runs on the service's repository", async () => {
-        vi.spyOn(Service, "findById").mockResolvedValue({ _id: serviceId, projectId, slug: "orders-api", name: "Orders API", port: 8080, healthcheckPath: "/health", env: [] } as never)
+        vi.spyOn(Service, "findById").mockResolvedValue({
+            _id: serviceId,
+            projectId,
+            slug: "orders-api",
+            name: "Orders API",
+            port: 8080,
+            livenessPath: "/health/live",
+            readinessPath: "/health/ready",
+            env: []
+        } as never)
         const request = { _id: new Types.ObjectId(), jobId: new Types.ObjectId(), serviceId, status: AiChangeStatus.PENDING }
         const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [request] } as never)
 

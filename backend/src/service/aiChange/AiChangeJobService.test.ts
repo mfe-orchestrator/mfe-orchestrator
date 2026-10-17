@@ -54,7 +54,9 @@ const catalogApi = {
     name: "Catalog API",
     stack: { runtime: "NODE", framework: "Express" },
     port: 3000,
-    healthcheckPath: "/healthz",
+    livenessPath: "/healthz/live",
+    readinessPath: "/healthz/ready",
+    docsPath: "/docs",
     env: [{ name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" }],
     codeRepository: { enabled: true, codeRepositoryId: connectionId, name: "catalog-api" }
 }
@@ -411,7 +413,9 @@ describe("AiChangeJobService", () => {
                 runtime: "NODE",
                 framework: "Express",
                 port: 3000,
-                healthcheckPath: "/healthz",
+                livenessPath: "/healthz/live",
+                readinessPath: "/healthz/ready",
+                docsPath: "/docs",
                 env: [{ name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" }],
                 context: undefined
             })

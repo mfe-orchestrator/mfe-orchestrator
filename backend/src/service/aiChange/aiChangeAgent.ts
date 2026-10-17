@@ -49,7 +49,10 @@ export interface AiChangeAgentService {
     runtime?: string
     framework?: string
     port?: number
-    healthcheckPath?: string
+    livenessPath?: string
+    readinessPath?: string
+    docsPath?: string
+    openApiPath?: string
     env?: { name: string; required: boolean; secret: boolean; description?: string }[]
     context?: string
 }
@@ -100,9 +103,10 @@ const multipleRepositories = (
 
 Paths: every path starts with the slug of its repository, e.g. "catalog/src/App.tsx". list_files without prefix lists the repositories; pass a slug or a folder of it as prefix to list its files. Change only the repositories the request needs.`
 
-/** Service templates ship instructions for coding agents: read them before anything else. */
+/** Service templates ship instructions for coding agents: read them before anything else. Kubernetes probes and API docs are served from the paths the service declares. */
 const AGENT_INSTRUCTIONS =
-    "\n- A backend service repository may hold an AGENTS.md or a CLAUDE.md at its root with instructions for coding agents: if present, read it first and follow it, within the rules below."
+    "\n- A backend service repository may hold an AGENTS.md or a CLAUDE.md at its root with instructions for coding agents: if present, read it first and follow it, within the rules below." +
+    "\n- A backend service is probed by Kubernetes on its liveness_path and readiness_path, and publishes its API documentation on its docs_path and its OpenAPI spec on its openapi_path: keep every one of them working on its path. Document every endpoint you add or change in the OpenAPI spec."
 
 const systemPrompt = (repositories: AiChangeAgentRepository[]) => {
     const multiple = repositories.length > 1
@@ -133,7 +137,10 @@ const serviceFacts = (service: AiChangeAgentService) => [
     service.runtime ? `runtime: ${service.runtime}` : undefined,
     service.framework ? `framework: ${service.framework}` : undefined,
     service.port !== undefined ? `port: ${service.port}` : undefined,
-    service.healthcheckPath ? `healthcheck_path: ${service.healthcheckPath}` : undefined,
+    service.livenessPath ? `liveness_path: ${service.livenessPath}` : undefined,
+    service.readinessPath ? `readiness_path: ${service.readinessPath}` : undefined,
+    service.docsPath ? `docs_path: ${service.docsPath}` : undefined,
+    service.openApiPath ? `openapi_path: ${service.openApiPath}` : undefined,
     service.env?.length ? ["env:", ...service.env.map(describeEnvVariable)].join("\n") : undefined
 ]
 

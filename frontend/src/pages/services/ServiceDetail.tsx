@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, DescriptionItem, DescriptionList, Spinner } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Hammer } from "lucide-react"
+import { Copy, Hammer } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams } from "react-router-dom"
@@ -9,10 +9,37 @@ import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import useServicesApi, { Service } from "@/hooks/apiClients/useServicesApi"
 import { AiChangeWorkspace } from "@/pages/microfrontends/partials/components"
+import useToastNotificationStore from "@/store/useToastNotificationStore"
 import RepositoryLink from "./partials/RepositoryLink"
 import ServiceBuildDialog from "./partials/ServiceBuildDialog"
 import ServiceHeader, { isServiceAiAvailable } from "./partials/ServiceHeader"
 import ServiceVersionsTable from "./partials/ServiceVersionsTable"
+
+/** A path of the service, as declared: no URL is made up from it, the host depends on where the service runs */
+const ServicePath: React.FC<{ path?: string | null }> = ({ path }) => {
+    const { t } = useTranslation()
+    const notifications = useToastNotificationStore()
+
+    if (!path) return "—"
+
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(path)
+            notifications.showSuccessNotification({ message: t("services.configuration.path_copied") })
+        } catch {
+            notifications.showErrorNotification({ message: t("services.configuration.copy_failed") })
+        }
+    }
+
+    return (
+        <span className="inline-flex items-center gap-1">
+            <span className="font-mono">{path}</span>
+            <Button variant="ghost" size="icon-sm" onClick={copy} aria-label={t("services.configuration.copy_path")} title={t("services.configuration.copy_path")}>
+                <Copy />
+            </Button>
+        </span>
+    )
+}
 
 const ServiceConfigurationSection: React.FC<{ service: Service }> = ({ service }) => {
     const { t } = useTranslation()
@@ -26,8 +53,17 @@ const ServiceConfigurationSection: React.FC<{ service: Service }> = ({ service }
             <CardContent className="flex flex-col gap-4 pt-3">
                 <DescriptionList orientation="inline">
                     <DescriptionItem label={t("services.port")}>{service.port}</DescriptionItem>
-                    <DescriptionItem label={t("services.healthcheck_path")}>
-                        <span className="font-mono">{service.healthcheckPath}</span>
+                    <DescriptionItem label={t("services.liveness_path")}>
+                        <ServicePath path={service.livenessPath} />
+                    </DescriptionItem>
+                    <DescriptionItem label={t("services.readiness_path")}>
+                        <ServicePath path={service.readinessPath} />
+                    </DescriptionItem>
+                    <DescriptionItem label={t("services.docs_path")}>
+                        <ServicePath path={service.docsPath} />
+                    </DescriptionItem>
+                    <DescriptionItem label={t("services.openapi_path")}>
+                        <ServicePath path={service.openApiPath} />
                     </DescriptionItem>
                     <DescriptionItem label={t("services.image_repository")}>{service.image?.repository ? <span className="font-mono">{service.image.repository}</span> : "—"}</DescriptionItem>
                 </DescriptionList>

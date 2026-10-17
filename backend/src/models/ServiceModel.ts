@@ -1,6 +1,6 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import { ServiceRuntime } from "../types/ServiceStack"
+import { SERVICE_HTTP_PATH, ServicePaths, ServiceRuntime } from "../types/ServiceStack"
 import { ICodeRepositoryMicrofrontend, microfrontendCodeRepositorySchema } from "./MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
@@ -20,7 +20,7 @@ export interface IServiceEnvVariable {
     description?: string
 }
 
-export interface IService extends Document<ObjectId> {
+export interface IService extends Document<ObjectId>, ServicePaths {
     projectId: Schema.Types.ObjectId
     slug: string
     name: string
@@ -37,7 +37,6 @@ export interface IService extends Document<ObjectId> {
         repository?: string
     }
     port: number
-    healthcheckPath: string
     env: IServiceEnvVariable[]
     createdAt: Date
     updatedAt: Date
@@ -91,6 +90,22 @@ const serviceEnvVariableSchema = new Schema<IServiceEnvVariable>(
     },
     { _id: false }
 )
+
+const httpPathValidator = {
+    validator: (value?: string | null) => value == null || SERVICE_HTTP_PATH.test(value),
+    message: (props: { path: string; value: unknown }) => `${props.path} "${props.value}" must start with "/", have at most 256 characters and no whitespace`
+}
+
+/** A probe path: always set, the template or the platform default when not given */
+const probePath = (defaultValue: string) => ({ type: String, default: defaultValue, trim: true, validate: httpPathValidator })
+
+/** An optional path: blank means the service has none, so it is stored as null rather than as "" */
+const optionalPath = {
+    type: String,
+    required: false,
+    set: (value?: string | null) => value?.trim() || null,
+    validate: httpPathValidator
+}
 
 const serviceSchema = new Schema<IService>(
     {
@@ -146,11 +161,10 @@ const serviceSchema = new Schema<IService>(
             type: Number,
             default: 8080
         },
-        healthcheckPath: {
-            type: String,
-            default: "/health",
-            trim: true
-        },
+        livenessPath: probePath("/health/live"),
+        readinessPath: probePath("/health/ready"),
+        docsPath: optionalPath,
+        openApiPath: optionalPath,
         env: {
             type: [serviceEnvVariableSchema],
             default: []

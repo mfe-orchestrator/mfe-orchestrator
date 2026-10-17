@@ -183,7 +183,7 @@ describe("ServiceService.create", () => {
         exists = vi.spyOn(Service, "exists").mockResolvedValue(null) as unknown as ReturnType<typeof vi.fn>
     })
 
-    const create = async (template: Record<string, unknown> | null, slug = " Orders-API ") => {
+    const create = async (template: Record<string, unknown> | null, slug = " Orders-API ", overrides: Partial<ServiceDTO> = {}) => {
         const service = new ServiceService()
         vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
         vi.spyOn(CodeRepository, "findById").mockResolvedValue({ _id: codeRepositoryId, projectId } as never)
@@ -193,7 +193,8 @@ describe("ServiceService.create", () => {
             {
                 name: "Orders API",
                 slug,
-                codeRepository: { enabled: true, codeRepositoryId, repositoryId: "", createData: { name: "orders-api", template: "service-node-fastify" } }
+                codeRepository: { enabled: true, codeRepositoryId, repositoryId: "", createData: { name: "orders-api", template: "service-node-fastify" } },
+                ...overrides
             } as ServiceDTO,
             projectId
         )
@@ -222,10 +223,45 @@ describe("ServiceService.create", () => {
     })
 
     it("given a template typed with another case, when a service is created, then it is still a service template", async () => {
-        const written = await create({ slug: "service-go", type: "Service", compiler: "docker", framework: "Go" })
+        const written = await create({ slug: "service-quarkus", type: "Service", compiler: "docker", framework: "Quarkus" })
 
         expect(createRepository).toHaveBeenCalledTimes(1)
-        expect(written.stack?.runtime).toBe(ServiceRuntime.GO)
+        expect(written.stack?.runtime).toBe(ServiceRuntime.JAVA)
+    })
+
+    const springBoot = {
+        slug: "service-spring-boot",
+        type: "service",
+        compiler: "docker",
+        framework: "Spring Boot",
+        serviceDefaults: { port: 8081, livenessPath: "/actuator/health/liveness", readinessPath: "/actuator/health/readiness", docsPath: "/swagger-ui.html", openApiPath: "/v3/api-docs" }
+    }
+
+    it("given a template with service defaults and a service that sets none, when it is created, then port, probes and API docs come from the template", async () => {
+        const written = await create(springBoot)
+
+        expect(written).toMatchObject(springBoot.serviceDefaults)
+        expect(written.stack?.runtime).toBe(ServiceRuntime.JAVA)
+    })
+
+    it("given a service that sets some of the template defaults, when it is created, then its own values are kept and only the rest come from the template", async () => {
+        const written = await create(springBoot, " Orders-API ", { port: 9090, readinessPath: "/ready", docsPath: "" })
+
+        expect(written).toMatchObject({
+            port: 9090,
+            livenessPath: "/actuator/health/liveness",
+            readinessPath: "/ready",
+            docsPath: "",
+            openApiPath: "/v3/api-docs"
+        })
+    })
+
+    it("given a template without service defaults, when a service is created, then nothing is filled in and the model defaults apply", async () => {
+        const written = await create({ slug: "service-node-fastify", type: "service", framework: "Node.js" })
+
+        expect(written.port).toBeUndefined()
+        expect(written.livenessPath).toBeUndefined()
+        expect(written.docsPath).toBeUndefined()
     })
 
     it("given a slug another service of the project has, when a service is created, then it is refused with a 409 before any repository is created", async () => {
@@ -271,6 +307,15 @@ describe("ServiceService.update", () => {
         await new ServiceService().update(String(serviceId), { name: "Orders", slug: "renamed" } as ServiceDTO)
 
         expect(write.mock.calls[0][1]).toEqual({ name: "Orders" })
+    })
+
+    it("given new probe and docs paths, when a service is updated, then they are written and validated", async () => {
+        const write = vi.spyOn(Service, "findByIdAndUpdate").mockResolvedValue(service as never)
+        const paths = { livenessPath: "/q/health/live", readinessPath: "/q/health/ready", docsPath: "/q/swagger-ui", openApiPath: "/q/openapi" }
+
+        await new ServiceService().update(String(serviceId), { name: "Orders", ...paths } as ServiceDTO)
+
+        expect(write).toHaveBeenCalledWith(serviceId, { name: "Orders", ...paths }, { new: true, runValidators: true })
     })
 
     it("given a connection of another project, when a service is linked to it, then it is not found and nothing is written", async () => {

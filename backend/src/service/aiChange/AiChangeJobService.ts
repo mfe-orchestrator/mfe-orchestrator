@@ -162,7 +162,10 @@ const agentRepository = (component: RepositoryComponent, slug: string, rest: Omi
                   runtime: component.runtime,
                   framework: component.framework,
                   port: component.port,
-                  healthcheckPath: component.healthcheckPath,
+                  livenessPath: component.livenessPath,
+                  readinessPath: component.readinessPath,
+                  docsPath: component.docsPath,
+                  openApiPath: component.openApiPath,
                   env: component.env.map(({ name, required, secret, description }) => ({ name, required, secret, description })),
                   context: component.context
               }

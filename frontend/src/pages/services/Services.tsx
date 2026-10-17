@@ -40,8 +40,8 @@ const Services = () => {
 
     const totalCount = servicesQuery.data?.length ?? 0
     const hasServices = totalCount > 0
-    // Services are always born from a template: the library, filtered on services, is the entry point.
-    const onCreate = () => navigate("/templates-library?type=service")
+    // The form picks the template itself: the library is only one way in
+    const onCreate = () => navigate("/service/new")
 
     return (
         <Tabs value={view} onValueChange={value => setView(value as View)} className="flex min-h-full flex-col" layoutSize="sm" iconButtons tabsListPosition="end">

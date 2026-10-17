@@ -1811,9 +1811,17 @@
         "description": "Descrizione",
         "description_placeholder": "Cosa fa questo servizio",
         "runtime_settings": "Runtime e immagine",
-        "runtime_settings_description": "Porta, healthcheck e repository dell'immagine Docker",
+        "runtime_settings_description": "Porta, probe Kubernetes, documentazione API e repository dell'immagine Docker",
         "port": "Porta",
-        "healthcheck_path": "Percorso healthcheck",
+        "liveness_path": "Percorso liveness probe",
+        "liveness_path_hint": "Kubernetes riavvia il container quando questo percorso smette di rispondere",
+        "readiness_path": "Percorso readiness probe",
+        "readiness_path_hint": "Kubernetes invia traffico al container solo finché questo percorso risponde",
+        "docs_path": "Percorso documentazione API",
+        "docs_path_hint": "Facoltativo. La pagina della documentazione pubblica delle API, es. /docs",
+        "openapi_path": "Percorso specifica OpenAPI",
+        "openapi_path_hint": "Facoltativo. Es. /openapi.json",
+        "path_invalid": "Deve iniziare con \"/\", avere al massimo 256 caratteri e nessuno spazio",
         "image_repository": "Repository immagine",
         "image_repository_hint": "Facoltativo. Es. ghcr.io/acme/orders-api",
         "latest_version": "Ultima versione",
@@ -1867,7 +1875,10 @@
         },
         "configuration": {
             "title": "Configurazione",
-            "description": "Come viene eseguito il container del servizio"
+            "description": "Come viene eseguito il container del servizio",
+            "copy_path": "Copia il percorso",
+            "path_copied": "Percorso copiato",
+            "copy_failed": "Impossibile copiare negli appunti"
         },
         "build": {
             "action": "Crea versione",

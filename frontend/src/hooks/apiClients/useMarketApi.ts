@@ -1,5 +1,14 @@
 import useApiClient from "../useApiClient"
 
+/** What a service created from a service template starts with */
+export interface ServiceDefaults {
+    port: number
+    livenessPath: string
+    readinessPath: string
+    docsPath?: string
+    openApiPath?: string
+}
+
 export interface Market {
     _id: string
     name: string
@@ -15,6 +24,8 @@ export interface Market {
     repo?: string
     type?: string
     compiler?: string
+    /** Service templates only */
+    serviceDefaults?: ServiceDefaults
     createdAt: Date
     updatedAt: Date
 }

@@ -38,7 +38,10 @@ export interface ServiceComponent extends RepositoryComponentBase {
     runtime?: ServiceRuntime
     framework?: string
     port?: number
-    healthcheckPath?: string
+    livenessPath?: string
+    readinessPath?: string
+    docsPath?: string
+    openApiPath?: string
     env: IServiceEnvVariable[]
 }
 
@@ -67,7 +70,10 @@ export const fromService = (service: IService): ServiceComponent => ({
     runtime: service.stack?.runtime,
     framework: service.stack?.framework,
     port: service.port,
-    healthcheckPath: service.healthcheckPath,
+    livenessPath: service.livenessPath,
+    readinessPath: service.readinessPath,
+    docsPath: service.docsPath ?? undefined,
+    openApiPath: service.openApiPath ?? undefined,
     env: service.env ?? []
 })
 

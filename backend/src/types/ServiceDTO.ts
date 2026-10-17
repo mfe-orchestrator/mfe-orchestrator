@@ -25,7 +25,12 @@ interface ServiceDTO {
         repository?: string
     }
     port?: number
-    healthcheckPath?: string
+    livenessPath?: string
+    readinessPath?: string
+    /** The UI of the public API documentation; blank or null when the service has none */
+    docsPath?: string | null
+    /** The OpenAPI spec; blank or null when the service has none */
+    openApiPath?: string | null
     env?: ServiceEnvVariableDTO[]
     createdAt?: Date
     updatedAt?: Date

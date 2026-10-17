@@ -43,7 +43,14 @@ export interface Service {
         repository?: string
     }
     port: number
-    healthcheckPath: string
+    /** Kubernetes restarts the container when it fails */
+    livenessPath: string
+    /** Kubernetes sends traffic only while it answers */
+    readinessPath: string
+    /** The UI of the public API documentation; blank or null when the service has none */
+    docsPath?: string | null
+    /** The OpenAPI spec; blank or null when the service has none */
+    openApiPath?: string | null
     env: ServiceEnvVariable[]
     createdAt?: Date
     updatedAt?: Date

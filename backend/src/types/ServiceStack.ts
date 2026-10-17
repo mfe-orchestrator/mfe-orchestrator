@@ -16,6 +16,27 @@ export const SERVICE_SLUG = /^[a-z0-9][a-z0-9-]{1,49}$/
 /** What a version may be: it becomes a git tag and an image tag, which take no `+`, space or slash */
 export const SERVICE_VERSION = /^[A-Za-z0-9._-]{1,128}$/
 
+/**
+ * What an HTTP path of a service may be (probes, API docs, OpenAPI spec): absolute, at most 256
+ * characters and without whitespace, since it becomes a Kubernetes probe path and a link.
+ */
+export const SERVICE_HTTP_PATH = /^\/\S{0,255}$/
+
+/** The HTTP paths a service exposes: the probes Kubernetes calls and its public API documentation */
+export interface ServicePaths {
+    livenessPath: string
+    readinessPath: string
+    /** The UI of the public API documentation, e.g. /docs */
+    docsPath?: string
+    /** The OpenAPI spec, e.g. /openapi.json */
+    openApiPath?: string
+}
+
+/** What a service template fills in when the service being created does not say otherwise */
+export interface ServiceDefaults extends ServicePaths {
+    port: number
+}
+
 /** The language runtime a backend service image is built on */
 export enum ServiceRuntime {
     NODE = "NODE",
@@ -42,11 +63,14 @@ const RUNTIME_BY_NAME: Record<string, ServiceRuntime> = {
     golang: ServiceRuntime.GO,
     dotnet: ServiceRuntime.DOTNET,
     ".net": ServiceRuntime.DOTNET,
-    java: ServiceRuntime.JAVA
+    java: ServiceRuntime.JAVA,
+    "spring boot": ServiceRuntime.JAVA,
+    "spring-boot": ServiceRuntime.JAVA,
+    quarkus: ServiceRuntime.JAVA
 }
 
 /**
- * The marketplace spells the framework of a service template freely ("Node.js", "Python", "Go"),
+ * The marketplace spells the framework of a service template freely ("Node.js", "Spring Boot", "Quarkus"),
  * so it is normalised here. A value given but not recognised is OTHER: the service does run on
  * something, only not on a runtime this console knows by name.
  */

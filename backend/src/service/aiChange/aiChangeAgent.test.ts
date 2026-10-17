@@ -384,7 +384,10 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         runtime: "NODE",
         framework: "Express",
         port: 8080,
-        healthcheckPath: "/health",
+        livenessPath: "/health/live",
+        readinessPath: "/health/ready",
+        docsPath: "/docs",
+        openApiPath: "/openapi.json",
         env: [
             { name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" },
             { name: "LOG_LEVEL", required: false, secret: false }
@@ -392,7 +395,7 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         context: "Routes live in src/routes."
     })
 
-    it("Given one service, then the prompt describes it with its runtime, port, healthcheck and env, and points the agent to AGENTS.md", async () => {
+    it("Given one service, then the prompt describes it with its runtime, port, probe and docs paths and env, and points the agent to AGENTS.md", async () => {
         const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
 
         await runAiChangeAgent(client, { ...input(), repositories: [{ baseBranch: "main", workingCopy, service: ordersService() }] }, hooks().hooks)
@@ -401,13 +404,15 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         const firstPrompt = firstMessage.role === "user" ? firstMessage.text : ""
         expect(
             firstPrompt.startsWith(
-                "<service>\nname: Orders API\nslug: orders\nruntime: NODE\nframework: Express\nport: 8080\nhealthcheck_path: /health\nenv:\n- DATABASE_URL (required, secret): Postgres connection string\n- LOG_LEVEL (optional)\nbase_branch: main\n</service>"
+                "<service>\nname: Orders API\nslug: orders\nruntime: NODE\nframework: Express\nport: 8080\nliveness_path: /health/live\nreadiness_path: /health/ready\ndocs_path: /docs\nopenapi_path: /openapi.json\nenv:\n- DATABASE_URL (required, secret): Postgres connection string\n- LOG_LEVEL (optional)\nbase_branch: main\n</service>"
             )
         ).toBe(true)
         expect(firstPrompt).toContain("<service_context>\nRoutes live in src/routes.\n</service_context>")
         expect(sent[0].system).toContain("microfrontends and backend services")
         expect(sent[0].system).toContain("ONE backend service")
         expect(sent[0].system).toContain("AGENTS.md")
+        expect(sent[0].system).toContain("liveness_path and readiness_path")
+        expect(sent[0].system).toContain("Document every endpoint you add or change in the OpenAPI spec")
         expect(sent[0].system).toContain("You cannot run commands")
     })
 

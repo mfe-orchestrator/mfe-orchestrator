@@ -1792,9 +1792,17 @@
         "description": "Description",
         "description_placeholder": "What this service does",
         "runtime_settings": "Runtime and image",
-        "runtime_settings_description": "Port, healthcheck and Docker image repository",
+        "runtime_settings_description": "Port, Kubernetes probes, API documentation and Docker image repository",
         "port": "Port",
-        "healthcheck_path": "Healthcheck path",
+        "liveness_path": "Liveness probe path",
+        "liveness_path_hint": "Kubernetes restarts the container when this path stops answering",
+        "readiness_path": "Readiness probe path",
+        "readiness_path_hint": "Kubernetes sends traffic to the container only while this path answers",
+        "docs_path": "API docs path",
+        "docs_path_hint": "Optional. The page of the public API documentation, e.g. /docs",
+        "openapi_path": "OpenAPI spec path",
+        "openapi_path_hint": "Optional. E.g. /openapi.json",
+        "path_invalid": "Must start with \"/\", with at most 256 characters and no spaces",
         "image_repository": "Image repository",
         "image_repository_hint": "Optional. E.g. ghcr.io/acme/orders-api",
         "latest_version": "Latest version",
@@ -1848,7 +1856,10 @@
         },
         "configuration": {
             "title": "Configuration",
-            "description": "How the service container runs"
+            "description": "How the service container runs",
+            "copy_path": "Copy the path",
+            "path_copied": "Path copied",
+            "copy_failed": "Could not copy to clipboard"
         },
         "build": {
             "action": "Create version",

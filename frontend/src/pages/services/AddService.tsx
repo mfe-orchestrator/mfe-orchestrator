@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -12,7 +12,7 @@ import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
-import useMarketApi from "@/hooks/apiClients/useMarketApi"
+import useMarketApi, { ServiceDefaults } from "@/hooks/apiClients/useMarketApi"
 import useServicesApi, { Service, ServiceDTO } from "@/hooks/apiClients/useServicesApi"
 import { CodeRepositorySection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
@@ -26,7 +26,22 @@ import { isServiceTemplate } from "./partials/serviceTemplates"
 /** Same rule as the backend (SERVICE_SLUG): the slug names the workspace folder and the CI registration URL */
 const SERVICE_SLUG = /^[a-z0-9][a-z0-9-]{1,49}$/
 
-const createFormSchema = (slugMessage: string) =>
+/** Same rule as the backend (SERVICE_HTTP_PATH): a probe or docs path is absolute, at most 256 characters, without whitespace */
+const SERVICE_HTTP_PATH = /^\/\S{0,255}$/
+
+/** The fields a service template prefills */
+const PREFILLED_FIELDS = ["port", "livenessPath", "readinessPath", "docsPath", "openApiPath"] as const
+type PrefilledValues = Record<(typeof PREFILLED_FIELDS)[number], string>
+
+const prefilledValuesOf = (defaults: ServiceDefaults): PrefilledValues => ({
+    port: String(defaults.port),
+    livenessPath: defaults.livenessPath,
+    readinessPath: defaults.readinessPath,
+    docsPath: defaults.docsPath ?? "",
+    openApiPath: defaults.openApiPath ?? ""
+})
+
+const createFormSchema = (slugMessage: string, pathMessage: string) =>
     z.object({
         slug: z.string().regex(SERVICE_SLUG, slugMessage),
         name: z.string().min(3).max(100),
@@ -34,7 +49,17 @@ const createFormSchema = (slugMessage: string) =>
         context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
         template: z.string().optional(),
         port: z.string().regex(/^\d{1,5}$/),
-        healthcheckPath: z.string().min(1),
+        livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, pathMessage),
+        readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, pathMessage),
+        // Blank: the service publishes no API docs
+        docsPath: z
+            .string()
+            .trim()
+            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), pathMessage),
+        openApiPath: z
+            .string()
+            .trim()
+            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), pathMessage),
         image: z.object({ repository: z.string().optional() }).optional(),
         env: z.array(
             z.object({
@@ -83,11 +108,11 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
     const marketsQuery = useQuery({ queryKey: ["markets"], queryFn: getMarkets, enabled: !isEdit })
     const serviceTemplates = useMemo(() => (marketsQuery.data ?? []).filter(isServiceTemplate), [marketsQuery.data])
 
-    const formSchema = useMemo(() => createFormSchema(t("services.slug_invalid")), [t])
+    const formSchema = useMemo(() => createFormSchema(t("services.slug_invalid"), t("services.path_invalid")), [t])
     const form = useForm<FormInput, unknown, FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: service
-            ? { ...service, port: String(service.port), env: service.env ?? [] }
+            ? { ...service, port: String(service.port), docsPath: service.docsPath ?? "", openApiPath: service.openApiPath ?? "", env: service.env ?? [] }
             : {
                   slug: "",
                   name: "",
@@ -95,7 +120,10 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
                   context: "",
                   template: initialTemplate,
                   port: "8080",
-                  healthcheckPath: "/health",
+                  livenessPath: "/health/live",
+                  readinessPath: "/health/ready",
+                  docsPath: "",
+                  openApiPath: "",
                   image: { repository: "" },
                   env: [],
                   codeRepository: hasRepositories
@@ -107,6 +135,21 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
                       : { enabled: false }
               }
     })
+
+    // What the last template filled in: a field still holding it was not edited by hand, so the next template may replace it
+    const prefilled = useRef<PrefilledValues>({ port: "8080", livenessPath: "/health/live", readinessPath: "/health/ready", docsPath: "", openApiPath: "" })
+    const selectedTemplate = form.watch("template")
+    useEffect(() => {
+        const defaults = serviceTemplates.find(market => market.slug === selectedTemplate)?.serviceDefaults
+        if (isEdit || !defaults) return
+        const next = prefilledValuesOf(defaults)
+        for (const field of PREFILLED_FIELDS) {
+            if (form.getValues(field) === prefilled.current[field]) {
+                form.setValue(field, next[field], { shouldDirty: true })
+            }
+        }
+        prefilled.current = next
+    }, [selectedTemplate, serviceTemplates, isEdit, form])
 
     const onSubmit = async (data: FormValues) => {
         const dto = { ...data, port: Number(data.port) } as unknown as ServiceDTO
@@ -176,7 +219,30 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
                     </CardHeader>
                     <CardContent className="flex flex-wrap gap-x-4 gap-y-2 pt-3">
                         <TextField name="port" type="number" label={t("services.port")} required containerClassName="flex-[1_1_160px]" />
-                        <TextField name="healthcheckPath" label={t("services.healthcheck_path")} placeholder="/health" required containerClassName="flex-[1_1_240px]" />
+                        <TextField
+                            name="livenessPath"
+                            label={t("services.liveness_path")}
+                            placeholder="/health/live"
+                            description={t("services.liveness_path_hint")}
+                            required
+                            containerClassName="flex-[1_1_240px]"
+                        />
+                        <TextField
+                            name="readinessPath"
+                            label={t("services.readiness_path")}
+                            placeholder="/health/ready"
+                            description={t("services.readiness_path_hint")}
+                            required
+                            containerClassName="flex-[1_1_240px]"
+                        />
+                        <TextField name="docsPath" label={t("services.docs_path")} placeholder="/docs" description={t("services.docs_path_hint")} containerClassName="flex-[1_1_240px]" />
+                        <TextField
+                            name="openApiPath"
+                            label={t("services.openapi_path")}
+                            placeholder="/openapi.json"
+                            description={t("services.openapi_path_hint")}
+                            containerClassName="flex-[1_1_240px]"
+                        />
                         <TextField
                             name="image.repository"
                             label={t("services.image_repository")}
