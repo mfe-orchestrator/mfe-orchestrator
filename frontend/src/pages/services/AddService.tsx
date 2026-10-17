@@ -13,6 +13,7 @@ import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
+import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useMarketApi, { ServiceDefaults } from "@/hooks/apiClients/useMarketApi"
 import useServicesApi, { Service, ServiceDTO } from "@/hooks/apiClients/useServicesApi"
 import { CodeRepositorySection } from "@/pages/microfrontends/partials/components"
@@ -23,7 +24,9 @@ import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import ServiceDangerZone from "./partials/ServiceDangerZone"
 import ServiceEnvFields from "./partials/ServiceEnvFields"
 import ServiceHeader from "./partials/ServiceHeader"
+import ServiceVariablesFields from "./partials/ServiceVariablesFields"
 import { isServiceTemplate } from "./partials/serviceTemplates"
+import { fromFormVariables, SERVICE_VARIABLE_KEY, toFormVariables, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
 
 /** Same rule as the backend (SERVICE_SLUG): the slug names the workspace folder and the CI registration URL */
 const SERVICE_SLUG = /^[a-z0-9][a-z0-9-]{1,49}$/
@@ -43,48 +46,78 @@ const prefilledValuesOf = (defaults: ServiceDefaults): PrefilledValues => ({
     openApiPath: defaults.openApiPath ?? ""
 })
 
-const createFormSchema = (slugMessage: string, pathMessage: string) =>
-    z.object({
-        slug: z.string().regex(SERVICE_SLUG, slugMessage),
-        name: z.string().min(3).max(100),
-        description: z.string().optional(),
-        domainId: z.string().nullable().optional(),
-        context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
-        template: z.string().optional(),
-        port: z.string().regex(/^\d{1,5}$/),
-        livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, pathMessage),
-        readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, pathMessage),
-        // Blank: the service publishes no API docs
-        docsPath: z
-            .string()
-            .trim()
-            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), pathMessage),
-        openApiPath: z
-            .string()
-            .trim()
-            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), pathMessage),
-        image: z.object({ repository: z.string().optional() }).optional(),
-        env: z.array(
-            z.object({
-                name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
-                required: z.boolean().default(false),
-                secret: z.boolean().default(false),
-                description: z.string().optional()
-            })
-        ),
-        codeRepository: z
-            .object({
-                enabled: z.boolean().default(false),
-                codeRepositoryId: z.string().optional(),
-                repositoryId: z.string().optional(),
-                name: z.string().optional(),
-                cloneUrlHttps: z.string().optional(),
-                cloneUrlSsh: z.string().optional(),
-                gitlab: z.object({ groupPath: z.string().optional(), groupId: z.number().optional() }).optional(),
-                createData: z.object({ name: z.string().min(3).max(100), private: z.boolean().default(false) }).optional()
-            })
-            .optional()
-    })
+interface FormMessages {
+    slug: string
+    path: string
+    variableKey: string
+    variableKeyDuplicated: string
+}
+
+const variablesSchema = (keyMessage: string) =>
+    z.array(
+        z.object({
+            key: z.string().trim().regex(SERVICE_VARIABLE_KEY, keyMessage),
+            values: z.array(z.string()),
+            saved: z.boolean().default(false)
+        })
+    )
+
+const createFormSchema = (messages: FormMessages) =>
+    z
+        .object({
+            slug: z.string().regex(SERVICE_SLUG, messages.slug),
+            name: z.string().min(3).max(100),
+            description: z.string().optional(),
+            domainId: z.string().nullable().optional(),
+            context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
+            template: z.string().optional(),
+            port: z.string().regex(/^\d{1,5}$/),
+            livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
+            readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
+            // Blank: the service publishes no API docs
+            docsPath: z
+                .string()
+                .trim()
+                .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
+            openApiPath: z
+                .string()
+                .trim()
+                .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
+            image: z.object({ repository: z.string().optional() }).optional(),
+            env: z.array(
+                z.object({
+                    name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
+                    required: z.boolean().default(false),
+                    secret: z.boolean().default(false),
+                    description: z.string().optional()
+                })
+            ),
+            configMap: variablesSchema(messages.variableKey),
+            secrets: variablesSchema(messages.variableKey),
+            codeRepository: z
+                .object({
+                    enabled: z.boolean().default(false),
+                    codeRepositoryId: z.string().optional(),
+                    repositoryId: z.string().optional(),
+                    name: z.string().optional(),
+                    cloneUrlHttps: z.string().optional(),
+                    cloneUrlSsh: z.string().optional(),
+                    gitlab: z.object({ groupPath: z.string().optional(), groupId: z.number().optional() }).optional(),
+                    createData: z.object({ name: z.string().min(3).max(100), private: z.boolean().default(false) }).optional()
+                })
+                .optional()
+        })
+        // One key in both lists would give the container the same variable twice, as the backend refuses.
+        // Secrets first, so a clash lands on the config map entry: a saved secret's key cannot be edited.
+        .superRefine((values, context) => {
+            const seen = new Set<string>()
+            for (const list of ["secrets", "configMap"] as const) {
+                values[list].forEach((variable, index) => {
+                    if (seen.has(variable.key)) context.addIssue({ code: "custom", path: [list, index, "key"], message: messages.variableKeyDuplicated })
+                    seen.add(variable.key)
+                })
+            }
+        })
 
 type FormSchema = ReturnType<typeof createFormSchema>
 type FormInput = z.input<FormSchema>
@@ -92,10 +125,11 @@ type FormValues = z.output<FormSchema>
 
 interface AddServiceFormProps {
     repositories: ICodeRepository[]
+    environments: EnvironmentDTO[]
     service?: Service
 }
 
-const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }) => {
+const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environments, service }) => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
@@ -114,11 +148,29 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
     const marketsQuery = useQuery({ queryKey: ["markets"], queryFn: getMarkets, enabled: !isEdit })
     const serviceTemplates = useMemo(() => (marketsQuery.data ?? []).filter(isServiceTemplate), [marketsQuery.data])
 
-    const formSchema = useMemo(() => createFormSchema(t("services.slug_invalid"), t("services.path_invalid")), [t])
+    const formSchema = useMemo(
+        () =>
+            createFormSchema({
+                slug: t("services.slug_invalid"),
+                path: t("services.path_invalid"),
+                variableKey: t("services.variables.key_invalid"),
+                variableKeyDuplicated: t("services.variables.key_duplicated")
+            }),
+        [t]
+    )
     const form = useForm<FormInput, unknown, FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: service
-            ? { ...service, domainId: service.domainId ?? "", port: String(service.port), docsPath: service.docsPath ?? "", openApiPath: service.openApiPath ?? "", env: service.env ?? [] }
+            ? {
+                  ...service,
+                  domainId: service.domainId ?? "",
+                  port: String(service.port),
+                  docsPath: service.docsPath ?? "",
+                  openApiPath: service.openApiPath ?? "",
+                  env: service.env ?? [],
+                  configMap: toFormVariables(service.configMap, environments, false),
+                  secrets: toFormVariables(service.secrets, environments, true)
+              }
             : {
                   slug: "",
                   name: "",
@@ -133,6 +185,8 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
                   openApiPath: "",
                   image: { repository: "" },
                   env: [],
+                  configMap: [],
+                  secrets: [],
                   codeRepository: hasRepositories
                       ? {
                             enabled: Boolean(initialTemplate),
@@ -160,7 +214,13 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
 
     const onSubmit = async (data: FormValues) => {
         // Blank: the service is in no domain
-        const dto = { ...data, domainId: data.domainId || null, port: Number(data.port) } as unknown as ServiceDTO
+        const dto = {
+            ...data,
+            domainId: data.domainId || null,
+            port: Number(data.port),
+            configMap: fromFormVariables(data.configMap, environments),
+            secrets: fromFormVariables(data.secrets, environments)
+        } as unknown as ServiceDTO
         const template = data.template || undefined
 
         if (!isEdit && template && dto.codeRepository) {
@@ -266,6 +326,10 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
 
                 <ServiceEnvFields />
 
+                <ServiceVariablesFields kind="configMap" environments={environments} />
+
+                <ServiceVariablesFields kind="secrets" environments={environments} />
+
                 <Card>
                     <CardHeader>
                         <CardTitle className="mb-0">{t("services.context.title")}</CardTitle>
@@ -333,9 +397,12 @@ const AddServicePage: React.FC = () => {
         enabled: isEdit
     })
 
+    // Before the form mounts: its default values hold one config map and secret value per environment
+    const environmentsQuery = useProjectEnvironmentsQuery()
+
     return (
-        <ApiStatusHandler queries={[repositoriesQuery, serviceQuery]} interceptEmpty={false}>
-            <AddServiceForm repositories={repositoriesQuery.data ?? []} service={serviceQuery.data} />
+        <ApiStatusHandler queries={[repositoriesQuery, serviceQuery, environmentsQuery]} interceptEmpty={false}>
+            <AddServiceForm repositories={repositoriesQuery.data ?? []} environments={environmentsQuery.data ?? []} service={serviceQuery.data} />
         </ApiStatusHandler>
     )
 }

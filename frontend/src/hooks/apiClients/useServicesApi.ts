@@ -17,6 +17,13 @@ export interface ServiceEnvVariable {
     description?: string
 }
 
+/** A key of the config map or of the secrets with its value per environment; an environment left out leaves it unset there */
+export interface ServiceVariable {
+    key: string
+    /** For the secrets, the API sends a placeholder in place of every value, and sending it back keeps the stored one */
+    values: { environmentId: string; value: string }[]
+}
+
 /** Same shape as the microfrontend repository link: the backend reuses the subdocument. */
 export type ServiceCodeRepository = Microfrontend["codeRepository"]
 
@@ -54,6 +61,8 @@ export interface Service {
     /** The OpenAPI spec; blank or null when the service has none */
     openApiPath?: string | null
     env: ServiceEnvVariable[]
+    configMap?: ServiceVariable[]
+    secrets?: ServiceVariable[]
     createdAt?: Date
     updatedAt?: Date
 }

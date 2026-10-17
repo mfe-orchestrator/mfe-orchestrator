@@ -1869,6 +1869,26 @@
             "required": "Obbligatoria",
             "secret": "Segreta"
         },
+        "config_map": {
+            "title": "Config map",
+            "description": "Valori non sensibili che il servizio riceve come variabili d'ambiente, uno per ambiente. Visibili a chiunque veda il servizio.",
+            "add": "Aggiungi chiave",
+            "empty": "Nessuna chiave nella config map."
+        },
+        "secrets": {
+            "title": "Secrets",
+            "description": "Valori sensibili che il servizio riceve come variabili d'ambiente, uno per ambiente. Cifrati a riposo e mai più mostrati dopo il salvataggio.",
+            "add": "Aggiungi secret",
+            "empty": "Nessun secret.",
+            "set": "Impostato",
+            "key_locked": "Per rinominare un secret salvato, rimuovilo e aggiungilo di nuovo."
+        },
+        "variables": {
+            "key": "Chiave",
+            "not_set": "Non impostato",
+            "key_invalid": "Solo lettere, cifre e underscore, senza iniziare con una cifra",
+            "key_duplicated": "Questa chiave è già usata nella config map o nei secrets"
+        },
         "context": {
             "title": "Contesto per l'AI",
             "subtitle": "Note in markdown per gli agenti AI che lavorano su questo servizio",

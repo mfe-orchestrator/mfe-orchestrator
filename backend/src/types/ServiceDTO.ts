@@ -8,6 +8,12 @@ export interface ServiceEnvVariableDTO {
     description?: string
 }
 
+/** A key of the config map or of the secrets with its value per environment; a blank value leaves it unset there */
+export interface ServiceVariableDTO {
+    key: string
+    values?: Array<{ environmentId: string; value?: string }>
+}
+
 interface ServiceDTO {
     id?: string
     name: string
@@ -34,6 +40,9 @@ interface ServiceDTO {
     /** The OpenAPI spec; blank or null when the service has none */
     openApiPath?: string | null
     env?: ServiceEnvVariableDTO[]
+    configMap?: ServiceVariableDTO[]
+    /** A value sent as the placeholder the API answers with keeps the stored one */
+    secrets?: ServiceVariableDTO[]
     createdAt?: Date
     updatedAt?: Date
 }

@@ -1,7 +1,9 @@
 import { Types } from "mongoose"
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { transformDocument } from "../utils/encryptedFieldsPlugin"
+import { decryptSecret, encryptSecret, isEncryptedSecret, resetSecretEncryptionKeyCache, SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BuiltService from "./BuiltServiceModel"
-import Service from "./ServiceModel"
+import Service, { SERVICE_SECRET_PATHS } from "./ServiceModel"
 
 const aService = () => new Service({ projectId: new Types.ObjectId(), slug: "  Orders-API ", name: "Orders API" })
 
@@ -73,6 +75,77 @@ describe("Service model", () => {
         const service = new Service({ slug: "orders", name: "Orders" })
 
         await expect(service.validate()).rejects.toMatchObject({ errors: { projectId: expect.anything() } })
+    })
+
+    it("given a service with no variables, when it is built, then its config map and secrets are empty", () => {
+        expect(aService().configMap).toEqual([])
+        expect(aService().secrets).toEqual([])
+    })
+
+    it.each([["configMap"], ["secrets"]])("given a %s key starting with a digit, when it is validated, then it is refused", async field => {
+        const service = new Service({ projectId: new Types.ObjectId(), slug: "orders", name: "Orders", [field]: [{ key: "1_URL", values: [] }] })
+
+        await expect(service.validate()).rejects.toMatchObject({ errors: { [`${field}.0.key`]: expect.anything() } })
+    })
+
+    it("given a service with a config map and secrets, when it is serialised, then the config map is sent and every secret value is the placeholder", () => {
+        const environmentId = new Types.ObjectId()
+        const service = new Service({
+            projectId: new Types.ObjectId(),
+            slug: "orders",
+            name: "Orders",
+            configMap: [{ key: "LOG_LEVEL", values: [{ environmentId, value: "debug" }] }],
+            secrets: [{ key: "DATABASE_PASSWORD", values: [{ environmentId, value: "hunter2" }] }]
+        })
+
+        const json = JSON.parse(JSON.stringify(service))
+
+        expect(json.configMap).toEqual([{ key: "LOG_LEVEL", values: [{ environmentId: String(environmentId), value: "debug" }] }])
+        expect(json.secrets).toEqual([{ key: "DATABASE_PASSWORD", values: [{ environmentId: String(environmentId), value: SECRET_PLACEHOLDER }] }])
+        expect(service.secrets[0].values[0].value).toBe("hunter2")
+    })
+
+    describe("with a key configured", () => {
+        const originalKey = process.env.SECRETS_ENCRYPTION_KEY
+
+        beforeEach(() => {
+            process.env.SECRETS_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64")
+            resetSecretEncryptionKeyCache()
+        })
+
+        afterEach(() => {
+            if (originalKey === undefined) delete process.env.SECRETS_ENCRYPTION_KEY
+            else process.env.SECRETS_ENCRYPTION_KEY = originalKey
+            resetSecretEncryptionKeyCache()
+        })
+
+        it("given secrets in two environments, when they are encrypted and decrypted, then every value goes through it and the config map does not", () => {
+            const options = { model: "Service", paths: SERVICE_SECRET_PATHS }
+            const service = new Service({
+                projectId: new Types.ObjectId(),
+                slug: "orders",
+                name: "Orders",
+                configMap: [{ key: "LOG_LEVEL", values: [{ environmentId: new Types.ObjectId(), value: "debug" }] }],
+                secrets: [
+                    {
+                        key: "API_TOKEN",
+                        values: [
+                            { environmentId: new Types.ObjectId(), value: "dev-token" },
+                            { environmentId: new Types.ObjectId(), value: "prod-token" }
+                        ]
+                    }
+                ]
+            })
+
+            transformDocument(service, options, encryptSecret)
+
+            expect(service.secrets[0].values.every(({ value }) => isEncryptedSecret(value))).toBe(true)
+            expect(service.configMap[0].values[0].value).toBe("debug")
+
+            transformDocument(service, options, decryptSecret)
+
+            expect(service.secrets[0].values.map(({ value }) => value)).toEqual(["dev-token", "prod-token"])
+        })
     })
 
     it("declares the slug unique inside its project", () => {

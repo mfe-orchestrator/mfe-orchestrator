@@ -33,12 +33,14 @@ import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Domain from "../models/DomainModel"
+import Environment from "../models/EnvironmentModel"
 import Project from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
 import ServiceDTO from "../types/ServiceDTO"
 import { ServiceRuntime } from "../types/ServiceStack"
-import ServiceService, { imageRepositoryOf, isNewerVersion } from "./ServiceService"
+import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
+import ServiceService, { imageRepositoryOf, isNewerVersion, normalizeVariables } from "./ServiceService"
 
 const projectId = new Types.ObjectId().toString()
 const serviceId = new Types.ObjectId()
@@ -361,6 +363,137 @@ describe("ServiceService.update", () => {
         await new ServiceService().update(String(serviceId), { name: "Orders", domainId: "" } as ServiceDTO)
 
         expect(write.mock.calls[0][1]).toEqual({ name: "Orders", domainId: null })
+    })
+})
+
+describe("ServiceService.update of the config map and the secrets", () => {
+    const development = new Types.ObjectId().toString()
+    const production = new Types.ObjectId().toString()
+    const service = {
+        _id: serviceId,
+        projectId,
+        slug: "orders-api",
+        name: "Orders API",
+        configMap: [{ key: "LOG_LEVEL", values: [{ environmentId: development, value: "debug" }] }],
+        secrets: [{ key: "DATABASE_PASSWORD", values: [{ environmentId: production, value: "stored-password" }] }]
+    }
+    let write: ReturnType<typeof vi.fn>
+    let environments: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+        vi.spyOn(Service, "findById").mockResolvedValue(service as never)
+        vi.spyOn(ServiceService.prototype as unknown as { ensureAccessToService: () => Promise<void> }, "ensureAccessToService").mockResolvedValue(undefined)
+        environments = vi.spyOn(Environment, "find").mockResolvedValue([{ _id: development }, { _id: production }] as never) as unknown as ReturnType<typeof vi.fn>
+        write = vi.spyOn(Service, "findByIdAndUpdate").mockResolvedValue(service as never) as unknown as ReturnType<typeof vi.fn>
+    })
+
+    const update = (changes: Partial<ServiceDTO>) => new ServiceService().update(String(serviceId), { name: "Orders API", ...changes } as ServiceDTO)
+
+    it("given an update with neither list, when the service is updated, then no environment is read and neither list is written", async () => {
+        await update({})
+
+        expect(environments).not.toHaveBeenCalled()
+        expect(write.mock.calls[0][1]).toEqual({ name: "Orders API" })
+    })
+
+    it("given the secret sent back as the placeholder, when the service is updated, then the stored value is kept and a retyped one replaces it", async () => {
+        await update({
+            secrets: [
+                {
+                    key: "DATABASE_PASSWORD",
+                    values: [
+                        { environmentId: production, value: SECRET_PLACEHOLDER },
+                        { environmentId: development, value: "new-dev-password" }
+                    ]
+                }
+            ]
+        })
+
+        expect(environments).toHaveBeenCalledWith({ projectId }, { _id: 1 })
+        expect(write.mock.calls[0][1].secrets).toEqual([
+            {
+                key: "DATABASE_PASSWORD",
+                values: [
+                    { environmentId: production, value: "stored-password" },
+                    { environmentId: development, value: "new-dev-password" }
+                ]
+            }
+        ])
+    })
+
+    it("given a renamed secret sent back as the placeholder, when the service is updated, then it is refused and nothing is written", async () => {
+        const refusal = update({ secrets: [{ key: "DB_PASSWORD", values: [{ environmentId: production, value: SECRET_PLACEHOLDER }] }] })
+
+        await expect(refusal).rejects.toMatchObject({ code: "SERVICE_SECRET_VALUE_REQUIRED" })
+        expect(write).not.toHaveBeenCalled()
+    })
+
+    it("given a config map key the stored secrets already have, when only the config map is updated, then it is refused", async () => {
+        const refusal = update({ configMap: [{ key: "DATABASE_PASSWORD", values: [] }] })
+
+        await expect(refusal).rejects.toMatchObject({ code: "SERVICE_VARIABLE_KEY_DUPLICATED" })
+        expect(write).not.toHaveBeenCalled()
+    })
+
+    it("given a value for an environment of another project, when the service is updated, then it is refused", async () => {
+        const refusal = update({ configMap: [{ key: "LOG_LEVEL", values: [{ environmentId: new Types.ObjectId().toString(), value: "info" }] }] })
+
+        await expect(refusal).rejects.toMatchObject({ code: "SERVICE_VARIABLE_ENVIRONMENT_UNKNOWN" })
+        expect(write).not.toHaveBeenCalled()
+    })
+})
+
+describe("normalizeVariables", () => {
+    const environment = new Types.ObjectId().toString()
+    const environments = new Set([environment])
+
+    it("given blank values and a padded key, when the list is normalised, then the key is trimmed and the environments without a value are left out", () => {
+        expect(normalizeVariables([{ key: " LOG_LEVEL ", values: [{ environmentId: environment, value: "" }] }], "configMap", environments)).toEqual([{ key: "LOG_LEVEL", values: [] }])
+    })
+
+    it("given the placeholder in the config map, when the list is normalised, then it is an ordinary value", () => {
+        expect(normalizeVariables([{ key: "BANNER", values: [{ environmentId: environment, value: SECRET_PLACEHOLDER }] }], "configMap", environments)).toEqual([
+            { key: "BANNER", values: [{ environmentId: environment, value: SECRET_PLACEHOLDER }] }
+        ])
+    })
+
+    it.each([
+        ["an invalid key", [{ key: "my-key", values: [] }], "SERVICE_VARIABLE_KEY_INVALID"],
+        [
+            "a key used twice",
+            [
+                { key: "A", values: [] },
+                { key: "A", values: [] }
+            ],
+            "SERVICE_VARIABLE_KEY_DUPLICATED"
+        ],
+        [
+            "two values for one environment",
+            [
+                {
+                    key: "A",
+                    values: [
+                        { environmentId: environment, value: "1" },
+                        { environmentId: environment, value: "2" }
+                    ]
+                }
+            ],
+            "SERVICE_VARIABLE_ENVIRONMENT_DUPLICATED"
+        ],
+        ["a value too long", [{ key: "A", values: [{ environmentId: environment, value: "x".repeat(32 * 1024 + 1) }] }], "SERVICE_VARIABLE_VALUE_TOO_LONG"],
+        ["something that is not a list", { key: "A" }, "SERVICE_VARIABLES_INVALID"]
+    ])("given %s, when the list is normalised, then it is refused", (_case, variables, code) => {
+        expect(() => normalizeVariables(variables, "configMap", environments)).toThrow(expect.objectContaining({ code }))
+    })
+
+    it("given a null value, when the list is normalised, then it is skipped rather than crashing", () => {
+        expect(normalizeVariables([{ key: "A", values: [null] }], "configMap", environments)).toEqual([{ key: "A", values: [] }])
+    })
+
+    it("given a secret that looks like a ciphertext, when the list is normalised, then it is refused", () => {
+        const refusal = () => normalizeVariables([{ key: "A", values: [{ environmentId: environment, value: "enc:v1:a:b:c" }] }], "secrets", environments)
+
+        expect(refusal).toThrow(expect.objectContaining({ code: "SERVICE_VARIABLE_VALUE_INVALID" }))
     })
 })
 

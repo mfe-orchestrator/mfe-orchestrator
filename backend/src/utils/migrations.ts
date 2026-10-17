@@ -4,6 +4,7 @@ import AssistantConversation from "../models/AssistantConversationModel"
 import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepositoryModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
+import Service from "../models/ServiceModel"
 import Storage, { STORAGE_SECRET_PATHS } from "../models/StorageModel"
 import { migrateProjectsToOrganizations } from "./organizationMigration"
 import { isSecretEncryptionEnabled } from "./secretCrypto"
@@ -87,7 +88,7 @@ const NOT_ENCRYPTED = { $exists: true, $not: /^enc:v1:/ }
 const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> => {
     if (!isSecretEncryptionEnabled()) return
 
-    // The three models have nothing in common but the re-save, so they are walked through the loosest
+    // The models have nothing in common but the re-save, so they are walked through the loosest
     // shape that still gives back documents to save.
     type SecretHolder = Model<Record<string, unknown>>
     type SecretFilter = QueryFilter<Record<string, unknown>>
@@ -100,7 +101,9 @@ const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> =>
         // $elemMatch so both halves of the criterion have to be met by the same storage of the
         // snapshot: spelled out as a dotted path, a snapshot holding one already encrypted credential
         // beside a plaintext one would satisfy neither half on the element that still needs rewriting.
-        ["deployment", Deployment as unknown as SecretHolder, { storages: { $elemMatch: anyPlaintextIn(STORAGE_SECRET_PATHS) } } as SecretFilter]
+        ["deployment", Deployment as unknown as SecretHolder, { storages: { $elemMatch: anyPlaintextIn(STORAGE_SECRET_PATHS) } } as SecretFilter],
+        // Nested $elemMatch for the same reason, one level deeper: a secret holds a value per environment.
+        ["service", Service as unknown as SecretHolder, { secrets: { $elemMatch: { values: { $elemMatch: { value: NOT_ENCRYPTED } } } } } as SecretFilter]
     ]
 
     for (const [label, model, filter] of collections) {

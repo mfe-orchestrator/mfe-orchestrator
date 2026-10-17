@@ -1850,6 +1850,26 @@
             "required": "Required",
             "secret": "Secret"
         },
+        "config_map": {
+            "title": "Config map",
+            "description": "Non-sensitive values the service receives as environment variables, one per environment. Visible to anyone who can see the service.",
+            "add": "Add key",
+            "empty": "No keys in the config map."
+        },
+        "secrets": {
+            "title": "Secrets",
+            "description": "Sensitive values the service receives as environment variables, one per environment. Encrypted at rest and never shown again once saved.",
+            "add": "Add secret",
+            "empty": "No secrets.",
+            "set": "Set",
+            "key_locked": "To rename a saved secret, remove it and add it again."
+        },
+        "variables": {
+            "key": "Key",
+            "not_set": "Not set",
+            "key_invalid": "Letters, digits and underscores only, not starting with a digit",
+            "key_duplicated": "This key is already used in the config map or in the secrets"
+        },
         "context": {
             "title": "AI context",
             "subtitle": "Markdown notes for the AI agents working on this service",

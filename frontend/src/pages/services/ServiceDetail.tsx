@@ -13,7 +13,9 @@ import useToastNotificationStore from "@/store/useToastNotificationStore"
 import RepositoryLink from "./partials/RepositoryLink"
 import ServiceBuildDialog from "./partials/ServiceBuildDialog"
 import ServiceHeader, { isServiceAiAvailable } from "./partials/ServiceHeader"
+import ServiceVariablesTable from "./partials/ServiceVariablesTable"
 import ServiceVersionsTable from "./partials/ServiceVersionsTable"
+import { useProjectEnvironmentsQuery } from "./partials/serviceVariables"
 
 /** A path of the service, as declared: no URL is made up from it, the host depends on where the service runs */
 const ServicePath: React.FC<{ path?: string | null }> = ({ path }) => {
@@ -154,6 +156,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
 
     const serviceQuery = useQuery({ queryKey: ["service", id], queryFn: () => servicesApi.getSingle(id!), enabled: !!id })
     const versionsQuery = useQuery({ queryKey: ["service-versions", id], queryFn: () => servicesApi.getVersions(id!), enabled: !!id && view === "overview" })
+    const environmentsQuery = useProjectEnvironmentsQuery()
 
     const service = serviceQuery.data
     const hasRepository = Boolean(service?.codeRepository?.enabled)
@@ -161,7 +164,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
     if (view === "ai") return <ServiceAiSection serviceQuery={serviceQuery} />
 
     return (
-        <ApiStatusHandler queries={[serviceQuery, versionsQuery]} interceptEmpty={false}>
+        <ApiStatusHandler queries={[serviceQuery, versionsQuery, environmentsQuery]} interceptEmpty={false}>
             {service && (
                 <div className="flex min-h-full flex-col gap-6">
                     <ServiceHeader
@@ -180,6 +183,8 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
                     <ServiceRepositorySection service={service} />
                     <ServiceVersionsTable versions={versionsQuery.data ?? []} />
                     <ServiceConfigurationSection service={service} />
+                    <ServiceVariablesTable kind="configMap" variables={service.configMap} environments={environmentsQuery.data ?? []} />
+                    <ServiceVariablesTable kind="secrets" variables={service.secrets} environments={environmentsQuery.data ?? []} />
                     {hasRepository && (
                         <ServiceBuildDialog
                             open={buildOpen}
