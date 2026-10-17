@@ -505,6 +505,14 @@
             "mfeOrchestratorHub": "MFE Orchestrator Hub",
             "customSource": "Custom Source"
         },
+        "backendLinks": {
+            "microfrontendsColumn": "Microfrontends",
+            "servicesColumn": "Backend services",
+            "hint": "Drag from a microfrontend’s dot to a service to link them. Select a link and press Delete to remove it.",
+            "noServicesTitle": "No backend services",
+            "noServicesDescription": "Create a backend service to link it to your microfrontends.",
+            "createService": "Create a service"
+        },
         "dashboard": {
             "title": "Microfrontends",
             "description": "Manage your project's microfrontends",
@@ -516,6 +524,7 @@
             "viewFlow": "Diagram view",
             "viewGrid": "Grid view",
             "viewTable": "Table view",
+            "viewBackend": "Backend links view",
             "clearSearch": "Clear search",
             "noResultsTitle": "No results",
             "noResultsDescription": "No microfrontend matches “{{searchTerm}}”. Try a different search term.",

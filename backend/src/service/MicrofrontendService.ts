@@ -15,6 +15,7 @@ import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
+import Service from "../models/ServiceModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
@@ -338,6 +339,33 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         return await remote.save()
+    }
+
+    /** Links a backend service the microfrontend calls: both must belong to the same project. */
+    async linkService(microfrontendId: string, serviceId: string): Promise<IMicrofrontend> {
+        const microfrontend = await this.getById(microfrontendId)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendId)
+        }
+        const service = await Service.findById(toObjectId(serviceId))
+        if (!service || service.projectId.toString() !== microfrontend.projectId.toString()) {
+            throw new EntityNotFoundError(serviceId)
+        }
+
+        if (!microfrontend.serviceIds?.some(id => id.toString() === service._id.toString())) {
+            microfrontend.serviceIds = [...(microfrontend.serviceIds ?? []), service._id]
+        }
+        return await microfrontend.save()
+    }
+
+    /** No check on the service: a link to a service deleted since must still be removable. */
+    async unlinkService(microfrontendId: string, serviceId: string): Promise<IMicrofrontend> {
+        const microfrontend = await this.getById(microfrontendId)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendId)
+        }
+        microfrontend.serviceIds = (microfrontend.serviceIds ?? []).filter(id => id.toString() !== serviceId)
+        return await microfrontend.save()
     }
 
     async setPosition(id: string, x: number, y: number): Promise<IMicrofrontend> {

@@ -602,6 +602,14 @@
             "mfeOrchestratorHub": "MFE Orchestrator Hub",
             "customSource": "Sorgente Personalizzata"
         },
+        "backendLinks": {
+            "microfrontendsColumn": "Microfrontend",
+            "servicesColumn": "Servizi backend",
+            "hint": "Trascina dal pallino di un microfrontend a un servizio per collegarli. Seleziona un collegamento e premi Canc per rimuoverlo.",
+            "noServicesTitle": "Nessun servizio backend",
+            "noServicesDescription": "Crea un servizio backend per poterlo collegare ai microfrontend.",
+            "createService": "Crea un servizio"
+        },
         "dashboard": {
             "title": "Microfrontend",
             "description": "Gestisci i microfrontend del tuo progetto",
@@ -613,6 +621,7 @@
             "viewFlow": "Vista diagramma",
             "viewGrid": "Vista griglia",
             "viewTable": "Vista tabella",
+            "viewBackend": "Vista collegamenti ai backend",
             "clearSearch": "Cancella la ricerca",
             "noResultsTitle": "Nessun risultato",
             "noResultsDescription": "Nessun microfrontend corrisponde a «{{searchTerm}}». Prova con un altro termine di ricerca.",

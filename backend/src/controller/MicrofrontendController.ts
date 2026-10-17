@@ -111,6 +111,24 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         return reply.send(await new MicrofrontendService(request.databaseUser).deleteRelation(request.body.host, request.body.remote))
     })
 
+    fastify.put<{
+        Params: {
+            id: string
+            serviceId: string
+        }
+    }>("/microfrontends/:id/services/:serviceId", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).linkService(request.params.id, request.params.serviceId))
+    })
+
+    fastify.delete<{
+        Params: {
+            id: string
+            serviceId: string
+        }
+    }>("/microfrontends/:id/services/:serviceId", async (request, reply) => {
+        return reply.send(await new MicrofrontendService(request.databaseUser).unlinkService(request.params.id, request.params.serviceId))
+    })
+
     fastify.post<{
         Params: {
             id: string

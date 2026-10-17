@@ -1,6 +1,6 @@
 import { SearchInput, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { CirclePlus, DownloadCloud, LayoutGrid, StretchHorizontal, Workflow } from "lucide-react"
+import { CirclePlus, DownloadCloud, LayoutGrid, Server, StretchHorizontal, Workflow } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -11,12 +11,13 @@ import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useProjectStore from "@/store/useProjectStore"
 import { ImportRepositoriesDialog, MicrofrontendsEmptyState } from "./partials/components"
-import { MicrofrontendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
+import { MicrofrontendFlow, MicrofrontendsBackendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
 
 const VIEWS = [
     { value: "flow", icon: Workflow, labelKey: "microfrontend.dashboard.viewFlow" },
     { value: "grid", icon: LayoutGrid, labelKey: "microfrontend.dashboard.viewGrid" },
-    { value: "table", icon: StretchHorizontal, labelKey: "microfrontend.dashboard.viewTable" }
+    { value: "table", icon: StretchHorizontal, labelKey: "microfrontend.dashboard.viewTable" },
+    { value: "backend", icon: Server, labelKey: "microfrontend.dashboard.viewBackend" }
 ] as const
 
 type View = (typeof VIEWS)[number]["value"]
@@ -173,6 +174,9 @@ const Microfrontends = () => {
                             </TabsContent>
                             <TabsContent value="table" className="mt-0">
                                 <MicrofrontendsTable microfrontends={microfrontendsList} />
+                            </TabsContent>
+                            <TabsContent value="backend" className="mt-0">
+                                <MicrofrontendsBackendFlow microfrontends={microfrontendsList} />
                             </TabsContent>
                         </>
                     )}

@@ -70,6 +70,8 @@ export interface IMicrofrontend extends Document<ObjectId> {
     updatedAt: Date
 
     parentIds?: ObjectId[]
+    /** Backend services this microfrontend calls, linked by hand from the console */
+    serviceIds?: ObjectId[]
     position?: IPosition
 }
 
@@ -304,6 +306,11 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         parentIds: {
             type: [Schema.Types.ObjectId],
             ref: "Microfrontend",
+            required: false
+        },
+        serviceIds: {
+            type: [Schema.Types.ObjectId],
+            ref: "Service",
             required: false
         },
         path: {

@@ -90,6 +90,8 @@ export interface Microfrontend {
     createdAt?: Date
     updatedAt?: Date
     parentIds?: string[]
+    /** Backend services this microfrontend calls, linked by hand */
+    serviceIds?: string[]
     position?: {
         x: number
         y: number
@@ -195,6 +197,22 @@ const useMicrofrontendsApi = () => {
         return response.data
     }
 
+    const linkService = async (microfrontendId: string, serviceId: string) => {
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/${microfrontendId}/services/${serviceId}`,
+            method: "PUT"
+        })
+        return response.data
+    }
+
+    const unlinkService = async (microfrontendId: string, serviceId: string) => {
+        const response = await apiClient.doRequest({
+            url: `/api/microfrontends/${microfrontendId}/services/${serviceId}`,
+            method: "DELETE"
+        })
+        return response.data
+    }
+
     return {
         getByProjectId,
         create,
@@ -206,7 +224,9 @@ const useMicrofrontendsApi = () => {
         setPosition,
         setDimensions,
         setRelation,
-        removeRelation
+        removeRelation,
+        linkService,
+        unlinkService
     }
 }
 
