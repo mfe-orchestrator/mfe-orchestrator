@@ -94,10 +94,13 @@
   "92": "autorization.test.ts",
   "93": "vitest.config.mts",
   "94": "S3BucketClient",
+  "95": "BaseAuthorizedService.test.ts",
+  "96": "StartupController.test.ts",
   "97": "telemetry.ts",
   "98": "AiChangeService.test.ts",
   "99": "EmailSenderService",
+  "100": "assistantTools.test.ts",
   "101": "docsSearch.ts",
-  "104": "OAuthAuthorizationRequestModel.ts",
+  "102": "AccessProbe",
   "105": ".selectRepositories"
 }

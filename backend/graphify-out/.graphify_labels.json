@@ -48,7 +48,6 @@
   "46": "FederationConfigService",
   "47": "EmailSenderService",
   "48": ".gitHubInjectApiKey",
-  "49": "projectWizardStateMachine.ts",
   "50": "Project",
   "51": "CodeRepositoryModel.ts",
   "52": "ProjectService.ts",
@@ -102,7 +101,5 @@
   "100": "assistantTools.test.ts",
   "101": "docsSearch.ts",
   "102": "AccessProbe",
-  "103": "ConfigurationModel.ts",
-  "104": "OAuthAuthorizationRequestModel.ts",
   "105": ".selectRepositories"
 }
