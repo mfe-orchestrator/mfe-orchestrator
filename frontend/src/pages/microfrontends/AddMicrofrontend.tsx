@@ -13,11 +13,13 @@ import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
 import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, isAiEditAvailable, MicrofrontendHeader, ReleaseSection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import DomainSelectField from "../domains/partials/DomainSelectField"
 import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import { FetchDataTemplateCard } from "../templates-library/partials/"
 
@@ -28,6 +30,7 @@ const formSchema = z
         slug: z.string().min(3).max(50),
         name: z.string().min(3).max(100),
         description: z.string().optional(),
+        domainId: z.string().nullable().optional(),
         context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
         version: z.string().min(1, "Version is required"),
         customVersion: z.string().optional(),
@@ -105,7 +108,7 @@ type FormTab = (typeof FORM_TABS)[number] | "danger"
 const isFormTab = (value: string | null): value is FormTab => Boolean(value && ([...FORM_TABS, "danger"] as string[]).includes(value))
 
 const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
-    general: ["name", "slug", "description"],
+    general: ["name", "slug", "description", "domainId"],
     context: ["context"],
     hosting: ["host"],
     repository: ["codeRepository"],
@@ -131,8 +134,11 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const microfrontendsApi = useMicrofrontendsApi()
+    const { errorMessage: domainErrorMessage } = useDomainsApi()
     const navigate = useNavigate()
     const template = searchParams.get("template")
+    // Opened from a domain page: the microfrontend is created in it, and the page is where we go back
+    const initialDomainId = searchParams.get("domainId")
     // `?tab=` opens a tab straight away.
     const linkedTab = searchParams.get("tab")
     const [activeTab, setActiveTab] = useState<FormTab>(isFormTab(linkedTab) ? linkedTab : "general")
@@ -161,6 +167,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             slug: "",
             name: "",
             description: "",
+            domainId: initialDomainId ?? "",
             context: "",
             version: "1.0.0",
             host: getStandardHost(),
@@ -191,7 +198,9 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const onSubmit = async (data: FormValues) => {
         const dataToSend = {
             ...data,
-            version: data.version === "custom" ? data.customVersion : data.version
+            version: data.version === "custom" ? data.customVersion : data.version,
+            // Blank: the microfrontend is in no domain
+            domainId: data.domainId || null
         } as Microfrontend & { customVersion?: string }
 
         delete dataToSend.customVersion
@@ -207,7 +216,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         }
 
         if (isEdit) {
-            await microfrontendsApi.update(id, dataToSend)
+            await microfrontendsApi.update(id, dataToSend, { customErrorMessage: domainErrorMessage })
             notificationToast.showSuccessNotification({
                 message: t("microfrontend.updated_success_message")
             })
@@ -217,13 +226,13 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                 dataToSend.parentIds = [parentId]
             }
 
-            await microfrontendsApi.create(dataToSend)
+            await microfrontendsApi.create(dataToSend, { customErrorMessage: domainErrorMessage })
             notificationToast.showSuccessNotification({
                 message: t("microfrontend.created_success_message")
             })
         }
 
-        navigate(`/microfrontends`)
+        navigate(!isEdit && initialDomainId ? `/domain/${initialDomainId}` : `/microfrontends`)
     }
 
     const hasRepositories = Boolean(repositories && repositories.length > 0)
@@ -320,6 +329,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                     />
                                 </div>
                                 <TextareaField name="description" label={t("microfrontend.description")} placeholder={t("microfrontend.description_placeholder")} />
+                                <DomainSelectField containerClassName="w-full" />
                             </CardContent>
                         </Card>
                     </TabsContent>

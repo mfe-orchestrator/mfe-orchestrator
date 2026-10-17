@@ -9,6 +9,7 @@ import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useServicesApi from "@/hooks/apiClients/useServicesApi"
 import useProjectStore from "@/store/useProjectStore"
+import { ALL_DOMAINS, DomainFilter, matchesDomain } from "../domains/partials/DomainFilter"
 import { ServicesGrid } from "./partials/ServicesGrid"
 import { ServicesTable } from "./partials/ServicesTable"
 
@@ -25,6 +26,7 @@ const Services = () => {
     const projectId = useProjectStore(state => state.project?._id)
     const servicesApi = useServicesApi()
     const [searchTerm, setSearchTerm] = useState("")
+    const [domainFilter, setDomainFilter] = useState(ALL_DOMAINS)
     const [view, setView] = useState<View>("grid")
 
     const servicesQuery = useQuery({
@@ -35,11 +37,18 @@ const Services = () => {
 
     const filtered = useMemo(() => {
         const term = searchTerm.toLowerCase()
-        return (servicesQuery.data ?? []).filter(service => !term || service.name.toLowerCase().includes(term) || service.slug.toLowerCase().includes(term))
-    }, [servicesQuery.data, searchTerm])
+        return (servicesQuery.data ?? []).filter(
+            service => (!term || service.name.toLowerCase().includes(term) || service.slug.toLowerCase().includes(term)) && matchesDomain(service.domainId, domainFilter)
+        )
+    }, [servicesQuery.data, searchTerm, domainFilter])
 
     const totalCount = servicesQuery.data?.length ?? 0
     const hasServices = totalCount > 0
+    const isFiltered = Boolean(searchTerm) || domainFilter !== ALL_DOMAINS
+    const onResetFilters = () => {
+        setSearchTerm("")
+        setDomainFilter(ALL_DOMAINS)
+    }
     // The form picks the template itself: the library is only one way in
     const onCreate = () => navigate("/service/new")
 
@@ -52,16 +61,19 @@ const Services = () => {
                 left={
                     hasServices ? (
                         <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
-                            <SearchInput
-                                className="max-w-sm"
-                                placeholder={t("services.list.searchPlaceholder")}
-                                value={searchTerm}
-                                onValueChange={setSearchTerm}
-                                onClear={() => setSearchTerm("")}
-                                clearLabel={t("services.list.clearSearch")}
-                            />
+                            <div className="flex flex-wrap items-center gap-2">
+                                <SearchInput
+                                    className="max-w-sm"
+                                    placeholder={t("services.list.searchPlaceholder")}
+                                    value={searchTerm}
+                                    onValueChange={setSearchTerm}
+                                    onClear={() => setSearchTerm("")}
+                                    clearLabel={t("services.list.clearSearch")}
+                                />
+                                <DomainFilter value={domainFilter} onValueChange={setDomainFilter} />
+                            </div>
                             <p className="text-sm text-foreground-secondary" aria-live="polite">
-                                {searchTerm ? t("services.list.filteredCount", { count: filtered.length, total: totalCount }) : t("services.list.totalCount", { count: totalCount })}
+                                {isFiltered ? t("services.list.filteredCount", { count: filtered.length, total: totalCount }) : t("services.list.totalCount", { count: totalCount })}
                             </p>
                         </div>
                     ) : null
@@ -113,10 +125,16 @@ const Services = () => {
                             tone="primary"
                             icon={<SearchX />}
                             title={t("services.list.noResultsTitle")}
-                            description={t("services.list.noResultsDescription", { searchTerm })}
+                            description={
+                                domainFilter === ALL_DOMAINS
+                                    ? t("services.list.noResultsDescription", { searchTerm })
+                                    : searchTerm
+                                      ? t("domains.filter.no_results_search_description", { searchTerm })
+                                      : t("domains.filter.no_results_description")
+                            }
                             actions={
-                                <Button variant="secondary" onClick={() => setSearchTerm("")}>
-                                    {t("services.list.resetSearch")}
+                                <Button variant="secondary" onClick={onResetFilters}>
+                                    {t("domains.filter.reset")}
                                 </Button>
                             }
                         />

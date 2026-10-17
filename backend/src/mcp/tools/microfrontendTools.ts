@@ -66,7 +66,8 @@ const microfrontendFields = {
 }
 
 export const createSchema = z.object(microfrontendFields)
-const updateSchema = z.object({ microfrontendId, ...createSchema.partial().shape })
+// The slug is the microfrontend's identity in the upload URL its CI calls: fixed after creation, as in the console
+const updateSchema = z.object({ microfrontendId, ...createSchema.omit({ slug: true }).partial().shape })
 
 /**
  * References in the input are checked through the services before anything is written: the

@@ -12,6 +12,8 @@ import SelectOrganizationWrapper from "./theme/SelectOrganizationWrapper"
 import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 
 // Lazy load all page components
+const Domains = lazy(() => import("./pages/domains/Domains"))
+const DomainDetail = lazy(() => import("./pages/domains/DomainDetail"))
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"))
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"))
 const MicrofrontendAiWorkspace = lazy(() => import("./pages/microfrontends/MicrofrontendAiWorkspace"))
@@ -109,6 +111,8 @@ const PrivateProjectRoutes: React.FC = () => {
     return (
         <MainLayout>
             <RRDRoutes>
+                <Route path="/domains" element={<RouteWithSuspense element={<Domains />} />} />
+                <Route path="/domain/:id" element={<RouteWithSuspense element={<DomainDetail />} />} />
                 <Route path="/microfrontends" element={<RouteWithSuspense element={<Microfrontends />} />} />
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<MicrofrontendAiWorkspace />} />} />

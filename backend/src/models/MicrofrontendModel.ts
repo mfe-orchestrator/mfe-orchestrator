@@ -60,6 +60,8 @@ export interface IMicrofrontend extends Document<ObjectId> {
     continuousDeployment?: boolean
     path?: string
     projectId: Schema.Types.ObjectId
+    /** The functional domain it belongs to, if any */
+    domainId?: Schema.Types.ObjectId | null
     canary?: ICanaryMicrofrontend
     host: IHostMicrofrontend
     codeRepository?: ICodeRepositoryMicrofrontend
@@ -294,6 +296,11 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             type: Schema.Types.ObjectId,
             ref: "Project",
             required: true
+        },
+        domainId: {
+            type: Schema.Types.ObjectId,
+            ref: "Domain",
+            required: false
         },
         host: {
             type: microfrontendHostTypeSchema,

@@ -528,7 +528,6 @@
             "clearSearch": "Clear search",
             "noResultsTitle": "No results",
             "noResultsDescription": "No microfrontend matches “{{searchTerm}}”. Try a different search term.",
-            "resetFilters": "Clear search",
             "totalCount_one": "{{count}} microfrontend",
             "totalCount_other": "{{count}} microfrontends",
             "filteredCount_one": "{{count}} of {{total}} microfrontends",
@@ -1836,7 +1835,6 @@
             "createFromTemplate": "Create from a template",
             "noResultsTitle": "No results",
             "noResultsDescription": "No service matches \"{{searchTerm}}\".",
-            "resetSearch": "Reset search",
             "open": "Open"
         },
         "env": {
@@ -1902,5 +1900,65 @@
             }
         },
         "nav_ai": "Edit with AI"
+    },
+    "domains": {
+        "sidebar_title": "Domains",
+        "title": "Functional domains",
+        "description": "Group the project's microfrontends and services by functional area",
+        "add_new": "New domain",
+        "empty_title": "No functional domains",
+        "empty_description": "Create a domain to group the microfrontends and services that work on the same functional area.",
+        "frontend_count_one": "{{count}} microfrontend",
+        "frontend_count_other": "{{count}} microfrontends",
+        "backend_count_one": "{{count}} service",
+        "backend_count_other": "{{count}} services",
+        "open": "Open",
+        "delete_title": "Delete domain",
+        "delete_description": "Delete the domain “{{name}}”? Its microfrontends and services stay, without a domain.",
+        "created_success_message": "Domain created",
+        "updated_success_message": "Domain updated",
+        "no_domain": "No domain",
+        "form": {
+            "create_title": "New functional domain",
+            "edit_title": "Edit functional domain",
+            "description": "A domain groups the microfrontends and services of the same functional area.",
+            "name": "Name",
+            "name_placeholder": "E.g. Payments",
+            "name_required": "The name is required",
+            "description_label": "Description",
+            "description_placeholder": "What this domain is about"
+        },
+        "filter": {
+            "label": "Filter by domain",
+            "all": "All domains",
+            "no_results_description": "Nothing matches the selected domain.",
+            "reset": "Reset filters",
+            "no_results_search_description": "Nothing in the selected domain matches “{{searchTerm}}”."
+        },
+        "field": {
+            "label": "Domain",
+            "hint": "The functional domain it belongs to. Optional.",
+            "clear": "Remove from the domain",
+            "no_options": "No domains in the project"
+        },
+        "detail": {
+            "description": "Microfrontends and services of this domain",
+            "back": "All domains",
+            "frontend_title": "Frontend",
+            "frontend_description": "The microfrontends of this domain",
+            "frontend_empty": "No microfrontends in this domain.",
+            "add_microfrontend": "Add microfrontend",
+            "backend_title": "Backend",
+            "backend_description": "The services of this domain",
+            "backend_empty": "No services in this domain.",
+            "add_service": "Add service"
+        },
+        "errors": {
+            "slug_taken": "A domain with this name already exists in the project",
+            "slug_invalid": "The name must contain at least one letter or digit",
+            "name_required": "The domain name is required",
+            "invalid": "The domain data is not valid",
+            "not_found": "The selected domain no longer exists in this project"
+        }
     }
 }

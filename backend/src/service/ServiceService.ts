@@ -12,6 +12,7 @@ import ServiceDTO, { ServiceVersionRegistrationDTO } from "../types/ServiceDTO"
 import { isServiceTemplateType, parseRuntime, SERVICE_SLUG, SERVICE_VERSION } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import { resolveDomainId } from "./DomainService"
 import MarketService from "./MarketService"
 import TemplateScaffoldService, { placeholderDomain } from "./TemplateScaffoldService"
 import { forgetServices } from "./workspace/workspaceCleanup"
@@ -121,6 +122,9 @@ export class ServiceService extends BaseAuthorizedService {
         const slug = (dto.slug ?? "").trim().toLowerCase()
         ensureValidSlug(slug)
         const { id: _id, ...service } = { ...dto, slug }
+        if (service.domainId !== undefined) {
+            service.domainId = await resolveDomainId(service.domainId, projectIdObj)
+        }
 
         // Both before the repository is created: a refused save would leave an orphan repository behind
         if (await Service.exists({ slug, projectId: projectIdObj })) {
@@ -191,6 +195,9 @@ export class ServiceService extends BaseAuthorizedService {
         // Never moved to another project, nor given another identity, through an update: the slug is
         // in the registration URL the CI of the repository calls
         const { id: _id, _id: _mongoId, projectId: _projectId, slug: _slug, ...allowed } = updates as Partial<ServiceDTO> & { _id?: unknown; projectId?: unknown }
+        if (allowed.domainId !== undefined) {
+            allowed.domainId = await resolveDomainId(allowed.domainId, service.projectId)
+        }
         if (allowed.codeRepository) {
             allowed.codeRepository = { ...allowed.codeRepository, createData: undefined }
             if (allowed.codeRepository.enabled || allowed.codeRepository.codeRepositoryId) {

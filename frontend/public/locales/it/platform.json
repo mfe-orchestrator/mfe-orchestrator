@@ -625,7 +625,6 @@
             "clearSearch": "Cancella la ricerca",
             "noResultsTitle": "Nessun risultato",
             "noResultsDescription": "Nessun microfrontend corrisponde a «{{searchTerm}}». Prova con un altro termine di ricerca.",
-            "resetFilters": "Azzera la ricerca",
             "totalCount_one": "{{count}} microfrontend",
             "totalCount_other": "{{count}} microfrontend",
             "filteredCount_one": "{{count}} di {{total}} microfrontend",
@@ -1855,7 +1854,6 @@
             "createFromTemplate": "Crea da un template",
             "noResultsTitle": "Nessun risultato",
             "noResultsDescription": "Nessun servizio corrisponde a «{{searchTerm}}».",
-            "resetSearch": "Azzera la ricerca",
             "open": "Apri"
         },
         "env": {
@@ -1921,5 +1919,65 @@
             }
         },
         "nav_ai": "Modifica con AI"
+    },
+    "domains": {
+        "sidebar_title": "Domini",
+        "title": "Domini funzionali",
+        "description": "Raggruppa microfrontend e servizi del progetto per area funzionale",
+        "add_new": "Nuovo dominio",
+        "empty_title": "Nessun dominio funzionale",
+        "empty_description": "Crea un dominio per raggruppare i microfrontend e i servizi che lavorano sulla stessa area funzionale.",
+        "frontend_count_one": "{{count}} microfrontend",
+        "frontend_count_other": "{{count}} microfrontend",
+        "backend_count_one": "{{count}} servizio",
+        "backend_count_other": "{{count}} servizi",
+        "open": "Apri",
+        "delete_title": "Elimina dominio",
+        "delete_description": "Eliminare il dominio «{{name}}»? I suoi microfrontend e servizi restano, senza dominio.",
+        "created_success_message": "Dominio creato",
+        "updated_success_message": "Dominio aggiornato",
+        "no_domain": "Senza dominio",
+        "form": {
+            "create_title": "Nuovo dominio funzionale",
+            "edit_title": "Modifica dominio funzionale",
+            "description": "Un dominio raggruppa microfrontend e servizi della stessa area funzionale.",
+            "name": "Nome",
+            "name_placeholder": "Es. Pagamenti",
+            "name_required": "Il nome è obbligatorio",
+            "description_label": "Descrizione",
+            "description_placeholder": "Di cosa si occupa questo dominio"
+        },
+        "filter": {
+            "label": "Filtra per dominio",
+            "all": "Tutti i domini",
+            "no_results_description": "Nessun elemento corrisponde al dominio selezionato.",
+            "reset": "Azzera i filtri",
+            "no_results_search_description": "Nessun elemento del dominio selezionato corrisponde a «{{searchTerm}}»."
+        },
+        "field": {
+            "label": "Dominio",
+            "hint": "Il dominio funzionale a cui appartiene. Facoltativo.",
+            "clear": "Rimuovi dal dominio",
+            "no_options": "Nessun dominio nel progetto"
+        },
+        "detail": {
+            "description": "Microfrontend e servizi di questo dominio",
+            "back": "Tutti i domini",
+            "frontend_title": "Frontend",
+            "frontend_description": "I microfrontend di questo dominio",
+            "frontend_empty": "Nessun microfrontend in questo dominio.",
+            "add_microfrontend": "Aggiungi microfrontend",
+            "backend_title": "Backend",
+            "backend_description": "I servizi di questo dominio",
+            "backend_empty": "Nessun servizio in questo dominio.",
+            "add_service": "Aggiungi servizio"
+        },
+        "errors": {
+            "slug_taken": "Esiste già un dominio con questo nome nel progetto",
+            "slug_invalid": "Il nome deve contenere almeno una lettera o una cifra",
+            "name_required": "Il nome del dominio è obbligatorio",
+            "invalid": "I dati del dominio non sono validi",
+            "not_found": "Il dominio selezionato non esiste più in questo progetto"
+        }
     }
 }

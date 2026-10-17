@@ -1,0 +1,155 @@
+import { isValidObjectId, ObjectId, Schema } from "mongoose"
+import { createBusinessException } from "../errors/BusinessException"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import Domain, { IDomain } from "../models/DomainModel"
+import Microfrontend from "../models/MicrofrontendModel"
+import Service from "../models/ServiceModel"
+import DomainDTO from "../types/DomainDTO"
+import { toObjectId } from "../utils/mongooseUtils"
+import { runInTransaction } from "../utils/runInTransaction"
+import { slugify } from "../utils/slugUtils"
+import BaseAuthorizedService from "./BaseAuthorizedService"
+
+/**
+ * The domain a microfrontend or a service is put in, as it is stored: null when it is taken out of
+ * any. A domain of another project is refused as missing, as a code repository connection is:
+ * membership must never reach across projects.
+ */
+export const resolveDomainId = async (domainId: unknown, projectId: string | Schema.Types.ObjectId): Promise<string | null> => {
+    if (domainId === null || domainId === "") {
+        return null
+    }
+    if (typeof domainId !== "string" || !isValidObjectId(domainId)) {
+        throw createBusinessException({ code: "DOMAIN_INVALID", message: `Invalid domain identifier: ${JSON.stringify(domainId)}` })
+    }
+    if (!(await Domain.exists({ _id: toObjectId(domainId), projectId: toObjectId(projectId) }))) {
+        // A business exception rather than an EntityNotFoundError: the console translates it by its code
+        throw createBusinessException({ code: "DOMAIN_NOT_FOUND", message: `There is no domain ${domainId} in this project`, statusCode: 404 })
+    }
+    return domainId
+}
+
+/** A body field that must be a string when given: anything else is refused with a 400, not a 500 on `.trim()` */
+const ensureOptionalString = (field: string, value: unknown) => {
+    if (value !== undefined && value !== null && typeof value !== "string") {
+        throw createBusinessException({ code: "DOMAIN_INVALID", message: `${field} must be a string` })
+    }
+}
+
+/** What the database refuses, as the caller should see it: a 409 for a taken slug, a 400 for a value out of the schema */
+const toDomainError = (error: unknown, slug?: string): unknown => {
+    if ((error as { code?: number })?.code === 11000) {
+        return createBusinessException({ code: "DOMAIN_SLUG_TAKEN", message: `A domain with slug "${slug}" already exists in this project`, statusCode: 409 })
+    }
+    if ((error as Error)?.name === "ValidationError") {
+        return createBusinessException({ code: "DOMAIN_INVALID", message: (error as Error).message })
+    }
+    return error
+}
+
+const countBy = (members: { domainId?: unknown }[]): Map<string, number> => {
+    const counts = new Map<string, number>()
+    for (const member of members) {
+        const key = String(member.domainId)
+        counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    return counts
+}
+
+export class DomainService extends BaseAuthorizedService {
+    async getById(id: string | ObjectId): Promise<IDomain | null> {
+        const domain = await Domain.findById(toObjectId(id))
+        if (!domain) {
+            return null
+        }
+        await this.ensureAccessToProject(domain.projectId)
+        return domain
+    }
+
+    /** The domains of the project, each with how many microfrontends and services it groups */
+    async getByProjectId(projectId: string | Schema.Types.ObjectId) {
+        const projectIdObj = toObjectId(projectId)
+        await this.ensureAccessToProject(projectIdObj)
+        const [domains, microfrontends, services] = await Promise.all([
+            Domain.find({ projectId: projectIdObj }).sort({ name: 1 }),
+            Microfrontend.find({ projectId: projectIdObj, domainId: { $ne: null } }, { domainId: 1 }),
+            Service.find({ projectId: projectIdObj, domainId: { $ne: null } }, { domainId: 1 })
+        ])
+        const microfrontendCounts = countBy(microfrontends)
+        const serviceCounts = countBy(services)
+        return domains.map(domain => ({
+            ...domain.toObject(),
+            microfrontendsCount: microfrontendCounts.get(String(domain._id)) ?? 0,
+            servicesCount: serviceCounts.get(String(domain._id)) ?? 0
+        }))
+    }
+
+    async create(dto: DomainDTO, projectId: string | Schema.Types.ObjectId): Promise<IDomain> {
+        const projectIdObj = toObjectId(projectId)
+        await this.ensureAccessToProject(projectIdObj)
+
+        ensureOptionalString("name", dto.name)
+        ensureOptionalString("slug", dto.slug)
+        ensureOptionalString("description", dto.description)
+        const name = (dto.name ?? "").trim()
+        if (!name) {
+            throw createBusinessException({ code: "DOMAIN_NAME_REQUIRED", message: "The domain name is required" })
+        }
+        const slug = slugify(dto.slug?.trim() || name)
+        if (!slug) {
+            throw createBusinessException({ code: "DOMAIN_SLUG_INVALID", message: `"${name}" gives no usable slug: use at least one letter or digit` })
+        }
+        if (await Domain.exists({ slug, projectId: projectIdObj })) {
+            throw createBusinessException({ code: "DOMAIN_SLUG_TAKEN", message: `A domain with slug "${slug}" already exists in this project`, statusCode: 409 })
+        }
+
+        try {
+            return await Domain.create({ name, slug, description: dto.description ?? undefined, projectId: projectIdObj })
+        } catch (error) {
+            // A concurrent create of the same slug passed the check above: the unique index decides
+            throw toDomainError(error, slug)
+        }
+    }
+
+    async update(id: string | ObjectId, updates: DomainDTO): Promise<IDomain | null> {
+        const domain = await this.getById(id)
+        if (!domain) {
+            throw new EntityNotFoundError(String(id))
+        }
+        // Never moved to another project nor given another slug through an update
+        ensureOptionalString("name", updates.name)
+        ensureOptionalString("description", updates.description)
+        const allowed: Partial<DomainDTO> = {}
+        if (updates.name !== undefined && updates.name !== null) {
+            if (!updates.name.trim()) {
+                throw createBusinessException({ code: "DOMAIN_NAME_REQUIRED", message: "The domain name is required" })
+            }
+            allowed.name = updates.name
+        }
+        if (updates.description !== undefined) {
+            allowed.description = updates.description
+        }
+        try {
+            return await Domain.findByIdAndUpdate(domain._id, allowed, { new: true, runValidators: true })
+        } catch (error) {
+            throw toDomainError(error, domain.slug)
+        }
+    }
+
+    /** Deletes the domain only: its microfrontends and services stay, without a domain */
+    async delete(id: string | ObjectId): Promise<IDomain | null> {
+        const domain = await this.getById(id)
+        if (!domain) {
+            throw new EntityNotFoundError(String(id))
+        }
+        return runInTransaction(async session => {
+            const members = { projectId: domain.projectId, domainId: domain._id }
+            // null, as the forms store "no domain": the filters and the counts treat it as a missing domainId
+            await Microfrontend.updateMany(members, { $set: { domainId: null } }, { session })
+            await Service.updateMany(members, { $set: { domainId: null } }, { session })
+            return await Domain.findByIdAndDelete(domain._id, { session })
+        })
+    }
+}
+
+export default DomainService

@@ -1,4 +1,4 @@
-import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, Settings } from "lucide-react"
+import { FileText, Hammer as HammerIcon, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import AssistantPanel from "@/components/assistant/AssistantPanel"
@@ -19,6 +19,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     // Solo voci di progetto: il livello organizzazione vive nell'header, dal suo menu.
     const mainNavItems = [
+        {
+            name: t("domains.sidebar_title"),
+            path: "/domains",
+            icon: <Layers />
+        },
         {
             name: "Microfrontends",
             path: "/microfrontends",

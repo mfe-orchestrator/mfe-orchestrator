@@ -1,4 +1,4 @@
-import useApiClient from "../useApiClient"
+import useApiClient, { IClientRequestMetadataExtended } from "../useApiClient"
 
 export enum HostedOn {
     MFE_ORCHESTRATOR_HUB = "MFE_ORCHESTRATOR_HUB",
@@ -48,6 +48,8 @@ export interface Microfrontend {
     template?: string
     continuousDeployment?: boolean
     projectId?: string
+    /** The functional domain it belongs to; null or missing when it is in none */
+    domainId?: string | null
     canary?: {
         enabled: boolean
         percentage: number
@@ -119,20 +121,22 @@ const useMicrofrontendsApi = () => {
         return response.data
     }
 
-    const create = async (microfrontend: Microfrontend) => {
+    const create = async (microfrontend: Microfrontend, metadata?: IClientRequestMetadataExtended) => {
         const response = await apiClient.doRequest({
             url: `/api/microfrontends`,
             method: "POST",
-            data: microfrontend
+            data: microfrontend,
+            ...metadata
         })
         return response.data
     }
 
-    const update = async (id: string, microfrontend: Microfrontend) => {
+    const update = async (id: string, microfrontend: Microfrontend, metadata?: IClientRequestMetadataExtended) => {
         const response = await apiClient.doRequest({
             url: `/api/microfrontends/${id}`,
             method: "PUT",
-            data: microfrontend
+            data: microfrontend,
+            ...metadata
         })
         return response.data
     }

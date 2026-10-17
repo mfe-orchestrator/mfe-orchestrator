@@ -22,6 +22,7 @@ import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../type
 import { isServiceTemplateType } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import { resolveDomainId } from "./DomainService"
 import MarketService from "./MarketService"
 import TemplateScaffoldService from "./TemplateScaffoldService"
 import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
@@ -46,6 +47,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async create(microfrontend: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+
+        // Before the repository is created: a refused domain would leave an orphan repository behind
+        if (microfrontend.domainId !== undefined) {
+            microfrontend.domainId = await resolveDomainId(microfrontend.domainId, projectIdObj)
+        }
 
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
@@ -111,7 +117,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
 
-        const result = await Microfrontend.findByIdAndUpdate(microfrontendIdObj, updates, { new: true })
+        // Never moved to another project, nor given another identity, through an update: the slug is
+        // in the upload URL the CI of the repository calls, as for a service
+        const { _id: _mongoId, projectId: _projectId, slug: _slug, ...allowed } = updates as Partial<MicrofrontendDTO> & { _id?: unknown; projectId?: unknown }
+        if (allowed.domainId !== undefined) {
+            allowed.domainId = await resolveDomainId(allowed.domainId, microfrontend.projectId)
+        }
+
+        const result = await Microfrontend.findByIdAndUpdate(microfrontendIdObj, allowed, { new: true })
         return result
     }
 

@@ -8,6 +8,7 @@ import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
+import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
@@ -309,6 +310,7 @@ export class ProjectService extends BaseAuthorizedService {
         await Deployment.deleteMany({ projectId: projectIdObj }, session)
         await Microfrontend.deleteMany({ projectId: projectIdObj }, session)
         await Service.deleteMany({ projectId: projectIdObj }, session)
+        await Domain.deleteMany({ projectId: projectIdObj }, { session })
         await Environment.deleteMany({ projectId: projectIdObj }, session)
 
         return await Project.deleteOne({ _id: projectIdObj }, session)

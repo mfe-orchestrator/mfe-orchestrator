@@ -10,6 +10,7 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useProjectStore from "@/store/useProjectStore"
+import { ALL_DOMAINS, DomainFilter, matchesDomain } from "../domains/partials/DomainFilter"
 import { ImportRepositoriesDialog, MicrofrontendsEmptyState } from "./partials/components"
 import { MicrofrontendFlow, MicrofrontendsBackendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
 
@@ -33,11 +34,13 @@ const Microfrontends = () => {
     const microfrontendsApi = useMicrofrontendsApi()
 
     const [searchTerm, setSearchTerm] = useState("")
+    const [domainFilter, setDomainFilter] = useState(ALL_DOMAINS)
     const [view, setView] = useState<View>("flow")
     const [importDialogOpen, setImportDialogOpen] = useState(false)
 
     const onResetFilters = () => {
         setSearchTerm("")
+        setDomainFilter(ALL_DOMAINS)
     }
 
     const microfrontendListQuery = useQuery({
@@ -63,20 +66,21 @@ const Microfrontends = () => {
             return null
         }
 
-        if (!searchTerm) return data
+        if (!searchTerm && domainFilter === ALL_DOMAINS) return data
 
         const filteredData = data.filter(mfe => {
             const nameMatch = searchTerm ? mfe.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
-            return nameMatch
+            return nameMatch && matchesDomain(mfe.domainId, domainFilter)
         })
 
         return filteredData
-    }, [microfrontendListQuery?.data, searchTerm])
+    }, [microfrontendListQuery?.data, searchTerm, domainFilter])
 
     const totalCount = microfrontendListQuery.data?.length ?? 0
     const filteredCount = microfrontendsList?.length ?? 0
     // The toolbar is only useful once the project actually has something to search through or switch views on.
     const hasMicrofrontends = totalCount > 0
+    const isFiltered = Boolean(searchTerm) || domainFilter !== ALL_DOMAINS
 
     const onAddNewMicrofrontend = async (parentId?: string) => {
         const repositories = await codeRepositoriesApi.getRepositoriesByProjectId(projectStore.project?._id!)
@@ -107,16 +111,19 @@ const Microfrontends = () => {
                 left={
                     hasMicrofrontends ? (
                         <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
-                            <SearchInput
-                                className="max-w-sm"
-                                placeholder={t("microfrontend.dashboard.searchPlaceholder")}
-                                value={searchTerm}
-                                onValueChange={setSearchTerm}
-                                onClear={onResetFilters}
-                                clearLabel={t("microfrontend.dashboard.clearSearch")}
-                            />
+                            <div className="flex flex-wrap items-center gap-2">
+                                <SearchInput
+                                    className="max-w-sm"
+                                    placeholder={t("microfrontend.dashboard.searchPlaceholder")}
+                                    value={searchTerm}
+                                    onValueChange={setSearchTerm}
+                                    onClear={() => setSearchTerm("")}
+                                    clearLabel={t("microfrontend.dashboard.clearSearch")}
+                                />
+                                <DomainFilter value={domainFilter} onValueChange={setDomainFilter} />
+                            </div>
                             <p className="text-sm text-foreground-secondary" aria-live="polite">
-                                {searchTerm ? t("microfrontend.dashboard.filteredCount", { count: filteredCount, total: totalCount }) : t("microfrontend.dashboard.totalCount", { count: totalCount })}
+                                {isFiltered ? t("microfrontend.dashboard.filteredCount", { count: filteredCount, total: totalCount }) : t("microfrontend.dashboard.totalCount", { count: totalCount })}
                             </p>
                         </div>
                     ) : null
@@ -163,7 +170,14 @@ const Microfrontends = () => {
                             onImportRepositories={canImportRepositories ? () => setImportDialogOpen(true) : undefined}
                         />
                     ) : filteredCount === 0 ? (
-                        <MicrofrontendsEmptyState variant="no-results" searchTerm={searchTerm} onResetFilters={onResetFilters} />
+                        <MicrofrontendsEmptyState
+                            variant="no-results"
+                            searchTerm={searchTerm}
+                            onResetFilters={onResetFilters}
+                            noResultsDescription={
+                                domainFilter === ALL_DOMAINS ? undefined : searchTerm ? t("domains.filter.no_results_search_description", { searchTerm }) : t("domains.filter.no_results_description")
+                            }
+                        />
                     ) : (
                         <>
                             <TabsContent value="flow" className="mt-0">

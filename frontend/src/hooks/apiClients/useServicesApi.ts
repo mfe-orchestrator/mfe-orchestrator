@@ -1,4 +1,4 @@
-import useApiClient from "../useApiClient"
+import useApiClient, { IClientRequestMetadataExtended } from "../useApiClient"
 import type { Microfrontend } from "./useMicrofrontendsApi"
 
 export enum ServiceRuntime {
@@ -23,6 +23,8 @@ export type ServiceCodeRepository = Microfrontend["codeRepository"]
 export interface Service {
     _id?: string
     projectId?: string
+    /** The functional domain it belongs to; null or missing when it is in none */
+    domainId?: string | null
     slug: string
     name: string
     description?: string
@@ -88,13 +90,13 @@ const useServicesApi = () => {
         return response.data
     }
 
-    const create = async (service: ServiceDTO): Promise<Service> => {
-        const response = await apiClient.doRequest<Service>({ url: "/api/services", method: "POST", data: service })
+    const create = async (service: ServiceDTO, metadata?: IClientRequestMetadataExtended): Promise<Service> => {
+        const response = await apiClient.doRequest<Service>({ url: "/api/services", method: "POST", data: service, ...metadata })
         return response.data
     }
 
-    const update = async (id: string, service: ServiceDTO): Promise<Service> => {
-        const response = await apiClient.doRequest<Service>({ url: `/api/services/${id}`, method: "PUT", data: service })
+    const update = async (id: string, service: ServiceDTO, metadata?: IClientRequestMetadataExtended): Promise<Service> => {
+        const response = await apiClient.doRequest<Service>({ url: `/api/services/${id}`, method: "PUT", data: service, ...metadata })
         return response.data
     }
 

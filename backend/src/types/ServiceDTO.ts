@@ -13,6 +13,8 @@ interface ServiceDTO {
     name: string
     slug: string
     description?: string
+    /** The functional domain of the project it belongs to; null or blank takes it out of any */
+    domainId?: string | null
     /** Markdown for AI agents about this service */
     context?: string
     /** Slug of the marketplace template the repository was scaffolded from */

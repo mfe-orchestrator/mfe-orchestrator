@@ -32,6 +32,7 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
+import Domain from "../models/DomainModel"
 import Project from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
@@ -340,6 +341,26 @@ describe("ServiceService.update", () => {
         } as ServiceDTO)
 
         expect(write.mock.calls[0][1]).toMatchObject({ codeRepository: { codeRepositoryId, createData: undefined } })
+    })
+
+    it("given a domain of another project, when a service is put in it, then it is not found and nothing is written", async () => {
+        const domainId = new Types.ObjectId().toString()
+        const exists = vi.spyOn(Domain, "exists").mockResolvedValue(null)
+        const write = vi.spyOn(Service, "findByIdAndUpdate").mockResolvedValue(service as never)
+
+        const refusal = new ServiceService().update(String(serviceId), { name: "Orders", domainId } as ServiceDTO)
+
+        await expect(refusal).rejects.toMatchObject({ code: "DOMAIN_NOT_FOUND", statusCode: 404 })
+        expect(exists).toHaveBeenCalledWith({ _id: domainId, projectId })
+        expect(write).not.toHaveBeenCalled()
+    })
+
+    it("given a blank domain, when a service is updated, then it is taken out of its domain", async () => {
+        const write = vi.spyOn(Service, "findByIdAndUpdate").mockResolvedValue(service as never)
+
+        await new ServiceService().update(String(serviceId), { name: "Orders", domainId: "" } as ServiceDTO)
+
+        expect(write.mock.calls[0][1]).toEqual({ name: "Orders", domainId: null })
     })
 })
 

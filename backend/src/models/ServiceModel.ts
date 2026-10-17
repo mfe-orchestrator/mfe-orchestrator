@@ -22,6 +22,8 @@ export interface IServiceEnvVariable {
 
 export interface IService extends Document<ObjectId>, ServicePaths {
     projectId: Schema.Types.ObjectId
+    /** The functional domain it belongs to, if any */
+    domainId?: Schema.Types.ObjectId | null
     slug: string
     name: string
     description?: string
@@ -113,6 +115,11 @@ const serviceSchema = new Schema<IService>(
             type: Schema.Types.ObjectId,
             ref: "Project",
             required: true
+        },
+        domainId: {
+            type: Schema.Types.ObjectId,
+            ref: "Domain",
+            required: false
         },
         slug: {
             type: String,

@@ -7,6 +7,8 @@ interface MicrofrontendDTO {
     slug: string
     url: string
     environment: string
+    /** The functional domain of the project it belongs to; null or blank takes it out of any */
+    domainId?: string | null
     version?: string
     /** Markdown for AI agents about this microfrontend */
     context?: string

@@ -12,11 +12,13 @@ import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useMarketApi, { ServiceDefaults } from "@/hooks/apiClients/useMarketApi"
 import useServicesApi, { Service, ServiceDTO } from "@/hooks/apiClients/useServicesApi"
 import { CodeRepositorySection } from "@/pages/microfrontends/partials/components"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import DomainSelectField from "../domains/partials/DomainSelectField"
 import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import ServiceDangerZone from "./partials/ServiceDangerZone"
 import ServiceEnvFields from "./partials/ServiceEnvFields"
@@ -46,6 +48,7 @@ const createFormSchema = (slugMessage: string, pathMessage: string) =>
         slug: z.string().regex(SERVICE_SLUG, slugMessage),
         name: z.string().min(3).max(100),
         description: z.string().optional(),
+        domainId: z.string().nullable().optional(),
         context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
         template: z.string().optional(),
         port: z.string().regex(/^\d{1,5}$/),
@@ -98,11 +101,14 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
     const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const servicesApi = useServicesApi()
+    const { errorMessage: domainErrorMessage } = useDomainsApi()
     const { getMarkets } = useMarketApi()
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const notifications = useToastNotificationStore()
     const initialTemplate = searchParams.get("template") ?? undefined
+    // Opened from a domain page: the service is created in it, and the page is where we go back
+    const initialDomainId = searchParams.get("domainId")
     const hasRepositories = repositories.length > 0
 
     const marketsQuery = useQuery({ queryKey: ["markets"], queryFn: getMarkets, enabled: !isEdit })
@@ -112,11 +118,12 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
     const form = useForm<FormInput, unknown, FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: service
-            ? { ...service, port: String(service.port), docsPath: service.docsPath ?? "", openApiPath: service.openApiPath ?? "", env: service.env ?? [] }
+            ? { ...service, domainId: service.domainId ?? "", port: String(service.port), docsPath: service.docsPath ?? "", openApiPath: service.openApiPath ?? "", env: service.env ?? [] }
             : {
                   slug: "",
                   name: "",
                   description: "",
+                  domainId: initialDomainId ?? "",
                   context: "",
                   template: initialTemplate,
                   port: "8080",
@@ -152,7 +159,8 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
     }, [selectedTemplate, serviceTemplates, isEdit, form])
 
     const onSubmit = async (data: FormValues) => {
-        const dto = { ...data, port: Number(data.port) } as unknown as ServiceDTO
+        // Blank: the service is in no domain
+        const dto = { ...data, domainId: data.domainId || null, port: Number(data.port) } as unknown as ServiceDTO
         const template = data.template || undefined
 
         if (!isEdit && template && dto.codeRepository) {
@@ -160,14 +168,14 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
         }
 
         if (isEdit) {
-            await servicesApi.update(id!, dto)
+            await servicesApi.update(id!, dto, { customErrorMessage: domainErrorMessage })
             notifications.showSuccessNotification({ message: t("services.updated_success_message") })
             await queryClient.invalidateQueries({ queryKey: ["service", id] })
             navigate(`/service/${id}`)
         } else {
-            const created = await servicesApi.create(dto)
+            const created = await servicesApi.create(dto, { customErrorMessage: domainErrorMessage })
             notifications.showSuccessNotification({ message: t("services.created_success_message") })
-            navigate(created?._id ? `/service/${created._id}` : "/services")
+            navigate(initialDomainId ? `/domain/${initialDomainId}` : created?._id ? `/service/${created._id}` : "/services")
         }
         await queryClient.invalidateQueries({ queryKey: ["services"] })
     }
@@ -209,6 +217,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, service }
                             <TextField name="slug" disabled={isEdit} label={t("services.slug")} placeholder={t("services.slug_placeholder")} required containerClassName="flex-[1_1_240px]" />
                         </div>
                         <TextareaField name="description" label={t("services.description")} placeholder={t("services.description_placeholder")} />
+                        <DomainSelectField containerClassName="w-full" />
                     </CardContent>
                 </Card>
 
