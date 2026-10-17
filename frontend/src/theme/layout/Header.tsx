@@ -1,24 +1,18 @@
-import { ChevronRight, Settings, Sparkles } from "lucide-react"
+import { ChevronRight, Settings } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link, NavLink } from "react-router-dom"
-import { ASSISTANT_PAGE_PATH } from "@/components/assistant/AssistantPanel"
 import AssistantToggleButton from "@/components/assistant/AssistantToggleButton"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import SwitchOrganizationButton from "@/components/SwitchOrganizationButton"
 import SwitchProjectButton from "@/components/SwitchProjectButton"
 import useOrganizationStore from "@/store/useOrganizationStore"
 import useProjectStore from "@/store/useProjectStore"
 import { cn } from "@/utils/styleUtils"
 
-/** Il menu in alto: l'agente a tutta pagina e le pagine che valgono per tutto il progetto. */
+/** Il menu in alto: le pagine che valgono per tutto il progetto. L'agente a tutta pagina sta in sidebar. */
 const HeaderMenu: React.FC = () => {
     const { t } = useTranslation()
-    const assistantEnabled = useAssistantEnabled()
 
-    const items = [
-        ...(assistantEnabled ? [{ name: t("assistant.page_title"), path: ASSISTANT_PAGE_PATH, icon: <Sparkles />, dataTestId: "header-menu-assistant" }] : []),
-        { name: t("settings.title"), path: "/settings", icon: <Settings />, dataTestId: "header-menu-settings" }
-    ]
+    const items = [{ name: t("settings.title"), path: "/settings", icon: <Settings />, dataTestId: "header-menu-settings" }]
 
     return (
         <nav aria-label={t("navigation.top_menu")} className="flex items-center gap-1">

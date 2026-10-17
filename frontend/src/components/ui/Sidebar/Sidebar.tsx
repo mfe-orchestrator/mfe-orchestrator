@@ -9,9 +9,9 @@ import { UserButton } from "./partials/UserButton"
 
 export type { SidebarNavItemProps }
 
-/** Una sezione della navigazione principale: un titolo e le sue voci. */
+/** Una sezione della navigazione principale: un titolo e le sue voci. Senza titolo, le voci stanno in testa da sole. */
 export interface SidebarNavSection {
-    title: string
+    title?: string
     items: SidebarNavItemProps[]
 }
 
@@ -47,7 +47,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ mainNavSection
 
     const mainNavItems = mainNavSections.flatMap(section => section.items).map(item => ({ ...item, active: item.path ? isActivePath(location.pathname, item.path) : false }))
     // La sidebar del design system accetta una lista piatta: il titolo di una sezione lo rende la sua prima voce.
-    const sectionTitleByPath = new Map(mainNavSections.flatMap(section => (section.items[0]?.path ? [[section.items[0].path, section.title] as const] : [])))
+    const sectionTitleByPath = new Map(mainNavSections.flatMap(section => (section.title && section.items[0]?.path ? [[section.items[0].path, section.title] as const] : [])))
 
     return (
         <DesignSystemSidebar

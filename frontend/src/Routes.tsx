@@ -3,6 +3,7 @@ import { Navigate, Route, Routes as RRDRoutes } from "react-router-dom"
 import Auth0Wrapper from "./authentication/Auth0AuthWrapper"
 import GoogleAuthWrapper from "./authentication/GoogleAuthWrapper"
 import MicrosoftAuthWrapper from "./authentication/MicrosoftAuthWrapper"
+import { ASSISTANT_PAGE_PATH } from "./components/assistant/AssistantPanel"
 import RouteWithSuspense from "./components/RouteWithSuspense"
 import { readOAuthResume } from "./pages/oauth/oauthResume"
 import AuthWrapper from "./theme/AuthWrapper"
@@ -94,8 +95,11 @@ const OAuthRoutes: React.FC = () => {
     )
 }
 
-/** Safety net: a login that lands on "/" instead of the consent page resumes the pending consent. */
-const RootRedirect: React.FC = () => <Navigate to={readOAuthResume() ?? "/microfrontends"} replace />
+/**
+ * The console opens on the AI agent; without an AI provider its page sends on to /microfrontends.
+ * Safety net: a login that lands on "/" instead of the consent page resumes the pending consent.
+ */
+const RootRedirect: React.FC = () => <Navigate to={readOAuthResume() ?? ASSISTANT_PAGE_PATH} replace />
 
 const PrivateRoutes: React.FC = () => {
     return (

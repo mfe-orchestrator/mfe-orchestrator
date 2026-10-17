@@ -1,8 +1,9 @@
-import { FileText, Hammer as HammerIcon, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server } from "lucide-react"
+import { FileText, Hammer as HammerIcon, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, Sparkles } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
 import AssistantPanel, { ASSISTANT_PAGE_PATH } from "@/components/assistant/AssistantPanel"
+import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Sidebar, type SidebarNavSection } from "@/components/ui/Sidebar/Sidebar"
 import { cn } from "@/utils/styleUtils"
 import Header from "./Header"
@@ -14,6 +15,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const { t } = useTranslation()
     const location = useLocation()
+    const assistantEnabled = useAssistantEnabled()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     // La pagina dell'agente e' gia' la conversazione: il pannello laterale ne sarebbe un doppione.
     const isAssistantPage = location.pathname === ASSISTANT_PAGE_PATH
@@ -24,8 +26,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     // Solo voci di progetto: il livello organizzazione vive nell'header, dal suo menu, e le pagine
     // che valgono per tutto il progetto (impostazioni) nel menu in alto. Le variabili d'ambiente
-    // valgono solo per i microfrontend, quindi stanno nella loro sezione.
+    // valgono solo per i microfrontend, quindi stanno nella loro sezione. L'agente apre la console
+    // ed e' la prima voce, senza titolo di sezione.
     const mainNavSections: SidebarNavSection[] = [
+        ...(assistantEnabled ? [{ items: [{ name: t("assistant.page_title"), path: ASSISTANT_PAGE_PATH, icon: <Sparkles /> }] }] : []),
         {
             title: t("navigation.sections.domains"),
             items: [{ name: t("domains.sidebar_title"), path: "/domains", icon: <Layers /> }]
