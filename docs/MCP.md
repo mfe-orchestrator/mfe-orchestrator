@@ -31,13 +31,13 @@ layout it is `https://<your console>/api/mcp`.
 
 Two scopes, chosen on the consent page:
 
-- `mfe:read` — read the project: microfrontends, environments, deployments, canary users, global
-  variables, build status, storages and repository connections (credentials masked), dependency and
-  integration plans.
+- `mfe:read` — read the project: microfrontends, backend services, functional domains, environments,
+  deployments, canary users, global variables, build status, storages and repository connections
+  (credentials masked), dependency and integration plans.
 - `mfe:write` — everything the console does inside a project, **deploy and rollback included**:
-  create and edit microfrontends and environments, trigger builds, import repositories, change
-  global variables, apply dependency alignments and integrations. It also allows **creating
-  projects** (see below), which the consent page says next to "Allow changes".
+  create and edit microfrontends, services, domains and environments, trigger builds, import
+  repositories, change global variables, apply dependency alignments and integrations. It also
+  allows **creating projects** (see below), which the consent page says next to "Allow changes".
 
 The role caps each project separately. `mfe:write` can be granted when at least one picked project
 lets the user write; on a project where the user is a **VIEWER** every write tool is refused with an
@@ -66,6 +66,29 @@ microfrontend one in the "AI context" tab of the microfrontend. Both are limited
 - `project_update` and `microfrontend_update` (`mfe:write`) change them; `null` removes the project
   context.
 - The console assistant reads the same notes through its `get_project_context` tool.
+
+## Domains and services
+
+A project can group its microfrontends and backend services in **functional domains**. Membership
+lives on the member: each microfrontend or service has an optional `domainId`, so it is in one domain
+at most.
+
+- `domains_list` (`mfe:read`) returns the domains with how many microfrontends and services each one
+  groups; `domain_get` adds the id, name and slug of every member.
+- `domain_create` and `domain_update` (`mfe:write`) set the name and the description; the slug is
+  derived from the name when left out and fixed after creation. `domain_delete` is destructive: the
+  members are kept and end up in no domain.
+- `services_list`, `service_get` (`mfe:read`) and `service_create`, `service_update`, `service_delete`
+  (`mfe:write`, the delete destructive) manage the backend services: name, description, domain,
+  context, port, probe and API documentation paths, image repository, the environment variables the
+  image reads (names only, never values) and a link to a repository that already exists. As for
+  microfrontends, creating the repository from a template stays in the console, and the slug is fixed
+  after creation. The version comes from the CI, never from a tool.
+- `microfrontend_create`, `microfrontend_update`, `service_create` and `service_update` take an optional
+  `domainId`; `null` takes the item out of its domain. A domain of another project is refused before
+  anything is written.
+- `microfrontends_list` and `services_list` take an optional `domainId` filter: a domain id, or `none`
+  for the items in no domain.
 
 ## Several projects in one connection
 

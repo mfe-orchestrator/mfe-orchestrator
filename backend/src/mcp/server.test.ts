@@ -37,6 +37,8 @@ describe("MCP tool registry", () => {
         "deploy",
         "deployment_rollback",
         "microfrontend_delete",
+        "service_delete",
+        "domain_delete",
         "environment_delete",
         "global_variable_delete",
         "storage_delete",

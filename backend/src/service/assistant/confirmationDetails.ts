@@ -8,6 +8,7 @@ import AiChangeJobService from "../aiChange/AiChangeJobService"
 import AiChangeService from "../aiChange/AiChangeService"
 import CodeRepositoryService from "../CodeRepositoryService"
 import DeploymentService from "../DeploymentService"
+import DomainService from "../DomainService"
 import EnvironmentService from "../EnvironmentService"
 import GlobalVariablesService from "../GlobalVariablesService"
 import MicrofrontendService from "../MicrofrontendService"
@@ -176,6 +177,10 @@ class DetailResolver {
                     const grant = (await new OAuthGrantService(this.principal).listForProject(this.projectId)).find(candidate => candidate.id === id)
                     return grant && `${grant.clientName} (${grant.userEmail})`
                 })
+            case "serviceId":
+                return each("service", async id => (await new ServiceService(this.principal).getById(id))?.name)
+            case "domainId":
+                return each("domain", async id => (await new DomainService(this.principal).getById(id))?.name)
             case "storageId":
                 return each("storage", async id => (await new StorageService(this.principal).getByProjectId(this.projectId)).find(storage => String(storage._id) === id)?.name)
             case "codeRepositoryId":

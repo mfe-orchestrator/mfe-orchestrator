@@ -13,6 +13,7 @@ const projectUsers = vi.fn()
 const aiChange = vi.fn()
 const aiJob = vi.fn()
 const serviceById = vi.fn()
+const domainById = vi.fn()
 
 vi.mock("../EnvironmentService", () => ({
     default: class {
@@ -49,6 +50,11 @@ vi.mock("../UserProjectService", () => ({
 vi.mock("../ServiceService", () => ({
     default: class {
         getById = serviceById
+    }
+}))
+vi.mock("../DomainService", () => ({
+    default: class {
+        getById = domainById
     }
 }))
 vi.mock("../aiChange/AiChangeService", () => ({
@@ -113,7 +119,8 @@ describe("describeServedChanges", () => {
 
 describe("describeConfirmation", () => {
     beforeEach(() => {
-        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange, aiJob, serviceById]) mock.mockReset()
+        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange, aiJob, serviceById, domainById])
+            mock.mockReset()
         projectById.mockResolvedValue({ name: "Shop" })
         environments.mockResolvedValue([
             { _id: PRODUCTION, name: "Production" },
@@ -214,6 +221,20 @@ describe("describeConfirmation", () => {
         const details = await describeConfirmation(toolNamed("ai_change_apply"), { changeId: CHANGE }, context)
 
         expect(details[1]).toEqual({ label: "service", value: CHECKOUT })
+    })
+
+    it("Given a service or a domain to delete, when described, then it is shown by its name", async () => {
+        serviceById.mockResolvedValue({ _id: CHECKOUT, name: "Orders API" })
+        domainById.mockResolvedValue({ _id: CHANGE, name: "Payments" })
+
+        expect(await describeConfirmation(toolNamed("service_delete"), { serviceId: CHECKOUT }, context)).toEqual([
+            { label: "project", value: "Shop" },
+            { label: "service", value: "Orders API" }
+        ])
+        expect(await describeConfirmation(toolNamed("domain_delete"), { domainId: CHANGE }, context)).toEqual([
+            { label: "project", value: "Shop" },
+            { label: "domain", value: "Payments" }
+        ])
     })
 
     it("Given an AI job, when its apply is described, then the prompt and the file count of each repository it would commit are shown", async () => {

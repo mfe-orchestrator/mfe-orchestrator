@@ -1675,7 +1675,9 @@
                 "scope": "Ambito",
                 "excludePaths": "File esclusi",
                 "description": "Descrizione",
-                "jobId": "Job AI"
+                "jobId": "Job AI",
+                "service": "Servizio",
+                "domain": "Dominio"
             }
         },
         "errors": {

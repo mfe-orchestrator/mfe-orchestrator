@@ -50,7 +50,7 @@ the input is validated, a **VIEWER** cannot change anything, and errors read the
   setting canary users). The assistant stops and the panel shows a card, and the action runs only
   when the user confirms it. The card lists what the action acts on with names instead of ids
   (users by name and email, organization, project, environments, microfrontends with version and
-  host, API key, MCP client, AI change with its request and files), resolved by the server with the
+  host, services, domains, API key, MCP client, AI change with its request and files), resolved by the server with the
   user's own access; a `deploy` card says, per environment, which microfrontend versions, hosts and
   variables change compared to the active deployment (or everything it will serve on a first
   deployment). A name that cannot be resolved is shown as the raw value; the input the model sent is

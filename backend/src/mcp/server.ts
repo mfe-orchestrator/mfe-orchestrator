@@ -12,6 +12,7 @@ import { MCP_SCOPE_WRITE } from "../utils/oauthConfig"
 import { McpSession, McpSharedProject, McpToolContext, McpToolDefinition, objectId } from "./toolDefinition"
 import { aiChangeTools } from "./tools/aiChangeTools"
 import { configurationTools } from "./tools/configurationTools"
+import { domainTools } from "./tools/domainTools"
 import { environmentTools } from "./tools/environmentTools"
 import { microfrontendTools } from "./tools/microfrontendTools"
 import { organizationAdminTools } from "./tools/organizationAdminTools"
@@ -20,6 +21,7 @@ import { projectAdminTools } from "./tools/projectAdminTools"
 import { projectContentTools } from "./tools/projectContentTools"
 import { projectTools } from "./tools/projectTools"
 import { repositoryTools } from "./tools/repositoryTools"
+import { serviceTools } from "./tools/serviceTools"
 
 /**
  * Every tool the MCP server can expose, and the ones only the console assistant offers.
@@ -43,6 +45,8 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     ...organizationTools,
     ...projectTools,
     ...microfrontendTools,
+    ...serviceTools,
+    ...domainTools,
     ...environmentTools,
     ...repositoryTools,
     ...configurationTools,

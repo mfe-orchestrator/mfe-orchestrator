@@ -3,6 +3,7 @@ import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendType } from "../../models/MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import CodeRepositoryService from "../../service/CodeRepositoryService"
+import DomainService from "../../service/DomainService"
 import MicrofrontendService from "../../service/MicrofrontendService"
 import StackDetectionService from "../../service/StackDetectionService"
 import { StorageService } from "../../service/StorageService"
@@ -10,6 +11,7 @@ import MicrofrontendDTO from "../../types/MicrofrontendDTO"
 import { MicrofrontendCompiler, MicrofrontendFramework } from "../../types/MicrofrontendStack"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, defineTool, McpToolContext, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
+import { domainFilter, filterByDomain, memberDomainId } from "./domainTools"
 
 const microfrontendId = objectId("Id of the microfrontend")
 
@@ -27,6 +29,7 @@ const microfrontendFields = {
         .regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes")
         .max(100),
     description: z.string().max(2000).optional(),
+    domainId: memberDomainId,
     context: z.string().max(CONTEXT_MAX_LENGTH).optional().describe("Markdown notes for AI agents about this microfrontend, replaced as a whole"),
     version: z.string().min(1).max(100),
     type: z.enum(MicrofrontendType).optional(),
@@ -72,11 +75,15 @@ const updateSchema = z.object({ microfrontendId, ...createSchema.omit({ slug: tr
 /**
  * References in the input are checked through the services before anything is written: the
  * microfrontend service resolves the code repository by id without an access check, so a foreign
- * repository id would otherwise link this project to another project's credentials.
+ * repository id would otherwise link this project to another project's credentials. Services use
+ * it too, for their code repository and domain.
  */
 export const ensureReferencesBelongToProject = async (input: Partial<z.infer<typeof createSchema>>, { principal }: McpToolContext) => {
     if (input.codeRepository) {
         await new CodeRepositoryService(principal).findById(input.codeRepository.codeRepositoryId)
+    }
+    if (input.domainId && !(await new DomainService(principal).getById(input.domainId))) {
+        throw new EntityNotFoundError(input.domainId)
     }
     if (input.host?.storageId) {
         await new StorageService(principal).getById(input.host.storageId)
@@ -100,11 +107,11 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontends_list",
         title: "List microfrontends",
-        description: "Every microfrontend of the project, with its version, hosting, canary and repository settings.",
+        description: "Every microfrontend of the project, with its version, hosting, canary and repository settings and its domainId. Pass domainId to list one domain only.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
-        inputSchema: NO_INPUT,
-        run: (_args, { principal, projectId }) => new MicrofrontendService(principal).getByProjectId(projectId)
+        inputSchema: z.object({ domainId: domainFilter }),
+        run: async (args, context) => filterByDomain(await new MicrofrontendService(context.principal).getByProjectId(context.projectId), args.domainId, context)
     }),
     defineTool({
         name: "microfrontend_get",
