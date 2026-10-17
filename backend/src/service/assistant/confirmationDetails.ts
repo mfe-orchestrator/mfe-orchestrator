@@ -14,6 +14,7 @@ import MicrofrontendService from "../MicrofrontendService"
 import OAuthGrantService from "../OAuthGrantService"
 import OrganizationService from "../OrganizationService"
 import ProjectService from "../ProjectService"
+import ServiceService from "../ServiceService"
 import { StorageService } from "../StorageService"
 import UserOrganizationService from "../UserOrganizationService"
 import UserProjectService from "../UserProjectService"
@@ -193,9 +194,10 @@ class DetailResolver {
         const change = await new AiChangeService(this.principal, fastify.config).get(id).catch(() => undefined)
         if (!change) return [{ label: "ai_change", value: id }]
         const files = (change.files ?? []).map(file => `${file.action} ${file.path}`)
-        const microfrontend = await this.microfrontendLabel(String(change.microfrontendId)).catch(() => undefined)
+        const microfrontend = change.microfrontendId ? await this.microfrontendLabel(String(change.microfrontendId)).catch(() => undefined) : undefined
+        const service = change.serviceId ? await new ServiceService(this.principal).getById(String(change.serviceId)).catch(() => undefined) : undefined
         return [
-            { label: "microfrontend", value: microfrontend ?? String(change.microfrontendId) },
+            change.serviceId ? { label: "service", value: service?.name ?? String(change.serviceId) } : { label: "microfrontend", value: microfrontend ?? String(change.microfrontendId) },
             { label: "prompt", value: clip(change.prompt ?? "") },
             ...(files.length ? [{ label: "files", value: lines(files) }] : [])
         ]

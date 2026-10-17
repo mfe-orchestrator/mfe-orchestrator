@@ -7,19 +7,20 @@ import { getProjectIdFromRequest } from "../utils/requestUtils"
 const prompt = { type: "string", minLength: 1, maxLength: 8_000 }
 // Beyond 10 the service answers AI_JOB_TOO_MANY_REPOSITORIES, which the console explains; this only bounds the body.
 const microfrontendIds = { type: "array", maxItems: 100, items: { type: "string", pattern: "^[a-fA-F0-9]{24}$" } }
+const serviceIds = microfrontendIds
 
 const createBodySchema = {
     type: "object",
     required: ["prompt", "scope"],
     additionalProperties: false,
-    properties: { prompt, scope: { type: "string", enum: ["global", "selection"] }, microfrontendIds }
+    properties: { prompt, scope: { type: "string", enum: ["global", "selection"] }, microfrontendIds, serviceIds }
 }
 
 const followUpBodySchema = {
     type: "object",
     required: ["prompt"],
     additionalProperties: false,
-    properties: { prompt, microfrontendIds }
+    properties: { prompt, microfrontendIds, serviceIds }
 }
 
 const projectIdOf = (request: FastifyRequest) => {
@@ -29,7 +30,7 @@ const projectIdOf = (request: FastifyRequest) => {
 }
 
 /**
- * AI agent jobs on one or more repositories of a project, and their follow-ups.
+ * AI agent jobs on one or more repositories (microfrontends and services) of a project, and their follow-ups.
  *
  * Starting a job answers at once with the job; the console polls it until every repository has its
  * proposal. Console sessions only, like the AI changes of a single microfrontend.

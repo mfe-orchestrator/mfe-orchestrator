@@ -15,6 +15,9 @@ import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"))
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"))
 const MicrofrontendAiWorkspace = lazy(() => import("./pages/microfrontends/MicrofrontendAiWorkspace"))
+const Services = lazy(() => import("./pages/services/Services"))
+const AddService = lazy(() => import("./pages/services/AddService"))
+const ServiceDetail = lazy(() => import("./pages/services/ServiceDetail"))
 const Dependencies = lazy(() => import("./pages/dependencies/Dependencies"))
 const Builds = lazy(() => import("./pages/builds/Builds"))
 const Deployments = lazy(() => import("./pages/deployments/Deployments"))
@@ -110,6 +113,11 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<MicrofrontendAiWorkspace />} />} />
                 <Route path="/microfrontend/:id/settings" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
+                <Route path="/services" element={<RouteWithSuspense element={<Services />} />} />
+                <Route path="/service/new" element={<RouteWithSuspense element={<AddService />} />} />
+                <Route path="/service/:id" element={<RouteWithSuspense element={<ServiceDetail />} />} />
+                <Route path="/service/:id/ai" element={<RouteWithSuspense element={<ServiceDetail view="ai" />} />} />
+                <Route path="/service/:id/settings" element={<RouteWithSuspense element={<AddService />} />} />
                 <Route path="/dependencies" element={<RouteWithSuspense element={<Dependencies />} />} />
                 <Route path="/builds" element={<RouteWithSuspense element={<Builds />} />} />
                 <Route path="/deployments">

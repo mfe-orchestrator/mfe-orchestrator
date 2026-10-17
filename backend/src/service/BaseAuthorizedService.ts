@@ -7,6 +7,7 @@ import Deployment from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
 import { IMicrofrontend } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
+import { IService } from "../models/ServiceModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { ORGANIZATION_ADMIN_ROLES, RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject from "../models/UserProjectModel"
@@ -243,6 +244,10 @@ export default abstract class BaseAuthorizedService {
 
     protected async ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
         return this.ensureAccessToProject(microfrontend.projectId)
+    }
+
+    protected async ensureAccessToService(service: IService) {
+        return this.ensureAccessToProject(service.projectId)
     }
 
     /**

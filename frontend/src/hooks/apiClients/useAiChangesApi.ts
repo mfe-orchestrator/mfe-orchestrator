@@ -21,10 +21,20 @@ export interface AiChangeEvent {
     message: string
 }
 
+/** What owns the repository an AI change works on: a microfrontend or a backend service. */
+export interface AiChangeTarget {
+    kind: "microfrontend" | "service"
+    id: string
+}
+
+const targetPath = (target: AiChangeTarget) => `/api/${target.kind === "service" ? "services" : "microfrontends"}/${target.id}/ai-changes`
+
 export interface AiChangeRequest {
     _id: string
     projectId: string
-    microfrontendId: string
+    /** Exactly one of the two is set. */
+    microfrontendId?: string
+    serviceId?: string
     userId: string
     prompt: string
     baseBranch: string
@@ -59,9 +69,9 @@ export interface CreateAiChangeDTO {
 const useAiChangesApi = () => {
     const apiClient = useApiClient()
 
-    const create = async (microfrontendId: string, data: CreateAiChangeDTO, metadata?: IClientRequestMetadataExtended): Promise<AiChangeRequest> => {
+    const create = async (target: AiChangeTarget, data: CreateAiChangeDTO, metadata?: IClientRequestMetadataExtended): Promise<AiChangeRequest> => {
         const response = await apiClient.doRequest<AiChangeRequest, CreateAiChangeDTO>({
-            url: `/api/microfrontends/${microfrontendId}/ai-changes`,
+            url: targetPath(target),
             method: "POST",
             data,
             ...metadata
@@ -69,9 +79,9 @@ const useAiChangesApi = () => {
         return response.data
     }
 
-    const getByMicrofrontendId = async (microfrontendId: string): Promise<AiChangeRequest[]> => {
+    const getByTarget = async (target: AiChangeTarget): Promise<AiChangeRequest[]> => {
         const response = await apiClient.doRequest<AiChangeRequest[]>({
-            url: `/api/microfrontends/${microfrontendId}/ai-changes`
+            url: targetPath(target)
         })
         return response.data
     }
@@ -106,7 +116,7 @@ const useAiChangesApi = () => {
 
     return {
         create,
-        getByMicrofrontendId,
+        getByTarget,
         getSingle,
         apply,
         discard

@@ -1,9 +1,9 @@
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeRequest, { AiChangeStatus, IAiChangeRequest } from "../../models/AiChangeRequestModel"
-import Microfrontend, { IMicrofrontend } from "../../models/MicrofrontendModel"
 import { getLlmClient } from "../llm"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
+import { findComponent, ownerFields, RepositoryComponent, RepositoryComponentRef } from "../workspace/repositoryComponent"
 import AiChangeJobService from "./AiChangeJobService"
 import { AiChangeBaseService, ensureNotBeingRefined, staleOutcome } from "./aiChangeShared"
 
@@ -13,18 +13,18 @@ export interface AiChangeCreateInput {
 }
 
 /**
- * Code changes to a microfrontend proposed by an AI agent and applied as a pull request.
+ * Code changes to a microfrontend or a backend service proposed by an AI agent and applied as a pull request.
  *
  * The agent works on the local working copy of the repository and never pushes: its changes are
  * stored here as a proposal and the copy is reset. Only {@link apply}, a user's explicit action,
  * writes to the remote, and only on a new branch with a pull request.
  */
 export class AiChangeService extends AiChangeBaseService {
-    private async getMicrofrontend(microfrontendId: string): Promise<IMicrofrontend> {
-        const microfrontend = await Microfrontend.findById(microfrontendId)
-        if (!microfrontend) throw new EntityNotFoundError(microfrontendId)
-        await this.ensureAccessToMicrofrontend(microfrontend)
-        return microfrontend
+    private async getComponent(ref: RepositoryComponentRef): Promise<RepositoryComponent> {
+        const component = await findComponent(ref)
+        if (!component) throw new EntityNotFoundError(ref.id)
+        await this.ensureAccessToProject(component.projectId)
+        return component
     }
 
     private async getRequest(id: string): Promise<IAiChangeRequest> {
@@ -34,19 +34,19 @@ export class AiChangeService extends AiChangeBaseService {
         return request
     }
 
-    /** A job on this microfrontend's repository alone: the request is the job's only proposal. */
-    async create(microfrontendId: string, input: AiChangeCreateInput): Promise<IAiChangeRequest> {
+    /** A job on the repository of this microfrontend or service alone: the request is the job's only proposal. */
+    async create(ref: RepositoryComponentRef, input: AiChangeCreateInput): Promise<IAiChangeRequest> {
         const client = getLlmClient(this.config)
-        const microfrontend = await this.getMicrofrontend(microfrontendId)
-        await this.ensureCanChangeProject(microfrontend.projectId)
-        const workspace = await new RepositoryWorkspaceService(this.user).open(microfrontendId)
+        const component = await this.getComponent(ref)
+        await this.ensureCanChangeProject(component.projectId)
+        const workspace = await new RepositoryWorkspaceService(this.user).open(component)
 
         const { requests } = await new AiChangeJobService(this.user, this.config).start(
             {
-                projectId: microfrontend.projectId,
+                projectId: component.projectId,
                 prompt: input.prompt,
                 scope: "selection",
-                repositories: [{ microfrontend, baseBranch: input.baseBranch?.trim() || workspace.defaultBranch }]
+                repositories: [{ component, baseBranch: input.baseBranch?.trim() || workspace.defaultBranch }]
             },
             client
         )
@@ -64,10 +64,10 @@ export class AiChangeService extends AiChangeBaseService {
         return request
     }
 
-    /** The latest requests of a microfrontend, without file contents. */
-    async list(microfrontendId: string): Promise<IAiChangeRequest[]> {
-        const microfrontend = await this.getMicrofrontend(microfrontendId)
-        const requests = await AiChangeRequest.find({ microfrontendId: microfrontend._id }, { "files.originalContent": 0, "files.proposedContent": 0, events: 0 }).sort({ createdAt: -1 }).limit(20)
+    /** The latest requests of a microfrontend or a service, without file contents. */
+    async list(ref: RepositoryComponentRef): Promise<IAiChangeRequest[]> {
+        const component = await this.getComponent(ref)
+        const requests = await AiChangeRequest.find(ownerFields(component), { "files.originalContent": 0, "files.proposedContent": 0, events: 0 }).sort({ createdAt: -1 }).limit(20)
         for (const request of requests) {
             const outcome = staleOutcome(request)
             if (outcome) request.status = outcome

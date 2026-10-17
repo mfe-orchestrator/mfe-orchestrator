@@ -17,6 +17,12 @@ const EXTERNAL_NAV_ITEMS: SidebarNavItemProps[] = [
     { name: "Contribute", path: "https://github.com/mfe-orchestrator", icon: <GitBranch /> }
 ]
 
+/**
+ * A section stays highlighted on its detail pages: `/services` also covers `/service/:id/...`, and
+ * `/microfrontends` covers `/microfrontend/:id/...` (detail routes use the singular path).
+ */
+const isActivePath = (pathname: string, path: string) => pathname === path || (path.endsWith("s") && pathname.startsWith(`${path.slice(0, -1)}/`))
+
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ mainNavItems, ...props }, ref) => {
     const { t } = useTranslation()
     const location = useLocation()
@@ -27,7 +33,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(({ mainNavItems, 
             {...props}
             title={t("app.name")}
             logo={<img src="/img/logo.png" alt={t("app.name")} className="h-8 w-8" />}
-            mainNavItems={mainNavItems?.map(item => ({ ...item, active: location.pathname === item.path }))}
+            mainNavItems={mainNavItems?.map(item => ({ ...item, active: isActivePath(location.pathname, item.path) }))}
             secondaryNavItems={EXTERNAL_NAV_ITEMS}
             secondaryContent={({ isCollapsed, isMobile }) => (
                 <>

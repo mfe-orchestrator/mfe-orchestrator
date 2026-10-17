@@ -6,26 +6,32 @@ import GithubClient from "../../client/GithubClient"
 import GitlabClient from "../../client/GitlabClient"
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
-import { CodeRepositoryProvider, ICodeRepository } from "../../models/CodeRepositoryModel"
-import Microfrontend, { IMicrofrontend } from "../../models/MicrofrontendModel"
+import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../../models/CodeRepositoryModel"
 import Organization from "../../models/OrganizationModel"
 import Project from "../../models/ProjectModel"
-import { microfrontendWorkspacePath } from "../../utils/workspacePaths"
 import BaseAuthorizedService from "../BaseAuthorizedService"
-import { RepositoryFileService, RepositoryTarget } from "../RepositoryFileService"
+import { RepositoryFileService, repositoryNameFor } from "../RepositoryFileService"
 import { GitCredentials, GitWorkingCopy } from "./GitWorkingCopy"
+import { componentWorkspacePath, RepositoryComponent } from "./repositoryComponent"
 
 /** Written inside `.git`, where it is neither tracked nor wiped by a reset, to tell when a copy was last used. */
 const LAST_USED_MARKER = path.join(".git", "mfe-last-used")
 
+/** The repository of a component, paired with the connection it belongs to. */
+export interface WorkspaceTarget {
+    component: RepositoryComponent
+    codeRepository: ICodeRepository
+    repositoryName: string
+}
+
 export interface OpenedWorkspace {
-    target: RepositoryTarget
+    target: WorkspaceTarget
     workingCopy: GitWorkingCopy
     defaultBranch: string
 }
 
-const repositoryDataString = (microfrontend: IMicrofrontend, key: string): string | undefined => {
-    const value = microfrontend.codeRepository?.repositoryData?.[key]
+const repositoryDataString = (component: RepositoryComponent, key: string): string | undefined => {
+    const value = component.codeRepository?.repositoryData?.[key]
     return typeof value === "string" && value.startsWith("https://") ? value : undefined
 }
 
@@ -54,18 +60,18 @@ const onProviderHost = (candidate: string | undefined, codeRepository: ICodeRepo
 }
 
 /**
- * The HTTPS clone URL of a microfrontend's repository, without credentials.
+ * The HTTPS clone URL of the repository of a microfrontend or a service, without credentials.
  *
  * The URL the provider gave at import time wins, but only on the provider's own host: those fields
- * are editable with the microfrontend, and the token goes wherever this URL points. Otherwise the
+ * are editable with the component, and the token goes wherever this URL points. Otherwise the
  * URL is computed from the connection.
  */
-export const cloneUrlFor = ({ microfrontend, codeRepository, repositoryName }: RepositoryTarget): string => {
+export const cloneUrlFor = ({ component, codeRepository, repositoryName }: WorkspaceTarget): string => {
     const stored = [
-        microfrontend.codeRepository?.cloneUrlHttps,
-        repositoryDataString(microfrontend, "http_url_to_repo"),
-        repositoryDataString(microfrontend, "clone_url"),
-        repositoryDataString(microfrontend, "remoteUrl")
+        component.codeRepository?.cloneUrlHttps,
+        repositoryDataString(component, "http_url_to_repo"),
+        repositoryDataString(component, "clone_url"),
+        repositoryDataString(component, "remoteUrl")
     ]
         .map(candidate => onProviderHost(candidate, codeRepository))
         .find(Boolean)
@@ -78,7 +84,7 @@ export const cloneUrlFor = ({ microfrontend, codeRepository, repositoryName }: R
         case CodeRepositoryProvider.GITHUB:
             return `https://github.com/${codeRepository.githubData?.organizationId || codeRepository.githubData?.userName}/${repositoryName}.git`
         case CodeRepositoryProvider.GITLAB: {
-            const projectPath = microfrontend.codeRepository?.gitlab?.path
+            const projectPath = component.codeRepository?.gitlab?.path
             if (!projectPath || !codeRepository.gitlabData?.url) break
             return `${codeRepository.gitlabData.url.replace(/\/$/, "")}/${projectPath}.git`
         }
@@ -112,9 +118,9 @@ const exists = async (target: string) =>
         .catch(() => false)
 
 /**
- * The local clones of the repositories behind the microfrontends, under `REPOSITORIES_FOLDER`.
+ * The local clones of the repositories behind the microfrontends and the services, under `REPOSITORIES_FOLDER`.
  *
- * Laid out as `<org>/<project>/<microfrontend>` and reused across requests. It is a cache: every
+ * Laid out as `<org>/<project>/<microfrontend>` (`<service>.service` for a service) and reused across requests. It is a cache: every
  * use starts by resetting the copy to the remote, and deleting the folder only costs a new clone.
  */
 export class RepositoryWorkspaceService extends BaseAuthorizedService {
@@ -122,45 +128,39 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
         return fastify.config.REPOSITORIES_FOLDER
     }
 
-    /** Resolves the repository of a microfrontend and the folder its working copy lives in. Clones nothing yet. */
-    async open(microfrontendId: string): Promise<OpenedWorkspace> {
-        const microfrontend = await Microfrontend.findById(microfrontendId)
-        if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendId)
-        }
-        await this.ensureAccessToMicrofrontend(microfrontend)
+    /** Resolves the repository of a microfrontend or a service and the folder its working copy lives in. Clones nothing yet. */
+    async open(component: RepositoryComponent): Promise<OpenedWorkspace> {
+        await this.ensureAccessToProject(component.projectId)
 
-        const repositoryFileService = new RepositoryFileService(this.user)
-        const target = (await repositoryFileService.resolveTargets(microfrontend.projectId)).find(candidate => candidate.microfrontend._id.toString() === microfrontendId)
-        if (!target?.codeRepository || !target.repositoryName) {
-            throw createBusinessException({ code: "WORKSPACE_NO_REPOSITORY", message: "This microfrontend has no code repository connected", statusCode: 422 })
+        const link = component.codeRepository
+        const codeRepository = link?.enabled && link.codeRepositoryId ? await CodeRepository.findById(link.codeRepositoryId) : null
+        const repositoryName = codeRepository ? repositoryNameFor(link, codeRepository) : ""
+        if (!codeRepository || !repositoryName) {
+            throw createBusinessException({ code: "WORKSPACE_NO_REPOSITORY", message: `This ${component.kind} has no code repository connected`, statusCode: 422 })
         }
-        // The microfrontend names its connection by id, and that id is editable: without this check a
+        // The component names its connection by id, and that id is editable: without this check a
         // member could borrow the connection, and the token, of another project.
-        if (target.codeRepository.projectId?.toString() !== microfrontend.projectId.toString()) {
+        if (codeRepository.projectId?.toString() !== component.projectId.toString()) {
             throw createBusinessException({ code: "WORKSPACE_NO_REPOSITORY", message: "The code repository connection does not belong to this project", statusCode: 422 })
         }
 
-        const dir = await this.pathFor(microfrontend)
-        const workingCopy = new GitWorkingCopy(dir, cloneUrlFor(target), gitCredentialsFor(target.codeRepository))
-        return { target, workingCopy, defaultBranch: await repositoryFileService.getDefaultBranch(target) }
+        const target: WorkspaceTarget = { component, codeRepository, repositoryName }
+        const dir = await this.pathFor(component)
+        const workingCopy = new GitWorkingCopy(dir, cloneUrlFor(target), gitCredentialsFor(codeRepository))
+        return { target, workingCopy, defaultBranch: await new RepositoryFileService(this.user).getDefaultBranch(target) }
     }
 
-    async pathFor(microfrontend: IMicrofrontend): Promise<string> {
-        const project = await Project.findById(microfrontend.projectId)
+    async pathFor(component: Pick<RepositoryComponent, "kind" | "slug" | "projectId">): Promise<string> {
+        const project = await Project.findById(component.projectId)
         const organization = project && (await Organization.findById(project.organizationId))
         if (!project || !organization) {
-            throw new EntityNotFoundError(microfrontend.projectId.toString())
+            throw new EntityNotFoundError(component.projectId.toString())
         }
-        return microfrontendWorkspacePath(this.root, {
-            organization: { slug: organization.slug, id: organization._id.toString() },
-            project: { slug: project.slug, id: project._id.toString() },
-            microfrontendSlug: microfrontend.slug
-        })
+        return componentWorkspacePath(this.root, { organization: { slug: organization.slug, id: organization._id.toString() }, project: { slug: project.slug, id: project._id.toString() } }, component)
     }
 
     /** Size of the repository as the provider reports it, undefined when it cannot tell. */
-    private async providerSizeBytes({ codeRepository, repositoryName }: RepositoryTarget): Promise<number | undefined> {
+    private async providerSizeBytes({ codeRepository, repositoryName }: WorkspaceTarget): Promise<number | undefined> {
         try {
             switch (codeRepository.provider) {
                 case CodeRepositoryProvider.GITHUB: {
@@ -229,7 +229,7 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
 
     /** Opens a pull request (merge request on GitLab) from `sourceBranch` and returns its web URL. */
     async openPullRequest(
-        { codeRepository, repositoryName, microfrontend }: RepositoryTarget,
+        { codeRepository, repositoryName, component }: WorkspaceTarget,
         request: { sourceBranch: string; targetBranch: string; title: string; description: string }
     ): Promise<string> {
         switch (codeRepository.provider) {
@@ -247,7 +247,7 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
             case CodeRepositoryProvider.GITLAB:
                 if (!codeRepository.gitlabData?.url) break
                 return new GitlabClient(codeRepository.gitlabData.url, codeRepository.accessToken).createMergeRequest(
-                    encodeURIComponent(microfrontend.codeRepository?.repositoryId || repositoryName),
+                    encodeURIComponent(component.codeRepository?.repositoryId || repositoryName),
                     request
                 )
             case CodeRepositoryProvider.AZURE_DEV_OPS:

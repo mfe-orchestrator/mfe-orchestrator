@@ -804,7 +804,9 @@
                 "AI_CHANGE_FORBIDDEN": "You do not have permission to edit this microfrontend with AI.",
                 "WORKSPACE_NO_REPOSITORY": "This microfrontend has no linked code repository.",
                 "AI_CHANGE_CONFLICT": "These files changed on the base branch after the proposal: {{files}}. Ask for the change again.",
-                "AI_CHANGE_NOT_PROPOSED": "This request is no longer waiting for approval."
+                "AI_CHANGE_NOT_PROPOSED": "This request is no longer waiting for approval.",
+                "AI_CHANGE_FORBIDDEN_service": "You do not have permission to edit this service with AI.",
+                "WORKSPACE_NO_REPOSITORY_service": "This service has no linked code repository."
             },
             "new_change": "New change",
             "queue_label": "AI change requests",
@@ -822,7 +824,8 @@
             },
             "composer_title": "What do you want to change in {{name}}?",
             "composer_shortcut": "⌘/Ctrl + Enter to generate the proposal",
-            "advanced_options": "Advanced options"
+            "advanced_options": "Advanced options",
+            "description_service": "Describe the change you want. The agent reads the repository (and its AGENTS.md, if any) together with the AI context of the project and of this service, then proposes the edits. It cannot run commands or tests. Nothing is pushed until you approve: on approval the changes are committed on a new branch and a pull request is opened."
         },
         "workspace": {
             "back": "All microfrontends",
@@ -1207,7 +1210,8 @@
             "hostType": "Host Type",
             "remote": "Remote",
             "host": "Host",
-            "allTypes": "All Types"
+            "allTypes": "All Types",
+            "service": "Backend service"
         },
         "noResults": {
             "title": "No templates match your filters",
@@ -1695,7 +1699,7 @@
                 "DONE": "Done",
                 "FAILED": "Failed"
             },
-            "scope_global": "All microfrontends",
+            "scope_global": "All microfrontends and services",
             "repositories": "Repositories",
             "files_one": "{{count}} file changed",
             "files_other": "{{count}} files changed",
@@ -1723,17 +1727,17 @@
             "toast_failed": "{{label}}: the job failed",
             "new": {
                 "title": "New AI job",
-                "description": "One agent works on the chosen microfrontends together, so a change can span them, such as an API of the shell and the microfrontends that call it. It proposes the edits for review: nothing is pushed until you apply them.",
-                "microfrontends_label": "Microfrontends",
-                "all": "All microfrontends",
-                "all_hint": "Every microfrontend with a linked repository, at most {{max}}.",
+                "description": "One agent works on the chosen microfrontends and services together, so a change can span them, such as an API of a backend service and the microfrontends that call it. It proposes the edits for review: nothing is pushed until you apply them.",
+                "all": "All microfrontends and services",
+                "all_hint": "Every microfrontend and service with a linked repository, at most {{max}}.",
                 "selection_hint": "{{selected}} selected, at most {{max}}.",
-                "selection_required": "Select at least one microfrontend",
-                "no_repositories": "No microfrontend of this project has a linked code repository.",
+                "selection_required": "Select at least one microfrontend or service",
+                "no_repositories": "No microfrontend or service of this project has a linked code repository.",
                 "prompt_label": "What should change?",
                 "prompt_placeholder": "e.g. Rename the getUser API of the shell and update the microfrontends that call it",
                 "prompt_required": "Describe the change you want",
-                "start": "Start job"
+                "start": "Start job",
+                "repositories_label": "Microfrontends and services"
             },
             "errors": {
                 "load": "Could not load the job.",
@@ -1741,18 +1745,140 @@
                 "follow_up": "Could not send the request.",
                 "apply": "Could not apply the proposals.",
                 "ASSISTANT_DISABLED": "AI editing is not enabled on this installation.",
-                "AI_CHANGE_FORBIDDEN": "You do not have permission to edit microfrontends with AI.",
+                "AI_CHANGE_FORBIDDEN": "You do not have permission to edit microfrontends and services with AI.",
                 "AI_CHANGE_TOO_MANY": "Too many jobs are running in this project: wait for one to finish.",
                 "AI_JOB_NOT_DONE": "The job has not finished yet.",
-                "AI_JOB_NO_REPOSITORIES": "None of these microfrontends has a linked code repository.",
-                "AI_JOB_TOO_MANY_REPOSITORIES": "A job can work on at most 10 repositories: select the microfrontends to include.",
+                "AI_JOB_NO_REPOSITORIES": "None of these microfrontends or services has a linked code repository.",
+                "AI_JOB_TOO_MANY_REPOSITORIES": "A job can work on at most 10 repositories: select the microfrontends and services to include.",
                 "AI_JOB_FOLLOW_UP_RUNNING": "A follow-up of this job is still running: wait for it to finish.",
                 "AI_CHANGE_NOT_PROPOSED": "These proposals are no longer waiting for approval."
             },
             "apply_all_started": "Applying the proposals: the pull requests open in a moment",
             "apply_all_failed_one": "{{count}} of {{total}} proposals could not be applied: see the error on its repository",
             "apply_all_failed_other": "{{count}} of {{total}} proposals could not be applied: see the errors on their repositories",
-            "follow_up_no_proposal": "No proposal left to refine: start a new job for further changes."
+            "follow_up_no_proposal": "No proposal left to refine: start a new job for further changes.",
+            "service_badge": "Service"
         }
+    },
+    "services": {
+        "title": "Services",
+        "back": "All services",
+        "nav_label": "Service sections",
+        "nav_overview": "Overview",
+        "nav_settings": "Details & settings",
+        "version_short": "v{{version}}",
+        "add_new": "New service",
+        "add_new_description": "Create a backend Docker service from a template",
+        "updated_success_message": "Service updated",
+        "created_success_message": "Service created",
+        "general_information": "General information",
+        "general_information_description": "Name, identifier and template of the service",
+        "template": "Template",
+        "template_placeholder": "Select a service template",
+        "name": "Name",
+        "name_placeholder": "E.g. Orders API",
+        "slug": "Slug",
+        "slug_placeholder": "orders-api",
+        "slug_invalid": "2 to 50 lowercase letters, digits or dashes, not starting with a dash",
+        "description": "Description",
+        "description_placeholder": "What this service does",
+        "runtime_settings": "Runtime and image",
+        "runtime_settings_description": "Port, healthcheck and Docker image repository",
+        "port": "Port",
+        "healthcheck_path": "Healthcheck path",
+        "image_repository": "Image repository",
+        "image_repository_hint": "Optional. E.g. ghcr.io/acme/orders-api",
+        "latest_version": "Latest version",
+        "repository": "Repository",
+        "code_repository": "Code repository",
+        "no_repository": "No repository is linked to this service.",
+        "runtime": {
+            "label": "Runtime",
+            "NODE": "Node.js",
+            "PYTHON": "Python",
+            "GO": "Go",
+            "DOTNET": ".NET",
+            "JAVA": "Java",
+            "OTHER": "Other"
+        },
+        "list": {
+            "title": "Services",
+            "description": "Manage the backend Docker services of your project",
+            "searchPlaceholder": "Search services...",
+            "clearSearch": "Clear search",
+            "viewGrid": "Grid view",
+            "viewTable": "Table view",
+            "totalCount_one": "{{count}} service",
+            "totalCount_other": "{{count}} services",
+            "filteredCount_one": "{{count}} of {{total}} service",
+            "filteredCount_other": "{{count}} of {{total}} services",
+            "emptyTitle": "No services yet",
+            "emptyDescription": "Create your first backend service from a template: repository, Dockerfile and pipeline are ready.",
+            "createFromTemplate": "Create from a template",
+            "noResultsTitle": "No results",
+            "noResultsDescription": "No service matches \"{{searchTerm}}\".",
+            "resetSearch": "Reset search",
+            "open": "Open"
+        },
+        "env": {
+            "title": "Environment variables",
+            "description": "The variables the container expects. Only names are defined here, never values.",
+            "add": "Add variable",
+            "empty": "No variables defined.",
+            "name": "Name",
+            "variable_description": "Description",
+            "required": "Required",
+            "secret": "Secret"
+        },
+        "context": {
+            "title": "AI context",
+            "subtitle": "Markdown notes for the AI agents working on this service",
+            "label": "Context",
+            "placeholder": "Architecture, conventions, useful commands...",
+            "hint": "AI agents read this before changing the service code."
+        },
+        "configuration": {
+            "title": "Configuration",
+            "description": "How the service container runs"
+        },
+        "build": {
+            "action": "Create version",
+            "title": "Create a version of {{name}}",
+            "branch": "Branch",
+            "noBranches": "No branches",
+            "version": "Version",
+            "versionPlaceholder": "Enter version (e.g., 1.0.0)",
+            "building": "Creating...",
+            "start": "Create version",
+            "success": "Version started for {{name}}"
+        },
+        "versions": {
+            "title": "Versions",
+            "description": "The images the pipeline published on each tag",
+            "version": "Version",
+            "image": "Image",
+            "digest": "Digest",
+            "date": "Date",
+            "copy_image": "Copy the image reference",
+            "copied": "Image reference copied",
+            "copy_failed": "Could not copy to clipboard",
+            "empty": "No version published yet. Create a version to start the pipeline."
+        },
+        "dangerZone": {
+            "title": "Danger zone",
+            "subtitle": "Irreversible actions on this service",
+            "action_title": "Delete the service",
+            "action_description": "Removes the service and its versions from the console. The repository is left untouched.",
+            "button": "Delete service",
+            "success": "Service deleted",
+            "dialog": {
+                "title": "Delete service",
+                "warning": "This action cannot be undone",
+                "description": "You are about to delete the service {{name}}.",
+                "confirmation": "Type {{name}} to confirm",
+                "confirm": "Delete"
+            }
+        },
+        "nav_ai": "Edit with AI"
     }
 }

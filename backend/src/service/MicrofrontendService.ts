@@ -1,39 +1,30 @@
 import { MultipartFile } from "@fastify/multipart"
 import AdmZip from "adm-zip"
-import axios from "axios"
 import fs from "fs-extra"
-import * as git from "isomorphic-git"
-import http from "isomorphic-git/http/node"
 import { ClientSession, ObjectId, Schema, Types } from "mongoose"
-import os, { tmpdir } from "os"
-import path, { join } from "path"
+import os from "os"
+import path from "path"
 import { fastify } from ".."
-import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import AzureStorageClient from "../client/AzureStorageAccount"
-import GithubClient from "../client/GithubClient"
-import GitlabClient from "../client/GitlabClient"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
+import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
-import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
-import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
-import { IMarket } from "../models/MarketModel"
+import CodeRepository from "../models/CodeRepositoryModel"
 import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
+import { isServiceTemplateType } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
-import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import CodeManagementService from "./CodeManagementService"
-import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
+import TemplateScaffoldService from "./TemplateScaffoldService"
 import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
 
-const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
@@ -64,66 +55,16 @@ export class MicrofrontendService extends BaseAuthorizedService {
             if (microfrontend?.codeRepository?.createData) {
                 const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
 
-                if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                    if (!codeRepository.azureData) {
-                        throw new Error("Azure data is not set")
-                    }
-
-                    const azureDevOpsClient = new AzureDevOpsClient()
-                    const createdRepository = await azureDevOpsClient.createRepository(
-                        codeRepository.accessToken,
-                        codeRepository.azureData.organization,
-                        codeRepository.azureData.projectId,
-                        microfrontend.codeRepository.createData.name
-                    )
-                    microfrontend.codeRepository.repositoryId = createdRepository.id
-                    microfrontend.codeRepository.name = createdRepository.name
-                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.remoteUrl
-                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.sshUrl
-                    if (template) {
-                        await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template)
-                        await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
-                    }
-                } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
-                    if (!codeRepository.gitlabData?.url) {
-                        throw new Error("Gitlab url is not set")
-                    }
-                    const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
-                    const path = microfrontend.codeRepository.gitlab?.groupPath || codeRepository.gitlabData?.groupPath || ""
-                    const createdRepository = await gitlabClient.createRepository({
-                        name: microfrontend.codeRepository.createData.name,
-                        namespace_id: microfrontend.codeRepository.gitlab?.groupId,
-                        visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
+                // Checked before anything is created at the provider: a service template scaffolds a
+                // Docker image, which nothing can load as a microfrontend
+                if (template && isServiceTemplateType(template.type)) {
+                    throw createBusinessException({
+                        code: "SERVICE_TEMPLATE_NOT_ALLOWED",
+                        message: `"${template.slug}" is a backend service template: create a service from it, not a microfrontend`
                     })
-                    microfrontend.codeRepository.name = createdRepository.name
-                    microfrontend.codeRepository.repositoryId = createdRepository.id + ""
-                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.http_url_to_repo
-                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.ssh_url_to_repo
-                    if (template) {
-                        await this.injectTemplateGitlab(codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template)
-                    }
-                } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-                    const githubClient = new GithubClient()
-                    const createdRepository = await githubClient.createRepository(
-                        {
-                            name: microfrontend.codeRepository.createData.name,
-                            private: microfrontend.codeRepository.createData.private,
-                            visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
-                        },
-                        codeRepository.accessToken,
-                        codeRepository.githubData?.organizationId
-                    )
-                    microfrontend.codeRepository.repositoryId = createdRepository.id + ""
-                    microfrontend.codeRepository.name = createdRepository.name
-                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.clone_url
-                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.ssh_url
-                    // Now will inject api key
-                    await this.gitHubInjectApiKey(codeRepository, microfrontend)
-                    // Now will inject the template
-                    if (template) {
-                        await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)
-                    }
                 }
+
+                await new TemplateScaffoldService(this.user).createRepository(codeRepository, microfrontend.codeRepository, microfrontend.slug, template)
 
                 // The template knows the stack the repository was just scaffolded with: keep it,
                 // it is what makes the integration instructions specific to this microfrontend
@@ -159,431 +100,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
             return { type: HostedOn.MFE_ORCHESTRATOR_HUB, entryPoint }
         }
         return { type: HostedOn.CUSTOM_SOURCE, storageId: storage._id as unknown as IHostMicrofrontend["storageId"], entryPoint }
-    }
-    async gitHubInjectApiKey(codeRepository: ICodeRepository, microfrontend: MicrofrontendDTO) {
-        if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
-        if (codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return
-        if (!microfrontend.codeRepository.name) return
-
-        const githubClient = new GithubClient()
-
-        const exists = await githubClient.checkRepositorySecretExists({
-            accessToken: codeRepository.accessToken,
-            repositoryName: microfrontend.codeRepository.name,
-            secretName: deploySecretName
-        })
-
-        if (exists) {
-            return
-        }
-
-        const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
-            name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + microfrontend.slug,
-            role: ApiKeyRole.MANAGER,
-            expiresAt: deployKeyExpiry()
-        })
-
-        await githubClient.upsertRepositorySecret({
-            accessToken: codeRepository.accessToken,
-            userName: codeRepository.githubData?.userName,
-            repositoryName: microfrontend.codeRepository.name,
-            secretName: deploySecretName,
-            value: apiKey.apiKey
-        })
-    }
-
-    async injectTemplateGitlab(accessToken: string, baseUrl: string, repositoryName: string, repositoryGroup: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
-        const templateUrl = template.zipUrl
-        if (!templateUrl) {
-            throw new Error("Template url is not set")
-        }
-
-        if (!codeRepository.gitlabData) {
-            throw new Error("Gitlab data is not set")
-        }
-
-        // Download + unzip template
-        const tempDir = await this.downloadZip("template", templateUrl)
-
-        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITLAB, accessToken, tempDir)
-
-        const path = repositoryGroup || codeRepository.gitlabData.groupPath
-
-        const baseUrlReal = baseUrl.replaceAll("https://", "").replaceAll("http://", "")
-        const repoUrl = "https://oauth2:" + accessToken + "@" + baseUrlReal + "/" + path + "/" + repositoryName + ".git"
-
-        await codeManagementService.cloneRepository({
-            repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true,
-            onAuth: () => ({ username: "oauth2", password: accessToken })
-        })
-
-        let files = await fs.readdir(tempDir)
-        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
-
-        if (files.length === 1) {
-            const top = join(tempDir, files[0])
-            const stat = await fs.lstat(top)
-            if (stat.isDirectory()) {
-                const items = await fs.readdir(top)
-                for (const item of items) {
-                    try {
-                        await fs.move(join(top, item), join(tempDir, item), {
-                            overwrite: true
-                        })
-                    } catch (err) {
-                        console.error(`Error moving ${item}:`, err)
-                    }
-                }
-                try {
-                    await fs.remove(top)
-                } catch (err) {
-                    console.error(`Error removing top-level folder:`, err)
-                }
-            }
-        }
-
-        // Work on pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, ".gitlab-ci.yml")
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                // Copy all contents from pipeline path to .github directory
-                await fs.copyFile(pipelinePath, join(tempDir, ".gitlab-ci.yml"))
-
-                // TODO Replace placeholders in all copied files
-                //await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
-
-        // Stage + commit
-        try {
-            await git.branch({
-                fs,
-                dir: tempDir,
-                ref: "main",
-                checkout: true,
-                force: true
-            })
-            await git.add({ fs, dir: tempDir, filepath: "." })
-            await git.commit({
-                fs,
-                dir: tempDir,
-                message: "Initial commit",
-                author: {
-                    name: "MFE Orchestrator Bot",
-                    email: "bot@mfe-orchestrator.dev"
-                }
-            })
-
-            // Push creates "main" on remote if missing
-            await git.push({
-                fs,
-                http,
-                dir: tempDir,
-                remote: "origin",
-                ref: "main",
-                remoteRef: "main",
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: "oauth2", password: accessToken }),
-                force: true
-            })
-
-            console.log("✅ Repo is ready and pushed!")
-            return tempDir
-        } catch (e) {
-            console.error("‼️ Error pushing to remote: ", e)
-            const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
-
-            const branches = await git.listBranches({ fs, dir: tempDir })
-            console.log("🔍 Local branches:", branches)
-
-            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
-            console.log("🔍 Remote branches:", remoteBranches)
-        }
-    }
-
-    async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
-        const templateUrl = template.zipUrl
-        if (!templateUrl) {
-            throw new Error("Template url is not set")
-        }
-        if (!codeRepository.azureData) {
-            throw new Error("Azure data is not set")
-        }
-
-        // Download + unzip template
-        const tempDir = await this.downloadZip("template", templateUrl)
-
-        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.AZURE_DEV_OPS, accessToken, tempDir)
-
-        const repoUrl = "https://root:" + accessToken + "@dev.azure.com/" + codeRepository.azureData.organization + "/" + codeRepository.azureData.projectId + "/_git/" + repositoryName
-
-        await codeManagementService.cloneRepository({
-            repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true
-        })
-
-        let files = await fs.readdir(tempDir)
-        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
-
-        if (files.length === 1) {
-            const top = join(tempDir, files[0])
-            const stat = await fs.lstat(top)
-            if (stat.isDirectory()) {
-                const items = await fs.readdir(top)
-                for (const item of items) {
-                    try {
-                        await fs.move(join(top, item), join(tempDir, item), {
-                            overwrite: true
-                        })
-                    } catch (err) {
-                        console.error(`Error moving ${item}:`, err)
-                    }
-                }
-                try {
-                    await fs.remove(top)
-                } catch (err) {
-                    console.error(`Error removing top-level folder:`, err)
-                }
-            }
-        }
-
-        // Copy pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, "azure-pipelines.yml")
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                // Copy all contents from pipeline path to .github directory
-                await fs.copyFile(pipelinePath, join(tempDir, "azure-pipelines.yml"))
-
-                // Replace placeholders in all copied files
-                //await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
-                // Da fare!!
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
-
-        // Stage + commit
-        try {
-            await git.branch({
-                fs,
-                dir: tempDir,
-                ref: "main",
-                checkout: true,
-                force: true
-            })
-            await git.add({ fs, dir: tempDir, filepath: "." })
-            await git.commit({
-                fs,
-                dir: tempDir,
-                message: "Initial commit",
-                author: {
-                    name: "MFE Orchestrator Bot",
-                    email: "bot@mfe-orchestrator.dev"
-                }
-            })
-
-            // Push creates "main" on remote if missing
-            await git.push({
-                fs,
-                http,
-                dir: tempDir,
-                remote: "origin",
-                ref: "main",
-                remoteRef: "main",
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: accessToken, password: "x-oauth-basic" }),
-                force: true
-            })
-
-            console.log("✅ Repo is ready and pushed!")
-            return tempDir
-        } catch (e) {
-            console.error("‼️ Error pushing to remote: ", e)
-            const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
-
-            const branches = await git.listBranches({ fs, dir: tempDir })
-            console.log("🔍 Local branches:", branches)
-
-            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
-            console.log("🔍 Remote branches:", remoteBranches)
-        }
-    }
-
-    async createPipelineAzureDevOps(repositoryName: string, codeRepository: ICodeRepository) {
-        if (!codeRepository.azureData) {
-            throw new Error("Azure data is not set")
-        }
-
-        const accessToken = codeRepository.accessToken
-        const azureDevOpsClient = new AzureDevOpsClient()
-
-        try {
-            // Get repository details to obtain the repository ID
-            const repository = await azureDevOpsClient.getRepository(accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryName)
-
-            // Create the pipeline
-            const pipeline = await azureDevOpsClient.createPipeline(
-                accessToken,
-                codeRepository.azureData.organization,
-                codeRepository.azureData.projectId,
-                repository.id,
-                `${repositoryName}`,
-                "azure-pipelines.yml",
-                "/"
-            )
-
-            fastify.log.info(`✅ Pipeline created successfully: ${pipeline.name} (ID: ${pipeline.id})`)
-            fastify.log.info(`🔗 Pipeline URL: ${pipeline._links.web.href}`)
-
-            return pipeline
-        } catch (error: unknown) {
-            fastify.log.error(`❌ Failed to create pipeline for repository ${repositoryName}:` + error)
-            throw new Error(`Failed to create Azure DevOps pipeline: ${error}`)
-        }
-    }
-
-    async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {
-        const templateUrl = template.zipUrl
-        if (!templateUrl) {
-            throw new Error("Template url is not set")
-        }
-
-        // Download + unzip template
-        const tempDir = await this.downloadZip("template", templateUrl)
-
-        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITHUB, githubToken, tempDir)
-        await codeManagementService.cloneRepository({
-            repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true
-        })
-
-        // Flatten GitHub zip (moves contents up)
-        let files = await fs.readdir(tempDir)
-        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
-
-        if (files.length === 1) {
-            const top = join(tempDir, files[0])
-            const stat = await fs.lstat(top)
-            if (stat.isDirectory()) {
-                const items = await fs.readdir(top)
-                for (const item of items) {
-                    try {
-                        await fs.move(join(top, item), join(tempDir, item), {
-                            overwrite: true
-                        })
-                    } catch (err) {
-                        console.error(`Error moving ${item}:`, err)
-                    }
-                }
-                try {
-                    await fs.remove(top)
-                } catch (err) {
-                    console.error(`Error removing top-level folder:`, err)
-                }
-            }
-        }
-
-        // Copy pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType)
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                const githubDir = join(tempDir, ".github")
-
-                // Ensure .github directory exists
-                await fs.ensureDir(githubDir)
-
-                // Copy all contents from pipeline path to .github directory
-                await fs.copy(pipelinePath, githubDir, { overwrite: true })
-
-                // Replace placeholders in all copied files
-                await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
-
-        // Stage + commit
-        try {
-            await git.branch({
-                fs,
-                dir: tempDir,
-                ref: "main",
-                checkout: true,
-                force: true
-            })
-            await git.add({ fs, dir: tempDir, filepath: "." })
-            await git.commit({
-                fs,
-                dir: tempDir,
-                message: "Initial commit",
-                author: {
-                    name: "MFE Orchestrator Bot",
-                    email: "bot@mfe-orchestrator.dev"
-                }
-            })
-
-            await codeManagementService.pushRepository({
-                branch: "main"
-            })
-
-            console.log("✅ Repo is ready and pushed!")
-            return tempDir
-        } catch (e) {
-            console.error("‼️ Error pushing to remote: ", e)
-            const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
-
-            const branches = await git.listBranches({ fs, dir: tempDir })
-            console.log("🔍 Local branches:", branches)
-
-            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
-            console.log("🔍 Remote branches:", remoteBranches)
-        }
-    }
-
-    async downloadZip(prefixDirectory: string, urlToDownload: string): Promise<string> {
-        const temporaryDirectory = join(tmpdir(), `${prefixDirectory}-${Date.now()}`)
-        const responseDownload = await axios.get(urlToDownload, {
-            responseType: "arraybuffer"
-        })
-        if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
-
-        const zip = new AdmZip(Buffer.from(responseDownload.data))
-        zip.extractAllTo(temporaryDirectory, true)
-
-        return temporaryDirectory
     }
 
     async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {
@@ -764,40 +280,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await processDirectory(localDir)
     }
 
-    private async replacePlaceholdersInDirectory(directory: string, mfeSlug: string): Promise<void> {
-        const processFile = async (filePath: string) => {
-            try {
-                const content = await fs.readFile(filePath, "utf8")
-                const updatedContent = content.replace(/%microfrontendSlug%/g, mfeSlug).replace(/%domain%/g, process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev")
-
-                if (content !== updatedContent) {
-                    await fs.writeFile(filePath, updatedContent, "utf8")
-                    fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
-                }
-            } catch (error) {
-                // Skip binary files or files that can't be read as text
-                fastify.log.debug(`Skipping file ${filePath}: ${error}`)
-            }
-        }
-
-        const processDirectory = async (dir: string) => {
-            const items = await fs.readdir(dir)
-
-            for (const item of items) {
-                const fullPath = path.join(dir, item)
-                const stats = await fs.lstat(fullPath)
-
-                if (stats.isDirectory()) {
-                    await processDirectory(fullPath)
-                } else if (stats.isFile()) {
-                    await processFile(fullPath)
-                }
-            }
-        }
-
-        await processDirectory(directory)
-    }
-
     async build(microfrontendId: string, version: string, ref?: string): Promise<void> {
         const microfrontend = await this.getById(microfrontendId)
         if (!microfrontend) {
@@ -805,47 +287,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
 
-        if (!microfrontend.codeRepository?.enabled) return
-
-        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
-        if (!codeRepository) {
-            throw new EntityNotFoundError(microfrontend.codeRepository.codeRepositoryId.toString())
-        }
-
-        const repositoryId = microfrontend.codeRepository.repositoryId
-        const branchName = ref || "main"
-
-        if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-            const githubClient = new GithubClient()
-            const commitSha = await githubClient.getBranchCommitSha(
-                codeRepository.accessToken,
-                microfrontend.codeRepository.name,
-                branchName,
-                codeRepository.githubData?.organizationId,
-                codeRepository.githubData?.userName
-            )
-            return await githubClient.createTag(
-                codeRepository.accessToken,
-                microfrontend.codeRepository.name,
-                version,
-                commitSha,
-                codeRepository.githubData?.organizationId,
-                codeRepository.githubData?.userName
-            )
-        } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
-            const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url || "", codeRepository.accessToken)
-
-            const commitSha = await gitlabClient.getBranchCommitSha(repositoryId, branchName)
-            return await gitlabClient.createTag(repositoryId, version, commitSha)
-        } else if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-            const azureClient = new AzureDevOpsClient()
-            if (!codeRepository.azureData) {
-                throw new Error("Azure DevOps data not found")
-            }
-
-            const commitId = await azureClient.getBranchCommitId(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, branchName)
-            return await azureClient.createTag(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, version, commitId)
-        }
+        await new TemplateScaffoldService(this.user).createTag(microfrontend.codeRepository, microfrontend.projectId, version, ref)
     }
 
     async getVersionsById(id: string) {

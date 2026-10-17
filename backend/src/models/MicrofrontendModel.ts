@@ -155,7 +155,8 @@ const microfrontendCanaryTypeSchema = new Schema<ICanaryMicrofrontend>({
     }
 })
 
-const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofrontend>({
+/** Shared with the backend services, which link their repository exactly the same way */
+export const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofrontend>({
     enabled: {
         type: Boolean,
         default: false

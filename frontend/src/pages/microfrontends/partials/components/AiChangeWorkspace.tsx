@@ -9,7 +9,7 @@ import { useSearchParams } from "react-router-dom"
 import AnswerUsage from "@/components/assistant/AnswerUsage"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
-import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus } from "@/hooks/apiClients/useAiChangesApi"
+import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus, AiChangeTarget } from "@/hooks/apiClients/useAiChangesApi"
 import { errorCodeOf } from "@/hooks/useApiClient"
 import useThemeStore from "@/store/useThemeStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
@@ -419,7 +419,9 @@ const QueueSection: React.FC<QueueSectionProps> = ({ group, requests, selectedId
 }
 
 interface ComposerProps {
-    microfrontendName: string
+    name: string
+    /** Picks the wording of a service where it differs (`_service` keys). */
+    kind: AiChangeTarget["kind"]
     prompt: string
     baseBranch: string
     onPromptChange: (value: string) => void
@@ -432,7 +434,7 @@ interface ComposerProps {
     focusOnMount: React.RefObject<boolean>
 }
 
-const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef, focusOnMount }) => {
+const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef, focusOnMount }) => {
     const { t } = useTranslation()
     const promptId = useId()
     const branchId = useId()
@@ -458,9 +460,9 @@ const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBran
                 <CardHeader>
                     <CardTitle className="mb-0 flex items-center gap-2 break-words text-xl">
                         <Sparkles className="size-5 shrink-0 text-primary" aria-hidden="true" />
-                        {t("microfrontend.aiChange.composer_title", { name: microfrontendName })}
+                        {t("microfrontend.aiChange.composer_title", { name })}
                     </CardTitle>
-                    <CardDescription>{t("microfrontend.aiChange.description")}</CardDescription>
+                    <CardDescription>{t("microfrontend.aiChange.description", { context: kind === "service" ? "service" : undefined })}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 pt-3">
                     <div className="flex flex-col gap-1.5">
@@ -522,16 +524,17 @@ const Composer: React.FC<ComposerProps> = ({ microfrontendName, prompt, baseBran
 }
 
 interface AiChangeWorkspaceProps {
-    microfrontendId: string
-    microfrontendName: string
+    /** The microfrontend or the service whose repository the agent works on. */
+    target: AiChangeTarget
+    name: string
 }
 
 /**
- * The "Edit with AI" workspace, the landing screen of a microfrontend: the queue of its requests on one side
+ * The "Edit with AI" workspace of a microfrontend (its landing screen) or of a service: the queue of its requests on one side
  * (waiting for review, in progress, discarded, done) and the selected one, or a new request, on the other.
  * The selection lives in `?change=`, so the assistant can link a job straight to its diff.
  */
-export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfrontendId, microfrontendName }) => {
+export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ target, name }) => {
     const { t } = useTranslation()
     const aiChangesApi = useAiChangesApi()
     const queryClient = useQueryClient()
@@ -543,11 +546,11 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
     const focusComposer = useRef(false)
     const linkedId = searchParams.get("change") ?? undefined
 
-    const historyQueryKey = ["ai-changes", microfrontendId]
+    const historyQueryKey = ["ai-changes", target.id]
 
     const historyQuery = useQuery({
         queryKey: historyQueryKey,
-        queryFn: () => aiChangesApi.getByMicrofrontendId(microfrontendId),
+        queryFn: () => aiChangesApi.getByTarget(target),
         // Jobs started from the assistant land here too: keep the queue moving while any agent works.
         refetchInterval: query => (query.state.data?.some(request => isActive(request.status)) ? POLL_INTERVAL_MS * 2 : false)
     })
@@ -585,19 +588,21 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
         if (isActive(status)) wasActive.current = true
         else if (status && wasActive.current) {
             wasActive.current = false
-            queryClient.invalidateQueries({ queryKey: ["ai-changes", microfrontendId] })
+            queryClient.invalidateQueries({ queryKey: ["ai-changes", target.id] })
         }
-    }, [status, microfrontendId, queryClient])
+    }, [status, target.id, queryClient])
 
     const createMutation = useMutation({
         mutationFn: () =>
             aiChangesApi.create(
-                microfrontendId,
+                target,
                 { prompt: prompt.trim(), baseBranch: baseBranch.trim() || undefined },
                 {
                     customErrorMessage: error => {
                         const code = errorCodeOf(error)
-                        return code && CREATE_ERROR_CODES.has(code) ? t(`microfrontend.aiChange.errors.${code}`) : t("microfrontend.aiChange.errors.create")
+                        return code && CREATE_ERROR_CODES.has(code)
+                            ? t(`microfrontend.aiChange.errors.${code}`, { context: target.kind === "service" ? "service" : undefined })
+                            : t("microfrontend.aiChange.errors.create")
                     }
                 }
             ),
@@ -665,7 +670,8 @@ export const AiChangeWorkspace: React.FC<AiChangeWorkspaceProps> = ({ microfront
             <div className="min-w-0">
                 {(linkedId === NEW_CHANGE || (!linkedId && historyQuery.data?.length === 0)) && (
                     <Composer
-                        microfrontendName={microfrontendName}
+                        name={name}
+                        kind={target.kind}
                         prompt={prompt}
                         baseBranch={baseBranch}
                         onPromptChange={setPrompt}

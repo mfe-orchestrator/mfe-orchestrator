@@ -15,9 +15,11 @@ export interface AiUsage {
     outputTokens: number
 }
 
-/** What the job did on one repository: the `AiChangeRequest` reviewed on the microfrontend page, without file contents. */
+/** What the job did on one repository: the `AiChangeRequest` reviewed on the microfrontend (or service) page, without file contents. */
 export interface AiJobRepository {
     requestId: string
+    /** Whose repository it is: the `microfrontend*` fields describe a service too. */
+    kind: "microfrontend" | "service"
     microfrontendId: string
     microfrontendName: string
     microfrontendSlug: string
@@ -56,12 +58,13 @@ export interface AiWorkingAgents {
     agents: number
 }
 
-export type CreateAiJobDTO = { prompt: string; scope: "global" } | { prompt: string; scope: "selection"; microfrontendIds: string[] }
+export type CreateAiJobDTO = { prompt: string; scope: "global" } | { prompt: string; scope: "selection"; microfrontendIds: string[]; serviceIds?: string[] }
 
 export interface FollowUpAiJobDTO {
     prompt: string
     /** A subset of the parent's repositories; all of them when missing. */
     microfrontendIds?: string[]
+    serviceIds?: string[]
 }
 
 /** Project-scoped: the API client sends the `Project-Id` header of the open project. */

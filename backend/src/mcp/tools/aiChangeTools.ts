@@ -26,7 +26,8 @@ const jobService = (principal: AuthorizedPrincipal) => new AiChangeJobService(pr
 const toChangeView = (request: IAiChangeRequest) => ({
     id: request._id.toString(),
     jobId: request.jobId ? String(request.jobId) : undefined,
-    microfrontendId: String(request.microfrontendId),
+    // A change reached by its id (ai_change_get) may be a backend service's.
+    ...(request.serviceId ? { serviceId: String(request.serviceId) } : { microfrontendId: String(request.microfrontendId) }),
     status: request.status,
     prompt: request.prompt,
     baseBranch: request.baseBranch,
@@ -54,10 +55,13 @@ const toJobView = (job: AiJobView) => ({
     summary: job.summary,
     error: job.error,
     usage: job.usage,
+    // A global job also takes the services of the project: their id is not one microfrontend_get knows
     repositories: job.repositories.map(repository => ({
         changeId: repository.requestId,
-        microfrontendId: repository.microfrontendId,
-        microfrontend: repository.microfrontendName,
+        kind: repository.kind,
+        ...(repository.kind === "service"
+            ? { serviceId: repository.microfrontendId, service: repository.microfrontendName }
+            : { microfrontendId: repository.microfrontendId, microfrontend: repository.microfrontendName }),
         status: repository.status,
         files: repository.files,
         error: repository.error,
@@ -90,7 +94,7 @@ export const aiChangeTools = [
             prompt,
             baseBranch: z.string().trim().min(1).max(255).optional().describe("Branch to start from, the repository's default branch when omitted")
         }),
-        run: async (args, { principal }) => toChangeView(await service(principal).create(args.microfrontendId, { prompt: args.prompt, baseBranch: args.baseBranch }))
+        run: async (args, { principal }) => toChangeView(await service(principal).create({ kind: "microfrontend", id: args.microfrontendId }, { prompt: args.prompt, baseBranch: args.baseBranch }))
     }),
     defineTool({
         name: "ai_changes_list",
@@ -100,7 +104,7 @@ export const aiChangeTools = [
         consoleOnly: true,
         annotations: READ_ONLY,
         inputSchema: z.object({ microfrontendId }),
-        run: async (args, { principal }) => (await service(principal).list(args.microfrontendId)).map(toChangeView)
+        run: async (args, { principal }) => (await service(principal).list({ kind: "microfrontend", id: args.microfrontendId })).map(toChangeView)
     }),
     defineTool({
         name: "ai_change_get",
@@ -140,7 +144,7 @@ export const aiChangeTools = [
         name: "ai_job_start",
         title: "Start AI job",
         description:
-            "Starts one AI agent that proposes a coherent code change across the repositories of several microfrontends at once, e.g. an API changed in one and its callers updated in the others. Without microfrontendIds it works on every microfrontend of the project with a repository (at most 10). Each repository gets its own proposal, applied as its own pull request; nothing is pushed until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
+            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. Without microfrontendIds it works on every microfrontend and service of the project with a repository (at most 10). Each repository gets its own proposal, applied as its own pull request; nothing is pushed until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Clones the repositories from their provider: nothing is written there yet
@@ -152,7 +156,7 @@ export const aiChangeTools = [
                 .min(1)
                 .max(10)
                 .optional()
-                .describe("The microfrontends to change; all those with a repository when omitted")
+                .describe("The microfrontends to change; all the microfrontends and services with a repository when omitted")
         }),
         run: async (args, { principal, projectId }) =>
             toJobView(
@@ -173,7 +177,12 @@ export const aiChangeTools = [
         inputSchema: z.object({
             jobId,
             prompt,
-            microfrontendIds: z.array(objectId("Id of a microfrontend of the job")).min(1).max(10).optional().describe("The repositories of the job to refine; all those still proposed when omitted")
+            microfrontendIds: z
+                .array(objectId("Id of a repository of the job: its microfrontendId or serviceId in ai_job_get"))
+                .min(1)
+                .max(10)
+                .optional()
+                .describe("The repositories of the job to refine; all those still proposed when omitted")
         }),
         run: async (args, { principal }) => toJobView(await jobService(principal).followUp(args.jobId, { prompt: args.prompt, microfrontendIds: args.microfrontendIds }))
     }),
@@ -181,7 +190,7 @@ export const aiChangeTools = [
         name: "ai_job_get",
         title: "Get AI job",
         description:
-            "Status of an AI job (PENDING, RUNNING, DONE, FAILED), its summary, the tokens it used, its latest progress lines and, per repository, the status of its proposal (a changeId for ai_change_get), the files it touches and, once applied, the pull request.",
+            "Status of an AI job (PENDING, RUNNING, DONE, FAILED), its summary, the tokens it used, its latest progress lines and, per repository (a microfrontend's or a service's, see kind), the status of its proposal (a changeId for ai_change_get), the files it touches and, once applied, the pull request.",
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY,

@@ -9,7 +9,7 @@ vi.mock("../..", () => ({ fastify: { log, config: { REPOSITORIES_FOLDER: "/tmp/r
 
 const workspaces = new Map<string, { target: unknown; workingCopy: Record<string, unknown>; defaultBranch: string }>()
 const workspaceService = {
-    open: vi.fn(async (id: string) => workspaces.get(id)!),
+    open: vi.fn(async (component: { _id: unknown }) => workspaces.get(String(component._id))!),
     prepare: vi.fn(async () => "base-commit")
 }
 vi.mock("../workspace/RepositoryWorkspaceService", () => ({
@@ -24,8 +24,10 @@ vi.mock("./aiChangeAgent", async importOriginal => ({ ...(await importOriginal<t
 
 import AiChangeJob, { AiJobStatus } from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
+import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
+import Service from "../../models/ServiceModel"
 import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import BaseAuthorizedService from "../BaseAuthorizedService"
@@ -43,6 +45,19 @@ const projectId = new Types.ObjectId().toString()
 const microfrontend = (slug: string, name: string) => ({ _id: new Types.ObjectId(), projectId, slug, name, stack: { framework: "REACT" }, context: `${name} context` })
 const catalog = microfrontend("catalog", "Catalog")
 const cart = microfrontend("cart", "Cart")
+const connectionId = new Types.ObjectId()
+// Shares its slug with the catalog microfrontend: a service and a microfrontend may.
+const catalogApi = {
+    _id: new Types.ObjectId(),
+    projectId,
+    slug: "catalog",
+    name: "Catalog API",
+    stack: { runtime: "NODE", framework: "Express" },
+    port: 3000,
+    healthcheckPath: "/healthz",
+    env: [{ name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" }],
+    codeRepository: { enabled: true, codeRepositoryId: connectionId, name: "catalog-api" }
+}
 
 interface Update {
     model: string
@@ -57,6 +72,7 @@ describe("AiChangeJobService", () => {
     let role: RoleInProject
     let microfrontends: ReturnType<typeof microfrontend>[]
     let withRepository: ReturnType<typeof microfrontend>[]
+    let services: (typeof catalogApi)[]
     let activeJobs: number
     let updates: Update[]
 
@@ -64,6 +80,7 @@ describe("AiChangeJobService", () => {
         role = RoleInProject.MEMBER
         microfrontends = [catalog, cart]
         withRepository = [catalog, cart]
+        services = []
         activeJobs = 0
         updates = []
         const gates = BaseAuthorizedService.prototype as unknown as WithGates
@@ -76,6 +93,10 @@ describe("AiChangeJobService", () => {
         )
         vi.spyOn(Microfrontend, "find").mockImplementation(((filter: { _id: { $in: unknown[] } }) =>
             Promise.resolve(microfrontends.filter(candidate => filter._id.$in.map(String).includes(String(candidate._id))))) as never)
+        // By id for the components of a job, by project for the services a global job covers.
+        vi.spyOn(Service, "find").mockImplementation(((filter: { _id?: { $in: unknown[] } }) =>
+            Promise.resolve(filter._id ? services.filter(candidate => filter._id!.$in.map(String).includes(String(candidate._id))) : services)) as never)
+        vi.spyOn(CodeRepository, "find").mockResolvedValue([{ _id: connectionId, projectId, provider: CodeRepositoryProvider.GITHUB }] as never)
         vi.spyOn(AiChangeJob, "exists").mockResolvedValue(null as never)
         vi.spyOn(AiChangeRequest, "exists").mockResolvedValue(null as never)
         vi.spyOn(AiChangeJob, "countDocuments").mockImplementation((() => Promise.resolve(activeJobs)) as never)
@@ -96,6 +117,7 @@ describe("AiChangeJobService", () => {
         for (const candidate of microfrontends) {
             workspaces.set(String(candidate._id), { target: {}, workingCopy: { dir: `/tmp/repos/${candidate.slug}` }, defaultBranch: "main" })
         }
+        workspaces.set(String(catalogApi._id), { target: {}, workingCopy: { dir: "/tmp/repos/catalog.service" }, defaultBranch: "main" })
     })
 
     afterEach(() => {
@@ -164,6 +186,37 @@ describe("AiChangeJobService", () => {
                 expect.objectContaining({ microfrontendId: catalog._id, jobRepositoryCount: 2 })
             ])
             expect(String(requests[0].jobId)).toBe(job._id)
+        })
+
+        it("Given a microfrontend and a service selected, when the job is started, then the job lists each under its kind and each gets its request", async () => {
+            services = [catalogApi]
+
+            await service().create(projectId, { prompt: "Expose the price", scope: "selection", microfrontendIds: [String(cart._id)], serviceIds: [String(catalogApi._id)] })
+
+            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ microfrontendIds: [cart._id], serviceIds: [catalogApi._id] }))
+            const requests = (AiChangeRequest.create as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([document]) => document as Record<string, unknown>)
+            expect(requests).toEqual([
+                expect.objectContaining({ microfrontendId: cart._id, jobRepositoryCount: 2 }),
+                expect.objectContaining({ serviceId: catalogApi._id, jobRepositoryCount: 2, baseBranch: "main" })
+            ])
+            expect(requests[1].microfrontendId).toBeUndefined()
+        })
+
+        it("Given a service with a repository, when a global job is started, then it works on the service too", async () => {
+            services = [catalogApi]
+
+            await service().create(projectId, { prompt: "Expose the price", scope: "global" })
+
+            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "global", microfrontendIds: [catalog._id, cart._id], serviceIds: [catalogApi._id] }))
+        })
+
+        it("Given a selected service of another project, when the job is started, then it is not found", async () => {
+            services = [{ ...catalogApi, projectId: new Types.ObjectId().toString() }]
+
+            await expect(service().create(projectId, { prompt: "Expose the price", scope: "selection", serviceIds: [String(catalogApi._id)] })).rejects.toMatchObject({
+                message: expect.stringContaining(String(catalogApi._id))
+            })
+            expect(AiChangeJob.create).not.toHaveBeenCalled()
         })
     })
 
@@ -314,6 +367,59 @@ describe("AiChangeJobService", () => {
             expect(workingCopy.discardChanges).toHaveBeenCalled()
         })
 
+        it("Given a job on a microfrontend and a service of the same slug, when it runs, then the agent sees both under distinct slugs and the service with its container facts", async () => {
+            services = [catalogApi]
+            const serviceRequest = { _id: new Types.ObjectId(), jobId, serviceId: catalogApi._id, baseBranch: "main" }
+            vi.spyOn(AiChangeJob, "findById").mockImplementation(((id: unknown) =>
+                Promise.resolve(
+                    String(id) === String(jobId)
+                        ? {
+                              _id: jobId,
+                              rootJobId: jobId,
+                              projectId,
+                              userId: user._id,
+                              prompt: "Expose the price",
+                              microfrontendIds: [catalog._id],
+                              serviceIds: [catalogApi._id],
+                              status: AiJobStatus.RUNNING
+                          }
+                        : null
+                )) as never)
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ ...request, parentId: undefined }, serviceRequest] as never)
+            workspaces.set(String(catalogApi._id), {
+                target: {},
+                workingCopy: {
+                    dir: `${dir}-service`,
+                    changes: vi.fn(async () => [{ path: "src/routes/price.ts", action: "create" }]),
+                    readWorkingFile: vi.fn(async () => "export const price = 1\n"),
+                    discardChanges: vi.fn(async () => undefined)
+                },
+                defaultBranch: "main"
+            })
+            let input: { repositories: { microfrontend?: { slug: string }; service?: Record<string, unknown> }[] } | undefined
+            runAgent.mockImplementationOnce(async (_client: unknown, received: typeof input) => {
+                input = received
+                return { summary: "Exposed the price", stopReason: "finished" }
+            })
+
+            await run()
+
+            expect(input?.repositories.map(repository => repository.microfrontend?.slug ?? repository.service?.slug)).toEqual(["catalog", "catalog-service"])
+            expect(input?.repositories[1].service).toEqual({
+                name: "Catalog API",
+                slug: "catalog-service",
+                runtime: "NODE",
+                framework: "Express",
+                port: 3000,
+                healthcheckPath: "/healthz",
+                env: [{ name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" }],
+                context: undefined
+            })
+            expect(updates).toContainEqual(
+                expect.objectContaining({ filter: { _id: serviceRequest._id, status: AiChangeStatus.RUNNING }, update: expect.objectContaining({ status: AiChangeStatus.PROPOSED }) })
+            )
+        })
+
         it("Given a file of the parent changed on the base branch since, when the follow-up runs, then it fails naming the file and the parent stays applicable", async () => {
             vi.mocked(workingCopy.blobOid as ReturnType<typeof vi.fn>).mockResolvedValue("someone-else-blob")
 
@@ -462,7 +568,7 @@ describe("AiChangeJobService", () => {
 
     describe("working", () => {
         it("Given two jobs on the catalog and a change on the cart alone, when the project is asked, then each microfrontend counts its agents", async () => {
-            vi.spyOn(AiChangeJob, "find").mockResolvedValue([{ microfrontendIds: [catalog._id, cart._id] }, { microfrontendIds: [catalog._id] }] as never)
+            vi.spyOn(AiChangeJob, "find").mockResolvedValue([{ microfrontendIds: [catalog._id, cart._id], serviceIds: [catalogApi._id] }, { microfrontendIds: [catalog._id] }] as never)
             vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ microfrontendId: cart._id }] as never)
 
             const working = await service().working(projectId)
@@ -470,7 +576,8 @@ describe("AiChangeJobService", () => {
             expect(working).toEqual(
                 expect.arrayContaining([
                     { microfrontendId: String(catalog._id), agents: 2 },
-                    { microfrontendId: String(cart._id), agents: 2 }
+                    { microfrontendId: String(cart._id), agents: 2 },
+                    { microfrontendId: String(catalogApi._id), agents: 1 }
                 ])
             )
             // Only what is running and still alive: a job's own requests are counted through the job.

@@ -901,7 +901,9 @@
                 "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare questo microfrontend con l'AI.",
                 "WORKSPACE_NO_REPOSITORY": "Questo microfrontend non ha un repository di codice collegato.",
                 "AI_CHANGE_CONFLICT": "Questi file sono cambiati sul branch di partenza dopo la proposta: {{files}}. Richiedi di nuovo la modifica.",
-                "AI_CHANGE_NOT_PROPOSED": "Questa richiesta non è più in attesa di approvazione."
+                "AI_CHANGE_NOT_PROPOSED": "Questa richiesta non è più in attesa di approvazione.",
+                "AI_CHANGE_FORBIDDEN_service": "Non hai i permessi per modificare questo servizio con l'AI.",
+                "WORKSPACE_NO_REPOSITORY_service": "Questo servizio non ha un repository di codice collegato."
             },
             "new_change": "Nuova modifica",
             "queue_label": "Richieste di modifica con AI",
@@ -919,7 +921,8 @@
             },
             "composer_title": "Cosa vuoi cambiare in {{name}}?",
             "composer_shortcut": "⌘/Ctrl + Invio per generare la proposta",
-            "advanced_options": "Opzioni avanzate"
+            "advanced_options": "Opzioni avanzate",
+            "description_service": "Descrivi la modifica che vuoi. L'agente legge il repository (e il suo AGENTS.md, se c'è) insieme al contesto AI del progetto e di questo servizio, poi propone le modifiche. Non può eseguire comandi né test. Non viene pubblicato nulla finché non approvi: all'approvazione le modifiche vengono committate su un nuovo branch e viene aperta una pull request."
         },
         "workspace": {
             "back": "Tutti i microfrontend",
@@ -1226,7 +1229,8 @@
             "hostType": "Tipo di Host",
             "remote": "Remoto",
             "host": "Host",
-            "allTypes": "Tutti i Tipi"
+            "allTypes": "Tutti i Tipi",
+            "service": "Servizio backend"
         },
         "noResults": {
             "title": "Nessun template corrisponde ai tuoi filtri",
@@ -1714,7 +1718,7 @@
                 "DONE": "Completato",
                 "FAILED": "Non riuscito"
             },
-            "scope_global": "Tutti i microfrontend",
+            "scope_global": "Tutti i microfrontend e i servizi",
             "repositories": "Repository",
             "files_one": "{{count}} file modificato",
             "files_other": "{{count}} file modificati",
@@ -1742,17 +1746,17 @@
             "toast_failed": "{{label}}: il job non è andato a buon fine",
             "new": {
                 "title": "Nuovo job AI",
-                "description": "Un solo agente lavora insieme sui microfrontend scelti, così una modifica può attraversarli, per esempio un'API dello shell e i microfrontend che la usano. Propone le modifiche da rivedere: non viene pubblicato nulla finché non le applichi.",
-                "microfrontends_label": "Microfrontend",
-                "all": "Tutti i microfrontend",
-                "all_hint": "Tutti i microfrontend con un repository collegato, al massimo {{max}}.",
+                "description": "Un solo agente lavora insieme sui microfrontend e sui servizi scelti, così una modifica può attraversarli, per esempio un'API di un servizio backend e i microfrontend che la usano. Propone le modifiche da rivedere: non viene pubblicato nulla finché non le applichi.",
+                "all": "Tutti i microfrontend e i servizi",
+                "all_hint": "Tutti i microfrontend e i servizi con un repository collegato, al massimo {{max}}.",
                 "selection_hint": "{{selected}} selezionati, al massimo {{max}}.",
-                "selection_required": "Seleziona almeno un microfrontend",
-                "no_repositories": "Nessun microfrontend di questo progetto ha un repository di codice collegato.",
+                "selection_required": "Seleziona almeno un microfrontend o un servizio",
+                "no_repositories": "Nessun microfrontend o servizio di questo progetto ha un repository di codice collegato.",
                 "prompt_label": "Cosa vuoi cambiare?",
                 "prompt_placeholder": "es. Rinomina l'API getUser dello shell e aggiorna i microfrontend che la chiamano",
                 "prompt_required": "Descrivi la modifica che vuoi",
-                "start": "Avvia job"
+                "start": "Avvia job",
+                "repositories_label": "Microfrontend e servizi"
             },
             "errors": {
                 "load": "Impossibile caricare il job.",
@@ -1760,18 +1764,140 @@
                 "follow_up": "Impossibile inviare la richiesta.",
                 "apply": "Impossibile applicare le proposte.",
                 "ASSISTANT_DISABLED": "La modifica con AI non è attiva su questa installazione.",
-                "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare i microfrontend con AI.",
+                "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare microfrontend e servizi con AI.",
                 "AI_CHANGE_TOO_MANY": "Ci sono troppi job in corso in questo progetto: attendi che uno finisca.",
                 "AI_JOB_NOT_DONE": "Il job non è ancora finito.",
-                "AI_JOB_NO_REPOSITORIES": "Nessuno di questi microfrontend ha un repository di codice collegato.",
-                "AI_JOB_TOO_MANY_REPOSITORIES": "Un job può lavorare al massimo su 10 repository: seleziona i microfrontend da includere.",
+                "AI_JOB_NO_REPOSITORIES": "Nessuno di questi microfrontend o servizi ha un repository di codice collegato.",
+                "AI_JOB_TOO_MANY_REPOSITORIES": "Un job può lavorare al massimo su 10 repository: seleziona i microfrontend e i servizi da includere.",
                 "AI_JOB_FOLLOW_UP_RUNNING": "Un follow-up di questo job è ancora in corso: attendi che finisca.",
                 "AI_CHANGE_NOT_PROPOSED": "Queste proposte non sono più in attesa di approvazione."
             },
             "apply_all_started": "Applicazione delle proposte in corso: le pull request si aprono tra un momento",
             "apply_all_failed_one": "{{count}} proposta su {{total}} non è stata applicata: guarda l'errore sul suo repository",
             "apply_all_failed_other": "{{count}} proposte su {{total}} non sono state applicate: guarda gli errori sui loro repository",
-            "follow_up_no_proposal": "Non ci sono proposte da rifinire: avvia un nuovo job per altre modifiche."
+            "follow_up_no_proposal": "Non ci sono proposte da rifinire: avvia un nuovo job per altre modifiche.",
+            "service_badge": "Servizio"
         }
+    },
+    "services": {
+        "title": "Servizi",
+        "back": "Tutti i servizi",
+        "nav_label": "Sezioni del servizio",
+        "nav_overview": "Panoramica",
+        "nav_settings": "Dettagli e impostazioni",
+        "version_short": "v{{version}}",
+        "add_new": "Nuovo servizio",
+        "add_new_description": "Crea un servizio backend Docker a partire da un template",
+        "updated_success_message": "Servizio aggiornato",
+        "created_success_message": "Servizio creato",
+        "general_information": "Informazioni generali",
+        "general_information_description": "Nome, identificativo e template del servizio",
+        "template": "Template",
+        "template_placeholder": "Seleziona un template di servizio",
+        "name": "Nome",
+        "name_placeholder": "Es. Orders API",
+        "slug": "Slug",
+        "slug_placeholder": "orders-api",
+        "slug_invalid": "Da 2 a 50 lettere minuscole, cifre o trattini, senza iniziare con un trattino",
+        "description": "Descrizione",
+        "description_placeholder": "Cosa fa questo servizio",
+        "runtime_settings": "Runtime e immagine",
+        "runtime_settings_description": "Porta, healthcheck e repository dell'immagine Docker",
+        "port": "Porta",
+        "healthcheck_path": "Percorso healthcheck",
+        "image_repository": "Repository immagine",
+        "image_repository_hint": "Facoltativo. Es. ghcr.io/acme/orders-api",
+        "latest_version": "Ultima versione",
+        "repository": "Repository",
+        "code_repository": "Repository del codice",
+        "no_repository": "Nessun repository collegato a questo servizio.",
+        "runtime": {
+            "label": "Runtime",
+            "NODE": "Node.js",
+            "PYTHON": "Python",
+            "GO": "Go",
+            "DOTNET": ".NET",
+            "JAVA": "Java",
+            "OTHER": "Altro"
+        },
+        "list": {
+            "title": "Servizi",
+            "description": "Gestisci i servizi backend Docker del tuo progetto",
+            "searchPlaceholder": "Cerca servizi...",
+            "clearSearch": "Cancella la ricerca",
+            "viewGrid": "Vista griglia",
+            "viewTable": "Vista tabella",
+            "totalCount_one": "{{count}} servizio",
+            "totalCount_other": "{{count}} servizi",
+            "filteredCount_one": "{{count}} di {{total}} servizio",
+            "filteredCount_other": "{{count}} di {{total}} servizi",
+            "emptyTitle": "Nessun servizio",
+            "emptyDescription": "Crea il tuo primo servizio backend a partire da un template: repository, Dockerfile e pipeline sono pronti.",
+            "createFromTemplate": "Crea da un template",
+            "noResultsTitle": "Nessun risultato",
+            "noResultsDescription": "Nessun servizio corrisponde a «{{searchTerm}}».",
+            "resetSearch": "Azzera la ricerca",
+            "open": "Apri"
+        },
+        "env": {
+            "title": "Variabili d'ambiente",
+            "description": "Le variabili che il container si aspetta. Qui si definiscono solo i nomi, mai i valori.",
+            "add": "Aggiungi variabile",
+            "empty": "Nessuna variabile definita.",
+            "name": "Nome",
+            "variable_description": "Descrizione",
+            "required": "Obbligatoria",
+            "secret": "Segreta"
+        },
+        "context": {
+            "title": "Contesto per l'AI",
+            "subtitle": "Note in markdown per gli agenti AI che lavorano su questo servizio",
+            "label": "Contesto",
+            "placeholder": "Architettura, convenzioni, comandi utili...",
+            "hint": "Gli agenti AI lo leggono prima di modificare il codice del servizio."
+        },
+        "configuration": {
+            "title": "Configurazione",
+            "description": "Come viene eseguito il container del servizio"
+        },
+        "build": {
+            "action": "Crea versione",
+            "title": "Crea una versione di {{name}}",
+            "branch": "Branch",
+            "noBranches": "Nessun branch",
+            "version": "Versione",
+            "versionPlaceholder": "Inserisci la versione (es. 1.0.0)",
+            "building": "Creazione...",
+            "start": "Crea versione",
+            "success": "Versione avviata per {{name}}"
+        },
+        "versions": {
+            "title": "Versioni",
+            "description": "Le immagini pubblicate dalla pipeline a ogni tag",
+            "version": "Versione",
+            "image": "Immagine",
+            "digest": "Digest",
+            "date": "Data",
+            "copy_image": "Copia il riferimento dell'immagine",
+            "copied": "Riferimento dell'immagine copiato",
+            "copy_failed": "Impossibile copiare negli appunti",
+            "empty": "Nessuna versione pubblicata. Crea una versione per avviare la pipeline."
+        },
+        "dangerZone": {
+            "title": "Zona pericolosa",
+            "subtitle": "Azioni irreversibili su questo servizio",
+            "action_title": "Elimina il servizio",
+            "action_description": "Rimuove il servizio e le sue versioni dalla console. Il repository non viene toccato.",
+            "button": "Elimina servizio",
+            "success": "Servizio eliminato",
+            "dialog": {
+                "title": "Elimina servizio",
+                "warning": "Questa azione non si può annullare",
+                "description": "Stai per eliminare il servizio {{name}}.",
+                "confirmation": "Scrivi {{name}} per confermare",
+                "confirm": "Elimina"
+            }
+        },
+        "nav_ai": "Modifica con AI"
     }
 }

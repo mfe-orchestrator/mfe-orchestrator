@@ -33,6 +33,14 @@ export const projectWorkspacePath = (root: string, owner: Pick<WorkspaceOwner, "
 
 export const microfrontendWorkspacePath = (root: string, owner: WorkspaceOwner) => path.join(projectWorkspacePath(root, owner), safeSegment(owner.microfrontendSlug))
 
+/**
+ * `<project folder>/<serviceSlug>.service`. A service may share its slug with a microfrontend of the
+ * project: the suffix keeps the two clones (and the locks named after their folder) apart, and no
+ * microfrontend folder can end with it since a slug segment holds no dot.
+ */
+export const serviceWorkspacePath = (root: string, owner: Pick<WorkspaceOwner, "organization" | "project"> & { serviceSlug: string }) =>
+    path.join(projectWorkspacePath(root, owner), `${safeSegment(owner.serviceSlug)}.service`)
+
 export class WorkspacePathError extends Error {}
 
 /** Paths an agent may never read: credentials that can sit in a repository by mistake. */

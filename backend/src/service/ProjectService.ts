@@ -4,12 +4,14 @@ import { BusinessException, createBusinessException } from "../errors/BusinessEx
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
+import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
+import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
@@ -293,6 +295,9 @@ export class ProjectService extends BaseAuthorizedService {
         const mfeIds = microfrontends.map(mfe => mfe._id)
         await BuiltFrontend.deleteMany({ microfrontendId: { $in: mfeIds } }, session)
 
+        const services = await Service.find({ projectId: projectIdObj }, { _id: 1 }, { session })
+        await BuiltService.deleteMany({ serviceId: { $in: services.map(service => service._id) } }, session)
+
         const deployments = await Deployment.find({ projectId: projectIdObj }, {}, { session })
         const deploymentsIds = deployments.map(deployment => deployment._id)
         await DeploymentToCanaryUsers.deleteMany({ deploymentId: { $in: deploymentsIds } }, session)
@@ -303,6 +308,7 @@ export class ProjectService extends BaseAuthorizedService {
 
         await Deployment.deleteMany({ projectId: projectIdObj }, session)
         await Microfrontend.deleteMany({ projectId: projectIdObj }, session)
+        await Service.deleteMany({ projectId: projectIdObj }, session)
         await Environment.deleteMany({ projectId: projectIdObj }, session)
 
         return await Project.deleteOne({ _id: projectIdObj }, session)

@@ -1,0 +1,107 @@
+import useApiClient from "../useApiClient"
+import type { Microfrontend } from "./useMicrofrontendsApi"
+
+export enum ServiceRuntime {
+    NODE = "NODE",
+    PYTHON = "PYTHON",
+    GO = "GO",
+    DOTNET = "DOTNET",
+    JAVA = "JAVA",
+    OTHER = "OTHER"
+}
+
+export interface ServiceEnvVariable {
+    name: string
+    required: boolean
+    secret: boolean
+    description?: string
+}
+
+/** Same shape as the microfrontend repository link: the backend reuses the subdocument. */
+export type ServiceCodeRepository = Microfrontend["codeRepository"]
+
+export interface Service {
+    _id?: string
+    projectId?: string
+    slug: string
+    name: string
+    description?: string
+    /** Markdown per gli agenti AI su questo solo servizio */
+    context?: string
+    /** Market slug of the template the service was created from */
+    template?: string
+    stack?: {
+        runtime?: ServiceRuntime
+        framework?: string
+        source?: string
+        detectedAt?: Date
+    }
+    /** Latest registered version */
+    version?: string
+    codeRepository?: ServiceCodeRepository
+    image?: {
+        repository?: string
+    }
+    port: number
+    healthcheckPath: string
+    env: ServiceEnvVariable[]
+    createdAt?: Date
+    updatedAt?: Date
+}
+
+export type ServiceDTO = Omit<Service, "_id" | "projectId" | "stack" | "version" | "createdAt" | "updatedAt">
+
+export interface BuiltService {
+    _id?: string
+    serviceId: string
+    version: string
+    /** Full image reference, e.g. ghcr.io/acme/orders-api:1.2.0 */
+    image: string
+    digest?: string
+    commitSha?: string
+    createdAt?: Date
+    updatedAt?: Date
+}
+
+const useServicesApi = () => {
+    const apiClient = useApiClient()
+
+    const getAll = async (): Promise<Service[]> => {
+        const response = await apiClient.doRequest<Service[]>({ url: "/api/services" })
+        return response.data
+    }
+
+    const getSingle = async (id: string): Promise<Service> => {
+        const response = await apiClient.doRequest<Service>({ url: `/api/services/${id}` })
+        return response.data
+    }
+
+    const getVersions = async (id: string): Promise<BuiltService[]> => {
+        const response = await apiClient.doRequest<BuiltService[]>({ url: `/api/services/${id}/versions` })
+        return response.data
+    }
+
+    const create = async (service: ServiceDTO): Promise<Service> => {
+        const response = await apiClient.doRequest<Service>({ url: "/api/services", method: "POST", data: service })
+        return response.data
+    }
+
+    const update = async (id: string, service: ServiceDTO): Promise<Service> => {
+        const response = await apiClient.doRequest<Service>({ url: `/api/services/${id}`, method: "PUT", data: service })
+        return response.data
+    }
+
+    const deleteSingle = async (id: string) => {
+        const response = await apiClient.doRequest({ url: `/api/services/${id}`, method: "DELETE" })
+        return response.data
+    }
+
+    const build = async (id: string, version: string, branch?: string) => {
+        const response = await apiClient.doRequest({ url: `/api/services/${id}/build`, method: "POST", data: { version, branch } })
+        return response.data
+    }
+
+    return { getAll, getSingle, getVersions, create, update, deleteSingle, build }
+}
+
+export default useServicesApi

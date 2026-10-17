@@ -265,8 +265,9 @@ describe("checkApiKey", () => {
      * The stored key is a bcrypt hash, so the stub matches on the plaintext it was built
      * with rather than pretending to hash anything.
      */
-    const aStoredKey = (plaintext: string, overrides: { status?: ApiKeyStatus; expiresAt?: Date } = {}) => ({
+    const aStoredKey = (plaintext: string, overrides: { status?: ApiKeyStatus; expiresAt?: Date; role?: string } = {}) => ({
         projectId: PROJECT_ID,
+        role: overrides.role ?? "VIEWER",
         status: overrides.status ?? ApiKeyStatus.ACTIVE,
         expiresAt: overrides.expiresAt ?? new Date(Date.now() + 60_000),
         compareApiKey: (candidate: string) => Promise.resolve(candidate === plaintext)
@@ -287,6 +288,16 @@ describe("checkApiKey", () => {
         storing(aStoredKey("a-live-key"))
 
         await expect(checkApiKey(aRequest("a-live-key"))).resolves.toBe(PROJECT_ID)
+    })
+
+    /** Routes that restrict the role (the service version registration) read it from the request */
+    it("given an active key, when it is checked, then its role is left on the request", async () => {
+        storing(aStoredKey("a-manager-key", { role: "MANAGER" }))
+        const request = aRequest("a-manager-key")
+
+        await checkApiKey(request)
+
+        expect(request.apiKeyRole).toBe("MANAGER")
     })
 
     it("given a revoked key, when it is checked, then it is refused as revoked", async () => {

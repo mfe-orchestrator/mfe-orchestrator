@@ -47,7 +47,7 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
         <div className="flex min-h-full flex-col gap-6">
             <MicrofrontendHeader microfrontend={microfrontend} active="ai" aiAvailable />
             {/* Keyed: the route instance is reused across microfrontends, and a draft must not follow the user to another one. */}
-            <AiChangeWorkspace key={id} microfrontendId={id!} microfrontendName={microfrontend.name} />
+            <AiChangeWorkspace key={id} target={{ kind: "microfrontend", id: id! }} name={microfrontend.name} />
         </div>
     )
 }

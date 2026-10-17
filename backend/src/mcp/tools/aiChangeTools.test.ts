@@ -84,7 +84,15 @@ const jobView = (status: string) => ({
     events: Array.from({ length: 15 }, (_, index) => ({ at: new Date(0), kind: "tool", message: `step ${index}` })),
     usage: { inputTokens: 1200, cachedInputTokens: 800, outputTokens: 300 },
     repositories: [
-        { requestId: CHANGE, microfrontendId: MICROFRONTEND, microfrontendName: "Cart", microfrontendSlug: "cart", status: "PROPOSED", files: [{ path: "src/Price.ts", action: "update" }] }
+        {
+            requestId: CHANGE,
+            kind: "microfrontend",
+            microfrontendId: MICROFRONTEND,
+            microfrontendName: "Cart",
+            microfrontendSlug: "cart",
+            status: "PROPOSED",
+            files: [{ path: "src/Price.ts", action: "update" }]
+        }
     ],
     createdAt: new Date(0),
     updatedAt: new Date(0)
@@ -115,7 +123,7 @@ describe("AI change tools", () => {
 
             const result = (await run("ai_change_start", { microfrontendId: MICROFRONTEND, prompt: "Add a footer" })) as Record<string, unknown>
 
-            expect(createChange).toHaveBeenCalledWith(MICROFRONTEND, { prompt: "Add a footer", baseBranch: undefined })
+            expect(createChange).toHaveBeenCalledWith({ kind: "microfrontend", id: MICROFRONTEND }, { prompt: "Add a footer", baseBranch: undefined })
             expect(constructed[0]).toEqual([expect.objectContaining({ restrictedToProjectIds: [PROJECT] }), { AI_PROVIDER: "anthropic" }])
             expect(result).toMatchObject({ id: CHANGE, jobId: JOB, status: "PENDING", files: [{ path: "src/Footer.tsx", action: "create" }], usage: { cachedInputTokens: 800 } })
             expect(JSON.stringify(result)).not.toContain("export const Footer")
@@ -138,7 +146,7 @@ describe("AI change tools", () => {
             listChanges.mockResolvedValue([changeDocument("PROPOSED")])
 
             expect(await run("ai_changes_list", { microfrontendId: MICROFRONTEND })).toEqual([expect.objectContaining({ id: CHANGE, status: "PROPOSED" })])
-            expect(listChanges).toHaveBeenCalledWith(MICROFRONTEND)
+            expect(listChanges).toHaveBeenCalledWith({ kind: "microfrontend", id: MICROFRONTEND })
         })
 
         it("given a microfrontend of another project, when listed, then the refusal surfaces", async () => {
@@ -206,9 +214,23 @@ describe("AI change tools", () => {
                 jobId: JOB,
                 status: "PENDING",
                 usage: { inputTokens: 1200, cachedInputTokens: 800, outputTokens: 300 },
-                repositories: [{ changeId: CHANGE, microfrontend: "Cart", status: "PROPOSED", files: [{ path: "src/Price.ts", action: "update" }] }]
+                repositories: [
+                    { changeId: CHANGE, kind: "microfrontend", microfrontendId: MICROFRONTEND, microfrontend: "Cart", status: "PROPOSED", files: [{ path: "src/Price.ts", action: "update" }] }
+                ]
             })
             expect(result.recentEvents).toHaveLength(10)
+        })
+
+        /** A global job takes the services too: their id must not read as a microfrontend's */
+        it("given a job on a service, when it is viewed, then the repository is named a service with its serviceId", async () => {
+            const view = jobView("PENDING")
+            createJob.mockResolvedValue({ ...view, repositories: [{ ...view.repositories[0], kind: "service", microfrontendName: "Orders API", microfrontendSlug: "orders-api" }] })
+
+            const result = (await run("ai_job_start", { prompt: "Rename the price API" })) as { repositories: Record<string, unknown>[] }
+
+            expect(result.repositories[0]).toMatchObject({ kind: "service", serviceId: MICROFRONTEND, service: "Orders API" })
+            expect(result.repositories[0]).not.toHaveProperty("microfrontendId")
+            expect(result.repositories[0]).not.toHaveProperty("microfrontend")
         })
 
         it("given microfrontends, when started, then the job works on those alone", async () => {

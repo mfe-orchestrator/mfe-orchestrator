@@ -341,10 +341,15 @@ export const resolveApiKey = async (apiKey: unknown): Promise<IApiKeyDocument> =
     throw new AuthenticationError(refused.status !== ApiKeyStatus.ACTIVE ? "API key revoked" : `API key expired on ${refused.expiresAt.toISOString()}`)
 }
 
-/** The project of the API key the request carries, in the `api-key` header or the `apiKey` query parameter. */
+/**
+ * The project of the API key the request carries, in the `api-key` header or the `apiKey` query parameter.
+ * The key's role is left on `request.apiKeyRole` for the routes that restrict it; the others ignore it.
+ */
 export const checkApiKey = async (request: FastifyRequest): Promise<string> => {
     const apiKey = request.headers["api-key"] || (request.query as Record<string, unknown>)["apiKey"]
-    return (await resolveApiKey(apiKey)).projectId.toString()
+    const resolved = await resolveApiKey(apiKey)
+    request.apiKeyRole = resolved.role
+    return resolved.projectId.toString()
 }
 
 export default fastifyPlugin(

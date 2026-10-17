@@ -1,4 +1,4 @@
-import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Settings } from "lucide-react"
+import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, Settings } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import AssistantPanel from "@/components/assistant/AssistantPanel"
@@ -23,6 +23,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             name: "Microfrontends",
             path: "/microfrontends",
             icon: <LayoutDashboard />
+        },
+        {
+            name: t("services.title"),
+            path: "/services",
+            icon: <Server />
         },
         {
             name: t("environmentVariables.title"),

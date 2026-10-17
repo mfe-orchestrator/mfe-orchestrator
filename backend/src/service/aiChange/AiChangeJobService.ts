@@ -6,15 +6,27 @@ import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeJob, { AiJobScope, AiJobStatus, IAiChangeJob } from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AI_CHANGE_MAX_EVENTS, AiChangeFileAction, AiChangeStatus, IAiChangeEvent, IAiChangeFile, IAiChangeRequest } from "../../models/AiChangeRequestModel"
-import Microfrontend, { IMicrofrontend } from "../../models/MicrofrontendModel"
+import CodeRepository from "../../models/CodeRepositoryModel"
 import Project, { IProject } from "../../models/ProjectModel"
+import Service from "../../models/ServiceModel"
 import { toObjectId } from "../../utils/mongooseUtils"
 import { withRepositoryLock } from "../../utils/repositoryLock"
 import { isProtectedPath, resolveInsideWorkingCopy } from "../../utils/workspacePaths"
 import { addUsage, getLlmClient, LlmClient, LlmUsage, NO_USAGE } from "../llm"
-import { RepositoryFileService, toErrorMessage } from "../RepositoryFileService"
+import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "../RepositoryFileService"
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
-import { AI_CHANGE_LIMITS, runAiChangeAgent } from "./aiChangeAgent"
+import {
+    componentIdOf,
+    componentsOfJob,
+    findComponents,
+    fromMicrofrontend,
+    fromService,
+    ownerFields,
+    RepositoryComponent,
+    RepositoryComponentKind,
+    RepositoryComponentRef
+} from "../workspace/repositoryComponent"
+import { AI_CHANGE_LIMITS, AiChangeAgentRepository, runAiChangeAgent } from "./aiChangeAgent"
 import { AiChangeBaseService, ensureNotBeingRefined, followUpRunning, loggable, PROPOSAL_TTL_MS, STALE_AFTER_MS, staleOutcome, storable } from "./aiChangeShared"
 
 /** Repositories one job may work on: each is a clone and a share of the model's context. */
@@ -35,16 +47,20 @@ export interface AiJobCreateInput {
     prompt: string
     scope: AiJobScope
     microfrontendIds?: string[]
+    serviceIds?: string[]
 }
 
 export interface AiJobFollowUpInput {
     prompt: string
-    /** The repositories of the parent job to refine; all those still proposed when left out. */
+    /** The repositories of the parent job to refine; all those still proposed when both are left out. */
     microfrontendIds?: string[]
+    serviceIds?: string[]
 }
 
 export interface AiJobRepositoryView {
     requestId: string
+    /** Whether the repository is a microfrontend's or a service's: the `microfrontend*` fields describe either. */
+    kind: RepositoryComponentKind
     microfrontendId: string
     microfrontendName: string
     microfrontendSlug: string
@@ -76,15 +92,16 @@ export interface AiJobView {
     updatedAt: Date
 }
 
-/** The agents at work on one microfrontend: the console animates its card while any is. */
+/** The agents at work on one microfrontend (or service): the console animates its card while any is. */
 export interface AiWorkingAgentsView {
+    /** The id of the microfrontend or of the service. */
     microfrontendId: string
     agents: number
 }
 
 /** A repository the job is about to work on. */
 interface JobRepository {
-    microfrontend: IMicrofrontend
+    component: RepositoryComponent
     baseBranch: string
     /** The request of the parent job on the same repository, for a follow-up. */
     parentId?: IAiChangeRequest["_id"]
@@ -93,7 +110,7 @@ interface JobRepository {
 /** A repository of a running job: its request and its prepared working copy. */
 interface RunningRepository {
     request: IAiChangeRequest
-    microfrontend: IMicrofrontend
+    component: RepositoryComponent
     workspace: OpenedWorkspace
     baseCommit?: string
     /** The files of the parent request, written on the working copy before the agent starts. */
@@ -105,7 +122,7 @@ const isStale = (job: Pick<IAiChangeJob, "status" | "updatedAt">) => ACTIVE_JOB_
 const tooMany = () =>
     createBusinessException({
         code: "AI_JOB_TOO_MANY_REPOSITORIES",
-        message: `A job works on at most ${MAX_REPOSITORIES_PER_JOB} repositories: select the microfrontends to change`,
+        message: `A job works on at most ${MAX_REPOSITORIES_PER_JOB} repositories: select the microfrontends and services to change`,
         statusCode: 422
     })
 
@@ -117,7 +134,42 @@ const expiry = () => new Date(Date.now() + PROPOSAL_TTL_MS)
 
 const event = (kind: IAiChangeEvent["kind"], message: string) => ({ $push: { events: { $each: [{ at: new Date(), kind, message }], $slice: -AI_CHANGE_MAX_EVENTS } } })
 
-const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], microfrontends: Map<string, Pick<IMicrofrontend, "name" | "slug">>, withEvents: boolean): AiJobView => ({
+const sameComponent = (ref: RepositoryComponentRef) => (component: RepositoryComponent) => component.kind === ref.kind && String(component._id) === ref.id
+
+/**
+ * The slug the paths of each repository start with in a multi-repository job. A service may share
+ * its slug with a microfrontend of the project: the later one gets its kind appended, so every
+ * path still points into exactly one repository.
+ */
+const pathSlugs = (components: RepositoryComponent[]) => {
+    const taken = new Set<string>()
+    return components.map(component => {
+        let slug = component.slug
+        while (taken.has(slug)) slug = `${slug}-${component.kind}`
+        taken.add(slug)
+        return slug
+    })
+}
+
+/** What the agent is told of a repository: a microfrontend's stack, or what the platform expects of a service's container. */
+const agentRepository = (component: RepositoryComponent, slug: string, rest: Omit<AiChangeAgentRepository, "microfrontend" | "service">): AiChangeAgentRepository =>
+    component.kind === "service"
+        ? {
+              ...rest,
+              service: {
+                  name: component.name,
+                  slug,
+                  runtime: component.runtime,
+                  framework: component.framework,
+                  port: component.port,
+                  healthcheckPath: component.healthcheckPath,
+                  env: component.env.map(({ name, required, secret, description }) => ({ name, required, secret, description })),
+                  context: component.context
+              }
+          }
+        : { ...rest, microfrontend: { name: component.name, slug, framework: component.framework, compiler: component.compiler, context: component.context } }
+
+const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: Map<string, Pick<RepositoryComponent, "name" | "slug">>, withEvents: boolean): AiJobView => ({
     _id: String(job._id),
     projectId: String(job.projectId),
     userId: String(job.userId),
@@ -130,17 +182,18 @@ const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], microfronten
     summary: job.summary,
     error: job.error,
     usage: { inputTokens: job.usage?.inputTokens ?? 0, cachedInputTokens: job.usage?.cachedInputTokens ?? 0, outputTokens: job.usage?.outputTokens ?? 0 },
-    repositories: job.microfrontendIds.flatMap(microfrontendId => {
+    repositories: componentsOfJob(job).flatMap(ref => {
         // A request nobody acted upon expires: the job then only lists the others.
-        const request = requests.find(candidate => String(candidate.jobId) === String(job._id) && String(candidate.microfrontendId) === String(microfrontendId))
+        const request = requests.find(candidate => String(candidate.jobId) === String(job._id) && componentIdOf(candidate) === ref.id)
         if (!request) return []
-        const microfrontend = microfrontends.get(String(microfrontendId))
+        const component = components.get(ref.id)
         return [
             {
                 requestId: String(request._id),
-                microfrontendId: String(microfrontendId),
-                microfrontendName: microfrontend?.name ?? "",
-                microfrontendSlug: microfrontend?.slug ?? "",
+                kind: ref.kind,
+                microfrontendId: ref.id,
+                microfrontendName: component?.name ?? "",
+                microfrontendSlug: component?.slug ?? "",
                 status: staleOutcome(request) ?? request.status,
                 files: (request.files ?? []).map(file => ({ path: file.path, action: file.action })),
                 error: request.error,
@@ -163,41 +216,62 @@ const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], microfronten
  * and replaces them once it proposes.
  */
 export class AiChangeJobService extends AiChangeBaseService {
-    /** The microfrontends of the project whose repository connection the workspace can open. */
-    private async repositoriesOf(projectId: string): Promise<IMicrofrontend[]> {
-        const targets = await new RepositoryFileService(this.user).resolveTargets(projectId)
-        return targets.filter(target => target.codeRepository && target.repositoryName && target.codeRepository.projectId?.toString() === projectId).map(target => target.microfrontend)
+    /** The services of the project whose repository connection, of this same project, the workspace can open. */
+    private async servicesWithRepository(projectId: string): Promise<RepositoryComponent[]> {
+        const services = (await Service.find({ projectId: toObjectId(projectId) })).filter(service => service.codeRepository?.enabled && service.codeRepository.codeRepositoryId)
+        if (services.length === 0) return []
+        const connectionIds = [...new Set(services.map(service => String(service.codeRepository!.codeRepositoryId)))]
+        const connections = await CodeRepository.find({ _id: { $in: connectionIds.map(id => toObjectId(id)) }, projectId: toObjectId(projectId) })
+        return services
+            .filter(service => {
+                const connection = connections.find(candidate => String(candidate._id) === String(service.codeRepository!.codeRepositoryId))
+                return connection && repositoryNameFor(service.codeRepository, connection)
+            })
+            .sort((a, b) => a.slug.localeCompare(b.slug))
+            .map(fromService)
     }
 
-    private async selectRepositories(projectId: string, input: AiJobCreateInput): Promise<IMicrofrontend[]> {
+    /** The microfrontends, then the services, of the project whose repository connection the workspace can open. */
+    private async repositoriesOf(projectId: string): Promise<RepositoryComponent[]> {
+        const targets = await new RepositoryFileService(this.user).resolveTargets(projectId)
+        const microfrontends = targets
+            .filter(target => target.codeRepository && target.repositoryName && target.codeRepository.projectId?.toString() === projectId)
+            .map(target => fromMicrofrontend(target.microfrontend))
+        return [...microfrontends, ...(await this.servicesWithRepository(projectId))]
+    }
+
+    private async selectRepositories(projectId: string, input: AiJobCreateInput): Promise<RepositoryComponent[]> {
         const available = await this.repositoriesOf(projectId)
         if (input.scope === "global") {
-            if (available.length === 0) throw noRepositories("No microfrontend of the project has a code repository connected")
+            if (available.length === 0) throw noRepositories("No microfrontend or service of the project has a code repository connected")
             if (available.length > MAX_REPOSITORIES_PER_JOB) throw tooMany()
             return available
         }
 
-        const ids = [...new Set(input.microfrontendIds ?? [])]
-        if (ids.length === 0) throw noRepositories("Select at least one microfrontend")
-        if (ids.length > MAX_REPOSITORIES_PER_JOB) throw tooMany()
-        const inProject = await Microfrontend.find({ _id: { $in: ids.map(id => toObjectId(id)) }, projectId: toObjectId(projectId) }, { name: 1 })
-        const missing = ids.find(id => !inProject.some(microfrontend => String(microfrontend._id) === id))
-        if (missing) throw new EntityNotFoundError(missing)
-        const withoutRepository = inProject.filter(microfrontend => !available.some(candidate => String(candidate._id) === String(microfrontend._id)))
+        const refs: RepositoryComponentRef[] = [
+            ...[...new Set(input.microfrontendIds ?? [])].map(id => ({ kind: "microfrontend" as const, id })),
+            ...[...new Set(input.serviceIds ?? [])].map(id => ({ kind: "service" as const, id }))
+        ]
+        if (refs.length === 0) throw noRepositories("Select at least one microfrontend or service")
+        if (refs.length > MAX_REPOSITORIES_PER_JOB) throw tooMany()
+        const inProject = (await findComponents(refs, { name: 1, projectId: 1 })).filter(component => String(component.projectId) === projectId)
+        const missing = refs.find(ref => !inProject.some(sameComponent(ref)))
+        if (missing) throw new EntityNotFoundError(missing.id)
+        const withoutRepository = inProject.filter(component => !available.some(sameComponent({ kind: component.kind, id: String(component._id) })))
         if (withoutRepository.length) {
-            throw noRepositories(`No code repository is connected to ${withoutRepository.map(microfrontend => microfrontend.name).join(", ")}`)
+            throw noRepositories(`No code repository is connected to ${withoutRepository.map(component => component.name).join(", ")}`)
         }
-        return ids.map(id => available.find(microfrontend => String(microfrontend._id) === id)!)
+        return refs.map(ref => available.find(sameComponent(ref))!)
     }
 
-    /** Starts a job on every microfrontend of the project with a repository, or on the selected ones. */
+    /** Starts a job on every microfrontend and service of the project with a repository, or on the selected ones. */
     async create(projectId: string, input: AiJobCreateInput): Promise<AiJobView> {
         const client = getLlmClient(this.config)
         await this.ensureCanChangeProject(toObjectId(projectId))
-        const microfrontends = await this.selectRepositories(projectId, input)
+        const components = await this.selectRepositories(projectId, input)
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
-        const repositories = await Promise.all(microfrontends.map(async microfrontend => ({ microfrontend, baseBranch: (await workspaceService.open(String(microfrontend._id))).defaultBranch })))
+        const repositories = await Promise.all(components.map(async component => ({ component, baseBranch: (await workspaceService.open(component)).defaultBranch })))
         const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, repositories }, client)
         return this.view(job, true)
     }
@@ -216,27 +290,27 @@ export class AiChangeJobService extends AiChangeBaseService {
         if (runningChild) throw followUpRunning("A follow-up of this job is still running: wait for it to finish")
 
         const parentRequests = await AiChangeRequest.find({ jobId: parent._id }, WITHOUT_CONTENTS)
-        const requestOf = (microfrontendId: string) => parentRequests.find(request => String(request.microfrontendId) === microfrontendId)
-        const ids = input.microfrontendIds?.length ? [...new Set(input.microfrontendIds)] : parent.microfrontendIds.map(String).filter(id => requestOf(id)?.status === AiChangeStatus.PROPOSED)
+        const requestOf = (componentId: string) => parentRequests.find(request => componentIdOf(request) === componentId)
+        const parentRefs = componentsOfJob(parent)
+        const requested = [...new Set([...(input.microfrontendIds ?? []), ...(input.serviceIds ?? [])])]
+        const ids = requested.length ? requested : parentRefs.map(ref => ref.id).filter(id => requestOf(id)?.status === AiChangeStatus.PROPOSED)
         if (ids.length === 0) {
             throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: "No proposal of this job is left to refine", statusCode: 409 })
         }
 
-        const microfrontends = await Microfrontend.find({ _id: { $in: ids.map(id => toObjectId(id)) } })
+        const components = await findComponents(parentRefs.filter(ref => ids.includes(ref.id)))
         const repositories: JobRepository[] = ids.map(id => {
-            const microfrontend = microfrontends.find(candidate => String(candidate._id) === id)
-            if (!microfrontend || !parent.microfrontendIds.some(candidate => String(candidate) === id)) {
-                throw noRepositories(`${microfrontend?.name ?? id} is not a repository of this job`)
-            }
+            const component = components.find(candidate => String(candidate._id) === id)
+            if (!component) throw noRepositories(`${id} is not a repository of this job`)
             // An applied or discarded proposal is not on the working copy anymore: there is nothing to refine.
             const request = requestOf(id)
             if (request?.status !== AiChangeStatus.PROPOSED) {
-                throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: `The proposal for ${microfrontend.name} is not waiting for approval anymore`, statusCode: 409 })
+                throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: `The proposal for ${component.name} is not waiting for approval anymore`, statusCode: 409 })
             }
-            return { microfrontend, baseBranch: request.baseBranch, parentId: request._id }
+            return { component, baseBranch: request.baseBranch, parentId: request._id }
         })
 
-        const scope = repositories.length === parent.microfrontendIds.length ? parent.scope : "selection"
+        const scope = repositories.length === parentRefs.length ? parent.scope : "selection"
         const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, repositories, parentJob: parent }, client)
         return this.view(job, true)
     }
@@ -266,7 +340,8 @@ export class AiChangeJobService extends AiChangeBaseService {
             rootJobId: input.parentJob?.rootJobId ?? jobId,
             prompt: input.prompt,
             scope: input.scope,
-            microfrontendIds: input.repositories.map(repository => repository.microfrontend._id),
+            microfrontendIds: input.repositories.filter(({ component }) => component.kind === "microfrontend").map(({ component }) => component._id),
+            serviceIds: input.repositories.filter(({ component }) => component.kind === "service").map(({ component }) => component._id),
             status: AiJobStatus.PENDING,
             events: queued()
         })
@@ -274,7 +349,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             input.repositories.map(repository =>
                 AiChangeRequest.create({
                     projectId: input.projectId,
-                    microfrontendId: repository.microfrontend._id,
+                    ...ownerFields(repository.component),
                     userId,
                     jobId,
                     jobRepositoryCount: input.repositories.length,
@@ -292,7 +367,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         return { job, requests }
     }
 
-    /** One progress line, on the job and on each of its requests: the page of every microfrontend stays live. */
+    /** One progress line, on the job and on each of its requests: the page of every repository stays live. */
     private async log(jobId: string, kind: IAiChangeEvent["kind"], message: string) {
         await AiChangeJob.updateOne({ _id: toObjectId(jobId) }, event(kind, message))
         await AiChangeRequest.updateMany({ jobId: toObjectId(jobId) }, event(kind, message))
@@ -335,14 +410,15 @@ export class AiChangeJobService extends AiChangeBaseService {
             const project = await Project.findById(job.projectId)
             if (!project) throw new Error("The project no longer exists")
             const requests = await AiChangeRequest.find({ jobId: job._id })
-            const microfrontends = await Microfrontend.find({ _id: { $in: job.microfrontendIds } })
+            const refs = componentsOfJob(job)
+            const components = await findComponents(refs)
             const workspaceService = new RepositoryWorkspaceService(this.user)
             const repositories: RunningRepository[] = []
-            for (const microfrontendId of job.microfrontendIds) {
-                const microfrontend = microfrontends.find(candidate => String(candidate._id) === String(microfrontendId))
-                const request = requests.find(candidate => String(candidate.microfrontendId) === String(microfrontendId))
-                if (!microfrontend || !request) throw new Error("A microfrontend of the job no longer exists")
-                repositories.push({ request, microfrontend, workspace: await workspaceService.open(String(microfrontendId)) })
+            for (const ref of refs) {
+                const component = components.find(sameComponent(ref))
+                const request = requests.find(candidate => componentIdOf(candidate) === ref.id)
+                if (!component || !request) throw new Error(`A ${ref.kind} of the job no longer exists`)
+                repositories.push({ request, component, workspace: await workspaceService.open(component) })
             }
 
             // Locked by folder, in folder order: two jobs sharing repositories take them in the same
@@ -397,23 +473,19 @@ export class AiChangeJobService extends AiChangeBaseService {
 
             // A job declared dead (or failed) while the agent works stops at the next round instead of spending on.
             const abort = new AbortController()
+            const slugs = pathSlugs(repositories.map(repository => repository.component))
             const result = await runAiChangeAgent(
                 client,
                 {
                     prompt: job.prompt,
                     project: { name: project.name, context: project.context },
-                    repositories: repositories.map(({ microfrontend, request, workspace, previousFiles }) => ({
-                        microfrontend: {
-                            name: microfrontend.name,
-                            slug: microfrontend.slug,
-                            framework: microfrontend.stack?.framework,
-                            compiler: microfrontend.stack?.compiler,
-                            context: microfrontend.context
-                        },
-                        baseBranch: request.baseBranch,
-                        workingCopy: workspace.workingCopy,
-                        previousChanges: (previousFiles ?? []).map(file => ({ path: file.path, bytes: file.proposedContent === undefined ? 0 : Buffer.byteLength(file.proposedContent, "utf8") }))
-                    })),
+                    repositories: repositories.map(({ component, request, workspace, previousFiles }, index) =>
+                        agentRepository(component, slugs[index], {
+                            baseBranch: request.baseBranch,
+                            workingCopy: workspace.workingCopy,
+                            previousChanges: (previousFiles ?? []).map(file => ({ path: file.path, bytes: file.proposedContent === undefined ? 0 : Buffer.byteLength(file.proposedContent, "utf8") }))
+                        })
+                    ),
                     previousRequests: await this.previousRequests(job)
                 },
                 {
@@ -437,7 +509,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                 const files: IAiChangeFile[] = []
                 for (const change of await workingCopy.changes()) {
                     // The toolbox refuses these already; checked again on what actually changed on disk.
-                    if (isProtectedPath(change.path)) throw new Error(`The agent changed a protected file: ${repository.microfrontend.slug}/${change.path}`)
+                    if (isProtectedPath(change.path)) throw new Error(`The agent changed a protected file: ${repository.component.slug}/${change.path}`)
                     files.push({
                         path: change.path,
                         action: change.action,
@@ -448,7 +520,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                 }
                 // Also checked on disk: the proposal of a follow-up adds up to its parent's.
                 if (files.length > AI_CHANGE_LIMITS.maxChangedFiles) {
-                    throw new Error(`The proposal for ${repository.microfrontend.name} changes ${files.length} files, more than the ${AI_CHANGE_LIMITS.maxChangedFiles} allowed in one repository`)
+                    throw new Error(`The proposal for ${repository.component.name} changes ${files.length} files, more than the ${AI_CHANGE_LIMITS.maxChangedFiles} allowed in one repository`)
                 }
                 proposals.push({ repository, files })
             }
@@ -500,11 +572,11 @@ export class AiChangeJobService extends AiChangeBaseService {
         for (const repository of repositories) {
             if (!repository.request.parentId) continue
             const parent = await AiChangeRequest.findById(repository.request.parentId)
-            if (!parent) throw new Error(`The previous proposal for ${repository.microfrontend.name} no longer exists`)
+            if (!parent) throw new Error(`The previous proposal for ${repository.component.name} no longer exists`)
             parents.set(repository, parent)
             repository.previousFiles = parent.files
             for (const file of parent.files) {
-                if ((await repository.workspace.workingCopy.blobOid(repository.baseCommit!, file.path)) !== file.baseBlobOid) conflicts.push(`${repository.microfrontend.slug}/${file.path}`)
+                if ((await repository.workspace.workingCopy.blobOid(repository.baseCommit!, file.path)) !== file.baseBlobOid) conflicts.push(`${repository.component.slug}/${file.path}`)
             }
         }
         if (conflicts.length) {
@@ -515,12 +587,12 @@ export class AiChangeJobService extends AiChangeBaseService {
             const dir = repository.workspace.workingCopy.dir
             for (const file of parent.files) {
                 const { absolute, relative } = await resolveInsideWorkingCopy(dir, file.path)
-                if (isProtectedPath(relative)) throw new Error(`The previous proposal changes a protected file: ${repository.microfrontend.slug}/${relative}`)
+                if (isProtectedPath(relative)) throw new Error(`The previous proposal changes a protected file: ${repository.component.slug}/${relative}`)
                 if (file.action === "delete") {
                     await fs.rm(absolute, { force: true })
                     continue
                 }
-                if (file.proposedContent === undefined) throw new Error(`The previous proposal lost the content of ${repository.microfrontend.slug}/${relative}`)
+                if (file.proposedContent === undefined) throw new Error(`The previous proposal lost the content of ${repository.component.slug}/${relative}`)
                 await fs.mkdir(path.dirname(absolute), { recursive: true })
                 await fs.writeFile(absolute, file.proposedContent, "utf8")
             }
@@ -551,9 +623,9 @@ export class AiChangeJobService extends AiChangeBaseService {
     private async views(jobs: IAiChangeJob[], withEvents: boolean): Promise<AiJobView[]> {
         if (jobs.length === 0) return []
         const requests = await AiChangeRequest.find({ jobId: { $in: jobs.map(job => job._id) } }, WITHOUT_CONTENTS)
-        const microfrontendIds = [...new Set(jobs.flatMap(job => job.microfrontendIds.map(String)))]
-        const microfrontends = await Microfrontend.find({ _id: { $in: microfrontendIds.map(id => toObjectId(id)) } }, { name: 1, slug: 1 })
-        const byId = new Map(microfrontends.map(microfrontend => [String(microfrontend._id), microfrontend]))
+        const refs = jobs.flatMap(job => componentsOfJob(job)).filter((ref, index, all) => all.findIndex(other => other.id === ref.id) === index)
+        const components = await findComponents(refs, { name: 1, slug: 1 })
+        const byId = new Map(components.map(component => [String(component._id), component]))
         return jobs.map(job => toJobView(job, requests, byId, withEvents))
     }
 
@@ -590,23 +662,23 @@ export class AiChangeJobService extends AiChangeBaseService {
     }
 
     /**
-     * How many agents are working on each microfrontend of the project right now, whoever started them:
-     * a job counts on every repository it works on, a change asked from the microfrontend page on its own.
+     * How many agents are working on each microfrontend and service of the project right now, whoever started
+     * them: a job counts on every repository it works on, a change asked from the component page on its own.
      * A job is fresh by its own date, its requests are not touched while it runs.
      */
     async working(projectId: string): Promise<AiWorkingAgentsView[]> {
         await this.ensureAccessToProject(toObjectId(projectId))
         const fresh = { $gt: new Date(Date.now() - STALE_AFTER_MS) }
         const [jobs, requests] = await Promise.all([
-            AiChangeJob.find({ projectId: toObjectId(projectId), status: { $in: ACTIVE_JOB_STATUSES }, updatedAt: fresh }, { microfrontendIds: 1 }),
+            AiChangeJob.find({ projectId: toObjectId(projectId), status: { $in: ACTIVE_JOB_STATUSES }, updatedAt: fresh }, { microfrontendIds: 1, serviceIds: 1 }),
             AiChangeRequest.find(
                 { projectId: toObjectId(projectId), jobId: { $exists: false }, status: { $in: [AiChangeStatus.PENDING, AiChangeStatus.RUNNING] }, updatedAt: fresh },
-                { microfrontendId: 1 }
+                { microfrontendId: 1, serviceId: 1 }
             )
         ])
         const agents = new Map<string, number>()
-        for (const id of [...jobs.flatMap(job => job.microfrontendIds), ...requests.map(request => request.microfrontendId)]) {
-            agents.set(String(id), (agents.get(String(id)) ?? 0) + 1)
+        for (const id of [...jobs.flatMap(job => componentsOfJob(job).map(ref => ref.id)), ...requests.map(componentIdOf)]) {
+            agents.set(id, (agents.get(id) ?? 0) + 1)
         }
         return [...agents].map(([microfrontendId, count]) => ({ microfrontendId, agents: count }))
     }
@@ -622,8 +694,8 @@ export class AiChangeJobService extends AiChangeBaseService {
         if (job.status !== AiJobStatus.DONE) throw notDone()
 
         const requests = await AiChangeRequest.find({ jobId: job._id })
-        const order = job.microfrontendIds.map(String)
-        requests.sort((a, b) => order.indexOf(String(a.microfrontendId)) - order.indexOf(String(b.microfrontendId)))
+        const order = componentsOfJob(job).map(ref => ref.id)
+        requests.sort((a, b) => order.indexOf(componentIdOf(a)) - order.indexOf(componentIdOf(b)))
         const candidates = requests.filter(request => request.status === AiChangeStatus.PROPOSED && request.files.length > 0)
         for (const request of candidates) await ensureNotBeingRefined(request)
 
@@ -643,8 +715,8 @@ export class AiChangeJobService extends AiChangeBaseService {
 
         if (claimed.length) {
             await AiChangeJob.updateOne({ _id: job._id }, event("info", "applying"))
-            const microfrontends = await Microfrontend.find({ _id: { $in: job.microfrontendIds } }, { name: 1 })
-            const nameOf = (request: IAiChangeRequest) => microfrontends.find(microfrontend => String(microfrontend._id) === String(request.microfrontendId))?.name ?? String(request.microfrontendId)
+            const components = await findComponents(componentsOfJob(job), { name: 1 })
+            const nameOf = (request: IAiChangeRequest) => components.find(component => String(component._id) === componentIdOf(request))?.name ?? componentIdOf(request)
             const siblings = requests.filter(request => request.status === AiChangeStatus.APPLIED || claimed.some(entry => entry.request === request))
             // Detached on purpose: one pull request per repository takes minutes, the console follows it by polling.
             this.applyAll(job, claimed, siblings, nameOf).catch(error => fastify.log.error({ error: loggable(error), aiJobId: jobId }, "AI job apply crashed"))

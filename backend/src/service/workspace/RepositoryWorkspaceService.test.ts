@@ -3,18 +3,20 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("../..", () => ({ fastify: { log: { warn: vi.fn() }, config: { REPOSITORIES_FOLDER: "/repositories", REPOSITORIES_MAX_SIZE_MB: 500 } } }))
 
-import { CodeRepositoryProvider, ICodeRepository } from "../../models/CodeRepositoryModel"
-import Microfrontend, { IMicrofrontend } from "../../models/MicrofrontendModel"
-import { RepositoryFileService, RepositoryTarget } from "../RepositoryFileService"
-import RepositoryWorkspaceService, { cloneUrlFor, gitCredentialsFor } from "./RepositoryWorkspaceService"
+import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../../models/CodeRepositoryModel"
+import Organization from "../../models/OrganizationModel"
+import Project from "../../models/ProjectModel"
+import { RepositoryFileService } from "../RepositoryFileService"
+import RepositoryWorkspaceService, { cloneUrlFor, gitCredentialsFor, WorkspaceTarget } from "./RepositoryWorkspaceService"
+import { RepositoryComponent } from "./repositoryComponent"
 
 const github = { provider: CodeRepositoryProvider.GITHUB, accessToken: "ghs_token", githubData: { organizationId: "acme" } } as unknown as ICodeRepository
 const gitlab = { provider: CodeRepositoryProvider.GITLAB, accessToken: "glpat", gitlabData: { url: "https://git.acme.internal" } } as unknown as ICodeRepository
 
-const target = (codeRepository: ICodeRepository, mfeRepository: Record<string, unknown> = {}): RepositoryTarget => ({
+const target = (codeRepository: ICodeRepository, mfeRepository: Record<string, unknown> = {}): WorkspaceTarget => ({
     codeRepository,
     repositoryName: "catalog",
-    microfrontend: { codeRepository: { enabled: true, ...mfeRepository } } as unknown as IMicrofrontend
+    component: { kind: "microfrontend", codeRepository: { enabled: true, ...mfeRepository } } as unknown as RepositoryComponent
 })
 
 describe("cloneUrlFor", () => {
@@ -43,15 +45,47 @@ describe("cloneUrlFor", () => {
 describe("RepositoryWorkspaceService.open", () => {
     afterEach(() => vi.restoreAllMocks())
 
-    it("Given a microfrontend pointing at the connection of another project, when it is opened, then it is refused", async () => {
-        const projectId = new Types.ObjectId()
-        const microfrontend = { _id: new Types.ObjectId(), projectId, slug: "catalog", codeRepository: { enabled: true } }
-        vi.spyOn(Microfrontend, "findById").mockResolvedValue(microfrontend as never)
-        vi.spyOn(RepositoryWorkspaceService.prototype as unknown as { ensureAccessToMicrofrontend: () => Promise<void> }, "ensureAccessToMicrofrontend").mockResolvedValue(undefined)
-        vi.spyOn(RepositoryFileService.prototype, "resolveTargets").mockResolvedValue([
-            { microfrontend, repositoryName: "catalog", codeRepository: { ...github, projectId: new Types.ObjectId() } } as unknown as RepositoryTarget
-        ])
+    const projectId = new Types.ObjectId()
+    const component = (kind: RepositoryComponent["kind"]) =>
+        ({
+            kind,
+            _id: new Types.ObjectId(),
+            projectId,
+            slug: "catalog",
+            name: "Catalog",
+            codeRepository: { enabled: true, codeRepositoryId: new Types.ObjectId(), name: "catalog" },
+            env: []
+        }) as unknown as RepositoryComponent
 
-        await expect(new RepositoryWorkspaceService().open(microfrontend._id.toString())).rejects.toThrow(/does not belong to this project/)
+    const opened = (kind: RepositoryComponent["kind"]) => {
+        vi.spyOn(RepositoryWorkspaceService.prototype as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue(undefined)
+        vi.spyOn(CodeRepository, "findById").mockResolvedValue({ ...github, projectId } as never)
+        vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, slug: "portal", organizationId: new Types.ObjectId() } as never)
+        vi.spyOn(Organization, "findById").mockResolvedValue({ _id: new Types.ObjectId(), slug: "acme" } as never)
+        vi.spyOn(RepositoryFileService.prototype, "getDefaultBranch").mockResolvedValue("main")
+        return new RepositoryWorkspaceService().open(component(kind))
+    }
+
+    it("Given a microfrontend pointing at the connection of another project, when it is opened, then it is refused", async () => {
+        vi.spyOn(RepositoryWorkspaceService.prototype as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue(undefined)
+        vi.spyOn(CodeRepository, "findById").mockResolvedValue({ ...github, projectId: new Types.ObjectId() } as never)
+
+        await expect(new RepositoryWorkspaceService().open(component("microfrontend"))).rejects.toThrow(/does not belong to this project/)
+    })
+
+    it("Given a component without a repository, when it is opened, then it is refused naming its kind", async () => {
+        vi.spyOn(RepositoryWorkspaceService.prototype as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue(undefined)
+
+        await expect(new RepositoryWorkspaceService().open({ ...component("service"), codeRepository: undefined })).rejects.toThrow(/This service has no code repository/)
+    })
+
+    it("Given a service and a microfrontend of the same slug, when both are opened, then their working copies live in different folders", async () => {
+        const microfrontendCopy = await opened("microfrontend")
+        const serviceCopy = await opened("service")
+
+        expect(microfrontendCopy.workingCopy.dir).toMatch(/\/catalog$/)
+        expect(serviceCopy.workingCopy.dir).toMatch(/\/catalog\.service$/)
+        expect(serviceCopy.target.component.kind).toBe("service")
+        expect(serviceCopy.defaultBranch).toBe("main")
     })
 })

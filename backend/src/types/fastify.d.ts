@@ -1,6 +1,7 @@
 import { FastifyMultipartFile } from "@fastify/multipart"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { Authenticate } from "fastify-auth0-verify"
+import { ApiKeyRole } from "../models/ApiKeyModel"
 import UserModel from "../models/UserModel"
 import { FastifyInstanceWithConfig } from "./index"
 import { TelemetryDecisionDTO } from "./TelemetryDTO"
@@ -106,6 +107,8 @@ declare module "fastify" {
 
     interface FastifyRequest {
         databaseUser: UserModel
+        /** Set on API key routes only: the role of the key the request carried */
+        apiKeyRole?: ApiKeyRole
     }
 
     interface FastifyContextConfig {

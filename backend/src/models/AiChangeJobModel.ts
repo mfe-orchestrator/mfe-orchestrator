@@ -11,7 +11,7 @@ export enum AiJobStatus {
     FAILED = "FAILED"
 }
 
-/** `global` works on every microfrontend of the project with a repository, `selection` on the ones the user picked. */
+/** `global` works on every microfrontend and service of the project with a repository, `selection` on the ones the user picked. */
 export type AiJobScope = "global" | "selection"
 
 /**
@@ -32,6 +32,8 @@ export interface IAiChangeJob extends Document<ObjectId> {
     scope: AiJobScope
     /** The repositories the agent works on, in the order they are shown. */
     microfrontendIds: Schema.Types.ObjectId[]
+    /** The services among them, shown after the microfrontends. */
+    serviceIds: Schema.Types.ObjectId[]
     status: AiJobStatus
     events: IAiChangeEvent[]
     summary?: string
@@ -52,6 +54,7 @@ const aiChangeJobSchema = new Schema<IAiChangeJob>(
         prompt: { type: String, required: true, maxlength: 8_000 },
         scope: { type: String, enum: ["global", "selection"], required: true },
         microfrontendIds: { type: [{ type: Schema.Types.ObjectId, ref: "Microfrontend" }], default: [] },
+        serviceIds: { type: [{ type: Schema.Types.ObjectId, ref: "Service" }], default: [] },
         status: { type: String, enum: Object.values(AiJobStatus), default: AiJobStatus.PENDING, required: true },
         events: { type: [aiChangeEventSchema], default: [] },
         summary: { type: String },

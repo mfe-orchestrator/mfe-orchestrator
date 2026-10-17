@@ -12,6 +12,7 @@ const projectById = vi.fn()
 const projectUsers = vi.fn()
 const aiChange = vi.fn()
 const aiJob = vi.fn()
+const serviceById = vi.fn()
 
 vi.mock("../EnvironmentService", () => ({
     default: class {
@@ -43,6 +44,11 @@ vi.mock("../ProjectService", () => ({
 vi.mock("../UserProjectService", () => ({
     default: class {
         getProjectUsers = projectUsers
+    }
+}))
+vi.mock("../ServiceService", () => ({
+    default: class {
+        getById = serviceById
     }
 }))
 vi.mock("../aiChange/AiChangeService", () => ({
@@ -107,7 +113,7 @@ describe("describeServedChanges", () => {
 
 describe("describeConfirmation", () => {
     beforeEach(() => {
-        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange, aiJob]) mock.mockReset()
+        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange, aiJob, serviceById]) mock.mockReset()
         projectById.mockResolvedValue({ name: "Shop" })
         environments.mockResolvedValue([
             { _id: PRODUCTION, name: "Production" },
@@ -189,6 +195,25 @@ describe("describeConfirmation", () => {
         expect(details[2].value.length).toBeLessThanOrEqual(201)
         expect(details[3]).toEqual({ label: "files", value: "create src/Coupon.tsx\nupdate src/secret.ts" })
         expect(details).toHaveLength(4)
+    })
+
+    it("Given an AI change of a service, when described, then the service is shown by its name", async () => {
+        aiChange.mockResolvedValue({ serviceId: CHECKOUT, prompt: "Add a health route", files: [] })
+        serviceById.mockResolvedValue({ _id: CHECKOUT, name: "Orders API" })
+
+        const details = await describeConfirmation(toolNamed("ai_change_apply"), { changeId: CHANGE }, context)
+
+        expect(serviceById).toHaveBeenCalledWith(CHECKOUT)
+        expect(details[1]).toEqual({ label: "service", value: "Orders API" })
+    })
+
+    it("Given an AI change of a service that cannot be read, when described, then its id is shown instead", async () => {
+        aiChange.mockResolvedValue({ serviceId: CHECKOUT, prompt: "Add a health route", files: [] })
+        serviceById.mockRejectedValue(new Error("forbidden"))
+
+        const details = await describeConfirmation(toolNamed("ai_change_apply"), { changeId: CHANGE }, context)
+
+        expect(details[1]).toEqual({ label: "service", value: CHECKOUT })
     })
 
     it("Given an AI job, when its apply is described, then the prompt and the file count of each repository it would commit are shown", async () => {

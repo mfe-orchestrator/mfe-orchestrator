@@ -2,7 +2,7 @@ import { fastify } from "../.."
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeRequest, { AiChangeStatus, IAiChangeFile, IAiChangeRequest } from "../../models/AiChangeRequestModel"
-import Microfrontend, { IMicrofrontend } from "../../models/MicrofrontendModel"
+import { IMicrofrontend } from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import { withRepositoryLock } from "../../utils/repositoryLock"
@@ -11,6 +11,7 @@ import BaseAuthorizedService from "../BaseAuthorizedService"
 import { LlmConfiguration } from "../llm"
 import { toErrorMessage } from "../RepositoryFileService"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
+import { componentIdOf, componentOf, findComponent } from "../workspace/repositoryComponent"
 
 /** Proposals nobody approves or discards are removed after this, and so are finished jobs. */
 export const PROPOSAL_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -79,7 +80,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
         if (membership?.role !== RoleInProject.VIEWER) return
         const project = await Project.findById(projectId, { organizationId: 1 })
         if (project && (await this.isOrganizationAdmin(project.organizationId))) return
-        throw createBusinessException({ code: "AI_CHANGE_FORBIDDEN", message: "A viewer cannot change the code of a microfrontend", statusCode: 403 })
+        throw createBusinessException({ code: "AI_CHANGE_FORBIDDEN", message: "A viewer cannot change the code of a microfrontend or a service", statusCode: 403 })
     }
 
     /** The files of a proposal that will be committed, refused when none is left or one cannot be. */
@@ -104,12 +105,12 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
      * `related` lists the other repositories of the same job, one per line.
      */
     protected async applyClaimed(request: IAiChangeRequest, files: IAiChangeFile[], related: string[] = []): Promise<IAiChangeRequest> {
-        const microfrontend = await Microfrontend.findById(request.microfrontendId)
+        const component = await findComponent(componentOf(request))
         const user = this.getUser()!
         try {
-            if (!microfrontend) throw new EntityNotFoundError(request.microfrontendId.toString())
+            if (!component) throw new EntityNotFoundError(componentIdOf(request))
             const workspaceService = new RepositoryWorkspaceService(this.user)
-            const workspace = await workspaceService.open(microfrontend._id.toString())
+            const workspace = await workspaceService.open(component)
 
             const result = await withRepositoryLock(
                 workspace.workingCopy.dir,
@@ -132,7 +133,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
                     const title = firstLine(request.prompt, 72)
                     // Named once and saved before pushing: an apply retried after a crash pushes to the
                     // same branch (forced, it is ours) instead of leaving a second one behind.
-                    const branch = request.branch ?? `ai/${microfrontend.slug}-${timestamp()}`
+                    const branch = request.branch ?? `ai/${component.slug}-${timestamp()}`
                     await AiChangeRequest.updateOne({ _id: request._id }, { branch })
                     const commit = await workspace.workingCopy.commitAndPush({
                         branch,

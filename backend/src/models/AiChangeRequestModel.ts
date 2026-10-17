@@ -41,7 +41,9 @@ export interface IAiChangeUsage {
 
 export interface IAiChangeRequest extends Document<ObjectId> {
     projectId: Schema.Types.ObjectId
-    microfrontendId: Schema.Types.ObjectId
+    /** The repository the request changes belongs to a microfrontend or to a service: exactly one of the two is set. */
+    microfrontendId?: Schema.Types.ObjectId
+    serviceId?: Schema.Types.ObjectId
     userId: Schema.Types.ObjectId
     /** The agent run that produced this request: one job proposes a change on one or more repositories. */
     jobId?: Schema.Types.ObjectId
@@ -96,7 +98,8 @@ export const aiChangeEventSchema = new Schema<IAiChangeEvent>(
 const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
     {
         projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true, index: true },
-        microfrontendId: { type: Schema.Types.ObjectId, ref: "Microfrontend", required: true, index: true },
+        microfrontendId: { type: Schema.Types.ObjectId, ref: "Microfrontend", index: true },
+        serviceId: { type: Schema.Types.ObjectId, ref: "Service", index: true },
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         jobId: { type: Schema.Types.ObjectId, ref: "AiChangeJob", index: true },
         jobRepositoryCount: { type: Number },
@@ -124,6 +127,13 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
 )
 
 aiChangeRequestSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+
+// A request changes the repository of one component: a microfrontend or a service, never both, never none.
+aiChangeRequestSchema.pre("validate", function () {
+    if (Boolean(this.microfrontendId) === Boolean(this.serviceId)) {
+        this.invalidate("microfrontendId", "Exactly one of microfrontendId and serviceId must be set")
+    }
+})
 
 const AiChangeRequest = mongoose.model<IAiChangeRequest>("AiChangeRequest", aiChangeRequestSchema)
 export default AiChangeRequest
