@@ -1222,6 +1222,8 @@
     "market": {
         "title": "Libreria di template",
         "description": "Scegli dalla nostra collezione di template per microfrontend",
+        "templateRepository": "Template: {{name}}",
+        "templateRepositoryTitle": "Apri la repository del template {{name}}",
         "noTemplates": {
             "title": "Nessun template disponibile",
             "description": "Non ci sono ancora template per microfrontend nel market."

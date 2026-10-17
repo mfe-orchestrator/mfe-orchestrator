@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Link, NavLink } from "react-router-dom"
 import { Badge } from "@/components/atoms"
 import PageHead from "@/components/PageHead"
+import TemplateRepositoryLink from "@/components/TemplateRepositoryLink"
 import type { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { cn } from "@/utils/styleUtils"
 
@@ -46,6 +47,7 @@ export const MicrofrontendHeader: React.FC<MicrofrontendHeaderProps> = ({ microf
                                 {microfrontend.codeRepository.name}
                             </span>
                         )}
+                        <TemplateRepositoryLink slug={microfrontend.template} />
                     </div>
                 </div>
                 {aiAvailable && (

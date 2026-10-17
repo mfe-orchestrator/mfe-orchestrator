@@ -44,6 +44,8 @@ export interface Microfrontend {
     slug: string
     name: string
     version: string
+    /** Market slug of the template the microfrontend was created from */
+    template?: string
     continuousDeployment?: boolean
     projectId?: string
     canary?: {

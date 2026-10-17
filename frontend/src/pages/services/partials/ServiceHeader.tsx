@@ -4,6 +4,7 @@ import { Link, NavLink } from "react-router-dom"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge } from "@/components/atoms"
 import PageHead from "@/components/PageHead"
+import TemplateRepositoryLink from "@/components/TemplateRepositoryLink"
 import type { Service } from "@/hooks/apiClients/useServicesApi"
 import { cn } from "@/utils/styleUtils"
 import RuntimeBadge from "./RuntimeBadge"
@@ -45,6 +46,7 @@ export const ServiceHeader: React.FC<ServiceHeaderProps> = ({ service, active, a
                         <span className="font-mono">{service.slug}</span>
                         <RuntimeBadge service={service} />
                         {service.version && <Badge variant="outline">{t("services.version_short", { version: service.version })}</Badge>}
+                        <TemplateRepositoryLink slug={service.template} />
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
