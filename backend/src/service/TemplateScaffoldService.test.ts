@@ -62,7 +62,7 @@ import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
 import MicrofrontendService from "./MicrofrontendService"
 import ServiceService from "./ServiceService"
-import TemplateScaffoldService from "./TemplateScaffoldService"
+import TemplateScaffoldService, { replaceFederationName } from "./TemplateScaffoldService"
 
 const servicePlaceholders = { "%serviceSlug%": "orders-api", "%domain%": "https://console.example.com" }
 
@@ -183,6 +183,91 @@ describe("TemplateScaffoldService, microfrontend templates", () => {
 
         expect(committed[".gitlab-ci.yml"]).toBe("slug: %microfrontendSlug%")
         expect(committed["src/index.ts"]).toBe("%microfrontendSlug%")
+    })
+})
+
+describe("replaceFederationName", () => {
+    it("given a line with the marker, when the name is replaced, then its string literal becomes the name and keeps its quotes", () => {
+        expect(replaceFederationName("      name: 'exampleremote', // mfe-orchestrator:federation-name", "checkoutnew")).toBe("      name: 'checkoutnew', // mfe-orchestrator:federation-name")
+        expect(replaceFederationName('  name: "exampleremote", // mfe-orchestrator:federation-name', "checkoutnew")).toBe('  name: "checkoutnew", // mfe-orchestrator:federation-name')
+    })
+
+    it("given lines without the marker, when the name is replaced, then they are left alone", () => {
+        const config = "filename: 'remoteEntry.js',\nname: 'exampleremote',\n  './Button': './src/components/Button',"
+
+        expect(replaceFederationName(config, "checkoutnew")).toBe(config)
+    })
+
+    it("given a marked line with a second string, when the name is replaced, then only the first literal changes", () => {
+        expect(replaceFederationName("name: 'exampleremote', filename: 'remoteEntry.js', // mfe-orchestrator:federation-name", "cart")).toBe(
+            "name: 'cart', filename: 'remoteEntry.js', // mfe-orchestrator:federation-name"
+        )
+    })
+})
+
+describe("TemplateScaffoldService, federation name of a webpack microfrontend template", () => {
+    const webpackRemote = { slug: "webpack-remote-react", type: "remote", compiler: "webpack", framework: "React", zipUrl: "https://example.com/t.zip" } as IMarket
+
+    const webpackConfig = (name: string) => `new ModuleFederationPlugin({
+      name: '${name}', // mfe-orchestrator:federation-name
+      filename: 'remoteEntry.js',
+      exposes: { './Button': './src/components/Button' },
+    })`
+
+    const remoteFiles = {
+        "webpack.config.ts": webpackConfig("exampleremote"),
+        "src/index.ts": "export const name = 'exampleremote' // mfe-orchestrator:federation-name",
+        "vite.config.ts": "federation({ name: 'exampleremote', // mfe-orchestrator:federation-name"
+    }
+
+    /** A host configured by the console asks for federationName("checkout-new"): the dash has to go */
+    const expectRenamed = () => {
+        expect(committed["webpack.config.ts"]).toBe(webpackConfig("checkoutnew"))
+        expect(committed["src/index.ts"]).toBe(remoteFiles["src/index.ts"])
+        expect(committed["vite.config.ts"]).toBe(remoteFiles["vite.config.ts"])
+    }
+
+    it("given GitHub, when a webpack remote is scaffolded, then its container is named federationName(slug) and the pipeline still gets its placeholders", async () => {
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({ "remote/webpack/github/workflows/deploy.yml": "slug: %microfrontendSlug%" }))
+
+        await service.injectTemplateGithub("checkout-new", "token", "https://github.com/acme/checkout-new.git", "github", webpackRemote, { microfrontendSlug: "checkout-new" })
+
+        expectRenamed()
+        expect(committed[".github/workflows/deploy.yml"]).toBe("slug: checkout-new")
+    })
+
+    it("given GitLab, when a webpack remote is scaffolded, then its container is named federationName(slug)", async () => {
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
+        const codeRepository = { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository
+
+        await service.injectTemplateGitlab("token", "https://gitlab.com", "checkout-new", "acme", codeRepository, "gitlab", webpackRemote, { microfrontendSlug: "checkout-new" })
+
+        expectRenamed()
+    })
+
+    it("given Azure DevOps, when a webpack remote is scaffolded, then its container is named federationName(slug)", async () => {
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
+        const codeRepository = { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository
+
+        await service.injectTemplateAzureDevOps("token", "checkout-new", codeRepository, "azure_dev_ops", webpackRemote, { microfrontendSlug: "checkout-new" })
+
+        expectRenamed()
+    })
+
+    it.each(["webpack.config.js", "webpack.config.mjs", "webpack.config.cjs"])("given a %s, when a webpack remote is scaffolded, then it is renamed too", async file => {
+        const service = scaffoldWith(await templateZip({ [file]: webpackConfig("exampleremote") }), await pipelinesZip({}))
+
+        await service.injectTemplateGithub("shop/cart", "token", "https://github.com/acme/cart.git", "github", webpackRemote, { microfrontendSlug: "shop/cart" })
+
+        expect(committed[file]).toBe(webpackConfig("shop_cart"))
+    })
+
+    it("given no microfrontend slug, when a template is scaffolded, then its webpack config is committed untouched", async () => {
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
+
+        await service.injectTemplateGithub("checkout-new", "token", "https://github.com/acme/checkout-new.git", "github", webpackRemote)
+
+        expect(committed["webpack.config.ts"]).toBe(remoteFiles["webpack.config.ts"])
     })
 })
 

@@ -71,7 +71,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
                     })
                 }
 
-                await new TemplateScaffoldService(this.user).createRepository(codeRepository, microfrontend.codeRepository, microfrontend.slug, template)
+                await new TemplateScaffoldService(this.user).createRepository(codeRepository, microfrontend.codeRepository, microfrontend.slug, template, { microfrontendSlug: microfrontend.slug })
 
                 // The template knows the stack the repository was just scaffolded with: keep it,
                 // it is what makes the integration instructions specific to this microfrontend

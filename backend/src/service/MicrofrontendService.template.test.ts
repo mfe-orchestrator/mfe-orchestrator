@@ -58,11 +58,12 @@ describe("MicrofrontendService.create from a template", () => {
         expect(createRepository).not.toHaveBeenCalled()
     })
 
-    it("given a microfrontend template, when a microfrontend is created from it, then the repository is scaffolded without tree-wide placeholders", async () => {
+    it("given a microfrontend template, when a microfrontend is created from it, then the repository is scaffolded with its slug and without tree-wide placeholders", async () => {
         const write = await create({ slug: "vite-remote-react", type: "remote", compiler: "vite", framework: "React" })
 
         expect(createRepository).toHaveBeenCalledTimes(1)
-        expect(createRepository.mock.calls[0]).toHaveLength(4)
+        // The slug names the webpack container; tree-wide placeholders are a service template thing
+        expect(createRepository.mock.calls[0][4]).toEqual({ microfrontendSlug: "cart" })
         expect(write).toHaveBeenCalledTimes(1)
     })
 })

@@ -19,6 +19,7 @@ import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
 import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
+import { federationName } from "./FederationConfigService"
 
 const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
 
@@ -28,12 +29,38 @@ export const placeholderDomain = () => process.env.BACKEND_URL || "https://conso
 /** The repository part of a microfrontend or service DTO, filled in once the repository exists */
 export type CodeRepositoryTarget = MicrofrontendDTO["codeRepository"]
 
+/**
+ * Ends the line of a template's bundler config that holds the module federation name, e.g.
+ * `name: 'exampleremote', // mfe-orchestrator:federation-name`. The template keeps a valid name of
+ * its own, so it builds as it is, and the scaffolder swaps that string for the microfrontend's.
+ */
+export const FEDERATION_NAME_MARKER = "mfe-orchestrator:federation-name"
+
+/** The bundler configs that carry the marker: webpack names its container with it, Vite does not need one */
+const FEDERATION_NAME_FILES = ["webpack.config.ts", "webpack.config.js", "webpack.config.mjs", "webpack.config.cjs"]
+
+/**
+ * Replaces the first string literal of every line carrying {@link FEDERATION_NAME_MARKER} with
+ * `name`, keeping its quotes. A host the console configured loads the remote by that name, so it
+ * has to be the same {@link federationName} the console derives from the slug.
+ */
+export const replaceFederationName = (content: string, name: string): string =>
+    content
+        .split("\n")
+        .map(line => (line.includes(FEDERATION_NAME_MARKER) ? line.replace(/(['"`])[^'"`]*\1/, (_, quote) => `${quote}${name}${quote}`) : line))
+        .join("\n")
+
 export interface ScaffoldOptions {
     /**
      * Replaced in every text file of the scaffolded tree before the initial commit. Microfrontends
      * leave it out: their placeholders live only in the pipeline overlay, replaced on its own.
      */
     placeholders?: Record<string, string>
+    /**
+     * Slug of the microfrontend being scaffolded: the federation name in its webpack config becomes
+     * `federationName(slug)`, the name a host configured by the console looks the remote up by.
+     */
+    microfrontendSlug?: string
 }
 
 /**
@@ -200,6 +227,10 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
         }
 
+        if (options?.microfrontendSlug) {
+            await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
+        }
+
         // Stage + commit
         try {
             await git.branch({
@@ -293,6 +324,10 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
         if (options?.placeholders) {
             await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
+        }
+
+        if (options?.microfrontendSlug) {
+            await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
         }
 
         // Stage + commit
@@ -425,6 +460,10 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
         }
 
+        if (options?.microfrontendSlug) {
+            await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
+        }
+
         // Stage + commit
         try {
             await git.branch({
@@ -502,6 +541,21 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
                 } catch (err) {
                     console.error(`Error removing top-level folder:`, err)
                 }
+            }
+        }
+    }
+
+    /** Writes `name` on the marked federation name line of each webpack config at the root of the template */
+    async replaceFederationNameInConfigs(directory: string, name: string): Promise<void> {
+        for (const file of FEDERATION_NAME_FILES) {
+            const filePath = join(directory, file)
+            if (!(await fs.pathExists(filePath))) continue
+
+            const content = await fs.readFile(filePath, "utf8")
+            const updatedContent = replaceFederationName(content, name)
+            if (content !== updatedContent) {
+                await fs.writeFile(filePath, updatedContent, "utf8")
+                fastify.log.info(`✅ Federation name set to ${name} in ${file}`)
             }
         }
     }
