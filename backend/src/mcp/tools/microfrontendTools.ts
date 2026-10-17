@@ -203,7 +203,7 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontends_detect_stacks",
         title: "Detect stacks",
-        description: "Reads each linked repository to detect framework and bundler, and stores what it finds (manual choices are kept).",
+        description: "Reads each linked repository to detect framework and bundler (or the single-spa / micro-lc integration model), and stores what it finds (manual choices are kept).",
         scope: MCP_SCOPE_WRITE,
         annotations: WRITE_EXTERNAL,
         inputSchema: NO_INPUT,
@@ -212,7 +212,7 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontend_set_stack",
         title: "Set stack",
-        description: "Sets framework and bundler of a microfrontend by hand. Detection never overwrites a manual choice.",
+        description: "Sets framework and bundler (or integration model: SINGLE_SPA, MICRO_LC, WEBCOMPONENT) of a microfrontend by hand. Detection never overwrites a manual choice.",
         scope: MCP_SCOPE_WRITE,
         annotations: { ...WRITE, idempotentHint: true },
         inputSchema: z.object({ microfrontendId, framework: z.enum(MicrofrontendFramework).optional(), compiler: z.enum(MicrofrontendCompiler).optional() }),

@@ -102,7 +102,8 @@ export const configurationTools = [
     defineTool({
         name: "integration_plan",
         title: "Plan integration",
-        description: "Dry run: what wiring module federation, or the runtime configuration script, would change in each repository.",
+        description:
+            "Dry run: what wiring module federation (for single-spa and micro-lc hosts: the generated applications / micro-lc config file), or the runtime configuration script, would change in each repository.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY_EXTERNAL,
         inputSchema: z.object({ scope: integrationScope }),

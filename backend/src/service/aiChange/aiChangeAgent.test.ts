@@ -367,6 +367,22 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         }
     })
 
+    it.each([
+        ["SINGLE_SPA", "integration: single-spa.", "import map"],
+        ["MICRO_LC", "integration: micro-lc.", "window.ReactJSXRuntime"]
+    ])("Given a %s microfrontend, then the prompt names the integration model and its shared React contract, not a bundler", async (compiler, model, contract) => {
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+        const base = input()
+
+        await runAiChangeAgent(client, { ...base, repositories: [{ ...base.repositories[0], microfrontend: { ...base.repositories[0].microfrontend, compiler } }] }, hooks().hooks)
+
+        const firstMessage = sent[0].messages[0]
+        const text = firstMessage.role === "user" ? firstMessage.text : ""
+        expect(text).toContain(model)
+        expect(text).toContain(contract)
+        expect(text).not.toContain(`bundler: ${compiler}`)
+    })
+
     it("Given one repository, then the prompt keeps the single microfrontend form", async () => {
         const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
 
