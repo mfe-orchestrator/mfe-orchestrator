@@ -4,6 +4,12 @@ import { MicrofrontendCompiler, MicrofrontendFramework } from "../types/Microfro
 export const CLIENT_SDK_PACKAGE = "@mfe-orchestrator-hub/client"
 
 /**
+ * Where the SDK publishes its webpack remote loader. A webpack config reaches it through this
+ * global because the `promise` expression it declares cannot import a package.
+ */
+export const SDK_GLOBAL = "globalThis.__MFE_ORCHESTRATOR__"
+
+/**
  * A slug turned into an identifier module federation accepts as a remote name: slashes become
  * underscores and dashes go, because the host imports from it ("myremote/Button").
  */
@@ -174,7 +180,11 @@ export class FederationConfigService {
         return { dependencies: [], code: "", runtimeIntegration: true }
     }
 
-    private remotesBlock(remotes: FederationRemote[], render: (remote: FederationRemote) => string, indent: string): string {
+    /**
+     * @param sdkCall The SDK function the entries hand the slug to, named in the comment
+     * @param note Comment lines a bundler needs on top of the shared ones, already indented
+     */
+    private remotesBlock(remotes: FederationRemote[], render: (remote: FederationRemote) => string, indent: string, sdkCall = "remoteUrl()", note: string[] = []): string {
         if (remotes.length === 0) {
             return ""
         }
@@ -182,9 +192,9 @@ export class FederationConfigService {
         return `
 ${indent}remotes: {
 ${indent}  // One entry per microfrontend this host consumes. The key is the name you import
-${indent}  // from ("${remotes[0].name}/Button"), the string passed to remoteUrl() is the slug in
+${indent}  // from ("${remotes[0].name}/Button"), the string passed to ${sdkCall} is the slug in
 ${indent}  // the orchestrator. Never write a url here: the backend resolves the version.
-${remotes.map(render).join(",\n")}
+${note.map(line => `${indent}  // ${line}\n`).join("")}${remotes.map(render).join(",\n")}
 ${indent}},`
     }
 
@@ -285,8 +295,19 @@ ${this.viteDefineBlock(request, profile)}  build: {
     private webpackConfig(request: FederationConfigRequest, profile: FrameworkProfile): string {
         const { microfrontendSlug, remotes, exposeSelf } = request
         // `promise <expression>` is how ModuleFederationPlugin declares a remote whose url is only
-        // known at runtime: the expression is inlined in the host bundle and awaited before use
-        const remotesBlock = this.remotesBlock(remotes, remote => `        ${remote.name}: \`promise import('${CLIENT_SDK_PACKAGE}').then(m => m.remoteUrl('${remote.slug}'))\``, "      ")
+        // known at runtime. The expression is pasted into the host bundle verbatim, outside of any
+        // module, so it cannot import the SDK (a bare import() reaches the browser unresolved), and it
+        // must resolve to the remote's container, not to its url. The SDK publishes a loader on a
+        // global for exactly this: it resolves the url, injects the remote entry and returns the
+        // container the entry defines under the second argument, which is the remote's own
+        // ModuleFederationPlugin name, generated below from the same federationName() as the key.
+        const remotesBlock = this.remotesBlock(
+            remotes,
+            remote => `        ${remote.name}: "promise ${SDK_GLOBAL}.loadWebpackRemote('${remote.slug}', '${remote.name}')"`,
+            "      ",
+            "loadWebpackRemote()",
+            ["The second one is the name the remote gives its own ModuleFederationPlugin."]
+        )
 
         const sharedBlock = profile.shared.map(dependency => `        '${dependency}': { singleton: true }`).join(",\n")
         const imports = ["const webpack = require('webpack');", ...(profile.webpackImports || []), "const { ModuleFederationPlugin } = webpack.container;"]
@@ -317,7 +338,9 @@ ${(profile.webpackRules || []).map(rule => `      ${rule}`).join(",\n")}
   plugins: [
 ${plugins.map(plugin => `    ${plugin},`).join("\n")}
     new ModuleFederationPlugin({
-      name: '${microfrontendSlug}',
+      // The global the remote entry defines its container under, which is what a host passes
+      // to loadWebpackRemote(): an identifier, so it never holds a dash or a slash.
+      name: '${federationName(microfrontendSlug)}',
       filename: 'remoteEntry.js',${
           exposeSelf
               ? `
