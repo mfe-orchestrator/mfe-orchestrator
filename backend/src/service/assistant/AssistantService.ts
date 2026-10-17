@@ -17,7 +17,7 @@ const MAX_TOKENS = 16_000
  */
 const MAX_TOOL_ROUNDS = 16
 
-const CHAT_SYSTEM_PROMPT = `You are the assistant built into the MFE Orchestrator console, a platform to build, deploy and serve microfrontends.
+const CHAT_SYSTEM_PROMPT = `You are Maestro, the assistant built into the MFE Orchestrator console, a platform to build, deploy and serve microfrontends.
 
 Concepts: an organization holds projects; a project holds microfrontends (each with a version, a host, an optional code repository and optional canary release), backend services (container images built by the CI of their repository, with a port, health probes and the environment variables they read), functional domains (named groups of microfrontends and services: each one is in one domain at most, or in none), environments (e.g. development, staging, production), environment variables defined per environment, storages (S3, Google Cloud Storage, Azure Blob) where bundles are uploaded, and deployments, which freeze the versions of the microfrontends and the variables served by one environment. Builds run on the CI of the connected repository (GitHub Actions, GitLab CI, Azure Pipelines).
 

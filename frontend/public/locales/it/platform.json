@@ -1590,10 +1590,10 @@
         "projects": "Progetti"
     },
     "assistant": {
-        "title": "Assistente",
-        "open": "Apri l'assistente",
-        "close": "Chiudi l'assistente",
-        "shortcut": "Assistente (⌘J / Ctrl+J)",
+        "title": "Maestro",
+        "open": "Apri Maestro",
+        "close": "Chiudi Maestro",
+        "shortcut": "Maestro (⌘J / Ctrl+J)",
         "new_conversation": "Nuova conversazione",
         "history": {
             "open": "Conversazioni recenti",
@@ -1610,7 +1610,7 @@
         "placeholder_awaiting_confirmation": "Conferma o annulla l'azione qui sopra per continuare…",
         "send": "Invia",
         "stop": "Interrompi",
-        "disclaimer": "Le risposte sono generate da un'intelligenza artificiale e possono contenere errori. L'assistente può modificare il progetto: le azioni che eliminano o rimuovono qualcosa vengono eseguite solo dopo la tua conferma.",
+        "disclaimer": "Le risposte sono generate da un'intelligenza artificiale e possono contenere errori. Maestro può modificare il progetto: le azioni che eliminano o rimuovono qualcosa vengono eseguite solo dopo la tua conferma.",
         "empty_title": "Come posso aiutarti?",
         "empty_description": "Posso consultare e modificare microfrontend, build, deploy, ambienti e variabili di questo progetto e cercare nella documentazione.",
         "thinking": "Sto pensando…",
@@ -1643,7 +1643,7 @@
                 "declined": "Annullata.",
                 "expired": "Questa conferma è scaduta o ha già ricevuto una risposta."
             },
-            "raw_input": "Input inviato dall'assistente",
+            "raw_input": "Input inviato da Maestro",
             "details": {
                 "project": "Progetto",
                 "organization": "Organizzazione",
@@ -1683,7 +1683,7 @@
         "errors": {
             "generic": "Non sono riuscito a rispondere. Riprova tra poco.",
             "rate_limited": "Troppe domande in poco tempo. Attendi un minuto e riprova.",
-            "disabled": "L'assistente non è attivo su questa installazione.",
+            "disabled": "Maestro non è attivo su questa installazione.",
             "refusal": "Non posso rispondere a questa richiesta.",
             "incomplete": "La risposta è incompleta: prova a fare una domanda più specifica.",
             "stopped": "Risposta interrotta.",
