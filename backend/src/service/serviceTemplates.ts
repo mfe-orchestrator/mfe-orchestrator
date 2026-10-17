@@ -33,6 +33,13 @@ export const SERVICE_TEMPLATES: IMarket[] = [
         docsPath: "/docs",
         openApiPath: "/openapi.json"
     }),
+    serviceTemplate("service-python-fastapi", "Python & FastAPI", "Python", "Backend service with Python and FastAPI, packaged as a Docker image", {
+        port: 8080,
+        livenessPath: "/health/live",
+        readinessPath: "/health/ready",
+        docsPath: "/docs",
+        openApiPath: "/openapi.json"
+    }),
     serviceTemplate("service-spring-boot", "Spring Boot", "Spring Boot", "Backend service with Java and Spring Boot, packaged as a Docker image", {
         port: 8080,
         livenessPath: "/actuator/health/liveness",

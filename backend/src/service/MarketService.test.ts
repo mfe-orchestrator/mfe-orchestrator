@@ -47,9 +47,10 @@ describe("MarketService", () => {
         expect(fetchMock).not.toHaveBeenCalled()
     })
 
-    it("ships exactly the Node.js, Spring Boot and Quarkus service templates", () => {
+    it("ships exactly the Node.js, Python, Spring Boot and Quarkus service templates", () => {
         expect(SERVICE_TEMPLATES.map(t => [t.slug, t.name, t.framework, t.repo])).toEqual([
             ["service-node-fastify", "Node.js & Fastify", "Node.js", "https://github.com/mfe-orchestrator/template-service-node-fastify"],
+            ["service-python-fastapi", "Python & FastAPI", "Python", "https://github.com/mfe-orchestrator/template-service-python-fastapi"],
             ["service-spring-boot", "Spring Boot", "Spring Boot", "https://github.com/mfe-orchestrator/template-service-spring-boot"],
             ["service-quarkus", "Quarkus", "Quarkus", "https://github.com/mfe-orchestrator/template-service-quarkus"]
         ])
@@ -57,6 +58,7 @@ describe("MarketService", () => {
 
     it.each([
         ["service-node-fastify", { port: 8080, livenessPath: "/health/live", readinessPath: "/health/ready", docsPath: "/docs", openApiPath: "/openapi.json" }],
+        ["service-python-fastapi", { port: 8080, livenessPath: "/health/live", readinessPath: "/health/ready", docsPath: "/docs", openApiPath: "/openapi.json" }],
         ["service-spring-boot", { port: 8080, livenessPath: "/actuator/health/liveness", readinessPath: "/actuator/health/readiness", docsPath: "/swagger-ui.html", openApiPath: "/v3/api-docs" }],
         ["service-quarkus", { port: 8080, livenessPath: "/q/health/live", readinessPath: "/q/health/ready", docsPath: "/q/swagger-ui", openApiPath: "/q/openapi" }]
     ])("Given the %s template, then it declares the port, probes and API docs of its framework", (slug, defaults) => {
