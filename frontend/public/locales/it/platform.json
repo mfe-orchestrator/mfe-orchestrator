@@ -1787,7 +1787,8 @@
             "apply_all_failed_other": "{{count}} proposte su {{total}} non sono state applicate: guarda gli errori sui loro repository",
             "follow_up_no_proposal": "Non ci sono proposte da rifinire: avvia un nuovo job per altre modifiche.",
             "service_badge": "Servizio"
-        }
+        },
+        "page_title": "Agente AI"
     },
     "services": {
         "title": "Servizi",
@@ -1979,5 +1980,13 @@
             "invalid": "I dati del dominio non sono validi",
             "not_found": "Il dominio selezionato non esiste più in questo progetto"
         }
+    },
+    "navigation": {
+        "sections": {
+            "domains": "Domini funzionali",
+            "microfrontends": "Microfrontend",
+            "services": "Servizi backend"
+        },
+        "top_menu": "Menu del progetto"
     }
 }

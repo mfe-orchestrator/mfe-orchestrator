@@ -8,6 +8,7 @@ import useAssistantChat from "@/hooks/useAssistantChat"
 import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobsStore"
 import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
+import { cn } from "@/utils/styleUtils"
 import AnswerUsage from "./AnswerUsage"
 import AssistantConfirmationCard from "./AssistantConfirmationCard"
 import AssistantHistory from "./AssistantHistory"
@@ -20,6 +21,9 @@ import useAssistantEnabled from "./useAssistantEnabled"
 import useAssistantJobsWatcher from "./useAssistantJobsWatcher"
 
 const MAX_QUESTION_CHARS = 4_000
+
+/** The page that shows the assistant full width, as a chat of its own. */
+export const ASSISTANT_PAGE_PATH = "/assistant"
 
 /** Starter questions, page-specific first: they show what the assistant can look up from here. */
 const SUGGESTIONS_BY_PAGE: Record<string, string[]> = {
@@ -68,14 +72,22 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAns
     )
 }
 
+interface AssistantPanelProps {
+    /**
+     * `panel`: docked on the right of every project page, opened and closed by the user.
+     * `page`: the whole content area of the assistant page, with the conversation in a centred column.
+     */
+    variant?: "panel" | "page"
+}
+
 /**
- * The assistant, docked on the right of every project page.
+ * The assistant, docked on the right of every project page or shown on a page of its own.
  *
- * On wide screens it takes a column next to the content, so the page the user is asking
+ * As a panel, on wide screens it takes a column next to the content, so the page the user is asking
  * about stays visible; on small screens it covers the page. ⌘J / Ctrl+J toggles it. Next to the
  * project conversation, each chain of agent jobs has a tab of its own.
  */
-const AssistantPanel: React.FC = () => {
+const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) => {
     const { t } = useTranslation()
     const enabled = useAssistantEnabled()
     const location = useLocation()
@@ -97,10 +109,13 @@ const AssistantPanel: React.FC = () => {
     const scrollRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
+    const isPage = variant === "page"
+
     useAssistantJobsWatcher(projectId, enabled)
 
     useEffect(() => {
-        if (!enabled) return
+        // The page cannot be closed: the shortcut is only for the panel.
+        if (!enabled || isPage) return
         const onKeyDown = (event: KeyboardEvent) => {
             if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
                 event.preventDefault()
@@ -109,7 +124,7 @@ const AssistantPanel: React.FC = () => {
         }
         window.addEventListener("keydown", onKeyDown)
         return () => window.removeEventListener("keydown", onKeyDown)
-    }, [enabled, toggle])
+    }, [enabled, isPage, toggle])
 
     // A conversation is about one project: switching project shows that project's conversation,
     // and the one left behind is there again on the way back. Mounting the panel or a reload
@@ -132,15 +147,15 @@ const AssistantPanel: React.FC = () => {
     }, [pendingQuestion, isStreaming, awaitingConfirmation])
 
     useEffect(() => {
-        if (isOpen) inputRef.current?.focus()
-    }, [isOpen])
+        if (isOpen || isPage) inputRef.current?.focus()
+    }, [isOpen, isPage])
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every change of the conversation, streamed text included, and when it is shown again.
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
     }, [messages, activeTab])
 
-    if (!enabled || !isOpen) return null
+    if (!enabled || (!isPage && !isOpen)) return null
 
     const submit = () => {
         if (!draft.trim() || isStreaming || awaitingConfirmation) return
@@ -152,9 +167,12 @@ const AssistantPanel: React.FC = () => {
         <aside
             aria-label={t("assistant.title")}
             data-testid="assistant-panel"
-            className="fixed inset-0 z-40 flex flex-col bg-background md:static md:inset-auto md:z-auto md:h-full md:w-[380px] md:shrink-0 md:border-l md:border-divider"
+            className={cn(
+                "flex flex-col bg-background",
+                isPage ? "h-full min-h-0" : "fixed inset-0 z-40 md:static md:inset-auto md:z-auto md:h-full md:w-[380px] md:shrink-0 md:border-l md:border-divider"
+            )}
         >
-            <header className="flex items-center gap-2 border-b border-divider px-4 py-3">
+            <header className={cn("flex items-center gap-2 px-4 py-3", !isPage && "border-b border-divider")}>
                 <Sparkles className="size-5 text-primary" aria-hidden="true" />
                 <h2 className="flex-1 font-semibold text-foreground">{t("assistant.title")}</h2>
                 {projectId && (
@@ -191,9 +209,11 @@ const AssistantPanel: React.FC = () => {
                         <RotateCcw />
                     </Button>
                 )}
-                <Button variant="ghost" size="icon" aria-label={t("assistant.close")} onClick={close} dataTestId="assistant-close">
-                    <X />
-                </Button>
+                {!isPage && (
+                    <Button variant="ghost" size="icon" aria-label={t("assistant.close")} onClick={close} dataTestId="assistant-close">
+                        <X />
+                    </Button>
+                )}
             </header>
 
             <Tabs value={activeTab} onValueChange={value => projectId && setActiveTab(projectId, value)} layoutSize="sm" className="flex min-h-0 flex-1 flex-col">
@@ -204,39 +224,46 @@ const AssistantPanel: React.FC = () => {
                         <AssistantHistory projectId={projectId} onOpened={() => setHistoryOpen(false)} />
                     ) : (
                         <>
-                            <div ref={scrollRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
-                                {messages.length === 0 ? (
-                                    <div className="flex flex-col gap-3">
-                                        <p className="font-medium text-foreground">{t("assistant.empty_title")}</p>
-                                        <p className="text-sm text-foreground-secondary">{t("assistant.empty_description")}</p>
-                                        <div className="flex flex-col gap-2">
-                                            {suggestionsFor(location.pathname).map(key => (
-                                                <button
-                                                    key={key}
-                                                    type="button"
-                                                    onClick={() => send(t(`assistant.suggestions.${key}`))}
-                                                    className="rounded-md border border-divider px-3 py-2 text-left text-sm text-foreground hover:bg-primary/5"
-                                                >
-                                                    {t(`assistant.suggestions.${key}`)}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    messages.map(message =>
-                                        message.role === "user" ? (
-                                            <div key={message.id} className="self-end max-w-[85%] rounded-lg bg-primary/10 px-3 py-2 text-sm text-foreground">
-                                                <AssistantMessageText text={message.content} />
+                            <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto px-4 py-4">
+                                {/* On the page the scrollbar stays at the edge, the conversation in a readable column. */}
+                                <div className={cn("flex flex-1 flex-col gap-4", isPage && "mx-auto w-full max-w-3xl")}>
+                                    {messages.length === 0 ? (
+                                        <div className={cn("flex flex-col gap-3", isPage && "flex-1 items-center justify-center text-center")}>
+                                            <p className={cn("font-medium text-foreground", isPage && "text-2xl font-semibold")}>{t("assistant.empty_title")}</p>
+                                            <p className={cn("text-sm text-foreground-secondary", isPage && "max-w-xl")}>{t("assistant.empty_description")}</p>
+                                            <div className={cn("flex flex-col gap-2", isPage && "mt-4 grid w-full sm:grid-cols-3")}>
+                                                {suggestionsFor(location.pathname).map(key => (
+                                                    <button
+                                                        key={key}
+                                                        type="button"
+                                                        onClick={() => send(t(`assistant.suggestions.${key}`))}
+                                                        className="rounded-md border border-divider px-3 py-2 text-left text-sm text-foreground hover:bg-primary/5"
+                                                    >
+                                                        {t(`assistant.suggestions.${key}`)}
+                                                    </button>
+                                                ))}
                                             </div>
-                                        ) : (
-                                            <AnswerBubble key={message.id} message={message} isStreaming={isStreaming} onAnswerConfirmation={answerConfirmation} />
+                                        </div>
+                                    ) : (
+                                        messages.map(message =>
+                                            message.role === "user" ? (
+                                                <div key={message.id} className="self-end max-w-[85%] rounded-lg bg-primary/10 px-3 py-2 text-sm text-foreground">
+                                                    <AssistantMessageText text={message.content} />
+                                                </div>
+                                            ) : (
+                                                <AnswerBubble key={message.id} message={message} isStreaming={isStreaming} onAnswerConfirmation={answerConfirmation} />
+                                            )
                                         )
-                                    )
-                                )}
+                                    )}
+                                </div>
                             </div>
 
                             <form
-                                className="flex flex-col gap-2 border-t border-divider px-4 py-3"
+                                className={cn(
+                                    "flex flex-col gap-2 px-4 py-3",
+                                    // Sticky: on small screens the page grows with the conversation instead of scrolling inside it.
+                                    isPage ? "sticky bottom-0 mx-auto w-full max-w-3xl bg-background" : "border-t border-divider"
+                                )}
                                 onSubmit={event => {
                                     event.preventDefault()
                                     submit()
@@ -247,8 +274,8 @@ const AssistantPanel: React.FC = () => {
                                         ref={inputRef}
                                         value={draft}
                                         maxLength={MAX_QUESTION_CHARS}
-                                        rows={2}
-                                        className="min-h-[44px] resize-none"
+                                        rows={isPage ? 3 : 2}
+                                        className={cn("min-h-[44px] resize-none", isPage && "rounded-xl")}
                                         disabled={awaitingConfirmation}
                                         placeholder={t(awaitingConfirmation ? "assistant.placeholder_awaiting_confirmation" : "assistant.placeholder")}
                                         aria-label={t("assistant.placeholder")}

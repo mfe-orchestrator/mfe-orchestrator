@@ -1768,7 +1768,8 @@
             "apply_all_failed_other": "{{count}} of {{total}} proposals could not be applied: see the errors on their repositories",
             "follow_up_no_proposal": "No proposal left to refine: start a new job for further changes.",
             "service_badge": "Service"
-        }
+        },
+        "page_title": "AI agent"
     },
     "services": {
         "title": "Services",
@@ -1960,5 +1961,13 @@
             "invalid": "The domain data is not valid",
             "not_found": "The selected domain no longer exists in this project"
         }
+    },
+    "navigation": {
+        "sections": {
+            "domains": "Functional domains",
+            "microfrontends": "Microfrontends",
+            "services": "Backend services"
+        },
+        "top_menu": "Project menu"
     }
 }
