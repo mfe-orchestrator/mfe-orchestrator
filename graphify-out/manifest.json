@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792235581.0542738,
-    "ast_hash": "d9d1dbf39b9f3254fd40fa6107eb3097",
+    "mtime": 1792236014.108667,
+    "ast_hash": "9f8ecc26b332c0bac04285fddee8cd35",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792235581.0543556,
-    "ast_hash": "8e1b59f73b2a7168743d55144bada2a1",
+    "mtime": 1792236015.2352238,
+    "ast_hash": "7456e27d8945f835b4d99f1ab31b461d",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -905,13 +905,13 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useMarketApi.ts": {
-    "mtime": 1792235500.13868,
-    "ast_hash": "7c9dd35618f41d498e27500da3b787a0",
+    "mtime": 1792235993.8095589,
+    "ast_hash": "d2aeb328283ac28e297c06244244915f",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useMicrofrontendsApi.ts": {
-    "mtime": 1792235455.6758196,
-    "ast_hash": "88421b7ae4a3c1d174186bfd69e35043",
+    "mtime": 1792236008.4648294,
+    "ast_hash": "2384110dce278313671bf8021a0bccb0",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useProjectApi.ts": {
@@ -3335,8 +3335,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/MicrofrontendHeader.tsx": {
-    "mtime": 1792157497.5643723,
-    "ast_hash": "e47f683343e5264a35a73c0d1e5d78cb",
+    "mtime": 1792236010.6833615,
+    "ast_hash": "98f2686a324e4582ad75c2f6cf272188",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/MicrofrontendAiWorkspace.tsx": {
@@ -3420,8 +3420,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/services/partials/ServiceHeader.tsx": {
-    "mtime": 1792234871.7603207,
-    "ast_hash": "72d54b4c897a346760e284d79b7c20e7",
+    "mtime": 1792236012.9294958,
+    "ast_hash": "f9f517f1cf723637e5bed7458205bb0d",
     "semantic_hash": ""
   },
   "frontend/src/pages/services/partials/ServiceVersionsTable.tsx": {
@@ -3517,6 +3517,11 @@
   "frontend/src/pages/microfrontends/partials/views/MicrofrontendsBackendFlow.tsx": {
     "mtime": 1792235537.2224743,
     "ast_hash": "153198fbf2c28278ff1f888ab056b6d8",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/TemplateRepositoryLink.tsx": {
+    "mtime": 1792235992.6826022,
+    "ast_hash": "68707380e246efe26f57125140dea080",
     "semantic_hash": ""
   }
 }
