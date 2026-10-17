@@ -43,7 +43,7 @@
             "federation_tab": "Module Federation",
             "runtime_integration_description": "Web component microfrontends are plain scripts that register a custom element, so there is no module federation config to write: the host asks the SDK for the resolved url and mounts the element. See MicrofrontendLoader in the web component templates.",
             "integrate_dialog_title": "Wire up module federation",
-            "integrate_dialog_description": "For each microfrontend that consumes others, we write the bundler config declaring its remotes and add the packages that config needs. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
+            "integrate_dialog_description": "For each microfrontend that consumes others, we write the bundler config declaring its remotes (for a single-spa root config, the src/applications.ts registering them; for a micro-lc shell, the src/microlc-config.ts mounting them) and add the packages that config needs. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
             "integrate_confirm": "Commit to the selected repositories",
             "integrate_nothing_to_do": "Nothing to integrate: every repository is already wired up, or none of your microfrontends consumes another one yet.",
             "integrate_success": "Module federation wired up in {{count}} repositories",

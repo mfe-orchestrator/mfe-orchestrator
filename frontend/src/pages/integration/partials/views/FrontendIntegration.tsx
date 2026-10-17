@@ -36,7 +36,9 @@ const FRAMEWORK_OPTIONS: { value: MicrofrontendFramework; label: string }[] = [
 const COMPILER_OPTIONS: { value: MicrofrontendCompiler; label: string }[] = [
     { value: "VITE", label: "Vite" },
     { value: "WEBPACK", label: "Webpack" },
-    { value: "WEBCOMPONENT", label: "Web Component" }
+    { value: "WEBCOMPONENT", label: "Web Component" },
+    { value: "SINGLE_SPA", label: "single-spa" },
+    { value: "MICRO_LC", label: "micro-lc" }
 ]
 
 export const FrontendIntegration = ({ deployment }: { deployment: DeploymentDTO }) => {

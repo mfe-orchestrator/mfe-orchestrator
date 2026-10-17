@@ -14,7 +14,8 @@ export interface IServe {
 }
 
 export type MicrofrontendFramework = "REACT" | "VUE" | "ANGULAR"
-export type MicrofrontendCompiler = "VITE" | "WEBPACK" | "WEBCOMPONENT"
+/** Bundlers, or integration models (WEBCOMPONENT, SINGLE_SPA, MICRO_LC) that load remotes at runtime */
+export type MicrofrontendCompiler = "VITE" | "WEBPACK" | "WEBCOMPONENT" | "SINGLE_SPA" | "MICRO_LC"
 export type MicrofrontendStackSource = "TEMPLATE" | "DETECTED" | "MANUAL"
 
 export interface IMicrofrontendStackDTO {
