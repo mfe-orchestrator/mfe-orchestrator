@@ -1,7 +1,7 @@
 # Graph Report - mfe-orchestrator  (2026-10-19)
 
 ## Corpus Check
-- 681 files · ~725,775 words
+- 681 files · ~725,882 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9b79d893`
+- Built from commit: `27c826dd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -295,8 +295,8 @@
 
 ## Import Cycles
 - 3-file cycle: `frontend/src/pages/integration/partials/index.ts -> frontend/src/pages/integration/partials/views/index.ts -> frontend/src/pages/integration/partials/views/FrontendIntegration.tsx -> frontend/src/pages/integration/partials/index.ts`
-- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithAuth0Button.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
+- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithAuth0Button.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
 - 3-file cycle: `frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts`
@@ -341,8 +341,8 @@ Cohesion: 0.07
 Nodes (36): projectController(), EntityNotFoundError, EnvironmentNotFoundError, ProjectNotFoundError, BuiltService, builtServiceSchema, Deployment, deploymentSchema (+28 more)
 
 ### Community 8 - "Auth Pages & Form Inputs"
-Cohesion: 0.06
-Nodes (38): Button, ApiStatusHandler(), DeleteConfirmationDialog(), DeleteConfirmationDialogProps, ApiKey, CreateApiKeyDTO, CreateApiKeyResponseDTO, useApiKeysApi() (+30 more)
+Cohesion: 0.16
+Nodes (12): ApiKey, CreateApiKeyDTO, CreateApiKeyResponseDTO, useApiKeysApi(), ApiKeys(), CreateApiKeyDialog(), CreateApiKeyDialogProps, ApiKeyFormData (+4 more)
 
 ### Community 9 - "Code Repositories UI"
 Cohesion: 0.17
@@ -393,8 +393,8 @@ Cohesion: 0.08
 Nodes (21): McpCredential, McpSession, McpToolContext, domainDeploymentTools, context(), getByDomainId, getByProjectId, { principals } (+13 more)
 
 ### Community 21 - "Sidebar & Theme Toggle"
-Cohesion: 0.04
-Nodes (61): DeploymentDTO, DeployedMicrofrontend, DeployedService, DomainDeployments, EnvironmentDeployment, useDomainDeploymentsApi(), CanaryDeploymentType, CanaryType (+53 more)
+Cohesion: 0.03
+Nodes (87): DeploymentDTO, DeployedMicrofrontend, DeployedService, DomainDeployments, EnvironmentDeployment, useDomainDeploymentsApi(), CanaryDeploymentType, CanaryType (+79 more)
 
 ### Community 22 - "ApiKeyService.ts"
 Cohesion: 0.41
@@ -433,16 +433,16 @@ Cohesion: 0.07
 Nodes (27): Additional Types, Backend Layer Scopes, Best Practices, Branch Naming, Breaking Changes, Commit Conventions, Commit Message Format, Commit Message Template (+19 more)
 
 ### Community 31 - "Code Repository Service"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (7): CodeRepository, ICodeRepository, CodeRepositoryService, deployKeyExpiry(), retypedSecret(), CreateAzureDevOpsRepositoryDTO, CreateGitlabRepositoryDto
 
 ### Community 32 - "Login & Social Buttons"
-Cohesion: 0.06
-Nodes (47): TextFieldProps, DOMAIN_LINK_ERROR_KEYS, DomainLink, DomainLinkDTO, useDomainLinksApi(), EnvironmentValue, GlobalVariable, GlobalVariableCreateDTO (+39 more)
+Cohesion: 0.05
+Nodes (61): TextFieldProps, DeleteConfirmationDialog(), DeleteConfirmationDialogProps, CanaryUser, useCanaryUsersApi(), DOMAIN_LINK_ERROR_KEYS, DomainLink, DomainLinkDTO (+53 more)
 
 ### Community 33 - "Select & Environment Selector"
-Cohesion: 0.15
-Nodes (14): AnswerUsageProps, AssistantHistory(), AssistantHistoryProps, toPanelMessages(), AnswerBubbleProps, AssistantConversation, AssistantConversationSummary, useAssistantApi() (+6 more)
+Cohesion: 0.14
+Nodes (13): AnswerUsageProps, AssistantConfirmationCard(), AssistantConfirmationCardProps, readableValue(), AssistantToolCallRow(), formatToolValue(), AssistantConfirmation, AssistantConfirmationDetail (+5 more)
 
 ### Community 34 - "Frontend App TSConfig"
 Cohesion: 0.10
@@ -522,15 +522,15 @@ Nodes (10): stats, apiKeys, codeRepositories, environments, manage, mcpClients, 
 
 ### Community 54 - "Fastify App Bootstrap"
 Cohesion: 0.08
-Nodes (26): [1.0.0] - 2025-12-07, [1.2.0] - 2026-07-14, [2.0.0] - 2026-08-04, [2.2.0] - 2026-08-07, [3.1.0] - 2026-08-16, Added, Added, Automated Changelog Generation (+18 more)
+Nodes (26): [1.2.0] - 2026-07-14, [2.0.0] - 2026-08-04, [2.2.0] - 2026-08-07, [2.3.0] - 2026-08-11, [4.0.0] - 2026-08-27, Added, Added, Added (+18 more)
 
 ### Community 55 - "UserModel.ts"
-Cohesion: 0.03
-Nodes (94): service(), Domain, DOMAIN_ERROR_KEYS, DomainDTO, DomainMembersDTO, useDomainsApi(), BuiltService, Service (+86 more)
+Cohesion: 0.04
+Nodes (69): service(), BuiltService, Service, ServiceCodeRepository, ServiceDTO, ServiceEnvVariable, ServiceRuntime, ServiceUrl (+61 more)
 
 ### Community 56 - "useUserApi.ts"
-Cohesion: 0.05
-Nodes (48): GitHub Code Repository Provider, GitHub Logo (Octocat Mark), AddRepositoryAzureDTO, AddRepositoryGithubDTO, AddRepositoryGitlabDTO, AzureDevOpsProject, AzureDevOpsProjectsResponse, CodeRepositoryProvider (+40 more)
+Cohesion: 0.04
+Nodes (69): GitHub Code Repository Provider, GitHub Logo (Octocat Mark), Button, PageHead(), PageHeadProps, ProjectDraft, AddRepositoryAzureDTO, AddRepositoryGithubDTO (+61 more)
 
 ### Community 57 - "Project Wizard Service"
 Cohesion: 0.16
@@ -594,7 +594,7 @@ Nodes (34): auth, already_have_account, confirm_password, create_account, email,
 
 ### Community 73 - "DeploymentCanaryUsersController.ts"
 Cohesion: 0.04
-Nodes (72): AuthenticationType, createUrl(), doRequest(), getUTMFields(), IClientRequestData, IClientRequestMetadata, IUTMFields, out (+64 more)
+Nodes (75): AuthenticationType, createUrl(), doRequest(), getUTMFields(), IClientRequestData, IClientRequestMetadata, IUTMFields, out (+67 more)
 
 ### Community 74 - "Backend Test TSConfig"
 Cohesion: 0.33
@@ -657,8 +657,8 @@ Cohesion: 0.08
 Nodes (19): aiChangeTools, changeId, jobId, microfrontendId, prompt, applyChange, applyJob, { constructed } (+11 more)
 
 ### Community 91 - "Switch Component"
-Cohesion: 0.09
-Nodes (26): newEnvironment(), ColorPickerProps, EnvironmentSelectorProps, CreateEnvironmentDTO, EnvironmentDTO, useEnvironmentsApi(), moveItem(), useDragAndDropOrder() (+18 more)
+Cohesion: 0.04
+Nodes (57): newEnvironment(), ColorPickerProps, TextareaFieldProps, EnvironmentSelectorProps, ApiStatusHandler(), ProjectPickerListProps, useDeploymentsApi(), CreateEnvironmentDTO (+49 more)
 
 ### Community 93 - "MicrofrontendModel.ts"
 Cohesion: 0.15
@@ -801,8 +801,8 @@ Cohesion: 0.11
 Nodes (19): project, create, create_new, create_new_project, description, description_placeholder, name, name_placeholder (+11 more)
 
 ### Community 167 - "dashboard"
-Cohesion: 0.05
-Nodes (51): TextareaFieldProps, ProjectPickerListProps, ProjectDraft, AddUserToProjectDTO, Project, ProjectSummaryDTO, ProjectUpdateDTO, RoleInProject (+43 more)
+Cohesion: 0.21
+Nodes (13): RoleInProject, ProjectUser, useProjectUserApi(), Row, AddUserButton(), AddUserButtonProps, InviteUserFormValues, gravatarHash() (+5 more)
 
 ### Community 168 - "theme"
 Cohesion: 0.09
@@ -934,7 +934,7 @@ Nodes (6): contextUpdated, contextUpdateFailed, projectDeleted, projectUpdated, 
 
 ### Community 202 - "EmailSenderService"
 Cohesion: 0.05
-Nodes (54): AskAssistantButton(), AskAssistantButtonProps, AssistantToggleButton(), useAssistantEnabled(), EntityPickerLabels, EntityPickerList(), EntityPickerListProps, PickableEntity (+46 more)
+Nodes (51): AskAssistantButton(), AskAssistantButtonProps, AssistantToggleButton(), useAssistantEnabled(), EntityPickerLabels, EntityPickerList(), EntityPickerListProps, PickableEntity (+43 more)
 
 ### Community 203 - "validation"
 Cohesion: 0.50
@@ -1013,8 +1013,8 @@ Cohesion: 0.40
 Nodes (5): source, assist, actions, enabled, organizeImports
 
 ### Community 225 - "authentication.ts"
-Cohesion: 0.40
-Nodes (5): [4.0.0] - 2026-08-27, Added, Changed, Documentation, Fixed
+Cohesion: 0.38
+Nodes (8): AssistantHistory(), AssistantHistoryProps, toPanelMessages(), AnswerBubbleProps, AssistantConversation, AssistantConversationSummary, useAssistantApi(), AssistantMessage
 
 ### Community 226 - "CodeRepositoryController.ts"
 Cohesion: 0.08
@@ -1041,8 +1041,8 @@ Cohesion: 0.23
 Nodes (3): AI providers, Notes per provider, The console assistant
 
 ### Community 233 - "MainLayout.tsx"
-Cohesion: 0.06
-Nodes (51): App(), queryClient, CalendarField(), CalendarFieldProps, LanguageSelector(), LanguageSelectorProps, ThemeToggle(), ThemeToggleProps (+43 more)
+Cohesion: 0.07
+Nodes (48): App(), queryClient, CalendarField(), CalendarFieldProps, LanguageSelector(), LanguageSelectorProps, ThemeToggle(), ThemeToggleProps (+40 more)
 
 ### Community 234 - "MicrofrontendsTable.tsx"
 Cohesion: 0.19
@@ -1081,12 +1081,12 @@ Cohesion: 0.29
 Nodes (7): grantedAt, notifications, subtitle, title, granted, withdrawn, marketing
 
 ### Community 246 - "Sidebar.tsx"
-Cohesion: 0.40
-Nodes (5): [2.3.0] - 2026-08-11, Added, Changed, Documentation, Fixed
+Cohesion: 0.33
+Nodes (6): [1.0.0] - 2025-12-07, Added, Changed, Documentation, Fixed, Removed
 
 ### Community 247 - "CodeRepositoryType"
-Cohesion: 0.31
-Nodes (7): AssistantConfirmationCard(), AssistantConfirmationCardProps, readableValue(), AssistantToolCallRow(), formatToolValue(), AssistantConfirmation, AssistantToolCall
+Cohesion: 0.50
+Nodes (4): [3.1.0] - 2026-08-16, Changed, Fixed, Tests
 
 ### Community 248 - "Editing a microfrontend with AI"
 Cohesion: 0.40
