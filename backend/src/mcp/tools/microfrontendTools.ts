@@ -22,7 +22,7 @@ const microfrontendId = objectId("Id of the microfrontend")
  *
  * Deliberately narrower than the console route: no `projectId` (the token's project is the only
  * one), and no `codeRepository.createData`, which creates a repository at the provider and pushes
- * an API key into it. Linking an existing repository is allowed.
+ * an API key into it: that is `microfrontend_scaffold`'s. Linking an existing repository is allowed.
  */
 const microfrontendFields = {
     name: z.string().min(1).max(255),
@@ -140,8 +140,7 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontend_create",
         title: "Create microfrontend",
-        description:
-            "Adds a microfrontend to the project. A code repository can be linked if it already exists at the provider; creating a new repository from a template is only possible from the console.",
+        description: "Adds a microfrontend to the project. A code repository can be linked if it already exists at the provider; use microfrontend_scaffold to create a new one from a template.",
         scope: MCP_SCOPE_WRITE,
         annotations: WRITE,
         inputSchema: createSchema,

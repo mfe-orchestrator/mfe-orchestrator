@@ -19,7 +19,7 @@ const httpPath = z.string().regex(SERVICE_HTTP_PATH, 'starts with "/", at most 2
  *
  * Deliberately narrower than the console route, as for microfrontends: no `projectId` (the token's
  * project is the only one), no `codeRepository.createData` (scaffolding a repository at the provider
- * stays in the console), and nothing the CI or a template sets (`version`, `template`, `stack`).
+ * is `service_scaffold`'s), and nothing the CI or a template sets (`version`, `template`, `stack`).
  * Linking an existing repository is allowed, checked against the project first.
  */
 const serviceFields = {
@@ -67,7 +67,7 @@ const serviceFields = {
         .describe("Variables the image reads from its environment: names only, never values. Replaced as a whole")
 }
 
-const createSchema = z.object(serviceFields)
+export const createSchema = z.object(serviceFields)
 // The slug is in the registration URL the service's CI calls: fixed after creation, as in the console
 const updateSchema = z.object({ serviceId, ...createSchema.omit({ slug: true }).partial().shape })
 
@@ -107,7 +107,7 @@ export const serviceTools = [
         name: "service_create",
         title: "Create service",
         description:
-            "Adds a backend service (a container image built by the CI of its repository) to the project. A code repository can be linked if it already exists at the provider; creating a new repository from a template is only possible from the console.",
+            "Adds a backend service (a container image built by the CI of its repository) to the project. A code repository can be linked if it already exists at the provider; use service_scaffold to create a new one from a template.",
         scope: MCP_SCOPE_WRITE,
         annotations: WRITE,
         inputSchema: createSchema,

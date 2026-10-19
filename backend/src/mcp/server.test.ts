@@ -58,7 +58,7 @@ describe("MCP tool registry", () => {
 
     it("given the tools left out of v1, when the registry is searched, then none of them is there", () => {
         const excluded =
-            /api_?key|project_delete|organization_(create|update|delete)|member|invit|user_profile|profile|upload|position|dimension|storage_(create|update)|code_repository_(create|update|add)|scaffold/
+            /api_?key|project_delete|organization_(create|update|delete)|member|invit|user_profile|profile|upload|position|dimension|storage_(create|update)|code_repository_(create|update|add)/
         expect(
             MCP_TOOLS.filter(tool => !tool.consoleOnly)
                 .map(tool => tool.name)
@@ -88,6 +88,7 @@ describe("MCP tool registry", () => {
         const registered = registerTool.mock.calls.map(call => call[0])
         registerTool.mockRestore()
         expect(registered).toContain("microfrontends_list")
+        expect(registered).toEqual(expect.arrayContaining(["microfrontend_scaffold", "service_scaffold"]))
         expect(registered).not.toContain("console_only_probe")
     })
 

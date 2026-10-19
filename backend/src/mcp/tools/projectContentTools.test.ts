@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import UserCannotAccessThisEnvironmentError from "../../errors/UserCannotAccessThisEnvironmentError"
 import UserCannotAccessThisProjectError from "../../errors/UserCannotAccessThisProjectError"
 import { McpSession, McpToolContext } from "../toolDefinition"
@@ -10,10 +9,7 @@ const deleteMultiple = vi.fn()
 const bulkDelete = vi.fn()
 const setPosition = vi.fn()
 const setDimension = vi.fn()
-const createMicrofrontend = vi.fn()
 const getMicrofrontend = vi.fn()
-const getTemplate = vi.fn()
-const findCodeRepository = vi.fn()
 
 // Hoisted with the mocks below, which build their service classes with it
 const { principals, serviceClass } = vi.hoisted(() => {
@@ -36,17 +32,13 @@ vi.mock("../../service/MicrofrontendService", () => ({
         bulkDelete: (...args: unknown[]) => bulkDelete(...args),
         setPosition: (...args: unknown[]) => setPosition(...args),
         setDimension: (...args: unknown[]) => setDimension(...args),
-        create: (...args: unknown[]) => createMicrofrontend(...args),
         getById: (...args: unknown[]) => getMicrofrontend(...args)
     })
 }))
-vi.mock("../../service/MarketService", () => ({ default: serviceClass({ getSingle: (...args: unknown[]) => getTemplate(...args) }) }))
-vi.mock("../../service/CodeRepositoryService", () => ({ default: serviceClass({ findById: (...args: unknown[]) => findCodeRepository(...args) }) }))
 
 const PROJECT = "aaaaaaaaaaaaaaaaaaaaaaaa"
 const ENVIRONMENT = "bbbbbbbbbbbbbbbbbbbbbbbb"
 const MICROFRONTEND = "cccccccccccccccccccccccc"
-const CODE_REPOSITORY = "dddddddddddddddddddddddd"
 
 const tool = (name: string) => projectContentTools.find(candidate => candidate.name === name)!
 
@@ -64,7 +56,7 @@ const run = (name: string, args: Record<string, unknown>) => tool(name).run(args
 
 describe("project content tools", () => {
     beforeEach(() => {
-        for (const mock of [createBulk, deleteMultiple, bulkDelete, setPosition, setDimension, createMicrofrontend, getMicrofrontend, getTemplate, findCodeRepository]) {
+        for (const mock of [createBulk, deleteMultiple, bulkDelete, setPosition, setDimension, getMicrofrontend]) {
             mock.mockReset()
         }
         principals.length = 0
@@ -143,49 +135,6 @@ describe("project content tools", () => {
             await expect(run("microfrontend_canvas_set", { microfrontendId: MICROFRONTEND })).rejects.toMatchObject({ code: "CANVAS_NOTHING_TO_SET" })
             expect(setPosition).not.toHaveBeenCalled()
             expect(setDimension).not.toHaveBeenCalled()
-        })
-    })
-
-    describe("microfrontend_scaffold", () => {
-        const input = { name: "Cart", slug: "cart", version: "1.0.0", template: "react-vite", codeRepositoryId: CODE_REPOSITORY, private: true }
-
-        it("given a template and a connection of the project, when scaffolded, then the microfrontend is created with the repository to create", async () => {
-            findCodeRepository.mockResolvedValue({ _id: CODE_REPOSITORY })
-            getTemplate.mockResolvedValue({ slug: "react-vite" })
-            createMicrofrontend.mockResolvedValue({ _id: MICROFRONTEND, slug: "cart" })
-
-            expect(await run("microfrontend_scaffold", input)).toEqual({ _id: MICROFRONTEND, slug: "cart" })
-            expect(findCodeRepository).toHaveBeenCalledWith(CODE_REPOSITORY)
-            expect(createMicrofrontend).toHaveBeenCalledWith(
-                {
-                    name: "Cart",
-                    slug: "cart",
-                    version: "1.0.0",
-                    codeRepository: {
-                        enabled: true,
-                        codeRepositoryId: CODE_REPOSITORY,
-                        repositoryId: "",
-                        gitlab: undefined,
-                        createData: { name: "cart", private: true, template: "react-vite" }
-                    }
-                },
-                PROJECT
-            )
-        })
-
-        it("given a connection of another project, when scaffolded, then it is refused before anything is created", async () => {
-            findCodeRepository.mockRejectedValue(new EntityNotFoundError(CODE_REPOSITORY))
-
-            await expect(run("microfrontend_scaffold", input)).rejects.toBeInstanceOf(EntityNotFoundError)
-            expect(createMicrofrontend).not.toHaveBeenCalled()
-        })
-
-        it("given an unknown template, when scaffolded, then it is refused before any repository is created", async () => {
-            findCodeRepository.mockResolvedValue({ _id: CODE_REPOSITORY })
-            getTemplate.mockResolvedValue(null)
-
-            await expect(run("microfrontend_scaffold", input)).rejects.toMatchObject({ code: "TEMPLATE_NOT_FOUND" })
-            expect(createMicrofrontend).not.toHaveBeenCalled()
         })
     })
 })

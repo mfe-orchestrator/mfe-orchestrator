@@ -11,6 +11,8 @@ const projectId = new Types.ObjectId()
 const created = async (microfrontend: Partial<MicrofrontendDTO>) => {
     const service = new MicrofrontendService()
     vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
+    // The slug is free: checked before any repository is created
+    vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
     const create = vi.spyOn(Microfrontend, "create").mockImplementation((async (doc: unknown) => doc) as never)
     await service.create({ name: "cart", slug: "cart", version: "1.0.0", ...microfrontend } as MicrofrontendDTO, projectId.toString())
     return create.mock.calls[0][0] as unknown as { host: Record<string, unknown> }

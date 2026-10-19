@@ -101,9 +101,14 @@ at most.
 - `services_list`, `service_get` (`mfe:read`) and `service_create`, `service_update`, `service_delete`
   (`mfe:write`, the delete destructive) manage the backend services: name, description, domain,
   context, port, probe and API documentation paths, image repository, the environment variables the
-  image reads (names only, never values) and a link to a repository that already exists. As for
-  microfrontends, creating the repository from a template stays in the console, and the slug is fixed
-  after creation. The version comes from the CI, never from a tool.
+  image reads (names only, never values) and a link to a repository that already exists. The slug is
+  fixed after creation. The version comes from the CI, never from a tool.
+- `microfrontend_scaffold` and `service_scaffold` (`mfe:write`) create the microfrontend or the service
+  together with a new repository at the provider, from a marketplace template (`templates_list`) and
+  through a repository connection of the project (`code_repositories_list`), with its CI pipeline and,
+  on GitHub, the deploy secret. Neither the connection's credentials nor that secret are ever part of
+  the input or of the result, and the console assistant asks the user before running them. Creating a
+  domain creates no repository: scaffold its members with these tools and its `domainId`.
 - `microfrontend_create`, `microfrontend_update`, `service_create` and `service_update` take an optional
   `domainId`; `null` takes the item out of its domain. A domain of another project is refused before
   anything is written.
@@ -139,7 +144,7 @@ projects: there is no user to own them.
 - Every creation is logged with the `mcp_grant_project_created` audit tag (grant, client,
   organization, project).
 
-Left out on purpose: API keys, scaffolding a repository from a template, creating or editing
+Left out on purpose: API keys, creating or editing
 storages and repository connections (their input is a secret), deleting projects, organizations,
 members, invitations, the user profile, bundle upload and the canvas layout.
 

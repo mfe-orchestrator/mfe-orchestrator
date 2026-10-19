@@ -476,6 +476,7 @@ describe("TemplateScaffoldService, single-spa and micro-lc templates through Mic
                 vi.spyOn(GitlabClient.prototype, "createRepository").mockResolvedValue({
                     id: 2,
                     name: "cart",
+                    path_with_namespace: "acme/cart",
                     http_url_to_repo: "https://gitlab.com/acme/cart.git",
                     ssh_url_to_repo: "git@gitlab.com:acme/cart.git"
                 } as never)
@@ -521,6 +522,8 @@ describe("TemplateScaffoldService, single-spa and micro-lc templates through Mic
         vi.spyOn(MarketService.prototype, "getSingle").mockResolvedValue(marketEntry as IMarket)
         vi.spyOn(CodeRepository, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId, provider: testCase.provider, accessToken: "token", ...testCase.connection } as never)
         testCase.stub()
+        // The slug is free: checked before any repository is created
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
         const write = vi.spyOn(Microfrontend, "create").mockImplementation((async (doc: unknown) => doc) as never)
         const service = new MicrofrontendService()
         vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()

@@ -59,8 +59,8 @@ export const projectTools = [
     }),
     defineTool({
         name: "templates_list",
-        title: "List microfrontend templates",
-        description: "The marketplace templates a microfrontend repository can be scaffolded from (scaffolding itself is done from the console).",
+        title: "List templates",
+        description: 'The marketplace templates a repository can be scaffolded from: those of type "service" with service_scaffold, the others with microfrontend_scaffold.',
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: NO_INPUT,

@@ -17,6 +17,8 @@ describe("MicrofrontendService.create domain", () => {
     let write: ReturnType<typeof vi.fn>
 
     beforeEach(() => {
+        // The slug is free: checked before any repository is created
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
         write = vi.spyOn(Microfrontend, "create").mockImplementation((async (doc: unknown) => doc) as never) as unknown as ReturnType<typeof vi.fn>
     })
 

@@ -99,18 +99,32 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
                 throw new Error("Gitlab url is not set")
             }
             const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
-            const path = target.gitlab?.groupPath || codeRepository.gitlabData?.groupPath || ""
+            // In the connection's own group when none is picked: its deploy variable lives there
             const createdRepository = await gitlabClient.createRepository({
                 name: createData.name,
-                namespace_id: target.gitlab?.groupId,
+                namespace_id: target.gitlab?.groupId ?? codeRepository.gitlabData?.groupId,
                 visibility: createData.private ? "private" : "public"
             })
+            // The template goes where GitLab put the repository, never to a path rebuilt from the
+            // input: a group path that does not match the group id would force-push onto another repository
+            const fullPath = createdRepository.path_with_namespace
+            const separator = fullPath.lastIndexOf("/")
             target.name = createdRepository.name
             target.repositoryId = createdRepository.id + ""
             target.cloneUrlHttps = createdRepository.http_url_to_repo
             target.cloneUrlSsh = createdRepository.ssh_url_to_repo
             if (template) {
-                await this.injectTemplateGitlab(slug, codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template, options)
+                await this.injectTemplateGitlab(
+                    slug,
+                    codeRepository.accessToken,
+                    codeRepository.gitlabData?.url,
+                    fullPath.slice(separator + 1),
+                    fullPath.slice(0, separator),
+                    codeRepository,
+                    "gitlab",
+                    template,
+                    options
+                )
             }
         } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
             const githubClient = new GithubClient()
@@ -274,7 +288,11 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         } catch (e) {
             console.error("‼️ Error pushing to remote: ", e)
             const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
+            // A remote URL can carry the access token: never written to the log
+            console.log(
+                "🔍 Known remotes:",
+                remotes.map(remote => ({ ...remote, url: remote.url.replace(/\/\/[^/@]*@/, "//***@") }))
+            )
 
             const branches = await git.listBranches({ fs, dir: tempDir })
             console.log("🔍 Local branches:", branches)
@@ -374,7 +392,11 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         } catch (e) {
             console.error("‼️ Error pushing to remote: ", e)
             const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
+            // A remote URL can carry the access token: never written to the log
+            console.log(
+                "🔍 Known remotes:",
+                remotes.map(remote => ({ ...remote, url: remote.url.replace(/\/\/[^/@]*@/, "//***@") }))
+            )
 
             const branches = await git.listBranches({ fs, dir: tempDir })
             console.log("🔍 Local branches:", branches)
@@ -499,7 +521,11 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         } catch (e) {
             console.error("‼️ Error pushing to remote: ", e)
             const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
+            // A remote URL can carry the access token: never written to the log
+            console.log(
+                "🔍 Known remotes:",
+                remotes.map(remote => ({ ...remote, url: remote.url.replace(/\/\/[^/@]*@/, "//***@") }))
+            )
 
             const branches = await git.listBranches({ fs, dir: tempDir })
             console.log("🔍 Local branches:", branches)

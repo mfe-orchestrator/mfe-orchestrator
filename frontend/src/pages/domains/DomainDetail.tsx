@@ -4,7 +4,6 @@ import { ArrowLeft, Columns2, LayoutDashboard, LayoutGrid, Pencil, Server, Spark
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
@@ -116,8 +115,6 @@ const DomainDetail = () => {
     const domain = domainQuery.data
     const microfrontends = (microfrontendsQuery.data ?? []).filter(microfrontend => microfrontend.domainId === id)
     const services = (servicesQuery.data ?? []).filter(service => service.domainId === id)
-    // The agent works on code: the domain needs at least one member with a linked repository.
-    const aiAvailable = useAssistantEnabled() && [...microfrontends, ...services].some(member => member.codeRepository?.enabled)
     const domainParam = `domainId=${encodeURIComponent(id ?? "")}`
     const onAddMicrofrontend = (parentId?: string) => navigate(`/microfrontend/new?${domainParam}${parentId ? `&parentId=${encodeURIComponent(parentId)}` : ""}`)
     const onAddService = () => navigate(`/service/new?${domainParam}`)
@@ -188,12 +185,11 @@ const DomainDetail = () => {
                                     <Pencil />
                                     {t("common.edit")}
                                 </Button>
-                                {aiAvailable && (
-                                    <Button onClick={() => navigate(`/domain/${id}/ai`)} dataTestId="domain-edit-with-ai">
-                                        <Sparkles />
-                                        {t("domains.ai.open")}
-                                    </Button>
-                                )}
+                                {/* Always shown: the workspace says why it cannot run (no AI provider, no linked repository). */}
+                                <Button onClick={() => navigate(`/domain/${id}/ai`)} dataTestId="domain-edit-with-ai">
+                                    <Sparkles />
+                                    {t("domains.ai.open")}
+                                </Button>
                             </div>
                         }
                     >

@@ -39,6 +39,8 @@ describe("MicrofrontendService.create from a template", () => {
         const service = new MicrofrontendService()
         vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
         vi.spyOn(CodeRepository, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId } as never)
+        // The slug is free: checked before any repository is created
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
         const write = vi.spyOn(Microfrontend, "create").mockImplementation((async (doc: unknown) => doc) as never)
         getSingle.mockResolvedValue(template)
         await service.create(
@@ -102,5 +104,28 @@ describe("MicrofrontendService.create from a template", () => {
         const write = await create({ slug: "single-spa-host-react", type: "host", compiler: "single-spa", framework: "React" })
 
         expect(written(write).host).toEqual({ type: "MFE_ORCHESTRATOR_HUB" })
+    })
+})
+
+describe("MicrofrontendService.create with a taken slug", () => {
+    it("given a slug already taken in the project, when a microfrontend is created from a template, then it is refused before any repository is created", async () => {
+        const service = new MicrofrontendService()
+        vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
+        const write = vi.spyOn(Microfrontend, "create")
+
+        const creation = service.create(
+            {
+                name: "Cart",
+                slug: "cart",
+                version: "1.0.0",
+                codeRepository: { enabled: true, codeRepositoryId: new Types.ObjectId().toString(), repositoryId: "", createData: { name: "cart-fe", template: "react-vite" } }
+            } as unknown as MicrofrontendDTO,
+            projectId
+        )
+
+        await expect(creation).rejects.toMatchObject({ code: "MICROFRONTEND_SLUG_TAKEN", statusCode: 409 })
+        expect(createRepository).not.toHaveBeenCalled()
+        expect(write).not.toHaveBeenCalled()
     })
 })

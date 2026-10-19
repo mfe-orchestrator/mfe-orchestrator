@@ -23,23 +23,25 @@ import { projectAdminTools } from "./tools/projectAdminTools"
 import { projectContentTools } from "./tools/projectContentTools"
 import { projectTools } from "./tools/projectTools"
 import { repositoryTools } from "./tools/repositoryTools"
+import { scaffoldTools } from "./tools/scaffoldTools"
 import { serviceTools } from "./tools/serviceTools"
 
 /**
  * Every tool the MCP server can expose, and the ones only the console assistant offers.
  *
  * MCP clients get parity with the console, minus what v1 leaves out on purpose: API keys (creating
- * or showing one hands a long-lived credential to the client), scaffolding a repository from a
- * template (it pushes an API key into the new repository), creating or editing storages and
+ * or showing one hands a long-lived credential to the client), creating or editing storages and
  * repository connections (their input is a secret), and everything else above the project
  * (deleting projects, managing organizations, members, invitations, the user profile), bundle
  * upload, the canvas layout, bulk deletes and AI code changes (each one runs a paid agent).
  * Creating a project is the exception: `project_create` adds the new project to the grant.
+ * Scaffolding a repository from a template is offered too: the deploy API key it pushes into the
+ * new repository never reaches the client, only the connection's stored credentials are used.
  *
  * Tools marked `consoleOnly` are never registered on the MCP server: only the console assistant,
  * acting for the signed-in user inside the console, offers them. They cover most of the list above
  * (project deletion, members and invitations, organizations, API keys, MCP clients, bulk actions,
- * the canvas layout, scaffolding and AI code changes). What stays in the console pages for the
+ * the canvas layout and AI code changes). What stays in the console pages for the
  * assistant too: storages, repository connections, the user profile and bundle upload (their input
  * is a secret or a file).
  */
@@ -53,6 +55,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     ...domainDeploymentTools,
     ...environmentTools,
     ...repositoryTools,
+    ...scaffoldTools,
     ...configurationTools,
     ...projectAdminTools,
     ...organizationAdminTools,

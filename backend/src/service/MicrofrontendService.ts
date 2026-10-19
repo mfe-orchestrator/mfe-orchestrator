@@ -48,9 +48,12 @@ export class MicrofrontendService extends BaseAuthorizedService {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
-        // Before the repository is created: a refused domain would leave an orphan repository behind
+        // Both before the repository is created: a refused domain or a taken slug would leave an orphan repository behind
         if (microfrontend.domainId !== undefined) {
             microfrontend.domainId = await resolveDomainId(microfrontend.domainId, projectIdObj)
+        }
+        if (await Microfrontend.exists({ slug: microfrontend.slug, projectId: projectIdObj })) {
+            throw createBusinessException({ code: "MICROFRONTEND_SLUG_TAKEN", message: `A microfrontend with slug "${microfrontend.slug}" already exists in this project`, statusCode: 409 })
         }
 
         // The file the template's build serves the microfrontend by: index.js for a single-spa

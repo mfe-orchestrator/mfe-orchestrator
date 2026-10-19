@@ -2149,7 +2149,7 @@
             "context_title": "Repository su cui lavora l'agente",
             "kind_microfrontend": "microfrontend",
             "kind_service": "servizio",
-            "no_repositories": "Nessun microfrontend o servizio di questo dominio ha un repository di codice collegato.",
+            "no_repositories": "Nessun microfrontend o servizio di questo dominio ha un repository di codice collegato: collegalo dalla pagina del microfrontend o del servizio.",
             "unlinked": "Esclusi, senza repository collegato: {{names}}",
             "too_many_title": "Troppi repository",
             "too_many_description": "Il dominio ha {{count}} repository, un agente ne gestisce al massimo {{max}}: avvia il job dall'assistente e scegli quelli da modificare.",

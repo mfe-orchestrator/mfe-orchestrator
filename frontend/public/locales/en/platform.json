@@ -2130,7 +2130,7 @@
             "context_title": "Repositories the agent works on",
             "kind_microfrontend": "microfrontend",
             "kind_service": "service",
-            "no_repositories": "No microfrontend or service of this domain has a linked code repository.",
+            "no_repositories": "No microfrontend or service of this domain has a linked code repository: link one from the microfrontend or service page.",
             "unlinked": "Left out, without a linked repository: {{names}}",
             "too_many_title": "Too many repositories",
             "too_many_description": "The domain has {{count}} repositories, one agent works on at most {{max}}: start the job from the assistant and pick the ones to change.",
