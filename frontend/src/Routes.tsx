@@ -121,8 +121,9 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/assistant" element={<RouteWithSuspense element={<AssistantPage />} />} />
                 <Route path="/domains" element={<RouteWithSuspense element={<Domains />} />} />
                 <Route path="/domains/deployments" element={<RouteWithSuspense element={<DomainDeploymentsMatrix />} />} />
-                <Route path="/domain/:id" element={<RouteWithSuspense element={<DomainDetail />} />} />
+                <Route path="/domain/:id" element={<RouteWithSuspense element={<DomainAiWorkspace />} />} />
                 <Route path="/domain/:id/ai" element={<RouteWithSuspense element={<DomainAiWorkspace />} />} />
+                <Route path="/domain/:id/structure" element={<RouteWithSuspense element={<DomainDetail />} />} />
                 <Route path="/microfrontends" element={<RouteWithSuspense element={<Microfrontends />} />} />
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<MicrofrontendAiWorkspace />} />} />

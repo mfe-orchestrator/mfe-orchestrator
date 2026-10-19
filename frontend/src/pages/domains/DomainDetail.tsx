@@ -186,7 +186,7 @@ const DomainDetail = () => {
                                     {t("common.edit")}
                                 </Button>
                                 {/* Always shown: the workspace says why it cannot run (no AI provider, no linked repository). */}
-                                <Button onClick={() => navigate(`/domain/${id}/ai`)} dataTestId="domain-edit-with-ai">
+                                <Button onClick={() => navigate(`/domain/${id}`)} dataTestId="domain-edit-with-ai">
                                     <Sparkles />
                                     {t("domains.ai.open")}
                                 </Button>

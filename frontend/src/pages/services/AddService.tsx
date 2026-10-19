@@ -248,7 +248,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
         } else {
             const created = await servicesApi.create(dto, { customErrorMessage: domainErrorMessage })
             notifications.showSuccessNotification({ message: t("services.created_success_message") })
-            navigate(initialDomainId ? `/domain/${initialDomainId}` : created?._id ? `/service/${created._id}` : "/services")
+            navigate(initialDomainId ? `/domain/${initialDomainId}/structure` : created?._id ? `/service/${created._id}` : "/services")
         }
         await queryClient.invalidateQueries({ queryKey: ["services"] })
     }

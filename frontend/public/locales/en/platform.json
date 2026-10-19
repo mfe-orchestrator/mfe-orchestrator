@@ -2116,7 +2116,7 @@
             "open": "Edit with AI",
             "title": "Edit {{name}} with AI",
             "description": "One agent works on the frontend and the backend of this domain together",
-            "back": "Back to the domain",
+            "structure": "Domain structure",
             "unavailable": "AI editing is not available on this installation: no AI provider is configured.",
             "conversations_label": "AI conversations of the domain",
             "new_job": "New change",

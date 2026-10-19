@@ -2135,7 +2135,7 @@
             "open": "Modifica con AI",
             "title": "Modifica {{name}} con AI",
             "description": "Un unico agente lavora insieme sul frontend e sul backend di questo dominio",
-            "back": "Torna al dominio",
+            "structure": "Struttura del dominio",
             "unavailable": "La modifica con AI non è disponibile su questa installazione: nessun provider AI configurato.",
             "conversations_label": "Conversazioni AI del dominio",
             "new_job": "Nuova modifica",

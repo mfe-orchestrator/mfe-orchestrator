@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Spinner, Textarea } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { AlertTriangle, ArrowLeft, LayoutDashboard, Plus, Server, Sparkles } from "lucide-react"
+import { AlertTriangle, ArrowLeft, LayoutDashboard, Plus, Server, Sparkles, Workflow } from "lucide-react"
 import { useEffect, useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -310,9 +310,15 @@ const DomainAiWorkspace: React.FC = () => {
                     title={t("domains.ai.title", { name: domain.name })}
                     description={domain.description || t("domains.ai.description")}
                     left={
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/domain/${id}`)}>
+                        <Button variant="ghost" size="sm" onClick={() => navigate("/domains")}>
                             <ArrowLeft />
-                            {t("domains.ai.back")}
+                            {t("domains.detail.back")}
+                        </Button>
+                    }
+                    right={
+                        <Button variant="secondary" onClick={() => navigate(`/domain/${id}/structure`)} dataTestId="domain-structure">
+                            <Workflow />
+                            {t("domains.ai.structure")}
                         </Button>
                     }
                 >

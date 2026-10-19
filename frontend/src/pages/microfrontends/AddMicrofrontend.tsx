@@ -249,7 +249,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             })
         }
 
-        navigate(!isEdit && initialDomainId ? `/domain/${initialDomainId}` : `/microfrontends`)
+        navigate(!isEdit && initialDomainId ? `/domain/${initialDomainId}/structure` : `/microfrontends`)
     }
 
     const hasRepositories = Boolean(repositories && repositories.length > 0)
