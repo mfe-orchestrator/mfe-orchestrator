@@ -833,7 +833,19 @@
             "composer_title": "What do you want to change in {{name}}?",
             "composer_shortcut": "⌘/Ctrl + Enter to generate the proposal",
             "advanced_options": "Advanced options",
-            "description_service": "Describe the change you want. The agent reads the repository (and its AGENTS.md, if any) together with the AI context of the project and of this service, then proposes the edits. It cannot run commands or tests. Nothing is pushed until you approve: on approval the changes are committed on a new branch and a pull request is opened."
+            "description_service": "Describe the change you want. The agent reads the repository (and its AGENTS.md, if any) together with the AI context of the project and of this service, then proposes the edits. It cannot run commands or tests. Nothing is pushed until you approve: on approval the changes are committed on a new branch and a pull request is opened.",
+            "conversation_label": "Conversation with the agent",
+            "turns_count_one": "{{count}} message",
+            "turns_count_other": "{{count}} messages",
+            "superseded": "Refined by the next message: its changes are part of the newer proposal.",
+            "follow_up_label": "Ask the agent to refine the proposal",
+            "follow_up_placeholder": "Ask for a change to this proposal… (Enter to send, Shift+Enter for a new line)",
+            "follow_up_running": "Wait for the agent to finish to ask for more…",
+            "follow_up_failed": "The request failed: try again, or start a new change.",
+            "follow_up_closed": "This conversation is closed: start a new change to go on.",
+            "follow_up_send": "Send",
+            "usage_conversation_one": "Tokens used by the conversation ({{count}} message)",
+            "usage_conversation_other": "Tokens used by the conversation ({{count}} messages)"
         },
         "workspace": {
             "back": "All microfrontends",

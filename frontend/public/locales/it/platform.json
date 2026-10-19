@@ -930,7 +930,19 @@
             "composer_title": "Cosa vuoi cambiare in {{name}}?",
             "composer_shortcut": "⌘/Ctrl + Invio per generare la proposta",
             "advanced_options": "Opzioni avanzate",
-            "description_service": "Descrivi la modifica che vuoi. L'agente legge il repository (e il suo AGENTS.md, se c'è) insieme al contesto AI del progetto e di questo servizio, poi propone le modifiche. Non può eseguire comandi né test. Non viene pubblicato nulla finché non approvi: all'approvazione le modifiche vengono committate su un nuovo branch e viene aperta una pull request."
+            "description_service": "Descrivi la modifica che vuoi. L'agente legge il repository (e il suo AGENTS.md, se c'è) insieme al contesto AI del progetto e di questo servizio, poi propone le modifiche. Non può eseguire comandi né test. Non viene pubblicato nulla finché non approvi: all'approvazione le modifiche vengono committate su un nuovo branch e viene aperta una pull request.",
+            "conversation_label": "Conversazione con l'agente",
+            "turns_count_one": "{{count}} messaggio",
+            "turns_count_other": "{{count}} messaggi",
+            "superseded": "Rifinita dal messaggio successivo: le sue modifiche fanno parte della proposta più recente.",
+            "follow_up_label": "Chiedi all'agente di rifinire la proposta",
+            "follow_up_placeholder": "Chiedi una modifica a questa proposta… (Invio per inviare, Maiusc+Invio per andare a capo)",
+            "follow_up_running": "Attendi che l'agente finisca per chiedere altro…",
+            "follow_up_failed": "La richiesta non è andata a buon fine: riprova o avvia una nuova modifica.",
+            "follow_up_closed": "Questa conversazione è chiusa: avvia una nuova modifica per proseguire.",
+            "follow_up_send": "Invia",
+            "usage_conversation_one": "Token usati dalla conversazione ({{count}} messaggio)",
+            "usage_conversation_other": "Token usati dalla conversazione ({{count}} messaggi)"
         },
         "workspace": {
             "back": "Tutti i microfrontend",

@@ -1,6 +1,7 @@
 import { fastify } from "../.."
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
+import AiChangeJob from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus, IAiChangeFile, IAiChangeRequest } from "../../models/AiChangeRequestModel"
 import { IMicrofrontend } from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
@@ -59,6 +60,35 @@ const firstLine = (text: string, max: number) => {
 
 const timestamp = (date = new Date()) => date.toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15)
 
+/** How far back the messages of a conversation are looked up for its pull request. */
+const MAX_CONVERSATION_LENGTH = 50
+
+/**
+ * What was asked in the conversation that led to a proposal, oldest first: a follow-up ("also translate
+ * it") alone would make a poor pull request title.
+ */
+const conversationPrompts = async (request: IAiChangeRequest): Promise<string[]> => {
+    const prompts = [request.prompt]
+    let parentId = request.parentId
+    while (parentId && prompts.length < MAX_CONVERSATION_LENGTH) {
+        const parent = await AiChangeRequest.findById(parentId, { prompt: 1, parentId: 1 })
+        if (!parent) break
+        prompts.unshift(parent.prompt)
+        parentId = parent.parentId
+    }
+    return prompts
+}
+
+/** Applied work is kept, and so is the conversation that led to it: its jobs and its requests on this repository no longer expire. */
+const keepConversation = async (request: IAiChangeRequest) => {
+    const job = request.jobId ? await AiChangeJob.findById(request.jobId, { rootJobId: 1 }) : null
+    if (!job) return
+    const jobIds = (await AiChangeJob.find({ rootJobId: job.rootJobId }, { _id: 1 })).map(candidate => candidate._id)
+    await AiChangeJob.updateMany({ _id: { $in: jobIds } }, { $unset: { expiresAt: 1 } })
+    const owner = request.serviceId ? { serviceId: request.serviceId } : { microfrontendId: request.microfrontendId }
+    await AiChangeRequest.updateMany({ jobId: { $in: jobIds }, ...owner }, { $unset: { expiresAt: 1 } })
+}
+
 /** What the AI change services share: who may change a project, and how a claimed proposal becomes a pull request. */
 export abstract class AiChangeBaseService extends BaseAuthorizedService {
     constructor(
@@ -111,6 +141,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
             if (!component) throw new EntityNotFoundError(componentIdOf(request))
             const workspaceService = new RepositoryWorkspaceService(this.user)
             const workspace = await workspaceService.open(component)
+            const prompts = await conversationPrompts(request)
 
             const result = await withRepositoryLock(
                 workspace.workingCopy.dir,
@@ -130,7 +161,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
                         })
                     }
 
-                    const title = firstLine(request.prompt, 72)
+                    const title = firstLine(prompts[0], 72)
                     // Named once and saved before pushing: an apply retried after a crash pushes to the
                     // same branch (forced, it is ours) instead of leaving a second one behind.
                     const branch = request.branch ?? `ai/${component.slug}-${timestamp()}`
@@ -152,7 +183,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
                             description: [
                                 request.summary,
                                 related.length ? `Part of a change across ${related.length + 1} repositories:\n${related.map(line => `- ${line}`).join("\n")}` : undefined,
-                                `---\nRequested in MFE Orchestrator by ${user.email}:\n\n> ${request.prompt.split("\n").join("\n> ")}`
+                                `---\nRequested in MFE Orchestrator by ${user.email}:\n\n${prompts.map(prompt => `> ${prompt.split("\n").join("\n> ")}`).join("\n\n")}`
                             ]
                                 .filter(Boolean)
                                 .join("\n\n")
@@ -172,6 +203,8 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
                 { status: AiChangeStatus.APPLIED, ...result, $unset: { expiresAt: 1 }, $push: { events: { at: new Date(), kind: "info", message: "applied" } } },
                 { new: true }
             )
+            // The push is done: failing to keep the history must not turn the request back into a proposal.
+            await keepConversation(request).catch(error => fastify.log.warn({ error: loggable(error), aiChangeId: String(request._id) }, "Could not keep the AI conversation"))
             return applied!
         } catch (error) {
             await AiChangeRequest.updateOne({ _id: request._id }, { status: AiChangeStatus.PROPOSED, error: toErrorMessage(error) })

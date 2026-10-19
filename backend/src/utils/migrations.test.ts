@@ -1,8 +1,10 @@
 import { Types } from "mongoose"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import AiChangeJob from "../models/AiChangeJobModel"
+import AiChangeRequest from "../models/AiChangeRequestModel"
 import Service from "../models/ServiceModel"
 import { ConfigMap, Secret } from "../models/VariableMapModel"
-import { moveServiceVariablesToMaps, removeAssistantConversationExpiry } from "./migrations"
+import { backfillAiChangeConversations, moveServiceVariablesToMaps, removeAssistantConversationExpiry } from "./migrations"
 import { encryptSecret, resetSecretEncryptionKeyCache } from "./secretCrypto"
 
 const dropIndex = vi.fn()
@@ -128,5 +130,59 @@ describe("moveServiceVariablesToMaps", () => {
         expect(migrationLogger.error).toHaveBeenCalledTimes(1)
         expect(updateOne).toHaveBeenCalledTimes(1)
         expect(updateOne.mock.calls[0][0]).toEqual({ _id: otherId })
+    })
+})
+
+describe("backfillAiChangeConversations", () => {
+    const requestFindOne = vi.fn()
+    const jobFindOne = vi.fn()
+    const requestUpdateOne = vi.fn()
+
+    const backfill = async (requests: Record<string, unknown>[]) => {
+        vi.spyOn(AiChangeRequest.collection, "find").mockReturnValue(requests as never)
+        vi.spyOn(AiChangeRequest.collection, "findOne").mockImplementation(requestFindOne as never)
+        vi.spyOn(AiChangeRequest.collection, "updateOne").mockImplementation(requestUpdateOne as never)
+        vi.spyOn(AiChangeJob.collection, "findOne").mockImplementation(jobFindOne as never)
+        await backfillAiChangeConversations(logger)
+        return Object.fromEntries(requestUpdateOne.mock.calls.map(([filter, update]) => [String(filter._id), String(update.$set.conversationId)]))
+    }
+
+    beforeEach(() => {
+        vi.restoreAllMocks()
+        requestFindOne.mockReset().mockResolvedValue(null)
+        jobFindOne.mockReset().mockResolvedValue(null)
+        requestUpdateOne.mockReset().mockResolvedValue({})
+    })
+
+    it("Given a request made before jobs, when it runs, then the request is a conversation of its own", async () => {
+        const id = new Types.ObjectId()
+
+        expect(await backfill([{ _id: id }])).toEqual({ [String(id)]: String(id) })
+    })
+
+    it("Given a request whose job is still there, when it runs, then its conversation is the first job of the chain", async () => {
+        const id = new Types.ObjectId()
+        const rootJobId = new Types.ObjectId()
+        jobFindOne.mockResolvedValue({ rootJobId })
+
+        expect(await backfill([{ _id: id, jobId: new Types.ObjectId() }])).toEqual({ [String(id)]: String(rootJobId) })
+    })
+
+    it("Given a follow-up whose job expired, when it runs, then the oldest request of the chain names the conversation", async () => {
+        const id = new Types.ObjectId()
+        const parentId = new Types.ObjectId()
+        const rootJobId = new Types.ObjectId()
+        requestFindOne.mockImplementation(async ({ _id }: { _id: Types.ObjectId }) => (String(_id) === String(parentId) ? { _id: parentId, jobId: rootJobId } : null))
+
+        expect(await backfill([{ _id: id, jobId: new Types.ObjectId(), parentId }])).toEqual({ [String(id)]: String(rootJobId) })
+    })
+
+    it("Given a parent already linked, when it runs, then the follow-up joins the parent's conversation", async () => {
+        const id = new Types.ObjectId()
+        const parentId = new Types.ObjectId()
+        const conversationId = new Types.ObjectId()
+        requestFindOne.mockResolvedValue({ _id: parentId, jobId: new Types.ObjectId(), conversationId })
+
+        expect(await backfill([{ _id: id, jobId: new Types.ObjectId(), parentId }])).toEqual({ [String(id)]: String(conversationId) })
     })
 })

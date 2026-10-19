@@ -5,6 +5,15 @@ AI agent works on a local clone of the microfrontend's repository and proposes t
 Nothing reaches the repository until the user approves it: then the console commits the approved
 files on a new branch, pushes it and opens a pull request (a merge request on GitLab).
 
+Each request is a conversation. Once the proposal is ready the user can keep chatting with the agent to
+refine it ("also translate the page"). Each message is a follow-up: the agent starts from the files of
+the previous proposal, is told what was asked before, and its new proposal replaces the previous one.
+Only the latest proposal can be applied. A failed follow-up leaves the previous proposal open to apply
+or to refine again. Once a proposal is applied or discarded, the conversation is closed and a new change
+starts from the base branch. The pull request is named after the first message and its description quotes
+every message of the conversation. Once a proposal is applied, the whole conversation is kept, not removed
+with the proposals.
+
 It is available when an [AI provider](AI-PROVIDERS.md) is configured and the microfrontend has a
 code repository connected (GitHub, GitLab or Azure DevOps).
 

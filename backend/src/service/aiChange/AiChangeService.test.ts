@@ -24,6 +24,7 @@ vi.mock("../workspace/RepositoryWorkspaceService", () => ({
     })
 }))
 
+import AiChangeJob from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
@@ -133,14 +134,17 @@ describe("AiChangeService", () => {
         )
     })
 
-    it("Given a service, when its changes are listed, then they are looked up by service", async () => {
+    it("Given a service, when its changes are listed, then its latest conversations come back whole", async () => {
         vi.spyOn(Service, "findById").mockResolvedValue({ _id: serviceId, projectId, slug: "orders-api", name: "Orders API", env: [] } as never)
-        const limit = vi.fn(async () => [])
-        const find = vi.spyOn(AiChangeRequest, "find").mockReturnValue({ sort: () => ({ limit }) } as never)
+        const conversationIds = [new Types.ObjectId(), new Types.ObjectId()]
+        const aggregate = vi.spyOn(AiChangeRequest, "aggregate").mockResolvedValue(conversationIds.map(_id => ({ _id })) as never)
+        const find = vi.spyOn(AiChangeRequest, "find").mockReturnValue({ sort: async () => [] } as never)
 
         await service().list({ kind: "service", id: serviceId.toString() })
 
-        expect(find).toHaveBeenCalledWith({ serviceId }, expect.anything())
+        expect(aggregate.mock.calls[0][0]).toEqual(expect.arrayContaining([{ $match: { serviceId } }, { $limit: 20 }]))
+        // Every request of those conversations, not only the newest ones: the queue shows each conversation once.
+        expect(find).toHaveBeenCalledWith({ serviceId, conversationId: { $in: conversationIds } }, expect.anything())
     })
 
     it("Given a proposal on a service, when it is applied, then it is pushed on an ai/ branch named after the service", async () => {
@@ -197,6 +201,29 @@ describe("AiChangeService", () => {
         expect(pushed.author).toEqual({ name: "Ada", email: "ada@example.com" })
         expect(workspaceService.openPullRequest).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ sourceBranch: pushed.branch, targetBranch: "main", title: "Add a 404 page" }))
         expect(applied).toMatchObject({ status: AiChangeStatus.APPLIED, pullRequestUrl: "https://github.com/acme/catalog/pull/7", commit: "new-commit" })
+    })
+
+    it("Given a proposal refined by a follow-up, when it is applied, then the pull request is named after the conversation and the conversation is kept", async () => {
+        const parentId = new Types.ObjectId()
+        const rootJobId = new Types.ObjectId()
+        const jobIds = [rootJobId, new Types.ObjectId()]
+        vi.spyOn(AiChangeRequest, "findById")
+            .mockResolvedValueOnce(proposal({ prompt: "Also translate it", parentId, jobId: jobIds[1] }) as never)
+            .mockResolvedValueOnce({ _id: parentId, prompt: "Add a 404 page" } as never)
+        vi.spyOn(AiChangeRequest, "findOneAndUpdate").mockResolvedValue({ status: AiChangeStatus.APPLYING } as never)
+        vi.spyOn(AiChangeJob, "findById").mockResolvedValue({ _id: jobIds[1], rootJobId } as never)
+        vi.spyOn(AiChangeJob, "find").mockResolvedValue(jobIds.map(_id => ({ _id })) as never)
+        const keptJobs = vi.spyOn(AiChangeJob, "updateMany").mockResolvedValue({} as never)
+        const keptRequests = vi.spyOn(AiChangeRequest, "updateMany").mockResolvedValue({} as never)
+
+        await service().apply(new Types.ObjectId().toString())
+
+        expect(workspaceService.openPullRequest).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ title: "Add a 404 page", description: expect.stringContaining("> Add a 404 page\n\n> Also translate it") })
+        )
+        expect(keptJobs).toHaveBeenCalledWith({ _id: { $in: jobIds } }, { $unset: { expiresAt: 1 } })
+        expect(keptRequests).toHaveBeenCalledWith({ jobId: { $in: jobIds }, microfrontendId }, { $unset: { expiresAt: 1 } })
     })
 
     it("Given a follow-up refining the proposal, when it is applied, then it is refused without claiming or pushing", async () => {

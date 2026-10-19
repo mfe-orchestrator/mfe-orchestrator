@@ -7,6 +7,8 @@ import { findComponent, ownerFields, RepositoryComponent, RepositoryComponentRef
 import AiChangeJobService from "./AiChangeJobService"
 import { AiChangeBaseService, ensureNotBeingRefined, staleOutcome } from "./aiChangeShared"
 
+const LISTED_CONVERSATIONS = 20
+
 export interface AiChangeCreateInput {
     prompt: string
     baseBranch?: string
@@ -64,10 +66,23 @@ export class AiChangeService extends AiChangeBaseService {
         return request
     }
 
-    /** The latest requests of a microfrontend or a service, without file contents. */
+    /**
+     * The latest conversations on a microfrontend or a service, each with every request of it on this repository,
+     * newest first, without file contents. Whole conversations: a queue cut in the middle of one would show it twice.
+     */
     async list(ref: RepositoryComponentRef): Promise<IAiChangeRequest[]> {
         const component = await this.getComponent(ref)
-        const requests = await AiChangeRequest.find(ownerFields(component), { "files.originalContent": 0, "files.proposedContent": 0, events: 0 }).sort({ createdAt: -1 }).limit(20)
+        const owner = ownerFields(component)
+        const conversations = await AiChangeRequest.aggregate<{ _id: IAiChangeRequest["conversationId"] }>([
+            { $match: owner },
+            { $group: { _id: "$conversationId", latestAt: { $max: "$createdAt" } } },
+            { $sort: { latestAt: -1 } },
+            { $limit: LISTED_CONVERSATIONS }
+        ])
+        const requests = await AiChangeRequest.find(
+            { ...owner, conversationId: { $in: conversations.map(conversation => conversation._id) } },
+            { "files.originalContent": 0, "files.proposedContent": 0, events: 0 }
+        ).sort({ createdAt: -1 })
         for (const request of requests) {
             const outcome = staleOutcome(request)
             if (outcome) request.status = outcome

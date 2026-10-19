@@ -389,6 +389,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                     jobId,
                     jobRepositoryCount: input.repositories.length,
                     parentId: repository.parentId,
+                    conversationId: input.parentJob?.rootJobId ?? jobId,
                     prompt: input.prompt,
                     baseBranch: repository.baseBranch,
                     status: AiChangeStatus.PENDING,
@@ -780,28 +781,24 @@ export class AiChangeJobService extends AiChangeBaseService {
             const nameOf = (request: IAiChangeRequest) => components.find(component => String(component._id) === componentIdOf(request))?.name ?? componentIdOf(request)
             const siblings = requests.filter(request => request.status === AiChangeStatus.APPLIED || claimed.some(entry => entry.request === request))
             // Detached on purpose: one pull request per repository takes minutes, the console follows it by polling.
-            this.applyAll(job, claimed, siblings, nameOf).catch(error => fastify.log.error({ error: loggable(error), aiJobId: jobId }, "AI job apply crashed"))
+            this.applyAll(claimed, siblings, nameOf).catch(error => fastify.log.error({ error: loggable(error), aiJobId: jobId }, "AI job apply crashed"))
         }
         return this.view((await AiChangeJob.findById(job._id)) ?? job, true)
     }
 
     /** Each description names every other repository of the job, with its pull request once opened. */
-    private async applyAll(job: IAiChangeJob, claimed: { request: IAiChangeRequest; files: IAiChangeFile[] }[], siblings: IAiChangeRequest[], nameOf: (request: IAiChangeRequest) => string) {
+    private async applyAll(claimed: { request: IAiChangeRequest; files: IAiChangeFile[] }[], siblings: IAiChangeRequest[], nameOf: (request: IAiChangeRequest) => string) {
         const pullRequests = new Map(siblings.filter(request => request.pullRequestUrl).map(request => [String(request._id), request.pullRequestUrl!]))
-        let applied = 0
         for (const { request, files } of claimed) {
             const related = siblings.filter(other => other !== request).map(other => [nameOf(other), pullRequests.get(String(other._id))].filter(Boolean).join(": "))
             try {
                 const result = await this.applyClaimed(request, files, related)
-                applied++
                 if (result.pullRequestUrl) pullRequests.set(String(request._id), result.pullRequestUrl)
             } catch (error) {
                 // Kept on the request, back to a proposal: the others are applied anyway.
                 fastify.log.warn({ error: loggable(error), aiChangeId: String(request._id) }, "AI job could not apply a proposal")
             }
         }
-        // Applied work is kept: the job no longer expires with its proposals.
-        if (applied) await AiChangeJob.updateOne({ _id: job._id }, { $unset: { expiresAt: 1 } })
     }
 }
 

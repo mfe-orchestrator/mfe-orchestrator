@@ -51,6 +51,11 @@ export interface IAiChangeRequest extends Document<ObjectId> {
     jobRepositoryCount?: number
     /** The proposal this request refines: the agent started from its files, and this one replaces it once proposed. */
     parentId?: Schema.Types.ObjectId
+    /**
+     * The conversation the request is a message of: the first job of its chain of follow-ups (the jobs'
+     * `rootJobId`), or the request itself for one made before jobs existed. Always set.
+     */
+    conversationId: Schema.Types.ObjectId
     prompt: string
     baseBranch: string
     baseCommit?: string
@@ -104,6 +109,7 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
         jobId: { type: Schema.Types.ObjectId, ref: "AiChangeJob", index: true },
         jobRepositoryCount: { type: Number },
         parentId: { type: Schema.Types.ObjectId, ref: "AiChangeRequest", index: true },
+        conversationId: { type: Schema.Types.ObjectId, required: true, index: true },
         prompt: { type: String, required: true, maxlength: 8_000 },
         baseBranch: { type: String, required: true },
         baseCommit: { type: String },

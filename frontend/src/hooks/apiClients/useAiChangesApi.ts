@@ -53,6 +53,8 @@ export interface AiChangeRequest {
     jobId?: string
     /** The proposal this one starts from, when the job was a follow-up. */
     parentId?: string
+    /** The conversation the request is a message of: the first job of its chain of follow-ups, or the request itself before jobs. */
+    conversationId: string
     /** How many repositories the job works on: above one, its cost is shared with the other requests. */
     jobRepositoryCount?: number
     /** The cost of the whole job, the same on each of its requests; updated while the agent works. */

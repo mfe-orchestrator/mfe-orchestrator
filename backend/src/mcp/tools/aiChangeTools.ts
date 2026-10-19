@@ -26,6 +26,7 @@ const jobService = (principal: AuthorizedPrincipal) => new AiChangeJobService(pr
 const toChangeView = (request: IAiChangeRequest) => ({
     id: request._id.toString(),
     jobId: request.jobId ? String(request.jobId) : undefined,
+    conversationId: String(request.conversationId),
     // A change reached by its id (ai_change_get) may be a backend service's.
     ...(request.serviceId ? { serviceId: String(request.serviceId) } : { microfrontendId: String(request.microfrontendId) }),
     status: request.status,
