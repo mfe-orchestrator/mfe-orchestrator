@@ -16,7 +16,9 @@ import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useMarketApi, { ServiceDefaults } from "@/hooks/apiClients/useMarketApi"
 import useServicesApi, { Service, ServiceDTO } from "@/hooks/apiClients/useServicesApi"
+import { useVariableMapErrorMessage, VariableMap } from "@/hooks/apiClients/useVariableMapsApi"
 import { CodeRepositorySection } from "@/pages/microfrontends/partials/components"
+import { useVariableMapsQuery } from "@/pages/variable-maps/partials/variableMaps"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import DomainSelectField from "../domains/partials/DomainSelectField"
@@ -25,9 +27,9 @@ import ServiceDangerZone from "./partials/ServiceDangerZone"
 import ServiceEnvFields from "./partials/ServiceEnvFields"
 import ServiceHeader from "./partials/ServiceHeader"
 import ServiceUrlsFields from "./partials/ServiceUrlsFields"
-import ServiceVariablesFields from "./partials/ServiceVariablesFields"
+import ServiceVariableMapsFields from "./partials/ServiceVariableMapsFields"
 import { isServiceTemplate } from "./partials/serviceTemplates"
-import { fromFormUrls, fromFormVariables, isServiceUrl, SERVICE_VARIABLE_KEY, toFormUrls, toFormVariables, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
+import { fromFormUrls, isServiceUrl, toFormUrls, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
 
 /** Same rule as the backend (SERVICE_SLUG): the slug names the workspace folder and the CI registration URL */
 const SERVICE_SLUG = /^[a-z0-9][a-z0-9-]{1,49}$/
@@ -51,82 +53,59 @@ interface FormMessages {
     slug: string
     path: string
     url: string
-    variableKey: string
-    variableKeyDuplicated: string
 }
 
-const variablesSchema = (keyMessage: string) =>
-    z.array(
-        z.object({
-            key: z.string().trim().regex(SERVICE_VARIABLE_KEY, keyMessage),
-            values: z.array(z.string()),
-            saved: z.boolean().default(false)
-        })
-    )
-
 const createFormSchema = (messages: FormMessages) =>
-    z
-        .object({
-            slug: z.string().regex(SERVICE_SLUG, messages.slug),
-            name: z.string().min(3).max(100),
-            description: z.string().optional(),
-            domainId: z.string().nullable().optional(),
-            context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
-            template: z.string().optional(),
-            port: z.string().regex(/^\d{1,5}$/),
-            livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
-            readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
-            // Blank: the service publishes no API docs
-            docsPath: z
+    z.object({
+        slug: z.string().regex(SERVICE_SLUG, messages.slug),
+        name: z.string().min(3).max(100),
+        description: z.string().optional(),
+        domainId: z.string().nullable().optional(),
+        context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
+        template: z.string().optional(),
+        port: z.string().regex(/^\d{1,5}$/),
+        livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
+        readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
+        // Blank: the service publishes no API docs
+        docsPath: z
+            .string()
+            .trim()
+            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
+        openApiPath: z
+            .string()
+            .trim()
+            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
+        image: z.object({ repository: z.string().optional() }).optional(),
+        // One per environment, in their order; blank: not exposed there
+        urls: z.array(
+            z
                 .string()
                 .trim()
-                .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
-            openApiPath: z
-                .string()
-                .trim()
-                .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
-            image: z.object({ repository: z.string().optional() }).optional(),
-            // One per environment, in their order; blank: not exposed there
-            urls: z.array(
-                z
-                    .string()
-                    .trim()
-                    .refine(value => value === "" || isServiceUrl(value), messages.url)
-            ),
-            env: z.array(
-                z.object({
-                    name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
-                    required: z.boolean().default(false),
-                    secret: z.boolean().default(false),
-                    description: z.string().optional()
-                })
-            ),
-            configMap: variablesSchema(messages.variableKey),
-            secrets: variablesSchema(messages.variableKey),
-            codeRepository: z
-                .object({
-                    enabled: z.boolean().default(false),
-                    codeRepositoryId: z.string().optional(),
-                    repositoryId: z.string().optional(),
-                    name: z.string().optional(),
-                    cloneUrlHttps: z.string().optional(),
-                    cloneUrlSsh: z.string().optional(),
-                    gitlab: z.object({ groupPath: z.string().optional(), groupId: z.number().optional() }).optional(),
-                    createData: z.object({ name: z.string().min(3).max(100), private: z.boolean().default(false) }).optional()
-                })
-                .optional()
-        })
-        // One key in both lists would give the container the same variable twice, as the backend refuses.
-        // Secrets first, so a clash lands on the config map entry: a saved secret's key cannot be edited.
-        .superRefine((values, context) => {
-            const seen = new Set<string>()
-            for (const list of ["secrets", "configMap"] as const) {
-                values[list].forEach((variable, index) => {
-                    if (seen.has(variable.key)) context.addIssue({ code: "custom", path: [list, index, "key"], message: messages.variableKeyDuplicated })
-                    seen.add(variable.key)
-                })
-            }
-        })
+                .refine(value => value === "" || isServiceUrl(value), messages.url)
+        ),
+        env: z.array(
+            z.object({
+                name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
+                required: z.boolean().default(false),
+                secret: z.boolean().default(false),
+                description: z.string().optional()
+            })
+        ),
+        configMapIds: z.array(z.string()),
+        secretIds: z.array(z.string()),
+        codeRepository: z
+            .object({
+                enabled: z.boolean().default(false),
+                codeRepositoryId: z.string().optional(),
+                repositoryId: z.string().optional(),
+                name: z.string().optional(),
+                cloneUrlHttps: z.string().optional(),
+                cloneUrlSsh: z.string().optional(),
+                gitlab: z.object({ groupPath: z.string().optional(), groupId: z.number().optional() }).optional(),
+                createData: z.object({ name: z.string().min(3).max(100), private: z.boolean().default(false) }).optional()
+            })
+            .optional()
+    })
 
 type FormSchema = ReturnType<typeof createFormSchema>
 type FormInput = z.input<FormSchema>
@@ -135,16 +114,20 @@ type FormValues = z.output<FormSchema>
 interface AddServiceFormProps {
     repositories: ICodeRepository[]
     environments: EnvironmentDTO[]
+    configMaps: VariableMap[]
+    secrets: VariableMap[]
     service?: Service
 }
 
-const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environments, service }) => {
+const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environments, configMaps, secrets, service }) => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const servicesApi = useServicesApi()
     const { errorMessage: domainErrorMessage } = useDomainsApi()
+    const variableMapErrorMessage = useVariableMapErrorMessage()
+    const errorMessage = (error: Error) => variableMapErrorMessage(error) ?? domainErrorMessage(error)
     const { getMarkets } = useMarketApi()
     const navigate = useNavigate()
     const queryClient = useQueryClient()
@@ -162,9 +145,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
             createFormSchema({
                 slug: t("services.slug_invalid"),
                 path: t("services.path_invalid"),
-                url: t("services.urls.invalid"),
-                variableKey: t("services.variables.key_invalid"),
-                variableKeyDuplicated: t("services.variables.key_duplicated")
+                url: t("services.urls.invalid")
             }),
         [t]
     )
@@ -179,8 +160,9 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                   openApiPath: service.openApiPath ?? "",
                   urls: toFormUrls(service.urls, environments),
                   env: service.env ?? [],
-                  configMap: toFormVariables(service.configMap, environments, false),
-                  secrets: toFormVariables(service.secrets, environments, true)
+                  // Only the maps that still exist: one deleted meanwhile has no checkbox to untick, and would make every save fail
+                  configMapIds: (service.configMapIds ?? []).filter(id => configMaps.some(map => map._id === id)),
+                  secretIds: (service.secretIds ?? []).filter(id => secrets.some(map => map._id === id))
               }
             : {
                   slug: "",
@@ -197,8 +179,8 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                   image: { repository: "" },
                   urls: environments.map(() => ""),
                   env: [],
-                  configMap: [],
-                  secrets: [],
+                  configMapIds: [],
+                  secretIds: [],
                   codeRepository: hasRepositories
                       ? {
                             enabled: Boolean(initialTemplate),
@@ -230,9 +212,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
             ...data,
             domainId: data.domainId || null,
             port: Number(data.port),
-            urls: fromFormUrls(data.urls, environments),
-            configMap: fromFormVariables(data.configMap, environments),
-            secrets: fromFormVariables(data.secrets, environments)
+            urls: fromFormUrls(data.urls, environments)
         } as unknown as ServiceDTO
         const template = data.template || undefined
 
@@ -241,12 +221,12 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
         }
 
         if (isEdit) {
-            await servicesApi.update(id!, dto, { customErrorMessage: domainErrorMessage })
+            await servicesApi.update(id!, dto, { customErrorMessage: errorMessage })
             notifications.showSuccessNotification({ message: t("services.updated_success_message") })
             await queryClient.invalidateQueries({ queryKey: ["service", id] })
             navigate(`/service/${id}`)
         } else {
-            const created = await servicesApi.create(dto, { customErrorMessage: domainErrorMessage })
+            const created = await servicesApi.create(dto, { customErrorMessage: errorMessage })
             notifications.showSuccessNotification({ message: t("services.created_success_message") })
             navigate(initialDomainId ? `/domain/${initialDomainId}/structure` : created?._id ? `/service/${created._id}` : "/services")
         }
@@ -341,9 +321,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
 
                 <ServiceEnvFields />
 
-                <ServiceVariablesFields kind="configMap" environments={environments} />
-
-                <ServiceVariablesFields kind="secrets" environments={environments} />
+                <ServiceVariableMapsFields configMaps={configMaps} secrets={secrets} />
 
                 <Card>
                     <CardHeader>
@@ -412,12 +390,20 @@ const AddServicePage: React.FC = () => {
         enabled: isEdit
     })
 
-    // Before the form mounts: its default values hold one config map and secret value per environment
+    // Before the form mounts: its default values hold one base URL per environment
     const environmentsQuery = useProjectEnvironmentsQuery()
+    const configMapsQuery = useVariableMapsQuery("configMap")
+    const secretsQuery = useVariableMapsQuery("secret")
 
     return (
-        <ApiStatusHandler queries={[repositoriesQuery, serviceQuery, environmentsQuery]} interceptEmpty={false}>
-            <AddServiceForm repositories={repositoriesQuery.data ?? []} environments={environmentsQuery.data ?? []} service={serviceQuery.data} />
+        <ApiStatusHandler queries={[repositoriesQuery, serviceQuery, environmentsQuery, configMapsQuery, secretsQuery]} interceptEmpty={false}>
+            <AddServiceForm
+                repositories={repositoriesQuery.data ?? []}
+                environments={environmentsQuery.data ?? []}
+                configMaps={configMapsQuery.data ?? []}
+                secrets={secretsQuery.data ?? []}
+                service={serviceQuery.data}
+            />
         </ApiStatusHandler>
     )
 }

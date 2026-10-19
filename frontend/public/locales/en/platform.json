@@ -1897,26 +1897,6 @@
             "required": "Required",
             "secret": "Secret"
         },
-        "config_map": {
-            "title": "Config map",
-            "description": "Non-sensitive values the service receives as environment variables, one per environment. Visible to anyone who can see the service.",
-            "add": "Add key",
-            "empty": "No keys in the config map."
-        },
-        "secrets": {
-            "title": "Secrets",
-            "description": "Sensitive values the service receives as environment variables, one per environment. Encrypted at rest and never shown again once saved.",
-            "add": "Add secret",
-            "empty": "No secrets.",
-            "set": "Set",
-            "key_locked": "To rename a saved secret, remove it and add it again."
-        },
-        "variables": {
-            "key": "Key",
-            "not_set": "Not set",
-            "key_invalid": "Letters, digits and underscores only, not starting with a digit",
-            "key_duplicated": "This key is already used in the config map or in the secrets"
-        },
         "context": {
             "title": "AI context",
             "subtitle": "Markdown notes for the AI agents working on this service",
@@ -2196,5 +2176,96 @@
             "services": "Backend services"
         },
         "top_menu": "Project menu"
+    },
+    "variableMaps": {
+        "name": "Name",
+        "name_hint": "Lowercase letters, digits and dashes: it can become the name of a Kubernetes object as it is.",
+        "name_invalid": "At most 63 lowercase letters, digits or dashes, starting and ending with a letter or digit",
+        "description": "Description",
+        "description_placeholder": "What these values are for",
+        "general_information": "General information",
+        "configMap": {
+            "label": "Config map",
+            "list_title": "Config maps",
+            "list_description": "Non-sensitive values backend services receive as environment variables, one per environment. A config map belongs to the project: any number of services can attach it.",
+            "add_new": "New config map",
+            "form_description": "Non-sensitive values, visible to anyone who can see the project.",
+            "empty_title": "No config maps yet",
+            "empty_description": "Create one, then attach it to the services that need its values.",
+            "created": "Config map created",
+            "updated": "Config map updated",
+            "entries": {
+                "title": "Keys",
+                "description": "A value per environment; an empty one leaves the key unset there."
+            }
+        },
+        "secret": {
+            "label": "Secret",
+            "list_title": "Secrets",
+            "list_description": "Sensitive values backend services receive as environment variables, one per environment. Encrypted at rest and never shown again once saved. A secret belongs to the project: any number of services can attach it.",
+            "add_new": "New secret",
+            "form_description": "Sensitive values: encrypted at rest and never shown again once saved.",
+            "empty_title": "No secrets yet",
+            "empty_description": "Create one, then attach it to the services that need its values.",
+            "created": "Secret created",
+            "updated": "Secret updated",
+            "set": "Set",
+            "key_locked": "To rename a saved key, remove it and add it again.",
+            "entries": {
+                "title": "Keys",
+                "description": "A value per environment; an empty one leaves the key unset there. Saved values are never shown: leave them as they are to keep them."
+            }
+        },
+        "entries": {
+            "add": "Add key",
+            "empty": "No keys.",
+            "key": "Key",
+            "not_set": "Not set",
+            "key_invalid": "Letters, digits and underscores only, not starting with a digit",
+            "key_duplicated": "This key appears more than once"
+        },
+        "list": {
+            "search_placeholder": "Search by name or key",
+            "clear_search": "Clear search",
+            "keys": "Keys",
+            "no_results_title": "No results",
+            "no_results_description": "Nothing matches \"{{searchTerm}}\"."
+        },
+        "used_by": {
+            "title": "Used by",
+            "description": "The services that receive these values.",
+            "none": "No service"
+        },
+        "attach": {
+            "title": "Config maps and secrets",
+            "description": "The maps of the project whose values the service receives as environment variables. No key may be set by two of them.",
+            "detail_description": "What the service receives as environment variables, map by map.",
+            "none": "No config map or secret attached. Attach them from the settings of the service.",
+            "manage": "Manage"
+        },
+        "danger_zone": {
+            "title": "Danger zone",
+            "subtitle": "Irreversible actions on this map",
+            "action_title": "Delete the map",
+            "action_description": "Removes the map and all its values.",
+            "in_use": "Detach it from every service using it before deleting it.",
+            "button": "Delete",
+            "success": "Deleted",
+            "dialog": {
+                "title": "Delete map",
+                "warning": "This action cannot be undone",
+                "description": "You are about to delete {{name}} and all its values.",
+                "confirmation": "Type {{name}} to confirm"
+            }
+        },
+        "errors": {
+            "name_taken": "A map with this name already exists in the project",
+            "name_invalid": "At most 63 lowercase letters, digits or dashes, starting and ending with a letter or digit",
+            "in_use": "It is still attached to {{services}}: detach it first",
+            "secret_value_required": "A saved key was renamed: type its values again",
+            "key_clash": "{{key}} is set both by {{first}} and by {{second}}: a service cannot attach both",
+            "map_unknown": "One of the selected maps no longer exists: reload the page",
+            "description_invalid": "At most 2000 characters"
+        }
     }
 }

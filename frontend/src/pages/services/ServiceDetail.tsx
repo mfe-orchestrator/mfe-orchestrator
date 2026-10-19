@@ -10,11 +10,12 @@ import { ApiStatusHandler } from "@/components/organisms"
 import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useServicesApi, { Service } from "@/hooks/apiClients/useServicesApi"
 import { AiChangeWorkspace } from "@/pages/microfrontends/partials/components"
+import { useVariableMapsQuery } from "@/pages/variable-maps/partials/variableMaps"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import RepositoryLink from "./partials/RepositoryLink"
 import ServiceBuildDialog from "./partials/ServiceBuildDialog"
 import ServiceHeader, { isServiceAiAvailable } from "./partials/ServiceHeader"
-import ServiceVariablesTable from "./partials/ServiceVariablesTable"
+import ServiceVariableMapsSection from "./partials/ServiceVariableMapsSection"
 import ServiceVersionsTable from "./partials/ServiceVersionsTable"
 import { useProjectEnvironmentsQuery } from "./partials/serviceVariables"
 
@@ -204,6 +205,8 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
     const serviceQuery = useQuery({ queryKey: ["service", id], queryFn: () => servicesApi.getSingle(id!), enabled: !!id })
     const versionsQuery = useQuery({ queryKey: ["service-versions", id], queryFn: () => servicesApi.getVersions(id!), enabled: !!id && view === "overview" })
     const environmentsQuery = useProjectEnvironmentsQuery()
+    const configMapsQuery = useVariableMapsQuery("configMap")
+    const secretsQuery = useVariableMapsQuery("secret")
 
     const service = serviceQuery.data
     const hasRepository = Boolean(service?.codeRepository?.enabled)
@@ -211,7 +214,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
     if (view === "ai") return <ServiceAiSection serviceQuery={serviceQuery} />
 
     return (
-        <ApiStatusHandler queries={[serviceQuery, versionsQuery, environmentsQuery]} interceptEmpty={false}>
+        <ApiStatusHandler queries={[serviceQuery, versionsQuery, environmentsQuery, configMapsQuery, secretsQuery]} interceptEmpty={false}>
             {service && (
                 <div className="flex min-h-full flex-col gap-6">
                     <ServiceHeader
@@ -230,8 +233,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
                     <ServiceRepositorySection service={service} />
                     <ServiceVersionsTable versions={versionsQuery.data ?? []} />
                     <ServiceConfigurationSection service={service} environments={environmentsQuery.data ?? []} />
-                    <ServiceVariablesTable kind="configMap" variables={service.configMap} environments={environmentsQuery.data ?? []} />
-                    <ServiceVariablesTable kind="secrets" variables={service.secrets} environments={environmentsQuery.data ?? []} />
+                    <ServiceVariableMapsSection service={service} configMaps={configMapsQuery.data ?? []} secrets={secretsQuery.data ?? []} environments={environmentsQuery.data ?? []} />
                     {hasRepository && (
                         <ServiceBuildDialog
                             open={buildOpen}

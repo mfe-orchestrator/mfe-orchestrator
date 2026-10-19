@@ -17,13 +17,6 @@ export interface ServiceEnvVariable {
     description?: string
 }
 
-/** A key of the config map or of the secrets with its value per environment; an environment left out leaves it unset there */
-export interface ServiceVariable {
-    key: string
-    /** For the secrets, the API sends a placeholder in place of every value, and sending it back keeps the stored one */
-    values: { environmentId: string; value: string }[]
-}
-
 /** Where the service answers in one environment: the base its docs and OpenAPI paths are relative to */
 export interface ServiceUrl {
     environmentId: string
@@ -69,8 +62,10 @@ export interface Service {
     /** One per environment it is exposed in; an environment left out has no known address */
     urls?: ServiceUrl[]
     env: ServiceEnvVariable[]
-    configMap?: ServiceVariable[]
-    secrets?: ServiceVariable[]
+    /** Config maps of the project it receives as environment variables */
+    configMapIds?: string[]
+    /** Secrets of the project it receives as environment variables */
+    secretIds?: string[]
     createdAt?: Date
     updatedAt?: Date
 }

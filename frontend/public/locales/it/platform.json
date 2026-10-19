@@ -1916,26 +1916,6 @@
             "required": "Obbligatoria",
             "secret": "Segreta"
         },
-        "config_map": {
-            "title": "Config map",
-            "description": "Valori non sensibili che il servizio riceve come variabili d'ambiente, uno per ambiente. Visibili a chiunque veda il servizio.",
-            "add": "Aggiungi chiave",
-            "empty": "Nessuna chiave nella config map."
-        },
-        "secrets": {
-            "title": "Secrets",
-            "description": "Valori sensibili che il servizio riceve come variabili d'ambiente, uno per ambiente. Cifrati a riposo e mai più mostrati dopo il salvataggio.",
-            "add": "Aggiungi secret",
-            "empty": "Nessun secret.",
-            "set": "Impostato",
-            "key_locked": "Per rinominare un secret salvato, rimuovilo e aggiungilo di nuovo."
-        },
-        "variables": {
-            "key": "Chiave",
-            "not_set": "Non impostato",
-            "key_invalid": "Solo lettere, cifre e underscore, senza iniziare con una cifra",
-            "key_duplicated": "Questa chiave è già usata nella config map o nei secrets"
-        },
         "context": {
             "title": "Contesto per l'AI",
             "subtitle": "Note in markdown per gli agenti AI che lavorano su questo servizio",
@@ -2215,5 +2195,96 @@
             "services": "Servizi backend"
         },
         "top_menu": "Menu del progetto"
+    },
+    "variableMaps": {
+        "name": "Nome",
+        "name_hint": "Lettere minuscole, cifre e trattini: può diventare così com'è il nome di un oggetto Kubernetes.",
+        "name_invalid": "Al massimo 63 lettere minuscole, cifre o trattini, che iniziano e finiscono con una lettera o una cifra",
+        "description": "Descrizione",
+        "description_placeholder": "A cosa servono questi valori",
+        "general_information": "Informazioni generali",
+        "configMap": {
+            "label": "Config map",
+            "list_title": "Config map",
+            "list_description": "Valori non sensibili che i servizi backend ricevono come variabili d'ambiente, uno per ambiente. Una config map appartiene al progetto: qualsiasi servizio può agganciarla.",
+            "add_new": "Nuova config map",
+            "form_description": "Valori non sensibili, visibili a chiunque veda il progetto.",
+            "empty_title": "Ancora nessuna config map",
+            "empty_description": "Creane una, poi agganciala ai servizi che hanno bisogno dei suoi valori.",
+            "created": "Config map creata",
+            "updated": "Config map aggiornata",
+            "entries": {
+                "title": "Chiavi",
+                "description": "Un valore per ambiente; se vuoto, la chiave non è impostata in quell'ambiente."
+            }
+        },
+        "secret": {
+            "label": "Secret",
+            "list_title": "Secret",
+            "list_description": "Valori sensibili che i servizi backend ricevono come variabili d'ambiente, uno per ambiente. Cifrati a riposo e mai più mostrati dopo il salvataggio. Un secret appartiene al progetto: qualsiasi servizio può agganciarlo.",
+            "add_new": "Nuovo secret",
+            "form_description": "Valori sensibili: cifrati a riposo e mai più mostrati dopo il salvataggio.",
+            "empty_title": "Ancora nessun secret",
+            "empty_description": "Creane uno, poi aggancialo ai servizi che hanno bisogno dei suoi valori.",
+            "created": "Secret creato",
+            "updated": "Secret aggiornato",
+            "set": "Impostato",
+            "key_locked": "Per rinominare una chiave salvata, rimuovila e aggiungila di nuovo.",
+            "entries": {
+                "title": "Chiavi",
+                "description": "Un valore per ambiente; se vuoto, la chiave non è impostata in quell'ambiente. I valori salvati non vengono mai mostrati: lasciali così per conservarli."
+            }
+        },
+        "entries": {
+            "add": "Aggiungi chiave",
+            "empty": "Nessuna chiave.",
+            "key": "Chiave",
+            "not_set": "Non impostato",
+            "key_invalid": "Solo lettere, cifre e underscore, senza iniziare con una cifra",
+            "key_duplicated": "Questa chiave compare più di una volta"
+        },
+        "list": {
+            "search_placeholder": "Cerca per nome o chiave",
+            "clear_search": "Cancella ricerca",
+            "keys": "Chiavi",
+            "no_results_title": "Nessun risultato",
+            "no_results_description": "Nessuna corrispondenza per \"{{searchTerm}}\"."
+        },
+        "used_by": {
+            "title": "Usata da",
+            "description": "I servizi che ricevono questi valori.",
+            "none": "Nessun servizio"
+        },
+        "attach": {
+            "title": "Config map e secret",
+            "description": "Le mappe del progetto i cui valori il servizio riceve come variabili d'ambiente. Una stessa chiave non può arrivare da due mappe.",
+            "detail_description": "Cosa riceve il servizio come variabili d'ambiente, mappa per mappa.",
+            "none": "Nessuna config map o secret agganciato. Agganciali dalle impostazioni del servizio.",
+            "manage": "Gestisci"
+        },
+        "danger_zone": {
+            "title": "Zona pericolosa",
+            "subtitle": "Azioni irreversibili su questa mappa",
+            "action_title": "Elimina la mappa",
+            "action_description": "Rimuove la mappa e tutti i suoi valori.",
+            "in_use": "Sganciala da tutti i servizi che la usano prima di eliminarla.",
+            "button": "Elimina",
+            "success": "Eliminata",
+            "dialog": {
+                "title": "Elimina mappa",
+                "warning": "Questa azione non si può annullare",
+                "description": "Stai per eliminare {{name}} e tutti i suoi valori.",
+                "confirmation": "Scrivi {{name}} per confermare"
+            }
+        },
+        "errors": {
+            "name_taken": "Esiste già una mappa con questo nome nel progetto",
+            "name_invalid": "Al massimo 63 lettere minuscole, cifre o trattini, che iniziano e finiscono con una lettera o una cifra",
+            "in_use": "È ancora agganciata a {{services}}: sganciala prima",
+            "secret_value_required": "Una chiave salvata è stata rinominata: inserisci di nuovo i suoi valori",
+            "key_clash": "{{key}} è impostata sia da {{first}} sia da {{second}}: un servizio non può agganciarle entrambe",
+            "map_unknown": "Una delle mappe selezionate non esiste più: ricarica la pagina",
+            "description_invalid": "Al massimo 2000 caratteri"
+        }
     }
 }

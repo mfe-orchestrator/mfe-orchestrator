@@ -1,8 +1,6 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import { isServiceUrl, SERVICE_HTTP_PATH, SERVICE_VARIABLE_KEY, ServicePaths, ServiceRuntime } from "../types/ServiceStack"
-import { encryptedFields } from "../utils/encryptedFieldsPlugin"
-import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
+import { isServiceUrl, SERVICE_HTTP_PATH, ServicePaths, ServiceRuntime } from "../types/ServiceStack"
 import { ICodeRepositoryMicrofrontend, microfrontendCodeRepositorySchema } from "./MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
@@ -22,26 +20,11 @@ export interface IServiceEnvVariable {
     description?: string
 }
 
-/** The value a config map entry or a secret takes in one environment of the project */
-export interface IServiceVariableValue {
-    environmentId: Schema.Types.ObjectId
-    value: string
-}
-
-/** A key of the config map or of the secrets: an environment with no value leaves it unset there */
-export interface IServiceVariable {
-    key: string
-    values: IServiceVariableValue[]
-}
-
 /** Where the service answers in one environment of the project: the base its probe, docs and OpenAPI paths hang off */
 export interface IServiceUrl {
     environmentId: Schema.Types.ObjectId
     url: string
 }
-
-/** Encrypted at rest; every answer of the API carries the placeholder in their place */
-export const SERVICE_SECRET_PATHS = ["secrets.values.value"]
 
 export interface IService extends Document<ObjectId>, ServicePaths {
     projectId: Schema.Types.ObjectId
@@ -65,10 +48,10 @@ export interface IService extends Document<ObjectId>, ServicePaths {
     /** One per environment it is exposed in; an environment left out has no known address */
     urls: IServiceUrl[]
     env: IServiceEnvVariable[]
-    /** Values the service is given per environment, readable by whoever sees the service */
-    configMap: IServiceVariable[]
-    /** Values the service is given per environment, never sent back once written */
-    secrets: IServiceVariable[]
+    /** Config maps of the project the service receives as environment variables; they live on their own and can be shared */
+    configMapIds: Schema.Types.ObjectId[]
+    /** Secrets of the project the service receives as environment variables, as for the config maps */
+    secretIds: Schema.Types.ObjectId[]
     createdAt: Date
     updatedAt: Date
 }
@@ -117,39 +100,6 @@ const serviceEnvVariableSchema = new Schema<IServiceEnvVariable>(
             type: String,
             required: false,
             trim: true
-        }
-    },
-    { _id: false }
-)
-
-// No length limit here: on an update the validators see the ciphertext of a secret, not what was typed.
-// ServiceService bounds the values before they get this far.
-const serviceVariableValueSchema = new Schema<IServiceVariableValue>(
-    {
-        environmentId: {
-            type: Schema.Types.ObjectId,
-            ref: "Environment",
-            required: true
-        },
-        value: {
-            type: String,
-            required: true
-        }
-    },
-    { _id: false }
-)
-
-const serviceVariableSchema = new Schema<IServiceVariable>(
-    {
-        key: {
-            type: String,
-            required: true,
-            trim: true,
-            match: SERVICE_VARIABLE_KEY
-        },
-        values: {
-            type: [serviceVariableValueSchema],
-            default: []
         }
     },
     { _id: false }
@@ -260,12 +210,12 @@ const serviceSchema = new Schema<IService>(
             type: [serviceEnvVariableSchema],
             default: []
         },
-        configMap: {
-            type: [serviceVariableSchema],
+        configMapIds: {
+            type: [{ type: Schema.Types.ObjectId, ref: "ConfigMap" }],
             default: []
         },
-        secrets: {
-            type: [serviceVariableSchema],
+        secretIds: {
+            type: [{ type: Schema.Types.ObjectId, ref: "Secret" }],
             default: []
         }
     },
@@ -276,23 +226,19 @@ const serviceSchema = new Schema<IService>(
 
 serviceSchema.index({ slug: 1, projectId: 1 }, { unique: true })
 
-serviceSchema.plugin(encryptedFields, { model: "Service", paths: SERVICE_SECRET_PATHS })
-
 /**
- * Every way out of the backend serialises a service through here — the console routes, the MCP tools,
- * the assistant — so this is where the secrets are hidden. The placeholder rather than nothing: the
- * settings form submits it back untouched, and ServiceService reads that as "keep the stored value".
+ * A service the migration to maps has not reached yet still holds its old inline values, and Mongoose
+ * serialises fields the schema does not know: without this, its secrets would go out through every API,
+ * the MCP tools included, which read the document through toObject.
  */
-serviceSchema.set("toJSON", {
-    transform: (_document, object) => {
-        for (const secret of (object.secrets ?? []) as IServiceVariable[]) {
-            for (const value of secret.values ?? []) {
-                value.value = SECRET_PLACEHOLDER
-            }
-        }
-        return object
+const withoutInlineVariables = {
+    transform: (_document: unknown, object: IService) => {
+        const { configMap: _configMap, secrets: _secrets, ...rest } = object as IService & { configMap?: unknown; secrets?: unknown }
+        return rest
     }
-})
+}
+serviceSchema.set("toJSON", withoutInlineVariables)
+serviceSchema.set("toObject", withoutInlineVariables)
 
 const Service = mongoose.model<IService>("Service", serviceSchema)
 export default Service

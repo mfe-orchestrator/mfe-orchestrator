@@ -24,6 +24,8 @@ const MicrofrontendAiWorkspace = lazy(() => import("./pages/microfrontends/Micro
 const Services = lazy(() => import("./pages/services/Services"))
 const AddService = lazy(() => import("./pages/services/AddService"))
 const ServiceDetail = lazy(() => import("./pages/services/ServiceDetail"))
+const VariableMaps = lazy(() => import("./pages/variable-maps/VariableMaps"))
+const VariableMapForm = lazy(() => import("./pages/variable-maps/VariableMapForm"))
 const Dependencies = lazy(() => import("./pages/dependencies/Dependencies"))
 const Builds = lazy(() => import("./pages/builds/Builds"))
 const Deployments = lazy(() => import("./pages/deployments/Deployments"))
@@ -134,6 +136,10 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/service/:id/ai" element={<RouteWithSuspense element={<ServiceDetail view="ai" />} />} />
                 <Route path="/service/:id/overview" element={<RouteWithSuspense element={<ServiceDetail />} />} />
                 <Route path="/service/:id/settings" element={<RouteWithSuspense element={<AddService />} />} />
+                <Route path="/config-maps" element={<RouteWithSuspense element={<VariableMaps kind="configMap" />} />} />
+                <Route path="/config-map/:id" element={<RouteWithSuspense element={<VariableMapForm kind="configMap" />} />} />
+                <Route path="/secrets" element={<RouteWithSuspense element={<VariableMaps kind="secret" />} />} />
+                <Route path="/secret/:id" element={<RouteWithSuspense element={<VariableMapForm kind="secret" />} />} />
                 <Route path="/dependencies" element={<RouteWithSuspense element={<Dependencies />} />} />
                 <Route path="/builds" element={<RouteWithSuspense element={<Builds />} />} />
                 <Route path="/deployments">

@@ -8,12 +8,6 @@ export interface ServiceEnvVariableDTO {
     description?: string
 }
 
-/** A key of the config map or of the secrets with its value per environment; a blank value leaves it unset there */
-export interface ServiceVariableDTO {
-    key: string
-    values?: Array<{ environmentId: string; value?: string }>
-}
-
 interface ServiceDTO {
     id?: string
     name: string
@@ -42,9 +36,10 @@ interface ServiceDTO {
     /** The base URL per environment, e.g. https://orders.dev.acme.com; a blank one means it is not exposed there */
     urls?: Array<{ environmentId: string; url?: string }>
     env?: ServiceEnvVariableDTO[]
-    configMap?: ServiceVariableDTO[]
-    /** A value sent as the placeholder the API answers with keeps the stored one */
-    secrets?: ServiceVariableDTO[]
+    /** Config maps of the project to attach; replaced as a whole, and no key may be set by two attached maps */
+    configMapIds?: string[]
+    /** Secrets of the project to attach, as for the config maps */
+    secretIds?: string[]
     createdAt?: Date
     updatedAt?: Date
 }

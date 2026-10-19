@@ -44,6 +44,7 @@ upload a bundle.
 | `storages` | `secretAccessKey`, `accountKey`, `connectionString`, `clientSecret`, `jsonKey` |
 | `coderepositories` | `accessToken`, `refreshToken` |
 | `deployments` | the same storage fields, inside the snapshot a deployment freezes |
+| `secrets` | the value of every key in every environment, of the secrets backend services attach |
 
 Deployments are in the list because a deployment copies the storages of its project, credentials
 included, and the serve API reads the bucket keys from that copy. Encrypting the `storages`

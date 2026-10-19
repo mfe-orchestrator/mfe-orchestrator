@@ -1,4 +1,4 @@
-import { FileText, Hammer as HammerIcon, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, Sparkles } from "lucide-react"
+import { FileText, Hammer as HammerIcon, KeyRound, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, SlidersHorizontal, Sparkles } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
@@ -45,7 +45,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         },
         {
             title: t("navigation.sections.services"),
-            items: [{ name: t("services.title"), path: "/services", icon: <Server /> }]
+            items: [
+                { name: t("services.title"), path: "/services", icon: <Server /> },
+                { name: t("variableMaps.configMap.list_title"), path: "/config-maps", icon: <SlidersHorizontal /> },
+                { name: t("variableMaps.secret.list_title"), path: "/secrets", icon: <KeyRound /> }
+            ]
         },
         {
             title: t("navigation.sections.devops"),

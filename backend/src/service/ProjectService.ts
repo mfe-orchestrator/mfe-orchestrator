@@ -17,6 +17,7 @@ import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
+import { ConfigMap, Secret } from "../models/VariableMapModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
@@ -369,6 +370,8 @@ export class ProjectService extends BaseAuthorizedService {
         await Deployment.deleteMany({ projectId: projectIdObj }, session)
         await Microfrontend.deleteMany({ projectId: projectIdObj }, session)
         await Service.deleteMany({ projectId: projectIdObj }, session)
+        await ConfigMap.deleteMany({ projectId: projectIdObj }, { session })
+        await Secret.deleteMany({ projectId: projectIdObj }, { session })
         await Domain.deleteMany({ projectId: projectIdObj }, { session })
         await Environment.deleteMany({ projectId: projectIdObj }, session)
 

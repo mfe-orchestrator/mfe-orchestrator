@@ -8,16 +8,16 @@ import CodeRepository from "../models/CodeRepositoryModel"
 import Environment from "../models/EnvironmentModel"
 import Project from "../models/ProjectModel"
 import ServiceDeployment from "../models/ServiceDeploymentModel"
-import Service, { IService, IServiceVariable } from "../models/ServiceModel"
+import Service, { IService } from "../models/ServiceModel"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import ServiceDTO, { ServiceVariableDTO, ServiceVersionRegistrationDTO } from "../types/ServiceDTO"
-import { isServiceTemplateType, isServiceUrl, parseRuntime, SERVICE_SLUG, SERVICE_URL_MAX_LENGTH, SERVICE_VARIABLE_KEY, SERVICE_VERSION } from "../types/ServiceStack"
+import ServiceDTO, { ServiceVersionRegistrationDTO } from "../types/ServiceDTO"
+import { isServiceTemplateType, isServiceUrl, parseRuntime, SERVICE_SLUG, SERVICE_URL_MAX_LENGTH, SERVICE_VERSION } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
-import { isEncryptedSecret, SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { resolveDomainId } from "./DomainService"
 import MarketService from "./MarketService"
 import TemplateScaffoldService, { placeholderDomain } from "./TemplateScaffoldService"
+import { resolveAttachedMaps } from "./VariableMapService"
 import { forgetServices } from "./workspace/workspaceCleanup"
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0
@@ -34,68 +34,8 @@ const ensureValidSlug = (slug: string) => {
     }
 }
 
-/** Per list, as for env: well past any real service, short of a document Mongo would refuse */
-const MAX_SERVICE_VARIABLES = 200
-const MAX_SERVICE_VARIABLE_VALUE_LENGTH = 32 * 1024
-
-type VariablesKind = "configMap" | "secrets"
-
-/**
- * One list as it is stored: keys valid and unique, blank values dropped (the key stays unset in that
- * environment), every environment one of the project and at most once per key. A secret that comes
- * back as the placeholder keeps the value stored for that key and environment; with none to keep, it
- * is refused rather than saved literally.
- */
-export const normalizeVariables = (variables: unknown, kind: VariablesKind, environmentIds: Set<string>, stored: IServiceVariable[] = []): ServiceVariableDTO[] => {
-    if (!Array.isArray(variables) || variables.length > MAX_SERVICE_VARIABLES) {
-        throw createBusinessException({ code: "SERVICE_VARIABLES_INVALID", message: `${kind} must be a list of at most ${MAX_SERVICE_VARIABLES} keys` })
-    }
-
-    const keys = new Set<string>()
-    return variables.map((variable: ServiceVariableDTO) => {
-        const key = typeof variable?.key === "string" ? variable.key.trim() : ""
-        if (!SERVICE_VARIABLE_KEY.test(key)) {
-            throw createBusinessException({ code: "SERVICE_VARIABLE_KEY_INVALID", message: `"${key}" is not a valid key: letters, digits and underscores, not starting with a digit` })
-        }
-        if (keys.has(key)) {
-            throw createBusinessException({ code: "SERVICE_VARIABLE_KEY_DUPLICATED", message: `"${key}" appears more than once in ${kind}` })
-        }
-        keys.add(key)
-
-        const environments = new Set<string>()
-        const values = (Array.isArray(variable.values) ? variable.values : []).flatMap(item => {
-            const { environmentId, value } = (item ?? {}) as { environmentId?: unknown; value?: unknown }
-            if (typeof value !== "string" || value === "") return []
-
-            const environment = String(environmentId)
-            if (!environmentIds.has(environment)) {
-                throw createBusinessException({ code: "SERVICE_VARIABLE_ENVIRONMENT_UNKNOWN", message: `"${key}" has a value for ${environment}, which is not an environment of the project` })
-            }
-            if (environments.has(environment)) {
-                throw createBusinessException({ code: "SERVICE_VARIABLE_ENVIRONMENT_DUPLICATED", message: `"${key}" has more than one value for environment ${environment}` })
-            }
-            environments.add(environment)
-
-            if (kind === "secrets" && value === SECRET_PLACEHOLDER) {
-                const kept = stored.find(secret => secret.key === key)?.values.find(stored => String(stored.environmentId) === environment)?.value
-                if (!kept) {
-                    throw createBusinessException({ code: "SERVICE_SECRET_VALUE_REQUIRED", message: `The secret "${key}" has no stored value for environment ${environment} to keep: type it` })
-                }
-                return [{ environmentId: environment, value: kept }]
-            }
-            // Stored as typed, it would read as a ciphertext and make every load of the service fail to decrypt
-            if (kind === "secrets" && isEncryptedSecret(value)) {
-                throw createBusinessException({ code: "SERVICE_VARIABLE_VALUE_INVALID", message: `The value of "${key}" cannot start with "enc:v1:"` })
-            }
-            if (value.length > MAX_SERVICE_VARIABLE_VALUE_LENGTH) {
-                throw createBusinessException({ code: "SERVICE_VARIABLE_VALUE_TOO_LONG", message: `The value of "${key}" exceeds ${MAX_SERVICE_VARIABLE_VALUE_LENGTH} characters` })
-            }
-            return [{ environmentId: environment, value }]
-        })
-
-        return { key, values }
-    })
-}
+/** As for env: well past any real service, short of a document Mongo would refuse */
+const MAX_SERVICE_URLS = 200
 
 /**
  * The base URLs as they are stored: blank ones dropped (no known address in that environment), every
@@ -104,8 +44,8 @@ export const normalizeVariables = (variables: unknown, kind: VariablesKind, envi
  * entries too: it only bounds the request, the checks per entry give the precise refusal.
  */
 export const normalizeUrls = (urls: unknown, environmentIds: Set<string>): Array<{ environmentId: string; url: string }> => {
-    if (!Array.isArray(urls) || urls.length > MAX_SERVICE_VARIABLES) {
-        throw createBusinessException({ code: "SERVICE_URLS_INVALID", message: `urls must be a list of at most ${MAX_SERVICE_VARIABLES} entries` })
+    if (!Array.isArray(urls) || urls.length > MAX_SERVICE_URLS) {
+        throw createBusinessException({ code: "SERVICE_URLS_INVALID", message: `urls must be a list of at most ${MAX_SERVICE_URLS} entries` })
     }
 
     const environments = new Set<string>()
@@ -135,26 +75,27 @@ export const normalizeUrls = (urls: unknown, environmentIds: Set<string>): Array
 }
 
 /**
- * The fields of `dto` with a value per environment (config map, secrets, URLs), normalised, when it
- * carries any: a caller that leaves them all out (an MCP update of the name, say) changes none and costs
- * no query. One key cannot be in both the config map and the secrets, since both end up as variables of
- * one container; a list left out is compared as it is stored.
+ * Refuses update operators and dotted paths: `{"$set": {"secretIds": [...]}}` or `{"secretIds.0": ...}`
+ * would reach Mongo past every check here, attaching a secret of another project to this service.
  */
-const withNormalizedEnvironmentFields = async <T extends Pick<ServiceDTO, "configMap" | "secrets" | "urls">>(dto: T, projectId: Schema.Types.ObjectId, existing?: IService): Promise<T> => {
-    if (dto.configMap === undefined && dto.secrets === undefined && dto.urls === undefined) return dto
+const ensurePlainFields = (fields: object) => {
+    const key = Object.keys(fields).find(candidate => candidate.startsWith("$") || candidate.includes("."))
+    if (key) {
+        throw createBusinessException({ code: "SERVICE_INVALID", message: `"${key}" is not a field of a service` })
+    }
+}
+
+/**
+ * The base URLs of `dto`, normalised, and the maps it attaches, checked: a caller that leaves them out
+ * (an MCP update of the name, say) changes none of them and costs no query.
+ */
+const withNormalizedReferences = async <T extends Pick<ServiceDTO, "urls" | "configMapIds" | "secretIds">>(dto: T, projectId: Schema.Types.ObjectId, existing?: IService): Promise<T> => {
+    ensurePlainFields(dto)
+    const withMaps = await resolveAttachedMaps(dto, projectId, existing)
+    if (dto.urls === undefined) return withMaps
 
     const environmentIds = new Set((await Environment.find({ projectId }, { _id: 1 })).map(environment => String(environment._id)))
-    const configMap = dto.configMap === undefined ? undefined : normalizeVariables(dto.configMap, "configMap", environmentIds)
-    const secrets = dto.secrets === undefined ? undefined : normalizeVariables(dto.secrets, "secrets", environmentIds, existing?.secrets)
-    const urls = dto.urls === undefined ? undefined : normalizeUrls(dto.urls, environmentIds)
-
-    const secretKeys = new Set((secrets ?? existing?.secrets ?? []).map(secret => secret.key))
-    const clash = (configMap ?? existing?.configMap ?? []).find(entry => secretKeys.has(entry.key))
-    if (clash) {
-        throw createBusinessException({ code: "SERVICE_VARIABLE_KEY_DUPLICATED", message: `"${clash.key}" is both in the config map and in the secrets` })
-    }
-
-    return { ...dto, ...(configMap && { configMap }), ...(secrets && { secrets }), ...(urls && { urls }) }
+    return { ...withMaps, urls: normalizeUrls(dto.urls, environmentIds) }
 }
 
 /**
@@ -248,7 +189,7 @@ export class ServiceService extends BaseAuthorizedService {
         const slug = (dto.slug ?? "").trim().toLowerCase()
         ensureValidSlug(slug)
         const { id: _id, ...fields } = { ...dto, slug }
-        const service = await withNormalizedEnvironmentFields(fields, projectIdObj)
+        const service = await withNormalizedReferences(fields, projectIdObj)
         if (service.domainId !== undefined) {
             service.domainId = await resolveDomainId(service.domainId, projectIdObj)
         }
@@ -323,7 +264,7 @@ export class ServiceService extends BaseAuthorizedService {
         // Never moved to another project, nor given another identity, through an update: the slug is
         // in the registration URL the CI of the repository calls
         const { id: _id, _id: _mongoId, projectId: _projectId, slug: _slug, ...fields } = updates as Partial<ServiceDTO> & { _id?: unknown; projectId?: unknown }
-        const allowed = await withNormalizedEnvironmentFields(fields, service.projectId, service)
+        const allowed = await withNormalizedReferences(fields, service.projectId, service)
         if (allowed.domainId !== undefined) {
             allowed.domainId = await resolveDomainId(allowed.domainId, service.projectId)
         }
