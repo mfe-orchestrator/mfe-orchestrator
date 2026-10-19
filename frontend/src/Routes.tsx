@@ -130,8 +130,9 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/microfrontend/:id/settings" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/services" element={<RouteWithSuspense element={<Services />} />} />
                 <Route path="/service/new" element={<RouteWithSuspense element={<AddService />} />} />
-                <Route path="/service/:id" element={<RouteWithSuspense element={<ServiceDetail />} />} />
+                <Route path="/service/:id" element={<RouteWithSuspense element={<ServiceDetail view="ai" />} />} />
                 <Route path="/service/:id/ai" element={<RouteWithSuspense element={<ServiceDetail view="ai" />} />} />
+                <Route path="/service/:id/overview" element={<RouteWithSuspense element={<ServiceDetail />} />} />
                 <Route path="/service/:id/settings" element={<RouteWithSuspense element={<AddService />} />} />
                 <Route path="/dependencies" element={<RouteWithSuspense element={<Dependencies />} />} />
                 <Route path="/builds" element={<RouteWithSuspense element={<Builds />} />} />

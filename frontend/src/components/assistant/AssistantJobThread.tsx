@@ -75,7 +75,7 @@ const RepositoryCard: React.FC<{ repository: AiJobRepository }> = ({ repository 
                 <Link
                     to={
                         repository.kind === "service"
-                            ? `/service/${repository.microfrontendId}/ai?change=${repository.requestId}`
+                            ? `/service/${repository.microfrontendId}?change=${repository.requestId}`
                             : `/microfrontend/${repository.microfrontendId}?change=${repository.requestId}`
                     }
                     aria-label={t("assistant.jobs.diff_label", { name: repository.microfrontendName })}

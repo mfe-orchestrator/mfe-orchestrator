@@ -154,8 +154,8 @@ const ServiceRepositorySection: React.FC<{ service: Service }> = ({ service }) =
 }
 
 /**
- * Edit with AI on the repository of a service: the same workspace as a microfrontend's. Not inside an
- * ApiStatusHandler: it unmounts its children on every background refetch, and the workspace holds a draft prompt.
+ * The landing screen of a service: Edit with AI on its repository, the same workspace as a microfrontend's.
+ * Without AI editing, the overview takes its place. Not inside an ApiStatusHandler: it unmounts its children on every background refetch, and the workspace holds a draft prompt.
  */
 const ServiceAiSection: React.FC<{ serviceQuery: { isPending: boolean; isError: boolean; error: unknown; data?: Service } }> = ({ serviceQuery }) => {
     const { t } = useTranslation()
@@ -178,7 +178,7 @@ const ServiceAiSection: React.FC<{ serviceQuery: { isPending: boolean; isError: 
     }
 
     const service = serviceQuery.data
-    if (!isServiceAiAvailable(service, assistantEnabled)) return <Navigate to={`/service/${service._id}`} replace />
+    if (!isServiceAiAvailable(service, assistantEnabled)) return <Navigate to={`/service/${service._id}/overview`} replace />
 
     return (
         <div className="flex min-h-full flex-col gap-6">

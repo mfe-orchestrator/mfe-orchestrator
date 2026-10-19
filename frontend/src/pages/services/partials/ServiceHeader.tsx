@@ -52,16 +52,16 @@ export const ServiceHeader: React.FC<ServiceHeaderProps> = ({ service, active, a
                 <div className="flex flex-wrap items-center gap-2">
                     {actions}
                     <nav aria-label={t("services.nav_label")} className="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
-                        <NavLink to={`/service/${service._id}`} end className={navLinkClassName}>
-                            <Info className="size-4" aria-hidden="true" />
-                            {t("services.nav_overview")}
-                        </NavLink>
                         {aiAvailable && (
-                            <NavLink to={`/service/${service._id}/ai`} className={navLinkClassName}>
+                            <NavLink to={`/service/${service._id}`} end className={navLinkClassName}>
                                 <Sparkles className="size-4" aria-hidden="true" />
                                 {t("services.nav_ai")}
                             </NavLink>
                         )}
+                        <NavLink to={`/service/${service._id}/overview`} className={navLinkClassName}>
+                            <Info className="size-4" aria-hidden="true" />
+                            {t("services.nav_overview")}
+                        </NavLink>
                         <NavLink to={`/service/${service._id}/settings`} className={navLinkClassName}>
                             <Settings className="size-4" aria-hidden="true" />
                             {t("services.nav_settings")}
