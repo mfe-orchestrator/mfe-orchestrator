@@ -4,7 +4,7 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Domain, { IDomain } from "../models/DomainModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
-import DomainDTO from "../types/DomainDTO"
+import DomainDTO, { DomainMembersDTO } from "../types/DomainDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
@@ -34,6 +34,17 @@ const ensureOptionalString = (field: string, value: unknown) => {
     if (value !== undefined && value !== null && typeof value !== "string") {
         throw createBusinessException({ code: "DOMAIN_INVALID", message: `${field} must be a string` })
     }
+}
+
+/** A body field that must be a list of ids when given: anything else is refused with a 400 */
+const ensureIdList = (field: string, value: unknown) => {
+    if (value === undefined || value === null) {
+        return []
+    }
+    if (!Array.isArray(value) || !value.every(id => typeof id === "string" && isValidObjectId(id))) {
+        throw createBusinessException({ code: "DOMAIN_INVALID", message: `${field} must be a list of identifiers` })
+    }
+    return value.map(id => toObjectId(id as string))
 }
 
 /** What the database refuses, as the caller should see it: a 409 for a taken slug, a 400 for a value out of the schema */
@@ -134,6 +145,25 @@ export class DomainService extends BaseAuthorizedService {
         } catch (error) {
             throw toDomainError(error, domain.slug)
         }
+    }
+
+    /**
+     * Puts microfrontends and services in the domain, taking them out of the one they were in. Only members of
+     * the domain's project are moved: an id of another project is left as it is, never pulled across projects.
+     */
+    async addMembers(id: string | ObjectId, dto: DomainMembersDTO): Promise<{ microfrontends: number; services: number }> {
+        const domain = await this.getById(id)
+        if (!domain) {
+            throw new EntityNotFoundError(String(id))
+        }
+        const microfrontendIds = ensureIdList("microfrontendIds", dto?.microfrontendIds)
+        const serviceIds = ensureIdList("serviceIds", dto?.serviceIds)
+        return runInTransaction(async session => {
+            const membership = { $set: { domainId: domain._id } }
+            const microfrontends = await Microfrontend.updateMany({ _id: { $in: microfrontendIds }, projectId: domain.projectId }, membership, { session })
+            const services = await Service.updateMany({ _id: { $in: serviceIds }, projectId: domain.projectId }, membership, { session })
+            return { microfrontends: microfrontends.matchedCount, services: services.matchedCount }
+        })
     }
 
     /** Deletes the domain only: its microfrontends and services stay, without a domain */

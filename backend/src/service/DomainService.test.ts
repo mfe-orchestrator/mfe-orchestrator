@@ -159,6 +159,47 @@ describe("DomainService.delete", () => {
     })
 })
 
+describe("DomainService.addMembers", () => {
+    const domain = { _id: domainId, projectId, slug: "payments", name: "Payments" }
+    const microfrontendId = new Types.ObjectId().toString()
+    const serviceId = new Types.ObjectId().toString()
+
+    beforeEach(() => {
+        allowAccess()
+        vi.spyOn(Domain, "findById").mockResolvedValue(domain as never)
+    })
+
+    it("given microfrontends and services, when they are added, then only the ones of the domain's project are put in it", async () => {
+        const moveMicrofrontends = vi.spyOn(Microfrontend, "updateMany").mockResolvedValue({ matchedCount: 1 } as never)
+        const moveServices = vi.spyOn(Service, "updateMany").mockResolvedValue({ matchedCount: 1 } as never)
+
+        const added = await new DomainService().addMembers(String(domainId), { microfrontendIds: [microfrontendId], serviceIds: [serviceId] })
+
+        const membership = { $set: { domainId } }
+        expect(moveMicrofrontends).toHaveBeenCalledWith({ _id: { $in: [microfrontendId] }, projectId }, membership, expect.anything())
+        expect(moveServices).toHaveBeenCalledWith({ _id: { $in: [serviceId] }, projectId }, membership, expect.anything())
+        expect(added).toEqual({ microfrontends: 1, services: 1 })
+    })
+
+    it.each([[{ microfrontendIds: "abc" }], [{ serviceIds: ["not-an-id"] }], [{ serviceIds: [42] }]])(
+        "given the body %j, when members are added, then it is refused with a 400 and nothing is moved",
+        async body => {
+            const move = vi.spyOn(Microfrontend, "updateMany")
+
+            await expect(new DomainService().addMembers(String(domainId), body as never)).rejects.toMatchObject({ code: "DOMAIN_INVALID", statusCode: 400 })
+            expect(move).not.toHaveBeenCalled()
+        }
+    )
+
+    it("given an unknown domain, when members are added, then it is not found and nothing is moved", async () => {
+        vi.spyOn(Domain, "findById").mockResolvedValue(null)
+        const move = vi.spyOn(Service, "updateMany")
+
+        await expect(new DomainService().addMembers(String(domainId), { serviceIds: [serviceId] })).rejects.toBeInstanceOf(EntityNotFoundError)
+        expect(move).not.toHaveBeenCalled()
+    })
+})
+
 describe("DomainService.update", () => {
     it("given a slug and a project in the updates, when a domain is updated, then only name and description are written", async () => {
         allowAccess()

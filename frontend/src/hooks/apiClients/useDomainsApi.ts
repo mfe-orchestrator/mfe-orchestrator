@@ -21,6 +21,12 @@ export interface DomainDTO {
     description?: string
 }
 
+/** Microfrontends and services of the project to put in a domain */
+export interface DomainMembersDTO {
+    microfrontendIds?: string[]
+    serviceIds?: string[]
+}
+
 /** The codes the backend raises about domains, by translation key */
 const DOMAIN_ERROR_KEYS: Record<string, string> = {
     DOMAIN_SLUG_TAKEN: "domains.errors.slug_taken",
@@ -60,12 +66,23 @@ const useDomainsApi = () => {
         return response.data
     }
 
+    /** Moves the members into the domain, out of the one they were in; answers how many it now groups of each */
+    const addMembers = async (id: string, members: DomainMembersDTO): Promise<{ microfrontends: number; services: number }> => {
+        const response = await apiClient.doRequest<{ microfrontends: number; services: number }>({
+            url: `/api/domains/${id}/members`,
+            method: "POST",
+            data: members,
+            customErrorMessage: errorMessage
+        })
+        return response.data
+    }
+
     const deleteSingle = async (id: string) => {
         const response = await apiClient.doRequest({ url: `/api/domains/${id}`, method: "DELETE" })
         return response.data
     }
 
-    return { getAll, getSingle, create, update, deleteSingle, errorMessage }
+    return { getAll, getSingle, create, update, addMembers, deleteSingle, errorMessage }
 }
 
 export default useDomainsApi

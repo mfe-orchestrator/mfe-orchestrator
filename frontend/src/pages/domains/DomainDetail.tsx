@@ -1,20 +1,24 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, CirclePlus, Columns2, LayoutDashboard, LayoutGrid, Pencil, Server, StretchHorizontal, Workflow } from "lucide-react"
+import { ArrowLeft, Columns2, LayoutDashboard, LayoutGrid, Pencil, Server, Sparkles, StretchHorizontal, Workflow } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useParams } from "react-router-dom"
+import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useServicesApi from "@/hooks/apiClients/useServicesApi"
-import { MicrofrontendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "@/pages/microfrontends/partials/views"
+import { MicrofrontendsGrid, MicrofrontendsTable } from "@/pages/microfrontends/partials/views"
 import { ServicesGrid } from "@/pages/services/partials/ServicesGrid"
 import { ServicesTable } from "@/pages/services/partials/ServicesTable"
 import useProjectStore from "@/store/useProjectStore"
+import DomainDeploymentsSection from "./partials/DomainDeploymentsSection"
+import DomainFlow from "./partials/DomainFlow"
 import DomainFormDialog from "./partials/DomainFormDialog"
+import DomainMemberActions from "./partials/DomainMemberActions"
 
 const VIEWS = [
     { value: "overview", icon: Columns2, labelKey: "domains.detail.viewOverview" },
@@ -30,23 +34,20 @@ interface ViewSectionProps {
     icon: React.ReactNode
     isEmpty: boolean
     emptyLabel: string
-    addLabel: string
-    onAdd: () => void
+    /** The add menu of this half */
+    actions: React.ReactNode
     children: React.ReactNode
 }
 
 /** One half of the domain in the grid, table and flow views: the heading and add action the overview cards carry. */
-const ViewSection: React.FC<ViewSectionProps> = ({ title, icon, isEmpty, emptyLabel, addLabel, onAdd, children }) => (
+const ViewSection: React.FC<ViewSectionProps> = ({ title, icon, isEmpty, emptyLabel, actions, children }) => (
     <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
                 {icon}
                 {title}
             </h2>
-            <Button variant="secondary" size="sm" className="shrink-0" onClick={onAdd}>
-                <CirclePlus />
-                {addLabel}
-            </Button>
+            {actions}
         </div>
         {isEmpty ? <p className="text-sm text-foreground-secondary">{emptyLabel}</p> : children}
     </section>
@@ -57,12 +58,11 @@ interface MemberSectionProps {
     description: string
     icon: React.ReactNode
     emptyLabel: string
-    addLabel: string
-    onAdd: () => void
+    actions: React.ReactNode
     members: { id: string; name: string; slug: string; version?: string; href: string }[]
 }
 
-const MemberSection: React.FC<MemberSectionProps> = ({ title, description, icon, emptyLabel, addLabel, onAdd, members }) => (
+const MemberSection: React.FC<MemberSectionProps> = ({ title, description, icon, emptyLabel, actions, members }) => (
     <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
             <div className="min-w-0">
@@ -72,10 +72,7 @@ const MemberSection: React.FC<MemberSectionProps> = ({ title, description, icon,
                 </CardTitle>
                 <CardDescription>{description}</CardDescription>
             </div>
-            <Button variant="secondary" size="sm" className="shrink-0" onClick={onAdd}>
-                <CirclePlus />
-                {addLabel}
-            </Button>
+            {actions}
         </CardHeader>
         <CardContent className="pt-3">
             {members.length === 0 ? (
@@ -119,6 +116,8 @@ const DomainDetail = () => {
     const domain = domainQuery.data
     const microfrontends = (microfrontendsQuery.data ?? []).filter(microfrontend => microfrontend.domainId === id)
     const services = (servicesQuery.data ?? []).filter(service => service.domainId === id)
+    // The agent works on code: the domain needs at least one member with a linked repository.
+    const aiAvailable = useAssistantEnabled() && [...microfrontends, ...services].some(member => member.codeRepository?.enabled)
     const domainParam = `domainId=${encodeURIComponent(id ?? "")}`
     const onAddMicrofrontend = (parentId?: string) => navigate(`/microfrontend/new?${domainParam}${parentId ? `&parentId=${encodeURIComponent(parentId)}` : ""}`)
     const onAddService = () => navigate(`/service/new?${domainParam}`)
@@ -128,16 +127,30 @@ const DomainDetail = () => {
         icon: <LayoutDashboard className="size-5" aria-hidden="true" />,
         isEmpty: microfrontends.length === 0,
         emptyLabel: t("domains.detail.frontend_empty"),
-        addLabel: t("domains.detail.add_microfrontend"),
-        onAdd: () => onAddMicrofrontend()
+        actions: (
+            <DomainMemberActions
+                kind="microfrontend"
+                domainId={id!}
+                label={t("domains.detail.add_microfrontend")}
+                onCreate={() => onAddMicrofrontend()}
+                candidates={(microfrontendsQuery.data ?? []).filter(microfrontend => microfrontend.domainId !== id).map(microfrontend => ({ ...microfrontend, _id: microfrontend._id! }))}
+            />
+        )
     }
     const backendSection = {
         title: t("domains.detail.backend_title"),
         icon: <Server className="size-5" aria-hidden="true" />,
         isEmpty: services.length === 0,
         emptyLabel: t("domains.detail.backend_empty"),
-        addLabel: t("domains.detail.add_service"),
-        onAdd: onAddService
+        actions: (
+            <DomainMemberActions
+                kind="service"
+                domainId={id!}
+                label={t("domains.detail.add_service")}
+                onCreate={onAddService}
+                candidates={(servicesQuery.data ?? []).filter(service => service.domainId !== id).map(service => ({ ...service, _id: service._id! }))}
+            />
+        )
     }
 
     return (
@@ -175,18 +188,23 @@ const DomainDetail = () => {
                                     <Pencil />
                                     {t("common.edit")}
                                 </Button>
+                                {aiAvailable && (
+                                    <Button onClick={() => navigate(`/domain/${id}/ai`)} dataTestId="domain-edit-with-ai">
+                                        <Sparkles />
+                                        {t("domains.ai.open")}
+                                    </Button>
+                                )}
                             </div>
                         }
                     >
-                        <TabsContent value="overview" className="mt-0">
+                        <TabsContent value="overview" className="mt-0 flex flex-col gap-6">
                             <div className="grid gap-6 lg:grid-cols-2">
                                 <MemberSection
                                     title={t("domains.detail.frontend_title")}
                                     description={t("domains.detail.frontend_description")}
                                     icon={<LayoutDashboard className="size-5" aria-hidden="true" />}
                                     emptyLabel={t("domains.detail.frontend_empty")}
-                                    addLabel={t("domains.detail.add_microfrontend")}
-                                    onAdd={() => onAddMicrofrontend()}
+                                    actions={frontendSection.actions}
                                     members={microfrontends.map(microfrontend => ({
                                         id: microfrontend._id!,
                                         name: microfrontend.name,
@@ -200,8 +218,7 @@ const DomainDetail = () => {
                                     description={t("domains.detail.backend_description")}
                                     icon={<Server className="size-5" aria-hidden="true" />}
                                     emptyLabel={t("domains.detail.backend_empty")}
-                                    addLabel={t("domains.detail.add_service")}
-                                    onAdd={onAddService}
+                                    actions={backendSection.actions}
                                     members={services.map(service => ({
                                         id: service._id!,
                                         name: service.name,
@@ -211,15 +228,15 @@ const DomainDetail = () => {
                                     }))}
                                 />
                             </div>
+                            <DomainDeploymentsSection domainId={id!} />
                         </TabsContent>
-                        <TabsContent value="flow" className="mt-0 flex flex-col gap-8">
-                            {/* Positions are saved on the microfrontend, so the blocks sit where they were left on the microfrontends page too. */}
-                            <ViewSection {...frontendSection}>
-                                <MicrofrontendFlow microfrontends={microfrontends} onAddNewMicrofrontend={onAddMicrofrontend} />
-                            </ViewSection>
-                            <ViewSection {...backendSection}>
-                                <ServicesGrid services={services} />
-                            </ViewSection>
+                        <TabsContent value="flow" className="mt-0 flex flex-col gap-3">
+                            {/* Frontend and backend on one canvas; positions are saved on the microfrontend, so the blocks sit where they were left on the microfrontends page too. */}
+                            <div className="flex items-center justify-end gap-2">
+                                {frontendSection.actions}
+                                {backendSection.actions}
+                            </div>
+                            <DomainFlow microfrontends={microfrontends} services={services} onAddMicrofrontend={onAddMicrofrontend} />
                         </TabsContent>
                         <TabsContent value="grid" className="mt-0 flex flex-col gap-8">
                             <ViewSection {...frontendSection}>

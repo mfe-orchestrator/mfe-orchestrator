@@ -645,7 +645,7 @@
         "import": {
             "action": "Importa da repository",
             "title": "Importa repository",
-            "description": "Crea un microfrontend per ogni repository della connessione selezionata. I repository già collegati a un microfrontend vengono ignorati.",
+            "description": "Crea un microfrontend per ogni repository della connessione selezionata. I repository già collegati a un microfrontend o a un servizio vengono ignorati.",
             "loading": "Caricamento dei repository...",
             "loadError": "Impossibile caricare i repository di questa connessione.",
             "noRepositories": "Questa connessione non espone alcun repository.",
@@ -938,6 +938,33 @@
             "nav_ai": "Modifica con AI",
             "nav_settings": "Info e impostazioni",
             "version": "v{{version}}"
+        },
+        "rename_repository": {
+            "action": "Rinomina repository",
+            "title": "Rinomina repository",
+            "name_label": "Nuovo nome del repository",
+            "name_placeholder": "Inserisci il nuovo nome del repository",
+            "new_url": "nuovo url",
+            "warning_remote": "I cloni locali devono aggiornare l'URL del remote:",
+            "warning_redirect": "GitHub e GitLab reindirizzano il vecchio URL al nuovo, Azure DevOps no: lì il vecchio URL smette di funzionare.",
+            "confirm": "Rinomina",
+            "renaming": "Rinomina in corso...",
+            "success": "Repository rinominato in {{name}}",
+            "validation": {
+                "required": "Il nome del repository è obbligatorio",
+                "invalid": "Usa lettere, numeri, punti, trattini o underscore (max 100 caratteri), iniziando con una lettera o un numero e senza terminare con un punto",
+                "git_suffix": "Il nome non può terminare con .git o .atom",
+                "unchanged": "Inserisci un nome diverso da quello attuale"
+            },
+            "errors": {
+                "invalid_name": "Il nome del repository non è valido",
+                "name_taken": "Esiste già un repository con questo nome",
+                "not_linked": "Questo microfrontend non ha un repository collegato",
+                "rename_failed": "Il provider ha rifiutato la rinomina: {{reason}}",
+                "generic": "Impossibile rinominare il repository",
+                "link_inconsistent": "Il collegamento salvato non corrisponde al repository mostrato: seleziona di nuovo il repository e salva"
+            },
+            "save_first": "Salva le modifiche prima di rinominare il repository"
         }
     },
     "color_picker": {
@@ -1788,12 +1815,18 @@
             "apply_all_failed_one": "{{count}} proposta su {{total}} non è stata applicata: guarda l'errore sul suo repository",
             "apply_all_failed_other": "{{count}} proposte su {{total}} non sono state applicate: guarda gli errori sui loro repository",
             "follow_up_no_proposal": "Non ci sono proposte da rifinire: avvia un nuovo job per altre modifiche.",
-            "service_badge": "Servizio"
+            "service_badge": "Servizio",
+            "scope_domain": "Dominio"
         },
         "page_title": "Agente AI"
     },
     "services": {
         "title": "Servizi",
+        "import": {
+            "description": "Crea un servizio per ogni repository della connessione selezionata. I repository già collegati a un microfrontend o a un servizio vengono ignorati.",
+            "importedCount_one": "{{count}} servizio importato",
+            "importedCount_other": "{{count}} servizi importati"
+        },
         "back": "Tutti i servizi",
         "nav_label": "Sezioni del servizio",
         "nav_overview": "Panoramica",
@@ -1828,6 +1861,17 @@
         "path_invalid": "Deve iniziare con \"/\", avere al massimo 256 caratteri e nessuno spazio",
         "image_repository": "Repository immagine",
         "image_repository_hint": "Facoltativo. Es. ghcr.io/acme/orders-api",
+        "urls": {
+            "title": "Endpoint",
+            "description": "L'URL base su cui il servizio è raggiungibile in ciascun ambiente. I percorsi di documentazione e OpenAPI sono relativi a questo indirizzo. Lascia vuoto dove il servizio non è esposto.",
+            "placeholder": "https://orders-api.dev.example.com",
+            "invalid": "Inserisci un URL assoluto http o https, senza spazi, credenziali, query (?) o frammento (#)",
+            "no_environments": "Il progetto non ha ancora ambienti: creane uno per indicare dove è esposto il servizio",
+            "empty": "Nessun endpoint indicato. Aggiungilo dalle impostazioni del servizio.",
+            "not_exposed": "Non esposto",
+            "open_docs": "Documentazione API",
+            "open_openapi": "Specifica OpenAPI"
+        },
         "latest_version": "Ultima versione",
         "repository": "Repository",
         "code_repository": "Repository del codice",
@@ -1960,6 +2004,43 @@
         "created_success_message": "Dominio creato",
         "updated_success_message": "Dominio aggiornato",
         "no_domain": "Senza dominio",
+        "deployments": {
+            "open": "Versioni deployate",
+            "title": "Versioni deployate",
+            "description": "Quale versione di ogni microfrontend e servizio del dominio gira in ciascun ambiente. Il frontend è quello del deployment attivo, il backend quello comunicato dalla pipeline di deploy.",
+            "matrix_title": "Versioni deployate per dominio",
+            "matrix_description": "Per ogni dominio e ambiente, le versioni frontend del deployment attivo e le versioni backend comunicate dalla pipeline di deploy",
+            "matrix_empty_title": "Niente da mostrare",
+            "matrix_empty_description": "Il progetto non ha ancora domini, microfrontend o servizi",
+            "back": "Torna ai domini",
+            "domain": "Dominio",
+            "frontend": "Frontend",
+            "backend": "Backend",
+            "production": "Produzione",
+            "not_deployed": "non deployato",
+            "not_reported": "non segnalato",
+            "never_deployed": "Mai deployato",
+            "deployment": "Deployment {{deploymentId}} · {{date}}",
+            "canary": "canary {{version}} ({{audience}})",
+            "canary_without_version": "canary ({{audience}})",
+            "canary_enrolled_users": "utenti abilitati",
+            "no_environments": "Il progetto non ha ancora ambienti",
+            "no_members": "Il dominio non ha ancora microfrontend né servizi",
+            "no_members_short": "Nessun membro"
+        },
+        "viewCards": "Vista schede",
+        "viewGalaxy": "Vista galassia",
+        "galaxy": {
+            "legend_canary": "Canary attivo",
+            "legend_bridge": "Collegamento tra domini",
+            "recenter": "Mostra tutto",
+            "hint": "Clicca una galassia per avvicinarti e cliccala di nuovo per aprire il dominio. Clicca una stella per aprire il microfrontend o il servizio. Usa la rotella per lo zoom.",
+            "summary_one": "Mappa del progetto: ogni dominio è una galassia, i suoi microfrontend e servizi sono le stelle. C'è {{count}} collegamento tra domini diversi.",
+            "summary_other": "Mappa del progetto: ogni dominio è una galassia, i suoi microfrontend e servizi sono le stelle. Ci sono {{count}} collegamenti tra domini diversi.",
+            "kind_microfrontend": "Microfrontend",
+            "kind_service": "Servizio",
+            "canary": "Canary al {{percentage}}%"
+        },
         "form": {
             "create_title": "Nuovo dominio funzionale",
             "edit_title": "Modifica dominio funzionale",
@@ -1997,7 +2078,32 @@
             "viewOverview": "Vista panoramica",
             "viewFlow": "Vista diagramma",
             "viewGrid": "Vista griglia",
-            "viewTable": "Vista tabella"
+            "viewTable": "Vista tabella",
+            "flow_hint": "Trascina dal punto di un microfrontend a un altro microfrontend o a un servizio per collegarli. Seleziona un collegamento e premi Canc per rimuoverlo. Doppio clic su un blocco per aprirlo."
+        },
+        "members": {
+            "create_microfrontend": "Crea nuovo microfrontend",
+            "create_service": "Crea nuovo servizio",
+            "assign_existing": "Associa esistenti",
+            "import_repository": "Importa da repository",
+            "assign_title_microfrontend": "Associa microfrontend esistenti",
+            "assign_title_service": "Associa servizi esistenti",
+            "assign_description_microfrontend": "Scegli i microfrontend del progetto da mettere in questo dominio. Quelli che sono in un altro dominio vengono spostati qui.",
+            "assign_description_service": "Scegli i servizi del progetto da mettere in questo dominio. Quelli che sono in un altro dominio vengono spostati qui.",
+            "search_placeholder": "Cerca per nome o slug...",
+            "clear_search": "Cancella la ricerca",
+            "select_all": "Seleziona tutti",
+            "selected_count": "{{count}} di {{total}} selezionati",
+            "in_domain": "In {{name}}",
+            "empty_microfrontend": "Tutti i microfrontend del progetto sono già in questo dominio.",
+            "empty_service": "Tutti i servizi del progetto sono già in questo dominio.",
+            "no_search_results": "Nessun risultato per questa ricerca.",
+            "confirm_one": "Associa {{count}}",
+            "confirm_other": "Associa {{count}}",
+            "assigned_microfrontend_one": "{{count}} microfrontend aggiunto al dominio",
+            "assigned_microfrontend_other": "{{count}} microfrontend aggiunti al dominio",
+            "assigned_service_one": "{{count}} servizio aggiunto al dominio",
+            "assigned_service_other": "{{count}} servizi aggiunti al dominio"
         },
         "errors": {
             "slug_taken": "Esiste già un dominio con questo nome nel progetto",
@@ -2005,6 +2111,33 @@
             "name_required": "Il nome del dominio è obbligatorio",
             "invalid": "I dati del dominio non sono validi",
             "not_found": "Il dominio selezionato non esiste più in questo progetto"
+        },
+        "ai": {
+            "open": "Modifica con AI",
+            "title": "Modifica {{name}} con AI",
+            "description": "Un unico agente lavora insieme sul frontend e sul backend di questo dominio",
+            "back": "Torna al dominio",
+            "unavailable": "La modifica con AI non è disponibile su questa installazione: nessun provider AI configurato.",
+            "conversations_label": "Conversazioni AI del dominio",
+            "new_job": "Nuova modifica",
+            "no_conversations": "Nessuna modifica AI richiesta ancora su questo dominio.",
+            "open_conversation": "Apri la conversazione: {{prompt}}",
+            "repositories_count_one": "{{count}} repository",
+            "repositories_count_other": "{{count}} repository",
+            "to_review": "Da revisionare",
+            "composer_title": "Cosa vuoi cambiare in {{name}}?",
+            "composer_description": "L'agente legge insieme tutti i microfrontend e i servizi del dominio, con il contesto AI del progetto, del dominio e di ciascuno di essi, così una modifica può attraversare frontend e backend (un endpoint e le schermate che lo chiamano). Propone le modifiche da revisionare: nulla viene pushato finché non le applichi, con una pull request per repository.",
+            "context_title": "Repository su cui lavora l'agente",
+            "kind_microfrontend": "microfrontend",
+            "kind_service": "servizio",
+            "no_repositories": "Nessun microfrontend o servizio di questo dominio ha un repository di codice collegato.",
+            "unlinked": "Esclusi, senza repository collegato: {{names}}",
+            "too_many_title": "Troppi repository",
+            "too_many_description": "Il dominio ha {{count}} repository, un agente ne gestisce al massimo {{max}}: avvia il job dall'assistente e scegli quelli da modificare.",
+            "prompt_label": "Cosa deve cambiare?",
+            "prompt_placeholder": "es. Aggiungi il costo di spedizione all'API degli ordini e mostralo nelle pagine carrello e checkout",
+            "prompt_required": "Descrivi la modifica che vuoi",
+            "load_error": "Impossibile caricare le conversazioni AI del dominio."
         }
     },
     "navigation": {

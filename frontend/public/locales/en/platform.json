@@ -549,7 +549,7 @@
         "import": {
             "action": "Import from repository",
             "title": "Import repositories",
-            "description": "Create one microfrontend for each repository of the selected connection. Repositories already linked to a microfrontend are skipped.",
+            "description": "Create one microfrontend for each repository of the selected connection. Repositories already linked to a microfrontend or a service are skipped.",
             "loading": "Loading repositories...",
             "loadError": "Unable to load the repositories of this connection.",
             "noRepositories": "This connection does not expose any repository.",
@@ -841,6 +841,33 @@
             "nav_ai": "Edit with AI",
             "nav_settings": "Details & settings",
             "version": "v{{version}}"
+        },
+        "rename_repository": {
+            "action": "Rename repository",
+            "title": "Rename repository",
+            "name_label": "New repository name",
+            "name_placeholder": "Enter the new repository name",
+            "new_url": "new url",
+            "warning_remote": "Local clones must update their remote URL:",
+            "warning_redirect": "GitHub and GitLab redirect the old URL to the new one, Azure DevOps does not: there the old URL stops working.",
+            "confirm": "Rename",
+            "renaming": "Renaming...",
+            "success": "Repository renamed to {{name}}",
+            "validation": {
+                "required": "The repository name is required",
+                "invalid": "Use letters, numbers, dots, hyphens or underscores (max 100 characters), starting with a letter or number and not ending with a dot",
+                "git_suffix": "The name cannot end with .git or .atom",
+                "unchanged": "Enter a name different from the current one"
+            },
+            "errors": {
+                "invalid_name": "The repository name is not valid",
+                "name_taken": "A repository with this name already exists",
+                "not_linked": "This microfrontend has no linked repository",
+                "rename_failed": "The provider refused the rename: {{reason}}",
+                "generic": "Could not rename the repository",
+                "link_inconsistent": "The saved repository link does not match the repository shown: select the repository again and save"
+            },
+            "save_first": "Save the changes before renaming the repository"
         }
     },
     "environmentVariables": {
@@ -1769,12 +1796,18 @@
             "apply_all_failed_one": "{{count}} of {{total}} proposals could not be applied: see the error on its repository",
             "apply_all_failed_other": "{{count}} of {{total}} proposals could not be applied: see the errors on their repositories",
             "follow_up_no_proposal": "No proposal left to refine: start a new job for further changes.",
-            "service_badge": "Service"
+            "service_badge": "Service",
+            "scope_domain": "Domain"
         },
         "page_title": "AI agent"
     },
     "services": {
         "title": "Services",
+        "import": {
+            "description": "Create one service for each repository of the selected connection. Repositories already linked to a microfrontend or a service are skipped.",
+            "importedCount_one": "{{count}} service imported",
+            "importedCount_other": "{{count}} services imported"
+        },
         "back": "All services",
         "nav_label": "Service sections",
         "nav_overview": "Overview",
@@ -1809,6 +1842,17 @@
         "path_invalid": "Must start with \"/\", with at most 256 characters and no spaces",
         "image_repository": "Image repository",
         "image_repository_hint": "Optional. E.g. ghcr.io/acme/orders-api",
+        "urls": {
+            "title": "Endpoints",
+            "description": "The base URL the service is reachable at in each environment. The docs and OpenAPI paths are relative to it. Leave it blank where the service is not exposed.",
+            "placeholder": "https://orders-api.dev.example.com",
+            "invalid": "Enter an absolute http or https URL, without spaces, credentials, query (?) or fragment (#)",
+            "no_environments": "The project has no environments yet: create one to say where the service is exposed",
+            "empty": "No endpoint set. Add one from the service settings.",
+            "not_exposed": "Not exposed",
+            "open_docs": "API docs",
+            "open_openapi": "OpenAPI spec"
+        },
         "latest_version": "Latest version",
         "repository": "Repository",
         "code_repository": "Code repository",
@@ -1941,6 +1985,43 @@
         "created_success_message": "Domain created",
         "updated_success_message": "Domain updated",
         "no_domain": "No domain",
+        "deployments": {
+            "open": "Deployed versions",
+            "title": "Deployed versions",
+            "description": "Which version of each microfrontend and service of the domain runs in each environment. Frontend comes from the active deployment, backend from what the deploy pipeline reported.",
+            "matrix_title": "Deployed versions by domain",
+            "matrix_description": "For each domain and environment, the frontend versions of the active deployment and the backend versions reported by the deploy pipeline",
+            "matrix_empty_title": "Nothing to show",
+            "matrix_empty_description": "The project has no domains, microfrontends or services yet",
+            "back": "Back to domains",
+            "domain": "Domain",
+            "frontend": "Frontend",
+            "backend": "Backend",
+            "production": "Production",
+            "not_deployed": "not deployed",
+            "not_reported": "not reported",
+            "never_deployed": "Never deployed",
+            "deployment": "Deployment {{deploymentId}} · {{date}}",
+            "canary": "canary {{version}} ({{audience}})",
+            "canary_without_version": "canary ({{audience}})",
+            "canary_enrolled_users": "enrolled users",
+            "no_environments": "The project has no environments yet",
+            "no_members": "The domain has no microfrontends or services yet",
+            "no_members_short": "No members"
+        },
+        "viewCards": "Cards view",
+        "viewGalaxy": "Galaxy view",
+        "galaxy": {
+            "legend_canary": "Canary on",
+            "legend_bridge": "Link across domains",
+            "recenter": "Show everything",
+            "hint": "Click a galaxy to fly to it and click it again to open the domain. Click a star to open the microfrontend or the service. Scroll to zoom.",
+            "summary_one": "Project map: every domain is a galaxy, its microfrontends and services are the stars. There is {{count}} link across two domains.",
+            "summary_other": "Project map: every domain is a galaxy, its microfrontends and services are the stars. There are {{count}} links across two domains.",
+            "kind_microfrontend": "Microfrontend",
+            "kind_service": "Service",
+            "canary": "Canary at {{percentage}}%"
+        },
         "form": {
             "create_title": "New functional domain",
             "edit_title": "Edit functional domain",
@@ -1978,7 +2059,32 @@
             "viewOverview": "Overview",
             "viewFlow": "Diagram view",
             "viewGrid": "Grid view",
-            "viewTable": "Table view"
+            "viewTable": "Table view",
+            "flow_hint": "Drag from a microfrontend’s dot to another microfrontend or to a service to link them. Select a link and press Delete to remove it. Double click a block to open it."
+        },
+        "members": {
+            "create_microfrontend": "Create a new microfrontend",
+            "create_service": "Create a new service",
+            "assign_existing": "Add existing",
+            "import_repository": "Import from repository",
+            "assign_title_microfrontend": "Add existing microfrontends",
+            "assign_title_service": "Add existing services",
+            "assign_description_microfrontend": "Pick the microfrontends of the project to put in this domain. Those in another domain are moved here.",
+            "assign_description_service": "Pick the services of the project to put in this domain. Those in another domain are moved here.",
+            "search_placeholder": "Search by name or slug...",
+            "clear_search": "Clear the search",
+            "select_all": "Select all",
+            "selected_count": "{{count}} of {{total}} selected",
+            "in_domain": "In {{name}}",
+            "empty_microfrontend": "Every microfrontend of the project is already in this domain.",
+            "empty_service": "Every service of the project is already in this domain.",
+            "no_search_results": "Nothing matches this search.",
+            "confirm_one": "Add {{count}}",
+            "confirm_other": "Add {{count}}",
+            "assigned_microfrontend_one": "{{count}} microfrontend added to the domain",
+            "assigned_microfrontend_other": "{{count}} microfrontends added to the domain",
+            "assigned_service_one": "{{count}} service added to the domain",
+            "assigned_service_other": "{{count}} services added to the domain"
         },
         "errors": {
             "slug_taken": "A domain with this name already exists in the project",
@@ -1986,6 +2092,33 @@
             "name_required": "The domain name is required",
             "invalid": "The domain data is not valid",
             "not_found": "The selected domain no longer exists in this project"
+        },
+        "ai": {
+            "open": "Edit with AI",
+            "title": "Edit {{name}} with AI",
+            "description": "One agent works on the frontend and the backend of this domain together",
+            "back": "Back to the domain",
+            "unavailable": "AI editing is not available on this installation: no AI provider is configured.",
+            "conversations_label": "AI conversations of the domain",
+            "new_job": "New change",
+            "no_conversations": "No AI change asked on this domain yet.",
+            "open_conversation": "Open the conversation: {{prompt}}",
+            "repositories_count_one": "{{count}} repository",
+            "repositories_count_other": "{{count}} repositories",
+            "to_review": "To review",
+            "composer_title": "What do you want to change in {{name}}?",
+            "composer_description": "The agent reads the microfrontends and the services of the domain all at once, together with the AI context of the project, of the domain and of each of them, so a change can span frontend and backend (an endpoint and the screens that call it). It proposes the edits for review: nothing is pushed until you apply them, as one pull request per repository.",
+            "context_title": "Repositories the agent works on",
+            "kind_microfrontend": "microfrontend",
+            "kind_service": "service",
+            "no_repositories": "No microfrontend or service of this domain has a linked code repository.",
+            "unlinked": "Left out, without a linked repository: {{names}}",
+            "too_many_title": "Too many repositories",
+            "too_many_description": "The domain has {{count}} repositories, one agent works on at most {{max}}: start the job from the assistant and pick the ones to change.",
+            "prompt_label": "What should change?",
+            "prompt_placeholder": "e.g. Add the shipping cost to the order API and show it in the cart and checkout pages",
+            "prompt_required": "Describe the change you want",
+            "load_error": "Could not load the AI conversations of the domain."
         }
     },
     "navigation": {

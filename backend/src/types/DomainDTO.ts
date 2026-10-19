@@ -5,4 +5,10 @@ interface DomainDTO {
     description?: string
 }
 
+/** Microfrontends and services of the project to put in a domain */
+export interface DomainMembersDTO {
+    microfrontendIds?: string[]
+    serviceIds?: string[]
+}
+
 export default DomainDTO
