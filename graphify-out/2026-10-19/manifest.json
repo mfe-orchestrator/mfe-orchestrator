@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.ts": {
-    "mtime": 1792242965.4322186,
-    "ast_hash": "fa68171bb8cf29d4a8af38e206f5e328",
+    "mtime": 1792415820.568844,
+    "ast_hash": "88cce7ffc955f60fb41139789b2eb27c",
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.ts": {
@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792412277.772275,
-    "ast_hash": "a048128855d8280d981b0cdb1f762073",
+    "mtime": 1792415907.2271872,
+    "ast_hash": "545145141532e97b5f222309444086e6",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792412275.481984,
-    "ast_hash": "8d8177450f2065aaf025edfec09aea04",
+    "mtime": 1792415901.5870345,
+    "ast_hash": "09f93d0ee32a72f1f30352059c9d8fa3",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -2675,8 +2675,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/server.test.ts": {
-    "mtime": 1792415390.626214,
-    "ast_hash": "5ed2d68c1d551f19f2a7e40bf5869c86",
+    "mtime": 1792415844.3991225,
+    "ast_hash": "9f1bbcd494be7839f6fa731503078b7b",
     "semantic_hash": ""
   },
   "backend/src/mcp/server.ts": {
@@ -2705,8 +2705,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectTools.ts": {
-    "mtime": 1792407150.2003493,
-    "ast_hash": "1cbafb7e63742a699c5cac597cf3fd4f",
+    "mtime": 1792415854.6763432,
+    "ast_hash": "33326355d01a10b40971adc901863664",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/repositoryTools.ts": {
@@ -3350,8 +3350,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.defaultHost.test.ts": {
-    "mtime": 1792183225.2519724,
-    "ast_hash": "ace387d9e01f4da0e2aa14896f1138f8",
+    "mtime": 1792415942.4654717,
+    "ast_hash": "2ba8e3d78f9c420c08bac648b7808de3",
     "semantic_hash": ""
   },
   "backend/src/models/BuiltServiceModel.ts": {
@@ -3465,8 +3465,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.template.test.ts": {
-    "mtime": 1792242965.4317722,
-    "ast_hash": "c80a39f43767cf3cc3eedd356125819e",
+    "mtime": 1792415942.4898262,
+    "ast_hash": "0df79f9356e7dd85ba89c88c67301155",
     "semantic_hash": ""
   },
   "backend/src/service/ServiceService.test.ts": {
@@ -3480,13 +3480,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.test.ts": {
-    "mtime": 1792245790.7002072,
-    "ast_hash": "b30aa81276416f830c8797116e1fedf1",
+    "mtime": 1792415942.4642198,
+    "ast_hash": "93a769c55af9ee07458680340fd7c35a",
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.ts": {
-    "mtime": 1792245790.7006867,
-    "ast_hash": "e122822d4cb5560a13187b0893a74fe3",
+    "mtime": 1792415820.568125,
+    "ast_hash": "6f181f17fafc9bbcb44facd8b92bea1a",
     "semantic_hash": ""
   },
   "backend/src/service/workspace/repositoryComponent.ts": {
@@ -3560,8 +3560,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/DomainDetail.tsx": {
-    "mtime": 1792412766.3637621,
-    "ast_hash": "89eb584b999e8ab547dbc48e89df3b10",
+    "mtime": 1792415917.9900575,
+    "ast_hash": "725edc705895fb22da0887147d0327df",
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/Domains.tsx": {
@@ -3585,8 +3585,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.domain.test.ts": {
-    "mtime": 1792237276.425339,
-    "ast_hash": "f6da59cd88bceeaf6922274f26fd57c8",
+    "mtime": 1792415942.464911,
+    "ast_hash": "712a0795937be210e345be6aef930a27",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/domainTools.test.ts": {
@@ -3840,13 +3840,13 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/scaffoldTools.test.ts": {
-    "mtime": 1792415418.30081,
-    "ast_hash": "87c9bf4cd05e27ab68c64d24c6781d10",
+    "mtime": 1792415837.8139849,
+    "ast_hash": "f7b8584fdf9ee4c8b7acb7528e69304c",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/scaffoldTools.ts": {
-    "mtime": 1792415434.7154057,
-    "ast_hash": "724a5da1ec3ecc40464d2f8f50c84b80",
+    "mtime": 1792415968.944806,
+    "ast_hash": "63899c2ce0c9b7a3a5adc8f5d398a042",
     "semantic_hash": ""
   }
 }
