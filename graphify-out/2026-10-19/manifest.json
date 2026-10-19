@@ -2675,13 +2675,13 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/server.test.ts": {
-    "mtime": 1792237944.1112726,
-    "ast_hash": "72117668e2255e72720e42dcc6b175a3",
+    "mtime": 1792415390.626214,
+    "ast_hash": "5ed2d68c1d551f19f2a7e40bf5869c86",
     "semantic_hash": ""
   },
   "backend/src/mcp/server.ts": {
-    "mtime": 1792409235.0003405,
-    "ast_hash": "db25cdef7718ab8c7ce0ed538bd51878",
+    "mtime": 1792415380.0835626,
+    "ast_hash": "3a7c1ea622cada91aa452a7a6fd9c77f",
     "semantic_hash": ""
   },
   "backend/src/mcp/toolDefinition.ts": {
@@ -2700,8 +2700,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/microfrontendTools.ts": {
-    "mtime": 1792407150.2002335,
-    "ast_hash": "75f81787580dcb13dd39d371a4cf7be2",
+    "mtime": 1792415434.7148836,
+    "ast_hash": "5d4b67dc9cc96e4259a025963728a4d8",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectTools.ts": {
@@ -2710,8 +2710,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/repositoryTools.ts": {
-    "mtime": 1792403989.672689,
-    "ast_hash": "581e52b2ae931a78350956fe29e9f844",
+    "mtime": 1792415172.4175637,
+    "ast_hash": "367f07ea90a63b3f1ee6cec4334ca06a",
     "semantic_hash": ""
   },
   "backend/src/mcp/wellKnownRoutes.ts": {
@@ -2785,8 +2785,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/assistant/AssistantService.ts": {
-    "mtime": 1792407150.2024925,
-    "ast_hash": "df10f71960ed062692d9774bf5bd5b41",
+    "mtime": 1792415172.4161294,
+    "ast_hash": "539ae5e0adfd52bff099e3bd28fa00ac",
     "semantic_hash": ""
   },
   "backend/src/service/assistant/assistantTools.test.ts": {
@@ -2970,8 +2970,8 @@
     "semantic_hash": ""
   },
   "docs/MCP.md": {
-    "mtime": 1792409344.5954754,
-    "ast_hash": "c564dd51cfe4307259661dc9ba91e413",
+    "mtime": 1792415428.5956182,
+    "ast_hash": "1a5457b30ea41fcb5a2806e4e771e1d1",
     "semantic_hash": ""
   },
   "backend/src/utils/apiKeyCredentialCache.ts": {
@@ -3180,13 +3180,13 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectContentTools.test.ts": {
-    "mtime": 1792097670.0206149,
-    "ast_hash": "682349829407b1e1672a6dfa78453346",
+    "mtime": 1792415390.6256566,
+    "ast_hash": "f3b83d20d755bc2559fc5f42beda7d4d",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectContentTools.ts": {
-    "mtime": 1792097504.3990653,
-    "ast_hash": "8fbcc48c394a38607a4ddbf1c924757d",
+    "mtime": 1792415363.558001,
+    "ast_hash": "d25f39f920a200d04a71a2851d7f10b5",
     "semantic_hash": ""
   },
   "backend/src/service/assistant/assistantActions.test.ts": {
@@ -3605,8 +3605,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/serviceTools.ts": {
-    "mtime": 1792407150.2006378,
-    "ast_hash": "824026baea6df3ca5dad4303665c91b9",
+    "mtime": 1792415363.5585272,
+    "ast_hash": "337b831ee6d04dfc110432ab5fff2706",
     "semantic_hash": ""
   },
   "frontend/src/pages/assistant/AssistantPage.tsx": {
@@ -3837,6 +3837,16 @@
   "frontend/src/pages/domains/partials/DomainLinkDialog.tsx": {
     "mtime": 1792412209.7384493,
     "ast_hash": "925bd0806cc042d2f80b27717a11f9ed",
+    "semantic_hash": ""
+  },
+  "backend/src/mcp/tools/scaffoldTools.test.ts": {
+    "mtime": 1792415418.30081,
+    "ast_hash": "87c9bf4cd05e27ab68c64d24c6781d10",
+    "semantic_hash": ""
+  },
+  "backend/src/mcp/tools/scaffoldTools.ts": {
+    "mtime": 1792415434.7154057,
+    "ast_hash": "724a5da1ec3ecc40464d2f8f50c84b80",
     "semantic_hash": ""
   }
 }
