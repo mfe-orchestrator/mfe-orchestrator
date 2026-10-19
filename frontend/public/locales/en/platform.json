@@ -2142,6 +2142,7 @@
     },
     "navigation": {
         "sections": {
+            "devops": "DevOps",
             "domains": "Functional domains",
             "microfrontends": "Microfrontends",
             "services": "Backend services"

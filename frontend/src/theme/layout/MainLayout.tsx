@@ -39,8 +39,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             items: [
                 { name: "Microfrontends", path: "/microfrontends", icon: <LayoutDashboard /> },
                 { name: t("dependencies.sidebar_title"), path: "/dependencies", icon: <PackageIcon /> },
-                { name: t("builds.title"), path: "/builds", icon: <HammerIcon /> },
-                { name: t("deployments.title"), path: "/deployments", icon: <RocketIcon /> },
                 { name: t("integration.sidebar_title"), path: "/integration", icon: <LinkIcon /> },
                 { name: t("environmentVariables.title"), path: "/environment-variables", icon: <FileText /> }
             ]
@@ -48,6 +46,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {
             title: t("navigation.sections.services"),
             items: [{ name: t("services.title"), path: "/services", icon: <Server /> }]
+        },
+        {
+            title: t("navigation.sections.devops"),
+            items: [
+                { name: t("builds.title"), path: "/builds", icon: <HammerIcon /> },
+                { name: t("deployments.title"), path: "/deployments", icon: <RocketIcon /> }
+            ]
         }
     ]
 
