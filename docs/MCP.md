@@ -78,6 +78,9 @@ at most.
 - `domain_create` and `domain_update` (`mfe:write`) set the name and the description; the slug is
   derived from the name when left out and fixed after creation. `domain_delete` is destructive: the
   members are kept and end up in no domain.
+- `domain_deployments_get` (`mfe:read`) tells, for one domain or for the whole project, which version of
+  each microfrontend and service runs in each environment: the frontend from the active deployment
+  snapshot, the backend from the versions the customer's deploy pipeline reported.
 - `services_list`, `service_get` (`mfe:read`) and `service_create`, `service_update`, `service_delete`
   (`mfe:write`, the delete destructive) manage the backend services: name, description, domain,
   context, port, probe and API documentation paths, image repository, the environment variables the

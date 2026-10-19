@@ -12,6 +12,7 @@ import { MCP_SCOPE_WRITE } from "../utils/oauthConfig"
 import { McpSession, McpSharedProject, McpToolContext, McpToolDefinition, objectId } from "./toolDefinition"
 import { aiChangeTools } from "./tools/aiChangeTools"
 import { configurationTools } from "./tools/configurationTools"
+import { domainDeploymentTools } from "./tools/domainDeploymentTools"
 import { domainTools } from "./tools/domainTools"
 import { environmentTools } from "./tools/environmentTools"
 import { microfrontendTools } from "./tools/microfrontendTools"
@@ -47,6 +48,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     ...microfrontendTools,
     ...serviceTools,
     ...domainTools,
+    ...domainDeploymentTools,
     ...environmentTools,
     ...repositoryTools,
     ...configurationTools,

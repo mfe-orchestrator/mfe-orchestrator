@@ -16,6 +16,8 @@ import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 const AssistantPage = lazy(() => import("./pages/assistant/AssistantPage"))
 const Domains = lazy(() => import("./pages/domains/Domains"))
 const DomainDetail = lazy(() => import("./pages/domains/DomainDetail"))
+const DomainAiWorkspace = lazy(() => import("./pages/domains/DomainAiWorkspace"))
+const DomainDeploymentsMatrix = lazy(() => import("./pages/domains/DomainDeploymentsMatrix"))
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"))
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"))
 const MicrofrontendAiWorkspace = lazy(() => import("./pages/microfrontends/MicrofrontendAiWorkspace"))
@@ -118,7 +120,9 @@ const PrivateProjectRoutes: React.FC = () => {
             <RRDRoutes>
                 <Route path="/assistant" element={<RouteWithSuspense element={<AssistantPage />} />} />
                 <Route path="/domains" element={<RouteWithSuspense element={<Domains />} />} />
+                <Route path="/domains/deployments" element={<RouteWithSuspense element={<DomainDeploymentsMatrix />} />} />
                 <Route path="/domain/:id" element={<RouteWithSuspense element={<DomainDetail />} />} />
+                <Route path="/domain/:id/ai" element={<RouteWithSuspense element={<DomainAiWorkspace />} />} />
                 <Route path="/microfrontends" element={<RouteWithSuspense element={<Microfrontends />} />} />
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<MicrofrontendAiWorkspace />} />} />

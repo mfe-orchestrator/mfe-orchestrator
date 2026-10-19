@@ -4,6 +4,7 @@ import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
+import ServiceDeployment from "../models/ServiceDeploymentModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
@@ -117,6 +118,8 @@ class EnvironmentService extends BaseAuthorizedService {
         await DeploymentToCanaryUsers.deleteMany({ deploymentId: { $in: deploymentIds } }, { session })
         await Deployment.deleteMany({ environmentId: { $in: environmentIds } }, { session })
         await GlobalVariable.deleteMany({ environmentId: { $in: environmentIds } }, { session })
+        // The versions the deploy pipelines reported as running there
+        await ServiceDeployment.deleteMany({ environmentId: { $in: environmentIds } }, { session })
 
         return Environment.deleteMany({ _id: { $in: environmentIds } }, { session })
     }

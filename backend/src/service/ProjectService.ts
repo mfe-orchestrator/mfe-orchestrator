@@ -12,6 +12,7 @@ import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
+import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
@@ -298,6 +299,7 @@ export class ProjectService extends BaseAuthorizedService {
 
         const services = await Service.find({ projectId: projectIdObj }, { _id: 1 }, { session })
         await BuiltService.deleteMany({ serviceId: { $in: services.map(service => service._id) } }, session)
+        await ServiceDeployment.deleteMany({ serviceId: { $in: services.map(service => service._id) } }, { session })
 
         const deployments = await Deployment.find({ projectId: projectIdObj }, {}, { session })
         const deploymentsIds = deployments.map(deployment => deployment._id)
