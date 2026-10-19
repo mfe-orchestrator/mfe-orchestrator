@@ -3,7 +3,7 @@ import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import ServiceService from "../../service/ServiceService"
 import ServiceDTO from "../../types/ServiceDTO"
-import { SERVICE_HTTP_PATH, SERVICE_SLUG } from "../../types/ServiceStack"
+import { isServiceUrl, SERVICE_HTTP_PATH, SERVICE_SLUG } from "../../types/ServiceStack"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, defineTool, McpToolContext, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 import { domainFilter, filterByDomain, memberDomainId } from "./domainTools"
@@ -37,6 +37,18 @@ const serviceFields = {
     readinessPath: httpPath.optional().describe("Readiness probe path, /health/ready when omitted"),
     docsPath: httpPath.nullable().optional().describe("Path of the API documentation UI, e.g. /docs; null when the service has none"),
     openApiPath: httpPath.nullable().optional().describe("Path of the OpenAPI spec, e.g. /openapi.json; null when the service has none"),
+    urls: z
+        .array(
+            z.object({
+                environmentId: objectId("Id of an environment of the project, from environments_list"),
+                url: z
+                    .string()
+                    .refine(isServiceUrl, "absolute http(s), at most 2048 characters, without whitespace, credentials, query or fragment")
+                    .describe("Absolute http(s) base URL, e.g. https://orders.dev.acme.com")
+            })
+        )
+        .optional()
+        .describe("Where the service is reachable, one base URL per environment it is exposed in; docsPath and openApiPath are relative to it. Replaced as a whole"),
     env: z
         .array(
             z.object({
@@ -70,7 +82,8 @@ export const serviceTools = [
     defineTool({
         name: "services_list",
         title: "List services",
-        description: "Every backend service of the project, with its latest version, image, port, probes, environment variables, repository and domainId. Pass domainId to list one domain only.",
+        description:
+            "Every backend service of the project, with its latest version, image, port, probes, base URL per environment, environment variables, repository and domainId. Pass domainId to list one domain only.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: z.object({ domainId: domainFilter }),
@@ -101,7 +114,7 @@ export const serviceTools = [
     defineTool({
         name: "service_update",
         title: "Update service",
-        description: "Changes the given fields of a backend service. Nested objects (codeRepository, image) and the env list are replaced as a whole.",
+        description: "Changes the given fields of a backend service. Nested objects (codeRepository, image) and the env and urls lists are replaced as a whole.",
         scope: MCP_SCOPE_WRITE,
         annotations: { ...WRITE, idempotentHint: true },
         inputSchema: updateSchema,

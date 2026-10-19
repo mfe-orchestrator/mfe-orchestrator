@@ -24,6 +24,12 @@ export interface ServiceVariable {
     values: { environmentId: string; value: string }[]
 }
 
+/** Where the service answers in one environment: the base its docs and OpenAPI paths are relative to */
+export interface ServiceUrl {
+    environmentId: string
+    url: string
+}
+
 /** Same shape as the microfrontend repository link: the backend reuses the subdocument. */
 export type ServiceCodeRepository = Microfrontend["codeRepository"]
 
@@ -60,6 +66,8 @@ export interface Service {
     docsPath?: string | null
     /** The OpenAPI spec; blank or null when the service has none */
     openApiPath?: string | null
+    /** One per environment it is exposed in; an environment left out has no known address */
+    urls?: ServiceUrl[]
     env: ServiceEnvVariable[]
     configMap?: ServiceVariable[]
     secrets?: ServiceVariable[]

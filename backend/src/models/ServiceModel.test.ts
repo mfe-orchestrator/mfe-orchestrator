@@ -82,6 +82,19 @@ describe("Service model", () => {
         expect(aService().secrets).toEqual([])
     })
 
+    it("given a service with no base URL, when it is built, then it is exposed nowhere; given one without environment, then it is refused", async () => {
+        expect(aService().urls).toEqual([])
+
+        const service = new Service({ projectId: new Types.ObjectId(), slug: "orders", name: "Orders", urls: [{ url: "https://orders.acme.com" }] })
+        await expect(service.validate()).rejects.toMatchObject({ errors: { "urls.0.environmentId": expect.anything() } })
+    })
+
+    it("given a base URL that is not http(s), when it is validated, then it is refused even without going through ServiceService", async () => {
+        const service = new Service({ projectId: new Types.ObjectId(), slug: "orders", name: "Orders", urls: [{ environmentId: new Types.ObjectId(), url: "javascript:alert(1)" }] })
+
+        await expect(service.validate()).rejects.toMatchObject({ errors: { "urls.0.url": expect.anything() } })
+    })
+
     it.each([["configMap"], ["secrets"]])("given a %s key starting with a digit, when it is validated, then it is refused", async field => {
         const service = new Service({ projectId: new Types.ObjectId(), slug: "orders", name: "Orders", [field]: [{ key: "1_URL", values: [] }] })
 

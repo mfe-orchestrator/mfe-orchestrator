@@ -24,9 +24,10 @@ import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import ServiceDangerZone from "./partials/ServiceDangerZone"
 import ServiceEnvFields from "./partials/ServiceEnvFields"
 import ServiceHeader from "./partials/ServiceHeader"
+import ServiceUrlsFields from "./partials/ServiceUrlsFields"
 import ServiceVariablesFields from "./partials/ServiceVariablesFields"
 import { isServiceTemplate } from "./partials/serviceTemplates"
-import { fromFormVariables, SERVICE_VARIABLE_KEY, toFormVariables, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
+import { fromFormUrls, fromFormVariables, isServiceUrl, SERVICE_VARIABLE_KEY, toFormUrls, toFormVariables, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
 
 /** Same rule as the backend (SERVICE_SLUG): the slug names the workspace folder and the CI registration URL */
 const SERVICE_SLUG = /^[a-z0-9][a-z0-9-]{1,49}$/
@@ -49,6 +50,7 @@ const prefilledValuesOf = (defaults: ServiceDefaults): PrefilledValues => ({
 interface FormMessages {
     slug: string
     path: string
+    url: string
     variableKey: string
     variableKeyDuplicated: string
 }
@@ -84,6 +86,13 @@ const createFormSchema = (messages: FormMessages) =>
                 .trim()
                 .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
             image: z.object({ repository: z.string().optional() }).optional(),
+            // One per environment, in their order; blank: not exposed there
+            urls: z.array(
+                z
+                    .string()
+                    .trim()
+                    .refine(value => value === "" || isServiceUrl(value), messages.url)
+            ),
             env: z.array(
                 z.object({
                     name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
@@ -153,6 +162,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
             createFormSchema({
                 slug: t("services.slug_invalid"),
                 path: t("services.path_invalid"),
+                url: t("services.urls.invalid"),
                 variableKey: t("services.variables.key_invalid"),
                 variableKeyDuplicated: t("services.variables.key_duplicated")
             }),
@@ -167,6 +177,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                   port: String(service.port),
                   docsPath: service.docsPath ?? "",
                   openApiPath: service.openApiPath ?? "",
+                  urls: toFormUrls(service.urls, environments),
                   env: service.env ?? [],
                   configMap: toFormVariables(service.configMap, environments, false),
                   secrets: toFormVariables(service.secrets, environments, true)
@@ -184,6 +195,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                   docsPath: "",
                   openApiPath: "",
                   image: { repository: "" },
+                  urls: environments.map(() => ""),
                   env: [],
                   configMap: [],
                   secrets: [],
@@ -218,6 +230,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
             ...data,
             domainId: data.domainId || null,
             port: Number(data.port),
+            urls: fromFormUrls(data.urls, environments),
             configMap: fromFormVariables(data.configMap, environments),
             secrets: fromFormVariables(data.secrets, environments)
         } as unknown as ServiceDTO
@@ -321,6 +334,8 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                         />
                     </CardContent>
                 </Card>
+
+                <ServiceUrlsFields environments={environments} />
 
                 {hasRepositories && <CodeRepositorySection repositoriesData={repositories} isEdit={isEdit} forceCreation={!isEdit} />}
 

@@ -35,12 +35,13 @@ import CodeRepository from "../models/CodeRepositoryModel"
 import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import Project from "../models/ProjectModel"
+import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service from "../models/ServiceModel"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
 import ServiceDTO from "../types/ServiceDTO"
 import { ServiceRuntime } from "../types/ServiceStack"
 import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
-import ServiceService, { imageRepositoryOf, isNewerVersion, normalizeVariables } from "./ServiceService"
+import ServiceService, { imageRepositoryOf, isNewerVersion, normalizeUrls, normalizeVariables } from "./ServiceService"
 
 const projectId = new Types.ObjectId().toString()
 const serviceId = new Types.ObjectId()
@@ -441,6 +442,66 @@ describe("ServiceService.update of the config map and the secrets", () => {
         await expect(refusal).rejects.toMatchObject({ code: "SERVICE_VARIABLE_ENVIRONMENT_UNKNOWN" })
         expect(write).not.toHaveBeenCalled()
     })
+
+    it("given base URLs only, when the service is updated, then they are written normalised and the variables are left alone", async () => {
+        await update({
+            urls: [
+                { environmentId: development, url: " https://orders.dev.acme.com/ " },
+                { environmentId: production, url: "" }
+            ]
+        })
+
+        expect(write.mock.calls[0][1]).toEqual({ name: "Orders API", urls: [{ environmentId: development, url: "https://orders.dev.acme.com" }] })
+    })
+})
+
+describe("normalizeUrls", () => {
+    const development = new Types.ObjectId().toString()
+    const production = new Types.ObjectId().toString()
+    const environments = new Set([development, production])
+
+    it("given padded URLs with trailing slashes and a blank one, when normalised, then they are trimmed and the blank environment is left out", () => {
+        expect(
+            normalizeUrls(
+                [
+                    { environmentId: development, url: "  https://orders.dev.acme.com/api//  " },
+                    { environmentId: production, url: "   " }
+                ],
+                environments
+            )
+        ).toEqual([{ environmentId: development, url: "https://orders.dev.acme.com/api" }])
+    })
+
+    it("given a URL with a port, when normalised, then it is kept", () => {
+        expect(normalizeUrls([{ environmentId: development, url: "http://localhost:8080" }], environments)).toEqual([{ environmentId: development, url: "http://localhost:8080" }])
+    })
+
+    it.each([
+        ["a relative URL", [{ environmentId: development, url: "orders.acme.com" }], "SERVICE_URL_INVALID"],
+        ["another scheme", [{ environmentId: development, url: "ftp://orders.acme.com" }], "SERVICE_URL_INVALID"],
+        ["a URL with whitespace", [{ environmentId: development, url: "https://orders acme.com" }], "SERVICE_URL_INVALID"],
+        ["a URL too long", [{ environmentId: development, url: `https://acme.com/${"x".repeat(2048)}` }], "SERVICE_URL_INVALID"],
+        ["a URL with a query", [{ environmentId: development, url: "https://orders.acme.com?tenant=a" }], "SERVICE_URL_INVALID"],
+        ["a URL with a fragment", [{ environmentId: development, url: "https://orders.acme.com#top" }], "SERVICE_URL_INVALID"],
+        ["a URL with credentials", [{ environmentId: development, url: "https://user:pass@orders.acme.com" }], "SERVICE_URL_INVALID"],
+        ["a URL made of slashes only", [{ environmentId: development, url: "///" }], "SERVICE_URL_INVALID"],
+        ["an environment of another project", [{ environmentId: new Types.ObjectId().toString(), url: "https://acme.com" }], "SERVICE_URL_ENVIRONMENT_UNKNOWN"],
+        [
+            "two URLs for one environment",
+            [
+                { environmentId: development, url: "https://a.acme.com" },
+                { environmentId: development, url: "https://b.acme.com" }
+            ],
+            "SERVICE_URL_ENVIRONMENT_DUPLICATED"
+        ],
+        ["something that is not a list", { environmentId: development, url: "https://acme.com" }, "SERVICE_URLS_INVALID"]
+    ])("given %s, when normalised, then it is refused", (_case, urls, code) => {
+        expect(() => normalizeUrls(urls, environments)).toThrow(expect.objectContaining({ code }))
+    })
+
+    it("given a null entry, when normalised, then it is skipped rather than crashing", () => {
+        expect(normalizeUrls([null], environments)).toEqual([])
+    })
 })
 
 describe("normalizeVariables", () => {
@@ -553,16 +614,18 @@ describe("isNewerVersion", () => {
 })
 
 describe("ServiceService.delete", () => {
-    it("given a service, when it is deleted, then its versions go and its workspace and AI changes are forgotten", async () => {
+    it("given a service, when it is deleted, then its versions and reported deploys go and its workspace and AI changes are forgotten", async () => {
         const service = { _id: serviceId, projectId, slug: "orders-api" }
         vi.spyOn(Service, "findById").mockResolvedValue(service as never)
         vi.spyOn(ServiceService.prototype as unknown as { ensureAccessToService: () => Promise<void> }, "ensureAccessToService").mockResolvedValue(undefined)
         const deleteVersions = vi.spyOn(BuiltService, "deleteMany").mockResolvedValue({} as never)
+        const deleteDeploys = vi.spyOn(ServiceDeployment, "deleteMany").mockResolvedValue({} as never)
         vi.spyOn(Service, "findByIdAndDelete").mockResolvedValue(service as never)
 
         await new ServiceService().delete(String(serviceId))
 
         expect(deleteVersions).toHaveBeenCalledWith({ serviceId })
+        expect(deleteDeploys).toHaveBeenCalledWith({ serviceId })
         expect(forgetServices).toHaveBeenCalledWith([service])
     })
 })

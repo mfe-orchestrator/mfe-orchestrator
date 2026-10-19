@@ -7,10 +7,11 @@ import BuiltService, { IBuiltService } from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Environment from "../models/EnvironmentModel"
 import Project from "../models/ProjectModel"
+import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service, { IService, IServiceVariable } from "../models/ServiceModel"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
 import ServiceDTO, { ServiceVariableDTO, ServiceVersionRegistrationDTO } from "../types/ServiceDTO"
-import { isServiceTemplateType, parseRuntime, SERVICE_SLUG, SERVICE_VARIABLE_KEY, SERVICE_VERSION } from "../types/ServiceStack"
+import { isServiceTemplateType, isServiceUrl, parseRuntime, SERVICE_SLUG, SERVICE_URL_MAX_LENGTH, SERVICE_VARIABLE_KEY, SERVICE_VERSION } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
 import { isEncryptedSecret, SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BaseAuthorizedService from "./BaseAuthorizedService"
@@ -97,16 +98,55 @@ export const normalizeVariables = (variables: unknown, kind: VariablesKind, envi
 }
 
 /**
- * The config map and the secrets of `dto`, normalised, when it carries any: a caller that leaves both
- * out (an MCP update of the name, say) changes neither and costs no query. One key cannot be in both,
- * since both end up as variables of one container; a list left out is compared as it is stored.
+ * The base URLs as they are stored: blank ones dropped (no known address in that environment), every
+ * environment one of the project and at most once, every URL absolute http(s) without a trailing slash,
+ * so that appending a path such as `/docs` gives a working link. The size guard counts the blank
+ * entries too: it only bounds the request, the checks per entry give the precise refusal.
  */
-const withNormalizedVariables = async <T extends Pick<ServiceDTO, "configMap" | "secrets">>(dto: T, projectId: Schema.Types.ObjectId, existing?: IService): Promise<T> => {
-    if (dto.configMap === undefined && dto.secrets === undefined) return dto
+export const normalizeUrls = (urls: unknown, environmentIds: Set<string>): Array<{ environmentId: string; url: string }> => {
+    if (!Array.isArray(urls) || urls.length > MAX_SERVICE_VARIABLES) {
+        throw createBusinessException({ code: "SERVICE_URLS_INVALID", message: `urls must be a list of at most ${MAX_SERVICE_VARIABLES} entries` })
+    }
+
+    const environments = new Set<string>()
+    return urls.flatMap(item => {
+        const { environmentId, url } = (item ?? {}) as { environmentId?: unknown; url?: unknown }
+        const typed = typeof url === "string" ? url.trim() : ""
+        if (!typed) return []
+        const value = typed.replace(/\/+$/, "")
+
+        const environment = String(environmentId)
+        if (!environmentIds.has(environment)) {
+            throw createBusinessException({ code: "SERVICE_URL_ENVIRONMENT_UNKNOWN", message: `There is a URL for ${environment}, which is not an environment of the project` })
+        }
+        if (environments.has(environment)) {
+            throw createBusinessException({ code: "SERVICE_URL_ENVIRONMENT_DUPLICATED", message: `There is more than one URL for environment ${environment}` })
+        }
+        environments.add(environment)
+
+        if (!isServiceUrl(value)) {
+            throw createBusinessException({
+                code: "SERVICE_URL_INVALID",
+                message: `"${typed}" is not a valid URL: absolute http or https, at most ${SERVICE_URL_MAX_LENGTH} characters, without whitespace, credentials, query or fragment`
+            })
+        }
+        return [{ environmentId: environment, url: value }]
+    })
+}
+
+/**
+ * The fields of `dto` with a value per environment (config map, secrets, URLs), normalised, when it
+ * carries any: a caller that leaves them all out (an MCP update of the name, say) changes none and costs
+ * no query. One key cannot be in both the config map and the secrets, since both end up as variables of
+ * one container; a list left out is compared as it is stored.
+ */
+const withNormalizedEnvironmentFields = async <T extends Pick<ServiceDTO, "configMap" | "secrets" | "urls">>(dto: T, projectId: Schema.Types.ObjectId, existing?: IService): Promise<T> => {
+    if (dto.configMap === undefined && dto.secrets === undefined && dto.urls === undefined) return dto
 
     const environmentIds = new Set((await Environment.find({ projectId }, { _id: 1 })).map(environment => String(environment._id)))
     const configMap = dto.configMap === undefined ? undefined : normalizeVariables(dto.configMap, "configMap", environmentIds)
     const secrets = dto.secrets === undefined ? undefined : normalizeVariables(dto.secrets, "secrets", environmentIds, existing?.secrets)
+    const urls = dto.urls === undefined ? undefined : normalizeUrls(dto.urls, environmentIds)
 
     const secretKeys = new Set((secrets ?? existing?.secrets ?? []).map(secret => secret.key))
     const clash = (configMap ?? existing?.configMap ?? []).find(entry => secretKeys.has(entry.key))
@@ -114,7 +154,7 @@ const withNormalizedVariables = async <T extends Pick<ServiceDTO, "configMap" | 
         throw createBusinessException({ code: "SERVICE_VARIABLE_KEY_DUPLICATED", message: `"${clash.key}" is both in the config map and in the secrets` })
     }
 
-    return { ...dto, ...(configMap && { configMap }), ...(secrets && { secrets }) }
+    return { ...dto, ...(configMap && { configMap }), ...(secrets && { secrets }), ...(urls && { urls }) }
 }
 
 /**
@@ -208,7 +248,7 @@ export class ServiceService extends BaseAuthorizedService {
         const slug = (dto.slug ?? "").trim().toLowerCase()
         ensureValidSlug(slug)
         const { id: _id, ...fields } = { ...dto, slug }
-        const service = await withNormalizedVariables(fields, projectIdObj)
+        const service = await withNormalizedEnvironmentFields(fields, projectIdObj)
         if (service.domainId !== undefined) {
             service.domainId = await resolveDomainId(service.domainId, projectIdObj)
         }
@@ -282,7 +322,7 @@ export class ServiceService extends BaseAuthorizedService {
         // Never moved to another project, nor given another identity, through an update: the slug is
         // in the registration URL the CI of the repository calls
         const { id: _id, _id: _mongoId, projectId: _projectId, slug: _slug, ...fields } = updates as Partial<ServiceDTO> & { _id?: unknown; projectId?: unknown }
-        const allowed = await withNormalizedVariables(fields, service.projectId, service)
+        const allowed = await withNormalizedEnvironmentFields(fields, service.projectId, service)
         if (allowed.domainId !== undefined) {
             allowed.domainId = await resolveDomainId(allowed.domainId, service.projectId)
         }
@@ -305,6 +345,7 @@ export class ServiceService extends BaseAuthorizedService {
             throw new EntityNotFoundError(String(id))
         }
         await BuiltService.deleteMany({ serviceId: service._id })
+        await ServiceDeployment.deleteMany({ serviceId: service._id })
         const deleted = await Service.findByIdAndDelete(service._id)
         // The local clone and the AI change requests go with it, as for a microfrontend.
         await forgetServices([service])

@@ -22,6 +22,19 @@ export const SERVICE_VERSION = /^[A-Za-z0-9._-]{1,128}$/
  */
 export const SERVICE_HTTP_PATH = /^\/\S{0,255}$/
 
+export const SERVICE_URL_MAX_LENGTH = 2048
+
+/**
+ * What a base URL of a service may be: absolute http(s), no whitespace, and nothing a path could not
+ * follow (no query, no fragment), so that appending `/docs` gives a working link. No credentials: the
+ * URL is shown to whoever reads the service, unlike its secrets.
+ */
+export const isServiceUrl = (value: string): boolean => {
+    if (value.length > SERVICE_URL_MAX_LENGTH || /\s/.test(value) || !URL.canParse(value)) return false
+    const url = new URL(value)
+    return ["http:", "https:"].includes(url.protocol) && !url.search && !url.hash && !url.username && !url.password
+}
+
 /** What a key of the config map or of the secrets may be: it reaches the container as an environment variable name */
 export const SERVICE_VARIABLE_KEY = /^[A-Za-z_][A-Za-z0-9_]{0,254}$/
 

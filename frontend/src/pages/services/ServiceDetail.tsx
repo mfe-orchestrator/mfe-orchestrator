@@ -1,12 +1,13 @@
 import { Alert, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, DescriptionItem, DescriptionList, Spinner } from "@mfe-orchestrator/design-system"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Copy, Hammer } from "lucide-react"
+import { Copy, ExternalLink, Hammer } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams } from "react-router-dom"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
+import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useServicesApi, { Service } from "@/hooks/apiClients/useServicesApi"
 import { AiChangeWorkspace } from "@/pages/microfrontends/partials/components"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
@@ -43,7 +44,52 @@ const ServicePath: React.FC<{ path?: string | null }> = ({ path }) => {
     )
 }
 
-const ServiceConfigurationSection: React.FC<{ service: Service }> = ({ service }) => {
+const ServiceLink: React.FC<{ href: string; label: string }> = ({ href, label }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline-offset-4 hover:underline" title={href}>
+        {label}
+        <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+    </a>
+)
+
+/** Where the service answers in each environment, with the docs and the OpenAPI spec reached from there */
+const ServiceUrls: React.FC<{ service: Service; environments: EnvironmentDTO[] }> = ({ service, environments }) => {
+    const { t } = useTranslation()
+    // A URL left behind by a deleted environment has no row to show
+    const exposed = environments.some(environment => service.urls?.some(url => url.environmentId === environment._id))
+
+    return (
+        <div>
+            <h3 className="mb-2 text-base font-semibold">{t("services.urls.title")}</h3>
+            {exposed ? (
+                <ul className="flex flex-col gap-2">
+                    {environments.map(environment => {
+                        const url = service.urls?.find(candidate => candidate.environmentId === environment._id)?.url
+                        return (
+                            <li key={environment._id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                <Badge variant="outline">{environment.name}</Badge>
+                                {url ? (
+                                    <>
+                                        <span className="min-w-0 break-all font-mono">
+                                            <ServiceLink href={url} label={url} />
+                                        </span>
+                                        {service.docsPath && <ServiceLink href={url + service.docsPath} label={t("services.urls.open_docs")} />}
+                                        {service.openApiPath && <ServiceLink href={url + service.openApiPath} label={t("services.urls.open_openapi")} />}
+                                    </>
+                                ) : (
+                                    <span className="text-foreground-secondary">{t("services.urls.not_exposed")}</span>
+                                )}
+                            </li>
+                        )
+                    })}
+                </ul>
+            ) : (
+                <p className="text-sm text-foreground-secondary">{t("services.urls.empty")}</p>
+            )}
+        </div>
+    )
+}
+
+const ServiceConfigurationSection: React.FC<{ service: Service; environments: EnvironmentDTO[] }> = ({ service, environments }) => {
     const { t } = useTranslation()
 
     return (
@@ -69,6 +115,7 @@ const ServiceConfigurationSection: React.FC<{ service: Service }> = ({ service }
                     </DescriptionItem>
                     <DescriptionItem label={t("services.image_repository")}>{service.image?.repository ? <span className="font-mono">{service.image.repository}</span> : "—"}</DescriptionItem>
                 </DescriptionList>
+                <ServiceUrls service={service} environments={environments} />
                 <div>
                     <h3 className="mb-2 text-base font-semibold">{t("services.env.title")}</h3>
                     {service.env?.length ? (
@@ -182,7 +229,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ view = "overview" }) => {
                     {/* Sections are siblings so further ones (e.g. AI) can be added next to them. */}
                     <ServiceRepositorySection service={service} />
                     <ServiceVersionsTable versions={versionsQuery.data ?? []} />
-                    <ServiceConfigurationSection service={service} />
+                    <ServiceConfigurationSection service={service} environments={environmentsQuery.data ?? []} />
                     <ServiceVariablesTable kind="configMap" variables={service.configMap} environments={environmentsQuery.data ?? []} />
                     <ServiceVariablesTable kind="secrets" variables={service.secrets} environments={environmentsQuery.data ?? []} />
                     {hasRepository && (

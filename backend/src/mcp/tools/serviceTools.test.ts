@@ -168,6 +168,17 @@ describe("service tools", () => {
             expect(schema.safeParse({ ...input, port: 70000 }).success).toBe(false)
             expect(schema.safeParse({ ...input, env: [{ name: "1BAD" }] }).success).toBe(false)
         })
+
+        it("given base URLs, when validated, then an http(s) one per environment is accepted and any other scheme or a bad environment id is refused", () => {
+            const schema = tool("service_create").inputSchema
+
+            expect(schema.safeParse({ ...input, urls: [{ environmentId: DOMAIN, url: "https://orders.dev.acme.com" }] }).success).toBe(true)
+            expect(schema.safeParse({ ...input, urls: [{ environmentId: DOMAIN, url: "ftp://orders.acme.com" }] }).success).toBe(false)
+            expect(schema.safeParse({ ...input, urls: [{ environmentId: DOMAIN, url: "orders.acme.com" }] }).success).toBe(false)
+            expect(schema.safeParse({ ...input, urls: [{ environmentId: DOMAIN, url: "https://orders.acme.com?tenant=a" }] }).success).toBe(false)
+            expect(schema.safeParse({ ...input, urls: [{ environmentId: DOMAIN, url: "https://user:pass@orders.acme.com" }] }).success).toBe(false)
+            expect(schema.safeParse({ ...input, urls: [{ environmentId: "dev", url: "https://orders.dev.acme.com" }] }).success).toBe(false)
+        })
     })
 
     describe("service_update", () => {

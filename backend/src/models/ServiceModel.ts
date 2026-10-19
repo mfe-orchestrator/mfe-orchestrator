@@ -1,6 +1,6 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import { SERVICE_HTTP_PATH, SERVICE_VARIABLE_KEY, ServicePaths, ServiceRuntime } from "../types/ServiceStack"
+import { isServiceUrl, SERVICE_HTTP_PATH, SERVICE_VARIABLE_KEY, ServicePaths, ServiceRuntime } from "../types/ServiceStack"
 import { encryptedFields } from "../utils/encryptedFieldsPlugin"
 import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import { ICodeRepositoryMicrofrontend, microfrontendCodeRepositorySchema } from "./MicrofrontendModel"
@@ -34,6 +34,12 @@ export interface IServiceVariable {
     values: IServiceVariableValue[]
 }
 
+/** Where the service answers in one environment of the project: the base its probe, docs and OpenAPI paths hang off */
+export interface IServiceUrl {
+    environmentId: Schema.Types.ObjectId
+    url: string
+}
+
 /** Encrypted at rest; every answer of the API carries the placeholder in their place */
 export const SERVICE_SECRET_PATHS = ["secrets.values.value"]
 
@@ -56,6 +62,8 @@ export interface IService extends Document<ObjectId>, ServicePaths {
         repository?: string
     }
     port: number
+    /** One per environment it is exposed in; an environment left out has no known address */
+    urls: IServiceUrl[]
     env: IServiceEnvVariable[]
     /** Values the service is given per environment, readable by whoever sees the service */
     configMap: IServiceVariable[]
@@ -147,6 +155,24 @@ const serviceVariableSchema = new Schema<IServiceVariable>(
     { _id: false }
 )
 
+const serviceUrlSchema = new Schema<IServiceUrl>(
+    {
+        environmentId: {
+            type: Schema.Types.ObjectId,
+            ref: "Environment",
+            required: true
+        },
+        url: {
+            type: String,
+            required: true,
+            trim: true,
+            // ServiceService normalises it first; this keeps any other write path from storing an href the console would render
+            validate: { validator: isServiceUrl, message: (props: { value: unknown }) => `"${String(props.value)}" is not a valid service URL` }
+        }
+    },
+    { _id: false }
+)
+
 const httpPathValidator = {
     validator: (value?: string | null) => value == null || SERVICE_HTTP_PATH.test(value),
     message: (props: { path: string; value: unknown }) => `${props.path} "${props.value}" must start with "/", have at most 256 characters and no whitespace`
@@ -226,6 +252,10 @@ const serviceSchema = new Schema<IService>(
         readinessPath: probePath("/health/ready"),
         docsPath: optionalPath,
         openApiPath: optionalPath,
+        urls: {
+            type: [serviceUrlSchema],
+            default: []
+        },
         env: {
             type: [serviceEnvVariableSchema],
             default: []

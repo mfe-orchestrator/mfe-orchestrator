@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import ServiceDeploymentService from "../service/ServiceDeploymentService"
 import ServiceService from "../service/ServiceService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import ServiceDTO from "../types/ServiceDTO"
@@ -58,5 +59,18 @@ export default async function serviceController(fastify: FastifyInstance) {
             throw new ProjectHeaderNotFoundError()
         }
         return reply.send(await new ServiceService().registerVersionWithPermissionCheck(request.params.serviceSlug, request.params.version, projectId, request.body, request.apiKeyRole))
+    })
+
+    // Called by the deploy pipeline of the customer once a version runs in an environment: the orchestrator
+    // does not deploy services, so this is how it learns which version each environment runs (MANAGER only)
+    fastify.post<{
+        Params: { serviceSlug: string; environmentSlug: string }
+        Body: unknown
+    }>("/services/by-slug/:serviceSlug/environments/:environmentSlug/deployments", { config: { authMethod: AuthenticationMethod.API_KEY } }, async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+        return reply.send(await new ServiceDeploymentService().registerWithPermissionCheck(request.params.serviceSlug, request.params.environmentSlug, projectId, request.body, request.apiKeyRole))
     })
 }
