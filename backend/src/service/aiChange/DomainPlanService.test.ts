@@ -30,12 +30,12 @@ const projectId = new Types.ObjectId().toString()
 const domain = { _id: new Types.ObjectId(), projectId, name: "Orders", description: "Ordering and checkout", context: "Prices are in cents" }
 
 const templates = [
-    { slug: "vite-host-react", type: "host", framework: "React", compiler: "vite" },
-    { slug: "vite-remote-react", type: "remote", framework: "React", compiler: "vite" },
-    { slug: "vite-remote-vue", type: "remote", framework: "Vue", compiler: "vite" },
-    { slug: "soon-remote", type: "remote", framework: "Svelte", compiler: "vite", comingSoon: true },
-    { slug: "service-node-fastify", type: "service", framework: "Node.js", compiler: "docker" },
-    { slug: "service-python-fastapi", type: "service", framework: "Python", compiler: "docker" }
+    { slug: "vite-host-react", type: "host", framework: "React", compiler: "vite", description: "React host on Vite" },
+    { slug: "vite-remote-react", type: "remote", framework: "React", compiler: "vite", description: "React remote on Vite" },
+    { slug: "vite-remote-vue", type: "remote", framework: "Vue", compiler: "vite", description: "Vue remote on Vite" },
+    { slug: "soon-remote", type: "remote", framework: "Svelte", compiler: "vite", description: "Svelte remote on Vite", comingSoon: true },
+    { slug: "service-node-fastify", type: "service", framework: "Node.js", compiler: "docker", description: "Fastify service" },
+    { slug: "service-python-fastapi", type: "service", framework: "Python", compiler: "docker", description: "FastAPI service" }
 ]
 
 const planned = (slug: string, template: string, repositoryName: string) => ({ name: slug, slug, template, repositoryName, reason: `${slug} reason` })
