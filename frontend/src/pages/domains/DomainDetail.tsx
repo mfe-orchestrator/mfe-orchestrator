@@ -21,8 +21,8 @@ import DomainFormDialog from "./partials/DomainFormDialog"
 import DomainMemberActions from "./partials/DomainMemberActions"
 
 const VIEWS = [
-    { value: "overview", icon: Columns2, labelKey: "domains.detail.viewOverview" },
     { value: "flow", icon: Workflow, labelKey: "domains.detail.viewFlow" },
+    { value: "overview", icon: Columns2, labelKey: "domains.detail.viewOverview" },
     { value: "grid", icon: LayoutGrid, labelKey: "domains.detail.viewGrid" },
     { value: "table", icon: StretchHorizontal, labelKey: "domains.detail.viewTable" }
 ] as const
@@ -103,7 +103,7 @@ const DomainDetail = () => {
     const microfrontendsApi = useMicrofrontendsApi()
     const servicesApi = useServicesApi()
     const [isFormOpen, setIsFormOpen] = useState(false)
-    const [view, setView] = useState<View>("overview")
+    const [view, setView] = useState<View>("flow")
 
     const domainQuery = useQuery({ queryKey: ["domain", id], queryFn: () => domainsApi.getSingle(id!), enabled: !!id })
     const microfrontendsQuery = useQuery({
