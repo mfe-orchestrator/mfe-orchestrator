@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792415907.2271872,
-    "ast_hash": "545145141532e97b5f222309444086e6",
+    "mtime": 1792420761.0250726,
+    "ast_hash": "9ae664d272c8d8ae0eb37d9988339851",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792415901.5870345,
-    "ast_hash": "09f93d0ee32a72f1f30352059c9d8fa3",
+    "mtime": 1792420761.0153897,
+    "ast_hash": "24bcd3bcd052f86f8f4bba6a7421124d",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "frontend/src/Routes.tsx": {
-    "mtime": 1792404649.82977,
-    "ast_hash": "c569139c2ab6df581215365af23e87e9",
+    "mtime": 1792420761.0075796,
+    "ast_hash": "cc7a2c1facc371534a936aaac6b1e83a",
     "semantic_hash": ""
   },
   "frontend/src/api/apiClient.ts": {
@@ -1180,8 +1180,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/AddMicrofrontend.tsx": {
-    "mtime": 1792404034.4898322,
-    "ast_hash": "21543935d059238aa3c13b650e52be8a",
+    "mtime": 1792420761.0083249,
+    "ast_hash": "f1f490c7327113252302e95b6389cf7e",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/Microfrontends.tsx": {
@@ -3380,8 +3380,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/services/AddService.tsx": {
-    "mtime": 1792404014.1509924,
-    "ast_hash": "8c291aecdbc250e25fe44634348b234f",
+    "mtime": 1792420761.0085623,
+    "ast_hash": "64a73a6abcd818af8dabc21418954b01",
     "semantic_hash": ""
   },
   "frontend/src/pages/services/ServiceDetail.tsx": {
@@ -3560,8 +3560,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/DomainDetail.tsx": {
-    "mtime": 1792415917.9900575,
-    "ast_hash": "725edc705895fb22da0887147d0327df",
+    "mtime": 1792420761.0079646,
+    "ast_hash": "691025275c3cd03b35c576da4e9cd38c",
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/Domains.tsx": {
@@ -3710,8 +3710,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/DomainAiWorkspace.tsx": {
-    "mtime": 1792404087.8694212,
-    "ast_hash": "af816ea622695f107361bb3a07c12e5d",
+    "mtime": 1792420761.0144749,
+    "ast_hash": "44416e83a67594dcf2eb25b33534f961",
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/partials/AssignDomainMembersDialog.tsx": {

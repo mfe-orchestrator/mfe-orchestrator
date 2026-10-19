@@ -218,6 +218,7 @@
   "216": "StackDetectionService",
   "217": "docsSearch.ts",
   "218": "EnvironmentService",
+  "219": "assist",
   "220": "confirmationDetails.test.ts",
   "221": "BaseAuthorizedService.test.ts",
   "222": "useAssistantChat.ts",
