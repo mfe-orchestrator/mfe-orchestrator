@@ -489,6 +489,28 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         }
     })
 
+    it("Given a domain with an AI context, when it runs, then the context follows the description inside the domain block", async () => {
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+        const domain = { ...input(), domain: { name: "Checkout", description: "Everything between the cart and the payment.", context: "Prices are in cents." } }
+
+        await runAiChangeAgent(client, domain, hooks().hooks)
+
+        const firstMessage = sent[0].messages[0]
+        const firstPrompt = firstMessage.role === "user" ? firstMessage.text : ""
+        expect(firstPrompt).toContain('<domain_context domain="Checkout">\nEverything between the cart and the payment.\nPrices are in cents.\n</domain_context>')
+    })
+
+    it("Given a job not on a domain whose microfrontend is in one, when it runs, then the prompt carries that domain's context without asking to keep a frontend and a backend in step", async () => {
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+
+        await runAiChangeAgent(client, { ...input(), memberDomains: [{ name: "Checkout", context: "Prices are in cents." }] }, hooks().hooks)
+
+        const firstMessage = sent[0].messages[0]
+        const firstPrompt = firstMessage.role === "user" ? firstMessage.text : ""
+        expect(firstPrompt).toContain('<domain_context domain="Checkout">\nPrices are in cents.\n</domain_context>')
+        expect(firstPrompt).not.toContain("belong to the functional domain")
+    })
+
     it("Given no domain, then the prompt says nothing of one", async () => {
         const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
 

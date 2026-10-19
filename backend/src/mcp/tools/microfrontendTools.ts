@@ -5,6 +5,7 @@ import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import CodeRepositoryService from "../../service/CodeRepositoryService"
 import DomainService from "../../service/DomainService"
 import MicrofrontendService from "../../service/MicrofrontendService"
+import ProjectService from "../../service/ProjectService"
 import RepositoryRenameService, { isValidRepositoryName } from "../../service/RepositoryRenameService"
 import StackDetectionService from "../../service/StackDetectionService"
 import { StorageService } from "../../service/StorageService"
@@ -117,11 +118,15 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontend_get",
         title: "Get microfrontend",
-        description: "One microfrontend of the project.",
+        description: "One microfrontend of the project, with aiContext: what the team wrote for AI agents about it, its domain and the project. Follow it when working on its code.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: z.object({ microfrontendId }),
-        run: (args, context) => getExisting(args.microfrontendId, context)
+        run: async (args, context) => {
+            const microfrontend = await getExisting(args.microfrontendId, context)
+            const aiContext = await new ProjectService(context.principal).getContext(context.projectId, { microfrontendId: args.microfrontendId })
+            return { ...microfrontend.toObject(), aiContext }
+        }
     }),
     defineTool({
         name: "microfrontend_versions",

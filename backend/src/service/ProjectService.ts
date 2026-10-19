@@ -1,6 +1,7 @@
 import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
@@ -41,11 +42,41 @@ export interface ProjectUpdateInput {
     isActive?: boolean
 }
 
-/** Everything the team wrote for AI agents in one project: the shared context and the one of each microfrontend that has it. */
+interface ContextEntry {
+    id: string
+    slug: string
+    name: string
+    context: string
+}
+
+/** What the team wrote for AI agents in one project: the shared context and the one of each domain, microfrontend and service that has it. */
 export interface ProjectContextDTO {
     project: { id: string; name: string; context?: string }
-    microfrontends: { id: string; slug: string; name: string; context: string }[]
+    domains: ContextEntry[]
+    microfrontends: ContextEntry[]
+    services: ContextEntry[]
 }
+
+/**
+ * The piece of work a context is read for. A microfrontend or a service reads its own context and
+ * the one of its domain; a domain reads its own and the one of each of its microfrontends and services.
+ * The project context always comes along.
+ */
+export type ContextFocus = { microfrontendId: string } | { serviceId: string } | { domainId: string }
+
+/** Which domains, microfrontends and services a focus reads the context of: a list left out is read for none. */
+interface ContextFilters {
+    domains?: Record<string, unknown>
+    microfrontends?: Record<string, unknown>
+    services?: Record<string, unknown>
+}
+
+const toContextEntry = (item: { _id: unknown; slug: string; name: string; context?: string }): ContextEntry => ({
+    id: String(item._id),
+    slug: item.slug,
+    name: item.name,
+    context: item.context as string
+})
 
 export interface ProjectSummaryDTO {
     project: IProject
@@ -139,22 +170,48 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
-    async getContext(projectId: string): Promise<ProjectContextDTO> {
+    /** The contexts of the whole project, or only the ones a piece of work needs when a focus is given. */
+    async getContext(projectId: string, focus?: ContextFocus): Promise<ProjectContextDTO> {
         const projectIdObj = toObjectId(projectId)
         const project = await this.findById(projectIdObj)
         if (!project) {
             throw new ProjectNotFoundError(projectId)
         }
-        const microfrontends = await Microfrontend.find({ projectId: projectIdObj, context: { $nin: [null, ""] } }, { slug: 1, name: 1, context: 1 }).sort({ slug: 1 })
+        const filters = await this.contextFilters(projectIdObj, focus)
+        const withContext = { projectId: projectIdObj, context: { $nin: [null, ""] } }
+        const fields = { slug: 1, name: 1, context: 1 }
+        const [domains, microfrontends, services] = await Promise.all([
+            filters.domains ? Domain.find({ ...filters.domains, ...withContext }, fields).sort({ slug: 1 }) : [],
+            filters.microfrontends ? Microfrontend.find({ ...filters.microfrontends, ...withContext }, fields).sort({ slug: 1 }) : [],
+            filters.services ? Service.find({ ...filters.services, ...withContext }, fields).sort({ slug: 1 }) : []
+        ])
         return {
             project: { id: project._id.toString(), name: project.name, context: project.context || undefined },
-            microfrontends: microfrontends.map(microfrontend => ({
-                id: microfrontend._id.toString(),
-                slug: microfrontend.slug,
-                name: microfrontend.name,
-                context: microfrontend.context as string
-            }))
+            domains: domains.map(toContextEntry),
+            microfrontends: microfrontends.map(toContextEntry),
+            services: services.map(toContextEntry)
         }
+    }
+
+    /** A focus outside the project is refused as not found: a context never reaches across projects. */
+    private async contextFilters(projectId: Schema.Types.ObjectId, focus?: ContextFocus): Promise<ContextFilters> {
+        if (!focus) {
+            return { domains: {}, microfrontends: {}, services: {} }
+        }
+        const domainOf = (domainId?: unknown) => (domainId ? { _id: domainId } : undefined)
+        if ("domainId" in focus) {
+            const domain = await Domain.findOne({ _id: toObjectId(focus.domainId), projectId }, { _id: 1 })
+            if (!domain) throw new EntityNotFoundError(focus.domainId)
+            return { domains: { _id: domain._id }, microfrontends: { domainId: domain._id }, services: { domainId: domain._id } }
+        }
+        if ("microfrontendId" in focus) {
+            const microfrontend = await Microfrontend.findOne({ _id: toObjectId(focus.microfrontendId), projectId }, { domainId: 1 })
+            if (!microfrontend) throw new EntityNotFoundError(focus.microfrontendId)
+            return { domains: domainOf(microfrontend.domainId), microfrontends: { _id: microfrontend._id } }
+        }
+        const service = await Service.findOne({ _id: toObjectId(focus.serviceId), projectId }, { domainId: 1 })
+        if (!service) throw new EntityNotFoundError(focus.serviceId)
+        return { domains: domainOf(service.domainId), services: { _id: service._id } }
     }
 
     async create(projectData: ProjectCreateInput, creatorUserId: ObjectId): Promise<IProject> {

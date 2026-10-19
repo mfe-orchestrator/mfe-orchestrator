@@ -16,6 +16,7 @@ const getMicrofrontend = vi.fn()
 const createMicrofrontend = vi.fn()
 const updateMicrofrontend = vi.fn()
 const listServices = vi.fn()
+const getContext = vi.fn()
 
 // Hoisted with the mocks below, which build their service classes with it
 const { principals, serviceClass } = vi.hoisted(() => {
@@ -48,6 +49,7 @@ vi.mock("../../service/MicrofrontendService", () => ({
     })
 }))
 vi.mock("../../service/ServiceService", () => ({ default: serviceClass({ getByProjectId: (...args: unknown[]) => listServices(...args) }) }))
+vi.mock("../../service/ProjectService", () => ({ default: serviceClass({ getContext: (...args: unknown[]) => getContext(...args) }) }))
 
 const PROJECT = "aaaaaaaaaaaaaaaaaaaaaaaa"
 const DOMAIN = "bbbbbbbbbbbbbbbbbbbbbbbb"
@@ -99,7 +101,9 @@ describe("domain tools", () => {
         expect(principals[0]).toMatchObject({ restrictedToProjectIds: [PROJECT] })
     })
 
-    it("given a domain, when read, then its microfrontends and services are listed by id, name and slug", async () => {
+    it("given a domain, when read, then its microfrontends and services are listed by id, name and slug, with the AI context of the domain", async () => {
+        const aiContext = { project: { id: PROJECT, name: "Shop" }, domains: [{ id: DOMAIN, slug: "checkout", name: "Checkout", context: "Prices are in cents" }], microfrontends: [], services: [] }
+        getContext.mockResolvedValue(aiContext)
         getDomain.mockResolvedValue(domain)
         listMicrofrontends.mockResolvedValue([
             { _id: MICROFRONTEND, name: "Cart", slug: "cart", domainId: DOMAIN, version: "1.0.0" },
@@ -112,8 +116,10 @@ describe("domain tools", () => {
             name: "Checkout",
             slug: "checkout",
             microfrontends: [{ _id: MICROFRONTEND, name: "Cart", slug: "cart" }],
-            services: [{ _id: SERVICE, name: "Orders API", slug: "orders-api" }]
+            services: [{ _id: SERVICE, name: "Orders API", slug: "orders-api" }],
+            aiContext
         })
+        expect(getContext).toHaveBeenCalledWith(PROJECT, { domainId: DOMAIN })
     })
 
     it("given a domain that does not exist, when read, then it is not found", async () => {

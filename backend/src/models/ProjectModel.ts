@@ -1,6 +1,6 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 
-/** Upper bound of a context, project or microfrontend: it ends up in the prompt of every agent reading it. */
+/** Upper bound of a context, of a project, a domain, a microfrontend or a service: it ends up in the prompt of every agent reading it. */
 export const CONTEXT_MAX_LENGTH = 20_000
 
 export interface IProject extends Document<ObjectId> {

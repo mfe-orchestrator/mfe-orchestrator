@@ -63,7 +63,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
 const SERVER_INSTRUCTIONS =
     "Tools of the MFE Orchestrator console, bound to the projects shared when this connection was authorized. " +
     "Call projects_list first: when more than one project is shared, every project tool needs its projectId. " +
-    "Before working on a project call context_get: it returns the notes its team wrote for agents. " +
+    "Before working on a project call context_get: it returns the notes its team wrote for agents. Working on one microfrontend, service or domain, pass its id to context_get, or read aiContext from microfrontend_get, service_get or domain_get: follow those notes. " +
     "Ids are 24 character hexadecimal strings returned by the list tools. Tools marked destructive change what users are served " +
     "(deploy, rollback) or delete data: confirm with the user before calling them."
 

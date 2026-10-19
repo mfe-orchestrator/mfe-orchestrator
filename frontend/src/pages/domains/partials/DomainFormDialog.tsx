@@ -10,11 +10,13 @@ import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import useDomainsApi, { Domain } from "@/hooks/apiClients/useDomainsApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import { CONTEXT_MAX_LENGTH } from "../../settings/partials/ProjectContextSection"
 
-const createFormSchema = (nameMessage: string) =>
+const createFormSchema = (nameMessage: string, contextMessage: string) =>
     z.object({
         name: z.string().trim().min(1, nameMessage).max(100),
-        description: z.string().optional()
+        description: z.string().optional(),
+        context: z.string().max(CONTEXT_MAX_LENGTH, contextMessage).optional()
     })
 
 type FormValues = z.infer<ReturnType<typeof createFormSchema>>
@@ -31,12 +33,12 @@ export const DomainFormDialog: React.FC<DomainFormDialogProps> = ({ open, onOpen
     const domainsApi = useDomainsApi()
     const queryClient = useQueryClient()
     const notifications = useToastNotificationStore()
-    const formSchema = useMemo(() => createFormSchema(t("domains.form.name_required")), [t])
+    const formSchema = useMemo(() => createFormSchema(t("domains.form.name_required"), t("settings.projectContext.tooLong", { max: CONTEXT_MAX_LENGTH })), [t])
     const form = useForm<FormValues>({ resolver: zodResolver(formSchema) })
 
     useEffect(() => {
         if (open) {
-            form.reset({ name: domain?.name ?? "", description: domain?.description ?? "" })
+            form.reset({ name: domain?.name ?? "", description: domain?.description ?? "", context: domain?.context ?? "" })
         }
     }, [open, domain, form.reset])
 
@@ -65,6 +67,15 @@ export const DomainFormDialog: React.FC<DomainFormDialogProps> = ({ open, onOpen
                         <div className="space-y-2 py-4">
                             <TextField name="name" label={t("domains.form.name")} placeholder={t("domains.form.name_placeholder")} required dataTestId="domain-name" />
                             <TextareaField name="description" label={t("domains.form.description_label")} placeholder={t("domains.form.description_placeholder")} />
+                            <TextareaField
+                                name="context"
+                                label={t("domains.form.context_label")}
+                                placeholder={t("domains.form.context_placeholder")}
+                                description={t("domains.form.context_hint")}
+                                rows={8}
+                                className="font-mono text-sm"
+                                dataTestId="domain-context"
+                            />
                         </div>
                         <DialogFooter>
                             <Button variant="secondary" type="button" onClick={() => onOpenChange(false)} disabled={form.formState.isSubmitting}>

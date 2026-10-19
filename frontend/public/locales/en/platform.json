@@ -2046,7 +2046,10 @@
             "name_placeholder": "E.g. Payments",
             "name_required": "The name is required",
             "description_label": "Description",
-            "description_placeholder": "What this domain is about"
+            "description_placeholder": "What this domain is about",
+            "context_label": "AI context",
+            "context_placeholder": "## Responsibility\nHandles ...\n\n## Rules\n- ...",
+            "context_hint": "Notes for AI agents about this domain only; what applies to the whole project belongs in the project context, in Settings. Markdown is supported, at most 20,000 characters."
         },
         "filter": {
             "label": "Filter by domain",

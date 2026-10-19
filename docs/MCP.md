@@ -56,16 +56,29 @@ API key creation, discarding an AI change, canary users).
 
 ## Project context
 
-Every project and every microfrontend can carry a **context**: free markdown the team writes for AI
-agents (domain, conventions, rules). The project one is edited in Settings → Project AI context, the
-microfrontend one in the "AI context" tab of the microfrontend. Both are limited to 20,000 characters.
+Every project, functional domain, microfrontend and service can carry a **context**: free markdown
+the team writes for AI agents (domain, conventions, rules). The project one is edited in Settings →
+Project AI context, the domain one in the domain form, the microfrontend and service ones in their
+"AI context" tab. Each is limited to 20,000 characters.
 
-- `context_get` (`mfe:read`) returns the project context together with the context of every
-  microfrontend that has one. The server instructions ask clients to call it before working on a
-  project.
-- `project_update` and `microfrontend_update` (`mfe:write`) change them; `null` removes the project
-  context.
-- The console assistant reads the same notes through its `get_project_context` tool.
+An agent always gets the contexts of what it works on, the project one included:
+
+| Working on | Contexts returned |
+| --- | --- |
+| a microfrontend (frontend) | the microfrontend, its domain, the project |
+| a service (backend) | the service, its domain, the project |
+| a domain | the domain, each of its microfrontends and services, the project |
+
+- `context_get` (`mfe:read`) takes at most one of `microfrontendId`, `serviceId`, `domainId` and
+  returns the contexts above. Without ids it returns every context of the project. The server
+  instructions ask clients to call it before working on a project.
+- `microfrontend_get`, `service_get` and `domain_get` return the same contexts in `aiContext`, so an
+  agent that reads what it works on gets its notes without a second call.
+- `project_update`, `domain_create`/`domain_update`, `microfrontend_update` and `service_update`
+  (`mfe:write`) change them; `null` removes the project and the domain context.
+- The console assistant reads the same notes through the same tools. The console's AI change jobs
+  put the project context, the domain context (of the job's domain, or of the domains its
+  microfrontends and services are in) and the context of each repository in the agent's prompt.
 
 ## Domains and services
 

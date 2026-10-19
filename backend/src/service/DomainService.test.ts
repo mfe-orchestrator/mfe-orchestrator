@@ -35,6 +35,15 @@ describe("DomainService.create", () => {
         expect(write).toHaveBeenCalledWith({ name: "Customer Payments", slug: "customer-payments", description: "Checkout and refunds", projectId })
     })
 
+    it("given a context, when a domain is created, then it is stored with it", async () => {
+        vi.spyOn(Domain, "exists").mockResolvedValue(null)
+        const write = vi.spyOn(Domain, "create").mockImplementation((async (doc: unknown) => doc) as never)
+
+        await new DomainService().create({ name: "Payments", context: "Prices are in cents" }, projectId)
+
+        expect(write).toHaveBeenCalledWith(expect.objectContaining({ context: "Prices are in cents" }))
+    })
+
     it("given a slug another domain of the project has, when a domain is created, then it is refused with a conflict and nothing is written", async () => {
         const exists = vi.spyOn(Domain, "exists").mockResolvedValue({ _id: domainId } as never)
         const write = vi.spyOn(Domain, "create")
@@ -213,6 +222,28 @@ describe("DomainService.update", () => {
         await new DomainService().update(String(domainId), { name: "Billing", description: "Invoices", slug: "billing", projectId: "x" } as never)
 
         expect(write).toHaveBeenCalledWith(domainId, { name: "Billing", description: "Invoices" }, { new: true, runValidators: true })
+    })
+
+    it("given a context, when a domain is updated, then it is written, and null clears it", async () => {
+        allowAccess()
+        const domain = { _id: domainId, projectId, slug: "payments", name: "Payments" }
+        vi.spyOn(Domain, "findById").mockResolvedValue(domain as never)
+        const write = vi.spyOn(Domain, "findByIdAndUpdate").mockResolvedValue(domain as never)
+
+        await new DomainService().update(String(domainId), { context: "Prices are in cents" } as never)
+        await new DomainService().update(String(domainId), { context: null } as never)
+
+        expect(write).toHaveBeenNthCalledWith(1, domainId, { context: "Prices are in cents" }, { new: true, runValidators: true })
+        expect(write).toHaveBeenNthCalledWith(2, domainId, { context: null }, { new: true, runValidators: true })
+    })
+
+    it("given a context that is not a string, when a domain is updated, then it is refused with a 400 and nothing is written", async () => {
+        allowAccess()
+        vi.spyOn(Domain, "findById").mockResolvedValue({ _id: domainId, projectId, slug: "payments", name: "Payments" } as never)
+        const write = vi.spyOn(Domain, "findByIdAndUpdate")
+
+        await expect(new DomainService().update(String(domainId), { context: 42 } as never)).rejects.toMatchObject({ code: "DOMAIN_INVALID", statusCode: 400 })
+        expect(write).not.toHaveBeenCalled()
     })
 
     it("given a name that is not a string, when a domain is updated, then it is refused with a 400 and nothing is written", async () => {

@@ -103,6 +103,7 @@ export class DomainService extends BaseAuthorizedService {
         ensureOptionalString("name", dto.name)
         ensureOptionalString("slug", dto.slug)
         ensureOptionalString("description", dto.description)
+        ensureOptionalString("context", dto.context)
         const name = (dto.name ?? "").trim()
         if (!name) {
             throw createBusinessException({ code: "DOMAIN_NAME_REQUIRED", message: "The domain name is required" })
@@ -116,7 +117,7 @@ export class DomainService extends BaseAuthorizedService {
         }
 
         try {
-            return await Domain.create({ name, slug, description: dto.description ?? undefined, projectId: projectIdObj })
+            return await Domain.create({ name, slug, description: dto.description ?? undefined, context: dto.context || undefined, projectId: projectIdObj })
         } catch (error) {
             // A concurrent create of the same slug passed the check above: the unique index decides
             throw toDomainError(error, slug)
@@ -131,6 +132,7 @@ export class DomainService extends BaseAuthorizedService {
         // Never moved to another project nor given another slug through an update
         ensureOptionalString("name", updates.name)
         ensureOptionalString("description", updates.description)
+        ensureOptionalString("context", updates.context)
         const allowed: Partial<DomainDTO> = {}
         if (updates.name !== undefined && updates.name !== null) {
             if (!updates.name.trim()) {
@@ -140,6 +142,9 @@ export class DomainService extends BaseAuthorizedService {
         }
         if (updates.description !== undefined) {
             allowed.description = updates.description
+        }
+        if (updates.context !== undefined) {
+            allowed.context = updates.context
         }
         try {
             return await Domain.findByIdAndUpdate(domain._id, allowed, { new: true, runValidators: true })

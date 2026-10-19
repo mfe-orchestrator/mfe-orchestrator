@@ -8,6 +8,8 @@ export interface Domain {
     slug: string
     name: string
     description?: string
+    /** Markdown notes for AI agents about this domain */
+    context?: string
     /** Only on the list */
     microfrontendsCount?: number
     /** Only on the list */
@@ -19,6 +21,7 @@ export interface Domain {
 export interface DomainDTO {
     name: string
     description?: string
+    context?: string
 }
 
 /** Microfrontends and services of the project to put in a domain */

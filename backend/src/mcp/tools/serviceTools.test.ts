@@ -12,6 +12,7 @@ const updateService = vi.fn()
 const deleteService = vi.fn()
 const getDomain = vi.fn()
 const findCodeRepository = vi.fn()
+const getContext = vi.fn()
 
 // Hoisted with the mocks below, which build their service classes with it
 const { principals, serviceClass } = vi.hoisted(() => {
@@ -36,6 +37,7 @@ vi.mock("../../service/ServiceService", () => ({
     })
 }))
 vi.mock("../../service/DomainService", () => ({ default: serviceClass({ getById: (...args: unknown[]) => getDomain(...args) }) }))
+vi.mock("../../service/ProjectService", () => ({ default: serviceClass({ getContext: (...args: unknown[]) => getContext(...args) }) }))
 vi.mock("../../service/CodeRepositoryService", () => ({ default: serviceClass({ findById: (...args: unknown[]) => findCodeRepository(...args) }) }))
 
 const PROJECT = "aaaaaaaaaaaaaaaaaaaaaaaa"
@@ -107,10 +109,18 @@ describe("service tools", () => {
     })
 
     describe("service_get", () => {
-        it("given a service of the project, when read, then it comes back", async () => {
-            getService.mockResolvedValue(ordersApi)
+        it("given a service of the project, when read, then it comes back with the AI context of the service, its domain and the project", async () => {
+            const aiContext = {
+                project: { id: PROJECT, name: "Shop" },
+                domains: [],
+                microfrontends: [],
+                services: [{ id: SERVICE, slug: "orders-api", name: "Orders API", context: "Routes live in src/routes" }]
+            }
+            getContext.mockResolvedValue(aiContext)
+            getService.mockResolvedValue({ ...ordersApi, toObject: () => ordersApi })
 
-            expect(await run("service_get", { serviceId: SERVICE })).toBe(ordersApi)
+            expect(await run("service_get", { serviceId: SERVICE })).toEqual({ ...ordersApi, aiContext })
+            expect(getContext).toHaveBeenCalledWith(PROJECT, { serviceId: SERVICE })
         })
 
         it("given a service that does not exist, when read, then it is not found", async () => {

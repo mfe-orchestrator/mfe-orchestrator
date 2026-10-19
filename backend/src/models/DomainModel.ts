@@ -1,4 +1,5 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
 export const DOMAIN_NAME_MAX_LENGTH = 100
 /** As the descriptions the MCP tools accept */
@@ -13,6 +14,8 @@ export interface IDomain extends Document<ObjectId> {
     slug: string
     name: string
     description?: string
+    /** Markdown for AI agents about this domain only; the project context covers what all domains share. */
+    context?: string
     createdAt: Date
     updatedAt: Date
 }
@@ -40,6 +43,11 @@ const domainSchema = new Schema<IDomain>(
             type: String,
             trim: true,
             maxlength: DOMAIN_DESCRIPTION_MAX_LENGTH
+        },
+        context: {
+            type: String,
+            trim: true,
+            maxlength: CONTEXT_MAX_LENGTH
         }
     },
     {

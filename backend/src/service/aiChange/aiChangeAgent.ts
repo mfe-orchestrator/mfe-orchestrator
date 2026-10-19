@@ -67,11 +67,19 @@ interface AiChangeAgentRepositoryBase {
     previousChanges?: AiChangeToolboxChange[]
 }
 
+export interface AiChangeAgentDomain {
+    name: string
+    description?: string
+    context?: string
+}
+
 export interface AiChangeAgentInput {
     prompt: string
     project: { name: string; context?: string }
     /** The functional domain the job works on: its repositories are its frontend and its backend. */
-    domain?: { name: string; description?: string }
+    domain?: AiChangeAgentDomain
+    /** For a job not on a domain: the domains its repositories are in, whose context they follow too. */
+    memberDomains?: AiChangeAgentDomain[]
     repositories: AiChangeAgentRepository[]
     /** The earlier jobs of a follow-up, oldest first: the working copies already hold what they proposed. */
     previousRequests?: { prompt: string; summary?: string }[]
@@ -203,12 +211,13 @@ const describePreviousRequests = (previous: NonNullable<AiChangeAgentInput["prev
           ].join("\n")
         : undefined
 
+/** What a domain is for and what the team wrote for agents about it. */
+const domainNotes = (domain: AiChangeAgentDomain) => [`<domain_context domain="${domain.name}">`, domain.description, domain.context, "</domain_context>"].filter(Boolean).join("\n")
+
 /** The domain of the job: what it is for, in the team's words, and why its repositories are changed together. */
-const describeDomain = (domain: NonNullable<AiChangeAgentInput["domain"]>) =>
+const describeDomain = (domain: AiChangeAgentDomain) =>
     [
-        `<domain_context domain="${domain.name}">`,
-        domain.description,
-        "</domain_context>",
+        domainNotes(domain),
         `The repositories of this job belong to the functional domain "${domain.name}", which groups its frontend (microfrontends) and its backend (services). Read across all of them before changing one: what a service exposes (an endpoint, its payload, an event) and what the microfrontends call must stay in step.`
     ]
         .filter(Boolean)
@@ -216,7 +225,7 @@ const describeDomain = (domain: NonNullable<AiChangeAgentInput["domain"]>) =>
 
 const describeInput = (input: AiChangeAgentInput) => {
     const projectContext = input.project.context ? `<project_context project="${input.project.name}">\n${input.project.context}\n</project_context>` : undefined
-    const domainContext = input.domain ? describeDomain(input.domain) : undefined
+    const domainContext = input.domain ? describeDomain(input.domain) : (input.memberDomains ?? []).map(domainNotes).join("\n") || undefined
     // One repository reads as it always did: the microfrontend (or the service), then its context.
     const repositories =
         input.repositories.length === 1

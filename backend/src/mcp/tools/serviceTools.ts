@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
+import ProjectService from "../../service/ProjectService"
 import ServiceService from "../../service/ServiceService"
 import ServiceDTO from "../../types/ServiceDTO"
 import { isServiceUrl, SERVICE_HTTP_PATH, SERVICE_SLUG } from "../../types/ServiceStack"
@@ -92,11 +93,15 @@ export const serviceTools = [
     defineTool({
         name: "service_get",
         title: "Get service",
-        description: "One backend service of the project.",
+        description: "One backend service of the project, with aiContext: what the team wrote for AI agents about it, its domain and the project. Follow it when working on its code.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: z.object({ serviceId }),
-        run: (args, context) => getExisting(args.serviceId, context)
+        run: async (args, context) => {
+            const service = await getExisting(args.serviceId, context)
+            const aiContext = await new ProjectService(context.principal).getContext(context.projectId, { serviceId: args.serviceId })
+            return { ...service.toObject(), aiContext }
+        }
     }),
     defineTool({
         name: "service_create",

@@ -176,6 +176,8 @@ const agentRepository = (component: RepositoryComponent, slug: string, rest: Omi
           }
         : { ...rest, microfrontend: { name: component.name, slug, framework: component.framework, compiler: component.compiler, context: component.context } }
 
+const toAgentDomain = (domain: IDomain) => ({ name: domain.name, description: domain.description, context: domain.context })
+
 const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: Map<string, Pick<RepositoryComponent, "name" | "slug">>, withEvents: boolean): AiJobView => ({
     _id: String(job._id),
     projectId: String(job.projectId),
@@ -442,11 +444,14 @@ export class AiChangeJobService extends AiChangeBaseService {
         try {
             const project = await Project.findById(job.projectId)
             if (!project) throw new Error("The project no longer exists")
-            // A domain deleted since leaves its members as they are: the job goes on without its description.
+            // A domain deleted since leaves its members as they are: the job goes on without its description and context.
             const domain = job.domainId ? await Domain.findById(job.domainId) : null
             const requests = await AiChangeRequest.find({ jobId: job._id })
             const refs = componentsOfJob(job)
             const components = await findComponents(refs)
+            // A job on single microfrontends or services still follows the context of the domains they are in.
+            const memberDomainIds = domain ? [] : [...new Set(components.flatMap(component => (component.domainId ? [String(component.domainId)] : [])))]
+            const memberDomains = memberDomainIds.length ? await Domain.find({ _id: { $in: memberDomainIds.map(id => toObjectId(id)) }, projectId: job.projectId }).sort({ name: 1 }) : []
             const workspaceService = new RepositoryWorkspaceService(this.user)
             const repositories: RunningRepository[] = []
             for (const ref of refs) {
@@ -469,7 +474,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             const locked = (index: number): Promise<void> =>
                 index < byFolder.length
                     ? withRepositoryLock(byFolder[index].workspace.workingCopy.dir, () => locked(index + 1), { onWait, waitMs: Math.max(0, deadline - Date.now()) })
-                    : this.work(job, project, domain, repositories, workspaceService, client, delta => {
+                    : this.work(job, project, domain, memberDomains, repositories, workspaceService, client, delta => {
                           usage = addUsage(usage, delta)
                       })
             await locked(0)
@@ -486,6 +491,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         job: IAiChangeJob,
         project: IProject,
         domain: IDomain | null,
+        memberDomains: IDomain[],
         repositories: RunningRepository[],
         workspaceService: RepositoryWorkspaceService,
         client: LlmClient,
@@ -515,7 +521,8 @@ export class AiChangeJobService extends AiChangeBaseService {
                 {
                     prompt: job.prompt,
                     project: { name: project.name, context: project.context },
-                    domain: domain ? { name: domain.name, description: domain.description } : undefined,
+                    domain: domain ? toAgentDomain(domain) : undefined,
+                    memberDomains: memberDomains.map(toAgentDomain),
                     repositories: repositories.map(({ component, request, workspace, previousFiles }, index) =>
                         agentRepository(component, slugs[index], {
                             baseBranch: request.baseBranch,

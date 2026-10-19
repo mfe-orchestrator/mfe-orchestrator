@@ -2065,7 +2065,10 @@
             "name_placeholder": "Es. Pagamenti",
             "name_required": "Il nome è obbligatorio",
             "description_label": "Descrizione",
-            "description_placeholder": "Di cosa si occupa questo dominio"
+            "description_placeholder": "Di cosa si occupa questo dominio",
+            "context_label": "Contesto IA",
+            "context_placeholder": "## Responsabilità\nGestisce ...\n\n## Regole\n- ...",
+            "context_hint": "Note per gli agenti IA solo su questo dominio; ciò che vale per tutto il progetto va nel contesto del progetto, in Impostazioni. Markdown supportato, al massimo 20.000 caratteri."
         },
         "filter": {
             "label": "Filtra per dominio",
