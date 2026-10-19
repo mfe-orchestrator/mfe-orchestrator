@@ -249,6 +249,7 @@
   "247": "CodeRepositoryType",
   "248": "Editing a microfrontend with AI",
   "249": "TemplateScaffoldService.test.ts",
+  "250": "NpmRegistryClient.ts",
   "251": "InvalidCredentialsError",
   "252": "NpmRegistryClient.ts",
   "253": "package.json",
@@ -258,7 +259,13 @@
   "257": "integration",
   "258": "[4.0.0] - 2026-08-27",
   "259": "curl",
+  "260": "encryptedFieldsPlugin.ts",
   "261": "integration",
+  "262": "useOAuthApi.ts",
   "263": "AssistantMessageText.tsx",
+  "264": "[4.0.0] - 2026-08-27",
+  "265": "roles",
+  "266": "[3.1.0] - 2026-08-16",
+  "267": "account_activation",
   "268": "curl"
 }
