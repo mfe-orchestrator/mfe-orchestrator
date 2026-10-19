@@ -8,12 +8,21 @@ const prompt = { type: "string", minLength: 1, maxLength: 8_000 }
 // Beyond 10 the service answers AI_JOB_TOO_MANY_REPOSITORIES, which the console explains; this only bounds the body.
 const microfrontendIds = { type: "array", maxItems: 100, items: { type: "string", pattern: "^[a-fA-F0-9]{24}$" } }
 const serviceIds = microfrontendIds
+const domainId = { type: "string", pattern: "^[a-fA-F0-9]{24}$" }
 
 const createBodySchema = {
     type: "object",
     required: ["prompt", "scope"],
     additionalProperties: false,
-    properties: { prompt, scope: { type: "string", enum: ["global", "selection"] }, microfrontendIds, serviceIds }
+    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds },
+    // A domain job works on the members of that domain: without it there is nothing to work on.
+    if: { properties: { scope: { const: "domain" } } },
+    then: { required: ["domainId"] }
+}
+
+const listQuerySchema = {
+    type: "object",
+    properties: { active: { type: "string" }, domainId }
 }
 
 const followUpBodySchema = {
@@ -55,8 +64,13 @@ export default async function aiJobController(fastify: FastifyInstance) {
         reply.status(202).send(await service(request).followUp(request.params.id, request.body))
     )
 
-    fastify.get<{ Querystring: { active?: string } }>("/ai-jobs", { config }, async (request, reply) =>
-        reply.send(await service(request).list(projectIdOf(request), ["true", "1"].includes(request.query.active ?? "")))
+    // With a domain, everyone's conversations on it (first and latest job of each chain): the domain page shows them as a microfrontend page shows its requests.
+    fastify.get<{ Querystring: { active?: string; domainId?: string } }>("/ai-jobs", { schema: { querystring: listQuerySchema }, config }, async (request, reply) =>
+        reply.send(
+            request.query.domainId
+                ? await service(request).domainConversations(projectIdOf(request), request.query.domainId)
+                : await service(request).list(projectIdOf(request), ["true", "1"].includes(request.query.active ?? ""))
+        )
     )
 
     // Every user's agents, not only the caller's: the microfrontend list shows who is being worked on.

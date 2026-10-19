@@ -70,6 +70,8 @@ interface AiChangeAgentRepositoryBase {
 export interface AiChangeAgentInput {
     prompt: string
     project: { name: string; context?: string }
+    /** The functional domain the job works on: its repositories are its frontend and its backend. */
+    domain?: { name: string; description?: string }
     repositories: AiChangeAgentRepository[]
     /** The earlier jobs of a follow-up, oldest first: the working copies already hold what they proposed. */
     previousRequests?: { prompt: string; summary?: string }[]
@@ -201,15 +203,28 @@ const describePreviousRequests = (previous: NonNullable<AiChangeAgentInput["prev
           ].join("\n")
         : undefined
 
+/** The domain of the job: what it is for, in the team's words, and why its repositories are changed together. */
+const describeDomain = (domain: NonNullable<AiChangeAgentInput["domain"]>) =>
+    [
+        `<domain_context domain="${domain.name}">`,
+        domain.description,
+        "</domain_context>",
+        `The repositories of this job belong to the functional domain "${domain.name}", which groups its frontend (microfrontends) and its backend (services). Read across all of them before changing one: what a service exposes (an endpoint, its payload, an event) and what the microfrontends call must stay in step.`
+    ]
+        .filter(Boolean)
+        .join("\n")
+
 const describeInput = (input: AiChangeAgentInput) => {
     const projectContext = input.project.context ? `<project_context project="${input.project.name}">\n${input.project.context}\n</project_context>` : undefined
+    const domainContext = input.domain ? describeDomain(input.domain) : undefined
     // One repository reads as it always did: the microfrontend (or the service), then its context.
     const repositories =
         input.repositories.length === 1
-            ? [describeMicrofrontend(input.repositories[0], input.repositories[0].service ? "service" : "microfrontend"), projectContext, microfrontendContext(input.repositories[0])]
+            ? [describeMicrofrontend(input.repositories[0], input.repositories[0].service ? "service" : "microfrontend"), projectContext, domainContext, microfrontendContext(input.repositories[0])]
             : [
                   ["<repositories>", ...input.repositories.map(repository => describeMicrofrontend(repository, "repository", microfrontendContext(repository))), "</repositories>"].join("\n"),
-                  projectContext
+                  projectContext,
+                  domainContext
               ]
     return [...repositories, describePreviousRequests(input.previousRequests ?? []), `<request>\n${input.prompt}\n</request>`].filter(Boolean).join("\n\n")
 }

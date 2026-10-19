@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 import { AnthropicLlmClient, ClaudeClient } from "./anthropicProvider"
 import { AzureOpenAiLlmClient } from "./azureOpenAiProvider"
 import { GeminiLlmClient } from "./geminiProvider"
-import { isLlmEnabled, LlmMessage, LlmProvider, LlmTurnRequest, resolveLlmProvider } from "./index"
+import { isLlmEnabled, isRateLimitError, LlmMessage, LlmProvider, LlmTurnRequest, resolveLlmProvider } from "./index"
 
 const tool = { name: "read_file", description: "Reads a file", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] } }
 
@@ -40,6 +40,17 @@ describe("resolveLlmProvider", () => {
 
     it("Given a complete Gemini configuration with an Anthropic key around, then the named provider wins", () => {
         expect(resolveLlmProvider({ AI_PROVIDER: "Gemini", GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-x", ANTHROPIC_API_KEY: "sk" })).toBe(LlmProvider.GEMINI)
+    })
+})
+
+describe("isRateLimitError", () => {
+    it("Given a 429, or a mid-stream error with no status and a rate-limit code, then it is a rate limit; any other error is not", () => {
+        expect(isRateLimitError({ status: 429 })).toBe(true)
+        expect(isRateLimitError({ status: undefined, code: "no_capacity" })).toBe(true)
+        expect(isRateLimitError({ code: "rate_limit_exceeded" })).toBe(true)
+        expect(isRateLimitError({ status: 500, code: "server_error" })).toBe(false)
+        expect(isRateLimitError(new Error("boom"))).toBe(false)
+        expect(isRateLimitError(null)).toBe(false)
     })
 })
 

@@ -40,7 +40,9 @@ export interface AiJob {
     /** The first job of the chain (its own id on the first one): the key of the panel tabs. */
     rootJobId: string
     prompt: string
-    scope: "global" | "selection"
+    scope: "global" | "domain" | "selection"
+    /** The functional domain the job was asked from; its follow-ups keep it. */
+    domainId?: string
     status: AiJobStatus
     /** Missing on the list endpoint. */
     events?: AiChangeEvent[]
@@ -58,7 +60,10 @@ export interface AiWorkingAgents {
     agents: number
 }
 
-export type CreateAiJobDTO = { prompt: string; scope: "global" } | { prompt: string; scope: "selection"; microfrontendIds: string[]; serviceIds?: string[] }
+export type CreateAiJobDTO =
+    | { prompt: string; scope: "global" }
+    | { prompt: string; scope: "domain"; domainId: string }
+    | { prompt: string; scope: "selection"; microfrontendIds: string[]; serviceIds?: string[] }
 
 export interface FollowUpAiJobDTO {
     prompt: string
@@ -108,11 +113,14 @@ const useAiJobsApi = () => {
         return response.data
     }
 
-    /** The user's jobs in the project, newest first; `active` keeps the running ones and those with a proposal to review. */
-    const list = async (filter?: { active?: boolean }, metadata?: IClientRequestMetadataExtended): Promise<AiJob[]> => {
+    /**
+     * The user's jobs in the project, newest first, or everyone's on one domain; `active` keeps the running ones
+     * and those with a proposal to review.
+     */
+    const list = async (filter?: { active?: boolean; domainId?: string }, metadata?: IClientRequestMetadataExtended): Promise<AiJob[]> => {
         const response = await apiClient.doRequest<AiJob[]>({
             url: "/api/ai-jobs",
-            params: filter?.active ? { active: true } : undefined,
+            params: filter?.active || filter?.domainId ? { ...(filter.active ? { active: true } : {}), ...(filter.domainId ? { domainId: filter.domainId } : {}) } : undefined,
             ...metadata
         })
         return response.data

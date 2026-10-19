@@ -7,6 +7,7 @@ import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeJob, { AiJobScope, AiJobStatus, IAiChangeJob } from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AI_CHANGE_MAX_EVENTS, AiChangeFileAction, AiChangeStatus, IAiChangeEvent, IAiChangeFile, IAiChangeRequest } from "../../models/AiChangeRequestModel"
 import CodeRepository from "../../models/CodeRepositoryModel"
+import Domain, { IDomain } from "../../models/DomainModel"
 import Project, { IProject } from "../../models/ProjectModel"
 import Service from "../../models/ServiceModel"
 import { toObjectId } from "../../utils/mongooseUtils"
@@ -46,6 +47,8 @@ const WITHOUT_CONTENTS = { "files.originalContent": 0, "files.proposedContent": 
 export interface AiJobCreateInput {
     prompt: string
     scope: AiJobScope
+    /** The domain whose microfrontends and services a `domain` job works on. */
+    domainId?: string
     microfrontendIds?: string[]
     serviceIds?: string[]
 }
@@ -81,6 +84,7 @@ export interface AiJobView {
     rootJobId: string
     prompt: string
     scope: AiJobScope
+    domainId?: string
     status: AiJobStatus
     /** Left out of lists. */
     events?: { at: Date; kind: IAiChangeEvent["kind"]; message: string }[]
@@ -180,6 +184,7 @@ const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: 
     rootJobId: String(job.rootJobId),
     prompt: job.prompt,
     scope: job.scope,
+    domainId: job.domainId ? String(job.domainId) : undefined,
     status: job.status,
     events: withEvents ? (job.events ?? []).map(entry => ({ at: entry.at, kind: entry.kind, message: entry.message })) : undefined,
     summary: job.summary,
@@ -243,8 +248,21 @@ export class AiChangeJobService extends AiChangeBaseService {
         return [...microfrontends, ...(await this.servicesWithRepository(projectId))]
     }
 
-    private async selectRepositories(projectId: string, input: AiJobCreateInput): Promise<RepositoryComponent[]> {
+    /** A domain of the project. */
+    private async domainOf(projectId: string, domainId?: string): Promise<IDomain> {
+        const domain = domainId ? await Domain.findOne({ _id: toObjectId(domainId), projectId: toObjectId(projectId) }) : null
+        if (!domain) throw new EntityNotFoundError(domainId ?? "domain")
+        return domain
+    }
+
+    private async selectRepositories(projectId: string, input: AiJobCreateInput, domain?: IDomain): Promise<RepositoryComponent[]> {
         const available = await this.repositoriesOf(projectId)
+        if (domain) {
+            const members = available.filter(component => component.domainId && String(component.domainId) === String(domain._id))
+            if (members.length === 0) throw noRepositories(`No microfrontend or service of the domain ${domain.name} has a code repository connected`)
+            if (members.length > MAX_REPOSITORIES_PER_JOB) throw tooMany()
+            return members
+        }
         if (input.scope === "global") {
             if (available.length === 0) throw noRepositories("No microfrontend or service of the project has a code repository connected")
             if (available.length > MAX_REPOSITORIES_PER_JOB) throw tooMany()
@@ -267,15 +285,19 @@ export class AiChangeJobService extends AiChangeBaseService {
         return refs.map(ref => available.find(sameComponent(ref))!)
     }
 
-    /** Starts a job on every microfrontend and service of the project with a repository, or on the selected ones. */
+    /**
+     * Starts a job on every microfrontend and service of the project with a repository, on those of
+     * one domain (its frontend and its backend at once), or on the selected ones.
+     */
     async create(projectId: string, input: AiJobCreateInput): Promise<AiJobView> {
         const client = getLlmClient(this.config)
         await this.ensureCanChangeProject(toObjectId(projectId))
-        const components = await this.selectRepositories(projectId, input)
+        const domain = input.scope === "domain" ? await this.domainOf(projectId, input.domainId) : undefined
+        const components = await this.selectRepositories(projectId, input, domain)
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
         const repositories = await Promise.all(components.map(async component => ({ component, baseBranch: (await workspaceService.open(component)).defaultBranch })))
-        const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, repositories }, client)
+        const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, domainId: domain?._id, repositories }, client)
         return this.view(job, true)
     }
 
@@ -314,7 +336,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         })
 
         const scope = repositories.length === parentRefs.length ? parent.scope : "selection"
-        const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, repositories, parentJob: parent }, client)
+        const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, domainId: parent.domainId, repositories, parentJob: parent }, client)
         return this.view(job, true)
     }
 
@@ -323,7 +345,14 @@ export class AiChangeJobService extends AiChangeBaseService {
      * Callers have checked that the user may change the project.
      */
     async start(
-        input: { projectId: IAiChangeJob["projectId"]; prompt: string; scope: AiJobScope; repositories: JobRepository[]; parentJob?: IAiChangeJob },
+        input: {
+            projectId: IAiChangeJob["projectId"]
+            prompt: string
+            scope: AiJobScope
+            domainId?: IAiChangeJob["domainId"] | IDomain["_id"]
+            repositories: JobRepository[]
+            parentJob?: IAiChangeJob
+        },
         client: LlmClient
     ): Promise<{ job: IAiChangeJob; requests: IAiChangeRequest[] }> {
         const active = await AiChangeJob.countDocuments({ projectId: input.projectId, status: { $in: ACTIVE_JOB_STATUSES }, updatedAt: { $gt: new Date(Date.now() - STALE_AFTER_MS) } })
@@ -343,6 +372,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             rootJobId: input.parentJob?.rootJobId ?? jobId,
             prompt: input.prompt,
             scope: input.scope,
+            domainId: input.domainId,
             microfrontendIds: input.repositories.filter(({ component }) => component.kind === "microfrontend").map(({ component }) => component._id),
             serviceIds: input.repositories.filter(({ component }) => component.kind === "service").map(({ component }) => component._id),
             status: AiJobStatus.PENDING,
@@ -412,6 +442,8 @@ export class AiChangeJobService extends AiChangeBaseService {
         try {
             const project = await Project.findById(job.projectId)
             if (!project) throw new Error("The project no longer exists")
+            // A domain deleted since leaves its members as they are: the job goes on without its description.
+            const domain = job.domainId ? await Domain.findById(job.domainId) : null
             const requests = await AiChangeRequest.find({ jobId: job._id })
             const refs = componentsOfJob(job)
             const components = await findComponents(refs)
@@ -437,7 +469,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             const locked = (index: number): Promise<void> =>
                 index < byFolder.length
                     ? withRepositoryLock(byFolder[index].workspace.workingCopy.dir, () => locked(index + 1), { onWait, waitMs: Math.max(0, deadline - Date.now()) })
-                    : this.work(job, project, repositories, workspaceService, client, delta => {
+                    : this.work(job, project, domain, repositories, workspaceService, client, delta => {
                           usage = addUsage(usage, delta)
                       })
             await locked(0)
@@ -453,6 +485,7 @@ export class AiChangeJobService extends AiChangeBaseService {
     private async work(
         job: IAiChangeJob,
         project: IProject,
+        domain: IDomain | null,
         repositories: RunningRepository[],
         workspaceService: RepositoryWorkspaceService,
         client: LlmClient,
@@ -482,6 +515,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                 {
                     prompt: job.prompt,
                     project: { name: project.name, context: project.context },
+                    domain: domain ? { name: domain.name, description: domain.description } : undefined,
                     repositories: repositories.map(({ component, request, workspace, previousFiles }, index) =>
                         agentRepository(component, slugs[index], {
                             baseBranch: request.baseBranch,
@@ -646,6 +680,23 @@ export class AiChangeJobService extends AiChangeBaseService {
         const job = await this.getJob(id)
         const jobs = await AiChangeJob.find({ rootJobId: job.rootJobId, projectId: job.projectId }).sort({ createdAt: 1 })
         return this.views(await Promise.all(jobs.map(candidate => this.failIfStale(candidate))), true)
+    }
+
+    /**
+     * The latest conversations on a domain, everyone's, as a microfrontend page shows everyone's requests:
+     * the first job of each chain, which names it, and its latest, which says where it stands. Newest first.
+     */
+    async domainConversations(projectId: string, domainId: string): Promise<AiJobView[]> {
+        await this.ensureAccessToProject(toObjectId(projectId))
+        // By their roots: a chain with many follow-ups must not push the other conversations out.
+        const roots = await AiChangeJob.find({ projectId: toObjectId(projectId), domainId: toObjectId(domainId), $expr: { $eq: ["$_id", "$rootJobId"] } }, { events: 0 })
+            .sort({ createdAt: -1 })
+            .limit(LISTED_JOBS)
+        const latest = await Promise.all(roots.map(root => AiChangeJob.findOne({ rootJobId: root._id }, { events: 0 }).sort({ createdAt: -1 })))
+        const jobs: IAiChangeJob[] = [...roots, ...latest.flatMap(job => (job ? [job] : []))]
+            .filter((job, index, all) => all.findIndex(other => String(other._id) === String(job._id)) === index)
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        return this.views(await Promise.all(jobs.map(job => this.failIfStale(job))), false)
     }
 
     /**

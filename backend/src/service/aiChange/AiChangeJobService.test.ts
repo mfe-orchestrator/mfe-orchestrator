@@ -25,6 +25,7 @@ vi.mock("./aiChangeAgent", async importOriginal => ({ ...(await importOriginal<t
 import AiChangeJob, { AiJobStatus } from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
 import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
+import Domain from "../../models/DomainModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
 import Service from "../../models/ServiceModel"
@@ -212,6 +213,53 @@ describe("AiChangeJobService", () => {
             expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "global", microfrontendIds: [catalog._id, cart._id], serviceIds: [catalogApi._id] }))
         })
 
+        describe("on a domain", () => {
+            const checkoutId = new Types.ObjectId()
+            const checkout = { _id: checkoutId, projectId, slug: "checkout", name: "Checkout", description: "From the cart to the payment" }
+
+            beforeEach(() => {
+                vi.spyOn(Domain, "findOne").mockImplementation(((filter: { _id: unknown; projectId: unknown }) =>
+                    Promise.resolve(String(filter._id) === String(checkoutId) && String(filter.projectId) === projectId ? checkout : null)) as never)
+            })
+
+            it("Given a domain with a microfrontend and a service, when its job is started, then it works on its members only and remembers the domain", async () => {
+                withRepository = [{ ...cart, domainId: checkoutId } as never, catalog]
+                services = [{ ...catalogApi, domainId: checkoutId } as never]
+
+                const job = await service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })
+
+                expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "domain", domainId: checkoutId, microfrontendIds: [cart._id], serviceIds: [catalogApi._id] }))
+                expect(job).toMatchObject({ scope: "domain", domainId: String(checkoutId) })
+            })
+
+            it("Given a domain whose members have no repository, when its job is started, then it is refused naming the domain", async () => {
+                withRepository = [catalog]
+
+                await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })).rejects.toMatchObject({
+                    code: "AI_JOB_NO_REPOSITORIES",
+                    message: expect.stringContaining("Checkout")
+                })
+                expect(AiChangeJob.create).not.toHaveBeenCalled()
+            })
+
+            it("Given a domain of another project, when its job is started, then it is not found", async () => {
+                const elsewhere = new Types.ObjectId().toString()
+
+                await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: elsewhere })).rejects.toMatchObject({
+                    message: expect.stringContaining(elsewhere)
+                })
+                expect(AiChangeJob.create).not.toHaveBeenCalled()
+            })
+
+            it("Given a domain with more than 10 members with a repository, when its job is started, then it is refused", async () => {
+                withRepository = Array.from({ length: 11 }, (_, index) => ({ ...microfrontend(`mfe-${index}`, `Mfe ${index}`), domainId: checkoutId }) as never)
+
+                await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })).rejects.toMatchObject({
+                    code: "AI_JOB_TOO_MANY_REPOSITORIES"
+                })
+            })
+        })
+
         it("Given a selected service of another project, when the job is started, then it is not found", async () => {
             services = [{ ...catalogApi, projectId: new Types.ObjectId().toString() }]
 
@@ -254,6 +302,28 @@ describe("AiChangeJobService", () => {
 
             expect(child).toMatchObject({ parentJobId: String(parentJobId), rootJobId: String(rootJobId), scope: "global" })
             expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ microfrontendId: catalog._id, parentId: requests[0]._id, baseBranch: "develop" }))
+        })
+
+        it("Given a job of a domain, when it is followed up, then the child stays in the domain", async () => {
+            const domainId = new Types.ObjectId()
+            vi.spyOn(AiChangeJob, "findById").mockImplementation((() =>
+                Promise.resolve({
+                    _id: parentJobId,
+                    rootJobId,
+                    projectId,
+                    userId: user._id,
+                    prompt: "Show the shipping cost",
+                    scope: "domain",
+                    domainId,
+                    microfrontendIds: [catalog._id],
+                    status: parentStatus,
+                    usage: {},
+                    updatedAt: new Date()
+                })) as never)
+
+            await service().followUp(String(parentJobId), { prompt: "Also in the summary" })
+
+            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "domain", domainId, parentJobId }))
         })
 
         it("Given a job still running, when it is followed up, then it is refused", async () => {
@@ -422,6 +492,24 @@ describe("AiChangeJobService", () => {
             expect(updates).toContainEqual(
                 expect.objectContaining({ filter: { _id: serviceRequest._id, status: AiChangeStatus.RUNNING }, update: expect.objectContaining({ status: AiChangeStatus.PROPOSED }) })
             )
+        })
+
+        it("Given a job of a domain, when it runs, then the agent is told what the domain is for", async () => {
+            const domainId = new Types.ObjectId()
+            const job = { _id: jobId, rootJobId: jobId, projectId, userId: user._id, prompt: "Show the shipping cost", domainId, microfrontendIds, status: AiJobStatus.RUNNING }
+            vi.spyOn(AiChangeJob, "findById").mockImplementation(((id: unknown) => Promise.resolve(String(id) === String(jobId) ? job : null)) as never)
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ ...request, parentId: undefined }] as never)
+            vi.spyOn(Domain, "findById").mockResolvedValue({ _id: domainId, name: "Checkout", description: "From the cart to the payment" } as never)
+            let received: { domain?: unknown } | undefined
+            runAgent.mockImplementationOnce(async (_client: unknown, input: typeof received) => {
+                received = input
+                return { summary: "Shows the shipping cost", stopReason: "finished" }
+            })
+
+            await run()
+
+            expect(Domain.findById).toHaveBeenCalledWith(domainId)
+            expect(received?.domain).toEqual({ name: "Checkout", description: "From the cart to the payment" })
         })
 
         it("Given a file of the parent changed on the base branch since, when the follow-up runs, then it fails naming the file and the parent stays applicable", async () => {
@@ -596,6 +684,44 @@ describe("AiChangeJobService", () => {
             vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
 
             expect(await service().working(projectId)).toEqual([])
+        })
+    })
+
+    describe("domainConversations", () => {
+        it("Given a chain with follow-ups and another conversation, when the domain is listed, then each conversation comes with its first and its latest job only, newest first", async () => {
+            const domainId = new Types.ObjectId()
+            const job = (rootJobId: Types.ObjectId | undefined, prompt: string, minutes: number) => {
+                const _id = new Types.ObjectId()
+                return {
+                    _id,
+                    rootJobId: rootJobId ?? _id,
+                    projectId,
+                    userId: user._id,
+                    prompt,
+                    scope: "domain",
+                    domainId,
+                    status: AiJobStatus.DONE,
+                    microfrontendIds: [],
+                    serviceIds: [],
+                    createdAt: new Date(Date.UTC(2026, 9, 19, 10, minutes)),
+                    updatedAt: new Date()
+                }
+            }
+            const shipping = job(undefined, "Show the shipping cost", 0)
+            const middle = job(shipping._id, "Also in the summary", 10)
+            const latest = job(shipping._id, "And in the email", 20)
+            const coupons = job(undefined, "Accept coupons", 5)
+            const chains = [shipping, middle, latest, coupons]
+            const find = vi.spyOn(AiChangeJob, "find").mockImplementation((() => ({ sort: () => ({ limit: () => Promise.resolve([shipping, coupons]) }) })) as never)
+            vi.spyOn(AiChangeJob, "findOne").mockImplementation(((filter: { rootJobId: unknown }) => ({
+                sort: () => Promise.resolve(chains.filter(candidate => String(candidate.rootJobId) === String(filter.rootJobId)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0])
+            })) as never)
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
+
+            const conversations = await service().domainConversations(projectId, String(domainId))
+
+            expect(find).toHaveBeenCalledWith(expect.objectContaining({ domainId: String(domainId), $expr: { $eq: ["$_id", "$rootJobId"] } }), expect.anything())
+            expect(conversations.map(view => view.prompt)).toEqual(["And in the email", "Accept coupons", "Show the shipping cost"])
         })
     })
 })

@@ -11,8 +11,11 @@ export enum AiJobStatus {
     FAILED = "FAILED"
 }
 
-/** `global` works on every microfrontend and service of the project with a repository, `selection` on the ones the user picked. */
-export type AiJobScope = "global" | "selection"
+/**
+ * `global` works on every microfrontend and service of the project with a repository, `domain` on those of one
+ * functional domain, its frontend and its backend together, `selection` on the ones the user picked.
+ */
+export type AiJobScope = "global" | "domain" | "selection"
 
 /**
  * One run of the AI agent over one or more repositories of a project.
@@ -30,6 +33,8 @@ export interface IAiChangeJob extends Document<ObjectId> {
     rootJobId: Schema.Types.ObjectId
     prompt: string
     scope: AiJobScope
+    /** The functional domain the job was asked from: its follow-ups keep it, and the agent is told about it. */
+    domainId?: Schema.Types.ObjectId
     /** The repositories the agent works on, in the order they are shown. */
     microfrontendIds: Schema.Types.ObjectId[]
     /** The services among them, shown after the microfrontends. */
@@ -52,7 +57,8 @@ const aiChangeJobSchema = new Schema<IAiChangeJob>(
         parentJobId: { type: Schema.Types.ObjectId, ref: "AiChangeJob" },
         rootJobId: { type: Schema.Types.ObjectId, ref: "AiChangeJob", required: true, index: true },
         prompt: { type: String, required: true, maxlength: 8_000 },
-        scope: { type: String, enum: ["global", "selection"], required: true },
+        scope: { type: String, enum: ["global", "domain", "selection"], required: true },
+        domainId: { type: Schema.Types.ObjectId, ref: "Domain" },
         microfrontendIds: { type: [{ type: Schema.Types.ObjectId, ref: "Microfrontend" }], default: [] },
         serviceIds: { type: [{ type: Schema.Types.ObjectId, ref: "Service" }], default: [] },
         status: { type: String, enum: Object.values(AiJobStatus), default: AiJobStatus.PENDING, required: true },
@@ -71,6 +77,7 @@ const aiChangeJobSchema = new Schema<IAiChangeJob>(
 
 aiChangeJobSchema.index({ projectId: 1, userId: 1, createdAt: -1 })
 aiChangeJobSchema.index({ projectId: 1, status: 1 })
+aiChangeJobSchema.index({ projectId: 1, domainId: 1, createdAt: -1 })
 aiChangeJobSchema.index({ parentJobId: 1 })
 aiChangeJobSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 

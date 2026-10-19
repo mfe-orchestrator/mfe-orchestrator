@@ -464,4 +464,37 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
             fs.rmSync(ordersDir, { recursive: true, force: true })
         }
     })
+
+    it("Given the frontend and the backend of a domain, when it runs, then the prompt carries the domain's description and asks to keep them in step", async () => {
+        const ordersDir = makeRepository({ "src/routes.ts": "export const routes = []\n" })
+        try {
+            const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+            const domain = {
+                ...input(),
+                domain: { name: "Checkout", description: "Everything between the cart and the payment." },
+                repositories: [...input().repositories, { baseBranch: "main", workingCopy: new GitWorkingCopy(ordersDir, "http://unused", { username: "", password: "" }), service: ordersService() }]
+            }
+
+            await runAiChangeAgent(client, domain, hooks().hooks)
+
+            const firstMessage = sent[0].messages[0]
+            const firstPrompt = firstMessage.role === "user" ? firstMessage.text : ""
+            expect(firstPrompt).toContain('<domain_context domain="Checkout">\nEverything between the cart and the payment.\n</domain_context>')
+            expect(firstPrompt).toContain('belong to the functional domain "Checkout", which groups its frontend (microfrontends) and its backend (services)')
+            // The domain sits with the project, before the request.
+            expect(firstPrompt.indexOf("<domain_context")).toBeGreaterThan(firstPrompt.indexOf("</repositories>"))
+            expect(firstPrompt.indexOf("<domain_context")).toBeLessThan(firstPrompt.indexOf("<request>"))
+        } finally {
+            fs.rmSync(ordersDir, { recursive: true, force: true })
+        }
+    })
+
+    it("Given no domain, then the prompt says nothing of one", async () => {
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+
+        await runAiChangeAgent(client, input(), hooks().hooks)
+
+        const firstMessage = sent[0].messages[0]
+        expect(firstMessage.role === "user" && firstMessage.text).not.toContain("domain")
+    })
 })

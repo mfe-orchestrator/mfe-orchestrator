@@ -52,6 +52,7 @@ const toJobView = (job: AiJobView) => ({
     status: job.status,
     prompt: job.prompt,
     scope: job.scope,
+    domainId: job.domainId,
     summary: job.summary,
     error: job.error,
     usage: job.usage,
@@ -144,25 +145,32 @@ export const aiChangeTools = [
         name: "ai_job_start",
         title: "Start AI job",
         description:
-            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. Without microfrontendIds it works on every microfrontend and service of the project with a repository (at most 10). Each repository gets its own proposal, applied as its own pull request; nothing is pushed until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
+            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. With domainId it works on the microfrontends and services of that functional domain, frontend and backend together, and is told what the domain is for. Without domainId nor microfrontendIds it works on every microfrontend and service of the project with a repository (at most 10). Each repository gets its own proposal, applied as its own pull request; nothing is pushed until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Clones the repositories from their provider: nothing is written there yet
         annotations: WRITE_EXTERNAL,
-        inputSchema: z.object({
-            prompt,
-            microfrontendIds: z
-                .array(objectId("Id of a microfrontend, from microfrontends_list"))
-                .min(1)
-                .max(10)
-                .optional()
-                .describe("The microfrontends to change; all the microfrontends and services with a repository when omitted")
-        }),
+        inputSchema: z
+            .object({
+                prompt,
+                domainId: objectId("Id of a functional domain, from domains_list: the job works on its microfrontends and services").optional(),
+                microfrontendIds: z
+                    .array(objectId("Id of a microfrontend, from microfrontends_list"))
+                    .min(1)
+                    .max(10)
+                    .optional()
+                    .describe("The microfrontends to change, without domainId; all the microfrontends and services with a repository when both are omitted")
+            })
+            .refine(args => !(args.domainId && args.microfrontendIds), { message: "Pass domainId or microfrontendIds, not both" }),
         run: async (args, { principal, projectId }) =>
             toJobView(
                 await jobService(principal).create(
                     projectId,
-                    args.microfrontendIds ? { prompt: args.prompt, scope: "selection", microfrontendIds: args.microfrontendIds } : { prompt: args.prompt, scope: "global" }
+                    args.domainId
+                        ? { prompt: args.prompt, scope: "domain", domainId: args.domainId }
+                        : args.microfrontendIds
+                          ? { prompt: args.prompt, scope: "selection", microfrontendIds: args.microfrontendIds }
+                          : { prompt: args.prompt, scope: "global" }
                 )
             )
     }),

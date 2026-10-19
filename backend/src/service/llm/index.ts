@@ -90,8 +90,14 @@ export const createLlmClient = (config: LlmConfiguration): LlmClient | undefined
     }
 }
 
-/** A 429 from the provider. Every SDK in use exposes the HTTP status as `status` on its errors. */
-export const isRateLimitError = (error: unknown): boolean => (error as { status?: unknown } | null)?.status === 429
+/** Codes OpenAI-compatible providers put on errors sent mid-stream, which carry no HTTP status: Azure sends `no_capacity` when peak load rejects a large request. */
+const RATE_LIMIT_CODES = new Set(["rate_limit_exceeded", "no_capacity"])
+
+/** A 429 from the provider, or a rate-limit code on an error sent mid-stream. Every SDK in use exposes the HTTP status as `status` on its errors. */
+export const isRateLimitError = (error: unknown): boolean => {
+    const { status, code } = (error ?? {}) as { status?: unknown; code?: unknown }
+    return status === 429 || (typeof code === "string" && RATE_LIMIT_CODES.has(code))
+}
 
 let cached: { config: LlmConfiguration; client: LlmClient } | undefined
 
