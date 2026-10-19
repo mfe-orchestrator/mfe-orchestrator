@@ -239,6 +239,12 @@ class GitLabClient {
         return res.data
     }
 
+    /** Renames the project and moves its path with it: the path is what the clone URL is made of. */
+    async renameProject(projectId: string | number, name: string): Promise<GitLabProject> {
+        const res = await this.api.put<GitLabProject>(`/projects/${projectId}`, { name, path: name })
+        return res.data
+    }
+
     /** Opens a merge request and returns its web URL. */
     async createMergeRequest(projectId: string | number, request: { sourceBranch: string; targetBranch: string; title: string; description: string }): Promise<string> {
         const res = await this.api.post<{ web_url: string }>(`/projects/${projectId}/merge_requests`, {

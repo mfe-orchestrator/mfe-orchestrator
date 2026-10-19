@@ -377,7 +377,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
 
                     {hasRepositories && (
                         <TabsContent value="repository" forceMount>
-                            <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} forceCreation={!isEdit} />
+                            <CodeRepositorySection repositoriesData={repositories || []} isEdit={!!id} microfrontendId={id} savedRepository={frontend?.codeRepository} forceCreation={!isEdit} />
                         </TabsContent>
                     )}
 

@@ -22,7 +22,7 @@ import { CircleCheck, DownloadCloud } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
-import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
+import useCodeRepositoriesApi, { ICodeRepository, ImportTarget } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
@@ -31,14 +31,20 @@ interface ImportRepositoriesDialogProps {
     onOpenChange: (open: boolean) => void
     /** Code repository connections configured on the project (GitHub account/org, GitLab group, Azure DevOps project). */
     codeRepositories: ICodeRepository[]
+    /** One microfrontend per repository when omitted, one service otherwise. */
+    target?: ImportTarget
+    /** The functional domain every imported microfrontend or service is put in. */
+    domainId?: string
 }
 
-export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> = ({ open, onOpenChange, codeRepositories }) => {
+export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> = ({ open, onOpenChange, codeRepositories, target = "microfrontend", domainId }) => {
     const { t } = useTranslation()
     const codeRepositoriesApi = useCodeRepositoriesApi()
     const notifications = useToastNotificationStore()
     const queryClient = useQueryClient()
     const projectId = useProjectStore().project?._id
+    // Only what names the result differs between microfrontends and services: the rest of the copy is shared.
+    const targetKeys = target === "service" ? "services.import" : "microfrontend.import"
 
     const defaultCodeRepositoryId = useMemo(() => codeRepositories.find(repository => repository.default)?._id ?? codeRepositories[0]?._id, [codeRepositories])
 
@@ -55,8 +61,8 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
     }, [open, defaultCodeRepositoryId])
 
     const repositoriesQuery = useQuery({
-        queryKey: ["importable-repositories", codeRepositoryId],
-        queryFn: () => codeRepositoriesApi.getImportableRepositories(codeRepositoryId!),
+        queryKey: ["importable-repositories", codeRepositoryId, target],
+        queryFn: () => codeRepositoriesApi.getImportableRepositories(codeRepositoryId!, undefined, target),
         enabled: open && !!codeRepositoryId
     })
 
@@ -82,11 +88,11 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
     }
 
     const importMutation = useMutation({
-        mutationFn: () => codeRepositoriesApi.importRepositories(codeRepositoryId!, { repositoryIds: selectedRepositoryIds }),
+        mutationFn: () => codeRepositoriesApi.importRepositories(codeRepositoryId!, { repositoryIds: selectedRepositoryIds, target, domainId }),
         onSuccess: async result => {
             if (result.imported.length > 0) {
                 notifications.showSuccessNotification({
-                    message: t("microfrontend.import.importedCount", { count: result.imported.length })
+                    message: t(`${targetKeys}.importedCount`, { count: result.imported.length })
                 })
             }
 
@@ -103,7 +109,10 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
                 notifications.showInfoNotification({ message: t("microfrontend.import.nothingImported") })
             }
 
-            await queryClient.invalidateQueries({ queryKey: ["microfrontends-by-project-id", projectId] })
+            await queryClient.invalidateQueries({ queryKey: target === "service" ? ["services", projectId] : ["microfrontends-by-project-id", projectId] })
+            if (domainId) {
+                await queryClient.invalidateQueries({ queryKey: ["domains"] })
+            }
 
             if (result.failed.length === 0) {
                 onOpenChange(false)
@@ -121,7 +130,7 @@ export const ImportRepositoriesDialog: React.FC<ImportRepositoriesDialogProps> =
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{t("microfrontend.import.title")}</DialogTitle>
-                    <DialogDescription>{t("microfrontend.import.description")}</DialogDescription>
+                    <DialogDescription>{t(`${targetKeys}.description`)}</DialogDescription>
                 </DialogHeader>
 
                 <div className="mt-2 flex flex-col gap-3">

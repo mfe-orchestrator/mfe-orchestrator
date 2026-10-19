@@ -2,6 +2,7 @@ import fastifyMultipart from "@fastify/multipart"
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import MicrofrontendService from "../service/MicrofrontendService"
+import RepositoryRenameService from "../service/RepositoryRenameService"
 import StackDetectionService from "../service/StackDetectionService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
@@ -139,6 +140,10 @@ export default async function microfrontendController(fastify: FastifyInstance) 
         }
     }>("/microfrontends/:id/build", async (request, reply) => {
         return reply.send(await new MicrofrontendService(request.databaseUser).build(request.params.id, request.body.version, request.body.branch))
+    })
+
+    fastify.post<{ Params: { id: string }; Body: { name: string } }>("/microfrontends/:id/repository/rename", async (request, reply) => {
+        return reply.send(await new RepositoryRenameService(request.databaseUser).renameMicrofrontendRepository(request.params.id, request.body?.name ?? ""))
     })
 
     fastify.put<{

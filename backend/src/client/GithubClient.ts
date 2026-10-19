@@ -723,6 +723,21 @@ class GithubClient {
         return response.data
     }
 
+    async renameRepository({ accessToken, orgName, userName, repositoryName, newName }: GithubRepositoryBaseDTO & { newName: string }): Promise<GithubRepository> {
+        const response = await axios.request<GithubRepository>({
+            method: "PATCH",
+            url: this.getRepositoryBaseUrlBase(repositoryName, orgName, userName),
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "User-Agent": "MFE-Orchestrator"
+            },
+            data: { name: newName }
+        })
+
+        return response.data
+    }
+
     /**
      * Reads a text file from a repository. Returns null when the file does not exist on the
      * given ref, so callers can treat a missing package.json as "nothing to analyse".

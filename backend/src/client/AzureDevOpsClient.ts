@@ -293,6 +293,21 @@ class AzureDevOpsClient {
         return response.data
     }
 
+    async renameRepository(token: string, organization: string, project: string, repositoryId: string, newName: string): Promise<RepositoryData> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}?api-version=7.1-preview.1`
+        const response = await axios.request<RepositoryData>({
+            method: "PATCH",
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: { name: newName }
+        })
+
+        return response.data
+    }
+
     async getBranches(token: string, organization: string, project: string, repositoryName: string): Promise<AzureDevOpsBranchDTO> {
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/refs?filter=heads/&api-version=7.1-preview.1`
         const response = await axios.request<AzureDevOpsBranchDTO>({

@@ -158,6 +158,17 @@ const useMicrofrontendsApi = () => {
         return response.data
     }
 
+    /** Rinomina il repository git del microfrontend presso il provider: ritorna il microfrontend aggiornato. Gli errori li gestisce il chiamante */
+    const renameRepository = async (id: string, name: string): Promise<Microfrontend> => {
+        const response = await apiClient.doRequest<Microfrontend>({
+            url: `/api/microfrontends/${id}/repository/rename`,
+            method: "POST",
+            data: { name },
+            silent: true
+        })
+        return response.data
+    }
+
     const getVersions = async (id: string): Promise<string[]> => {
         const response = await apiClient.doRequest<string[]>({
             url: `/api/microfrontends/${id}/versions`
@@ -226,6 +237,7 @@ const useMicrofrontendsApi = () => {
         deleteSingle,
         getSingle,
         build,
+        renameRepository,
         getVersions,
         setPosition,
         setDimensions,

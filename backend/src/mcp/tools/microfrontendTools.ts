@@ -5,6 +5,7 @@ import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import CodeRepositoryService from "../../service/CodeRepositoryService"
 import DomainService from "../../service/DomainService"
 import MicrofrontendService from "../../service/MicrofrontendService"
+import RepositoryRenameService, { isValidRepositoryName } from "../../service/RepositoryRenameService"
 import StackDetectionService from "../../service/StackDetectionService"
 import { StorageService } from "../../service/StorageService"
 import MicrofrontendDTO from "../../types/MicrofrontendDTO"
@@ -199,6 +200,25 @@ export const microfrontendTools = [
             await new MicrofrontendService(principal).build(args.microfrontendId, args.version, args.branch)
             return { triggered: true }
         }
+    }),
+    defineTool({
+        name: "microfrontend_repository_rename",
+        title: "Rename repository",
+        description:
+            "Renames the git repository of a microfrontend at its provider (GitHub, GitLab, Azure DevOps) and updates the repository name and clone URLs the console keeps. The microfrontend's own name and slug do not change. Local clones must point their remote to the new URL: GitHub and GitLab redirect the old one, Azure DevOps does not.",
+        scope: MCP_SCOPE_WRITE,
+        annotations: { ...WRITE_EXTERNAL, idempotentHint: true },
+        // Every clone and pipeline of the team follows the repository URL: the user says yes first.
+        requiresConfirmation: true,
+        inputSchema: z.object({
+            microfrontendId,
+            name: z
+                .string()
+                .trim()
+                .refine(isValidRepositoryName, "letters, digits, '.', '_' and '-' (up to 100), starting with a letter or a digit, not ending with '.', '.git' or '.atom'")
+                .describe("New name of the repository at the provider, e.g. checkout-web")
+        }),
+        run: (args, { principal }) => new RepositoryRenameService(principal).renameMicrofrontendRepository(args.microfrontendId, args.name)
     }),
     defineTool({
         name: "microfrontends_detect_stacks",

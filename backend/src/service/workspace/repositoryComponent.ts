@@ -25,6 +25,8 @@ interface RepositoryComponentBase {
     codeRepository?: ICodeRepositoryMicrofrontend
     /** Markdown for AI agents about this component only. */
     context?: string
+    /** The functional domain it belongs to, if any. */
+    domainId?: IMicrofrontend["domainId"]
 }
 
 export interface MicrofrontendComponent extends RepositoryComponentBase {
@@ -55,6 +57,7 @@ export const fromMicrofrontend = (microfrontend: IMicrofrontend): MicrofrontendC
     name: microfrontend.name,
     codeRepository: microfrontend.codeRepository,
     context: microfrontend.context,
+    domainId: microfrontend.domainId ?? undefined,
     framework: microfrontend.stack?.framework,
     compiler: microfrontend.stack?.compiler
 })
@@ -67,6 +70,7 @@ export const fromService = (service: IService): ServiceComponent => ({
     name: service.name,
     codeRepository: service.codeRepository,
     context: service.context,
+    domainId: service.domainId ?? undefined,
     runtime: service.stack?.runtime,
     framework: service.stack?.framework,
     port: service.port,
