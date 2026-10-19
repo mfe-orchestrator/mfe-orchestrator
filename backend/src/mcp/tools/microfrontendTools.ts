@@ -221,7 +221,7 @@ export const microfrontendTools = [
                 .string()
                 .trim()
                 .refine(isValidRepositoryName, "letters, digits, '.', '_' and '-' (up to 100), starting with a letter or a digit, not ending with '.', '.git' or '.atom'")
-                .describe("New name of the repository at the provider, e.g. checkout-web")
+                .describe("New name of the repository at the provider, ending in -fe, e.g. checkout-fe")
         }),
         run: (args, { principal }) => new RepositoryRenameService(principal).renameMicrofrontendRepository(args.microfrontendId, args.name)
     }),

@@ -13,7 +13,13 @@ import { createSchema, ensureReferencesBelongToProject } from "./microfrontendTo
 const scaffoldSchema = createSchema.omit({ codeRepository: true }).extend({
     template: z.string().trim().min(1).describe("Slug of the template, from templates_list"),
     codeRepositoryId: objectId("Id of a code repository connection of this project, from code_repositories_list: the new repository is created there"),
-    repositoryName: z.string().trim().min(3).max(100).optional().describe("Name of the new repository, the microfrontend's slug when omitted"),
+    repositoryName: z
+        .string()
+        .trim()
+        .min(3)
+        .max(100)
+        .optional()
+        .describe("Name of the new repository, ending in -fe (e.g. checkout-fe): always pass it, the microfrontend's slug is used as is when omitted"),
     private: z.boolean().optional().describe("Create the repository as private (default false)"),
     gitlab: z
         .object({

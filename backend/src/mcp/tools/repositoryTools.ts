@@ -52,7 +52,7 @@ export const repositoryTools = [
     defineTool({
         name: "code_repository_check_name",
         title: "Check repository name",
-        description: "Whether a repository name is still free at the provider.",
+        description: "Whether a repository name is still free at the provider. New repositories end in -fe (frontend) or -be (backend service).",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY_EXTERNAL,
         inputSchema: z.object({ codeRepositoryId, name: z.string().min(1).max(255), groupPath: z.string().optional(), groupId: z.number().int().optional() }),
