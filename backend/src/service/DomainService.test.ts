@@ -6,6 +6,7 @@ vi.mock("../plugins/noSQL", () => ({ isReplicaSet: false }))
 
 import { BusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import DomainLink from "../models/DomainLinkModel"
 import Domain from "../models/DomainModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
@@ -137,6 +138,7 @@ describe("DomainService.delete", () => {
         const unsetServices = vi.spyOn(Service, "updateMany").mockResolvedValue({ modifiedCount: 1 } as never)
         const deleteMicrofrontends = vi.spyOn(Microfrontend, "deleteMany")
         const deleteServices = vi.spyOn(Service, "deleteMany")
+        const deleteLinks = vi.spyOn(DomainLink, "deleteMany").mockResolvedValue({ deletedCount: 1 } as never)
         const remove = vi.spyOn(Domain, "findByIdAndDelete").mockResolvedValue(domain as never)
 
         const deleted = await new DomainService().delete(String(domainId))
@@ -144,6 +146,7 @@ describe("DomainService.delete", () => {
         const members = { projectId, domainId }
         expect(unsetMicrofrontends).toHaveBeenCalledWith(members, { $set: { domainId: null } }, expect.anything())
         expect(unsetServices).toHaveBeenCalledWith(members, { $set: { domainId: null } }, expect.anything())
+        expect(deleteLinks).toHaveBeenCalledWith({ $or: [{ sourceDomainId: domainId }, { targetDomainId: domainId }] }, expect.anything())
         expect(remove).toHaveBeenCalledWith(domainId, expect.anything())
         expect(deleteMicrofrontends).not.toHaveBeenCalled()
         expect(deleteServices).not.toHaveBeenCalled()

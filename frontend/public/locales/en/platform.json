@@ -2015,12 +2015,28 @@
             "legend_canary": "Canary on",
             "legend_bridge": "Link across domains",
             "recenter": "Show everything",
-            "hint": "Click a galaxy to fly to it and click it again to open the domain. Click a star to open the microfrontend or the service. Scroll to zoom.",
+            "hint": "Click a galaxy to fly to it and click it again to open the domain. Click a star to open the microfrontend or the service, a relation to delete it. Scroll to zoom.",
             "summary_one": "Project map: every domain is a galaxy, its microfrontends and services are the stars. There is {{count}} link across two domains.",
             "summary_other": "Project map: every domain is a galaxy, its microfrontends and services are the stars. There are {{count}} links across two domains.",
             "kind_microfrontend": "Microfrontend",
             "kind_service": "Service",
-            "canary": "Canary at {{percentage}}%"
+            "canary": "Canary at {{percentage}}%",
+            "legend_relation": "Domain relation",
+            "link_action": "Link domains",
+            "link_pick_source": "Click the galaxy the relation starts from. Esc to cancel.",
+            "link_pick_target": "Now click the galaxy the relation from “{{source}}” goes to. Esc to cancel.",
+            "link_dialog_title": "New domain relation",
+            "link_label": "Label",
+            "link_label_placeholder": "E.g. uses, publishes events to",
+            "link_label_hint": "Optional: what the relation is.",
+            "link_created": "Domains linked",
+            "link_delete": "Delete relation",
+            "link_delete_description": "Delete the relation “{{source}} → {{target}}”? The domains and their members stay.",
+            "link_close": "Close",
+            "errors": {
+                "link_exists": "These domains are already linked this way.",
+                "link_invalid": "This relation is not valid."
+            }
         },
         "form": {
             "create_title": "New functional domain",

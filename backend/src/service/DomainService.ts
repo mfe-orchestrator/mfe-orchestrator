@@ -9,6 +9,7 @@ import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import { deleteLinksOfDomain } from "./DomainLinkService"
 
 /**
  * The domain a microfrontend or a service is put in, as it is stored: null when it is taken out of
@@ -177,6 +178,7 @@ export class DomainService extends BaseAuthorizedService {
             // null, as the forms store "no domain": the filters and the counts treat it as a missing domainId
             await Microfrontend.updateMany(members, { $set: { domainId: null } }, { session })
             await Service.updateMany(members, { $set: { domainId: null } }, { session })
+            await deleteLinksOfDomain(domain._id, session)
             return await Domain.findByIdAndDelete(domain._id, { session })
         })
     }

@@ -13,6 +13,7 @@ import { McpSession, McpSharedProject, McpToolContext, McpToolDefinition, object
 import { aiChangeTools } from "./tools/aiChangeTools"
 import { configurationTools } from "./tools/configurationTools"
 import { domainDeploymentTools } from "./tools/domainDeploymentTools"
+import { domainLinkTools } from "./tools/domainLinkTools"
 import { domainTools } from "./tools/domainTools"
 import { environmentTools } from "./tools/environmentTools"
 import { microfrontendTools } from "./tools/microfrontendTools"
@@ -48,6 +49,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     ...microfrontendTools,
     ...serviceTools,
     ...domainTools,
+    ...domainLinkTools,
     ...domainDeploymentTools,
     ...environmentTools,
     ...repositoryTools,

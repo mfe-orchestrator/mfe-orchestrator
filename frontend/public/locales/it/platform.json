@@ -2034,12 +2034,28 @@
             "legend_canary": "Canary attivo",
             "legend_bridge": "Collegamento tra domini",
             "recenter": "Mostra tutto",
-            "hint": "Clicca una galassia per avvicinarti e cliccala di nuovo per aprire il dominio. Clicca una stella per aprire il microfrontend o il servizio. Usa la rotella per lo zoom.",
+            "hint": "Clicca una galassia per avvicinarti e cliccala di nuovo per aprire il dominio. Clicca una stella per aprire il microfrontend o il servizio, una relazione per eliminarla. Usa la rotella per lo zoom.",
             "summary_one": "Mappa del progetto: ogni dominio è una galassia, i suoi microfrontend e servizi sono le stelle. C'è {{count}} collegamento tra domini diversi.",
             "summary_other": "Mappa del progetto: ogni dominio è una galassia, i suoi microfrontend e servizi sono le stelle. Ci sono {{count}} collegamenti tra domini diversi.",
             "kind_microfrontend": "Microfrontend",
             "kind_service": "Servizio",
-            "canary": "Canary al {{percentage}}%"
+            "canary": "Canary al {{percentage}}%",
+            "legend_relation": "Relazione tra domini",
+            "link_action": "Collega domini",
+            "link_pick_source": "Clicca la galassia da cui parte la relazione. Esc per annullare.",
+            "link_pick_target": "Ora clicca la galassia a cui arriva la relazione da «{{source}}». Esc per annullare.",
+            "link_dialog_title": "Nuova relazione tra domini",
+            "link_label": "Etichetta",
+            "link_label_placeholder": "Es. usa, pubblica eventi a",
+            "link_label_hint": "Facoltativa: descrive la relazione.",
+            "link_created": "Domini collegati",
+            "link_delete": "Elimina relazione",
+            "link_delete_description": "Eliminare la relazione «{{source}} → {{target}}»? I domini e i loro membri restano.",
+            "link_close": "Chiudi",
+            "errors": {
+                "link_exists": "Questi domini sono già collegati in questa direzione.",
+                "link_invalid": "Questa relazione non è valida."
+            }
         },
         "form": {
             "create_title": "Nuovo dominio funzionale",

@@ -8,12 +8,14 @@ import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
+import useDomainLinksApi, { DomainLink } from "@/hooks/apiClients/useDomainLinksApi"
 import useDomainsApi, { Domain } from "@/hooks/apiClients/useDomainsApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useServicesApi from "@/hooks/apiClients/useServicesApi"
 import useProjectStore from "@/store/useProjectStore"
 import DomainFormDialog from "./partials/DomainFormDialog"
 import DomainGalaxy from "./partials/DomainGalaxy"
+import DomainLinkDialog from "./partials/DomainLinkDialog"
 
 const VIEWS = [
     { value: "cards", icon: LayoutGrid, labelKey: "domains.viewCards" },
@@ -30,11 +32,14 @@ const Domains = () => {
     const domainsApi = useDomainsApi()
     const microfrontendsApi = useMicrofrontendsApi()
     const servicesApi = useServicesApi()
+    const domainLinksApi = useDomainLinksApi()
 
-    const [view, setView] = useState<View>("cards")
+    const [view, setView] = useState<View>("galaxy")
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [editedDomain, setEditedDomain] = useState<Domain | undefined>()
     const [domainToDelete, setDomainToDelete] = useState<Domain | null>(null)
+    const [linkToCreate, setLinkToCreate] = useState<{ sourceDomainId: string; targetDomainId: string } | null>(null)
+    const [linkToDelete, setLinkToDelete] = useState<DomainLink | null>(null)
 
     const domainsQuery = useQuery({
         queryKey: ["domains", projectId],
@@ -48,6 +53,7 @@ const Domains = () => {
         enabled: !!projectId && view === "galaxy"
     })
     const servicesQuery = useQuery({ queryKey: ["services", projectId], queryFn: servicesApi.getAll, enabled: !!projectId && view === "galaxy" })
+    const domainLinksQuery = useQuery({ queryKey: ["domain-links", projectId], queryFn: domainLinksApi.getAll, enabled: !!projectId && view === "galaxy" })
 
     const deleteMutation = useMutation({
         mutationFn: domainsApi.deleteSingle,
@@ -55,7 +61,14 @@ const Domains = () => {
             await queryClient.invalidateQueries({ queryKey: ["domains"] })
             await queryClient.invalidateQueries({ queryKey: ["services"] })
             await queryClient.invalidateQueries({ queryKey: ["microfrontends-by-project-id"] })
+            // The relations of the domain go with it
+            await queryClient.invalidateQueries({ queryKey: ["domain-links"] })
         }
+    })
+
+    const deleteLinkMutation = useMutation({
+        mutationFn: domainLinksApi.deleteSingle,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["domain-links"] })
     })
 
     const openForm = (domain?: Domain) => {
@@ -64,6 +77,7 @@ const Domains = () => {
     }
 
     const domains = domainsQuery.data ?? []
+    const domainNamed = (id: string) => ({ id, name: domains.find(domain => domain._id === id)?.name ?? "" })
 
     return (
         <>
@@ -119,8 +133,15 @@ const Domains = () => {
                         ) : (
                             <>
                                 <TabsContent value="galaxy" className="mt-0">
-                                    <ApiStatusHandler queries={[microfrontendsQuery, servicesQuery]} interceptEmpty={false}>
-                                        <DomainGalaxy domains={domains} microfrontends={microfrontendsQuery.data ?? []} services={servicesQuery.data ?? []} />
+                                    <ApiStatusHandler queries={[microfrontendsQuery, servicesQuery, domainLinksQuery]} interceptEmpty={false}>
+                                        <DomainGalaxy
+                                            domains={domains}
+                                            microfrontends={microfrontendsQuery.data ?? []}
+                                            services={servicesQuery.data ?? []}
+                                            links={domainLinksQuery.data ?? []}
+                                            onLink={(sourceDomainId, targetDomainId) => setLinkToCreate({ sourceDomainId, targetDomainId })}
+                                            onUnlink={setLinkToDelete}
+                                        />
                                     </ApiStatusHandler>
                                 </TabsContent>
                                 <TabsContent value="cards" className="mt-0">
@@ -187,6 +208,21 @@ const Domains = () => {
                 onDeleteSuccess={() => setDomainToDelete(null)}
                 title={t("domains.delete_title")}
                 description={domainToDelete ? t("domains.delete_description", { name: domainToDelete.name }) : ""}
+            />
+            <DomainLinkDialog link={linkToCreate && { source: domainNamed(linkToCreate.sourceDomainId), target: domainNamed(linkToCreate.targetDomainId) }} onClose={() => setLinkToCreate(null)} />
+            <DeleteConfirmationDialog
+                isOpen={Boolean(linkToDelete)}
+                onOpenChange={open => !open && setLinkToDelete(null)}
+                onDelete={async () => {
+                    if (linkToDelete) {
+                        await deleteLinkMutation.mutateAsync(linkToDelete._id)
+                    }
+                }}
+                onDeleteSuccess={() => setLinkToDelete(null)}
+                title={t("domains.galaxy.link_delete")}
+                description={
+                    linkToDelete ? t("domains.galaxy.link_delete_description", { source: domainNamed(linkToDelete.sourceDomainId).name, target: domainNamed(linkToDelete.targetDomainId).name }) : ""
+                }
             />
         </>
     )

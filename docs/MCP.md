@@ -78,6 +78,10 @@ at most.
 - `domain_create` and `domain_update` (`mfe:write`) set the name and the description; the slug is
   derived from the name when left out and fixed after creation. `domain_delete` is destructive: the
   members are kept and end up in no domain.
+- `domain_links_list` (`mfe:read`) returns the relations the team drew by hand between two domains,
+  each from `sourceDomainId` to `targetDomainId` with an optional label; `domain_link_create` and
+  `domain_link_delete` (`mfe:write`, the delete destructive) draw and remove them. A relation goes one
+  way, and deleting a domain deletes its relations.
 - `domain_deployments_get` (`mfe:read`) tells, for one domain or for the whole project, which version of
   each microfrontend and service runs in each environment: the frontend from the active deployment
   snapshot, the backend from the versions the customer's deploy pipeline reported.
