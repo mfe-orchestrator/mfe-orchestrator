@@ -72,6 +72,22 @@ export interface FollowUpAiJobDTO {
     serviceIds?: string[]
 }
 
+/** A microfrontend or a service the AI proposes to create in a domain that has none, with the repository it would be scaffolded in. */
+export interface DomainPlanComponent {
+    name: string
+    slug: string
+    /** Slug of a marketplace template of the right kind. */
+    template: string
+    repositoryName: string
+    /** Why the request needs it. */
+    reason: string
+}
+
+export interface DomainPlan {
+    microfrontends: DomainPlanComponent[]
+    services: DomainPlanComponent[]
+}
+
 /** Project-scoped: the API client sends the `Project-Id` header of the open project. */
 const useAiJobsApi = () => {
     const apiClient = useApiClient()
@@ -146,8 +162,20 @@ const useAiJobsApi = () => {
         return response.data
     }
 
+    /** What the AI proposes to create in a domain without microfrontends nor services, for the request: nothing is created yet. */
+    const planDomain = async (data: { domainId: string; prompt: string }, metadata?: IClientRequestMetadataExtended): Promise<DomainPlan> => {
+        const response = await apiClient.doRequest<DomainPlan, { domainId: string; prompt: string }>({
+            url: "/api/ai-jobs/domain-plan",
+            method: "POST",
+            data,
+            ...metadata
+        })
+        return response.data
+    }
+
     return {
         create,
+        planDomain,
         followUp,
         get,
         chain,

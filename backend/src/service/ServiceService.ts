@@ -272,6 +272,7 @@ export class ServiceService extends BaseAuthorizedService {
 
             const createData = service.codeRepository.createData
             if (createData) {
+                await this.ensureNotViewer(projectIdObj, { code: "REPOSITORY_CREATE_FORBIDDEN", message: "A viewer cannot create a code repository" })
                 const template = createData.template ? await new MarketService().getSingle(createData.template) : null
                 // Both checked before anything is created at the provider
                 if (createData.template && !template) {

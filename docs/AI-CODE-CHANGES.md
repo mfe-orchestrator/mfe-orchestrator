@@ -29,6 +29,29 @@ code repository connected (GitHub, GitLab or Azure DevOps).
 Clone, fetch, commit and push use [isomorphic-git](https://isomorphic-git.org): no `git` binary is
 needed in the image, and no repository hook is ever run.
 
+## Changing a whole domain
+
+**Edit with AI** on a functional domain starts one agent on every microfrontend and service of the
+domain that has a code repository (at most 10), with the project and domain context. It sees them all
+at once, so one change can span an API and the screens that call it, and it still proposes one diff
+per repository: applying them opens one pull request per repository. Members without a repository are
+left out and listed under the request.
+
+When the domain has nothing for the agent to work on yet, **Generate** first offers to create it:
+
+- **No microfrontend and no service:** one model call proposes the components the request needs
+  (usually a frontend and a backend, at most 3 of each), each with a name, a slug, a template and a
+  repository name ending in `-fe` or `-be`. The user reviews and edits the proposal; on confirmation
+  the console creates each one in the domain with a new repository scaffolded from its template, then
+  starts the job on them.
+- **Members, none with a repository:** the console asks to create one per member (named
+  `<slug>-fe` or `<slug>-be`, scaffolded from the member's template or the default of its kind), then
+  starts the job.
+
+Both need a code repository connection on the project. Creating a repository for an existing member
+is also available as `POST /microfrontends/:id/repository` and `POST /services/:id/repository`;
+viewers cannot use it.
+
 ## Where the repositories are cloned
 
 ```

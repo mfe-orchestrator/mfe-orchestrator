@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import AiChangeJobService, { AiJobCreateInput, AiJobFollowUpInput } from "../service/aiChange/AiChangeJobService"
+import DomainPlanService, { DomainPlanInput } from "../service/aiChange/DomainPlanService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
@@ -18,6 +19,13 @@ const createBodySchema = {
     // A domain job works on the members of that domain: without it there is nothing to work on.
     if: { properties: { scope: { const: "domain" } } },
     then: { required: ["domainId"] }
+}
+
+const domainPlanBodySchema = {
+    type: "object",
+    required: ["prompt", "domainId"],
+    additionalProperties: false,
+    properties: { prompt, domainId }
 }
 
 const listQuerySchema = {
@@ -58,6 +66,11 @@ export default async function aiJobController(fastify: FastifyInstance) {
 
     fastify.post<{ Body: AiJobCreateInput }>("/ai-jobs", { schema: { body: createBodySchema }, config: { ...config, rateLimit } }, async (request, reply) =>
         reply.status(202).send(await service(request).create(projectIdOf(request), request.body))
+    )
+
+    // What to create in a domain without microfrontends nor services before a job can work on it: one model call, so the same ceiling.
+    fastify.post<{ Body: DomainPlanInput }>("/ai-jobs/domain-plan", { schema: { body: domainPlanBodySchema }, config: { ...config, rateLimit } }, async (request, reply) =>
+        reply.send(await new DomainPlanService(request.databaseUser, fastify.config).plan(projectIdOf(request), request.body))
     )
 
     fastify.post<{ Params: { id: string }; Body: AiJobFollowUpInput }>("/ai-jobs/:id/follow-ups", { schema: { body: followUpBodySchema }, config: { ...config, rateLimit } }, async (request, reply) =>

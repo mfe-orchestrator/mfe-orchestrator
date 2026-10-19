@@ -633,3 +633,24 @@ describe("TemplateScaffoldService.downloadZip", () => {
         }
     })
 })
+
+describe("TemplateScaffoldService.createRepository with a name in use", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    const target = () => ({ enabled: true, codeRepositoryId: String(new Types.ObjectId()), repositoryId: "", createData: { name: "checkout-fe" } })
+    const github = { _id: new Types.ObjectId(), provider: CodeRepositoryProvider.GITHUB, accessToken: "token" } as unknown as ICodeRepository
+    const refusal = (status: number, data: unknown) => new axios.AxiosError("Request failed", "ERR_BAD_REQUEST", undefined, undefined, { status, data } as never)
+
+    it("given a name the provider already has, when the repository is created, then it is refused with a code of its own", async () => {
+        vi.spyOn(GithubClient.prototype, "createRepository").mockRejectedValue(refusal(422, { message: "Repository creation failed.", errors: [{ message: "name already exists on this account" }] }))
+
+        await expect(new TemplateScaffoldService().createRepository(github, target(), "checkout", null)).rejects.toMatchObject({ code: "REPOSITORY_NAME_TAKEN", statusCode: 409 })
+    })
+
+    it("given any other refusal of the provider, when the repository is created, then the provider error goes through", async () => {
+        const error = refusal(403, { message: "Resource not accessible by integration" })
+        vi.spyOn(GithubClient.prototype, "createRepository").mockRejectedValue(error)
+
+        await expect(new TemplateScaffoldService().createRepository(github, target(), "checkout", null)).rejects.toBe(error)
+    })
+})

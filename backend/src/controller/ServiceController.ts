@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import RepositoryCreationService, { CreateRepositoryInput } from "../service/RepositoryCreationService"
 import ServiceDeploymentService from "../service/ServiceDeploymentService"
 import ServiceService from "../service/ServiceService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
@@ -46,6 +47,11 @@ export default async function serviceController(fastify: FastifyInstance) {
 
     fastify.post<{ Params: { id: string }; Body: { version: string; branch?: string } }>("/services/:id/build", async (request, reply) => {
         return reply.send(await new ServiceService(request.databaseUser).build(request.params.id, request.body.version, request.body.branch))
+    })
+
+    // A new repository, scaffolded from a template, for a service that has none: the domain AI workspace offers it
+    fastify.post<{ Params: { id: string }; Body: CreateRepositoryInput }>("/services/:id/repository", async (request, reply) => {
+        return reply.send(await new RepositoryCreationService(request.databaseUser).createServiceRepository(request.params.id, request.body))
     })
 
     // Called by the release pipeline of the service with its deploy secret: the API key resolves the project,

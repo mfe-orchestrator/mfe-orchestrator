@@ -27,6 +27,12 @@ import MarketService from "./MarketService"
 import TemplateScaffoldService from "./TemplateScaffoldService"
 import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
 
+/** What a microfrontend is served by when neither the caller nor a template says otherwise. */
+export const DEFAULT_ENTRY_POINT = "assets/remoteEntry.js"
+
+/** A host given without an entry point gets the template's, when there is one: one given is kept */
+export const withEntryPoint = (host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend => (entryPoint && !host.entryPoint ? { ...host, entryPoint } : host)
+
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
@@ -62,11 +68,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
-            if (!codeRepository) {
-                throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
+            // A connection of another project would lend this one its access token, as for a service
+            if (!codeRepository || String(codeRepository.projectId) !== String(projectIdObj)) {
+                throw new EntityNotFoundError(String(microfrontend.codeRepository.codeRepositoryId))
             }
 
             if (microfrontend?.codeRepository?.createData) {
+                await this.ensureNotViewer(projectIdObj, { code: "REPOSITORY_CREATE_FORBIDDEN", message: "A viewer cannot create a code repository" })
                 const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
 
                 // Checked before anything is created at the provider: a service template scaffolds a
@@ -98,14 +106,9 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         return await Microfrontend.create({
             ...microfrontend,
-            host: microfrontend.host ? this.withEntryPoint(microfrontend.host, templateEntryPoint) : await this.defaultHost(projectIdObj, templateEntryPoint),
+            host: microfrontend.host ? withEntryPoint(microfrontend.host, templateEntryPoint) : await this.defaultHost(projectIdObj, templateEntryPoint),
             projectId: projectIdObj
         } as unknown as IMicrofrontend)
-    }
-
-    /** A host given without an entry point gets the template's, when there is one: one given is kept */
-    private withEntryPoint(host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend {
-        return entryPoint && !host.entryPoint ? { ...host, entryPoint } : host
     }
 
     /**
@@ -115,7 +118,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
      * saying where it is served from.
      */
     private async defaultHost(projectId: ReturnType<typeof toObjectId>, templateEntryPoint?: string): Promise<IHostMicrofrontend> {
-        const entryPoint = templateEntryPoint || "assets/remoteEntry.js"
+        const entryPoint = templateEntryPoint || DEFAULT_ENTRY_POINT
         const storage = await Storage.findOne({ projectId, default: true }, { _id: 1 })
         if (!storage) {
             return { type: HostedOn.MFE_ORCHESTRATOR_HUB, entryPoint }

@@ -1,4 +1,5 @@
 import { ClientSession, ObjectId, Schema } from "mongoose"
+import { createBusinessException } from "../errors/BusinessException"
 import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
 import UserCannotAccessThisEnvironmentError from "../errors/UserCannotAccessThisEnvironmentError"
 import UserCannotAccessThisOrganizationError from "../errors/UserCannotAccessThisOrganizationError"
@@ -10,7 +11,7 @@ import Project from "../models/ProjectModel"
 import { IService } from "../models/ServiceModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { ORGANIZATION_ADMIN_ROLES, RoleInOrganization } from "../models/UserOrganizationModel"
-import UserProject from "../models/UserProjectModel"
+import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
 
 /**
@@ -248,6 +249,23 @@ export default abstract class BaseAuthorizedService {
 
     protected async ensureAccessToService(service: IService) {
         return this.ensureAccessToProject(service.projectId)
+    }
+
+    /**
+     * Refuses a VIEWER of the project what writes at its code provider (a new repository, an AI
+     * change): a viewer may look, not write. Organization administrators reach every project and act
+     * there as owners. Called after the access to the project is checked, which already refuses a
+     * call without a principal; a project API key has no membership, its role is checked where it
+     * authenticates (the MCP server refuses write tools to a VIEWER key).
+     */
+    protected async ensureNotViewer(projectId: string | Schema.Types.ObjectId | ObjectId, forbidden: { code: string; message: string }): Promise<void> {
+        const user = this.getUser()
+        if (!user || this.user?.apiKeyId) return
+        const membership = await UserProject.findOne({ userId: user._id, projectId: toObjectId(projectId), invitationToken: null })
+        if (membership?.role !== RoleInProject.VIEWER) return
+        const project = await Project.findById(projectId, { organizationId: 1 })
+        if (project && (await this.isOrganizationAdmin(project.organizationId))) return
+        throw createBusinessException({ ...forbidden, statusCode: 403 })
     }
 
     /**

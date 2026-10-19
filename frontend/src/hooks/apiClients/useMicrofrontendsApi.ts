@@ -104,6 +104,16 @@ export interface Microfrontend {
     }
 }
 
+/** A new repository, scaffolded from a template, for a microfrontend or a service that has none. */
+export interface CreateMemberRepositoryDTO {
+    codeRepositoryId: string
+    repositoryName: string
+    /** The member's own template, then the default of its kind, when left out. */
+    template?: string
+    private?: boolean
+    gitlab?: { groupId?: number }
+}
+
 const useMicrofrontendsApi = () => {
     const apiClient = useApiClient()
 
@@ -121,7 +131,8 @@ const useMicrofrontendsApi = () => {
         return response.data
     }
 
-    const create = async (microfrontend: Microfrontend, metadata?: IClientRequestMetadataExtended) => {
+    /** Without a host the backend serves it from the project's default hosting. */
+    const create = async (microfrontend: Omit<Microfrontend, "host"> & { host?: Microfrontend["host"] }, metadata?: IClientRequestMetadataExtended) => {
         const response = await apiClient.doRequest({
             url: `/api/microfrontends`,
             method: "POST",
@@ -165,6 +176,16 @@ const useMicrofrontendsApi = () => {
             method: "POST",
             data: { name },
             silent: true
+        })
+        return response.data
+    }
+
+    const createRepository = async (id: string, data: CreateMemberRepositoryDTO, metadata?: IClientRequestMetadataExtended): Promise<Microfrontend> => {
+        const response = await apiClient.doRequest<Microfrontend, CreateMemberRepositoryDTO>({
+            url: `/api/microfrontends/${id}/repository`,
+            method: "POST",
+            data,
+            ...metadata
         })
         return response.data
     }
@@ -238,6 +259,7 @@ const useMicrofrontendsApi = () => {
         getSingle,
         build,
         renameRepository,
+        createRepository,
         getVersions,
         setPosition,
         setDimensions,

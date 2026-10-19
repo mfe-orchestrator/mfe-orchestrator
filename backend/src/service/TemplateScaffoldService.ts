@@ -9,6 +9,7 @@ import { fastify } from ".."
 import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
+import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
@@ -20,6 +21,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
 import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
 import { federationName } from "./FederationConfigService"
+import { isRepositoryNameTakenError } from "./RepositoryRenameService"
 
 const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
 
@@ -76,6 +78,17 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
      * GitHub and pushes the template, then writes what the provider answered back into `target`.
      */
     async createRepository(codeRepository: ICodeRepository, target: CodeRepositoryTarget, slug: string, template: IMarket | null, options?: ScaffoldOptions): Promise<void> {
+        try {
+            await this.createAtProvider(codeRepository, target, slug, template, options)
+        } catch (error) {
+            // Often one left behind by an attempt that failed after it: the console says so instead of a provider error
+            if (!isRepositoryNameTakenError(error)) throw error
+            const name = target.createData?.name
+            throw createBusinessException({ code: "REPOSITORY_NAME_TAKEN", message: `A repository named "${name}" already exists at the provider`, statusCode: 409 })
+        }
+    }
+
+    private async createAtProvider(codeRepository: ICodeRepository, target: CodeRepositoryTarget, slug: string, template: IMarket | null, options?: ScaffoldOptions): Promise<void> {
         const createData = target.createData
         if (!createData) return
 

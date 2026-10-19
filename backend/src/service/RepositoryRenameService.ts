@@ -44,6 +44,9 @@ const describeProviderError = (error: unknown): { status?: number; message: stri
 /** Azure DevOps answers 409, GitHub 422 and GitLab 400, each saying so in its own words. */
 const isNameTaken = ({ status, message }: { status?: number; message: string }) => status === 409 || /already (exists|been taken)/i.test(message)
 
+/** Whether a provider refused to create or rename a repository because the name is in use. */
+export const isRepositoryNameTakenError = (error: unknown): boolean => axios.isAxiosError(error) && isNameTaken(describeProviderError(error))
+
 /**
  * Renames the repository of a microfrontend at its provider, then updates what the console keeps
  * about it. The microfrontend itself keeps its name and slug: those are what deployments and

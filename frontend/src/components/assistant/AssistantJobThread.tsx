@@ -27,7 +27,9 @@ const JOB_ERROR_CODES = new Set([
     "AI_JOB_FOLLOW_UP_RUNNING",
     "AI_JOB_NOT_DONE",
     "AI_JOB_NO_REPOSITORIES",
-    "AI_JOB_TOO_MANY_REPOSITORIES"
+    "AI_JOB_TOO_MANY_REPOSITORIES",
+    "AI_DOMAIN_PLAN_HAS_MEMBERS",
+    "AI_DOMAIN_PLAN_FAILED"
 ])
 
 /** The translated message of a failed job call; `fallback` is a key under `assistant.jobs.errors`. */
@@ -36,7 +38,7 @@ export const jobErrorMessage = (t: TFunction, error: Error, fallback: string) =>
     return t(`assistant.jobs.errors.${code && JOB_ERROR_CODES.has(code) ? code : fallback}`)
 }
 
-const sumUsage = (jobs: AiJob[]): AiUsage =>
+export const sumUsage = (jobs: AiJob[]): AiUsage =>
     jobs.reduce(
         (total, job) => ({
             inputTokens: total.inputTokens + job.usage.inputTokens,

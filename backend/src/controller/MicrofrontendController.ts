@@ -2,6 +2,7 @@ import fastifyMultipart from "@fastify/multipart"
 import { FastifyInstance } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import MicrofrontendService from "../service/MicrofrontendService"
+import RepositoryCreationService, { CreateRepositoryInput } from "../service/RepositoryCreationService"
 import RepositoryRenameService from "../service/RepositoryRenameService"
 import StackDetectionService from "../service/StackDetectionService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
@@ -144,6 +145,11 @@ export default async function microfrontendController(fastify: FastifyInstance) 
 
     fastify.post<{ Params: { id: string }; Body: { name: string } }>("/microfrontends/:id/repository/rename", async (request, reply) => {
         return reply.send(await new RepositoryRenameService(request.databaseUser).renameMicrofrontendRepository(request.params.id, request.body?.name ?? ""))
+    })
+
+    // A new repository, scaffolded from a template, for a microfrontend that has none: the domain AI workspace offers it
+    fastify.post<{ Params: { id: string }; Body: CreateRepositoryInput }>("/microfrontends/:id/repository", async (request, reply) => {
+        return reply.send(await new RepositoryCreationService(request.databaseUser).createMicrofrontendRepository(request.params.id, request.body))
     })
 
     fastify.put<{

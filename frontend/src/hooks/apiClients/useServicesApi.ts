@@ -1,5 +1,5 @@
 import useApiClient, { IClientRequestMetadataExtended } from "../useApiClient"
-import type { Microfrontend } from "./useMicrofrontendsApi"
+import type { CreateMemberRepositoryDTO, Microfrontend } from "./useMicrofrontendsApi"
 
 export enum ServiceRuntime {
     NODE = "NODE",
@@ -77,6 +77,9 @@ export interface Service {
 
 export type ServiceDTO = Omit<Service, "_id" | "projectId" | "stack" | "version" | "createdAt" | "updatedAt">
 
+/** Port and probe paths left out come from the template, the platform defaults after it. */
+export type ServiceCreateDTO = Omit<ServiceDTO, "port" | "livenessPath" | "readinessPath"> & Partial<Pick<ServiceDTO, "port" | "livenessPath" | "readinessPath">>
+
 export interface BuiltService {
     _id?: string
     serviceId: string
@@ -107,7 +110,7 @@ const useServicesApi = () => {
         return response.data
     }
 
-    const create = async (service: ServiceDTO, metadata?: IClientRequestMetadataExtended): Promise<Service> => {
+    const create = async (service: ServiceCreateDTO, metadata?: IClientRequestMetadataExtended): Promise<Service> => {
         const response = await apiClient.doRequest<Service>({ url: "/api/services", method: "POST", data: service, ...metadata })
         return response.data
     }
@@ -127,7 +130,12 @@ const useServicesApi = () => {
         return response.data
     }
 
-    return { getAll, getSingle, getVersions, create, update, deleteSingle, build }
+    const createRepository = async (id: string, data: CreateMemberRepositoryDTO, metadata?: IClientRequestMetadataExtended): Promise<Service> => {
+        const response = await apiClient.doRequest<Service>({ url: `/api/services/${id}/repository`, method: "POST", data, ...metadata })
+        return response.data
+    }
+
+    return { getAll, getSingle, getVersions, create, update, deleteSingle, build, createRepository }
 }
 
 export default useServicesApi
