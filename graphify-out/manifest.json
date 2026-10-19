@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.test.ts": {
-    "mtime": 1792407150.2013674,
-    "ast_hash": "8c258a2709ca1b689ac3ef79f1daefbc",
+    "mtime": 1792414854.299318,
+    "ast_hash": "46bc0078aab29c6926113680bfc4d178",
     "semantic_hash": ""
   },
   "backend/src/service/UserOrganizationService.test.ts": {
@@ -3560,8 +3560,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/DomainDetail.tsx": {
-    "mtime": 1792404649.8148844,
-    "ast_hash": "1d36d0c9b51f99ec454227f0d22b0744",
+    "mtime": 1792412766.3637621,
+    "ast_hash": "89eb584b999e8ab547dbc48e89df3b10",
     "semantic_hash": ""
   },
   "frontend/src/pages/domains/Domains.tsx": {
