@@ -10,6 +10,7 @@
         "build": "tsc && node ./postbuild.js",
         "test": "vitest run",
         "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
         "lint": "biome lint --write ./src",
         "format": "biome format --write ./src",
         "docs:index": "node ./scripts/build-docs-index.js",
@@ -75,6 +76,7 @@
         "@types/oracledb": "^7.0.3",
         "@types/pg": "^8.23.1",
         "@types/pug": "^2.0.10",
+        "@vitest/coverage-v8": "^5.0.5",
         "tsx": "^4.23.15",
         "vitest": "^5.0.5",
         "yaml": "2.9.1"

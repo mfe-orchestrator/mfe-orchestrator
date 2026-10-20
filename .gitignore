@@ -39,3 +39,6 @@ playwright-report/
 playwright/.cache/
 # oh-my-claudecode session state
 .omc/
+
+# Test coverage reports
+coverage

@@ -65,7 +65,24 @@ jobs:
       # suite, which needs a live stack and mailbox credentials and has its own
       # workflow (e2e-tests.yml).
       - name: 🧪 Run Backend Unit Tests
-        run: pnpm --filter @mfe-orchestrator/backend test
+        run: pnpm --filter @mfe-orchestrator/backend test:coverage
+
+      - name: 📊 Coverage Summary
+        if: always()
+        run: |
+          node -e '
+            const t = require("./backend/coverage/coverage-summary.json").total
+            const rows = ["lines", "statements", "functions", "branches"]
+              .map(k => `| ${k} | ${t[k].pct}% | ${t[k].covered}/${t[k].total} |`)
+            console.log(["### Backend coverage", "", "| | % | covered |", "|---|---|---|", ...rows].join("\n"))
+          ' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 📤 Upload Backend Coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-coverage
+          path: backend/coverage
 
       - name: 📤 Upload Backend Build
         uses: actions/upload-artifact@v7
