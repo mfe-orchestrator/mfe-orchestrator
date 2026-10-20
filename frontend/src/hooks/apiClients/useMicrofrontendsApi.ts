@@ -212,7 +212,7 @@ const useMicrofrontendsApi = () => {
     const setDimensions = async (data: DimensionsDTO) => {
         const { id, ...dimensions } = data
         const response = await apiClient.doRequest({
-            url: `/api/microfrontends/${id}/dimensions`,
+            url: `/api/microfrontends/${id}/dimension`,
             method: "PUT",
             data: dimensions
         })
