@@ -42,6 +42,9 @@ const jobIdOf = (result: unknown): string | undefined => {
 
 const hasPendingConfirmation = () => useAssistantStore.getState().messages.some(message => message.confirmation?.status === "pending")
 
+/** Saves go one after the other: each one replaces the whole conversation, a slow one landing last would drop what came after it. */
+let savesInFlight: Promise<void> = Promise.resolve()
+
 /**
  * The conversation as the model sees it: plain text, failed answers dropped (they carry no
  * content, only an error), at most `limit` messages, opening with the user.
@@ -93,6 +96,30 @@ const useAssistantChat = () => {
             // The answer still says what happened; the tab is a shortcut to it.
             console.error("Could not open the job tab", error)
         }
+    }
+
+    /**
+     * Saves the conversation as it is now for the history. Nothing else keeps it: a reload starts a
+     * new conversation, and the history is where this one is found again.
+     *
+     * Open, or set aside by a project switch while it streamed: the request carries the project of
+     * the render that sent the question, the one the conversation belongs to. Anything else (opened
+     * from the history, a new conversation) is not this one any more and is left alone.
+     */
+    const save = (conversationId: string) => {
+        const state = useAssistantStore.getState()
+        const parkedOn = Object.keys(state.conversationIds).find(projectId => projectId !== state.projectId && state.conversationIds[projectId] === conversationId)
+        const current = state.conversationId === conversationId ? state.messages : parkedOn && state.conversations[parkedOn]
+        if (!current) return
+        const messages = toStored(current)
+        savesInFlight = savesInFlight.then(async () => {
+            try {
+                await assistantApi.saveConversation(conversationId, messages)
+                queryClient.invalidateQueries({ queryKey: ["assistant-conversations"] })
+            } catch (error) {
+                console.error("Could not save the conversation", error)
+            }
+        })
     }
 
     /**
@@ -214,13 +241,7 @@ const useAssistantChat = () => {
             setIsStreaming(false)
             if (wrote) queryClient.invalidateQueries()
             // Saved after every answer, so that the history can reopen it.
-            const state = useAssistantStore.getState()
-            if (conversationId && state.conversationId === conversationId) {
-                assistantApi
-                    .saveConversation(conversationId, toStored(state.messages))
-                    .then(() => queryClient.invalidateQueries({ queryKey: ["assistant-conversations"] }))
-                    .catch(error => console.error("Could not save the conversation", error))
-            }
+            if (conversationId) save(conversationId)
         }
     }
 
@@ -232,9 +253,11 @@ const useAssistantChat = () => {
 
         const history = buildHistory(MAX_MESSAGES - 1)
         const answerId = newId()
-        useAssistantStore.getState().ensureConversationId()
+        const conversationId = useAssistantStore.getState().ensureConversationId()
         addMessage({ id: newId(), role: "user", content: trimmed })
         addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [] })
+        // Saved with the question too: a reload during the answer would otherwise lose the turn, and a first question its conversation.
+        save(conversationId)
 
         await stream({ messages: [...history, { role: "user", content: trimmed.slice(0, MAX_MESSAGE_CHARS) }] }, answerId)
     }
@@ -258,6 +281,9 @@ const useAssistantChat = () => {
 
         const answerId = newId()
         addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [] })
+        // The server takes the answer at once: reopened after a reload, the card must not ask again.
+        const conversationId = useAssistantStore.getState().conversationId
+        if (conversationId) save(conversationId)
 
         await stream({ messages: history, confirmation: { actionId: confirmation.actionId, approved } }, answerId, status => {
             // The server took nothing unless it says the action is gone: the card can be answered again.

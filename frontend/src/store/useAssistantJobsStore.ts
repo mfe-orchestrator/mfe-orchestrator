@@ -19,6 +19,7 @@ export interface AssistantJobTab {
 
 interface AssistantJobsState {
     tabsByProject: Record<string, AssistantJobTab[]>
+    /** In memory only: opening the console shows the conversation, a new one, not the tab left open. */
     activeTabByProject: Record<string, AssistantTab>
     /** Chains whose tab the user closed: restoring after a reload leaves them closed. */
     dismissedByProject: Record<string, string[]>
@@ -97,7 +98,6 @@ const useAssistantJobsStore = create<AssistantJobsState>()(
                 // Ids and the label only: what the job did is read from the server again.
                 partialize: state => ({
                     tabsByProject: Object.fromEntries(Object.entries(state.tabsByProject).map(([projectId, tabs]) => [projectId, tabs.map(({ status: _status, ...tab }) => tab)])),
-                    activeTabByProject: state.activeTabByProject,
                     dismissedByProject: state.dismissedByProject
                 })
             }

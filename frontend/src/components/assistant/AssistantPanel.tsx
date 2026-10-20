@@ -75,7 +75,8 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAns
 interface AssistantPanelProps {
     /**
      * `panel`: docked on the right of every project page, opened and closed by the user.
-     * `page`: the whole content area of the assistant page, with the conversation in a centred column.
+     * `page`: the content area of the assistant page, with the conversation in a centred column; on
+     * wide screens the page lists the saved conversations next to it.
      */
     variant?: "panel" | "page"
 }
@@ -101,7 +102,7 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
     // A closed (or never restored) chain falls back to the conversation.
     const activeTab = jobTabs.some(tab => tab.rootJobId === storedTab) ? storedTab : "project"
     const [newJobOpen, setNewJobOpen] = useState(false)
-    // The saved conversations, shown in place of the open one.
+    // The saved conversations, shown in place of the open one. On wide screens the page lists them next to it.
     const [historyOpen, setHistoryOpen] = useState(false)
     // The turn waits for the user's answer to the card: a new question would leave it hanging.
     const awaitingConfirmation = messages.some(message => message.confirmation?.status === "pending")
@@ -127,8 +128,9 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
     }, [enabled, isPage, toggle])
 
     // A conversation is about one project: switching project shows that project's conversation,
-    // and the one left behind is there again on the way back. Mounting the panel or a reload
-    // resumes the conversation instead of starting a new one.
+    // and the one left behind is there again on the way back. Mounting the panel (from the page
+    // and back) resumes the conversation; opening the console or a reload starts a new one, the
+    // history reopens the saved ones.
     // biome-ignore lint/correctness/useExhaustiveDependencies: only a project change must switch the conversation.
     useEffect(() => {
         if (useAssistantStore.getState().switchProject(projectId)) stop()
@@ -189,6 +191,8 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
                         title={t("assistant.history.open")}
                         onClick={() => setHistoryOpen(!historyOpen)}
                         disabled={isStreaming}
+                        // From lg up the page lists them on the right.
+                        className={cn(isPage && "lg:hidden")}
                         dataTestId="assistant-history-toggle"
                     >
                         <History />
@@ -220,11 +224,16 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
                 {projectId && jobTabs.length > 0 && <AssistantJobTabs projectId={projectId} tabs={jobTabs} />}
 
                 <TabsContent value="project" className="mt-0 flex min-h-0 flex-1 flex-col rounded-none">
-                    {historyOpen && projectId ? (
-                        <AssistantHistory projectId={projectId} onOpened={() => setHistoryOpen(false)} />
-                    ) : (
+                    {historyOpen && projectId && (
+                        // From lg up the page lists the conversations on the right: there the open one stays in front,
+                        // also when the list was opened in a narrower window.
+                        <div className={cn("flex min-h-0 flex-1 flex-col", isPage && "lg:hidden")}>
+                            <AssistantHistory projectId={projectId} onOpened={() => setHistoryOpen(false)} />
+                        </div>
+                    )}
+                    {(!historyOpen || !projectId || isPage) && (
                         <>
-                            <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto px-4 py-4">
+                            <div ref={scrollRef} className={cn("flex flex-1 flex-col overflow-y-auto px-4 py-4", historyOpen && projectId && "max-lg:hidden")}>
                                 {/* On the page the scrollbar stays at the edge, the conversation in a readable column. */}
                                 <div className={cn("flex flex-1 flex-col gap-4", isPage && "mx-auto w-full max-w-3xl")}>
                                     {messages.length === 0 ? (
@@ -262,7 +271,8 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
                                 className={cn(
                                     "flex flex-col gap-2 px-4 py-3",
                                     // Sticky: on small screens the page grows with the conversation instead of scrolling inside it.
-                                    isPage ? "sticky bottom-0 mx-auto w-full max-w-3xl bg-background" : "border-t border-divider"
+                                    isPage ? "sticky bottom-0 mx-auto w-full max-w-3xl bg-background" : "border-t border-divider",
+                                    historyOpen && projectId && "max-lg:hidden"
                                 )}
                                 onSubmit={event => {
                                     event.preventDefault()

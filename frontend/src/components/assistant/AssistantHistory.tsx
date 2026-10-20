@@ -6,10 +6,11 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
 import useAssistantApi, { AssistantConversation, AssistantConversationSummary } from "@/hooks/apiClients/useAssistantApi"
+import useAssistantJobsStore from "@/store/useAssistantJobsStore"
 import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
 
 /**
- * The server keeps no tool inputs: the panel's types expect them, empty as after a reload. A card
+ * The server keeps no tool inputs (toStored drops them): the panel's types expect them, empty. A card
  * still pending past its expiry can no longer be answered: left pending, it would lock the input.
  */
 const toPanelMessages = (conversation: AssistantConversation): AssistantMessage[] => {
@@ -35,15 +36,20 @@ const toPanelMessages = (conversation: AssistantConversation): AssistantMessage[
 interface AssistantHistoryProps {
     projectId: string
     /** Runs once a conversation is shown, so the panel goes back to it. */
-    onOpened: () => void
+    onOpened?: () => void
 }
 
-/** The user's saved conversations on the project, the most recent first: one click reopens it. */
+/**
+ * The user's saved conversations on the project, the most recent first: one click reopens it. In
+ * place of the conversation in the panel, next to it on the assistant page.
+ */
 const AssistantHistory: React.FC<AssistantHistoryProps> = ({ projectId, onOpened }) => {
     const { t, i18n } = useTranslation()
     const assistantApi = useAssistantApi()
     const queryClient = useQueryClient()
     const currentId = useAssistantStore(state => state.conversationId)
+    // Shown next to the conversation, the list stays usable while an answer streams: it must not swap or drop that conversation.
+    const isStreaming = useAssistantStore(state => state.messages.some(message => message.status === "streaming"))
     const [openingId, setOpeningId] = useState<string>()
     const [deleting, setDeleting] = useState<AssistantConversationSummary>()
 
@@ -65,15 +71,21 @@ const AssistantHistory: React.FC<AssistantHistoryProps> = ({ projectId, onOpened
         }
     })
 
+    // A job tab may be in front: the conversation has to show.
+    const shown = () => {
+        useAssistantJobsStore.getState().setActiveTab(projectId, "project")
+        onOpened?.()
+    }
+
     const open = async (id: string) => {
         if (id === currentId) {
-            onOpened()
+            shown()
             return
         }
         setOpeningId(id)
         try {
             const conversation = await assistantApi.getConversation(id)
-            if (useAssistantStore.getState().openConversation(projectId, conversation.id, toPanelMessages(conversation))) onOpened()
+            if (useAssistantStore.getState().openConversation(projectId, conversation.id, toPanelMessages(conversation))) shown()
         } catch (error) {
             // The API client already shows the error: the list stays open.
             console.error("Could not open the conversation", error)
@@ -99,7 +111,7 @@ const AssistantHistory: React.FC<AssistantHistoryProps> = ({ projectId, onOpened
                         <li key={conversation.id} className="flex items-center gap-1">
                             <button
                                 type="button"
-                                disabled={Boolean(openingId)}
+                                disabled={Boolean(openingId) || isStreaming}
                                 onClick={() => open(conversation.id)}
                                 className="flex min-w-0 flex-1 flex-col rounded-md px-3 py-2 text-left hover:bg-primary/5 disabled:opacity-60"
                             >
@@ -109,7 +121,14 @@ const AssistantHistory: React.FC<AssistantHistoryProps> = ({ projectId, onOpened
                             {openingId === conversation.id ? (
                                 <Spinner size={16} centerScreen={false} />
                             ) : (
-                                <Button variant="ghost" size="icon" aria-label={t("assistant.history.delete")} title={t("assistant.history.delete")} onClick={() => setDeleting(conversation)}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t("assistant.history.delete")}
+                                    title={t("assistant.history.delete")}
+                                    disabled={isStreaming}
+                                    onClick={() => setDeleting(conversation)}
+                                >
                                     <Trash2 />
                                 </Button>
                             )}
