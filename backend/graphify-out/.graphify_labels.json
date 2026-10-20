@@ -96,11 +96,18 @@
   "94": "S3BucketClient",
   "95": "BaseAuthorizedService.test.ts",
   "96": "StartupController.test.ts",
+  "97": "migrations.ts",
+  "98": "BusinessException.ts",
   "99": "EmailSenderService",
+  "100": "CodeRepositoryService.ts",
   "101": "docsSearch.ts",
   "102": "AccessProbe",
+  "103": "ServiceModel.ts",
   "104": "DeploymentCanaryUsersService",
   "105": ".selectRepositories",
+  "106": "TemplateScaffoldService",
+  "107": "GitWorkingCopy",
   "108": "EnvironmentController.ts",
-  "114": "DeploymentCanaryUsersController.ts"
+  "113": "BaseAuthorizedService.test.ts",
+  "115": "SqlDatabaseClient.ts"
 }
