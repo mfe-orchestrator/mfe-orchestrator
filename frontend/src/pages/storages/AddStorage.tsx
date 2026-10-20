@@ -6,6 +6,7 @@ import { FormProvider, useForm, useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/atoms"
+import ConnectionTest from "@/components/ConnectionTest"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
@@ -153,11 +154,21 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
         }
     })
 
-    const onSubmit = async (dataInput: CreateStorageDTO) => {
-        const data = { ...dataInput }
+    const toPayload = (dataInput: CreateStorageDTO): CreateStorageDTO => {
+        const data = { ...dataInput, authConfig: { ...dataInput.authConfig } } as CreateStorageDTO
         if (data.type === StorageType.GOOGLE) {
             data.authConfig.authType = "serviceAccount"
         }
+        return data
+    }
+
+    const handleTest = async () => {
+        if (!(await form.trigger(["type", "authConfig"]))) return undefined
+        return storageApi.test(toPayload(form.getValues()), id)
+    }
+
+    const onSubmit = async (dataInput: CreateStorageDTO) => {
+        const data = toPayload(dataInput)
 
         if (isEditMode && id) {
             await storageApi.update(id, data)
@@ -216,8 +227,9 @@ export const StorageForm: React.FC<StorageFormProps> = ({ initialData, id, onCan
                         </div>
                         <CardDescription>{t("storage.providerConfigurationDescription", { storageType: selectedStorageType })}</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
                         <StorageAuthFields storageType={selectedStorageType} />
+                        <ConnectionTest onTest={handleTest} successDescription={t("storage.connectionTestSuccess")} dataTestId="storage-test" />
                     </CardContent>
                 </Card>
 

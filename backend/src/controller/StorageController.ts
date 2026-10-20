@@ -1,6 +1,8 @@
 import { FastifyInstance } from "fastify"
+import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import { StorageService } from "../service/StorageService"
 import { StorageDTO } from "../types/StorageDTO"
+import { CONNECTION_TEST_ROUTE_CONFIG } from "../utils/connectionTest"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
 export default async function storageController(fastify: FastifyInstance) {
@@ -26,6 +28,21 @@ export default async function storageController(fastify: FastifyInstance) {
 
         const storage = await new StorageService(request.databaseUser).create(projectId, request.body)
         return reply.send(storage.toFrontendObject())
+    })
+
+    // Writes, reads back and deletes a probe file with what the form holds, without saving it.
+    // A storage that refuses is the result of the test, not an error: both answer 200
+    fastify.post<{ Body: StorageDTO }>("/storages/test", { config: CONNECTION_TEST_ROUTE_CONFIG }, async (request, reply) => {
+        const projectId = getProjectIdFromRequest(request)
+        if (!projectId) {
+            throw new ProjectHeaderNotFoundError()
+        }
+
+        return reply.send(await new StorageService(request.databaseUser).testConnection(request.body, { projectId }))
+    })
+
+    fastify.post<{ Body: StorageDTO; Params: { storageId: string } }>("/storages/:storageId/test", { config: CONNECTION_TEST_ROUTE_CONFIG }, async (request, reply) => {
+        return reply.send(await new StorageService(request.databaseUser).testConnection(request.body, { storageId: request.params.storageId }))
     })
 
     // Update storage

@@ -60,6 +60,11 @@ export class AzureStorageClient {
         }
     }
 
+    /** Where the requests go, as resolved from the account name or the connection string */
+    public get endpoint(): string {
+        return this.blobServiceClient.url
+    }
+
     /**
      * Uploads a file to Azure Blob Storage
      * @param filePath The path (including filename) where the file should be stored in the container

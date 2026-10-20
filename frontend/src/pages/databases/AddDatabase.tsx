@@ -6,11 +6,15 @@ import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/atoms"
+import ConnectionTest from "@/components/ConnectionTest"
 import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import useDatabaseApi, { Database, DatabaseDTO, DatabaseType, DEFAULT_DATABASE_PORT } from "@/hooks/apiClients/useDatabaseApi"
+import useDatabaseApi, { Database, DatabaseDTO, DatabaseType, DEFAULT_DATABASE_PORT, keepsStoredSecret, SECRET_PLACEHOLDER } from "@/hooks/apiClients/useDatabaseApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+
+/** I campi che decidono dove va una credenziale salvata */
+const TARGET_FIELDS: string[] = ["type", "connection.authType", "connection.host", "connection.port", "connection.database", "connection.username"]
 
 interface DatabaseFormProps {
     initialData?: Database
@@ -43,6 +47,24 @@ const DatabaseForm: React.FC<DatabaseFormProps> = ({ initialData, id, onDone }) 
         }
         previousType.current = type
     }, [type, authType, form])
+
+    // Una credenziale salvata vale solo per il motore e l'indirizzo con cui e' stata salvata (il backend la
+    // rifiuta altrove): cambiandoli il campo si svuota e chiede di riscriverla
+    useEffect(() => {
+        if (!initialData) return
+        const subscription = form.watch((_values, { name }) => {
+            if (!name || !TARGET_FIELDS.includes(name) || keepsStoredSecret(initialData, form.getValues())) return
+            for (const key of ["connection.password", "connection.connectionString"] as const) {
+                if (form.getValues(key) === SECRET_PLACEHOLDER) form.setValue(key, "")
+            }
+        })
+        return () => subscription.unsubscribe()
+    }, [initialData, form])
+
+    const handleTest = async () => {
+        if (!(await form.trigger(["type", "connection"]))) return undefined
+        return databaseApi.test(form.getValues(), id)
+    }
 
     const onSubmit = async (data: DatabaseDTO) => {
         if (id) {
@@ -128,10 +150,12 @@ const DatabaseForm: React.FC<DatabaseFormProps> = ({ initialData, id, onDone }) 
                                 type="password"
                                 autoComplete="new-password"
                                 label={t("database.fields.connectionString")}
-                                placeholder={t("database.connectionStringPlaceholder")}
+                                placeholder={t(`database.connectionStringPlaceholders.${type}`)}
                                 rules={required}
                             />
                         )}
+
+                        <ConnectionTest onTest={handleTest} dataTestId="database-test" />
                     </CardContent>
                 </Card>
 

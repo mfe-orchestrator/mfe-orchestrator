@@ -1050,7 +1050,12 @@
         "securityNotice": "Security Notice:",
         "securityNoticeDescription": "All credentials are stored securely. They are only used to access your storage resources and are never shared with third parties.",
         "path": "Path",
-        "serviceAccountJsonKey": "Service Account JSON Key"
+        "serviceAccountJsonKey": "Service Account JSON Key",
+        "errors": {
+            "write_forbidden": "A read-only member cannot add, edit, test or delete storages.",
+            "secret_required": "Type the credential again: the stored one is only valid for the provider and the account it was saved with."
+        },
+        "connectionTestSuccess": "A probe file was uploaded and read back: microfrontend hosting can use this storage."
     },
     "database": {
         "databases": "Databases",
@@ -1089,13 +1094,29 @@
         "basicInformationDescription": "What the database is called and which engine it runs",
         "connection": "Connection",
         "connectionDescription": "Where the database is and which account to reach it with",
-        "connectionStringPlaceholder": "postgres://user:password@host:5432/database",
         "portInvalid": "The port must be a number between 1 and 65535",
         "createSuccess": "Database connected",
         "updateSuccess": "Database updated",
         "deleteDescription": "Disconnect \"{{name}}\"? The database and its data are not touched.",
         "securityNotice": "Security notice:",
-        "securityNoticeDescription": "Passwords and connection strings are encrypted at rest and never shown again: leave them as they are to keep the stored ones."
+        "securityNoticeDescription": "Passwords and connection strings are encrypted at rest and never shown again: leave them as they are to keep the stored ones.",
+        "connectionStringPlaceholders": {
+            "POSTGRESQL": "postgres://user:password@host:5432/database",
+            "MYSQL": "mysql://user:password@host:3306/database",
+            "MARIADB": "mysql://user:password@host:3306/database",
+            "SQLSERVER": "Server=host,1433;Database=database;User Id=user;Password=password;Encrypt=true",
+            "ORACLE": "oracle://user:password@host:1521/service"
+        },
+        "errors": {
+            "secret_required": "Type the password or the connection string again: the stored one is only valid for the engine and the address it was saved with.",
+            "write_forbidden": "A read-only member cannot connect, edit, test or delete databases."
+        }
+    },
+    "connectionTest": {
+        "test": "Test connection",
+        "testing": "Testing…",
+        "success": "Connection succeeded",
+        "failure": "Connection failed"
     },
     "codeRepositories": {
         "title": "Code Repositories",
