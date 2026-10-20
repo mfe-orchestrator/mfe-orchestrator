@@ -168,9 +168,10 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 if (change.type === "remove") {
                     const edgeToRemove = edges.find(e => e.id === change.id)
                     if (edgeToRemove && edgeToRemove.source && edgeToRemove.target) {
+                        // The edge runs from the host (source) to its remote (target)
                         await microfrontendApi.removeRelation({
-                            remote: edgeToRemove.source,
-                            host: edgeToRemove.target
+                            remote: edgeToRemove.target,
+                            host: edgeToRemove.source
                         })
                     }
                 }
