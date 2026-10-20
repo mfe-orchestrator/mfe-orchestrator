@@ -29,6 +29,7 @@ export interface ProjectSummaryDTO {
         codeRepositories: number
         apiKeys: number
         storages: number
+        databases: number
     }
 }
 

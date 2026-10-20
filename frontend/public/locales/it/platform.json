@@ -193,7 +193,8 @@
             "storages": "Storages",
             "codeRepositories": "Repository Codice",
             "mcpClients": "Assistenti AI",
-            "manage": "Gestisci"
+            "manage": "Gestisci",
+            "databases": "Database"
         },
         "projectInfo": {
             "title": "Informazioni Progetto",
@@ -1068,6 +1069,51 @@
         "securityNoticeDescription": "Tutte le credenziali sono memorizzate in modo sicuro. Vengono utilizzate solo per accedere alle tue risorse di storage e non vengono mai condivise con terze parti.",
         "path": "Percorso",
         "serviceAccountJsonKey": "Chiave JSON Account di Servizio"
+    },
+    "database": {
+        "databases": "Database",
+        "databasesDescription": "Collega i database SQL del progetto",
+        "noDatabasesFound": "Nessun database collegato",
+        "newDatabase": "Nuovo database",
+        "editDatabase": "Modifica database",
+        "newDatabaseDescription": "Collega un database SQL con le sue credenziali o con una stringa di connessione",
+        "editDatabaseDescription": "Aggiorna il collegamento al database",
+        "name": "Nome",
+        "namePlaceholder": "es. ordini-produzione",
+        "type": "Motore",
+        "address": "Indirizzo",
+        "types": {
+            "POSTGRESQL": "PostgreSQL",
+            "MYSQL": "MySQL",
+            "MARIADB": "MariaDB",
+            "SQLSERVER": "SQL Server",
+            "ORACLE": "Oracle"
+        },
+        "authTypes": {
+            "credentials": "Host e credenziali",
+            "connectionString": "Stringa di connessione"
+        },
+        "fields": {
+            "authType": "Modalità di collegamento",
+            "host": "Host",
+            "port": "Porta",
+            "database": "Nome database",
+            "username": "Utente",
+            "password": "Password",
+            "ssl": "Connessione cifrata (SSL/TLS)",
+            "connectionString": "Stringa di connessione"
+        },
+        "basicInformation": "Informazioni di base",
+        "basicInformationDescription": "Come si chiama il database e quale motore usa",
+        "connection": "Collegamento",
+        "connectionDescription": "Dove si trova il database e con quale account accedervi",
+        "connectionStringPlaceholder": "postgres://utente:password@host:5432/database",
+        "portInvalid": "La porta deve essere un numero tra 1 e 65535",
+        "createSuccess": "Database collegato",
+        "updateSuccess": "Database aggiornato",
+        "deleteDescription": "Scollegare \"{{name}}\"? Il database e i suoi dati non vengono toccati.",
+        "securityNotice": "Avviso di sicurezza:",
+        "securityNoticeDescription": "Password e stringhe di connessione sono cifrate a riposo e non vengono mai rimostrate: lasciale come sono per mantenere quelle salvate."
     },
     "codeRepositories": {
         "title": "Repository di Codice",
@@ -2199,7 +2245,8 @@
             "devops": "DevOps",
             "domains": "Domini funzionali",
             "microfrontends": "Microfrontend",
-            "services": "Servizi backend"
+            "services": "Servizi backend",
+            "cloud": "Cloud"
         },
         "top_menu": "Menu del progetto"
     },

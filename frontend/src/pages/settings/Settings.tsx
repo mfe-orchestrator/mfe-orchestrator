@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Bot, GitBranch, HardDrive, Key, Server, Users } from "lucide-react"
+import { Bot, Database, GitBranch, HardDrive, Key, Server, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 // Components
@@ -94,6 +94,12 @@ export const Settings: React.FC = () => {
                             title: t("settings.stats.storages"),
                             value: projectQuery.data?.count?.storages,
                             href: "/storages"
+                        },
+                        {
+                            icon: <Database />,
+                            title: t("settings.stats.databases"),
+                            value: projectQuery.data?.count?.databases,
+                            href: "/databases"
                         },
                         {
                             icon: <Key />,

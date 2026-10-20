@@ -193,7 +193,8 @@
             "storages": "Storages",
             "codeRepositories": "Code Repositories",
             "mcpClients": "AI assistants",
-            "manage": "Manage"
+            "manage": "Manage",
+            "databases": "Databases"
         },
         "projectInfo": {
             "title": "Project Information",
@@ -1049,6 +1050,51 @@
         "securityNoticeDescription": "All credentials are stored securely. They are only used to access your storage resources and are never shared with third parties.",
         "path": "Path",
         "serviceAccountJsonKey": "Service Account JSON Key"
+    },
+    "database": {
+        "databases": "Databases",
+        "databasesDescription": "Connect the project's SQL databases",
+        "noDatabasesFound": "No databases connected",
+        "newDatabase": "New database",
+        "editDatabase": "Edit database",
+        "newDatabaseDescription": "Connect a SQL database with its credentials or a connection string",
+        "editDatabaseDescription": "Update the database connection",
+        "name": "Name",
+        "namePlaceholder": "e.g. orders-production",
+        "type": "Engine",
+        "address": "Address",
+        "types": {
+            "POSTGRESQL": "PostgreSQL",
+            "MYSQL": "MySQL",
+            "MARIADB": "MariaDB",
+            "SQLSERVER": "SQL Server",
+            "ORACLE": "Oracle"
+        },
+        "authTypes": {
+            "credentials": "Host and credentials",
+            "connectionString": "Connection string"
+        },
+        "fields": {
+            "authType": "Connection mode",
+            "host": "Host",
+            "port": "Port",
+            "database": "Database name",
+            "username": "Username",
+            "password": "Password",
+            "ssl": "Encrypted connection (SSL/TLS)",
+            "connectionString": "Connection string"
+        },
+        "basicInformation": "Basic information",
+        "basicInformationDescription": "What the database is called and which engine it runs",
+        "connection": "Connection",
+        "connectionDescription": "Where the database is and which account to reach it with",
+        "connectionStringPlaceholder": "postgres://user:password@host:5432/database",
+        "portInvalid": "The port must be a number between 1 and 65535",
+        "createSuccess": "Database connected",
+        "updateSuccess": "Database updated",
+        "deleteDescription": "Disconnect \"{{name}}\"? The database and its data are not touched.",
+        "securityNotice": "Security notice:",
+        "securityNoticeDescription": "Passwords and connection strings are encrypted at rest and never shown again: leave them as they are to keep the stored ones."
     },
     "codeRepositories": {
         "title": "Code Repositories",
@@ -2180,7 +2226,8 @@
             "devops": "DevOps",
             "domains": "Functional domains",
             "microfrontends": "Microfrontends",
-            "services": "Backend services"
+            "services": "Backend services",
+            "cloud": "Cloud"
         },
         "top_menu": "Project menu"
     },

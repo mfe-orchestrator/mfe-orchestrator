@@ -1,4 +1,18 @@
-import { FileText, Hammer as HammerIcon, KeyRound, Layers, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Server, SlidersHorizontal, Sparkles } from "lucide-react"
+import {
+    Database,
+    FileText,
+    Hammer as HammerIcon,
+    HardDrive,
+    KeyRound,
+    Layers,
+    LayoutDashboard,
+    Link as LinkIcon,
+    Package as PackageIcon,
+    Rocket as RocketIcon,
+    Server,
+    SlidersHorizontal,
+    Sparkles
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
@@ -56,6 +70,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             items: [
                 { name: t("builds.title"), path: "/builds", icon: <HammerIcon /> },
                 { name: t("deployments.title"), path: "/deployments", icon: <RocketIcon /> }
+            ]
+        },
+        {
+            title: t("navigation.sections.cloud"),
+            items: [
+                { name: t("database.databases"), path: "/databases", icon: <Database /> },
+                { name: t("storage.storages"), path: "/storages", icon: <HardDrive /> }
             ]
         }
     ]

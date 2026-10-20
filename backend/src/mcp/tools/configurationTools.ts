@@ -1,5 +1,6 @@
 import { z } from "zod"
 import BuildStatusService from "../../service/BuildStatusService"
+import DatabaseService from "../../service/DatabaseService"
 import FederationIntegrationService, { IntegrationScope } from "../../service/FederationIntegrationService"
 import GlobalVariablesService from "../../service/GlobalVariablesService"
 import MicrofrontendDependencyService from "../../service/MicrofrontendDependencyService"
@@ -8,6 +9,7 @@ import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, READ_ONLY_EXTERNAL, WRITE } from "../toolDefinition"
 
 const storageId = objectId("Id of the storage")
+const databaseId = objectId("Id of the database")
 
 const environmentValues = z
     .array(z.object({ environmentId: objectId("Id of an environment of the project"), value: z.string() }))
@@ -154,6 +156,36 @@ export const configurationTools = [
         inputSchema: z.object({ storageId }),
         run: async (args, { principal }) => {
             await new StorageService(principal).delete(args.storageId)
+            return { deleted: true }
+        }
+    }),
+    defineTool({
+        name: "databases_list",
+        title: "List databases",
+        description: "The SQL databases connected to the project. Credentials are masked; connecting or editing a database is only possible from the console.",
+        scope: MCP_SCOPE_READ,
+        annotations: READ_ONLY,
+        inputSchema: NO_INPUT,
+        run: async (_args, { principal, projectId }) => (await new DatabaseService(principal).getByProjectId(projectId)).map(database => database.toFrontendObject())
+    }),
+    defineTool({
+        name: "database_get",
+        title: "Get database",
+        description: "One database connected to the project. Credentials are masked.",
+        scope: MCP_SCOPE_READ,
+        annotations: READ_ONLY,
+        inputSchema: z.object({ databaseId }),
+        run: async (args, { principal }) => (await new DatabaseService(principal).getById(args.databaseId)).toFrontendObject()
+    }),
+    defineTool({
+        name: "database_delete",
+        title: "Delete database",
+        description: "Disconnects a database from the project. The database itself and its data are not touched.",
+        scope: MCP_SCOPE_WRITE,
+        annotations: DESTRUCTIVE,
+        inputSchema: z.object({ databaseId }),
+        run: async (args, { principal }) => {
+            await new DatabaseService(principal).delete(args.databaseId)
             return { deleted: true }
         }
     })

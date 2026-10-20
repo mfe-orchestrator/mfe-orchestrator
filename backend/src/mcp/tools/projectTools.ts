@@ -22,7 +22,7 @@ export const projectTools = [
     defineTool({
         name: "project_get",
         title: "Get project",
-        description: "The project this connection is bound to, with how many environments, microfrontends, members, storages and code repositories it has.",
+        description: "The project this connection is bound to, with how many environments, microfrontends, members, storages, databases and code repositories it has.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: NO_INPUT,

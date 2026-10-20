@@ -42,6 +42,7 @@ upload a bundle.
 | Where | Fields |
 | --- | --- |
 | `storages` | `secretAccessKey`, `accountKey`, `connectionString`, `clientSecret`, `jsonKey` |
+| `databases` | `password`, `connectionString` |
 | `coderepositories` | `accessToken`, `refreshToken` |
 | `deployments` | the same storage fields, inside the snapshot a deployment freezes |
 | `secrets` | the value of every key in every environment, of the secrets backend services attach |

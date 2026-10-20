@@ -7,6 +7,7 @@ import ApiKey from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
 import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
+import Database from "../models/DatabaseModel"
 import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Domain from "../models/DomainModel"
@@ -87,6 +88,7 @@ export interface ProjectSummaryDTO {
         microfrontends: number
         apiKeys: number
         storages: number
+        databases: number
         codeRepositories: number
     }
 }
@@ -166,6 +168,7 @@ export class ProjectService extends BaseAuthorizedService {
                 microfrontends: await Microfrontend.countDocuments({ projectId: projectIdObj }),
                 apiKeys: await ApiKey.countDocuments({ projectId: projectIdObj }),
                 storages: await Storage.countDocuments({ projectId: projectIdObj }),
+                databases: await Database.countDocuments({ projectId: projectIdObj }),
                 codeRepositories: await CodeRepository.countDocuments({ projectId: projectIdObj })
             }
         }
@@ -349,6 +352,7 @@ export class ProjectService extends BaseAuthorizedService {
         await UserProject.deleteMany({ projectId: projectIdObj }, session)
         await ApiKey.deleteMany({ projectId: projectIdObj }, session)
         await Storage.deleteMany({ projectId: projectIdObj }, session)
+        await Database.deleteMany({ projectId: projectIdObj }, { session })
         await CodeRepository.deleteMany({ projectId: projectIdObj }, session)
 
         const microfrontends = await Microfrontend.find({ projectId: projectIdObj }, {}, { session })
