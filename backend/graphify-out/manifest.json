@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/models/ProjectModel.ts": {
-    "mtime": 1792407150.2009504,
-    "ast_hash": "b34e000a86ddd084bcbe2f4332b3d222",
+    "mtime": 1792527307.3694959,
+    "ast_hash": "ef6ef48c5a107e16ff6a0536b1714b71",
     "semantic_hash": ""
   },
   "src/models/StorageModel.ts": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/service/EnvironmentService.ts": {
-    "mtime": 1792404184.7026732,
-    "ast_hash": "ff52e28245f559e54ebe6987d40a11d8",
+    "mtime": 1792528039.7936373,
+    "ast_hash": "95225c0c614be02b4519b37062872b18",
     "semantic_hash": ""
   },
   "src/service/GlobalVariablesService.ts": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/service/ProjectService.ts": {
-    "mtime": 1792505578.3780348,
-    "ast_hash": "60506755a20daf8c37d0f9f41addd9f3",
+    "mtime": 1792528027.9692822,
+    "ast_hash": "3ed7379f92808882094db0cb4bb381b1",
     "semantic_hash": ""
   },
   "src/service/ProjectWizardService.ts": {
@@ -640,8 +640,8 @@
     "semantic_hash": ""
   },
   "src/service/CodeRepositoryImportService.ts": {
-    "mtime": 1792403946.389529,
-    "ast_hash": "38c13f598492982a78420cf52fa907e9",
+    "mtime": 1792527312.9967306,
+    "ast_hash": "0af0670ab416b83c6090ccd30716005a",
     "semantic_hash": ""
   },
   "src/service/FederationConfigService.ts": {
@@ -910,8 +910,8 @@
     "semantic_hash": ""
   },
   "src/service/EnvironmentService.test.ts": {
-    "mtime": 1792404283.4910738,
-    "ast_hash": "bfe7e61a6250f6bc84ac13b259563903",
+    "mtime": 1792528131.0923457,
+    "ast_hash": "3b710048d920fdc7213497cf15ffe752",
     "semantic_hash": ""
   },
   "src/service/OAuthAuthorizationService.test.ts": {
@@ -1205,8 +1205,8 @@
     "semantic_hash": ""
   },
   "src/service/workspace/RepositoryWorkspaceService.ts": {
-    "mtime": 1792224874.0122356,
-    "ast_hash": "1b21a8735f0b5b8ec1a9e7d823c70cbe",
+    "mtime": 1792527384.7112575,
+    "ast_hash": "1251cb89a8391295e93d4c1997c80e9a",
     "semantic_hash": ""
   },
   "src/service/workspace/workspaceCleanup.ts": {
@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "src/utils/workspacePaths.ts": {
-    "mtime": 1792224422.5830386,
-    "ast_hash": "a776c4305aad6bbeef8dd0e0c558f5e5",
+    "mtime": 1792527302.1757538,
+    "ast_hash": "44137bd9a4dea9a5b0558657218c955e",
     "semantic_hash": ""
   },
   "src/service/llm/anthropicProvider.ts": {
@@ -1710,13 +1710,13 @@
     "semantic_hash": ""
   },
   "src/service/VariableMapService.test.ts": {
-    "mtime": 1792422771.6037304,
-    "ast_hash": "37fce153c016834c596f417465c38ad8",
+    "mtime": 1792528060.1652846,
+    "ast_hash": "1556b0d3e5deb54a09327ccc94a4bd17",
     "semantic_hash": ""
   },
   "src/service/VariableMapService.ts": {
-    "mtime": 1792525391.697415,
-    "ast_hash": "bf9404442d2c6627f34c9a51e3b0e2ee",
+    "mtime": 1792528027.9688838,
+    "ast_hash": "dc2e29ce6571a9571541b540601ae4f5",
     "semantic_hash": ""
   },
   "src/service/aiChange/DomainPlanService.test.ts": {
@@ -1832,6 +1832,16 @@
   "src/service/workspace/LocalChangeService.ts": {
     "mtime": 1792519922.6511385,
     "ast_hash": "04ac09dfa7b970d3f6f4a099d4092a3e",
+    "semantic_hash": ""
+  },
+  "src/service/GitOpsService.test.ts": {
+    "mtime": 1792528124.0432568,
+    "ast_hash": "d7e4396eacaf4035b004388925f2ca04",
+    "semantic_hash": ""
+  },
+  "src/service/GitOpsService.ts": {
+    "mtime": 1792528093.3701744,
+    "ast_hash": "88ea88097d725add523c4523b0a27b3e",
     "semantic_hash": ""
   }
 }

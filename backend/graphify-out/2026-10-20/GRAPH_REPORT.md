@@ -1,7 +1,7 @@
 # Graph Report - backend  (2026-10-20)
 
 ## Corpus Check
-- 361 files · ~309,954 words
+- 361 files · ~310,019 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `94b8da09`
+- Built from commit: `eabe178c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -178,8 +178,8 @@ Cohesion: 0.24
 Nodes (6): { json }, MicrofrontendDependencyService, manifest(), AlignmentApplyRequestDTO, DependencyScanRequestDTO, MicrofrontendAlignmentChangeDTO
 
 ### Community 2 - "ServeService.ts"
-Cohesion: 0.16
-Nodes (18): aToken(), callMcp(), ENVIRONMENT, grantState, listToolNames(), previousEnvironment, PROTOCOL_HEADERS, readJsonRpc() (+10 more)
+Cohesion: 0.14
+Nodes (21): aToken(), callMcp(), ENVIRONMENT, grantState, listToolNames(), previousEnvironment, PROTOCOL_HEADERS, readJsonRpc() (+13 more)
 
 ### Community 3 - "MicrofrontendService"
 Cohesion: 0.10
@@ -318,8 +318,8 @@ Cohesion: 0.18
 Nodes (9): COMPILER_MARKERS, CONFIG_CANDIDATES, FEDERATION_PLUGIN_BY_COMPILER, FRAMEWORK_MARKERS, INTEGRATION_MARKERS, isMicrolcParcelConfig(), MicrofrontendStackDetectionDTO, PackageManifest (+1 more)
 
 ### Community 46 - "FederationConfigService"
-Cohesion: 0.08
-Nodes (30): AssistantToolEvents, AssistantConfirmation, AssistantService, AssistantStopReason, AssistantStreamHandlers, describeContext(), isProjectDraft(), MAX_TOKENS_BY_EFFORT (+22 more)
+Cohesion: 0.07
+Nodes (31): AssistantToolEvents, AssistantConfirmation, AssistantService, AssistantStopReason, AssistantStreamHandlers, describeContext(), isProjectDraft(), MAX_TOKENS_BY_EFFORT (+23 more)
 
 ### Community 47 - "EmailSenderService"
 Cohesion: 0.11
@@ -338,8 +338,8 @@ Cohesion: 0.23
 Nodes (5): Project, IUserProject, UserProject, UserProjectService, recordLogin()
 
 ### Community 51 - "CodeRepositoryModel.ts"
-Cohesion: 0.09
-Nodes (19): EntityNotFoundError, EnvironmentNotFoundError, OrganizationNotFoundError, ProjectNotFoundError, IDeployment, projectId, CodeIntegrationRequestDTO, GetAllDataDTO (+11 more)
+Cohesion: 0.08
+Nodes (15): AuthConfig, AuthConfig, S3BucketClient, EntityNotFoundError, EnvironmentNotFoundError, OrganizationNotFoundError, ProjectNotFoundError, BuiltFrontend (+7 more)
 
 ### Community 52 - "ProjectService.ts"
 Cohesion: 0.11
@@ -378,7 +378,7 @@ Cohesion: 0.14
 Nodes (17): ICanaryMicrofrontend, buildEnvironments(), CurrentDeployment, DEPLOYMENT_FIELDS, DomainDeploymentDomain, DomainDeploymentEnvironment, DomainDeployments, DomainDeploymentService (+9 more)
 
 ### Community 62 - "EntityNotFoundError"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (18): Deployment, deploymentSchema, DeploymentToCanaryUsers, deploymentToCanaryUsersSchema, Environment, environmentSchema, HostedOn, IServiceDeployment (+10 more)
 
 ### Community 63 - "BaseAuthorizedService.ts"
@@ -426,8 +426,8 @@ Cohesion: 0.15
 Nodes (14): serviceTools, context(), createService, deleteService, findCodeRepository, getContext, getDomain, getService (+6 more)
 
 ### Community 74 - ".create"
-Cohesion: 0.23
-Nodes (8): GlobalVariable, globalVariableSchema, IGlobalVariable, GlobalVariablesService, EnvironmentValue, GlobalVariableCreateDTO, GlobalVariableUpdateDTO, GlobalVariableDTO
+Cohesion: 0.11
+Nodes (22): IDeployment, GlobalVariable, globalVariableSchema, IGlobalVariable, GlobalVariablesService, CodeIntegrationRequestDTO, GetAllDataDTO, GetMicrofrontendAdaptedDataDTO (+14 more)
 
 ### Community 75 - "MicrofrontendService.ts"
 Cohesion: 0.17
@@ -446,8 +446,8 @@ Cohesion: 0.16
 Nodes (10): authorizationController(), GoogleTokenResponse, microfrontendController(), oauthController(), RFC-6749, serveController(), StartupUserRegistrationDTO, CreateRepositoryInput (+2 more)
 
 ### Community 79 - "StartupController.ts"
-Cohesion: 0.19
-Nodes (14): configurationController(), ClaudeClient, aboveCap(), createLlmClient(), effortsFor(), isLlmEnabled(), LlmConfiguration, REQUIRED (+6 more)
+Cohesion: 0.28
+Nodes (11): configurationController(), ClaudeClient, aboveCap(), createLlmClient(), effortsFor(), isLlmEnabled(), REQUIRED, resolveEffort() (+3 more)
 
 ### Community 80 - "BuildStatusDTO.ts"
 Cohesion: 0.17
@@ -466,8 +466,8 @@ Cohesion: 0.08
 Nodes (27): ProjectContextDTO, BranchNotFoundError, FileChangeAction, GitAuthor, GitCredentials, ORCHESTRATOR_COMMITTER, WorkingCopyChange, invalidFile() (+19 more)
 
 ### Community 85 - "GoogleStorageClient"
-Cohesion: 0.22
-Nodes (14): AiChangeAgentHooks, AssistantChatOutcome, AgentLoopOptions, AgentLoopResult, AgentLoopStopReason, runAgentLoop(), sleep(), turnRetryingRateLimits() (+6 more)
+Cohesion: 0.19
+Nodes (16): AiChangeAgentHooks, AssistantChatOutcome, AgentLoopOptions, AgentLoopResult, AgentLoopStopReason, runAgentLoop(), sleep(), turnRetryingRateLimits() (+8 more)
 
 ### Community 86 - ".runRound"
 Cohesion: 0.14
@@ -511,7 +511,7 @@ Nodes (13): ALLOWED_AVATAR_MIME_TYPES, IUserAvatar, IUserAvatarDocument, userAva
 
 ### Community 100 - "ServiceModel.ts"
 Cohesion: 0.07
-Nodes (25): BusinessException, Domain, domainSchema, microfrontendCodeRepositorySchema, httpPathValidator, IServiceUrl, optionalPath, serviceEnvVariableSchema (+17 more)
+Nodes (23): Domain, domainSchema, microfrontendCodeRepositorySchema, httpPathValidator, IServiceUrl, optionalPath, serviceEnvVariableSchema, serviceSchema (+15 more)
 
 ### Community 101 - "docsSearch.ts"
 Cohesion: 0.32
@@ -527,7 +527,7 @@ Nodes (4): IWizardProjectState, WizardProjectState, WizardProjectStateSchema, Pr
 
 ### Community 104 - "DeploymentCanaryUsersService"
 Cohesion: 0.13
-Nodes (9): deploymentController(), IDeploymentToCanaryUsers, DeploymentCanaryUsersService, A_DEPLOYMENT_ID, A_SESSION, anExistingRow(), tick(), DeploymentCanaryUsersDTO (+1 more)
+Nodes (8): deploymentController(), IDeploymentToCanaryUsers, DeploymentCanaryUsersService, A_DEPLOYMENT_ID, A_SESSION, anExistingRow(), tick(), DeploymentCanaryUsersDTO
 
 ### Community 105 - ".selectRepositories"
 Cohesion: 0.05
@@ -562,8 +562,8 @@ Cohesion: 0.38
 Nodes (6): aUser(), FakeProject, matches(), newId(), sameId(), WithAuthorizationGate
 
 ### Community 113 - "index.ts"
-Cohesion: 0.08
-Nodes (30): AuthConfig, AuthConfig, S3BucketClient, organizationController(), ErrorDetails, build(), fastify, initSentry() (+22 more)
+Cohesion: 0.13
+Nodes (16): build(), fastify, initSentry(), start(), organizationSchema, projectSchema, IUserDocument, User (+8 more)
 
 ### Community 114 - "AccessProbe"
 Cohesion: 0.15
@@ -574,8 +574,8 @@ Cohesion: 0.12
 Nodes (15): DatabaseTarget, databaseTargetOf(), DEFAULT_PORT, sqlServerTargetOf(), SSL_MODES, credentials, testDatabaseConnection(), TESTERS (+7 more)
 
 ### Community 116 - "projectWizardStateMachine.ts"
-Cohesion: 0.19
-Nodes (8): BuiltFrontend, builtFrontendSchema, IBuiltFrontend, ContextEntry, ContextFilters, ProjectCreateInput, ProjectUpdateInput, NewProjectWizardContext
+Cohesion: 0.15
+Nodes (12): organizationController(), BusinessException, ErrorDetails, OrganizationCreateInput, OrganizationUpdateInput, ContextEntry, ContextFilters, ProjectCreateInput (+4 more)
 
 ### Community 117 - "MicrofrontendDependencyService.ts"
 Cohesion: 0.18
@@ -641,11 +641,11 @@ Nodes (3): aUser(), newId(), ORGANIZATION_ID
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `toObjectId()` connect `BaseAuthorizedService.ts` to `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `ServeService`, `FastifyInstance`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `devDependencies`, `User`, `BusinessException`, `autorization.ts`, `GitlabClient.ts`, `FederationConfigService`, `EmailSenderService`, `.gitHubInjectApiKey`, `Project`, `CodeRepositoryModel.ts`, `ProjectService.ts`, `FastifyInstance`, `BuildStatusService.ts`, `BusinessException`, `EntityNotFoundError`, `DeploymentService`, `AssistantController.ts`, `.create`, `toObjectId`, `.runRound`, `codeRepositoryUtils.ts`, `AzureStorageClient`, `BusinessException.ts`, `BaseAuthorizedService`, `ServiceModel.ts`, `ProjectWizardService`, `DeploymentCanaryUsersService`, `.selectRepositories`, `organizationTools.test.ts`, `index.ts`, `SqlDatabaseClient.ts`, `projectWizardStateMachine.ts`, `OAuthAuthorizationService`, `OAuthAuthorizationService.ts`, `RepositoryRenameService.ts`, `ProjectService`?**
+- **Why does `toObjectId()` connect `BaseAuthorizedService.ts` to `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `ServeService`, `FastifyInstance`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `devDependencies`, `User`, `BusinessException`, `autorization.ts`, `GitlabClient.ts`, `FederationConfigService`, `EmailSenderService`, `.gitHubInjectApiKey`, `Project`, `CodeRepositoryModel.ts`, `ProjectService.ts`, `FastifyInstance`, `BuildStatusService.ts`, `BusinessException`, `EntityNotFoundError`, `DeploymentService`, `AssistantController.ts`, `.create`, `toObjectId`, `.runRound`, `codeRepositoryUtils.ts`, `AzureStorageClient`, `BusinessException.ts`, `BaseAuthorizedService`, `ProjectWizardService`, `DeploymentCanaryUsersService`, `.selectRepositories`, `organizationTools.test.ts`, `index.ts`, `SqlDatabaseClient.ts`, `projectWizardStateMachine.ts`, `OAuthAuthorizationService`, `OAuthAuthorizationService.ts`, `RepositoryRenameService.ts`, `ProjectService`?**
   _High betweenness centrality (0.127) - this node is a cross-community bridge._
-- **Why does `createBusinessException()` connect `ProjectService.ts` to `MicrofrontendDependencyService.ts`, `MicrofrontendService`, `toObjectId`, `FastifyInstance`, `CodeRepositoryService`, `AzureDevOpsClient.ts`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `devDependencies`, `scripts`, `cors.ts`, `user-id.template.js`, `User`, `BusinessException`, `RepositoryFileService.ts`, `ICodeRepository`, `FederationConfigService`, `EmailSenderService`, `Project`, `CodeRepositoryModel.ts`, `StorageService.ts`, `organizationMigration.ts`, `StorageModel.ts`, `FastifyInstance`, `EntityNotFoundError`, `BaseAuthorizedService.ts`, `DeploymentService`, `organizationTools.test.ts`, `AssistantController.ts`, `GitlabClient.ts`, `toObjectId`, `BaseAuthorizedService.test.ts`, `encryptedFieldsPlugin.ts`, `docsSearch.ts`, `.runRound`, `codeRepositoryUtils.ts`, `AssistantService.test.ts`, `AzureStorageClient`, `BusinessException.ts`, `BaseAuthorizedService`, `ServiceModel.ts`, `.selectRepositories`, `TemplateScaffoldService`, `organizationTools.test.ts`, `index.ts`, `projectWizardStateMachine.ts`, `MicrofrontendDependencyService.ts`, `OAuthAuthorizationService.ts`, `RepositoryRenameService.ts`, `ProjectService`?**
+- **Why does `createBusinessException()` connect `ProjectService.ts` to `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `toObjectId`, `FastifyInstance`, `CodeRepositoryService`, `AzureDevOpsClient.ts`, `CodeRepositoryService.ts`, `DeploymentCanaryUsersService`, `devDependencies`, `scripts`, `cors.ts`, `user-id.template.js`, `User`, `BusinessException`, `RepositoryFileService.ts`, `ICodeRepository`, `FederationConfigService`, `EmailSenderService`, `Project`, `CodeRepositoryModel.ts`, `StorageService.ts`, `organizationMigration.ts`, `StorageModel.ts`, `FastifyInstance`, `EntityNotFoundError`, `BaseAuthorizedService.ts`, `DeploymentService`, `organizationTools.test.ts`, `AssistantController.ts`, `GitlabClient.ts`, `toObjectId`, `BaseAuthorizedService.test.ts`, `encryptedFieldsPlugin.ts`, `docsSearch.ts`, `.runRound`, `codeRepositoryUtils.ts`, `AssistantService.test.ts`, `AzureStorageClient`, `BusinessException.ts`, `BaseAuthorizedService`, `.selectRepositories`, `TemplateScaffoldService`, `organizationTools.test.ts`, `index.ts`, `projectWizardStateMachine.ts`, `MicrofrontendDependencyService.ts`, `OAuthAuthorizationService.ts`, `RepositoryRenameService.ts`, `ProjectService`?**
   _High betweenness centrality (0.082) - this node is a cross-community bridge._
-- **Why does `BaseAuthorizedService` connect `BaseAuthorizedService` to `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `toObjectId`, `ServeService`, `FastifyInstance`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `devDependencies`, `BusinessException`, `GitlabClient.ts`, `IMarket`, `FederationConfigService`, `EmailSenderService`, `.gitHubInjectApiKey`, `Project`, `CodeRepositoryModel.ts`, `ProjectService.ts`, `BuildStatusService.ts`, `BusinessException`, `EntityNotFoundError`, `BaseAuthorizedService.ts`, `DeploymentService`, `GitlabClient.ts`, `IProject`, `.create`, `toObjectId`, `StartupController.ts`, `docsSearch.ts`, `.runRound`, `codeRepositoryUtils.ts`, `AzureStorageClient`, `ServiceModel.ts`, `RepositoryCreationService.test.ts`, `ProjectWizardService`, `DeploymentCanaryUsersService`, `.selectRepositories`, `TemplateScaffoldService`, `index.ts`, `AccessProbe`, `projectWizardStateMachine.ts`, `MicrofrontendDependencyService.ts`, `RepositoryRenameService.ts`, `ProjectService`?**
+- **Why does `BaseAuthorizedService` connect `BaseAuthorizedService` to `MicrofrontendDependencyService.ts`, `ServeService.ts`, `MicrofrontendService`, `toObjectId`, `ServeService`, `FastifyInstance`, `CodeRepositoryService`, `CodeRepositoryService.ts`, `devDependencies`, `BusinessException`, `GitlabClient.ts`, `IMarket`, `FederationConfigService`, `EmailSenderService`, `.gitHubInjectApiKey`, `Project`, `CodeRepositoryModel.ts`, `ProjectService.ts`, `BuildStatusService.ts`, `BusinessException`, `EntityNotFoundError`, `BaseAuthorizedService.ts`, `DeploymentService`, `GitlabClient.ts`, `IProject`, `.create`, `toObjectId`, `docsSearch.ts`, `.runRound`, `codeRepositoryUtils.ts`, `AzureStorageClient`, `ServiceModel.ts`, `RepositoryCreationService.test.ts`, `ProjectWizardService`, `DeploymentCanaryUsersService`, `.selectRepositories`, `TemplateScaffoldService`, `index.ts`, `AccessProbe`, `projectWizardStateMachine.ts`, `MicrofrontendDependencyService.ts`, `RepositoryRenameService.ts`, `ProjectService`?**
   _High betweenness centrality (0.043) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `toObjectId()` (e.g. with `.getRepositoriesById()` and `.bulkDelete()`) actually correct?**
   _`toObjectId()` has 2 INFERRED edges - model-reasoned connections that need verification._
@@ -653,5 +653,5 @@ _Questions this graph is uniquely positioned to answer:_
   _725 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `MicrofrontendService.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.09230769230769231 - nodes in this community are weakly interconnected._
-- **Should `MicrofrontendService` be split into smaller, more focused modules?**
-  _Cohesion score 0.10121457489878542 - nodes in this community are weakly interconnected._
+- **Should `ServeService.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.13725490196078433 - nodes in this community are weakly interconnected._

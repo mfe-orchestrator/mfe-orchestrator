@@ -125,9 +125,5 @@
   "123": "ProjectService",
   "124": "projectContentTools.test.ts",
   "125": "NpmRegistryClient.ts",
-  "126": "CodeRepositoryModel.ts",
-  "127": "pkce.ts",
-  "128": "UserOrganizationService.test.ts",
-  "129": "UserProjectService.test.ts",
-  "130": "OrganizationService.test.ts"
+  "126": "CodeRepositoryModel.ts"
 }
