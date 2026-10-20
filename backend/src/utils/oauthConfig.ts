@@ -123,16 +123,22 @@ export const assertMcpConfigurationIsUsable = (env: NodeJS.ProcessEnv = process.
 /**
  * Fastify's `trustProxy` from TRUST_PROXY.
  *
- * "true" trusts every hop, a number trusts that many hops, anything else is a comma separated list
- * of addresses or CIDRs. Unset keeps the previous behaviour (no proxy trusted), under which every
- * request behind nginx shares one IP and one rate limit bucket.
+ * "true" trusts every hop, anything else is a comma separated list of addresses or CIDRs. Unset keeps
+ * the previous behaviour (no proxy trusted), under which every request behind nginx shares one IP and
+ * one rate limit bucket.
+ *
+ * A hop count is refused: Fastify 5.12 stopped honouring it (it cannot tell a proxy from a client
+ * that sends its own X-Forwarded-For) and silently trusts nobody instead, which would put every
+ * client back in one bucket without a word.
  */
-export const parseTrustProxy = (value: string | undefined): boolean | number | string[] => {
+export const parseTrustProxy = (value: string | undefined): boolean | string[] => {
     if (!value) return false
     const trimmed = value.trim()
     if (trimmed.toLowerCase() === "true") return true
     if (trimmed.toLowerCase() === "false") return false
-    if (/^\d+$/.test(trimmed)) return Number(trimmed)
+    if (/^\d+$/.test(trimmed)) {
+        throw new Error(`TRUST_PROXY=${trimmed} is a hop count, which is no longer supported: list the proxies instead, e.g. "loopback,10.0.0.0/8".`)
+    }
     return trimmed
         .split(",")
         .map(entry => entry.trim())

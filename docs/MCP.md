@@ -251,7 +251,6 @@ that hop, or every client is seen with the controller's IP and shares one bucket
 # helm values
 env:
   TRUST_PROXY: "loopback,10.0.0.0/8"   # in-pod nginx + ingress pods in the pod CIDR
-  # TRUST_PROXY: "2"                   # or count the hops: nginx + ingress
 ```
 
 Trust only the hops you actually run: a trusted hop lets the caller choose its own IP.

@@ -102,7 +102,7 @@ const ensureNoKeyClash = (maps: KeyedMap[], serviceName?: string) => {
     }
 }
 
-const keysOnly = { name: 1, "entries.key": 1 }
+const keysOnly = "name entries.key"
 
 /** The maps of the project with these ids, refused when one is missing or of another project */
 const findAttachable = async (kind: VariableMapKind, ids: unknown, projectId: Schema.Types.ObjectId): Promise<{ ids: string[]; maps: KeyedMap[] }> => {

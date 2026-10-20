@@ -58,9 +58,9 @@ const MAX_CHAIN_LENGTH = 50
 const LOCK_WAIT_MS = 10 * 60_000
 
 /** File contents stay out of every view: the diff is read from the request of each repository. */
-const WITHOUT_CONTENTS = { "files.originalContent": 0, "files.proposedContent": 0, events: 0 }
+const WITHOUT_CONTENTS = { "files.originalContent": 0, "files.proposedContent": 0, events: 0 } as const
 /** Neither the progress nor the conversation of the agent: what lists of jobs read. */
-const JOB_LISTED = { events: 0, transcript: 0 }
+const JOB_LISTED = { events: 0, transcript: 0 } as const
 
 export interface AiJobCreateInput {
     prompt: string
@@ -224,7 +224,10 @@ const sameRepositories = (a: IAiChangeJob, b: IAiChangeJob) => {
     return ids(a).join(",") === ids(b).join(",")
 }
 
-const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: Map<string, Pick<RepositoryComponent, "name" | "slug">>, withEvents: boolean): AiJobView => ({
+/** A job as lists read it: without the conversation of the agent, and without its progress unless asked. */
+type ListedJob = Omit<IAiChangeJob, "events" | "transcript"> & Partial<Pick<IAiChangeJob, "events">>
+
+const toJobView = (job: ListedJob, requests: Omit<IAiChangeRequest, "events">[], components: Map<string, Pick<RepositoryComponent, "name" | "slug">>, withEvents: boolean): AiJobView => ({
     _id: String(job._id),
     projectId: String(job.projectId),
     userId: String(job.userId),
@@ -798,7 +801,7 @@ export class AiChangeJobService extends AiChangeBaseService {
     }
 
     /** A job whose process died is reported as failed, and so are its requests still waiting for it. */
-    private async failIfStale(job: IAiChangeJob): Promise<IAiChangeJob> {
+    private async failIfStale<T extends ListedJob>(job: T): Promise<T | IAiChangeJob> {
         if (!isStale(job)) return job
         const error = "The job stopped without finishing"
         const failed = await AiChangeJob.findOneAndUpdate({ _id: job._id, status: job.status }, { status: AiJobStatus.FAILED, error, expiresAt: expiry() }, { new: true })
@@ -806,7 +809,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         return failed ?? job
     }
 
-    private async views(jobs: IAiChangeJob[], withEvents: boolean): Promise<AiJobView[]> {
+    private async views(jobs: ListedJob[], withEvents: boolean): Promise<AiJobView[]> {
         if (jobs.length === 0) return []
         const requests = await AiChangeRequest.find({ jobId: { $in: jobs.map(job => job._id) } }, WITHOUT_CONTENTS)
         const refs = jobs.flatMap(job => componentsOfJob(job)).filter((ref, index, all) => all.findIndex(other => other.id === ref.id) === index)
@@ -842,7 +845,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             .sort({ createdAt: -1 })
             .limit(LISTED_JOBS)
         const latest = await Promise.all(roots.map(root => AiChangeJob.findOne({ rootJobId: root._id }, JOB_LISTED).sort({ createdAt: -1 })))
-        const jobs: IAiChangeJob[] = [...roots, ...latest.flatMap(job => (job ? [job] : []))]
+        const jobs: ListedJob[] = [...roots, ...latest.flatMap(job => (job ? [job] : []))]
             .filter((job, index, all) => all.findIndex(other => String(other._id) === String(job._id)) === index)
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         return this.views(await Promise.all(jobs.map(job => this.failIfStale(job))), false)

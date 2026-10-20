@@ -306,7 +306,7 @@ falling back to it.
 | `CIMD_ALLOWED_HOSTS`                   | _(any)_                                                                                           | Comma separated hosts allowed to publish client metadata documents. Clients from listed hosts show as verified on the consent page; with no list every CIMD client is marked unverified. |
 | `OAUTH_ISSUER_URL`                     | _(empty, falls back to `BACKEND_URL`)_                                                            | Issuer of the MCP access tokens.                                |
 | `MCP_RESOURCE_URL`                     | _(empty, falls back to the issuer + `/mcp`)_                                                      | Public URL of the MCP endpoint.                                 |
-| `TRUST_PROXY`                          | `127.0.0.1` _(in the Docker images)_                                                              | Proxies trusted for `X-Forwarded-For`: `true`, a hop count, or a comma separated list of addresses/CIDRs (`loopback`, `uniquelocal` work too). Behind a Kubernetes ingress add its hop, e.g. `loopback,10.0.0.0/8` or `2`, or every client shares one rate limit bucket. |
+| `TRUST_PROXY`                          | `127.0.0.1` _(in the Docker images)_                                                              | Proxies trusted for `X-Forwarded-For`: `true` or a comma separated list of addresses/CIDRs (`loopback`, `uniquelocal` work too); a hop count is refused. Behind a Kubernetes ingress add its hop, e.g. `loopback,10.0.0.0/8`, or every client shares one rate limit bucket. |
 
 ## Anonymous telemetry 📡
 

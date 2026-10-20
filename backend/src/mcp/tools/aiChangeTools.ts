@@ -35,7 +35,7 @@ const jobService = (principal: AuthorizedPrincipal) => new AiChangeJobService(pr
  * touches. File contents stay out (the console shows the diff): they can be megabytes, and a tool
  * result is sent again on every later round.
  */
-const toChangeView = (request: IAiChangeRequest) => ({
+const toChangeView = (request: Omit<IAiChangeRequest, "events"> & Partial<Pick<IAiChangeRequest, "events">>) => ({
     id: request._id.toString(),
     jobId: request.jobId ? String(request.jobId) : undefined,
     conversationId: String(request.conversationId),

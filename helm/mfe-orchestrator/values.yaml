@@ -61,7 +61,7 @@ env:
   # default: 1
   MARKETING_OPT_IN_VERSION: ""
 
-  # Proxies whose X-Forwarded-For the backend trusts: true, a hop count, or a
+  # Proxies whose X-Forwarded-For the backend trusts: true or a
   # comma separated list of addresses/CIDRs ("loopback", "uniquelocal" work too).
   # The image trusts its own nginx (127.0.0.1). Behind an ingress controller the
   # request reaches nginx from the controller's pod IP, so that hop has to be
@@ -69,7 +69,7 @@ env:
   # registration limit of 10/hour per IP becomes 10/hour for everyone). Trust
   # exactly the hops you run, never "true" on a pod reachable from outside:
   #   TRUST_PROXY: "loopback,10.0.0.0/8"   # nginx + ingress pods in the pod CIDR
-  #   TRUST_PROXY: "2"                     # or: exactly nginx + one ingress hop
+  # A hop count ("2") is refused: list the proxies.
   # default: 127.0.0.1
   TRUST_PROXY: ""
 

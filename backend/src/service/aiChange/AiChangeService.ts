@@ -75,7 +75,7 @@ export class AiChangeService extends AiChangeBaseService {
      * The latest conversations on a microfrontend or a service, each with every request of it on this repository,
      * newest first, without file contents. Whole conversations: a queue cut in the middle of one would show it twice.
      */
-    async list(ref: RepositoryComponentRef): Promise<IAiChangeRequest[]> {
+    async list(ref: RepositoryComponentRef): Promise<Omit<IAiChangeRequest, "events">[]> {
         const component = await this.getComponent(ref)
         const owner = ownerFields(component)
         const conversations = await AiChangeRequest.aggregate<{ _id: IAiChangeRequest["conversationId"] }>([

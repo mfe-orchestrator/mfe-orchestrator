@@ -94,10 +94,13 @@ describe("environment parsing", () => {
     it.each([
         [undefined, false],
         ["true", true],
-        ["2", 2],
         ["10.0.0.0/8, 127.0.0.1", ["10.0.0.0/8", "127.0.0.1"]]
     ])("given TRUST_PROXY=%s, when parsed, then Fastify gets %j", (value, expected) => {
         expect(parseTrustProxy(value)).toEqual(expected)
+    })
+
+    it("given TRUST_PROXY as a hop count, when parsed, then it refuses to start", () => {
+        expect(() => parseTrustProxy("2")).toThrow(/hop count/)
     })
 })
 
