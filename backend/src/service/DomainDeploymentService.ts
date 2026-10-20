@@ -3,12 +3,13 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Deployment from "../models/DeploymentModel"
 import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
-import Microfrontend, { CanaryDeploymentType, CanaryType, ICanaryMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { CanaryDeploymentType, CanaryType, ICanaryMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
 import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service from "../models/ServiceModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import DomainService from "./DomainService"
+import { findLatestFrontendDeployments } from "./FrontendDeploymentService"
 
 export interface DomainDeploymentDomain {
     _id: unknown
@@ -20,11 +21,17 @@ export interface DomainDeploymentMicrofrontend {
     _id: unknown
     slug: string
     name: string
-    /** As frozen in the deployment that environment serves; null when it was never deployed there */
+    /** MICROFRONTEND for the ones stored before the kind existed */
+    kind: MicrofrontendKind
+    /**
+     * As frozen in the deployment that environment serves; null when it was never deployed there. For a
+     * FRONTEND, the latest version its deploy pipeline reported there, as for a service.
+     */
     version: string | null
     /**
      * Only when the canary was enabled in that deployment. `percentage` only means something for the
-     * RANDOM and ON_SESSION types (ON_USER serves the enrolled users); `version` is null for a canary based on a URL.
+     * RANDOM and ON_SESSION types (ON_USER serves the enrolled users); `version` is null for a canary based on a
+     * URL. Always null for a FRONTEND, which the orchestrator does not serve.
      */
     canary: { type: CanaryType; deploymentType: CanaryDeploymentType; percentage: number; version: string | null } | null
 }
@@ -52,13 +59,16 @@ export interface DomainDeployments {
     environments: DomainDeploymentEnvironment[]
 }
 
-type Member = { _id: unknown; slug: string; name: string; domainId?: unknown }
+type Member = { _id: unknown; slug: string; name: string; domainId?: unknown; kind?: MicrofrontendKind }
 type Environments = Awaited<ReturnType<typeof findEnvironments>>
 type SnapshotMicrofrontend = { _id: unknown; version?: string; canary?: ICanaryMicrofrontend }
 type CurrentDeployment = { _id: unknown; environmentId: unknown; deploymentId: string; deployedAt: Date; microfrontends?: SnapshotMicrofrontend[] }
 type LatestServiceDeployment = { _id: { serviceId: unknown; environmentId: unknown }; version: string; deployedAt: Date }
 
 const MEMBER_FIELDS = { slug: 1, name: 1, domainId: 1 }
+const MICROFRONTEND_FIELDS = { ...MEMBER_FIELDS, kind: 1 }
+
+const isFrontend = (member: Member) => member.kind === MicrofrontendKind.FRONTEND
 /** Only what is shown: the snapshot also carries the variables and the storage credentials */
 const DEPLOYMENT_FIELDS = { environmentId: 1, deploymentId: 1, deployedAt: 1, "microfrontends._id": 1, "microfrontends.version": 1, "microfrontends.canary": 1 }
 
@@ -74,9 +84,9 @@ const toDomain = (domain: DomainDeploymentDomain): DomainDeploymentDomain => ({ 
  * The deployment is picked on scalars only, then read alone: sorting whole snapshots would load the
  * full history of every environment on each call.
  */
-const findVersions = async (environments: Environments, services: Member[]) => {
+const findVersions = async (environments: Environments, services: Member[], microfrontends: Member[]) => {
     const environmentIds = environments.map(environment => environment._id)
-    const [currentDeploymentIds, serviceDeployments] = await Promise.all([
+    const [currentDeploymentIds, serviceDeployments, frontendDeployments] = await Promise.all([
         environmentIds.length === 0
             ? []
             : Deployment.aggregate<{ _id: ObjectId; id: ObjectId }>([
@@ -93,7 +103,11 @@ const findVersions = async (environments: Environments, services: Member[]) => {
                   // Follows the index { serviceId, environmentId, deployedAt, _id }, so the first of each group is the latest deploy
                   { $sort: { serviceId: 1, environmentId: 1, deployedAt: -1, _id: -1 } },
                   { $group: { _id: { serviceId: "$serviceId", environmentId: "$environmentId" }, version: { $first: "$version" }, deployedAt: { $first: "$deployedAt" } } }
-              ])
+              ]),
+        findLatestFrontendDeployments(
+            microfrontends.filter(isFrontend).map(frontend => frontend._id),
+            environmentIds
+        )
     ])
     const deployments = currentDeploymentIds.length === 0 ? [] : await Deployment.find({ _id: { $in: currentDeploymentIds.map(current => current.id) } }, DEPLOYMENT_FIELDS).lean<CurrentDeployment[]>()
 
@@ -104,7 +118,8 @@ const findVersions = async (environments: Environments, services: Member[]) => {
         ])
     )
     const serviceDeploymentByKey = new Map(serviceDeployments.map(deploy => [`${deploy._id.serviceId}:${deploy._id.environmentId}`, deploy]))
-    return { deploymentByEnvironment, serviceDeploymentByKey }
+    const frontendDeploymentByKey = new Map(frontendDeployments.map(deploy => [`${deploy._id.microfrontendId}:${deploy._id.environmentId}`, deploy]))
+    return { deploymentByEnvironment, serviceDeploymentByKey, frontendDeploymentByKey }
 }
 
 const buildEnvironments = (environments: Environments, microfrontends: Member[], services: Member[], versions: Awaited<ReturnType<typeof findVersions>>): DomainDeploymentEnvironment[] =>
@@ -114,11 +129,16 @@ const buildEnvironments = (environments: Environments, microfrontends: Member[],
             environment: { _id: environment._id, name: environment.name, slug: environment.slug, color: environment.color, isProduction: Boolean(environment.isProduction) },
             deployment: current ? { deploymentId: current.deployment.deploymentId, deployedAt: current.deployment.deployedAt } : null,
             microfrontends: microfrontends.map(microfrontend => {
+                if (isFrontend(microfrontend)) {
+                    const deploy = versions.frontendDeploymentByKey.get(`${microfrontend._id}:${environment._id}`)
+                    return { _id: microfrontend._id, slug: microfrontend.slug, name: microfrontend.name, kind: MicrofrontendKind.FRONTEND, version: deploy?.version ?? null, canary: null }
+                }
                 const snapshot = current?.microfrontends.get(String(microfrontend._id))
                 return {
                     _id: microfrontend._id,
                     slug: microfrontend.slug,
                     name: microfrontend.name,
+                    kind: MicrofrontendKind.MICROFRONTEND,
                     version: snapshot?.version ?? null,
                     canary: snapshot?.canary?.enabled
                         ? {
@@ -140,8 +160,8 @@ const buildEnvironments = (environments: Environments, microfrontends: Member[],
 /**
  * Which version of each microfrontend (frontend) and service (backend) of a domain runs in each
  * environment. A microfrontend's version is the one frozen in the deployment the environment serves;
- * a service's is the latest one the customer's deploy pipeline reported, since the orchestrator does
- * not deploy services. Members are the ones in the domain now, environments come in their order.
+ * a service's, and a FRONTEND's, is the latest one the customer's deploy pipeline reported, since the
+ * orchestrator deploys neither. Members are the ones in the domain now, environments come in their order.
  */
 export class DomainDeploymentService extends BaseAuthorizedService {
     async getByDomainId(domainId: string | ObjectId): Promise<{ domain: DomainDeploymentDomain; environments: DomainDeploymentEnvironment[] }> {
@@ -152,10 +172,10 @@ export class DomainDeploymentService extends BaseAuthorizedService {
         }
         const [environments, microfrontends, services] = await Promise.all([
             findEnvironments(domain.projectId),
-            Microfrontend.find({ projectId: domain.projectId, domainId: domain._id }, MEMBER_FIELDS).sort({ name: 1 }),
+            Microfrontend.find({ projectId: domain.projectId, domainId: domain._id }, MICROFRONTEND_FIELDS).sort({ name: 1 }),
             Service.find({ projectId: domain.projectId, domainId: domain._id }, MEMBER_FIELDS).sort({ name: 1 })
         ])
-        const versions = await findVersions(environments, services)
+        const versions = await findVersions(environments, services, microfrontends)
         return { domain: toDomain(domain as unknown as DomainDeploymentDomain), environments: buildEnvironments(environments, microfrontends, services, versions) }
     }
 
@@ -169,10 +189,10 @@ export class DomainDeploymentService extends BaseAuthorizedService {
         const [domains, environments, microfrontends, services] = await Promise.all([
             Domain.find({ projectId: projectIdObj, ...domainsInScope }, { name: 1, slug: 1 }).sort({ name: 1 }),
             findEnvironments(projectIdObj),
-            Microfrontend.find({ projectId: projectIdObj, ...membersInScope }, MEMBER_FIELDS).sort({ name: 1 }),
+            Microfrontend.find({ projectId: projectIdObj, ...membersInScope }, MICROFRONTEND_FIELDS).sort({ name: 1 }),
             Service.find({ projectId: projectIdObj, ...membersInScope }, MEMBER_FIELDS).sort({ name: 1 })
         ])
-        const versions = await findVersions(environments, services)
+        const versions = await findVersions(environments, services, microfrontends)
 
         // A member pointing at a domain that is gone counts as in no domain, as the domain filters treat it
         const domainIds = new Set(domains.map(domain => String(domain._id)))

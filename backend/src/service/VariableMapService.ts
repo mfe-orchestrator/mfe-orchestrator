@@ -2,6 +2,7 @@ import { isValidObjectId, ObjectId, Schema } from "mongoose"
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Environment from "../models/EnvironmentModel"
+import Microfrontend from "../models/MicrofrontendModel"
 import Service, { IService } from "../models/ServiceModel"
 import { ConfigMap, IVariableMap, IVariableMapEntry, Secret, variableMapModels } from "../models/VariableMapModel"
 import { SERVICE_VARIABLE_KEY } from "../types/ServiceStack"
@@ -141,15 +142,15 @@ export const resolveAttachedMaps = async <T extends { configMapIds?: unknown; se
 }
 
 /**
- * The maps of this kind a domain-scoped member may see and edit: those attached to at least one service,
- * all of them in `scope`. A map shared with a service of another domain, or of none, or attached to
- * nothing, belongs to nobody assigned to only some domains.
+ * The maps of this kind a domain-scoped member may see and edit: those attached to at least one service or
+ * FRONTEND microfrontend, all of them in `scope`. A map shared with a component of another domain, or of
+ * none, or attached to nothing, belongs to nobody assigned to only some domains.
  */
 export const mapIdsInScope = async (kind: VariableMapKind, projectId: Schema.Types.ObjectId, scope: string[]): Promise<Set<string>> => {
     const field = SERVICE_FIELD[kind]
     const attaching = { projectId, [field]: { $exists: true, $ne: [] } }
     const fields = { domainId: 1, configMapIds: 1, secretIds: 1 }
-    const components = await Service.find(attaching, fields)
+    const components = [...(await Service.find(attaching, fields)), ...(await Microfrontend.find(attaching, fields))]
     const inScope = new Set<string>()
     const outOfScope = new Set<string>()
     for (const component of components) {
@@ -160,9 +161,9 @@ export const mapIdsInScope = async (kind: VariableMapKind, projectId: Schema.Typ
 }
 
 /**
- * A domain-scoped member attaches to a service only the config maps and secrets they can see, those
- * attached exclusively to services of their domains: anything else would hand them the values of another
- * domain. The maps the service already attaches stay, whoever attached them. `scope` is the
+ * A domain-scoped member attaches to a service or a FRONTEND only the config maps and secrets they can see,
+ * those attached exclusively to components of their domains: anything else would hand them the values of
+ * another domain. The maps the component already attaches stay, whoever attached them. `scope` is the
  * caller's domain scope, nothing to check without one.
  */
 export const ensureAttachableMaps = async (

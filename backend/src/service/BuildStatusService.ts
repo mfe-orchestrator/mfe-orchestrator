@@ -8,12 +8,13 @@ import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
 import Deployment from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
-import Microfrontend, { ICodeRepositoryMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { ICodeRepositoryMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
 import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service, { IService } from "../models/ServiceModel"
 import { BuildJobLogDTO, BuildRunDTO, BuildStatus, BuildUnavailableReason, ComponentBuildStatusDTO, ProjectBuildStatusDTO } from "../types/BuildStatusDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import { findLatestFrontendDeployments } from "./FrontendDeploymentService"
 
 /** How many runs per microfrontend or service are read from the provider. */
 const RUNS_PER_COMPONENT = 5
@@ -293,9 +294,11 @@ class BuildStatusService extends BaseAuthorizedService {
         ])
 
         const environmentIds = environments.map(environment => environment._id)
-        const [versionsByEnvironment, serviceVersionsByEnvironment, repositoriesById] = await Promise.all([
+        const frontends = microfrontends.filter(microfrontend => microfrontend.kind === MicrofrontendKind.FRONTEND)
+        const [versionsByEnvironment, serviceVersionsByEnvironment, frontendVersionsByEnvironment, repositoriesById] = await Promise.all([
             this.getVersionsByEnvironment(environmentIds),
             this.getServiceVersionsByEnvironment(services, environmentIds),
+            this.getFrontendVersionsByEnvironment(frontends, environmentIds),
             this.getRepositoriesById([...microfrontends, ...services])
         ])
         const environmentIdStrings = environmentIds.map(environmentId => environmentId.toString())
@@ -304,7 +307,9 @@ class BuildStatusService extends BaseAuthorizedService {
             Promise.all(
                 microfrontends.map(async microfrontend => {
                     const lastBuilt = await BuiltFrontend.findOne({ microfrontendId: microfrontend._id }).sort({ createdAt: -1 }).select("version")
-                    const versionByEnvironmentId = this.toVersionByEnvironmentId(microfrontend, environmentIdStrings, versionsByEnvironment)
+                    // A FRONTEND is not in the deployments of the orchestrator as deployed: its pipeline reports where it runs
+                    const deployed = microfrontend.kind === MicrofrontendKind.FRONTEND ? frontendVersionsByEnvironment : versionsByEnvironment
+                    const versionByEnvironmentId = this.toVersionByEnvironmentId(microfrontend, environmentIdStrings, deployed)
                     return { microfrontendId: microfrontend._id.toString(), ...(await this.toComponentStatus(microfrontend, lastBuilt?.version, versionByEnvironmentId, repositoriesById)) }
                 })
             ),
@@ -374,6 +379,21 @@ class BuildStatusService extends BaseAuthorizedService {
             const environmentId = deploy._id.environmentId.toString()
             const versions = result.get(environmentId) ?? new Map<string, string>()
             versions.set(deploy._id.serviceId.toString(), deploy.version)
+            result.set(environmentId, versions)
+        }
+        return result
+    }
+
+    /** As for the services: the latest deploy the pipeline of each FRONTEND reported in each environment */
+    private async getFrontendVersionsByEnvironment(frontends: BuildableComponent[], environmentIds: ObjectId[]): Promise<Map<string, Map<string, string>>> {
+        const result = new Map<string, Map<string, string>>()
+        for (const deploy of await findLatestFrontendDeployments(
+            frontends.map(frontend => frontend._id),
+            environmentIds
+        )) {
+            const environmentId = String(deploy._id.environmentId)
+            const versions = result.get(environmentId) ?? new Map<string, string>()
+            versions.set(String(deploy._id.microfrontendId), deploy.version)
             result.set(environmentId, versions)
         }
         return result

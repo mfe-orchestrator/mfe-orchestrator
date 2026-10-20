@@ -26,16 +26,14 @@ import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import ServiceDangerZone from "./partials/ServiceDangerZone"
 import ServiceEnvFields from "./partials/ServiceEnvFields"
 import ServiceHeader from "./partials/ServiceHeader"
+import ServiceRuntimeFields from "./partials/ServiceRuntimeFields"
 import ServiceUrlsFields from "./partials/ServiceUrlsFields"
 import ServiceVariableMapsFields from "./partials/ServiceVariableMapsFields"
 import { isServiceTemplate } from "./partials/serviceTemplates"
-import { fromFormUrls, isServiceUrl, toFormUrls, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
+import { createServiceRuntimeShape, fromFormUrls, toFormUrls, useProjectEnvironmentsQuery } from "./partials/serviceVariables"
 
 /** Same rule as the backend (SERVICE_SLUG): the slug names the workspace folder and the CI registration URL */
 const SERVICE_SLUG = /^[a-z0-9][a-z0-9-]{1,49}$/
-
-/** Same rule as the backend (SERVICE_HTTP_PATH): a probe or docs path is absolute, at most 256 characters, without whitespace */
-const SERVICE_HTTP_PATH = /^\/\S{0,255}$/
 
 /** The fields a service template prefills */
 const PREFILLED_FIELDS = ["port", "livenessPath", "readinessPath", "docsPath", "openApiPath"] as const
@@ -63,36 +61,7 @@ const createFormSchema = (messages: FormMessages) =>
         domainId: z.string().nullable().optional(),
         context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
         template: z.string().optional(),
-        port: z.string().regex(/^\d{1,5}$/),
-        livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
-        readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
-        // Blank: the service publishes no API docs
-        docsPath: z
-            .string()
-            .trim()
-            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
-        openApiPath: z
-            .string()
-            .trim()
-            .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
-        image: z.object({ repository: z.string().optional() }).optional(),
-        // One per environment, in their order; blank: not exposed there
-        urls: z.array(
-            z
-                .string()
-                .trim()
-                .refine(value => value === "" || isServiceUrl(value), messages.url)
-        ),
-        env: z.array(
-            z.object({
-                name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
-                required: z.boolean().default(false),
-                secret: z.boolean().default(false),
-                description: z.string().optional()
-            })
-        ),
-        configMapIds: z.array(z.string()),
-        secretIds: z.array(z.string()),
+        ...createServiceRuntimeShape(messages),
         codeRepository: z
             .object({
                 enabled: z.boolean().default(false),
@@ -274,46 +243,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="mb-0">{t("services.runtime_settings")}</CardTitle>
-                        <CardDescription>{t("services.runtime_settings_description")}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-x-4 gap-y-2 pt-3">
-                        <TextField name="port" type="number" label={t("services.port")} required containerClassName="flex-[1_1_160px]" />
-                        <TextField
-                            name="livenessPath"
-                            label={t("services.liveness_path")}
-                            placeholder="/health/live"
-                            description={t("services.liveness_path_hint")}
-                            required
-                            containerClassName="flex-[1_1_240px]"
-                        />
-                        <TextField
-                            name="readinessPath"
-                            label={t("services.readiness_path")}
-                            placeholder="/health/ready"
-                            description={t("services.readiness_path_hint")}
-                            required
-                            containerClassName="flex-[1_1_240px]"
-                        />
-                        <TextField name="docsPath" label={t("services.docs_path")} placeholder="/docs" description={t("services.docs_path_hint")} containerClassName="flex-[1_1_240px]" />
-                        <TextField
-                            name="openApiPath"
-                            label={t("services.openapi_path")}
-                            placeholder="/openapi.json"
-                            description={t("services.openapi_path_hint")}
-                            containerClassName="flex-[1_1_240px]"
-                        />
-                        <TextField
-                            name="image.repository"
-                            label={t("services.image_repository")}
-                            placeholder="ghcr.io/acme/orders-api"
-                            description={t("services.image_repository_hint")}
-                            containerClassName="flex-[2_1_320px]"
-                        />
-                    </CardContent>
-                </Card>
+                <ServiceRuntimeFields />
 
                 <ServiceUrlsFields environments={environments} />
 

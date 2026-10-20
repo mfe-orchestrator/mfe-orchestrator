@@ -1,7 +1,7 @@
 import { addEdge, applyEdgeChanges, applyNodeChanges, Background, Connection, Controls, Edge, EdgeChange, Node, NodeChange, OnConnectEnd, ReactFlow } from "@xyflow/react"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import useMicrofrontendsApi, { Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useThemeStore, { ThemeEnum } from "@/store/useThemeStore"
 import { MICROFRONTEND_NODE_TYPE, MicrofrontendFlowNode } from "./MicrofrontendFlowNode"
 import "@xyflow/react/dist/style.css"
@@ -46,6 +46,8 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
     const navigate = useNavigate()
     const microfrontendApi = useMicrofrontendsApi()
     const { theme } = useThemeStore()
+
+    const frontendIds = useMemo(() => new Set(microfrontends.filter(mfe => mfe.kind === MicrofrontendKind.FRONTEND).map(mfe => mfe._id!)), [microfrontends])
 
     useEffect(() => {
         const edgesList: Edge[] = []
@@ -181,6 +183,9 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
         },
         [edges, microfrontendApi]
     )
+    // A FRONTEND is served by its own container and cannot have parents: no link may end on it.
+    const isValidConnection = useCallback((connection: Connection | Edge) => connection.source !== connection.target && !frontendIds.has(connection.target), [frontendIds])
+
     const onConnect = useCallback(
         async (params: Connection) => {
             const newEdge: Edge = {
@@ -232,6 +237,7 @@ export const MicrofrontendFlow: React.FC<MicrofrontendFlowProps> = ({ microfront
                 nodeTypes={NODE_TYPES}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                isValidConnection={isValidConnection}
                 onConnect={onConnect}
                 onConnectEnd={onConnectEnd}
                 onNodeMouseEnter={onNodeMouseEnter}

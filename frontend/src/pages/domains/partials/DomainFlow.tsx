@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge } from "@/components/atoms"
-import useMicrofrontendsApi, { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import useMicrofrontendsApi, { Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { Service } from "@/hooks/apiClients/useServicesApi"
 import { MICROFRONTEND_NODE_TYPE, MicrofrontendFlowNode } from "@/pages/microfrontends/partials/views/MicrofrontendFlowNode"
 import useProjectStore from "@/store/useProjectStore"
@@ -111,6 +111,7 @@ export const DomainFlow: React.FC<DomainFlowProps> = ({ microfrontends, services
 
     const microfrontendIds = useMemo(() => new Set(microfrontends.map(mfe => mfe._id!)), [microfrontends])
     const serviceIds = useMemo(() => new Set(services.map(service => service._id!)), [services])
+    const frontendIds = useMemo(() => new Set(microfrontends.filter(mfe => mfe.kind === MicrofrontendKind.FRONTEND).map(mfe => mfe._id!)), [microfrontends])
 
     useEffect(() => {
         const microfrontendNodes = microfrontends.map<Node>((mfe, index) => ({
@@ -206,7 +207,11 @@ export const DomainFlow: React.FC<DomainFlowProps> = ({ microfrontends, services
     )
 
     // Only a microfrontend starts a link: to another microfrontend it is a host/remote relation, to a service a backend call.
-    const isValidConnection = useCallback((connection: Connection | Edge) => connection.source !== connection.target && microfrontendIds.has(connection.source), [microfrontendIds])
+    // A FRONTEND is served by its own container and cannot have parents, so no relation may end on it.
+    const isValidConnection = useCallback(
+        (connection: Connection | Edge) => connection.source !== connection.target && microfrontendIds.has(connection.source) && !frontendIds.has(connection.target),
+        [microfrontendIds, frontendIds]
+    )
 
     const onConnect = useCallback(
         async ({ source, target }: Connection) => {

@@ -11,9 +11,12 @@ import S3BucketClient from "../client/S3Buckets"
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
-import BuiltFrontend from "../models/BuiltFrontendModel"
+import { ApiKeyRole } from "../models/ApiKeyModel"
+import BuiltFrontend, { IBuiltFrontend } from "../models/BuiltFrontendModel"
 import CodeRepository from "../models/CodeRepositoryModel"
-import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
+import { CONTAINER_DEFAULTS } from "../models/ContainerFields"
+import FrontendDeployment from "../models/FrontendDeploymentModel"
+import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import Storage, { StorageType } from "../models/StorageModel"
@@ -24,7 +27,9 @@ import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService, { domainScopeForbidden, ensureOnlyNewRepositoryLinked, ensureRepositoryLinkUnchanged, isInDomainScope } from "./BaseAuthorizedService"
 import { resolveDomainId } from "./DomainService"
 import MarketService from "./MarketService"
+import { ensurePlainFields, imageRepositoryOf, isNewerVersion, parseRegistration, withNormalizedReferences } from "./ServiceService"
 import TemplateScaffoldService from "./TemplateScaffoldService"
+import { ensureAttachableMaps } from "./VariableMapService"
 import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
 
 /** What a microfrontend is served by when neither the caller nor a template says otherwise. */
@@ -32,6 +37,44 @@ export const DEFAULT_ENTRY_POINT = "assets/remoteEntry.js"
 
 /** A host given without an entry point gets the template's, when there is one: one given is kept */
 export const withEntryPoint = (host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend => (entryPoint && !host.entryPoint ? { ...host, entryPoint } : host)
+
+const isDuplicateKeyError = (error: unknown): boolean => (error as { code?: number })?.code === 11000
+
+const ensureValidKind = (kind: unknown) => {
+    if (kind !== undefined && !Object.values(MicrofrontendKind).includes(kind as MicrofrontendKind)) {
+        throw createBusinessException({ code: "MICROFRONTEND_KIND_INVALID", message: `kind must be one of ${Object.values(MicrofrontendKind).join(", ")}` })
+    }
+}
+
+/**
+ * A FRONTEND is the top of its tree: it is served by its own container, so nothing can load it as a
+ * remote. Checked wherever parentIds is written, so no path leaves a FRONTEND with a parent.
+ */
+const frontendCannotHaveParents = (slug?: string) =>
+    createBusinessException({
+        code: "FRONTEND_CANNOT_HAVE_PARENTS",
+        message: `${slug ? `"${slug}" is a FRONTEND` : "A FRONTEND"}: it is served by its own container and cannot be a remote of another microfrontend`
+    })
+
+const ensureFrontendHasNoParents = (kind: MicrofrontendKind | undefined, parentIds: unknown[] | undefined, slug?: string) => {
+    if (kind === MicrofrontendKind.FRONTEND && parentIds && parentIds.length > 0) {
+        throw frontendCannotHaveParents(slug)
+    }
+}
+
+/** Matches a document with no parents: what a write making it a FRONTEND requires of what is stored at that moment */
+const WITHOUT_PARENTS = { $or: [{ parentIds: { $exists: false } }, { parentIds: { $size: 0 } }] }
+
+/** The service defaults a FRONTEND gets for what neither the caller nor what is stored says */
+const withFrontendDefaults = <T extends Pick<MicrofrontendDTO, "kind" | "port" | "livenessPath" | "readinessPath">>(fields: T, existing?: IMicrofrontend): T => {
+    if ((fields.kind ?? existing?.kind) !== MicrofrontendKind.FRONTEND) return fields
+    return {
+        ...fields,
+        port: fields.port ?? existing?.port ?? CONTAINER_DEFAULTS.port,
+        livenessPath: fields.livenessPath ?? existing?.livenessPath ?? CONTAINER_DEFAULTS.livenessPath,
+        readinessPath: fields.readinessPath ?? existing?.readinessPath ?? CONTAINER_DEFAULTS.readinessPath
+    }
+}
 
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
@@ -50,9 +93,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await Microfrontend.find({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) })
     }
 
-    async create(microfrontend: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
+    async create(dto: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+
+        ensurePlainFields(dto, "MICROFRONTEND_INVALID")
+        ensureValidKind(dto.kind)
+        ensureFrontendHasNoParents(dto.kind, dto.parentIds, dto.slug)
+        const microfrontend = withFrontendDefaults(await withNormalizedReferences(dto, projectIdObj))
 
         // Both before the repository is created: a refused domain or a taken slug would leave an orphan repository behind
         if (microfrontend.domainId !== undefined) {
@@ -62,7 +110,12 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await this.ensureInDomainScope(projectIdObj, microfrontend.domainId)
         const scope = await this.getDomainScope(projectIdObj)
         await this.ensureReferencesInScope(projectIdObj, scope, microfrontend)
+        await ensureAttachableMaps(scope, projectIdObj, microfrontend)
         ensureOnlyNewRepositoryLinked(scope, microfrontend.codeRepository)
+        // A FRONTEND starts without one, like a service: its first registered version sets it
+        if (dto.kind !== MicrofrontendKind.FRONTEND && (typeof dto.version !== "string" || !dto.version.trim())) {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_REQUIRED", message: "A MICROFRONTEND needs a version" })
+        }
         if (await Microfrontend.exists({ slug: microfrontend.slug, projectId: projectIdObj })) {
             throw createBusinessException({ code: "MICROFRONTEND_SLUG_TAKEN", message: `A microfrontend with slug "${microfrontend.slug}" already exists in this project`, statusCode: 409 })
         }
@@ -166,7 +219,19 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         // Never moved to another project, nor given another identity, through an update: the slug is
         // in the upload URL the CI of the repository calls, as for a service
-        const { _id: _mongoId, projectId: _projectId, slug: _slug, ...allowed } = updates as Partial<MicrofrontendDTO> & { _id?: unknown; projectId?: unknown }
+        const { _id: _mongoId, projectId: _projectId, slug: _slug, ...fields } = updates as Partial<MicrofrontendDTO> & { _id?: unknown; projectId?: unknown }
+        ensurePlainFields(fields, "MICROFRONTEND_INVALID")
+        ensureValidKind(fields.kind)
+        const kind = fields.kind ?? microfrontend.kind
+        // Both sides of the rule can change here: parents given to a FRONTEND, or a microfrontend with parents made one
+        ensureFrontendHasNoParents(kind, fields.parentIds ?? microfrontend.parentIds, microfrontend.slug)
+        const allowed: Partial<MicrofrontendDTO> & Record<string, unknown> = withFrontendDefaults(await withNormalizedReferences(fields, microfrontend.projectId, microfrontend), microfrontend)
+        // The orchestrator draws no canary for a FRONTEND: one left enabled would only mislead the console
+        if (kind === MicrofrontendKind.FRONTEND && allowed.canary) {
+            allowed.canary = { ...allowed.canary, enabled: false }
+        } else if (kind === MicrofrontendKind.FRONTEND && microfrontend.kind !== MicrofrontendKind.FRONTEND && microfrontend.canary) {
+            allowed["canary.enabled"] = false
+        }
         if (allowed.domainId !== undefined) {
             allowed.domainId = await resolveDomainId(allowed.domainId, microfrontend.projectId)
             // Moved only between the domains of a domain-scoped member, never out of their reach
@@ -174,6 +239,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         const scope = await this.getDomainScope(microfrontend.projectId)
         await this.ensureReferencesInScope(microfrontend.projectId, scope, allowed, microfrontend)
+        await ensureAttachableMaps(scope, microfrontend.projectId, allowed, microfrontend)
         if (ensureRepositoryLinkUnchanged(scope, allowed.codeRepository, microfrontend.codeRepository)) delete allowed.codeRepository
         // Checked once the link is enabled, as in create: a disabled link lends no token, and refusing it
         // would block every edit of a microfrontend whose connection was deleted since
@@ -185,7 +251,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
             }
         }
 
-        const result = await Microfrontend.findByIdAndUpdate(microfrontendIdObj, allowed, { new: true })
+        if (kind !== MicrofrontendKind.FRONTEND || fields.parentIds !== undefined) {
+            return await Microfrontend.findByIdAndUpdate(microfrontendIdObj, allowed, { new: true, runValidators: true })
+        }
+        // Conditional on the parents stored when it is written: a relation set since the check above makes it miss
+        const result = await Microfrontend.findOneAndUpdate({ _id: microfrontend._id, ...WITHOUT_PARENTS }, allowed, { new: true, runValidators: true })
+        if (!result) {
+            throw frontendCannotHaveParents(microfrontend.slug)
+        }
         return result
     }
 
@@ -196,6 +269,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendIdObj.toString())
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
+        await FrontendDeployment.deleteMany({ microfrontendId: microfrontend._id })
         const deleted = await Microfrontend.findByIdAndDelete(microfrontendIdObj)
         await forgetMicrofrontends([microfrontend])
         return deleted
@@ -212,6 +286,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
             microfrontends.push(microfrontend)
         }
 
+        await FrontendDeployment.deleteMany({ microfrontendId: { $in: microfrontends.map(microfrontend => microfrontend._id) } })
         const result = await Microfrontend.deleteMany({ _id: { $in: ids.map(toObjectId) } })
         await forgetMicrofrontends(microfrontends)
         return result.deletedCount
@@ -228,6 +303,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendSlug)
+        }
+        // Its container serves its files: the CI registers the image instead, see registerVersionWithPermissionCheck
+        if (microfrontend.kind === MicrofrontendKind.FRONTEND) {
+            throw createBusinessException({
+                code: "FRONTEND_UPLOAD_NOT_ALLOWED",
+                message: `"${microfrontendSlug}" is a FRONTEND: it is served by its own container, register the version of its image instead of uploading a bundle`
+            })
         }
 
         // Validate that the file is a ZIP
@@ -370,7 +452,91 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (!microfrontend) {
             throw new EntityNotFoundError(id)
         }
-        return BuiltFrontend.find({ microfrontendId: microfrontend._id }).select("version").distinct("version")
+        // A kind switch leaves the versions of the other kind behind: a bundle has no image, a registered image has one
+        return BuiltFrontend.find({ microfrontendId: microfrontend._id, image: { $exists: microfrontend.kind === MicrofrontendKind.FRONTEND } })
+            .select("version")
+            .distinct("version")
+    }
+
+    /** What was built of each version, newest first: for a FRONTEND the image the CI registered with it */
+    async getBuildsById(id: string): Promise<IBuiltFrontend[]> {
+        const microfrontend = await this.getById(id)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(id)
+        }
+        return await BuiltFrontend.find({ microfrontendId: microfrontend._id }).sort({ createdAt: -1 })
+    }
+
+    /**
+     * Called by the CI of a FRONTEND with the deploy API key once the image of `version` is pushed, as
+     * for a service: registering the same version again replaces what was stored for it, the FRONTEND
+     * moves to `version` only when it is newer and learns its image repository from the first
+     * registration. A MICROFRONTEND uploads its bundle instead. MANAGER keys only.
+     */
+    async registerVersionWithPermissionCheck(microfrontendSlug: string, version: string, projectId: string, body: unknown, apiKeyRole?: ApiKeyRole): Promise<IBuiltFrontend> {
+        if (apiKeyRole !== ApiKeyRole.MANAGER) {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_FORBIDDEN", message: "Registering a version requires an API key with the MANAGER role", statusCode: 403 })
+        }
+        const registration = parseRegistration(body)
+        if (typeof version !== "string" || !version.trim()) {
+            throw createBusinessException({ code: "SERVICE_VERSION_INVALID", message: "The version is required" })
+        }
+
+        const project = await Project.findById(projectId)
+        if (!project) {
+            throw new ProjectNotFoundError(projectId)
+        }
+        const microfrontend = await Microfrontend.findOne({ slug: microfrontendSlug.trim().toLowerCase(), projectId: toObjectId(projectId) })
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendSlug)
+        }
+        if (microfrontend.kind !== MicrofrontendKind.FRONTEND) {
+            throw createBusinessException({
+                code: "MICROFRONTEND_VERSION_REGISTRATION_NOT_ALLOWED",
+                message: `"${microfrontend.slug}" is a MICROFRONTEND: its CI uploads the bundle of a version, there is no image to register`
+            })
+        }
+
+        const trimmedVersion = version.trim()
+        const unset: Record<string, ""> = {}
+        if (!registration.digest) unset.digest = ""
+        if (!registration.commitSha) unset.commitSha = ""
+
+        const upsert = () =>
+            BuiltFrontend.findOneAndUpdate(
+                { microfrontendId: microfrontend._id, version: trimmedVersion },
+                {
+                    $set: {
+                        image: registration.image,
+                        ...(registration.digest && { digest: registration.digest }),
+                        ...(registration.commitSha && { commitSha: registration.commitSha })
+                    },
+                    ...(Object.keys(unset).length > 0 && { $unset: unset })
+                },
+                { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+            )
+        let built
+        try {
+            built = await upsert()
+        } catch (error) {
+            if (!isDuplicateKeyError(error)) throw error
+            built = await upsert()
+        }
+
+        // Compare and set on the version that was read, as for a service: two pipelines finishing
+        // together cannot move the FRONTEND back to the older of the two
+        let current: IMicrofrontend | null = microfrontend
+        for (let attempt = 0; current && attempt < 3; attempt++) {
+            const updates: Record<string, string> = {}
+            if (isNewerVersion(trimmedVersion, current.version)) updates.version = trimmedVersion
+            if (!current.image?.repository?.trim()) updates["image.repository"] = imageRepositoryOf(registration.image)
+            if (Object.keys(updates).length === 0) break
+            const result = await Microfrontend.updateOne({ _id: microfrontend._id, version: current.version ?? null }, { $set: updates })
+            if (result.matchedCount > 0) break
+            current = await Microfrontend.findById(microfrontend._id)
+        }
+
+        return built as IBuiltFrontend
     }
 
     async setRelation(hostId: string, remoteId: string): Promise<IMicrofrontend> {
@@ -384,16 +550,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         await this.ensureAccessToMicrofrontend(host)
+        ensureFrontendHasNoParents(remote.kind, [host._id], remote.slug)
 
-        if (remote.parentIds) {
-            if (!remote.parentIds.includes(host._id)) {
-                remote.parentIds.push(host._id)
-            }
-        } else {
-            remote.parentIds = [host._id]
+        // Conditional on the kind stored when it is written: a switch to FRONTEND since the check above makes it miss
+        const updated = await Microfrontend.findOneAndUpdate({ _id: remote._id, kind: { $ne: MicrofrontendKind.FRONTEND } }, { $addToSet: { parentIds: host._id } }, { new: true })
+        if (!updated) {
+            throw frontendCannotHaveParents(remote.slug)
         }
-
-        return await remote.save()
+        return updated
     }
 
     async deleteRelation(hostId: string, remoteId: string): Promise<IMicrofrontend> {

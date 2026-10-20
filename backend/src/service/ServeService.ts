@@ -15,7 +15,7 @@ import Deployment, { IDeployment } from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import { IGlobalVariable } from "../models/GlobalVariableModel"
-import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend, MicrofrontendType } from "../models/MicrofrontendModel"
+import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend, MicrofrontendKind, MicrofrontendType } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import { IStorage, StorageType } from "../models/StorageModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
@@ -234,7 +234,7 @@ export default class ServeService {
 
     async getMicrofrontendAdaptedData({ microfrontendId, environmentId, deploymentId }: GetRemotesRequestDTO): Promise<GetMicrofrontendAdaptedDataDTO> {
         const data = await this.getRemotes({ microfrontendId, environmentId, deploymentId })
-        const childs = await Promise.all(data.filteredMicrofrontends.map(child => this.adaptMicrofrontendToServe(child, data.environment.slug, data.deployment._id)))
+        const childs = await Promise.all(data.filteredMicrofrontends.map(child => this.adaptMicrofrontendToServe(child, data.environment, data.deployment._id)))
 
         return {
             ...data,
@@ -250,7 +250,7 @@ export default class ServeService {
     async getCodeIntegration({ framework, compiler, microfrontendId, deploymentId }: CodeIntegrationRequestDTO): Promise<CodeIntegrationResponseDTO> {
         const allData = await this.getRemotes({ microfrontendId, deploymentId })
 
-        const childs = await Promise.all(allData.filteredMicrofrontends.map(child => this.adaptMicrofrontendToServe(child, allData.environment.slug, allData.deployment._id)))
+        const childs = await Promise.all(allData.filteredMicrofrontends.map(child => this.adaptMicrofrontendToServe(child, allData.environment, allData.deployment._id)))
 
         const stored = allData.microfrontend.stack
         const stack = {
@@ -287,8 +287,11 @@ export default class ServeService {
             throw new EnvironmentNotFoundError(environmentId.toString())
         }
 
+        // A FRONTEND is never a remote, so no host loads it from the manifest
         const microFrontendsAdapted = deployment.microfrontends
-            ? await Promise.all(deployment.microfrontends.map(microfrontend => this.adaptMicrofrontendToServe(microfrontend, environment.slug, deployment._id)))
+            ? await Promise.all(
+                  deployment.microfrontends.filter(microfrontend => !isFrontend(microfrontend)).map(microfrontend => this.adaptMicrofrontendToServe(microfrontend, environment, deployment._id))
+              )
             : undefined
 
         return {
@@ -372,7 +375,7 @@ export default class ServeService {
         if (!deployedMFE) {
             throw new EntityNotFoundError(mfeId)
         }
-        return await this.adaptMicrofrontendToServe(deployedMFE, environment.slug, deployment._id)
+        return await this.adaptMicrofrontendToServe(deployedMFE, environment, deployment._id)
     }
 
     /**
@@ -416,7 +419,7 @@ export default class ServeService {
         if (!deployedMFE) {
             throw new EntityNotFoundError(mfeSlug)
         }
-        return await this.adaptMicrofrontendToServe(deployedMFE, environment.slug, deployment._id)
+        return await this.adaptMicrofrontendToServe(deployedMFE, environment, deployment._id)
     }
 
     async getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(environmentId: string, mfeSlug: string): Promise<MicrofrontendAdaptedToServe> {
@@ -432,7 +435,7 @@ export default class ServeService {
         if (!environment) {
             throw new EnvironmentNotFoundError(environmentId.toString())
         }
-        return await this.adaptMicrofrontendToServe(deployedMFE, environment.slug, deployment._id)
+        return await this.adaptMicrofrontendToServe(deployedMFE, environment, deployment._id)
     }
 
     /**
@@ -669,7 +672,16 @@ export default class ServeService {
      * the host page has nothing to decide, nothing to store about the rollout and no way to tell one
      * strategy from another.
      */
-    private async adaptMicrofrontendToServe(microfrontend: IMicrofrontend, environmentSlug?: string, deploymentId?: string | ObjectId | Schema.Types.ObjectId): Promise<MicrofrontendAdaptedToServe> {
+    private async adaptMicrofrontendToServe(
+        microfrontend: IMicrofrontend,
+        environment: Pick<IEnvironment, "_id" | "slug">,
+        deploymentId?: string | ObjectId | Schema.Types.ObjectId
+    ): Promise<MicrofrontendAdaptedToServe> {
+        const environmentSlug = environment.slug
+        // Its own container serves it at the URL of that environment, and nothing of ours draws a canary for it
+        if (isFrontend(microfrontend)) {
+            return buildMicrofrontendAdaptedToServe(microfrontend, getFrontendUrl(microfrontend, environment))
+        }
         if (!microfrontend.canary?.enabled) {
             return buildMicrofrontendAdaptedToServe(microfrontend, getMicrofrontendUrlStatic(microfrontend, environmentSlug))
         }
@@ -694,7 +706,8 @@ export default class ServeService {
      */
     async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string, version?: string): Promise<ServeFileResult> {
         const microfrontend = deployment.microfrontends?.find(mfe => mfe.slug === microfrontendSlug)
-        if (!microfrontend) {
+        // A FRONTEND has no files here: its own container serves them
+        if (!microfrontend || isFrontend(microfrontend)) {
             throw new EntityNotFoundError(microfrontendSlug)
         }
 
@@ -892,6 +905,17 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
         throw new Error("Microfrontend host type is not defined")
     }
 }
+
+/** Snapshots taken before `kind` existed hold none: those are all MICROFRONTENDs */
+const isFrontend = (microfrontend: Pick<IMicrofrontend, "kind">): boolean => microfrontend.kind === MicrofrontendKind.FRONTEND
+
+/**
+ * Where the container of a FRONTEND answers in the environment, as set on it: there is nothing of ours to
+ * point at. Empty when none is set there: the FRONTEND is a host asking for its own configuration, which
+ * must not fail for want of an address nobody loads it from.
+ */
+const getFrontendUrl = (microfrontend: IMicrofrontend, environment: Pick<IEnvironment, "_id">): string =>
+    microfrontend.urls?.find(entry => String(entry.environmentId) === String(environment._id))?.url ?? ""
 
 const getMicrofrontendUrlCanary = (microfrontend: IMicrofrontend): string => {
     if (!microfrontend.canary?.url) {

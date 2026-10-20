@@ -28,7 +28,7 @@ export const MicrofrontendHeader: React.FC<MicrofrontendHeaderProps> = ({ microf
             meta={
                 <>
                     <span className="font-mono">{microfrontend.slug}</span>
-                    <Badge variant="outline">{t("microfrontend.workspace.version", { version: microfrontend.version })}</Badge>
+                    <Badge variant="outline">{t("microfrontend.workspace.version", { version: microfrontend.version || "—" })}</Badge>
                     <RepositoryLink repository={microfrontend.codeRepository} />
                     <TemplateRepositoryLink slug={microfrontend.template} />
                 </>

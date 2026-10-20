@@ -1,8 +1,11 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import { isServiceUrl, SERVICE_HTTP_PATH, ServicePaths, ServiceRuntime } from "../types/ServiceStack"
+import { ServicePaths, ServiceRuntime } from "../types/ServiceStack"
+import { CONTAINER_DEFAULTS, IServiceEnvVariable, IServiceUrl, optionalPath, probePath, serviceEnvVariableSchema, serviceUrlSchema } from "./ContainerFields"
 import { ICodeRepositoryMicrofrontend, microfrontendCodeRepositorySchema } from "./MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
+
+export type { IServiceEnvVariable, IServiceUrl }
 
 /** Runtime and framework of a backend service, and where that knowledge came from */
 export interface IServiceStack {
@@ -10,20 +13,6 @@ export interface IServiceStack {
     framework?: string
     source: MicrofrontendStackSource
     detectedAt?: Date
-}
-
-/** A variable the service image reads from its environment */
-export interface IServiceEnvVariable {
-    name: string
-    required: boolean
-    secret: boolean
-    description?: string
-}
-
-/** Where the service answers in one environment of the project: the base its probe, docs and OpenAPI paths hang off */
-export interface IServiceUrl {
-    environmentId: Schema.Types.ObjectId
-    url: string
 }
 
 export interface IService extends Document<ObjectId>, ServicePaths {
@@ -80,64 +69,6 @@ const serviceStackSchema = new Schema<IServiceStack>(
     },
     { _id: false }
 )
-
-const serviceEnvVariableSchema = new Schema<IServiceEnvVariable>(
-    {
-        name: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        required: {
-            type: Boolean,
-            default: false
-        },
-        secret: {
-            type: Boolean,
-            default: false
-        },
-        description: {
-            type: String,
-            required: false,
-            trim: true
-        }
-    },
-    { _id: false }
-)
-
-const serviceUrlSchema = new Schema<IServiceUrl>(
-    {
-        environmentId: {
-            type: Schema.Types.ObjectId,
-            ref: "Environment",
-            required: true
-        },
-        url: {
-            type: String,
-            required: true,
-            trim: true,
-            // ServiceService normalises it first; this keeps any other write path from storing an href the console would render
-            validate: { validator: isServiceUrl, message: (props: { value: unknown }) => `"${String(props.value)}" is not a valid service URL` }
-        }
-    },
-    { _id: false }
-)
-
-const httpPathValidator = {
-    validator: (value?: string | null) => value == null || SERVICE_HTTP_PATH.test(value),
-    message: (props: { path: string; value: unknown }) => `${props.path} "${props.value}" must start with "/", have at most 256 characters and no whitespace`
-}
-
-/** A probe path: always set, the template or the platform default when not given */
-const probePath = (defaultValue: string) => ({ type: String, default: defaultValue, trim: true, validate: httpPathValidator })
-
-/** An optional path: blank means the service has none, so it is stored as null rather than as "" */
-const optionalPath = {
-    type: String,
-    required: false,
-    set: (value?: string | null) => value?.trim() || null,
-    validate: httpPathValidator
-}
 
 const serviceSchema = new Schema<IService>(
     {
@@ -196,10 +127,10 @@ const serviceSchema = new Schema<IService>(
         },
         port: {
             type: Number,
-            default: 8080
+            default: CONTAINER_DEFAULTS.port
         },
-        livenessPath: probePath("/health/live"),
-        readinessPath: probePath("/health/ready"),
+        livenessPath: probePath(CONTAINER_DEFAULTS.livenessPath),
+        readinessPath: probePath(CONTAINER_DEFAULTS.readinessPath),
         docsPath: optionalPath,
         openApiPath: optionalPath,
         urls: {

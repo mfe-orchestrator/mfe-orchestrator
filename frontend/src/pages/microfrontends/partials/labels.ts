@@ -1,4 +1,4 @@
-import { CanaryDeploymentType, CanaryType, HostedOn } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 
 /** Translation keys shared by every microfrontend view, so the label of a value is spelled out in one place only. */
 
@@ -24,4 +24,21 @@ export const CANARY_TYPE_DESCRIPTION_KEYS: Record<CanaryType, string> = {
 export const CANARY_DEPLOYMENT_TYPE_LABEL_KEYS: Record<CanaryDeploymentType, string> = {
     [CanaryDeploymentType.BASED_ON_VERSION]: "microfrontend.deploymentTypes.basedOnVersion",
     [CanaryDeploymentType.BASED_ON_URL]: "microfrontend.deploymentTypes.basedOnUrl"
+}
+
+export const KIND_LABEL_KEYS: Record<MicrofrontendKind, string> = {
+    [MicrofrontendKind.MICROFRONTEND]: "microfrontend.kind.microfrontend",
+    [MicrofrontendKind.FRONTEND]: "microfrontend.kind.frontend"
+}
+
+/** Who serves it, under each option of the selector. */
+export const KIND_DESCRIPTION_KEYS: Record<MicrofrontendKind, string> = {
+    [MicrofrontendKind.MICROFRONTEND]: "microfrontend.kind.microfrontend_description",
+    [MicrofrontendKind.FRONTEND]: "microfrontend.kind.frontend_description"
+}
+
+/** The short form shown on the node, the card and the table row. */
+export const KIND_BADGE_KEYS: Record<MicrofrontendKind, string> = {
+    [MicrofrontendKind.MICROFRONTEND]: "microfrontend.kind.badge_microfrontend",
+    [MicrofrontendKind.FRONTEND]: "microfrontend.kind.badge_frontend"
 }

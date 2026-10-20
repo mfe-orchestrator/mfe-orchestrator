@@ -4,7 +4,7 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Deployment from "../models/DeploymentModel"
 import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
-import Microfrontend, { CanaryDeploymentType, CanaryType } from "../models/MicrofrontendModel"
+import Microfrontend, { CanaryDeploymentType, CanaryType, MicrofrontendKind } from "../models/MicrofrontendModel"
 import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service from "../models/ServiceModel"
 import DomainDeploymentService from "./DomainDeploymentService"
@@ -182,20 +182,21 @@ describe("DomainDeploymentService.getByDomainId", () => {
         const [inDev, inProd, inStaging] = result.environments
 
         expect(inDev.microfrontends).toEqual([
-            { _id: cart._id, slug: "cart", name: "Cart", version: "1.1.0", canary: null },
+            { _id: cart._id, slug: "cart", name: "Cart", kind: MicrofrontendKind.MICROFRONTEND, version: "1.1.0", canary: null },
             // Created after the DEV deployment: not in its snapshot
-            { _id: checkoutUi._id, slug: "checkout-ui", name: "Checkout UI", version: null, canary: null }
+            { _id: checkoutUi._id, slug: "checkout-ui", name: "Checkout UI", kind: MicrofrontendKind.MICROFRONTEND, version: null, canary: null }
         ])
         expect(inProd.microfrontends).toEqual([
             {
                 _id: cart._id,
                 slug: "cart",
                 name: "Cart",
+                kind: MicrofrontendKind.MICROFRONTEND,
                 version: "1.0.0",
                 canary: { type: CanaryType.ON_SESSION, deploymentType: CanaryDeploymentType.BASED_ON_VERSION, percentage: 10, version: "2.0.0" }
             },
             // A canary that is configured but disabled is not shown
-            { _id: checkoutUi._id, slug: "checkout-ui", name: "Checkout UI", version: "3.0.0", canary: null }
+            { _id: checkoutUi._id, slug: "checkout-ui", name: "Checkout UI", kind: MicrofrontendKind.MICROFRONTEND, version: "3.0.0", canary: null }
         ])
         expect(inStaging.microfrontends.map(microfrontend => microfrontend.version)).toEqual([null, null])
     })

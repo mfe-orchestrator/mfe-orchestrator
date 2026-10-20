@@ -10,6 +10,7 @@ import { cn } from "@/utils/styleUtils"
 import BuildDialog from "./BuildDialog"
 import CloneRepositoryPopover from "./CloneRepositoryPopover"
 import { isAiEditAvailable } from "./MicrofrontendHeader"
+import MicrofrontendKindBadge from "./MicrofrontendKindBadge"
 import WorkingAgentsIndicator, { useWorkingAgents } from "./WorkingAgentsIndicator"
 
 interface MicrofrontendCardProps {
@@ -43,7 +44,10 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                     </p>
                     <WorkingAgentsIndicator agents={agents} className="mt-2 max-w-full" />
                 </div>
-                <Badge className="shrink-0">{mfe.version}</Badge>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <Badge>{mfe.version || "—"}</Badge>
+                    <MicrofrontendKindBadge microfrontend={mfe} />
+                </div>
             </CardHeader>
 
             <CardContent className="flex flex-grow flex-col gap-3 py-3">

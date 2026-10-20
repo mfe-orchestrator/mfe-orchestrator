@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
-import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendType } from "../../models/MicrofrontendModel"
+import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendKind, MicrofrontendType } from "../../models/MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import CodeRepositoryService from "../../service/CodeRepositoryService"
 import DomainService from "../../service/DomainService"
@@ -11,11 +11,57 @@ import StackDetectionService from "../../service/StackDetectionService"
 import { StorageService } from "../../service/StorageService"
 import MicrofrontendDTO from "../../types/MicrofrontendDTO"
 import { MicrofrontendCompiler, MicrofrontendFramework } from "../../types/MicrofrontendStack"
+import { isServiceUrl, SERVICE_HTTP_PATH } from "../../types/ServiceStack"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, defineTool, McpToolContext, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
 import { domainFilter, filterByDomain, memberDomainId } from "./domainTools"
 
 const microfrontendId = objectId("Id of the microfrontend")
+
+const httpPath = z.string().regex(SERVICE_HTTP_PATH, 'starts with "/", at most 256 characters, no whitespace')
+
+/**
+ * The fields of what runs as a container of its own: a backend service, and a microfrontend of kind
+ * FRONTEND. Here rather than in serviceTools, which already imports this module.
+ */
+export const containerFields = {
+    image: z
+        .object({ repository: z.string().max(500).optional() })
+        .optional()
+        .describe("Image repository without tag, e.g. ghcr.io/acme/orders-api. Learnt from the first version the CI registers when not set"),
+    port: z.number().int().min(1).max(65535).optional().describe("Port the container listens on, 8080 when omitted"),
+    livenessPath: httpPath.optional().describe("Liveness probe path, /health/live when omitted"),
+    readinessPath: httpPath.optional().describe("Readiness probe path, /health/ready when omitted"),
+    docsPath: httpPath.nullable().optional().describe("Path of the API documentation UI, e.g. /docs; null when there is none"),
+    openApiPath: httpPath.nullable().optional().describe("Path of the OpenAPI spec, e.g. /openapi.json; null when there is none"),
+    urls: z
+        .array(
+            z.object({
+                environmentId: objectId("Id of an environment of the project, from environments_list"),
+                url: z
+                    .string()
+                    .refine(isServiceUrl, "absolute http(s), at most 2048 characters, without whitespace, credentials, query or fragment")
+                    .describe("Absolute http(s) base URL, e.g. https://orders.dev.acme.com")
+            })
+        )
+        .optional()
+        .describe("Where it is reachable, one base URL per environment it is exposed in; docsPath and openApiPath are relative to it. Replaced as a whole"),
+    env: z
+        .array(
+            z.object({
+                name: z
+                    .string()
+                    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "letters, digits and underscores, not starting with a digit")
+                    .max(255),
+                required: z.boolean().optional(),
+                secret: z.boolean().optional(),
+                description: z.string().max(2000).optional()
+            })
+        )
+        .max(200)
+        .optional()
+        .describe("Variables the image reads from its environment: names only, never values. Replaced as a whole")
+}
 
 /**
  * The fields a microfrontend can be created or edited with.
@@ -33,8 +79,14 @@ const microfrontendFields = {
     description: z.string().max(2000).optional(),
     domainId: memberDomainId,
     context: z.string().max(CONTEXT_MAX_LENGTH).optional().describe("Markdown notes for AI agents about this microfrontend, replaced as a whole"),
-    version: z.string().min(1).max(100),
+    version: z.string().min(1).max(100).optional().describe("Required for a MICROFRONTEND. A FRONTEND may omit it: the first version its CI registers sets it"),
     type: z.enum(MicrofrontendType).optional(),
+    kind: z
+        .enum(MicrofrontendKind)
+        .optional()
+        .describe(
+            "MICROFRONTEND (default): a static bundle uploaded to and served by the orchestrator. FRONTEND: an app built into an image and served by its own container, like a backend service; it never has parentIds"
+        ),
     path: z.string().max(500).optional(),
     continuousDeployment: z.boolean().optional(),
     parentIds: z.array(objectId("Id of a host microfrontend of this project")).optional(),
@@ -67,7 +119,9 @@ const microfrontendFields = {
             version: z.string().optional(),
             url: z.string().url().optional()
         })
-        .optional()
+        .optional(),
+    // Only meaningful for a FRONTEND
+    ...containerFields
 }
 
 export const createSchema = z.object(microfrontendFields)
@@ -174,7 +228,7 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontend_relation_set",
         title: "Link remote to host",
-        description: "Declares that the host microfrontend loads the remote one (module federation parent/child relation).",
+        description: "Declares that the host microfrontend loads the remote one (module federation parent/child relation). A FRONTEND can be the host, never the remote.",
         scope: MCP_SCOPE_WRITE,
         annotations: { ...WRITE, idempotentHint: true },
         inputSchema: z.object({ hostId: objectId("Id of the host microfrontend"), remoteId: objectId("Id of the remote microfrontend") }),

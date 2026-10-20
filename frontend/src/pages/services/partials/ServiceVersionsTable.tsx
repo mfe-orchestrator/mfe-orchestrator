@@ -2,15 +2,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyStateRo
 import { Copy } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
+import type { BuiltFrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import type { BuiltService } from "@/hooks/apiClients/useServicesApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 /** "sha256:0123456789ab…" is enough to tell two builds apart. */
 const shortDigest = (digest?: string) => (digest ? digest.replace(/^sha256:/, "").slice(0, 12) : undefined)
 
-export const ServiceVersionsTable: React.FC<{ versions: BuiltService[] }> = ({ versions }) => {
+/** The versions of a service, or of a frontend served by its own container: both are images published by a pipeline. */
+export const ServiceVersionsTable: React.FC<{ versions: (BuiltService | BuiltFrontend)[] }> = ({ versions }) => {
     const { t } = useTranslation()
     const notifications = useToastNotificationStore()
+    // Only when a pipeline sent one: an empty column on every row says nothing
+    const showCommit = versions.some(built => built.commitSha)
 
     const copyImage = async (image: string) => {
         try {
@@ -35,6 +39,7 @@ export const ServiceVersionsTable: React.FC<{ versions: BuiltService[] }> = ({ v
                                 <TableHead>{t("services.versions.version")}</TableHead>
                                 <TableHead>{t("services.versions.image")}</TableHead>
                                 <TableHead>{t("services.versions.digest")}</TableHead>
+                                {showCommit && <TableHead>{t("services.versions.commit")}</TableHead>}
                                 <TableHead>{t("services.versions.date")}</TableHead>
                                 <TableHead className="text-right">{t("common.actions")}</TableHead>
                             </TableRow>
@@ -47,17 +52,23 @@ export const ServiceVersionsTable: React.FC<{ versions: BuiltService[] }> = ({ v
                                             <Badge>{built.version}</Badge>
                                         </TableCell>
                                         <TableCell className="max-w-[24rem] truncate font-mono text-xs" title={built.image}>
-                                            {built.image}
+                                            {built.image ?? "—"}
                                         </TableCell>
                                         <TableCell className="font-mono text-xs text-foreground-secondary" title={built.digest}>
                                             {shortDigest(built.digest) ?? "—"}
                                         </TableCell>
+                                        {showCommit && (
+                                            <TableCell className="font-mono text-xs text-foreground-secondary" title={built.commitSha}>
+                                                {built.commitSha?.slice(0, 7) ?? "—"}
+                                            </TableCell>
+                                        )}
                                         <TableCell className="whitespace-nowrap text-foreground-secondary">{built.createdAt ? new Date(built.createdAt).toLocaleString() : "—"}</TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 variant="secondary"
                                                 size="sm"
-                                                onClick={() => copyImage(built.image)}
+                                                disabled={!built.image}
+                                                onClick={() => built.image && copyImage(built.image)}
                                                 aria-label={t("services.versions.copy_image")}
                                                 title={t("services.versions.copy_image")}
                                             >

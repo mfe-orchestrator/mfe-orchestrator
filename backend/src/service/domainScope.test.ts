@@ -12,14 +12,14 @@ import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
-import Microfrontend from "../models/MicrofrontendModel"
+import Microfrontend, { MicrofrontendKind } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
-import { ConfigMap } from "../models/VariableMapModel"
+import { ConfigMap, Secret } from "../models/VariableMapModel"
 import WizardProjectState from "../models/WizardProjectState"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { ApiKeyService } from "./ApiKeyService"
@@ -602,6 +602,28 @@ describe("config maps of a domain-scoped member", () => {
             { domainId: OWN_DOMAIN, configMapIds: [ownMap, sharedMap] },
             { domainId: OTHER_DOMAIN, configMapIds: [sharedMap] }
         ] as never)
+        vi.spyOn(Microfrontend, "find").mockResolvedValue([] as never)
+    })
+
+    it("Given a map of their service also attached to a FRONTEND of another domain, when the scope is applied, then it is out of it", async () => {
+        vi.mocked(Microfrontend.find).mockResolvedValue([{ domainId: OTHER_DOMAIN, configMapIds: [ownMap] }] as never)
+
+        expect(await mapIdsInScope("configMap", PROJECT_ID, [String(OWN_DOMAIN)])).toEqual(new Set())
+    })
+
+    it("Given a map shared with another domain, when a scoped member creates a FRONTEND attaching it, then it is refused before anything is written", async () => {
+        vi.spyOn(Domain, "exists").mockResolvedValue({ _id: OWN_DOMAIN } as never)
+        vi.spyOn(ConfigMap, "find").mockResolvedValue([{ _id: sharedMap, name: "shared", entries: [] }] as never)
+        vi.spyOn(Secret, "find").mockResolvedValue([] as never)
+        const write = vi.spyOn(Microfrontend, "create")
+
+        const created = new MicrofrontendService(memberOf([OWN_DOMAIN])).create(
+            { name: "Shop", slug: "shop", kind: MicrofrontendKind.FRONTEND, domainId: String(OWN_DOMAIN), configMapIds: [String(sharedMap)] } as MicrofrontendDTO,
+            String(PROJECT_ID)
+        )
+
+        await expect(created).rejects.toMatchObject(refusedOutOfScope)
+        expect(write).not.toHaveBeenCalled()
     })
 
     it("Given maps attached to services of several domains, when the scope is applied, then only those attached exclusively inside it are editable", async () => {
@@ -628,7 +650,7 @@ describe("config maps of a domain-scoped member", () => {
         await expect(new VariableMapService("configMap", memberOf([OWN_DOMAIN])).create({ name: "settings", entries: [] } as never, String(PROJECT_ID))).rejects.toMatchObject(refusedOutOfScope)
     })
 
-    /** The check of create and update of services, reached directly: the rest of an update has tests of its own. */
+    /** The check of create and update of services and microfrontends, reached directly: the rest of an update has tests of its own. */
     const attach = async (user: IUser, configMapIds: ObjectId[], alreadyAttached: ObjectId[] = []) =>
         ensureAttachableMaps(await new ScopeProbe(user).scopeOf(PROJECT_ID), PROJECT_ID, { configMapIds: configMapIds.map(String) }, { configMapIds: alreadyAttached })
 

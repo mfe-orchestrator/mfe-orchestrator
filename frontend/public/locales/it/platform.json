@@ -651,6 +651,29 @@
         "max_length_other": "Massimo {{count}} caratteri"
     },
     "microfrontend": {
+        "kind": {
+            "label": "Tipo",
+            "microfrontend": "Microfrontend",
+            "microfrontend_description": "Servito da MFE Orchestrator",
+            "frontend": "Frontend",
+            "frontend_description": "Servito dal suo container Docker",
+            "badge_microfrontend": "Microfrontend",
+            "badge_frontend": "Docker",
+            "no_parents_hint": "Un frontend servito da Docker non può avere parent",
+            "container_tab": "Container",
+            "version_from_pipeline": "È impostata dalla pipeline ogni volta che registra la versione di un'immagine: qui non si può cambiare.",
+            "template_pipeline_hint": "La pipeline di questo template carica un bundle su MFE Orchestrator, che un frontend servito dal suo container Docker non accetta. Modificala perché costruisca l'immagine Docker e ne registri la versione."
+        },
+        "errors": {
+            "frontend_cannot_have_parents": "Un frontend servito dal suo container Docker non può avere parent",
+            "frontend_upload_not_allowed": "Un frontend servito dal suo container Docker non accetta upload di bundle: la sua pipeline registra l'immagine di ogni versione",
+            "version_registration_not_allowed": "Solo un frontend servito dal suo container Docker registra versioni di immagine: un microfrontend carica il suo bundle"
+        },
+        "validation": {
+            "version_required": "La versione è obbligatoria",
+            "host_url_required": "L'URL è obbligatorio per l'hosting personalizzato",
+            "canary_percentage": "La percentuale canary deve essere tra 1 e 100 quando il canary è attivo"
+        },
         "host": "Host",
         "hostTypes": {
             "customUrl": "URL Personalizzato",
@@ -2113,6 +2136,7 @@
             "version": "Versione",
             "image": "Immagine",
             "digest": "Digest",
+            "commit": "Commit",
             "date": "Data",
             "copy_image": "Copia il riferimento dell'immagine",
             "copied": "Riferimento dell'immagine copiato",

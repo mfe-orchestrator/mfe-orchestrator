@@ -1,8 +1,15 @@
-import { CanaryDeploymentType, CanaryType, IHostMicrofrontend } from "../models/MicrofrontendModel"
+import { CanaryDeploymentType, CanaryType, IHostMicrofrontend, MicrofrontendKind, MicrofrontendType } from "../models/MicrofrontendModel"
 import { MicrofrontendStackDTO } from "./MicrofrontendStack"
+import ServiceDTO from "./ServiceDTO"
 
-interface MicrofrontendDTO {
+/** The container fields of a FRONTEND, the same as a service's and checked the same way */
+type FrontendContainerDTO = Pick<ServiceDTO, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "urls" | "env" | "configMapIds" | "secretIds">
+
+interface MicrofrontendDTO extends FrontendContainerDTO {
     id: string
+    type?: MicrofrontendType
+    /** MICROFRONTEND when omitted. A FRONTEND never has parentIds */
+    kind?: MicrofrontendKind
     name: string
     slug: string
     url: string

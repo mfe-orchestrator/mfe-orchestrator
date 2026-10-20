@@ -2,9 +2,10 @@ import { Handle, type Node, type NodeProps, Position } from "@xyflow/react"
 import { LayoutDashboard } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
-import { CanaryType, type Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { CanaryType, type Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { cn } from "@/utils/styleUtils"
 import CloneRepositoryPopover from "../components/CloneRepositoryPopover"
+import MicrofrontendKindBadge from "../components/MicrofrontendKindBadge"
 import WorkingAgentsIndicator, { useWorkingAgents } from "../components/WorkingAgentsIndicator"
 import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS } from "../labels"
 
@@ -60,7 +61,8 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
                 agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none"
             )}
         >
-            <Handle type="target" position={Position.Top} className={HANDLE_CLASS} />
+            {/* A FRONTEND is served by its own container and cannot be the remote of a host: nothing may link into it. */}
+            {microfrontend.kind !== MicrofrontendKind.FRONTEND && <Handle type="target" position={Position.Top} className={HANDLE_CLASS} />}
 
             <div className="flex items-start gap-2 px-3 pt-2.5">
                 {showKind && <LayoutDashboard className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />}
@@ -81,8 +83,9 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
 
             {/* A row of its own, so a canary chip cannot make one node taller than the node beside it. */}
             <div className="mt-2 flex h-9 items-center gap-1.5 border-t border-divider px-3">
-                <Badge variant="outline" title={t("microfrontend.card.version", { version: microfrontend.version })}>
-                    {microfrontend.version}
+                <MicrofrontendKindBadge microfrontend={microfrontend} className="shrink-0" />
+                <Badge variant="outline" className="shrink-0" title={t("microfrontend.card.version", { version: microfrontend.version || "—" })}>
+                    {microfrontend.version || "—"}
                 </Badge>
                 {canaryLabel && (
                     <Badge className="min-w-0" title={canaryTitle}>

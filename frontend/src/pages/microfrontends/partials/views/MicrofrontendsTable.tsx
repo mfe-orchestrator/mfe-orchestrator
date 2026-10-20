@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
-import { CanaryType, HostedOn, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { BuildDialog, CloneRepositoryPopover, isAiEditAvailable, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
+import { CanaryType, HostedOn, Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { BuildDialog, CloneRepositoryPopover, isAiEditAvailable, MicrofrontendKindBadge, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
 import { cn } from "@/utils/styleUtils"
 import { HOST_TYPE_LABEL_KEYS } from "../labels"
 
@@ -14,7 +14,7 @@ interface MicrofrontendsTableProps {
     microfrontends: Microfrontend[]
 }
 
-const COLUMN_COUNT = 7
+const COLUMN_COUNT = 8
 
 /** The host is a single value out of three, so it reads as an icon and spells itself out on hover. */
 const HOST_TYPE_ICONS: Record<HostedOn, LucideIcon> = {
@@ -89,6 +89,8 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
     const agents = useWorkingAgents(mfe._id)
     const aiAvailable = isAiEditAvailable(mfe, useAssistantEnabled())
+    // Served by its own container: MFE Orchestrator neither hosts it nor runs a canary for it
+    const isFrontend = mfe.kind === MicrofrontendKind.FRONTEND
 
     return (
         <TableRow className={cn("border-divider hover:bg-primary/5", agents > 0 && "bg-primary/5")}>
@@ -105,14 +107,13 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
                 {mfe.slug}
             </TableCell>
             <TableCell>
-                <Badge>{mfe.version}</Badge>
+                <MicrofrontendKindBadge microfrontend={mfe} className="whitespace-nowrap" />
             </TableCell>
             <TableCell>
-                <HostCell host={mfe.host} />
+                <Badge>{mfe.version || "—"}</Badge>
             </TableCell>
-            <TableCell>
-                <CanaryCell canary={mfe.canary} />
-            </TableCell>
+            <TableCell>{isFrontend ? <span className="text-foreground-secondary">—</span> : <HostCell host={mfe.host} />}</TableCell>
+            <TableCell>{isFrontend ? <span className="text-foreground-secondary">—</span> : <CanaryCell canary={mfe.canary} />}</TableCell>
             <TableCell className="whitespace-nowrap">
                 <CanaryVersionCell canary={mfe.canary} />
             </TableCell>
@@ -146,6 +147,7 @@ export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microf
                     <TableRow className="bg-muted/60 hover:bg-muted/60">
                         <TableHead>{t("common.name")}</TableHead>
                         <TableHead>{t("microfrontend.slug")}</TableHead>
+                        <TableHead>{t("microfrontend.kind.label")}</TableHead>
                         <TableHead>{t("microfrontend.version")}</TableHead>
                         <TableHead>{t("microfrontend.host")}</TableHead>
                         <TableHead>{t("microfrontend.canary_release")}</TableHead>

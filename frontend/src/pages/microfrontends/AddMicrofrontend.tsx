@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
+import { Alert, AlertDescription, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { FieldErrors, FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -14,106 +14,164 @@ import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
+import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useMarketApi from "@/hooks/apiClients/useMarketApi"
-import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import { CodeRepositorySection, DangerZoneRemoveMicrofrontend, HostingSection, isAiEditAvailable, MicrofrontendHeader, ReleaseSection } from "@/pages/microfrontends/partials/components"
+import { useVariableMapErrorMessage, VariableMap } from "@/hooks/apiClients/useVariableMapsApi"
+import {
+    CodeRepositorySection,
+    DangerZoneRemoveMicrofrontend,
+    HostingSection,
+    isAiEditAvailable,
+    MicrofrontendHeader,
+    MicrofrontendKindField,
+    ReleaseSection
+} from "@/pages/microfrontends/partials/components"
+import ServiceEnvFields from "@/pages/services/partials/ServiceEnvFields"
+import ServiceRuntimeFields from "@/pages/services/partials/ServiceRuntimeFields"
+import ServiceUrlsFields from "@/pages/services/partials/ServiceUrlsFields"
+import ServiceVariableMapsFields from "@/pages/services/partials/ServiceVariableMapsFields"
+import ServiceVersionsTable from "@/pages/services/partials/ServiceVersionsTable"
+import { createServiceRuntimeShape, fromFormUrls, toFormUrls, useProjectEnvironmentsQuery } from "@/pages/services/partials/serviceVariables"
+import { useVariableMapsQuery } from "@/pages/variable-maps/partials/variableMaps"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import DomainSelectField from "../domains/partials/DomainSelectField"
 import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import { FetchDataTemplateCard } from "../templates-library/partials/"
 
-// Define form schema with validation
-const formSchema = z
-    .object({
-        // General Information
-        slug: z.string().min(3).max(50),
-        name: z.string().min(3).max(100),
-        description: z.string().optional(),
-        domainId: z.string().nullable().optional(),
-        context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
-        version: z.string().min(1, "Version is required"),
-        customVersion: z.string().optional(),
-        continuousDeployment: z.boolean().default(false),
+interface FormMessages {
+    path: string
+    url: string
+    versionRequired: string
+    hostUrlRequired: string
+    canaryPercentage: string
+}
 
-        // Hosting Information
-        host: z
-            .object({
+const createFormSchema = (messages: FormMessages) => {
+    // What a FRONTEND declares about its container, with the same rules as a service
+    const containerSchema = z.object(createServiceRuntimeShape(messages))
+
+    return z
+        .object({
+            // General Information
+            slug: z.string().min(3).max(50),
+            name: z.string().min(3).max(100),
+            description: z.string().optional(),
+            domainId: z.string().nullable().optional(),
+            kind: z.enum(MicrofrontendKind),
+            context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
+            // Required below for a MICROFRONTEND only: a FRONTEND's is set by its pipeline on the first registration
+            version: z.string().optional(),
+            customVersion: z.string().optional(),
+            continuousDeployment: z.boolean().default(false),
+
+            // Hosting Information
+            host: z.object({
                 type: z.enum(["MFE_ORCHESTRATOR_HUB", "CUSTOM_URL", "CUSTOM_SOURCE"]),
                 url: z.string().optional(),
                 storageId: z.string().optional(),
                 entryPoint: z.string().optional()
-            })
-            .refine(data => data.type !== "CUSTOM_URL" || (data.url && data.url.length > 0), {
-                message: "URL is required for custom hosting"
             }),
 
-        // Code Repository Settings
-        codeRepository: z
-            .object({
-                enabled: z.boolean().default(false),
-                codeRepositoryId: z.string().optional(),
-                repositoryId: z.string().optional(),
-                name: z.string().optional(),
-                cloneUrlHttps: z.string().optional(),
-                cloneUrlSsh: z.string().optional(),
-                gitlab: z
-                    .object({
-                        groupPath: z.string().optional(),
-                        groupId: z.number().optional()
+            // Container of a FRONTEND: held for a MICROFRONTEND too, so switching kind keeps what was typed, and checked below only for a FRONTEND
+            port: z.string().optional(),
+            livenessPath: z.string().optional(),
+            readinessPath: z.string().optional(),
+            docsPath: z.string().optional(),
+            openApiPath: z.string().optional(),
+            image: z.object({ repository: z.string().optional() }).optional(),
+            urls: z.array(z.string()).optional(),
+            env: z
+                .array(
+                    z.object({
+                        name: z.string(),
+                        required: z.boolean().default(false),
+                        secret: z.boolean().default(false),
+                        description: z.string().optional()
                     })
-                    .optional(),
-                createData: z
-                    .object({
-                        name: z.string().min(3).max(100),
-                        private: z.boolean().default(false)
-                    })
-                    .optional()
-            })
-            .optional(),
+                )
+                .optional(),
+            configMapIds: z.array(z.string()).optional(),
+            secretIds: z.array(z.string()).optional(),
 
-        // Canary Settings
-        canary: z
-            .object({
-                enabled: z.boolean().default(false),
-                percentage: z.number().min(0).max(100).default(0),
-                type: z.enum(CanaryType).optional(),
-                deploymentType: z.enum(["BASED_ON_VERSION", "BASED_ON_URL"]).optional(),
-                url: z.string().optional(),
-                version: z.string().optional()
-            })
-            .optional()
-    })
-    .refine(
-        data => {
-            // On User serves the canary to an enrolled list, so it has no traffic share to validate.
-            if (data.canary?.enabled && data.canary.type !== CanaryType.ON_USER) {
-                return data.canary.percentage > 0 && data.canary.percentage <= 100
+            // Code Repository Settings
+            codeRepository: z
+                .object({
+                    enabled: z.boolean().default(false),
+                    codeRepositoryId: z.string().optional(),
+                    repositoryId: z.string().optional(),
+                    name: z.string().optional(),
+                    cloneUrlHttps: z.string().optional(),
+                    cloneUrlSsh: z.string().optional(),
+                    gitlab: z
+                        .object({
+                            groupPath: z.string().optional(),
+                            groupId: z.number().optional()
+                        })
+                        .optional(),
+                    createData: z
+                        .object({
+                            name: z.string().min(3).max(100),
+                            private: z.boolean().default(false)
+                        })
+                        .optional()
+                })
+                .optional(),
+
+            // Canary Settings
+            canary: z
+                .object({
+                    enabled: z.boolean().default(false),
+                    percentage: z.number().min(0).max(100).default(0),
+                    type: z.enum(CanaryType).optional(),
+                    deploymentType: z.enum(["BASED_ON_VERSION", "BASED_ON_URL"]).optional(),
+                    url: z.string().optional(),
+                    version: z.string().optional()
+                })
+                .optional()
+        })
+        .superRefine((data, ctx) => {
+            if (data.kind === MicrofrontendKind.FRONTEND) {
+                // Its container, with the same rules as a service: every issue lands on the field it is about
+                const container = containerSchema.safeParse(data)
+                for (const issue of container.error?.issues ?? []) {
+                    ctx.addIssue({ code: "custom", message: issue.message, path: issue.path })
+                }
+                return
             }
-            return true
-        },
-        {
-            message: "Canary percentage must be between 1 and 100 when enabled",
-            path: ["canary.percentage"]
-        }
-    )
+            if (!data.version) {
+                ctx.addIssue({ code: "custom", message: messages.versionRequired, path: ["version"] })
+            }
+            if (data.host.type === "CUSTOM_URL" && !data.host.url) {
+                ctx.addIssue({ code: "custom", message: messages.hostUrlRequired, path: ["host"] })
+            }
+            // On User serves the canary to an enrolled list, so it has no traffic share to validate.
+            if (data.canary?.enabled && data.canary.type !== CanaryType.ON_USER && !(data.canary.percentage > 0 && data.canary.percentage <= 100)) {
+                ctx.addIssue({ code: "custom", message: messages.canaryPercentage, path: ["canary.percentage"] })
+            }
+        })
+}
+
+type FormSchema = ReturnType<typeof createFormSchema>
 
 // The defaults of the schema make some fields optional in what the form holds and required in what it submits
-type FormInput = z.input<typeof formSchema>
-type FormValues = z.output<typeof formSchema>
+type FormInput = z.input<FormSchema>
+type FormValues = z.output<FormSchema>
 
 /** Tabs that own validated fields, in the order they are shown: the first one with an error is the one we jump to. */
-const FORM_TABS = ["general", "context", "hosting", "repository"] as const
+const FORM_TABS = ["general", "context", "hosting", "container", "repository"] as const
 
 type FormTab = (typeof FORM_TABS)[number] | "danger"
 
 const isFormTab = (value: string | null): value is FormTab => Boolean(value && ([...FORM_TABS, "danger"] as string[]).includes(value))
 
 const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
-    general: ["name", "slug", "description", "domainId"],
+    general: ["name", "slug", "description", "domainId", "kind"],
     context: ["context"],
     hosting: ["host"],
+    container: ["port", "livenessPath", "readinessPath", "docsPath", "openApiPath", "image", "urls", "env", "configMapIds", "secretIds"],
     repository: ["codeRepository"],
     danger: []
 }
@@ -129,17 +187,24 @@ interface AddNewMicrofrontendFormProps {
     repositories: ICodeRepository[]
     frontend?: Microfrontend
     versions?: string[]
+    environments: EnvironmentDTO[]
+    configMaps: VariableMap[]
+    secrets: VariableMap[]
 }
 
-const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versions, repositories, frontend, storages }) => {
+const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versions, repositories, frontend, storages, environments, configMaps, secrets }) => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const microfrontendsApi = useMicrofrontendsApi()
     const { errorMessage: domainErrorMessage } = useDomainsApi()
+    const variableMapErrorMessage = useVariableMapErrorMessage()
+    const errorMessage = (error: Error) => microfrontendsApi.errorMessage(error) ?? variableMapErrorMessage(error) ?? domainErrorMessage(error)
     const navigate = useNavigate()
     const template = searchParams.get("template")
+    // Created under a parent: a FRONTEND cannot have one, so it is a MICROFRONTEND
+    const parentId = isEdit ? null : searchParams.get("parentId")
     // Opened from a domain page: the microfrontend is created in it, and the page is where we go back
     const initialDomainId = searchParams.get("domainId")
     // `?tab=` opens a tab straight away.
@@ -164,36 +229,68 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         }
     }
 
+    const formSchema = useMemo(
+        () =>
+            createFormSchema({
+                path: t("services.path_invalid"),
+                url: t("services.urls.invalid"),
+                versionRequired: t("microfrontend.validation.version_required"),
+                hostUrlRequired: t("microfrontend.validation.host_url_required"),
+                canaryPercentage: t("microfrontend.validation.canary_percentage")
+            }),
+        [t]
+    )
+
+    // The service defaults until it declares its own: a MICROFRONTEND holds them only in case it is switched to FRONTEND
+    const containerDefaults = {
+        port: String(frontend?.port ?? 8080),
+        livenessPath: frontend?.livenessPath ?? "/health/live",
+        readinessPath: frontend?.readinessPath ?? "/health/ready",
+        docsPath: frontend?.docsPath ?? "",
+        openApiPath: frontend?.openApiPath ?? "",
+        image: { repository: frontend?.image?.repository ?? "" },
+        urls: toFormUrls(frontend?.urls, environments),
+        env: frontend?.env ?? [],
+        // Only the maps that still exist: one deleted meanwhile has no checkbox to untick, and would make every save fail
+        configMapIds: (frontend?.configMapIds ?? []).filter(id => configMaps.some(map => map._id === id)),
+        secretIds: (frontend?.secretIds ?? []).filter(id => secrets.some(map => map._id === id))
+    }
+
     const form = useForm<FormInput, unknown, FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: frontend || {
-            slug: "",
-            name: "",
-            description: "",
-            domainId: initialDomainId ?? "",
-            context: "",
-            version: "1.0.0",
-            host: getStandardHost(),
-            ...(repositories && repositories.length > 0
-                ? {
-                      codeRepository: {
-                          enabled: Boolean(template),
-                          repositoryId: "create_new",
-                          codeRepositoryId: repositories.length === 1 ? repositories[0]._id : repositories.find(repo => repo.default)?._id
-                      }
+        // A FRONTEND may be saved without a host: the hosting tab it would be validated in is hidden for it
+        defaultValues: frontend
+            ? { ...frontend, kind: frontend.kind ?? MicrofrontendKind.MICROFRONTEND, host: frontend.host ?? getStandardHost(), ...containerDefaults }
+            : {
+                  slug: "",
+                  name: "",
+                  description: "",
+                  domainId: initialDomainId ?? "",
+                  context: "",
+                  kind: MicrofrontendKind.MICROFRONTEND,
+                  version: "1.0.0",
+                  host: getStandardHost(),
+                  ...containerDefaults,
+                  ...(repositories && repositories.length > 0
+                      ? {
+                            codeRepository: {
+                                enabled: Boolean(template),
+                                repositoryId: "create_new",
+                                codeRepositoryId: repositories.length === 1 ? repositories[0]._id : repositories.find(repo => repo.default)?._id
+                            }
+                        }
+                      : {
+                            codeRepository: {
+                                enabled: false
+                            }
+                        }),
+                  canary: {
+                      enabled: false,
+                      percentage: 0,
+                      type: CanaryType.ON_SESSION,
+                      deploymentType: CanaryDeploymentType.BASED_ON_VERSION
                   }
-                : {
-                      codeRepository: {
-                          enabled: false
-                      }
-                  }),
-            canary: {
-                enabled: false,
-                percentage: 0,
-                type: CanaryType.ON_SESSION,
-                deploymentType: CanaryDeploymentType.BASED_ON_VERSION
-            }
-        }
+              }
     })
 
     const notificationToast = useToastNotificationStore()
@@ -214,15 +311,44 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         }
     }, [templateEntryPoint, form])
 
+    const kind = form.watch("kind")
+    const isFrontend = kind === MicrofrontendKind.FRONTEND
+
+    // The builds of what is saved, not of the kind being chosen: a MICROFRONTEND has no image to show
+    const buildsQuery = useQuery({
+        queryKey: ["microfrontend-builds", id],
+        queryFn: () => microfrontendsApi.getBuilds(id!),
+        enabled: isEdit && frontend?.kind === MicrofrontendKind.FRONTEND
+    })
+
     const onSubmit = async (data: FormValues) => {
+        const { port, livenessPath, readinessPath, docsPath, openApiPath, image, urls, env, configMapIds, secretIds, ...rest } = data
         const dataToSend = {
-            ...data,
+            ...rest,
             version: data.version === "custom" ? data.customVersion : data.version,
             // Blank: the microfrontend is in no domain
-            domainId: data.domainId || null
+            domainId: data.domainId || null,
+            // Only a FRONTEND declares a container, and MFE Orchestrator runs no canary for it
+            ...(data.kind === MicrofrontendKind.FRONTEND
+                ? {
+                      port: Number(port),
+                      livenessPath: livenessPath?.trim(),
+                      readinessPath: readinessPath?.trim(),
+                      docsPath: docsPath?.trim(),
+                      openApiPath: openApiPath?.trim(),
+                      image,
+                      urls: fromFormUrls(urls ?? [], environments),
+                      env,
+                      configMapIds,
+                      secretIds,
+                      canary: data.canary && { ...data.canary, enabled: false }
+                  }
+                : {})
         } as Microfrontend & { customVersion?: string }
 
         delete dataToSend.customVersion
+        // A FRONTEND's version is the one its pipeline registered last: saving the form must not overwrite it
+        if (data.kind === MicrofrontendKind.FRONTEND) delete dataToSend.version
 
         if (template) {
             if (!dataToSend.codeRepository?.createData) {
@@ -235,17 +361,16 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         }
 
         if (isEdit) {
-            await microfrontendsApi.update(id, dataToSend, { customErrorMessage: domainErrorMessage })
+            await microfrontendsApi.update(id, dataToSend, { customErrorMessage: errorMessage })
             notificationToast.showSuccessNotification({
                 message: t("microfrontend.updated_success_message")
             })
         } else {
-            const parentId = searchParams.get("parentId")
             if (parentId) {
                 dataToSend.parentIds = [parentId]
             }
 
-            await microfrontendsApi.create(dataToSend, { customErrorMessage: domainErrorMessage })
+            await microfrontendsApi.create(dataToSend, { customErrorMessage: errorMessage })
             notificationToast.showSuccessNotification({
                 message: t("microfrontend.created_success_message")
             })
@@ -262,15 +387,21 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         if (isFormTab(linkedTab)) setActiveTab(linkedTab)
     }, [linkedTab])
 
-    // A linked tab may not exist on this microfrontend (no repository): fall back to the first one.
-    const isTabShown = (tab: FormTab) => (tab === "repository" ? hasRepositories : tab === "danger" ? isEdit : true)
+    // A linked tab may not exist on this microfrontend (no repository, or not of its kind): fall back to the first one.
+    const isTabShown = (tab: FormTab) => {
+        if (tab === "repository") return hasRepositories
+        if (tab === "danger") return isEdit
+        if (tab === "hosting") return !isFrontend
+        if (tab === "container") return isFrontend
+        return true
+    }
     const shownTab = isTabShown(activeTab) ? activeTab : "general"
 
     /** A tab is flagged when any of the fields it owns failed validation, so an error is never hidden behind an inactive tab. */
     const tabHasErrors = (tab: FormTab) => TAB_FIELDS[tab].some(field => Boolean(form.formState.errors[field]))
 
     const onInvalid = (errors: FieldErrors<FormInput>) => {
-        const firstTabWithErrors = FORM_TABS.find(tab => TAB_FIELDS[tab].some(field => Boolean(errors[field])))
+        const firstTabWithErrors = FORM_TABS.find(tab => isTabShown(tab) && TAB_FIELDS[tab].some(field => Boolean(errors[field])))
         if (firstTabWithErrors) setActiveTab(firstTabWithErrors)
     }
 
@@ -285,7 +416,9 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
                 <FetchDataTemplateCard slug={template} />
 
-                <ReleaseSection isEdit={isEdit} versions={versions} />
+                <ReleaseSection isEdit={isEdit} versions={versions} savedVersion={frontend?.version} />
+
+                {isEdit && frontend?.kind === MicrofrontendKind.FRONTEND && <ServiceVersionsTable versions={buildsQuery.data ?? []} />}
 
                 <Tabs value={shownTab} onValueChange={value => setActiveTab(value as FormTab)} tabsListPosition="fullWidth">
                     <TabsList>
@@ -297,10 +430,17 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                             {t("microfrontend.tabs.context")}
                             {tabHasErrors("context") && <ErrorDot />}
                         </TabsTrigger>
-                        <TabsTrigger value="hosting" className="flex-1">
-                            {t("microfrontend.tabs.hosting")}
-                            {tabHasErrors("hosting") && <ErrorDot />}
-                        </TabsTrigger>
+                        {isFrontend ? (
+                            <TabsTrigger value="container" className="flex-1">
+                                {t("microfrontend.kind.container_tab")}
+                                {tabHasErrors("container") && <ErrorDot />}
+                            </TabsTrigger>
+                        ) : (
+                            <TabsTrigger value="hosting" className="flex-1">
+                                {t("microfrontend.tabs.hosting")}
+                                {tabHasErrors("hosting") && <ErrorDot />}
+                            </TabsTrigger>
+                        )}
                         {hasRepositories && (
                             <TabsTrigger value="repository" className="flex-1">
                                 {t("microfrontend.tabs.repository")}
@@ -322,6 +462,13 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                 <CardDescription>{t("microfrontend.general_information_description")}</CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-2 pt-3">
+                                <MicrofrontendKindField disabled={Boolean(parentId)} frontendDisabled={Boolean(frontend?.parentIds?.length)} />
+                                {/* The templates scaffold a pipeline that uploads a bundle, which a FRONTEND does not take */}
+                                {isFrontend && template && !isEdit && (
+                                    <Alert>
+                                        <AlertDescription>{t("microfrontend.kind.template_pipeline_hint")}</AlertDescription>
+                                    </Alert>
+                                )}
                                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                                     <TextField
                                         name="name"
@@ -373,9 +520,20 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="hosting" forceMount>
-                        <HostingSection storages={storages} />
-                    </TabsContent>
+                    {isFrontend ? (
+                        <TabsContent value="container" forceMount>
+                            <div className="flex flex-col gap-6">
+                                <ServiceRuntimeFields />
+                                <ServiceUrlsFields environments={environments} />
+                                <ServiceEnvFields />
+                                <ServiceVariableMapsFields configMaps={configMaps} secrets={secrets} />
+                            </div>
+                        </TabsContent>
+                    ) : (
+                        <TabsContent value="hosting" forceMount>
+                            <HostingSection storages={storages} />
+                        </TabsContent>
+                    )}
 
                     {hasRepositories && (
                         <TabsContent value="repository" forceMount>
@@ -449,9 +607,22 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         enabled: isEdit
     })
 
+    // Before the form mounts: a FRONTEND's default values hold one base URL per environment
+    const environmentsQuery = useProjectEnvironmentsQuery()
+    const configMapsQuery = useVariableMapsQuery("configMap")
+    const secretsQuery = useVariableMapsQuery("secret")
+
     return (
-        <ApiStatusHandler queries={[storagesQuery, repositoriesQuery, versionsQuery, frontendQuery]} interceptEmpty={false}>
-            <AddNewMicrofrontendForm storages={storagesQuery.data} repositories={repositoriesQuery.data} frontend={frontendQuery.data} versions={versionsQuery.data} />
+        <ApiStatusHandler queries={[storagesQuery, repositoriesQuery, versionsQuery, frontendQuery, environmentsQuery, configMapsQuery, secretsQuery]} interceptEmpty={false}>
+            <AddNewMicrofrontendForm
+                storages={storagesQuery.data}
+                repositories={repositoriesQuery.data}
+                frontend={frontendQuery.data}
+                versions={versionsQuery.data}
+                environments={environmentsQuery.data ?? []}
+                configMaps={configMapsQuery.data ?? []}
+                secrets={secretsQuery.data ?? []}
+            />
         </ApiStatusHandler>
     )
 }

@@ -4,15 +4,13 @@ import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import ProjectService from "../../service/ProjectService"
 import ServiceService from "../../service/ServiceService"
 import ServiceDTO from "../../types/ServiceDTO"
-import { isServiceUrl, SERVICE_HTTP_PATH, SERVICE_SLUG } from "../../types/ServiceStack"
+import { SERVICE_SLUG } from "../../types/ServiceStack"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, defineTool, McpToolContext, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 import { domainFilter, filterByDomain, memberDomainId } from "./domainTools"
-import { ensureReferencesBelongToProject, createSchema as microfrontendCreateSchema } from "./microfrontendTools"
+import { containerFields, ensureReferencesBelongToProject, createSchema as microfrontendCreateSchema } from "./microfrontendTools"
 
 const serviceId = objectId("Id of the service, from services_list")
-
-const httpPath = z.string().regex(SERVICE_HTTP_PATH, 'starts with "/", at most 256 characters, no whitespace')
 
 /**
  * The fields a backend service can be created or edited with.
@@ -29,42 +27,7 @@ const serviceFields = {
     domainId: memberDomainId,
     context: z.string().max(CONTEXT_MAX_LENGTH).optional().describe("Markdown notes for AI agents about this service, replaced as a whole"),
     codeRepository: microfrontendCreateSchema.shape.codeRepository,
-    image: z
-        .object({ repository: z.string().max(500).optional() })
-        .optional()
-        .describe("Image repository without tag, e.g. ghcr.io/acme/orders-api. Learnt from the first version the CI registers when not set"),
-    port: z.number().int().min(1).max(65535).optional().describe("Port the container listens on, 8080 when omitted"),
-    livenessPath: httpPath.optional().describe("Liveness probe path, /health/live when omitted"),
-    readinessPath: httpPath.optional().describe("Readiness probe path, /health/ready when omitted"),
-    docsPath: httpPath.nullable().optional().describe("Path of the API documentation UI, e.g. /docs; null when the service has none"),
-    openApiPath: httpPath.nullable().optional().describe("Path of the OpenAPI spec, e.g. /openapi.json; null when the service has none"),
-    urls: z
-        .array(
-            z.object({
-                environmentId: objectId("Id of an environment of the project, from environments_list"),
-                url: z
-                    .string()
-                    .refine(isServiceUrl, "absolute http(s), at most 2048 characters, without whitespace, credentials, query or fragment")
-                    .describe("Absolute http(s) base URL, e.g. https://orders.dev.acme.com")
-            })
-        )
-        .optional()
-        .describe("Where the service is reachable, one base URL per environment it is exposed in; docsPath and openApiPath are relative to it. Replaced as a whole"),
-    env: z
-        .array(
-            z.object({
-                name: z
-                    .string()
-                    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "letters, digits and underscores, not starting with a digit")
-                    .max(255),
-                required: z.boolean().optional(),
-                secret: z.boolean().optional(),
-                description: z.string().max(2000).optional()
-            })
-        )
-        .max(200)
-        .optional()
-        .describe("Variables the image reads from its environment: names only, never values. Replaced as a whole")
+    ...containerFields
 }
 
 export const createSchema = z.object(serviceFields)

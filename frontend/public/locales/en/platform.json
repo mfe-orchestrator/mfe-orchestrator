@@ -554,6 +554,29 @@
         "go_to_login": "Go to login"
     },
     "microfrontend": {
+        "kind": {
+            "label": "Kind",
+            "microfrontend": "Microfrontend",
+            "microfrontend_description": "Served by MFE Orchestrator",
+            "frontend": "Frontend",
+            "frontend_description": "Served by its Docker container",
+            "badge_microfrontend": "Microfrontend",
+            "badge_frontend": "Docker",
+            "no_parents_hint": "A frontend served by Docker cannot have parents",
+            "container_tab": "Container",
+            "version_from_pipeline": "Set by the pipeline each time it registers an image version: it cannot be changed here.",
+            "template_pipeline_hint": "The pipeline of this template uploads a bundle to MFE Orchestrator, which a frontend served by its Docker container does not accept. Change it to build the Docker image and register its version."
+        },
+        "errors": {
+            "frontend_cannot_have_parents": "A frontend served by its Docker container cannot have parents",
+            "frontend_upload_not_allowed": "A frontend served by its Docker container takes no bundle upload: its pipeline registers the image of each version",
+            "version_registration_not_allowed": "Only a frontend served by its Docker container registers image versions: a microfrontend uploads its bundle"
+        },
+        "validation": {
+            "version_required": "The version is required",
+            "host_url_required": "The URL is required for custom hosting",
+            "canary_percentage": "The canary percentage must be between 1 and 100 when the canary is enabled"
+        },
         "host": "Host",
         "hostTypes": {
             "customUrl": "Custom URL",
@@ -2094,6 +2117,7 @@
             "version": "Version",
             "image": "Image",
             "digest": "Digest",
+            "commit": "Commit",
             "date": "Date",
             "copy_image": "Copy the image reference",
             "copied": "Image reference copied",

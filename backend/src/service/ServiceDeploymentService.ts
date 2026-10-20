@@ -18,7 +18,7 @@ export interface ServiceDeploymentRegistrationDTO {
  * The body the deploy pipeline posts once a version runs in an environment. It arrives with an API key
  * only, from a pipeline nobody watches: a malformed one is refused with a 400 rather than stored half filled.
  */
-const parseRegistration = (body: unknown): ServiceDeploymentRegistrationDTO => {
+export const parseRegistration = (body: unknown): ServiceDeploymentRegistrationDTO => {
     const registration = (body ?? {}) as Record<string, unknown>
     const version = typeof registration.version === "string" ? registration.version.trim() : registration.version
     if (typeof version !== "string" || !SERVICE_VERSION.test(version)) {
@@ -44,15 +44,36 @@ const parseRegistration = (body: unknown): ServiceDeploymentRegistrationDTO => {
     }
 }
 
+/**
+ * The environment a deploy pipeline names by slug. Slugs are stored as typed (usually uppercase, e.g.
+ * "PROD") and the unique index is case sensitive, so the slug is matched exactly first and without
+ * regard to case only when that is unambiguous.
+ */
+export const findEnvironmentBySlug = async (projectId: ReturnType<typeof toObjectId>, environmentSlug: string) => {
+    const wanted = environmentSlug.trim()
+    const environments = await Environment.find({ projectId }, { _id: 1, slug: 1 })
+    const sameCase = environments.find(environment => environment.slug === wanted)
+    const anyCase = environments.filter(environment => environment.slug?.toLowerCase() === wanted.toLowerCase())
+    if (!sameCase && anyCase.length > 1) {
+        throw createBusinessException({
+            code: "ENVIRONMENT_SLUG_AMBIGUOUS",
+            message: `More than one environment matches "${wanted}" without regard to case: use the exact slug`,
+            statusCode: 409
+        })
+    }
+    const environment = sameCase ?? anyCase[0]
+    if (!environment) {
+        throw new EntityNotFoundError(environmentSlug)
+    }
+    return environment
+}
+
 export class ServiceDeploymentService extends BaseAuthorizedService {
     /**
      * Called by the deploy pipeline of the customer with the deploy API key once `version` of the service
      * runs in the environment. Every call is kept, the latest by date is the version running there. The
      * version need not be one the CI registered: an image built elsewhere is deployed all the same. Only a
      * MANAGER key may report a deploy, as only one may register a version.
-     *
-     * Environment slugs are stored as typed (usually uppercase, e.g. "PROD") and the unique index is case
-     * sensitive, so the slug is matched exactly first and without regard to case only when that is unambiguous.
      */
     async registerWithPermissionCheck(serviceSlug: string, environmentSlug: string, projectId: string, body: unknown, apiKeyRole?: ApiKeyRole): Promise<IServiceDeployment> {
         if (apiKeyRole !== ApiKeyRole.MANAGER) {
@@ -66,21 +87,7 @@ export class ServiceDeploymentService extends BaseAuthorizedService {
             throw new EntityNotFoundError(serviceSlug)
         }
 
-        const wanted = environmentSlug.trim()
-        const environments = await Environment.find({ projectId: projectIdObj }, { _id: 1, slug: 1 })
-        const sameCase = environments.find(environment => environment.slug === wanted)
-        const anyCase = environments.filter(environment => environment.slug?.toLowerCase() === wanted.toLowerCase())
-        if (!sameCase && anyCase.length > 1) {
-            throw createBusinessException({
-                code: "ENVIRONMENT_SLUG_AMBIGUOUS",
-                message: `More than one environment matches "${wanted}" without regard to case: use the exact slug`,
-                statusCode: 409
-            })
-        }
-        const environment = sameCase ?? anyCase[0]
-        if (!environment) {
-            throw new EntityNotFoundError(environmentSlug)
-        }
+        const environment = await findEnvironmentBySlug(projectIdObj, environmentSlug)
 
         return await ServiceDeployment.create({
             serviceId: service._id,

@@ -78,20 +78,26 @@ export const normalizeUrls = (urls: unknown, environmentIds: Set<string>): Array
  * Refuses update operators and dotted paths: `{"$set": {"secretIds": [...]}}` or `{"secretIds.0": ...}`
  * would reach Mongo past every check here, attaching a secret of another project to this service.
  */
-const ensurePlainFields = (fields: object) => {
+export const ensurePlainFields = (fields: object, code = "SERVICE_INVALID") => {
     const key = Object.keys(fields).find(candidate => candidate.startsWith("$") || candidate.includes("."))
     if (key) {
-        throw createBusinessException({ code: "SERVICE_INVALID", message: `"${key}" is not a field of a service` })
+        throw createBusinessException({ code, message: `"${key}" is not a field: update operators and dotted paths are refused` })
     }
 }
 
 /**
  * The base URLs of `dto`, normalised, and the maps it attaches, checked: a caller that leaves them out
- * (an MCP update of the name, say) changes none of them and costs no query.
+ * (an MCP update of the name, say) changes none of them and costs no query. A FRONTEND microfrontend
+ * goes through it too, since it has the same container fields.
  */
-const withNormalizedReferences = async <T extends Pick<ServiceDTO, "urls" | "configMapIds" | "secretIds">>(dto: T, projectId: Schema.Types.ObjectId, existing?: IService): Promise<T> => {
+export const withNormalizedReferences = async <T extends Pick<ServiceDTO, "urls" | "configMapIds" | "secretIds">>(
+    dto: T,
+    projectId: Schema.Types.ObjectId,
+    existing?: Partial<Pick<IService, "name" | "configMapIds" | "secretIds">>
+): Promise<T> => {
     ensurePlainFields(dto)
-    const withMaps = await resolveAttachedMaps(dto, projectId, existing)
+    // Only the name and the attached ids of what is stored are read
+    const withMaps = await resolveAttachedMaps(dto, projectId, existing as IService | undefined)
     if (dto.urls === undefined) return withMaps
 
     const environmentIds = new Set((await Environment.find({ projectId }, { _id: 1 })).map(environment => String(environment._id)))
@@ -102,7 +108,7 @@ const withNormalizedReferences = async <T extends Pick<ServiceDTO, "urls" | "con
  * The body the CI posts once it pushed an image. It arrives with an API key only, from a pipeline
  * nobody watches: a malformed one is refused with a 400 rather than stored half filled.
  */
-const parseRegistration = (body: unknown): ServiceVersionRegistrationDTO => {
+export const parseRegistration = (body: unknown): ServiceVersionRegistrationDTO => {
     const registration = (body ?? {}) as Record<string, unknown>
     if (!isNonEmptyString(registration.image)) {
         throw createBusinessException({ code: "SERVICE_VERSION_IMAGE_REQUIRED", message: "The image reference is required, e.g. ghcr.io/acme/orders-api:1.2.0" })
