@@ -5,11 +5,11 @@ import { AlertTriangle, ArrowUp, ExternalLink, GitBranch, Server } from "lucide-
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
+import { ProgressLog, StatusBadge } from "@/components/ai-workspace/AiChangeProgress"
 import { Badge, Button } from "@/components/atoms"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
 import useAiJobsApi, { AiJob, AiJobRepository, AiUsage, isAiJobActive } from "@/hooks/apiClients/useAiJobsApi"
 import { errorCodeOf } from "@/hooks/useApiClient"
-import { ProgressLog, StatusBadge } from "@/pages/microfrontends/partials/components/AiChangeProgress"
 import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobsStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import AnswerUsage from "./AnswerUsage"
@@ -158,7 +158,7 @@ interface ApplyAllButtonProps {
 }
 
 /** Pushes every proposal of the job, one pull request per repository: it publishes code, so it asks first. */
-const ApplyAllButton: React.FC<ApplyAllButtonProps> = ({ job, requestIds, onApplying }) => {
+export const ApplyAllButton: React.FC<ApplyAllButtonProps> = ({ job, requestIds, onApplying }) => {
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [confirming, setConfirming] = useState(false)
@@ -198,12 +198,10 @@ interface FollowUpFormProps {
     latest: AiJob
     /** The job the follow-up refines: the latest one that finished with proposals still open. */
     target?: AiJob
-    /** Set by a page hosting the thread: it follows the child itself, the assistant's tabs are left alone. */
-    onFollowUp?: (child: AiJob) => void
 }
 
 /** Asks the agent to go on from the latest proposal: a child job, which the tab follows from then on. */
-const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target, onFollowUp }) => {
+const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target }) => {
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [draft, setDraft] = useState("")
@@ -211,8 +209,7 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target, 
     const followUpMutation = useMutation({
         mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) => aiJobsApi.followUp(jobId, { prompt }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
         onSuccess: child => {
-            if (onFollowUp) onFollowUp(child)
-            else useAssistantJobsStore.getState().openJob(projectId, child, true)
+            useAssistantJobsStore.getState().openJob(projectId, child, true)
             setDraft("")
         }
     })
@@ -273,16 +270,10 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target, 
 interface AssistantJobThreadProps {
     projectId: string
     tab: AssistantJobTab
-    /**
-     * Set by a page hosting the thread (a domain's AI workspace): told of the latest job of the chain when it is
-     * not `tab.jobId` (a follow-up, here or elsewhere), so the page moves its tab on. The assistant's tabs are
-     * then left alone: no tab opened, no second watcher polling the job, no toast for what the page shows.
-     */
-    onLatestJob?: (job: AiJob) => void
 }
 
 /** The tab of a chain of jobs: each request with the agent's log and its proposals, the cost, and the follow-up input. */
-const AssistantJobThread: React.FC<AssistantJobThreadProps> = ({ projectId, tab, onLatestJob }) => {
+const AssistantJobThread: React.FC<AssistantJobThreadProps> = ({ projectId, tab }) => {
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const queryClient = useQueryClient()
@@ -296,10 +287,6 @@ const AssistantJobThread: React.FC<AssistantJobThreadProps> = ({ projectId, tab,
         queryFn: async () => {
             const chain = await aiJobsApi.chain(tab.jobId, { silent: true })
             const latest = chain[chain.length - 1]
-            if (onLatestJob) {
-                if (latest && latest._id !== tab.jobId) onLatestJob(latest)
-                return chain
-            }
             const store = useAssistantJobsStore.getState()
             // A follow-up started elsewhere (the chat) makes the chain longer: the tab moves on to it.
             if (latest && latest._id !== tab.jobId) store.openJob(projectId, latest)
@@ -378,7 +365,7 @@ const AssistantJobThread: React.FC<AssistantJobThreadProps> = ({ projectId, tab,
                 ))}
             </div>
 
-            <FollowUpForm projectId={projectId} latest={latest} target={target} onFollowUp={onLatestJob} />
+            <FollowUpForm projectId={projectId} latest={latest} target={target} />
         </div>
     )
 }

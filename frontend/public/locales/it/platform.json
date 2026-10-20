@@ -942,7 +942,17 @@
             "follow_up_closed": "Questa conversazione è chiusa: avvia una nuova modifica per proseguire.",
             "follow_up_send": "Invia",
             "usage_conversation_one": "Token usati dalla conversazione ({{count}} messaggio)",
-            "usage_conversation_other": "Token usati dalla conversazione ({{count}} messaggi)"
+            "usage_conversation_other": "Token usati dalla conversazione ({{count}} messaggi)",
+            "description_domain": "L'agente legge insieme tutti i microfrontend e i servizi del dominio, con il contesto AI del progetto, del dominio e di ciascuno di essi, così una modifica può attraversare frontend e backend (un endpoint e le schermate che lo chiamano). Propone le modifiche da revisionare: nulla viene pushato finché non le applichi, con una pull request per repository.",
+            "prompt_placeholder_domain": "es. Aggiungi il costo di spedizione all'API degli ordini e mostralo nelle pagine carrello e checkout",
+            "repositories_count_one": "{{count}} repository",
+            "repositories_count_other": "{{count}} repository",
+            "request_meta_repositories_one": "{{date}} · {{count}} repository",
+            "request_meta_repositories_other": "{{date}} · {{count}} repository",
+            "kind": {
+                "microfrontend": "microfrontend",
+                "service": "servizio"
+            }
         },
         "workspace": {
             "back": "Tutti i microfrontend",
@@ -2079,7 +2089,6 @@
             "no_options": "Nessun dominio nel progetto"
         },
         "detail": {
-            "description": "Microfrontend e servizi di questo dominio",
             "back": "Tutti i domini",
             "frontend_title": "Frontend",
             "frontend_description": "I microfrontend di questo dominio",
@@ -2128,32 +2137,14 @@
         },
         "ai": {
             "open": "Modifica con AI",
-            "title": "Modifica {{name}} con AI",
-            "description": "Un unico agente lavora insieme sul frontend e sul backend di questo dominio",
-            "structure": "Struttura del dominio",
             "unavailable": "La modifica con AI non è disponibile su questa installazione: nessun provider AI configurato.",
-            "conversations_label": "Conversazioni AI del dominio",
-            "new_job": "Nuova modifica",
-            "no_conversations": "Nessuna modifica AI richiesta ancora su questo dominio.",
-            "open_conversation": "Apri la conversazione: {{prompt}}",
-            "repositories_count_one": "{{count}} repository",
-            "repositories_count_other": "{{count}} repository",
-            "to_review": "Da revisionare",
-            "composer_title": "Cosa vuoi cambiare in {{name}}?",
-            "composer_description": "L'agente legge insieme tutti i microfrontend e i servizi del dominio, con il contesto AI del progetto, del dominio e di ciascuno di essi, così una modifica può attraversare frontend e backend (un endpoint e le schermate che lo chiamano). Propone le modifiche da revisionare: nulla viene pushato finché non le applichi, con una pull request per repository.",
             "context_title": "Repository su cui lavora l'agente",
-            "kind_microfrontend": "microfrontend",
-            "kind_service": "servizio",
             "no_members": "Questo dominio non ha ancora microfrontend né servizi: Genera chiede prima all'AI quali servono alla tua richiesta e li crea con i loro repository quando confermi.",
             "no_repositories": "Nessun microfrontend o servizio di questo dominio ha un repository di codice collegato: Genera propone di crearne uno per ciascuno, da un template.",
             "planning": "L'AI sta proponendo i componenti…",
             "unlinked": "Esclusi, senza repository collegato: {{names}}",
             "too_many_title": "Troppi repository",
             "too_many_description": "Il dominio ha {{count}} repository, un agente ne gestisce al massimo {{max}}: avvia il job dall'assistente e scegli quelli da modificare.",
-            "prompt_label": "Cosa deve cambiare?",
-            "prompt_placeholder": "es. Aggiungi il costo di spedizione all'API degli ordini e mostralo nelle pagine carrello e checkout",
-            "prompt_required": "Descrivi la modifica che vuoi",
-            "load_error": "Impossibile caricare le conversazioni AI del dominio.",
             "scaffold": {
                 "plan_title": "Creare questi componenti per {{name}}?",
                 "plan_description": "L'AI li propone per la tua richiesta. Rivedili e modificali: ognuno viene creato in {{name}} con un nuovo repository generato dal suo template, poi l'agente implementa la richiesta su di essi.",
@@ -2197,6 +2188,10 @@
                     "TEMPLATE_NOT_FOUND": "Il template non esiste più: scegline un altro."
                 }
             }
+        },
+        "workspace": {
+            "nav_label": "Sezioni del dominio",
+            "nav_structure": "Struttura"
         }
     },
     "navigation": {

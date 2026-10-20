@@ -1,6 +1,4 @@
 export * from "./AddNewMicrofrontendCard"
-export * from "./AiChangeDiff"
-export * from "./AiChangeWorkspace"
 export * from "./BuildDialog"
 export * from "./CloneRepositoryPopover"
 export * from "./CodeRepositorySection"

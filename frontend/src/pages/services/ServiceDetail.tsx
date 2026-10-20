@@ -4,12 +4,12 @@ import { Copy, ExternalLink, Hammer } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams } from "react-router-dom"
+import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useServicesApi, { Service } from "@/hooks/apiClients/useServicesApi"
-import { AiChangeWorkspace } from "@/pages/microfrontends/partials/components"
 import { useVariableMapsQuery } from "@/pages/variable-maps/partials/variableMaps"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import RepositoryLink from "./partials/RepositoryLink"
@@ -185,7 +185,7 @@ const ServiceAiSection: React.FC<{ serviceQuery: { isPending: boolean; isError: 
         <div className="flex min-h-full flex-col gap-6">
             <ServiceHeader service={service} active="ai" />
             {/* Keyed: the route instance is reused across services, and a draft must not follow the user to another one. */}
-            <AiChangeWorkspace key={service._id} target={{ kind: "service", id: service._id! }} name={service.name} />
+            <AiWorkspace key={service._id} target={{ kind: "service", id: service._id! }} name={service.name} />
         </div>
     )
 }

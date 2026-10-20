@@ -1,12 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, Columns2, LayoutDashboard, LayoutGrid, Pencil, Server, Sparkles, StretchHorizontal, Workflow } from "lucide-react"
+import { Columns2, LayoutDashboard, LayoutGrid, Pencil, Server, StretchHorizontal, Workflow } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
-import SinglePageLayout from "@/components/SinglePageLayout"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useServicesApi from "@/hooks/apiClients/useServicesApi"
@@ -17,6 +16,7 @@ import useProjectStore from "@/store/useProjectStore"
 import DomainDeploymentsSection from "./partials/DomainDeploymentsSection"
 import DomainFlow from "./partials/DomainFlow"
 import DomainFormDialog from "./partials/DomainFormDialog"
+import DomainHeader from "./partials/DomainHeader"
 import DomainMemberActions from "./partials/DomainMemberActions"
 
 const VIEWS = [
@@ -153,20 +153,13 @@ const DomainDetail = () => {
     return (
         <ApiStatusHandler queries={[domainQuery, microfrontendsQuery, servicesQuery]} interceptEmpty={false}>
             {domain && (
-                // The Tabs root wraps the layout so the view switcher can live in the page header, as on the microfrontends page.
-                <Tabs value={view} onValueChange={value => setView(value as View)} className="flex min-h-full flex-col" layoutSize="sm" iconButtons tabsListPosition="end">
-                    <SinglePageLayout
-                        title={domain.name}
-                        description={domain.description || t("domains.detail.description")}
-                        lrContainerClassname="items-end"
-                        left={
-                            <Button variant="ghost" size="sm" onClick={() => navigate("/domains")}>
-                                <ArrowLeft />
-                                {t("domains.detail.back")}
-                            </Button>
-                        }
-                        right={
-                            <div className="flex flex-[0_0_auto] items-center gap-2">
+                // The Tabs root wraps the page so the view switcher can live in the page header, as on the microfrontends page.
+                <Tabs value={view} onValueChange={value => setView(value as View)} className="flex min-h-full flex-col gap-6" layoutSize="sm" iconButtons tabsListPosition="end">
+                    <DomainHeader
+                        domain={domain}
+                        active="structure"
+                        actions={
+                            <>
                                 <TabsList>
                                     {VIEWS.map(({ value, icon: Icon, labelKey }) => (
                                         // Same switcher as the microfrontends page: labelled via aria-label/title, primary fill when active.
@@ -185,73 +178,67 @@ const DomainDetail = () => {
                                     <Pencil />
                                     {t("common.edit")}
                                 </Button>
-                                {/* Always shown: the workspace says why it cannot run (no AI provider, no linked repository). */}
-                                <Button onClick={() => navigate(`/domain/${id}`)} dataTestId="domain-edit-with-ai">
-                                    <Sparkles />
-                                    {t("domains.ai.open")}
-                                </Button>
-                            </div>
+                            </>
                         }
-                    >
-                        <TabsContent value="overview" className="mt-0 flex flex-col gap-6">
-                            <div className="grid gap-6 lg:grid-cols-2">
-                                <MemberSection
-                                    title={t("domains.detail.frontend_title")}
-                                    description={t("domains.detail.frontend_description")}
-                                    icon={<LayoutDashboard className="size-5" aria-hidden="true" />}
-                                    emptyLabel={t("domains.detail.frontend_empty")}
-                                    actions={frontendSection.actions}
-                                    members={microfrontends.map(microfrontend => ({
-                                        id: microfrontend._id!,
-                                        name: microfrontend.name,
-                                        slug: microfrontend.slug,
-                                        version: microfrontend.version,
-                                        href: `/microfrontend/${microfrontend._id}/settings`
-                                    }))}
-                                />
-                                <MemberSection
-                                    title={t("domains.detail.backend_title")}
-                                    description={t("domains.detail.backend_description")}
-                                    icon={<Server className="size-5" aria-hidden="true" />}
-                                    emptyLabel={t("domains.detail.backend_empty")}
-                                    actions={backendSection.actions}
-                                    members={services.map(service => ({
-                                        id: service._id!,
-                                        name: service.name,
-                                        slug: service.slug,
-                                        version: service.version,
-                                        href: `/service/${service._id}`
-                                    }))}
-                                />
-                            </div>
-                            <DomainDeploymentsSection domainId={id!} />
-                        </TabsContent>
-                        <TabsContent value="flow" className="mt-0 flex flex-col gap-3">
-                            {/* Frontend and backend on one canvas; positions are saved on the microfrontend, so the blocks sit where they were left on the microfrontends page too. */}
-                            <div className="flex items-center justify-end gap-2">
-                                {frontendSection.actions}
-                                {backendSection.actions}
-                            </div>
-                            <DomainFlow microfrontends={microfrontends} services={services} onAddMicrofrontend={onAddMicrofrontend} />
-                        </TabsContent>
-                        <TabsContent value="grid" className="mt-0 flex flex-col gap-8">
-                            <ViewSection {...frontendSection}>
-                                <MicrofrontendsGrid microfrontends={microfrontends} onAddNewMicrofrontend={onAddMicrofrontend} />
-                            </ViewSection>
-                            <ViewSection {...backendSection}>
-                                <ServicesGrid services={services} />
-                            </ViewSection>
-                        </TabsContent>
-                        <TabsContent value="table" className="mt-0 flex flex-col gap-8">
-                            <ViewSection {...frontendSection}>
-                                <MicrofrontendsTable microfrontends={microfrontends} />
-                            </ViewSection>
-                            <ViewSection {...backendSection}>
-                                <ServicesTable services={services} />
-                            </ViewSection>
-                        </TabsContent>
-                        <DomainFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} domain={domain} />
-                    </SinglePageLayout>
+                    />
+                    <TabsContent value="overview" className="mt-0 flex flex-col gap-6">
+                        <div className="grid gap-6 lg:grid-cols-2">
+                            <MemberSection
+                                title={t("domains.detail.frontend_title")}
+                                description={t("domains.detail.frontend_description")}
+                                icon={<LayoutDashboard className="size-5" aria-hidden="true" />}
+                                emptyLabel={t("domains.detail.frontend_empty")}
+                                actions={frontendSection.actions}
+                                members={microfrontends.map(microfrontend => ({
+                                    id: microfrontend._id!,
+                                    name: microfrontend.name,
+                                    slug: microfrontend.slug,
+                                    version: microfrontend.version,
+                                    href: `/microfrontend/${microfrontend._id}/settings`
+                                }))}
+                            />
+                            <MemberSection
+                                title={t("domains.detail.backend_title")}
+                                description={t("domains.detail.backend_description")}
+                                icon={<Server className="size-5" aria-hidden="true" />}
+                                emptyLabel={t("domains.detail.backend_empty")}
+                                actions={backendSection.actions}
+                                members={services.map(service => ({
+                                    id: service._id!,
+                                    name: service.name,
+                                    slug: service.slug,
+                                    version: service.version,
+                                    href: `/service/${service._id}`
+                                }))}
+                            />
+                        </div>
+                        <DomainDeploymentsSection domainId={id!} />
+                    </TabsContent>
+                    <TabsContent value="flow" className="mt-0 flex flex-col gap-3">
+                        {/* Frontend and backend on one canvas; positions are saved on the microfrontend, so the blocks sit where they were left on the microfrontends page too. */}
+                        <div className="flex items-center justify-end gap-2">
+                            {frontendSection.actions}
+                            {backendSection.actions}
+                        </div>
+                        <DomainFlow microfrontends={microfrontends} services={services} onAddMicrofrontend={onAddMicrofrontend} />
+                    </TabsContent>
+                    <TabsContent value="grid" className="mt-0 flex flex-col gap-8">
+                        <ViewSection {...frontendSection}>
+                            <MicrofrontendsGrid microfrontends={microfrontends} onAddNewMicrofrontend={onAddMicrofrontend} />
+                        </ViewSection>
+                        <ViewSection {...backendSection}>
+                            <ServicesGrid services={services} />
+                        </ViewSection>
+                    </TabsContent>
+                    <TabsContent value="table" className="mt-0 flex flex-col gap-8">
+                        <ViewSection {...frontendSection}>
+                            <MicrofrontendsTable microfrontends={microfrontends} />
+                        </ViewSection>
+                        <ViewSection {...backendSection}>
+                            <ServicesTable services={services} />
+                        </ViewSection>
+                    </TabsContent>
+                    <DomainFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} domain={domain} />
                 </Tabs>
             )}
         </ApiStatusHandler>

@@ -845,7 +845,17 @@
             "follow_up_closed": "This conversation is closed: start a new change to go on.",
             "follow_up_send": "Send",
             "usage_conversation_one": "Tokens used by the conversation ({{count}} message)",
-            "usage_conversation_other": "Tokens used by the conversation ({{count}} messages)"
+            "usage_conversation_other": "Tokens used by the conversation ({{count}} messages)",
+            "description_domain": "The agent reads the microfrontends and the services of the domain all at once, together with the AI context of the project, of the domain and of each of them, so a change can span frontend and backend (an endpoint and the screens that call it). It proposes the edits for review: nothing is pushed until you apply them, as one pull request per repository.",
+            "prompt_placeholder_domain": "e.g. Add the shipping cost to the order API and show it in the cart and checkout pages",
+            "repositories_count_one": "{{count}} repository",
+            "repositories_count_other": "{{count}} repositories",
+            "request_meta_repositories_one": "{{date}} · {{count}} repository",
+            "request_meta_repositories_other": "{{date}} · {{count}} repositories",
+            "kind": {
+                "microfrontend": "microfrontend",
+                "service": "service"
+            }
         },
         "workspace": {
             "back": "All microfrontends",
@@ -2060,7 +2070,6 @@
             "no_options": "No domains in the project"
         },
         "detail": {
-            "description": "Microfrontends and services of this domain",
             "back": "All domains",
             "frontend_title": "Frontend",
             "frontend_description": "The microfrontends of this domain",
@@ -2109,32 +2118,14 @@
         },
         "ai": {
             "open": "Edit with AI",
-            "title": "Edit {{name}} with AI",
-            "description": "One agent works on the frontend and the backend of this domain together",
-            "structure": "Domain structure",
             "unavailable": "AI editing is not available on this installation: no AI provider is configured.",
-            "conversations_label": "AI conversations of the domain",
-            "new_job": "New change",
-            "no_conversations": "No AI change asked on this domain yet.",
-            "open_conversation": "Open the conversation: {{prompt}}",
-            "repositories_count_one": "{{count}} repository",
-            "repositories_count_other": "{{count}} repositories",
-            "to_review": "To review",
-            "composer_title": "What do you want to change in {{name}}?",
-            "composer_description": "The agent reads the microfrontends and the services of the domain all at once, together with the AI context of the project, of the domain and of each of them, so a change can span frontend and backend (an endpoint and the screens that call it). It proposes the edits for review: nothing is pushed until you apply them, as one pull request per repository.",
             "context_title": "Repositories the agent works on",
-            "kind_microfrontend": "microfrontend",
-            "kind_service": "service",
             "no_members": "This domain has no microfrontend or service yet: Generate first asks the AI which ones your request needs, and creates them with their repositories once you confirm.",
             "no_repositories": "No microfrontend or service of this domain has a linked code repository: Generate offers to create one for each of them, from a template.",
             "planning": "The AI is proposing the components…",
             "unlinked": "Left out, without a linked repository: {{names}}",
             "too_many_title": "Too many repositories",
             "too_many_description": "The domain has {{count}} repositories, one agent works on at most {{max}}: start the job from the assistant and pick the ones to change.",
-            "prompt_label": "What should change?",
-            "prompt_placeholder": "e.g. Add the shipping cost to the order API and show it in the cart and checkout pages",
-            "prompt_required": "Describe the change you want",
-            "load_error": "Could not load the AI conversations of the domain.",
             "scaffold": {
                 "plan_title": "Create these components for {{name}}?",
                 "plan_description": "The AI proposes them for your request. Review and edit them: each one is created in {{name}} with a new repository scaffolded from its template, then the agent implements the request in them.",
@@ -2178,6 +2169,10 @@
                     "TEMPLATE_NOT_FOUND": "The template no longer exists: pick another one."
                 }
             }
+        },
+        "workspace": {
+            "nav_label": "Domain sections",
+            "nav_structure": "Structure"
         }
     },
     "navigation": {

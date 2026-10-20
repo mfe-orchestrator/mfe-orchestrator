@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, EmptyState, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CirclePlus, FolderOpen, LayoutDashboard, LayoutGrid, Orbit, Pencil, Rocket, Server, Trash2 } from "lucide-react"
+import { CirclePlus, FolderOpen, LayoutDashboard, LayoutGrid, Orbit, Pencil, Rocket, Server, Sparkles, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -170,8 +170,10 @@ const Domains = () => {
                                                     </div>
                                                 </CardContent>
                                                 <CardFooter className="gap-2 border-t border-divider pt-3">
+                                                    {/* A domain opens on Edit with AI, which says why it cannot run when no AI provider is configured. */}
                                                     <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(`/domain/${domain._id}`)}>
-                                                        {t("domains.open")}
+                                                        <Sparkles />
+                                                        {t("domains.ai.open")}
                                                     </Button>
                                                     <Button variant="ghost" size="icon" aria-label={t("common.edit")} title={t("common.edit")} onClick={() => openForm(domain)}>
                                                         <Pencil />
