@@ -88,7 +88,7 @@ describe("assistantToolDefinitions", () => {
     it("Given a tool input with a field description, when converted, then the model sees the description", () => {
         const logs = assistantToolDefinitions.find(definition => definition.name === "get_failed_build_logs")!
 
-        expect(logs.inputSchema).toMatchObject({ properties: { runId: { type: "string", description: expect.stringContaining("CI run") } }, required: ["microfrontendId", "runId"] })
+        expect(logs.inputSchema).toMatchObject({ properties: { runId: { type: "string", description: expect.stringContaining("CI run") } }, required: ["runId"] })
     })
 })
 
