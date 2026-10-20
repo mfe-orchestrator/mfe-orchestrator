@@ -43,6 +43,8 @@ const LOCK_WAIT_MS = 10 * 60_000
 
 /** File contents stay out of every view: the diff is read from the request of each repository. */
 const WITHOUT_CONTENTS = { "files.originalContent": 0, "files.proposedContent": 0, events: 0 }
+/** Neither the progress nor the conversation of the agent: what lists of jobs read. */
+const JOB_LISTED = { events: 0, transcript: 0 }
 
 export interface AiJobCreateInput {
     prompt: string
@@ -119,6 +121,8 @@ interface RunningRepository {
     baseCommit?: string
     /** The files of the parent request, written on the working copy before the agent starts. */
     previousFiles?: IAiChangeFile[]
+    /** The pull request description of the parent request: kept when the agent only answers. */
+    previousSummary?: string
 }
 
 const isStale = (job: Pick<IAiChangeJob, "status" | "updatedAt">) => ACTIVE_JOB_STATUSES.includes(job.status) && Date.now() - job.updatedAt.getTime() > STALE_AFTER_MS
@@ -182,6 +186,12 @@ const agentRepository = (component: RepositoryComponent, slug: string, rest: Omi
         : { ...rest, microfrontend: { name: component.name, slug, framework: component.framework, compiler: component.compiler, context: component.context } }
 
 const toAgentDomain = (domain: IDomain) => ({ name: domain.name, description: domain.description, context: domain.context })
+
+/** Whether two jobs work on the same repositories in the same order: the paths the agent knows then still point where they did. */
+const sameRepositories = (a: IAiChangeJob, b: IAiChangeJob) => {
+    const ids = (job: IAiChangeJob) => componentsOfJob(job).map(ref => `${ref.kind}:${ref.id}`)
+    return ids(a).join(",") === ids(b).join(",")
+}
 
 const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: Map<string, Pick<RepositoryComponent, "name" | "slug">>, withEvents: boolean): AiJobView => ({
     _id: String(job._id),
@@ -426,6 +436,16 @@ export class AiChangeJobService extends AiChangeBaseService {
         await AiChangeJob.updateOne({ _id: toObjectId(jobId), status: { $in: ACTIVE_JOB_STATUSES } }, { status: AiJobStatus.FAILED, error, expiresAt: expiry() })
     }
 
+    /**
+     * The conversation a follow-up carries on from: its parent's, when the parent worked on the same
+     * repositories and kept one. Otherwise the agent starts over, told only what was asked before.
+     */
+    private async historyOf(job: IAiChangeJob): Promise<IAiChangeJob["transcript"]> {
+        if (!job.parentJobId) return undefined
+        const parent = await AiChangeJob.findById(job.parentJobId, { transcript: 1, microfrontendIds: 1, serviceIds: 1 })
+        return parent?.transcript?.length && sameRepositories(parent, job) ? parent.transcript : undefined
+    }
+
     /** What was asked before this job in its chain, oldest first. */
     private async previousRequests(job: IAiChangeJob): Promise<{ prompt: string; summary?: string }[]> {
         const previous: { prompt: string; summary?: string }[] = []
@@ -521,6 +541,7 @@ export class AiChangeJobService extends AiChangeBaseService {
 
             // A job declared dead (or failed) while the agent works stops at the next round instead of spending on.
             const abort = new AbortController()
+            const history = await this.historyOf(job)
             const slugs = pathSlugs(repositories.map(repository => repository.component))
             // The agent may stop midway, the provider failing or its answer cut off: what it wrote until then is still proposed.
             let stopped: string | undefined
@@ -538,7 +559,8 @@ export class AiChangeJobService extends AiChangeBaseService {
                             previousChanges: (previousFiles ?? []).map(file => ({ path: file.path, bytes: file.proposedContent === undefined ? 0 : Buffer.byteLength(file.proposedContent, "utf8") }))
                         })
                     ),
-                    previousRequests: await this.previousRequests(job)
+                    previousRequests: history ? undefined : await this.previousRequests(job),
+                    history
                 },
                 {
                     onEvent: (kind, message) => this.log(jobId, kind, message),
@@ -592,6 +614,9 @@ export class AiChangeJobService extends AiChangeBaseService {
                   ? "The agent ran out of steps: the proposal may be incomplete"
                   : undefined
             const summary = result?.summary || undefined
+            // An answer without a change of its own is no pull request description: the proposal keeps its parent's.
+            const answered = (repository: RunningRepository, files: IAiChangeFile[]) =>
+                result?.stopReason === "end_turn" && repository.previousFiles !== undefined && sameFiles(repository.previousFiles, files)
             // Requests first: the console stops polling once the job is done. Guarded: a job get()
             // already declared dead must not come back to life.
             let saved = 0
@@ -600,7 +625,14 @@ export class AiChangeJobService extends AiChangeBaseService {
                 for (const { repository, files } of proposals) {
                     const proposed = await AiChangeRequest.findOneAndUpdate(
                         { _id: repository.request._id, status: AiChangeStatus.RUNNING },
-                        { status: AiChangeStatus.PROPOSED, files, summary, error: incomplete, expiresAt: expiry(), ...event("info", files.length ? "proposed" : "no-changes") }
+                        {
+                            status: AiChangeStatus.PROPOSED,
+                            files,
+                            summary: answered(repository, files) ? repository.previousSummary : summary,
+                            error: incomplete,
+                            expiresAt: expiry(),
+                            ...event("info", files.length ? "proposed" : "no-changes")
+                        }
                     )
                     if (!proposed) continue
                     saved++
@@ -618,7 +650,14 @@ export class AiChangeJobService extends AiChangeBaseService {
             }
             await AiChangeJob.updateOne(
                 { _id: job._id, status: AiJobStatus.RUNNING },
-                { status: AiJobStatus.DONE, summary, error: partial ?? incomplete, expiresAt: expiry(), ...event("info", anyChange ? "proposed" : "no-changes") }
+                {
+                    status: AiJobStatus.DONE,
+                    summary,
+                    transcript: result?.transcript,
+                    error: partial ?? incomplete,
+                    expiresAt: expiry(),
+                    ...event("info", anyChange ? "proposed" : "no-changes")
+                }
             )
         } finally {
             for (const repository of repositories) await repository.workspace.workingCopy.discardChanges().catch(() => undefined)
@@ -639,6 +678,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             if (!parent) throw new Error(`The previous proposal for ${repository.component.name} no longer exists`)
             parents.set(repository, parent)
             repository.previousFiles = parent.files
+            repository.previousSummary = parent.summary
             for (const file of parent.files) {
                 if ((await repository.workspace.workingCopy.blobOid(repository.baseCommit!, file.path)) !== file.baseBlobOid) conflicts.push(`${repository.component.slug}/${file.path}`)
             }
@@ -705,7 +745,7 @@ export class AiChangeJobService extends AiChangeBaseService {
     /** Every job of the conversation the given one belongs to, from the first to the latest. */
     async chain(id: string): Promise<AiJobView[]> {
         const job = await this.getJob(id)
-        const jobs = await AiChangeJob.find({ rootJobId: job.rootJobId, projectId: job.projectId }).sort({ createdAt: 1 })
+        const jobs = await AiChangeJob.find({ rootJobId: job.rootJobId, projectId: job.projectId }, { transcript: 0 }).sort({ createdAt: 1 })
         return this.views(await Promise.all(jobs.map(candidate => this.failIfStale(candidate))), true)
     }
 
@@ -716,10 +756,10 @@ export class AiChangeJobService extends AiChangeBaseService {
     async domainConversations(projectId: string, domainId: string): Promise<AiJobView[]> {
         await this.ensureAccessToProject(toObjectId(projectId))
         // By their roots: a chain with many follow-ups must not push the other conversations out.
-        const roots = await AiChangeJob.find({ projectId: toObjectId(projectId), domainId: toObjectId(domainId), $expr: { $eq: ["$_id", "$rootJobId"] } }, { events: 0 })
+        const roots = await AiChangeJob.find({ projectId: toObjectId(projectId), domainId: toObjectId(domainId), $expr: { $eq: ["$_id", "$rootJobId"] } }, JOB_LISTED)
             .sort({ createdAt: -1 })
             .limit(LISTED_JOBS)
-        const latest = await Promise.all(roots.map(root => AiChangeJob.findOne({ rootJobId: root._id }, { events: 0 }).sort({ createdAt: -1 })))
+        const latest = await Promise.all(roots.map(root => AiChangeJob.findOne({ rootJobId: root._id }, JOB_LISTED).sort({ createdAt: -1 })))
         const jobs: IAiChangeJob[] = [...roots, ...latest.flatMap(job => (job ? [job] : []))]
             .filter((job, index, all) => all.findIndex(other => String(other._id) === String(job._id)) === index)
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
@@ -737,7 +777,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             const proposed = await AiChangeRequest.distinct("jobId", { ...filter, status: AiChangeStatus.PROPOSED, jobId: { $exists: true } })
             filter.$or = [{ status: { $in: ACTIVE_JOB_STATUSES } }, { _id: { $in: proposed } }]
         }
-        const jobs = await Promise.all((await AiChangeJob.find(filter, { events: 0 }).sort({ createdAt: -1 }).limit(LISTED_JOBS)).map(job => this.failIfStale(job)))
+        const jobs = await Promise.all((await AiChangeJob.find(filter, JOB_LISTED).sort({ createdAt: -1 }).limit(LISTED_JOBS)).map(job => this.failIfStale(job)))
         const views = await this.views(jobs, false)
         return active ? views.filter(view => ACTIVE_JOB_STATUSES.includes(view.status) || view.repositories.some(repository => repository.status === AiChangeStatus.PROPOSED)) : views
     }

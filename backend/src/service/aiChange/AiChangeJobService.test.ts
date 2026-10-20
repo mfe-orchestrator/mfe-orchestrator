@@ -439,6 +439,59 @@ describe("AiChangeJobService", () => {
             expect(workingCopy.discardChanges).toHaveBeenCalled()
         })
 
+        describe("going on with the parent's conversation", () => {
+            const transcript = [
+                { role: "user", text: "<request>\nShow the price\n</request>" },
+                { role: "assistant", text: "Added the price.", toolCalls: [] }
+            ]
+            const withParent = (parentJob: Record<string, unknown>) => {
+                const current = { _id: jobId, parentJobId, rootJobId: parentJobId, projectId, userId: user._id, prompt: "Why src/Price.tsx?", microfrontendIds, status: AiJobStatus.RUNNING }
+                const jobs: Record<string, unknown> = {
+                    [String(jobId)]: current,
+                    [String(parentJobId)]: { _id: parentJobId, rootJobId: parentJobId, prompt: "Show the price", summary: "Added the price", ...parentJob }
+                }
+                vi.spyOn(AiChangeJob, "findById").mockImplementation(((id: unknown) => Promise.resolve(jobs[String(id)] ?? null)) as never)
+            }
+
+            it("Given a parent on the same repositories with a conversation, when a question is answered without a change, then the agent carries on from it and the proposal keeps the parent's description", async () => {
+                withParent({ microfrontendIds, transcript })
+                ;(parent as Record<string, unknown>).summary = "Adds the price to the catalog"
+                // The working copy holds the parent's files and nothing more.
+                workingCopy.changes = vi.fn(async () => [
+                    { path: "src/App.tsx", action: "update", baseBlobOid: "app-blob" },
+                    { path: "src/Price.tsx", action: "create" }
+                ])
+                const answer = [...transcript, { role: "user", text: "Why src/Price.tsx?" }, { role: "assistant", text: "To keep the price apart.", toolCalls: [] }]
+                runAgent.mockImplementationOnce(async (_client: unknown, input: { history?: unknown; previousRequests?: unknown }) => {
+                    expect(input.history).toEqual(transcript)
+                    expect(input.previousRequests).toBeUndefined()
+                    return { summary: "To keep the price apart.", stopReason: "end_turn", transcript: answer }
+                })
+
+                await run()
+
+                const proposal = updates.find(({ update }) => update.status === AiChangeStatus.PROPOSED)
+                expect(proposal?.update).toMatchObject({ summary: "Adds the price to the catalog" })
+                expect(updates).toContainEqual(
+                    expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.DONE, summary: "To keep the price apart.", transcript: answer }) })
+                )
+            })
+
+            it("Given a parent on other repositories, when the follow-up runs, then the agent starts over, told only what was asked before", async () => {
+                withParent({ microfrontendIds: [catalog._id, cart._id], transcript })
+                runAgent.mockImplementationOnce(async (_client: unknown, input: { history?: unknown; previousRequests?: unknown }) => {
+                    expect(input.history).toBeUndefined()
+                    expect(input.previousRequests).toEqual([{ prompt: "Show the price", summary: "Added the price" }])
+                    return { summary: "Shows the price with its currency", stopReason: "finished", transcript: [] }
+                })
+
+                await run()
+
+                expect(runAgent).toHaveBeenCalledTimes(1)
+                expect(updates).toContainEqual(expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.DONE }) }))
+            })
+        })
+
         it("Given a job on a microfrontend and a service of the same slug, when it runs, then the agent sees both under distinct slugs and the service with its container facts", async () => {
             services = [catalogApi]
             const serviceRequest = { _id: new Types.ObjectId(), jobId, serviceId: catalogApi._id, baseBranch: "main" }

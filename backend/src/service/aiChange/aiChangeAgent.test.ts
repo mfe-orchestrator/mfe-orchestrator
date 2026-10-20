@@ -297,7 +297,7 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
 
         const result = await runAiChangeAgent(client, input(), agentHooks)
 
-        expect(result).toEqual({ summary: "Added src/pages/NotFound.tsx", stopReason: "finished" })
+        expect(result).toMatchObject({ summary: "Added src/pages/NotFound.tsx", stopReason: "finished" })
         expect((await workingCopy.changes()).map(change => change.path)).toEqual(["src/pages/NotFound.tsx"])
         expect(events).toEqual(["write_file src/pages/NotFound.tsx", "finish"])
         expect(tokens()).toBe(20)
@@ -356,7 +356,7 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
             expect(sent).toHaveLength(0)
             await vi.advanceTimersByTimeAsync(1)
 
-            expect(await running).toEqual({ summary: "Added src/pages/NotFound.tsx", stopReason: "finished" })
+            expect(await running).toMatchObject({ summary: "Added src/pages/NotFound.tsx", stopReason: "finished" })
             expect(events).toEqual(["rate-limited", "write_file src/pages/NotFound.tsx", "finish"])
             expect(sent).toHaveLength(2)
         })
@@ -399,7 +399,7 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
 
             const result = await runAiChangeAgent(client, twoRepositories, hooks().hooks)
 
-            expect(result).toEqual({ summary: "Cart shows its name", stopReason: "finished" })
+            expect(result).toMatchObject({ summary: "Cart shows its name", stopReason: "finished" })
             expect(fs.readFileSync(path.join(cartDir, "src/Cart.tsx"), "utf8")).toBe("export const Cart = () => 'cart'\n")
             expect(await workingCopy.changes()).toEqual([])
             const firstMessage = sent[0].messages[0]
@@ -416,6 +416,36 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         } finally {
             fs.rmSync(cartDir, { recursive: true, force: true })
         }
+    })
+
+    it("Given an agent that answers without a tool, when it runs, then the answer comes back with a transcript ending on it", async () => {
+        const { client } = scriptedClient([{ stopReason: "end_turn", text: "The 404 page would go in src/pages.", toolCalls: [] }])
+
+        const result = await runAiChangeAgent(client, input(), hooks().hooks)
+
+        expect(result).toMatchObject({ summary: "The 404 page would go in src/pages.", stopReason: "end_turn" })
+        expect(result.transcript.map(message => message.role)).toEqual(["user", "assistant"])
+        expect(result.transcript.at(-1)).toEqual({ role: "assistant", text: "The 404 page would go in src/pages.", toolCalls: [] })
+    })
+
+    it("Given a run that ended with finish, when the next one carries on from its transcript, then the model gets the whole conversation and the new request after it", async () => {
+        const first = scriptedClient([
+            { stopReason: "tool_use", text: "", toolCalls: [toolUse("1", "read_file", { path: "src/App.tsx" })] },
+            { stopReason: "tool_use", text: "", toolCalls: [toolUse("2", "finish", { summary: "Nothing needed" })] }
+        ])
+        const { transcript } = await runAiChangeAgent(first.client, input(), hooks().hooks)
+        // The run ended on the result of finish: the model's last words close it.
+        expect(transcript.map(message => message.role)).toEqual(["user", "assistant", "tool", "assistant", "tool", "assistant"])
+        expect(transcript.at(-1)).toEqual({ role: "assistant", text: "Nothing needed", toolCalls: [] })
+
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "It renders null.", toolCalls: [] }])
+        const result = await runAiChangeAgent(client, { ...input(), prompt: "What does App render?", history: transcript }, hooks().hooks)
+
+        expect(sent[0].messages.slice(0, transcript.length)).toEqual(transcript)
+        const next = sent[0].messages[transcript.length]
+        expect(next.role === "user" && next.text).toContain("<request>\nWhat does App render?\n</request>")
+        expect(next.role === "user" && next.text).not.toContain("<project_context")
+        expect(result.transcript).toHaveLength(transcript.length + 2)
     })
 
     it.each([

@@ -1,4 +1,5 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import type { LlmMessage } from "../service/llm/types"
 import { aiChangeEventSchema, IAiChangeEvent, IAiChangeUsage } from "./AiChangeRequestModel"
 
 export enum AiJobStatus {
@@ -42,6 +43,11 @@ export interface IAiChangeJob extends Document<ObjectId> {
     status: AiJobStatus
     events: IAiChangeEvent[]
     summary?: string
+    /**
+     * The conversation of the agent with the user, up to and including this job, compacted: a
+     * follow-up on the same repositories carries on from it instead of starting over.
+     */
+    transcript?: LlmMessage[]
     error?: string
     usage: IAiChangeUsage
     /** Finished jobs nobody applied are removed by a TTL index on this date, like their proposals. */
@@ -64,6 +70,7 @@ const aiChangeJobSchema = new Schema<IAiChangeJob>(
         status: { type: String, enum: Object.values(AiJobStatus), default: AiJobStatus.PENDING, required: true },
         events: { type: [aiChangeEventSchema], default: [] },
         summary: { type: String },
+        transcript: { type: [Schema.Types.Mixed], default: undefined },
         error: { type: String },
         usage: {
             inputTokens: { type: Number, default: 0 },
