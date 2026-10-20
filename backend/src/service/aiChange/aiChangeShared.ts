@@ -53,12 +53,12 @@ export const ensureNotBeingRefined = async (request: Pick<IAiChangeRequest, "_id
     if (child) throw followUpRunning("A follow-up is refining this proposal: wait for it to finish")
 }
 
-const firstLine = (text: string, max: number) => {
+export const firstLine = (text: string, max: number) => {
     const line = text.trim().split("\n")[0].trim()
     return line.length > max ? `${line.slice(0, max - 1)}…` : line
 }
 
-const timestamp = (date = new Date()) => date.toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15)
+export const timestamp = (date = new Date()) => date.toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15)
 
 /** How far back the messages of a conversation are looked up for its pull request. */
 const MAX_CONVERSATION_LENGTH = 50

@@ -184,6 +184,16 @@ export class GitWorkingCopy {
         }
     }
 
+    /** True when the commit is in the copy. A shallow fetch only brings the tip: older commits are often missing. */
+    async hasCommit(oid: string): Promise<boolean> {
+        try {
+            await git.readCommit({ fs, dir: this.dir, oid })
+            return true
+        } catch {
+            return false
+        }
+    }
+
     async readHeadFile(filepath: string): Promise<string | undefined> {
         try {
             const head = await git.resolveRef({ fs, dir: this.dir, ref: "HEAD" })

@@ -16,6 +16,7 @@ import { domainDeploymentTools } from "./tools/domainDeploymentTools"
 import { domainLinkTools } from "./tools/domainLinkTools"
 import { domainTools } from "./tools/domainTools"
 import { environmentTools } from "./tools/environmentTools"
+import { localChangeTools } from "./tools/localChangeTools"
 import { microfrontendTools } from "./tools/microfrontendTools"
 import { organizationAdminTools } from "./tools/organizationAdminTools"
 import { organizationTools } from "./tools/organizationTools"
@@ -34,6 +35,8 @@ import { serviceTools } from "./tools/serviceTools"
  * databases and repository connections (their input is a secret), and everything else above the project
  * (deleting projects, managing organizations, members, invitations, the user profile), bundle
  * upload, the canvas layout, bulk deletes and AI code changes (each one runs a paid agent).
+ * Code changes made by the client's own agent are offered instead: `repository_checkout_get` says
+ * where to clone, `code_change_submit` pushes the result on a new branch with a pull request.
  * Creating a project is the exception: `project_create` adds the new project to the grant.
  * Scaffolding a repository from a template is offered too: the deploy API key it pushes into the
  * new repository never reaches the client, only the connection's stored credentials are used.
@@ -55,6 +58,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     ...domainDeploymentTools,
     ...environmentTools,
     ...repositoryTools,
+    ...localChangeTools,
     ...scaffoldTools,
     ...configurationTools,
     ...projectAdminTools,
@@ -67,6 +71,7 @@ const SERVER_INSTRUCTIONS =
     "Tools of the MFE Orchestrator console, bound to the projects shared when this connection was authorized. " +
     "Call projects_list first: when more than one project is shared, every project tool needs its projectId. " +
     "Before working on a project call context_get: it returns the notes its team wrote for agents. Working on one microfrontend, service or domain, pass its id to context_get, or read aiContext from microfrontend_get, service_get or domain_get: follow those notes. " +
+    "To change the code of a microfrontend or a service: repository_checkout_get, clone and edit locally following aiContext, then code_change_submit opens a pull request. " +
     "Repository naming: every repository you create or rename ends in -fe for a frontend (microfrontend or host, e.g. checkout-fe) and in -be for a backend service (e.g. orders-be). " +
     "Ids are 24 character hexadecimal strings returned by the list tools. Tools marked destructive change what users are served " +
     "(deploy, rollback) or delete data: confirm with the user before calling them."
