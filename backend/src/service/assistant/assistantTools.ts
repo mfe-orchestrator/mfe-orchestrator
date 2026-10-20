@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { defineTool, objectId, READ_ONLY, READ_ONLY_EXTERNAL } from "../../mcp/toolDefinition"
 import { MCP_SCOPE_READ } from "../../utils/oauthConfig"
-import BuildStatusService from "../BuildStatusService"
+import BuildStatusService, { BuildRunOwner } from "../BuildStatusService"
 import { searchDocs } from "./docsSearch"
 
 /** Logs are read from the end: that is where a failing step prints why it failed. */
@@ -58,16 +58,20 @@ export const assistantOnlyTools = [
     defineTool({
         name: "get_failed_build_logs",
         title: "Read failed build logs",
-        description: `Downloads the logs of the failed jobs of one CI run of a microfrontend. Each log is cut to its last ${MAX_LOG_CHARS_PER_JOB} characters, where the error usually is; "truncated" says when that happened. Get run ids from build_status_get.`,
+        description: `Downloads the logs of the failed jobs of one CI run of a microfrontend (frontend build) or of a service (backend build): pass exactly one of microfrontendId and serviceId. Each log is cut to its last ${MAX_LOG_CHARS_PER_JOB} characters, where the error usually is; "truncated" says when that happened. Get run ids from build_status_get.`,
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY_EXTERNAL,
-        inputSchema: z.object({
-            microfrontendId: objectId("Id of the microfrontend, as returned by microfrontends_list or build_status_get"),
-            runId: z.string().trim().min(1).describe("Id of the CI run, as returned by build_status_get")
-        }),
+        inputSchema: z
+            .object({
+                microfrontendId: objectId("Id of the microfrontend, as returned by microfrontends_list or build_status_get").optional(),
+                serviceId: objectId("Id of the service, as returned by services_list or build_status_get").optional(),
+                runId: z.string().trim().min(1).describe("Id of the CI run, as returned by build_status_get")
+            })
+            .refine(args => Boolean(args.microfrontendId) !== Boolean(args.serviceId), { message: "Pass exactly one of microfrontendId and serviceId" }),
         run: async (args, { principal, projectId }) => {
-            const logs = await new BuildStatusService(principal).getFailedRunLogs(projectId, args.microfrontendId, args.runId)
+            const owner: BuildRunOwner = args.serviceId ? { serviceId: args.serviceId } : { microfrontendId: args.microfrontendId as string }
+            const logs = await new BuildStatusService(principal).getFailedRunLogs(projectId, owner, args.runId)
             let budget = MAX_LOG_CHARS_TOTAL
             return logs.map(job => {
                 const { text, truncated } = tail(redactSecrets(job.log), Math.min(MAX_LOG_CHARS_PER_JOB, budget))

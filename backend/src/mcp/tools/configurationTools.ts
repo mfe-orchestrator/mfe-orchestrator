@@ -32,7 +32,8 @@ export const configurationTools = [
     defineTool({
         name: "build_status_get",
         title: "Get build status",
-        description: "The latest CI runs of every microfrontend, read from the git providers, and which version each environment serves.",
+        description:
+            "The latest CI runs of every microfrontend (frontend builds, under microfrontends) and every service (backend builds, under services), read from the git providers, each with a link to the run on the provider, and which version each environment serves.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY_EXTERNAL,
         inputSchema: NO_INPUT,

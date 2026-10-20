@@ -302,7 +302,7 @@
     },
     "builds": {
         "title": "Build",
-        "subtitle": "Stato delle build dei microfrontend e versione servita da ogni ambiente",
+        "subtitle": "Stato delle build frontend e backend, con il link a ogni run sulla sua piattaforma CI, e versione servita da ogni ambiente",
         "refresh": "Aggiorna",
         "live": {
             "connected": "Aggiornamento in tempo reale attivo",
@@ -310,11 +310,12 @@
             "last_update": "Ultimo aggiornamento: {{moment}}"
         },
         "empty": {
-            "title": "Nessun microfrontend",
-            "description": "Crea un microfrontend per vedere qui lo stato delle sue build."
+            "title": "Nessun microfrontend o servizio",
+            "description": "Crea un microfrontend o un servizio per vedere qui lo stato delle sue build."
         },
         "table": {
-            "microfrontend": "Microfrontend",
+            "name": "Nome",
+            "kind": "Tipo",
             "last_build": "Ultima build",
             "build_ref": "Tag / branch",
             "last_built_version": "Ultima versione buildata",
@@ -322,6 +323,7 @@
             "no_runs": "Nessuna build",
             "triggered_by": "avviata da {{user}}",
             "open_run": "Apri sul provider",
+            "open_run_on": "Apri su {{provider}}",
             "repository": "Repository: {{name}}",
             "selected_version": "versione selezionata: {{version}}",
             "expand_history": "Mostra lo storico build di {{name}}",
@@ -334,6 +336,10 @@
             "FAILED": "Fallita",
             "CANCELED": "Annullata",
             "UNKNOWN": "Sconosciuto"
+        },
+        "kind": {
+            "FRONTEND": "Frontend",
+            "BACKEND": "Backend"
         },
         "unavailable": {
             "NO_REPOSITORY": "Nessun repository collegato",
@@ -1824,6 +1830,7 @@
         },
         "questions": {
             "explain_build": "Perché è fallita la build {{runId}} (ref {{ref}}) del microfrontend {{name}} (id {{microfrontendId}})? Leggi i log dei job falliti, spiegami la causa e proponi una correzione.",
+            "explain_service_build": "Perché è fallita la build {{runId}} (ref {{ref}}) del servizio {{name}} (id {{serviceId}})? Leggi i log dei job falliti, spiegami la causa e proponi una correzione.",
             "analyze_deployments": "Confronta l'ultimo deploy dell'ambiente {{environment}} (id {{environmentId}}) con quello precedente: quali versioni e variabili sono cambiate, e c'è qualcosa da controllare?",
             "explain_dependencies": "Analizza le dipendenze condivise e i peer dependency non allineati tra i microfrontend: quali conflitti sono rischiosi e da quale conviene partire?",
             "check_variables": "Confronta le variabili d'ambiente tra gli ambienti del progetto: ce ne sono definite in un ambiente e mancanti in un altro, in particolare in produzione?"

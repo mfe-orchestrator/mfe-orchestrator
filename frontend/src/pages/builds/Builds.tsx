@@ -37,7 +37,7 @@ export const Builds: React.FC = () => {
     const stream = useBuildStatusStream(onSnapshot, Boolean(projectId))
 
     const data = buildStatusQuery.data
-    const hasMicrofrontends = (data?.microfrontends?.length ?? 0) > 0
+    const hasComponents = (data?.microfrontends?.length ?? 0) + (data?.services?.length ?? 0) > 0
 
     return (
         <SinglePageLayout
@@ -60,7 +60,7 @@ export const Builds: React.FC = () => {
             }
         >
             <ApiStatusHandler queries={[buildStatusQuery]}>
-                {hasMicrofrontends ? (
+                {hasComponents ? (
                     <BuildStatusTable data={data} />
                 ) : (
                     <EmptyState size="default" iconVariant="bare" tone="muted" icon={<PackageOpen />} title={t("builds.empty.title")} description={t("builds.empty.description")} />

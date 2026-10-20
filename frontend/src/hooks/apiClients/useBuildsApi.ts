@@ -1,6 +1,7 @@
 import useProjectStore from "@/store/useProjectStore"
 import useApiClient from "../useApiClient"
 import useEventStream, { EventStreamState } from "../useEventStream"
+import { CodeRepositoryProvider } from "./useCodeRepositoriesApi"
 
 export enum BuildStatus {
     QUEUED = "QUEUED",
@@ -30,11 +31,11 @@ export interface BuildRun {
     finishedAt?: string
 }
 
-export interface MicrofrontendBuildStatus {
-    microfrontendId: string
+/** Fields shared by the build status of a microfrontend and of a service. */
+export interface ComponentBuildStatus {
     name: string
     slug: string
-    provider?: string
+    provider?: CodeRepositoryProvider
     repositoryName?: string
     selectedVersion?: string
     latestBuiltVersion?: string
@@ -42,6 +43,14 @@ export interface MicrofrontendBuildStatus {
     versionByEnvironmentId: Record<string, string>
     builds: BuildRun[]
     unavailableReason?: BuildUnavailableReason
+}
+
+export interface MicrofrontendBuildStatus extends ComponentBuildStatus {
+    microfrontendId: string
+}
+
+export interface ServiceBuildStatus extends ComponentBuildStatus {
+    serviceId: string
 }
 
 export interface BuildStatusEnvironment {
@@ -56,7 +65,10 @@ export interface ProjectBuildStatus {
     projectId: string
     fetchedAt: string
     environments: BuildStatusEnvironment[]
+    /** Frontend builds. */
     microfrontends: MicrofrontendBuildStatus[]
+    /** Backend builds. */
+    services: ServiceBuildStatus[]
 }
 
 export const BUILD_STATUS_QUERY_KEY = "build-status"

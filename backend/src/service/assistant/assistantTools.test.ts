@@ -11,6 +11,7 @@ vi.mock("../BuildStatusService", () => ({
 }))
 
 const MICROFRONTEND = "aaaaaaaaaaaaaaaaaaaaaaaa"
+const SERVICE = "bbbbbbbbbbbbbbbbbbbbbbbb"
 const context = { principal: { _id: "user-1" }, projectId: "project-1" } as unknown as McpToolContext
 const toolNamed = (name: string) => assistantOnlyTools.find(tool => tool.name === name)!
 
@@ -32,7 +33,7 @@ describe("assistant-only tools", () => {
 
         const result = (await toolNamed("get_failed_build_logs").run({ microfrontendId: MICROFRONTEND, runId: "42" } as never, context)) as { job: string; truncated: boolean; log: string }[]
 
-        expect(getFailedRunLogs).toHaveBeenCalledWith("project-1", MICROFRONTEND, "42")
+        expect(getFailedRunLogs).toHaveBeenCalledWith("project-1", { microfrontendId: MICROFRONTEND }, "42")
         expect(result[0]).toMatchObject({ job: "build", truncated: false })
         expect(result[0].log).not.toContain("ghp_abcdefghijklmnopqrstuvwxyz0123456789")
         expect(result[0].log).toContain("ERROR: lint failed")
@@ -50,6 +51,20 @@ describe("assistant-only tools", () => {
 
     it("Given a log request without a run id, when validated, then the input is refused", () => {
         expect(toolNamed("get_failed_build_logs").inputSchema.safeParse({ microfrontendId: MICROFRONTEND }).success).toBe(false)
+    })
+
+    it("Given a failed backend build, when its logs are read, then the run is looked up on the service", async () => {
+        getFailedRunLogs.mockResolvedValue([])
+
+        await toolNamed("get_failed_build_logs").run({ serviceId: SERVICE, runId: "42" } as never, context)
+
+        expect(getFailedRunLogs).toHaveBeenCalledWith("project-1", { serviceId: SERVICE }, "42")
+    })
+
+    it("Given a log request naming both a microfrontend and a service, or neither, when validated, then the input is refused", () => {
+        const schema = toolNamed("get_failed_build_logs").inputSchema
+        expect(schema.safeParse({ microfrontendId: MICROFRONTEND, serviceId: SERVICE, runId: "42" }).success).toBe(false)
+        expect(schema.safeParse({ runId: "42" }).success).toBe(false)
     })
 
     it("Given a question about the platform, when the docs are searched, then sections come back with their URL", async () => {

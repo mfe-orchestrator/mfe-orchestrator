@@ -15,6 +15,15 @@ const snapshot = {
             versionByEnvironmentId: { "env-1": "1.2.0" },
             builds: [{ id: "10", status: BuildStatus.SUCCESS, ref: "1.2.0" }]
         }
+    ],
+    services: [
+        {
+            serviceId: "service-1",
+            name: "Orders",
+            slug: "orders",
+            versionByEnvironmentId: { "env-1": "2.0.0" },
+            builds: [{ id: "11", status: BuildStatus.FAILED, ref: "2.0.1", url: "https://github.com/acme/orders/actions/runs/11" }]
+        }
     ]
 }
 

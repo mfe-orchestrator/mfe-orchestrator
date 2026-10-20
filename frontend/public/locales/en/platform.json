@@ -399,7 +399,7 @@
     },
     "builds": {
         "title": "Builds",
-        "subtitle": "Build status of your microfrontends and the version each environment serves",
+        "subtitle": "Frontend and backend build status, with a link to each run on its CI platform, and the version each environment serves",
         "refresh": "Refresh",
         "live": {
             "connected": "Live updates on",
@@ -407,11 +407,12 @@
             "last_update": "Last update: {{moment}}"
         },
         "empty": {
-            "title": "No microfrontends",
-            "description": "Create a microfrontend to see its build status here."
+            "title": "No microfrontends or services",
+            "description": "Create a microfrontend or a service to see its build status here."
         },
         "table": {
-            "microfrontend": "Microfrontend",
+            "name": "Name",
+            "kind": "Type",
             "last_build": "Last build",
             "build_ref": "Tag / branch",
             "last_built_version": "Last built version",
@@ -419,6 +420,7 @@
             "no_runs": "No builds",
             "triggered_by": "started by {{user}}",
             "open_run": "Open on provider",
+            "open_run_on": "Open on {{provider}}",
             "repository": "Repository: {{name}}",
             "selected_version": "selected version: {{version}}",
             "expand_history": "Show build history for {{name}}",
@@ -431,6 +433,10 @@
             "FAILED": "Failed",
             "CANCELED": "Canceled",
             "UNKNOWN": "Unknown"
+        },
+        "kind": {
+            "FRONTEND": "Frontend",
+            "BACKEND": "Backend"
         },
         "unavailable": {
             "NO_REPOSITORY": "No linked repository",
@@ -1805,6 +1811,7 @@
         },
         "questions": {
             "explain_build": "Why did build {{runId}} (ref {{ref}}) of microfrontend {{name}} (id {{microfrontendId}}) fail? Read the logs of the failed jobs, explain the cause and suggest a fix.",
+            "explain_service_build": "Why did build {{runId}} (ref {{ref}}) of service {{name}} (id {{serviceId}}) fail? Read the logs of the failed jobs, explain the cause and suggest a fix.",
             "analyze_deployments": "Compare the latest deployment of environment {{environment}} (id {{environmentId}}) with the previous one: which versions and variables changed, and is there anything to check?",
             "explain_dependencies": "Analyze the shared dependencies and misaligned peer dependencies across the microfrontends: which conflicts are risky and which should I tackle first?",
             "check_variables": "Compare the environment variables across the project's environments: are any defined in one environment and missing from another, production in particular?"
