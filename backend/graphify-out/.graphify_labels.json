@@ -115,5 +115,19 @@
   "113": "index.ts",
   "114": "AccessProbe",
   "115": "SqlDatabaseClient.ts",
-  "116": "projectWizardStateMachine.ts"
+  "116": "projectWizardStateMachine.ts",
+  "117": "MicrofrontendDependencyService.ts",
+  "118": ".computeAlignmentIssues",
+  "119": "OAuthAuthorizationService",
+  "120": "IUser",
+  "121": "OAuthAuthorizationService.ts",
+  "122": "RepositoryRenameService.ts",
+  "123": "ProjectService",
+  "124": "projectContentTools.test.ts",
+  "125": "NpmRegistryClient.ts",
+  "126": "CodeRepositoryModel.ts",
+  "127": "pkce.ts",
+  "128": "UserOrganizationService.test.ts",
+  "129": "UserProjectService.test.ts",
+  "130": "OrganizationService.test.ts"
 }

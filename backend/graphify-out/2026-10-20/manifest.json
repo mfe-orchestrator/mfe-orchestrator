@@ -1170,13 +1170,13 @@
     "semantic_hash": ""
   },
   "src/service/aiChange/AiChangeService.test.ts": {
-    "mtime": 1792523313.7958126,
-    "ast_hash": "114e176e25dfa0a6a2e7b10d88564231",
+    "mtime": 1792523900.5714326,
+    "ast_hash": "3e8cbaa61194df7ab2f629c45aa87cd2",
     "semantic_hash": ""
   },
   "src/service/aiChange/AiChangeService.ts": {
-    "mtime": 1792523094.9224255,
-    "ast_hash": "fd8aa3464e52e461e336db9257e55735",
+    "mtime": 1792523860.8781571,
+    "ast_hash": "32c7820a50da10dff0f21ac097747514",
     "semantic_hash": ""
   },
   "src/service/aiChange/aiChangeAgent.test.ts": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "src/service/workspace/GitWorkingCopy.ts": {
-    "mtime": 1792523010.6786144,
-    "ast_hash": "e9e47eba589cb7e7f9bef3c13a5683c6",
+    "mtime": 1792523873.5607073,
+    "ast_hash": "a3dee3a1774149ef6089b01472ceacaf",
     "semantic_hash": ""
   },
   "src/service/workspace/RepositoryWorkspaceService.test.ts": {
@@ -1285,8 +1285,8 @@
     "semantic_hash": ""
   },
   "src/mcp/tools/aiChangeTools.ts": {
-    "mtime": 1792523243.060323,
-    "ast_hash": "b719cd837bc449cb905af2aad3839976",
+    "mtime": 1792523860.8790877,
+    "ast_hash": "71463a0a946c0d9a6b5aa9dde79ee306",
     "semantic_hash": ""
   },
   "src/mcp/tools/organizationAdminTools.test.ts": {
@@ -1380,23 +1380,23 @@
     "semantic_hash": ""
   },
   "src/service/aiChange/AiChangeJobService.test.ts": {
-    "mtime": 1792523274.8751562,
-    "ast_hash": "8d647e938abb4ac98187c1c47e9a4d9e",
+    "mtime": 1792523509.9054377,
+    "ast_hash": "6cb3ab267766d0790ba97cc41815c53d",
     "semantic_hash": ""
   },
   "src/service/aiChange/AiChangeJobService.ts": {
-    "mtime": 1792523234.122887,
-    "ast_hash": "304160b7a3e9292f57ea48dd31e1943b",
+    "mtime": 1792523860.8788798,
+    "ast_hash": "890b0d63bc7f4ed4135466bfc39be2df",
     "semantic_hash": ""
   },
   "src/service/aiChange/aiChangeShared.ts": {
-    "mtime": 1792523071.5823655,
-    "ast_hash": "9caedb18c1e864bc12f5a498b4a5eae3",
+    "mtime": 1792523873.5606945,
+    "ast_hash": "d8d1660255684345f4c479baabe82ccd",
     "semantic_hash": ""
   },
   "src/service/assistant/assistantActions.test.ts": {
-    "mtime": 1792237944.111749,
-    "ast_hash": "21eb3c1fe63042bae7b94e437e958267",
+    "mtime": 1792524424.4069421,
+    "ast_hash": "5a33e44cc36e32354887fbe408f832cb",
     "semantic_hash": ""
   },
   "src/service/assistant/assistantActions.ts": {
