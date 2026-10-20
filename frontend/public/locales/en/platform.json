@@ -852,6 +852,7 @@
             "prompt_placeholder_domain": "e.g. Add the shipping cost to the order API and show it in the cart and checkout pages",
             "repositories_count_one": "{{count}} repository",
             "repositories_count_other": "{{count}} repositories",
+            "repositories_tabs_label": "Changes by repository",
             "request_meta_repositories_one": "{{date}} · {{count}} repository",
             "request_meta_repositories_other": "{{date}} · {{count}} repositories",
             "kind": {

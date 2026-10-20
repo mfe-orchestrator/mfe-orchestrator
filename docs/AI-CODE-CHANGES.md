@@ -43,8 +43,9 @@ needed in the image, and no repository hook is ever run.
 **Edit with AI** on a functional domain starts one agent on every microfrontend and service of the
 domain that has a code repository (at most 10), with the project and domain context. It sees them all
 at once, so one change can span an API and the screens that call it, and it still proposes one diff
-per repository: applying them opens one pull request per repository. Members without a repository are
-left out and listed under the request.
+per repository: applying them opens one pull request per repository. Each message of the conversation shows
+one tab per repository, with its own files and diff, opened on the first proposal to review. Members without
+a repository are left out and listed under the request.
 
 When the domain has nothing for the agent to work on yet, **Generate** first offers to create it:
 

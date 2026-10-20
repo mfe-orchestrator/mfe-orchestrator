@@ -1,4 +1,21 @@
-import { Alert, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label, Spinner, Textarea } from "@mfe-orchestrator/design-system"
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    Input,
+    Label,
+    Spinner,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+    Textarea
+} from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import { format } from "date-fns"
@@ -20,7 +37,7 @@ import {
     Sparkles,
     Trash2
 } from "lucide-react"
-import { useEffect, useId, useRef, useState } from "react"
+import { Fragment, useEffect, useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useSearchParams } from "react-router-dom"
 import AnswerUsage from "@/components/assistant/AnswerUsage"
@@ -458,6 +475,33 @@ const RepositoryResult: React.FC<RepositoryResultProps> = ({ job, repository, la
     )
 }
 
+/** The tab of one repository, over several: whose it is, how many files it changes, and whether it still moves, failed or went out. */
+const RepositoryTab: React.FC<{ repository: AiJobRepository }> = ({ repository }) => {
+    const { t } = useTranslation()
+    const Icon = repository.kind === "service" ? Server : LayoutDashboard
+    const count = repository.files.length
+    return (
+        <TabsTrigger value={repository.requestId} className="min-w-0 max-w-[16rem]" title={repository.microfrontendName} dataTestId="ai-change-repository-tab">
+            <Icon className="shrink-0" aria-hidden="true" />
+            <span className="truncate">{repository.microfrontendName}</span>
+            {count > 0 && (
+                <span aria-hidden="true" className="shrink-0 rounded-full bg-muted px-1.5 tabular-nums text-foreground">
+                    {count}
+                </span>
+            )}
+            {isActive(repository.status) && <LoaderCircle className="shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
+            {repository.status === "FAILED" && <AlertTriangle className="shrink-0 text-destructive" aria-hidden="true" />}
+            {repository.status === "APPLIED" && <CheckCircle2 className="shrink-0 text-green-600 dark:text-green-400" aria-hidden="true" />}
+            <span className="sr-only">
+                {count > 0 && `, ${t("microfrontend.aiChange.files_count", { count })}`}, {t(`microfrontend.aiChange.status.${repository.status}`)}
+            </span>
+        </TabsTrigger>
+    )
+}
+
+/** The tab a message opens on: the first repository with a proposal to review, else the first. */
+const firstTab = (repositories: AiJobRepository[]) => (repositories.find(repository => repository.status === "PROPOSED" && repository.files.length > 0) ?? repositories[0]).requestId
+
 interface TurnViewProps {
     turn: Turn
     /** Over several repositories, each result says whose it is. */
@@ -474,6 +518,20 @@ const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposa
     const { t } = useTranslation()
     const { job, repositories } = turn
     const active = isTurnActive(turn)
+    // Over several repositories, one tab each: the files of one repository are never mixed with those of another.
+    const tabbed = labelled && repositories.length > 1
+    // Follows the repository to review until the user picks one: the proposals land after the tabs are on screen.
+    const [selectedTab, setSelectedTab] = useState<string>()
+
+    const resultOf = (repository: AiJobRepository) => (
+        <RepositoryResult
+            job={job}
+            repository={repository}
+            labelled={labelled}
+            superseded={superseded.has(repository.requestId)}
+            proposal={repository.status === "PROPOSED" ? proposalOf?.(repository) : undefined}
+        />
+    )
 
     return (
         <div className="flex flex-col gap-3">
@@ -490,16 +548,23 @@ const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposa
 
             {job.summary && !active && <p className="whitespace-pre-wrap break-words text-sm">{job.summary}</p>}
 
-            {repositories.map(repository => (
-                <RepositoryResult
-                    key={repository.requestId}
-                    job={job}
-                    repository={repository}
-                    labelled={labelled}
-                    superseded={superseded.has(repository.requestId)}
-                    proposal={repository.status === "PROPOSED" ? proposalOf?.(repository) : undefined}
-                />
-            ))}
+            {tabbed ? (
+                <Tabs value={selectedTab ?? firstTab(repositories)} onValueChange={setSelectedTab} layoutSize="sm">
+                    <TabsList aria-label={t("microfrontend.aiChange.repositories_tabs_label")} className="max-w-full">
+                        {repositories.map(repository => (
+                            <RepositoryTab key={repository.requestId} repository={repository} />
+                        ))}
+                    </TabsList>
+                    {repositories.map(repository => (
+                        // Kept mounted: switching tab keeps the diffs the user unfolded.
+                        <TabsContent key={repository.requestId} value={repository.requestId} forceMount className="mt-3">
+                            {resultOf(repository)}
+                        </TabsContent>
+                    ))}
+                </Tabs>
+            ) : (
+                repositories.map(repository => <Fragment key={repository.requestId}>{resultOf(repository)}</Fragment>)
+            )}
 
             {actions}
 

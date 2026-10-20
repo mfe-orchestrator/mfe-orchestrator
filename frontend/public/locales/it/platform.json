@@ -949,6 +949,7 @@
             "prompt_placeholder_domain": "es. Aggiungi il costo di spedizione all'API degli ordini e mostralo nelle pagine carrello e checkout",
             "repositories_count_one": "{{count}} repository",
             "repositories_count_other": "{{count}} repository",
+            "repositories_tabs_label": "Modifiche per repository",
             "request_meta_repositories_one": "{{date}} · {{count}} repository",
             "request_meta_repositories_other": "{{date}} · {{count}} repository",
             "kind": {
