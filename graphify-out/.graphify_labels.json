@@ -266,7 +266,12 @@
   "264": "[4.0.0] - 2026-08-27",
   "265": "readOAuthResume",
   "266": "UserAlreadyExistsError",
+  "267": "useOAuthApi.ts",
   "268": "curl",
+  "269": "microfrontendTools.test.ts",
+  "270": "fastify.d.ts",
+  "271": ".isCanary",
+  "273": "account_activation",
   "275": "BuildController.ts",
   "277": "DeploymentController.ts",
   "278": "DomainDeploymentController.test.ts"

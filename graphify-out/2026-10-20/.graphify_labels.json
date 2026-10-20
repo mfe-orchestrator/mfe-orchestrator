@@ -266,13 +266,15 @@
   "264": "[4.0.0] - 2026-08-27",
   "265": "readOAuthResume",
   "266": "UserAlreadyExistsError",
-  "267": "[1.0.0] - 2025-12-07",
+  "267": "useOAuthApi.ts",
   "268": "curl",
-  "269": "encryptedFieldsPlugin.ts",
-  "270": "firstLine",
-  "271": "turnStatus",
+  "269": "microfrontendTools.test.ts",
+  "270": "fastify.d.ts",
+  "271": ".isCanary",
+  "272": "[3.1.0] - 2026-08-16",
+  "273": "account_activation",
+  "274": "account_activation",
   "275": "BuildController.ts",
   "277": "DeploymentController.ts",
-  "278": "DomainDeploymentController.test.ts",
-  "279": "account_activation"
+  "278": "DomainDeploymentController.test.ts"
 }
