@@ -22,6 +22,16 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
  */
 const retypedSecret = (value?: string): string | undefined => (value && value !== SECRET_PLACEHOLDER ? value : undefined)
 
+/** Whether two GitLab URLs name the same instance: only a trailing slash may tell them apart. */
+const sameGitlabUrl = (stored: string | undefined, requested: string | undefined) => !!stored && stored.replace(/\/+$/, "") === requested?.replace(/\/+$/, "")
+
+const storedTokenElsewhere = () =>
+    new BusinessException({
+        code: "ACCESS_TOKEN_REQUIRED",
+        message: "The stored access token is used only with the URL it was saved for: type it again to use another one",
+        statusCode: 400
+    })
+
 export const deploySecretName = "MICROFRONTEND_ORCHESTRATOR_API_KEY"
 
 /**
@@ -146,8 +156,12 @@ export class CodeRepositoryService extends BaseAuthorizedService {
      * The token to authenticate a call with: the one just typed in, or the one already stored when the
      * form sent the placeholder back — which is what the edit screens do, since the API never hands
      * them the real token to begin with.
+     *
+     * The stored token is lent only to those who manage the connection, and only towards what it was
+     * stored for: `storedFor` tells whether the target the request names is that one. Without it, any
+     * member could name a host of theirs and receive the token.
      */
-    private async resolveAccessToken(pat: string | undefined, repositoryId?: string): Promise<string> {
+    private async resolveAccessToken(pat: string | undefined, repositoryId: string | undefined, storedFor: (repository: ICodeRepository) => boolean): Promise<string> {
         const typed = retypedSecret(pat)
         if (typed) return typed
 
@@ -159,9 +173,12 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             })
         }
 
-        const repository = await this.findById(repositoryId)
+        const repository = await this.findForWrite(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
+        }
+        if (!storedFor(repository)) {
+            throw storedTokenElsewhere()
         }
 
         return repository.accessToken
@@ -552,7 +569,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async testConnectionAzure(organization: string, pat: string, repositoryId?: string) {
         const client = new AzureDevOpsClient()
-        const token = await this.resolveAccessToken(pat, repositoryId)
+        // The organization may change on the edit screen: the host stays Azure DevOps, so the token stays with it
+        const token = await this.resolveAccessToken(pat, repositoryId, repository => repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS)
         const projects = await client.getProjects(token, organization)
         // Saving the connection writes the deploy key into a variable group: a token without that
         // scope still lists the projects, so it is tried here rather than failing only on save.
@@ -608,8 +626,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             })
         }
 
+        const typed = retypedSecret(body.pat)
+        // Saving pushes the deploy key with the token to the URL: a new one takes the token typed again
+        if (!typed && !sameGitlabUrl(repository.gitlabData?.url, body.url)) {
+            throw storedTokenElsewhere()
+        }
+
         repository.name = body.name
-        repository.accessToken = retypedSecret(body.pat) ?? repository.accessToken
+        repository.accessToken = typed ?? repository.accessToken
         repository.gitlabData = {
             url: body.url,
             groupId: body.groupId,
@@ -623,7 +647,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async testConnectionGitlab(url: string, pat: string, repositoryId?: string) {
-        return new GitLabClient(url, await this.resolveAccessToken(pat, repositoryId)).getGroups()
+        const token = await this.resolveAccessToken(pat, repositoryId, repository => repository.provider === CodeRepositoryProvider.GITLAB && sameGitlabUrl(repository.gitlabData?.url, url))
+        return new GitLabClient(url, token).getGroups()
     }
 
     async getAzureRepositories(repositoryId: string, projectId: string): Promise<RepositoryData[]> {
