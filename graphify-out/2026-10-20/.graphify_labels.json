@@ -49,7 +49,6 @@
   "47": "Environment List & Drag-Drop",
   "48": "Frontend Node TSConfig",
   "49": "Telemetry Service & Config",
-  "50": "User & Invitation API",
   "51": "integration",
   "52": "Azure DevOps Client",
   "53": "Error Handler Middleware",
@@ -249,7 +248,6 @@
   "247": "status",
   "248": "[3.0.0] - 2026-08-16",
   "249": "TemplateScaffoldService.test.ts",
-  "250": "[3.1.0] - 2026-08-16",
   "251": "roles",
   "252": "NpmRegistryClient.ts",
   "253": "package.json",
@@ -271,10 +269,13 @@
   "269": "microfrontendTools.test.ts",
   "270": "fastify.d.ts",
   "271": ".isCanary",
-  "272": "[3.1.0] - 2026-08-16",
+  "272": "encryptedFieldsPlugin.ts",
   "273": "account_activation",
-  "274": "account_activation",
+  "274": "ProjectService.test.ts",
   "275": "BuildController.ts",
+  "276": "integration",
   "277": "DeploymentController.ts",
-  "278": "DomainDeploymentController.test.ts"
+  "278": "DomainDeploymentController.test.ts",
+  "279": "DeploymentCanaryUsersController.ts",
+  "280": "curl"
 }
