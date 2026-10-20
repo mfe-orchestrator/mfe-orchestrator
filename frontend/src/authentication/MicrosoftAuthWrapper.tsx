@@ -26,8 +26,7 @@ const MicrosoftAuthWrapper: React.FC<MicrosoftAuthWrapperProps> = ({ children })
                 redirectUri: window.location.origin
             },
             cache: {
-                cacheLocation: "localStorage",
-                storeAuthStateInCookie: false
+                cacheLocation: "localStorage"
             }
         })
 

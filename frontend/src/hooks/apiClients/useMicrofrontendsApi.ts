@@ -81,6 +81,8 @@ export interface Microfrontend {
         gitlab?: {
             groupPath?: string
             groupId?: number
+            /** Full path of the repository on GitLab, written by the backend when it creates or renames it */
+            path?: string
         }
         createData?: {
             template?: string

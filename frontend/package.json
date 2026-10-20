@@ -14,7 +14,7 @@
         "lint": "biome lint --write ./src",
         "format": "biome format --write ./src",
         "preview": "vite preview",
-        "typecheck": "pnpm exec tsc --noEmit"
+        "typecheck": "pnpm exec tsc --noEmit -p tsconfig.app.json && pnpm exec tsc --noEmit -p tsconfig.node.json"
     },
     "dependencies": {
         "@auth0/auth0-react": "^2.28.2",

@@ -9,10 +9,10 @@ i18n.use(Backend)
     .init({
         fallbackLng: "en",
         supportedLngs: ["it", "en"],
-        debug: process.env.NODE_ENV === "development",
+        debug: import.meta.env.DEV,
         ns: ["platform"],
         defaultNS: "platform",
-        saveMissing: process.env.NODE_ENV === "development",
+        saveMissing: import.meta.env.DEV,
         backend: {
             loadPath: "/locales/{{lng}}/{{ns}}.json",
             // Cache busting: the translations are fetched at runtime, so without a version

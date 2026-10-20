@@ -145,7 +145,14 @@ const Dependencies: React.FC = () => {
 
                 {report?.scannedAt && <p className="text-xs text-foreground-secondary">{t("dependencies.scanned_at", { date: new Date(report.scannedAt).toLocaleString() })}</p>}
 
-                <AlignPeerDependenciesDialog isOpen={isAlignDialogOpen} onOpenChange={setIsAlignDialogOpen} branches={appliedBranches} onApplied={() => reportQuery.refetch()} />
+                <AlignPeerDependenciesDialog
+                    isOpen={isAlignDialogOpen}
+                    onOpenChange={setIsAlignDialogOpen}
+                    branches={appliedBranches}
+                    onApplied={async () => {
+                        await reportQuery.refetch()
+                    }}
+                />
             </SinglePageLayout>
         </ApiStatusHandler>
     )

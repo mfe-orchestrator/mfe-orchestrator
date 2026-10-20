@@ -99,7 +99,9 @@ const formSchema = z
         }
     )
 
-type FormValues = z.infer<typeof formSchema>
+// The defaults of the schema make some fields optional in what the form holds and required in what it submits
+type FormInput = z.input<typeof formSchema>
+type FormValues = z.output<typeof formSchema>
 
 /** Tabs that own validated fields, in the order they are shown: the first one with an error is the one we jump to. */
 const FORM_TABS = ["general", "context", "hosting", "repository"] as const
@@ -145,8 +147,8 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const [activeTab, setActiveTab] = useState<FormTab>(isFormTab(linkedTab) ? linkedTab : "general")
     const assistantEnabled = useAssistantEnabled()
 
-    const getStandardHost = () => {
-        const standardHost = {
+    const getStandardHost = (): FormInput["host"] => {
+        const standardHost: FormInput["host"] = {
             type: "MFE_ORCHESTRATOR_HUB",
             entryPoint: "assets/remoteEntry.js"
         }
@@ -162,7 +164,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         }
     }
 
-    const form = useForm<FormValues>({
+    const form = useForm<FormInput, unknown, FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: frontend || {
             slug: "",
@@ -267,7 +269,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     /** A tab is flagged when any of the fields it owns failed validation, so an error is never hidden behind an inactive tab. */
     const tabHasErrors = (tab: FormTab) => TAB_FIELDS[tab].some(field => Boolean(form.formState.errors[field]))
 
-    const onInvalid = (errors: FieldErrors<FormValues>) => {
+    const onInvalid = (errors: FieldErrors<FormInput>) => {
         const firstTabWithErrors = FORM_TABS.find(tab => TAB_FIELDS[tab].some(field => Boolean(errors[field])))
         if (firstTabWithErrors) setActiveTab(firstTabWithErrors)
     }

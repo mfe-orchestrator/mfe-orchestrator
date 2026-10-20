@@ -45,8 +45,9 @@ const useLogout = () => {
                 return
             }
             // Logout from Microsoft if logged in with Microsoft
-            if (msal?.instance) {
-                await msal.instance.logout()
+            // Not awaited: it leaves the page for Microsoft, and the local session below has to be cleared first
+            if (msal?.accounts?.length) {
+                msal.instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin }).catch(error => console.error("Error during Microsoft logout:", error))
             }
         } catch (error) {
             console.error("Error during logout:", error)

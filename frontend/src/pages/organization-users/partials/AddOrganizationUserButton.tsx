@@ -43,7 +43,7 @@ export const AddOrganizationUserButton: React.FC<{ onSuccess?: () => void }> = (
             z.object({
                 email: z.string().email(t("auth.invalid_email")),
                 role: z.enum([RoleInOrganization.OWNER, RoleInOrganization.ADMIN, RoleInOrganization.MEMBER], {
-                    required_error: t("organization_users.role_required")
+                    error: t("organization_users.role_required")
                 })
             }),
         [t]
