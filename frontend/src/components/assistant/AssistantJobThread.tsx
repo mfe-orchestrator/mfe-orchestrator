@@ -138,7 +138,7 @@ const JobEntry: React.FC<{ job: AiJob }> = ({ job }) => {
                     <AlertDescription className="whitespace-pre-wrap break-words">{job.error || t("microfrontend.aiChange.errors.generic")}</AlertDescription>
                 </Alert>
             )}
-            {job.summary && !active && <p className="whitespace-pre-wrap break-words">{job.summary}</p>}
+            {job.summary && !active && <AssistantMessageText text={job.summary} />}
             <ul className="flex flex-col gap-2" aria-label={t("assistant.jobs.repositories")}>
                 {job.repositories.map(repository => (
                     <RepositoryCard key={repository.requestId} repository={repository} />

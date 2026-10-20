@@ -42,6 +42,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useSearchParams } from "react-router-dom"
 import AnswerUsage from "@/components/assistant/AnswerUsage"
 import { ApplyAllButton, jobErrorMessage, sumUsage } from "@/components/assistant/AssistantJobThread"
+import AssistantMessageText from "@/components/assistant/AssistantMessageText"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
 import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus, AiChangeTarget } from "@/hooks/apiClients/useAiChangesApi"
@@ -347,7 +348,7 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
                 {request.summary && finished && (
                     <div className="flex flex-col gap-1">
                         <h4 className="text-sm font-semibold">{t("microfrontend.aiChange.summary")}</h4>
-                        <p className="whitespace-pre-wrap break-words text-sm">{request.summary}</p>
+                        <AssistantMessageText text={request.summary} className="text-sm" />
                     </div>
                 )}
 
@@ -546,7 +547,7 @@ const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposa
                 </Alert>
             )}
 
-            {job.summary && !active && <p className="whitespace-pre-wrap break-words text-sm">{job.summary}</p>}
+            {job.summary && !active && <AssistantMessageText text={job.summary} className="text-sm" />}
 
             {tabbed ? (
                 <Tabs value={selectedTab ?? firstTab(repositories)} onValueChange={setSelectedTab} layoutSize="sm">
