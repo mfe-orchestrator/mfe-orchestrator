@@ -5,11 +5,13 @@ import { useNavigate } from "react-router-dom"
 // Components
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
+import useGitOpsErrorMessage from "@/hooks/apiClients/useGitOpsErrorMessage"
 // Hooks & Stores
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { DangerZone, ProjectContextSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import { DangerZone, GitOpsSection, ProjectContextSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import type { GitOpsFormValues } from "./partials/GitOpsSection"
 import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
 
@@ -20,6 +22,7 @@ export const Settings: React.FC = () => {
     const projectApi = useProjectApi()
     const navigate = useNavigate()
     const queryClient = useQueryClient()
+    const gitOpsErrorMessage = useGitOpsErrorMessage()
 
     const projectQuery = useQuery({
         queryKey: ["project-summary", project._id],
@@ -66,6 +69,14 @@ export const Settings: React.FC = () => {
         }
     })
 
+    const updateGitOpsMutation = useMutation({
+        mutationFn: (values: GitOpsFormValues) => projectApi.updateProject(project._id, { gitOps: values }, gitOpsErrorMessage),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
+            notifications.showSuccessNotification({ message: t("settings.gitOps.saved") })
+        }
+    })
+
     const projectData = projectQuery.data?.project
 
     return (
@@ -74,6 +85,10 @@ export const Settings: React.FC = () => {
                 {projectData && <ProjectInfoSection {...projectData} onUpdate={values => updateProjectMutation.mutate(values)} isUpdating={updateProjectMutation.isPending} />}
 
                 {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
+
+                {projectData && (
+                    <GitOpsSection projectId={projectData._id} gitOps={projectData.gitOps} onUpdate={values => updateGitOpsMutation.mutate(values)} isUpdating={updateGitOpsMutation.isPending} />
+                )}
 
                 <ProjectStatsSection
                     stats={[

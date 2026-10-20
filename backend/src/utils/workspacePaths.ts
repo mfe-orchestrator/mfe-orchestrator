@@ -41,6 +41,9 @@ export const microfrontendWorkspacePath = (root: string, owner: WorkspaceOwner) 
 export const serviceWorkspacePath = (root: string, owner: Pick<WorkspaceOwner, "organization" | "project"> & { serviceSlug: string }) =>
     path.join(projectWorkspacePath(root, owner), `${safeSegment(owner.serviceSlug)}.service`)
 
+/** `<project folder>/variables.gitops`: the repository config maps and secrets are committed to. No slug holds a dot, so no component folder can take it. */
+export const gitOpsWorkspacePath = (root: string, owner: Pick<WorkspaceOwner, "organization" | "project">) => path.join(projectWorkspacePath(root, owner), "variables.gitops")
+
 export class WorkspacePathError extends Error {}
 
 /** Paths an agent may never read: credentials that can sit in a repository by mistake. */

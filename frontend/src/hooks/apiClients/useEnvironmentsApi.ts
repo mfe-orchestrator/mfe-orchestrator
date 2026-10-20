@@ -1,4 +1,5 @@
 import useApiClient from "../useApiClient"
+import useGitOpsErrorMessage from "./useGitOpsErrorMessage"
 
 export interface EnvironmentDTO {
     slug: string
@@ -23,6 +24,8 @@ export interface CreateEnvironmentDTO {
 
 const useEnvironmentsApi = () => {
     const apiClient = useApiClient()
+    // Creare, rinominare o eliminare un ambiente riallinea il repository GitOps, quando e' attivo
+    const customErrorMessage = useGitOpsErrorMessage()
 
     const getEnvironment = async (id: string) => {
         const response = await apiClient.doRequest<EnvironmentDTO>({
@@ -35,6 +38,7 @@ const useEnvironmentsApi = () => {
         const response = await apiClient.doRequest<EnvironmentDTO>({
             url: `/api/environments`,
             method: "POST",
+            customErrorMessage,
             data
         })
         return response.data
@@ -44,6 +48,7 @@ const useEnvironmentsApi = () => {
         const response = await apiClient.doRequest<EnvironmentDTO[]>({
             url: `/api/environments/bulk`,
             method: "POST",
+            customErrorMessage,
             data
         })
         return response.data
@@ -52,7 +57,8 @@ const useEnvironmentsApi = () => {
     const deleteEnvironment = async (id: string) => {
         const response = await apiClient.doRequest({
             url: `/api/environments/${id}`,
-            method: "DELETE"
+            method: "DELETE",
+            customErrorMessage
         })
         return response.data
     }
@@ -73,6 +79,7 @@ const useEnvironmentsApi = () => {
         const response = await apiClient.doRequest<EnvironmentDTO>({
             url: `/api/environments/${id}`,
             method: "PUT",
+            customErrorMessage,
             data
         })
         return response.data

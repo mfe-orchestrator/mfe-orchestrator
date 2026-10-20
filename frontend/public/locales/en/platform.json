@@ -214,6 +214,32 @@
             "hint": "Markdown is supported. Agents read it with the context_get tool, together with the context of each microfrontend.",
             "tooLong": "The context can be at most {{max}} characters long"
         },
+        "gitOps": {
+            "title": "GitOps for config maps and secrets",
+            "subtitle": "Every time a config map or a secret is saved, it is committed to a repository as a Kubernetes manifest: configMaps/<environment>/<name>.yaml and secrets/<environment>/<name>.yaml, on the default branch.",
+            "enabled": "Commit config maps and secrets to a repository",
+            "connection": "Connection",
+            "connectionPlaceholder": "Pick a connection",
+            "repository": "Repository",
+            "repositoryPlaceholder": "Pick a repository",
+            "noConnections": "The project has no code repository connection yet: add one in Code Repositories.",
+            "secretsWarningTitle": "Secrets are committed in plaintext",
+            "secretsWarning": "Anyone who can read the repository, and its history, sees the values of the secrets. Use a private repository with restricted access.",
+            "exportHint": "Saving these settings with GitOps on commits every existing config map and secret, and removes the manifests of those deleted meanwhile: use it to realign the repository. With GitOps on, a change that cannot be committed is not saved.",
+            "saved": "GitOps settings saved",
+            "errors": {
+                "repository_required": "Pick the connection and the repository",
+                "repository_invalid": "The connection cannot reach this repository, or no longer exists: pick another one in Settings",
+                "commit_failed": "Not saved: the commit to {{repository}} did not go through ({{reason}})",
+                "settings_invalid": "The GitOps settings are not valid: reload the page",
+                "repositories_not_available": "The repositories of this connection cannot be listed: check the connection",
+                "owner_required": "Only an owner of the project can change the GitOps settings",
+                "viewer_forbidden": "A viewer cannot change what is committed to the GitOps repository",
+                "busy": "Another change is being committed to the GitOps repository: try again in a moment",
+                "environment_slug_invalid": "The slug of environment {{slug}} cannot be a folder of the repository: use lowercase letters, digits and dashes",
+                "sync_failed": "Saved, but the GitOps repository is not aligned ({{reason}}): save the GitOps settings again in Settings to export"
+            }
+        },
         "dangerZone": {
             "title": "Danger Zone",
             "subtitle": "These actions are irreversible. Please be certain.",

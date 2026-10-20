@@ -1,6 +1,7 @@
 import type { AxiosError } from "axios"
 import { useTranslation } from "react-i18next"
 import useApiClient, { errorCodeOf } from "../useApiClient"
+import useGitOpsErrorMessage from "./useGitOpsErrorMessage"
 
 /** A config map holds values anyone who sees the project may read; a secret holds values never sent back once written */
 export type VariableMapKind = "configMap" | "secret"
@@ -50,10 +51,11 @@ interface VariableMapErrorDetails {
  */
 export const useVariableMapErrorMessage = () => {
     const { t } = useTranslation()
+    const gitOpsErrorMessage = useGitOpsErrorMessage()
 
     return (error: Error): string | undefined => {
         const key = ERROR_KEYS[errorCodeOf(error) ?? ""]
-        if (!key) return undefined
+        if (!key) return gitOpsErrorMessage(error)
         const details: VariableMapErrorDetails = (error as AxiosError<{ error?: { details?: VariableMapErrorDetails } }>)?.response?.data?.error?.details ?? {}
         return t(key, { key: details.key, first: details.maps?.[0], second: details.maps?.[1], services: details.services?.join(", ") })
     }

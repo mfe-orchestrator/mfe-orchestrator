@@ -9,6 +9,7 @@ import { EnvironmentDTO } from "../types/EnvironmentDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import GitOpsService from "./GitOpsService"
 
 class EnvironmentService extends BaseAuthorizedService {
     async getByProjectId(projectId: string) {
@@ -34,7 +35,9 @@ class EnvironmentService extends BaseAuthorizedService {
         if (environment.order === undefined || environment.order === null) {
             environment.order = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
         }
-        return await environment.save()
+        const saved = await environment.save()
+        await new GitOpsService(this.user).syncEnvironments(projectIdObj)
+        return saved
     }
 
     async createBulk(body: EnvironmentDTO[], projectId: string) {
@@ -49,16 +52,23 @@ class EnvironmentService extends BaseAuthorizedService {
                 maxOrder++
             }
         })
-        return await Environment.insertMany(environments)
+        const saved = await Environment.insertMany(environments)
+        await new GitOpsService(this.user).syncEnvironments(projectIdObj)
+        return saved
     }
 
     async update(environmentId: string | ObjectId, updateData: EnvironmentDTO) {
         await this.ensureAccessToEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
+        const previousSlug = (await Environment.findById(environmentIdObj, { slug: 1 }))?.slug
         const updatedEnvironment = await Environment.findOneAndUpdate({ _id: environmentIdObj }, updateData, { new: true })
 
         if (!updatedEnvironment) {
             throw new EnvironmentNotFoundError(environmentIdObj.toString())
+        }
+        // The slug is the folder of the environment in the GitOps repository
+        if (updatedEnvironment.slug !== previousSlug) {
+            await new GitOpsService(this.user).syncEnvironments(updatedEnvironment.projectId)
         }
 
         return updatedEnvironment
@@ -128,14 +138,16 @@ class EnvironmentService extends BaseAuthorizedService {
         await this.ensureAccessToEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
 
-        return runInTransaction(async session => {
+        const projectId = await runInTransaction(async session => {
             const environment = await Environment.findById(environmentIdObj).session(session ?? null)
             if (!environment) {
                 throw new EnvironmentNotFoundError(environmentIdObj.toString())
             }
 
             await this.deleteWithContents([environmentIdObj], session)
+            return environment.projectId
         })
+        await new GitOpsService(this.user).syncEnvironments(projectId)
     }
 
     // Delete multiple environments
@@ -151,7 +163,12 @@ class EnvironmentService extends BaseAuthorizedService {
             })
         )
 
-        return runInTransaction(session => this.deleteWithContents(idsObj, session))
+        const projectIds = [...new Set((await Environment.find({ _id: { $in: idsObj } }, { projectId: 1 })).map(environment => String(environment.projectId)))]
+        const result = await runInTransaction(session => this.deleteWithContents(idsObj, session))
+        for (const projectId of projectIds) {
+            await new GitOpsService(this.user).syncEnvironments(projectId)
+        }
+        return result
     }
 }
 

@@ -7,6 +7,16 @@ export enum RoleInProject {
     VIEWER = "VIEWER"
 }
 
+/** Config maps and secrets committed to a repository of the project every time one is saved */
+export interface ProjectGitOps {
+    enabled: boolean
+    codeRepository?: {
+        codeRepositoryId: string
+        repositoryId: string
+        name: string
+    }
+}
+
 export interface Project {
     /** The organization the project belongs to: a project sits in exactly one. */
     organizationId: string
@@ -15,6 +25,7 @@ export interface Project {
     description?: string
     /** Markdown per gli agenti AI (client MCP, assistente della console) */
     context?: string
+    gitOps?: ProjectGitOps
     createdAt?: string
     updatedAt?: string
     _id: string
@@ -47,6 +58,8 @@ export interface ProjectUpdateDTO {
     /** `null` azzera il contesto, come per la descrizione. */
     context?: string | null
     isActive?: boolean
+    /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga */
+    gitOps?: { enabled: boolean; codeRepositoryId?: string; repositoryId?: string }
 }
 
 interface AddUserToProjectDTO {
@@ -101,11 +114,12 @@ const useProjectApi = () => {
         return response.data
     }
 
-    const updateProject = async (id: string, project: ProjectUpdateDTO): Promise<Project> => {
+    const updateProject = async (id: string, project: ProjectUpdateDTO, customErrorMessage?: (error: Error) => string | undefined): Promise<Project> => {
         const response = await apiClient.doRequest<Project>({
             url: `/api/projects/${id}`,
             method: "PUT",
-            data: project
+            data: project,
+            customErrorMessage
         })
         return response.data
     }

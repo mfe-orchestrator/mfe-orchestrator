@@ -24,13 +24,16 @@ export interface WorkspaceTarget {
     repositoryName: string
 }
 
+/** What cloning a repository needs: how it is linked and the connection it goes through, whoever links it. */
+export type RepositoryLink = Pick<WorkspaceTarget, "codeRepository" | "repositoryName"> & { component: Pick<RepositoryComponent, "codeRepository"> }
+
 export interface OpenedWorkspace {
     target: WorkspaceTarget
     workingCopy: GitWorkingCopy
     defaultBranch: string
 }
 
-const repositoryDataString = (component: RepositoryComponent, key: string): string | undefined => {
+const repositoryDataString = (component: Pick<RepositoryComponent, "codeRepository">, key: string): string | undefined => {
     const value = component.codeRepository?.repositoryData?.[key]
     return typeof value === "string" && value.startsWith("https://") ? value : undefined
 }
@@ -66,7 +69,7 @@ const onProviderHost = (candidate: string | undefined, codeRepository: ICodeRepo
  * are editable with the component, and the token goes wherever this URL points. Otherwise the
  * URL is computed from the connection.
  */
-export const cloneUrlFor = ({ component, codeRepository, repositoryName }: WorkspaceTarget): string => {
+export const cloneUrlFor = ({ component, codeRepository, repositoryName }: RepositoryLink): string => {
     const stored = [
         component.codeRepository?.cloneUrlHttps,
         repositoryDataString(component, "http_url_to_repo"),
@@ -160,7 +163,7 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
     }
 
     /** Size of the repository as the provider reports it, undefined when it cannot tell. */
-    private async providerSizeBytes({ codeRepository, repositoryName }: WorkspaceTarget): Promise<number | undefined> {
+    private async providerSizeBytes({ codeRepository, repositoryName }: Pick<WorkspaceTarget, "codeRepository" | "repositoryName">): Promise<number | undefined> {
         try {
             switch (codeRepository.provider) {
                 case CodeRepositoryProvider.GITHUB: {
@@ -206,7 +209,7 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
      * on disk could run. The disk check after the clone covers providers that report no size, and a
      * refused repository is remembered for an hour so it is not cloned again on every request.
      */
-    async prepare({ workingCopy, target }: Pick<OpenedWorkspace, "workingCopy" | "target">, branch: string): Promise<string> {
+    async prepare({ workingCopy, target }: { workingCopy: GitWorkingCopy; target: Pick<WorkspaceTarget, "codeRepository" | "repositoryName"> }, branch: string): Promise<string> {
         const maxBytes = fastify.config.REPOSITORIES_MAX_SIZE_MB * 1024 * 1024
         const refusedUntil = refusedRepositories.get(workingCopy.dir)
         if (refusedUntil && refusedUntil > Date.now()) throw this.tooBig()

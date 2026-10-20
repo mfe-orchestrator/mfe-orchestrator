@@ -1,4 +1,5 @@
 export * from "./DangerZone"
+export * from "./GitOpsSection"
 export * from "./ProjectContextSection"
 export * from "./ProjectInfoSection"
 export * from "./ProjectStatsSection"

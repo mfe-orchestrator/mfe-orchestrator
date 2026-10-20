@@ -1,6 +1,7 @@
 import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
+import CustomError from "../errors/CustomError"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
@@ -23,6 +24,7 @@ import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import GitOpsService, { GitOpsSettingsInput } from "./GitOpsService"
 import UserProjectService from "./UserProjectService"
 import { prepareProjectCleanup } from "./workspace/workspaceCleanup"
 
@@ -42,6 +44,8 @@ export interface ProjectUpdateInput {
     /** `null` removes it, like the description. */
     context?: string | null
     isActive?: boolean
+    /** Turning it on commits every config map and secret to the repository: refused when that push fails */
+    gitOps?: GitOpsSettingsInput
 }
 
 interface ContextEntry {
@@ -302,6 +306,9 @@ export class ProjectService extends BaseAuthorizedService {
             if (projectData.isActive !== undefined) {
                 updateData.isActive = projectData.isActive
             }
+            if (projectData.gitOps !== undefined) {
+                updateData.gitOps = await new GitOpsService(this.user).resolveSettings(projectId, projectData.gitOps)
+            }
             for (const field of ["description", "context"] as const) {
                 if (projectData[field] === null) {
                     updateData.$unset = { ...updateData.$unset, [field]: 1 }
@@ -325,7 +332,8 @@ export class ProjectService extends BaseAuthorizedService {
 
             return updated
         } catch (error) {
-            if (error instanceof BusinessException) throw error
+            // A not found, or a GitOps refusal, keeps its own status and code
+            if (error instanceof CustomError) throw error
 
             throw createBusinessException({
                 code: "PROJECT_UPDATE_ERROR",

@@ -215,6 +215,32 @@
             "hint": "Supporta Markdown. Gli agenti lo leggono con il tool context_get insieme al contesto di ogni microfrontend.",
             "tooLong": "Il contesto può contenere al massimo {{max}} caratteri"
         },
+        "gitOps": {
+            "title": "GitOps per config map e secret",
+            "subtitle": "Ogni volta che salvi una config map o un secret viene fatto un commit su un repository come manifest Kubernetes: configMaps/<ambiente>/<nome>.yaml e secrets/<ambiente>/<nome>.yaml, sul branch di default.",
+            "enabled": "Fai il commit di config map e secret su un repository",
+            "connection": "Connessione",
+            "connectionPlaceholder": "Scegli una connessione",
+            "repository": "Repository",
+            "repositoryPlaceholder": "Scegli un repository",
+            "noConnections": "Il progetto non ha ancora connessioni a repository di codice: aggiungine una in Repository di codice.",
+            "secretsWarningTitle": "I secret finiscono nel repository in chiaro",
+            "secretsWarning": "Chiunque possa leggere il repository, e la sua history, vede i valori dei secret. Usa un repository privato con accesso ristretto.",
+            "exportHint": "Salvando queste impostazioni con GitOps attivo viene fatto il commit di tutte le config map e i secret esistenti, e vengono rimossi i manifest di quelli eliminati nel frattempo: usalo per riallineare il repository. Con GitOps attivo, una modifica di cui non si riesce a fare il commit non viene salvata.",
+            "saved": "Impostazioni GitOps salvate",
+            "errors": {
+                "repository_required": "Scegli la connessione e il repository",
+                "repository_invalid": "La connessione non raggiunge questo repository, o non esiste più: scegline un'altra nelle Impostazioni",
+                "commit_failed": "Non salvato: il commit su {{repository}} non è andato a buon fine ({{reason}})",
+                "settings_invalid": "Le impostazioni GitOps non sono valide: ricarica la pagina",
+                "repositories_not_available": "Non è possibile elencare i repository di questa connessione: verifica la connessione",
+                "owner_required": "Solo un owner del progetto può modificare le impostazioni GitOps",
+                "viewer_forbidden": "Un viewer non può modificare ciò che viene committato sul repository GitOps",
+                "busy": "È in corso un altro commit sul repository GitOps: riprova tra un momento",
+                "environment_slug_invalid": "Lo slug dell'ambiente {{slug}} non può essere una cartella del repository: usa lettere minuscole, cifre e trattini",
+                "sync_failed": "Salvato, ma il repository GitOps non è allineato ({{reason}}): salva di nuovo le impostazioni GitOps per riesportare"
+            }
+        },
         "dangerZone": {
             "title": "Zona Pericolosa",
             "subtitle": "Queste azioni sono irreversibili. Sii certo di quello che fai.",
