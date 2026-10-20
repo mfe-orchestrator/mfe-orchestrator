@@ -1,6 +1,7 @@
 import { Coins } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { AssistantUsage } from "@/store/useAssistantStore"
+import type { LlmEffort } from "@/types/ConfigResponseDTO"
 
 interface AnswerUsageProps {
     usage: AssistantUsage
@@ -8,10 +9,12 @@ interface AnswerUsageProps {
     label?: string
     /** The tooltip; by default it describes the cost of one answer. */
     hint?: string
+    /** The reasoning effort the figures were spent at, when known. */
+    effort?: LlmEffort
 }
 
 /** What the answer cost, in tokens: the cached part of the prompt is shown apart, being far cheaper. */
-const AnswerUsage: React.FC<AnswerUsageProps> = ({ usage, label, hint }) => {
+const AnswerUsage: React.FC<AnswerUsageProps> = ({ usage, label, hint, effort }) => {
     const { t, i18n } = useTranslation()
     const format = (value: number) => value.toLocaleString(i18n.language)
     const input =
@@ -24,6 +27,7 @@ const AnswerUsage: React.FC<AnswerUsageProps> = ({ usage, label, hint }) => {
             <Coins className="size-3" aria-hidden />
             {label && <span className="font-medium">{label}:</span>}
             {input} · {t("assistant.usage.output", { formatted: format(usage.outputTokens) })}
+            {effort && ` · ${t("assistant.effort.used", { level: t(`assistant.effort.levels.${effort}`) })}`}
         </p>
     )
 }

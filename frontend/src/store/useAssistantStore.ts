@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { devtools } from "zustand/middleware"
+import type { LlmEffort } from "@/types/ConfigResponseDTO"
 
 export type AssistantRole = "user" | "assistant"
 
@@ -61,6 +62,10 @@ export interface AssistantMessage {
     confirmation?: AssistantConfirmation
     /** Tokens the answer cost, every model round summed; set when it finished. */
     usage?: AssistantUsage
+    /** The reasoning effort the answer was asked with; missing when the provider offers no choice. */
+    effort?: LlmEffort
+    /** The summary of the model's reasoning, streamed before and between the rounds of the answer. */
+    thinking?: string
 }
 
 export interface AssistantUsage {

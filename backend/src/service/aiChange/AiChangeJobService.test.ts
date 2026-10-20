@@ -191,6 +191,36 @@ describe("AiChangeJobService", () => {
             expect(String(requests[0].jobId)).toBe(job._id)
         })
 
+        it("Given a chosen effort, when the job is started, then the job and each of its requests keep it", async () => {
+            const job = await service().create(projectId, { prompt: "Rename the price API", scope: "selection", microfrontendIds: [String(cart._id), String(catalog._id)], effort: "max" })
+
+            expect(job.effort).toBe("max")
+            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ effort: "max" }))
+            const requests = (AiChangeRequest.create as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([document]) => document as Record<string, unknown>)
+            expect(requests.map(request => request.effort)).toEqual(["max", "max"])
+        })
+
+        it("Given no effort chosen, when a job is started, then it reasons at high", async () => {
+            const job = await service().create(projectId, { prompt: "Rename the price API", scope: "global" })
+
+            expect(job.effort).toBe("high")
+            expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ effort: "high" }))
+        })
+
+        it("Given an installation capped at high, when a job is started at max, then the job and its requests keep high, the effort it runs at", async () => {
+            const capped = new AiChangeJobService(user, { ANTHROPIC_API_KEY: "sk-test", AI_MAX_EFFORT: "high" })
+
+            const job = await capped.create(projectId, { prompt: "Rename the price API", scope: "global", effort: "max" })
+
+            expect(job.effort).toBe("high")
+            expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ effort: "high" }))
+        })
+
+        it("Given a job and a request stored before the effort could be chosen, when they are read, then they read as high", () => {
+            expect(AiChangeJob.hydrate({ _id: new Types.ObjectId(), prompt: "Rename the price API" }).effort).toBe("high")
+            expect(AiChangeRequest.hydrate({ _id: new Types.ObjectId(), prompt: "Rename the price API" }).effort).toBe("high")
+        })
+
         it("Given a microfrontend and a service selected, when the job is started, then the job lists each under its kind and each gets its request", async () => {
             services = [catalogApi]
 
@@ -302,6 +332,58 @@ describe("AiChangeJobService", () => {
 
             expect(child).toMatchObject({ parentJobId: String(parentJobId), rootJobId: String(rootJobId), scope: "global" })
             expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ microfrontendId: catalog._id, parentId: requests[0]._id, baseBranch: "develop" }))
+        })
+
+        it("Given a parent that reasoned at low, when it is followed up, then the child reasons at low too unless another effort is chosen", async () => {
+            vi.spyOn(AiChangeJob, "findById").mockImplementation((() =>
+                Promise.resolve({
+                    _id: parentJobId,
+                    rootJobId,
+                    projectId,
+                    userId: user._id,
+                    prompt: "Rename the price API",
+                    scope: "global",
+                    microfrontendIds: [catalog._id],
+                    status: parentStatus,
+                    effort: "low",
+                    usage: {},
+                    updatedAt: new Date()
+                })) as never)
+
+            const inherited = await service().followUp(String(parentJobId), { prompt: "Also rename the tests" })
+            const chosen = await service().followUp(String(parentJobId), { prompt: "Also rename the mocks", effort: "xhigh" })
+
+            expect(inherited.effort).toBe("low")
+            expect(chosen.effort).toBe("xhigh")
+            expect(AiChangeRequest.create).toHaveBeenNthCalledWith(1, expect.objectContaining({ prompt: "Also rename the tests", effort: "low" }))
+            expect(AiChangeRequest.create).toHaveBeenNthCalledWith(2, expect.objectContaining({ prompt: "Also rename the mocks", effort: "xhigh" }))
+        })
+
+        it("Given a parent at max and an installation capped since at medium, when it is followed up, then the child reasons at medium", async () => {
+            vi.spyOn(AiChangeJob, "findById").mockImplementation((() =>
+                Promise.resolve({
+                    _id: parentJobId,
+                    rootJobId,
+                    projectId,
+                    userId: user._id,
+                    prompt: "Rename the price API",
+                    scope: "global",
+                    microfrontendIds: [catalog._id],
+                    status: parentStatus,
+                    effort: "max",
+                    usage: {},
+                    updatedAt: new Date()
+                })) as never)
+
+            const child = await new AiChangeJobService(user, { ANTHROPIC_API_KEY: "sk-test", AI_MAX_EFFORT: "medium" }).followUp(String(parentJobId), { prompt: "Also rename the tests" })
+
+            expect(child.effort).toBe("medium")
+        })
+
+        it("Given a parent stored before the effort could be chosen, when it is followed up, then the child reasons at high", async () => {
+            const child = await service().followUp(String(parentJobId), { prompt: "Also rename the tests" })
+
+            expect(child.effort).toBe("high")
         })
 
         it("Given a job of a domain, when it is followed up, then the child stays in the domain", async () => {
@@ -437,6 +519,43 @@ describe("AiChangeJobService", () => {
                 expect.objectContaining({ model: "job", filter: { _id: jobId, status: AiJobStatus.RUNNING }, update: expect.objectContaining({ status: AiJobStatus.DONE }) })
             )
             expect(workingCopy.discardChanges).toHaveBeenCalled()
+        })
+
+        it("Given a job at max effort, when it runs, then the agent reasons at max, its reasoning is logged on the job and its request, and the usage is audited with the effort", async () => {
+            // The job of beforeEach, chosen at max.
+            Object.assign((await AiChangeJob.findById(jobId)) as object, { effort: "max" })
+            runAgent.mockImplementationOnce(async (_client: unknown, _input: unknown, hooks: { onEvent: (kind: string, message: string) => Promise<void> }) => {
+                await hooks.onEvent("thinking", "The price is rendered in src/App.tsx.")
+                return { summary: "Shows the price with its currency", stopReason: "finished" }
+            })
+
+            await run()
+
+            expect(runAgent.mock.calls[0][1]).toMatchObject({ effort: "max" })
+            const thinking = updates.filter(({ update }) =>
+                ((update.$push as { events?: { $each: { kind: string; message: string }[] } } | undefined)?.events?.$each ?? []).some(
+                    entry => entry.kind === "thinking" && entry.message === "The price is rendered in src/App.tsx."
+                )
+            )
+            expect(thinking.map(({ model }) => model)).toEqual(["job", "request"])
+            expect(log.info).toHaveBeenCalledWith(expect.objectContaining({ audit: "ai_job_usage", effort: "max" }), "AI job usage")
+        })
+
+        it("Given what the agent says and thinks repeating a secret, when it is logged, then the secret is masked and the steps are kept as they are", async () => {
+            runAgent.mockImplementationOnce(async (_client: unknown, _input: unknown, hooks: { onEvent: (kind: string, message: string) => Promise<void> }) => {
+                await hooks.onEvent("thinking", "The pipeline sets NPM_TOKEN=abcdef1234567890.")
+                await hooks.onEvent("text", "Set API_KEY = sk-live-123456789 in the pipeline.")
+                await hooks.onEvent("tool", "read_file catalog/.npmrc")
+                return { summary: "Shows the price with its currency", stopReason: "finished" }
+            })
+
+            await run()
+
+            const logged = pushed(updates).join("\n")
+            expect(logged).not.toContain("abcdef1234567890")
+            expect(logged).not.toContain("sk-live-123456789")
+            expect(logged).toContain("The pipeline sets NPM_TOKEN=")
+            expect(pushed(updates)).toContain("read_file catalog/.npmrc")
         })
 
         describe("going on with the parent's conversation", () => {

@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose"
+import { LLM_EFFORTS, LlmEffort } from "../service/llm/types"
 
 /** The tokens of one assistant answer, every model round included: what the assistant costs, per user and project. */
 export interface IAssistantUsage {
@@ -6,6 +7,8 @@ export interface IAssistantUsage {
     projectId: Schema.Types.ObjectId
     provider?: string
     stopReason: string
+    /** The effort the answer was asked with: more effort, more tokens. */
+    effort?: LlmEffort
     inputTokens: number
     cachedInputTokens: number
     outputTokens: number
@@ -18,6 +21,7 @@ const assistantUsageSchema = new Schema<IAssistantUsage>(
         projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true, index: true },
         provider: { type: String },
         stopReason: { type: String, required: true },
+        effort: { type: String, enum: [...LLM_EFFORTS] },
         inputTokens: { type: Number, default: 0 },
         cachedInputTokens: { type: Number, default: 0 },
         outputTokens: { type: Number, default: 0 }

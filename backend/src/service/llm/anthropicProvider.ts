@@ -57,6 +57,8 @@ export class AnthropicLlmClient implements LlmClient {
                 model: this.model,
                 max_tokens: request.maxTokens,
                 output_config: { effort: request.effort },
+                // Summarized, so the user can follow the reasoning: it changes what is shown, not what is billed.
+                thinking: { type: "adaptive", display: "summarized" },
                 cache_control: { type: "ephemeral" },
                 ...this.fallback,
                 system: request.system,
@@ -66,9 +68,22 @@ export class AnthropicLlmClient implements LlmClient {
             { signal: request.signal }
         )
         if (request.onText) stream.on("text", request.onText)
+        if (request.onThinking) {
+            const onThinking = request.onThinking
+            let streamed = false
+            stream.on("thinking", (delta, snapshot) => {
+                // Nothing to show: an empty delta must not open a round of reasoning that never comes.
+                if (!delta) return
+                // A snapshot equal to its delta starts a new block: kept apart, as in the turn's `thinking`.
+                if (streamed && snapshot === delta) onThinking("\n\n")
+                streamed = true
+                onThinking(delta)
+            })
+        }
         const message = await stream.finalMessage()
 
         const text = message.content.flatMap(block => (block.type === "text" ? [block.text] : [])).join("")
+        const thinking = message.content.flatMap(block => (block.type === "thinking" && block.thinking ? [block.thinking] : [])).join("\n\n")
         const toolCalls = message.content.flatMap(block => (block.type === "tool_use" ? [{ id: block.id, name: block.name, input: toInputObject(block.input) }] : []))
         const stopReason = message.stop_reason === "refusal" ? "refusal" : message.stop_reason === "max_tokens" ? "max_tokens" : toolCalls.length ? "tool_use" : "end_turn"
         return {
@@ -82,6 +97,7 @@ export class AnthropicLlmClient implements LlmClient {
                 cachedInputTokens: message.usage.cache_read_input_tokens ?? 0,
                 outputTokens: message.usage.output_tokens
             },
+            thinking: thinking || undefined,
             message: assistantMessage(text, toolCalls, message.content)
         }
     }

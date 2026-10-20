@@ -35,6 +35,38 @@ with the missing variables in the error.
 Authentication is by API key on every provider. The quality of the assistant and above all of
 the code agent depends on the model: the prompts and tools were written and tested with Claude.
 
+## Reasoning effort and visible reasoning
+
+Users choose how hard the model reasons: per question in the assistant, per job (and follow-up) in
+Code with AI. The levels are `low`, `medium`, `high`, `xhigh` and `max`: more effort means deeper
+reasoning, slower answers and more tokens. When none is chosen the assistant answers at `medium`, a
+new AI job runs at `high` and a follow-up at its parent's effort. The effort used is shown next to
+the token usage and recorded in the usage audit (`assistant_usage`, `ai_job_usage`). The reasoning
+counts towards the output ceiling of each model turn, so the ceiling grows with the effort: 16K
+tokens up to `medium`, 32K at `high` and 64K at `xhigh` and `max` for the assistant; 32K up to
+`high` and 64K above for the code agent.
+
+| Provider                                          | Levels offered                                                |
+| ------------------------------------------------- | ------------------------------------------------------------- |
+| `anthropic`, `azure-foundry`                      | all five                                                      |
+| `azure-openai` with `AZURE_OPENAI_REASONING=true` | `low`, `medium`, `high`; `xhigh` and `max` are sent as `high` |
+| `azure-openai` without reasoning, `gemini`        | none: the choice is hidden; Gemini ignores the effort         |
+
+The levels on Claude and its adaptive thinking need **Claude Opus 4.7 / Sonnet 5 or later**. The
+default model, `claude-opus-5-5`, is one. On Foundry, `AZURE_FOUNDRY_MODEL` must name a deployment
+of such a model: an older one rejects the requests.
+
+Claude also returns a summary of its reasoning. The assistant streams it live above the answer and
+keeps it in saved conversations; an AI job logs it as progress lines, the first 1 000 characters of
+each turn. What is kept has secrets masked, as the answers do. The summary changes what is shown,
+not what is billed. The other providers show no reasoning.
+
+`AI_MAX_EFFORT` (optional: `low`, `medium`, `high`, `xhigh` or `max`) caps the effort users may
+choose. The console offers no level above it, and a request asking for more is served at the cap,
+which is what gets stored and audited. Unset, every level the provider takes is offered. On an
+installation open to sign-ups it bounds the cost of one question: at `max` each model turn may
+produce up to 64K tokens.
+
 ## The console assistant
 
 The assistant acts on the project open in the console, for the signed-in user and with that user's

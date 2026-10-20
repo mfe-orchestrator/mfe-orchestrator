@@ -1,3 +1,4 @@
+import type { LlmEffort } from "@/types/ConfigResponseDTO"
 import useApiClient, { IClientRequestMetadataExtended } from "../useApiClient"
 import { AiChangeEvent, AiChangeStatus } from "./useAiChangesApi"
 
@@ -50,6 +51,8 @@ export interface AiJob {
     error?: string
     /** The cost of this job alone, every model round summed. */
     usage: AiUsage
+    /** The reasoning effort the agent worked at. */
+    effort: LlmEffort
     repositories: AiJobRepository[]
     createdAt: string
     updatedAt: string
@@ -60,16 +63,20 @@ export interface AiWorkingAgents {
     agents: number
 }
 
-export type CreateAiJobDTO =
+/** Without `effort`, the backend works at `high`. */
+export type CreateAiJobDTO = (
     | { prompt: string; scope: "global" }
     | { prompt: string; scope: "domain"; domainId: string }
     | { prompt: string; scope: "selection"; microfrontendIds: string[]; serviceIds?: string[] }
+) & { effort?: LlmEffort }
 
 export interface FollowUpAiJobDTO {
     prompt: string
     /** A subset of the parent's repositories; all of them when missing. */
     microfrontendIds?: string[]
     serviceIds?: string[]
+    /** The parent's effort when missing. */
+    effort?: LlmEffort
 }
 
 /** A microfrontend or a service the AI proposes to create in a domain that has none, with the repository it would be scaffolded in. */

@@ -246,7 +246,7 @@ describe.skipIf(!hasGit)("AiChangeToolbox on several repositories", () => {
 })
 
 /** A model that answers with the scripted turns in order, and records what it was sent. */
-const scriptedClient = (turns: Pick<LlmTurnResult, "stopReason" | "text" | "toolCalls">[]) => {
+const scriptedClient = (turns: Pick<LlmTurnResult, "stopReason" | "text" | "toolCalls" | "thinking">[]) => {
     const sent: LlmTurnRequest[] = []
     const client: LlmClient = {
         provider: LlmProvider.ANTHROPIC,
@@ -306,6 +306,41 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
         expect(firstPrompt).toContain("We use TypeScript strict.")
         expect(firstPrompt).toContain("Pages live in src/pages.")
         expect(firstPrompt).toContain("<request>\nAdd a 404 page\n</request>")
+    })
+
+    it("Given a chosen effort and a model that reasons, when it runs, then every turn is sent at that effort with its room, and each reasoning is logged before what the turn said and did", async () => {
+        const { client, sent } = scriptedClient([
+            {
+                stopReason: "tool_use",
+                thinking: "  The page goes in src/pages.  ",
+                text: "Adding the page.",
+                toolCalls: [toolUse("1", "write_file", { path: "src/pages/NotFound.tsx", content: "x\n" })]
+            },
+            { stopReason: "tool_use", thinking: "x".repeat(2_000), text: "", toolCalls: [toolUse("2", "finish", { summary: "Added the page" })] }
+        ])
+        const events: { kind: string; message: string }[] = []
+
+        await runAiChangeAgent(client, { ...input(), effort: "xhigh" }, { onEvent: (kind, message) => void events.push({ kind, message }), onUsage: () => undefined })
+
+        expect(sent.map(request => [request.effort, request.maxTokens])).toEqual([
+            ["xhigh", 64_000],
+            ["xhigh", 64_000]
+        ])
+        expect(events).toEqual([
+            { kind: "thinking", message: "The page goes in src/pages." },
+            { kind: "text", message: "Adding the page." },
+            { kind: "tool", message: "write_file src/pages/NotFound.tsx" },
+            { kind: "thinking", message: "x".repeat(1_000) },
+            { kind: "tool", message: "finish" }
+        ])
+    })
+
+    it("Given no effort, when it runs, then it reasons at high, as before the effort could be chosen", async () => {
+        const { client, sent } = scriptedClient([{ stopReason: "end_turn", text: "Nothing to do.", toolCalls: [] }])
+
+        await runAiChangeAgent(client, input(), hooks().hooks)
+
+        expect(sent[0]).toMatchObject({ effort: "high", maxTokens: 32_000 })
     })
 
     it("Given a tool call that fails, when it runs, then the error goes back to the model as a tool result and the run goes on", async () => {

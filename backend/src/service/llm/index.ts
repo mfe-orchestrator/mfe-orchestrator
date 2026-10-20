@@ -6,7 +6,7 @@ import AssistantDisabledError from "../../errors/AssistantDisabledError"
 import { AnthropicLlmClient } from "./anthropicProvider"
 import { AzureOpenAiLlmClient } from "./azureOpenAiProvider"
 import { GeminiLlmClient } from "./geminiProvider"
-import { LlmClient, LlmProvider } from "./types"
+import { LLM_EFFORTS, LlmClient, LlmEffort, LlmProvider } from "./types"
 
 export * from "./types"
 
@@ -27,6 +27,8 @@ export interface LlmConfiguration {
     AZURE_OPENAI_API_KEY?: string
     AZURE_OPENAI_DEPLOYMENT?: string
     AZURE_OPENAI_REASONING?: boolean
+    /** The highest effort the installation serves: unset, every level the provider takes. */
+    AI_MAX_EFFORT?: LlmEffort
 }
 
 /** Variables each provider cannot work without. */
@@ -88,6 +90,44 @@ export const createLlmClient = (config: LlmConfiguration): LlmClient | undefined
         default:
             return undefined
     }
+}
+
+/** Whether an effort is above the installation's cap. An unknown cap caps nothing. */
+const aboveCap = (config: LlmConfiguration, effort: LlmEffort) => {
+    const cap = config.AI_MAX_EFFORT ? LLM_EFFORTS.indexOf(config.AI_MAX_EFFORT) : -1
+    return cap !== -1 && LLM_EFFORTS.indexOf(effort) > cap
+}
+
+/**
+ * The effort levels the configured provider honours, lowest first, up to AI_MAX_EFFORT: the console
+ * offers only these. Claude takes them all; an Azure OpenAI reasoning deployment up to `high`; a
+ * deployment that does not reason and Gemini none, as the effort is not sent to them.
+ */
+export const effortsFor = (config: LlmConfiguration): LlmEffort[] => {
+    let provider: LlmProvider | undefined
+    try {
+        provider = resolveLlmProvider(config)
+    } catch {
+        return []
+    }
+    switch (provider) {
+        case LlmProvider.ANTHROPIC:
+        case LlmProvider.AZURE_FOUNDRY:
+            return LLM_EFFORTS.filter(effort => !aboveCap(config, effort))
+        case LlmProvider.AZURE_OPENAI:
+            return config.AZURE_OPENAI_REASONING ? (["low", "medium", "high"] as const).filter(effort => !aboveCap(config, effort)) : []
+        default:
+            return []
+    }
+}
+
+/**
+ * The effort a request is served with: the one asked for, else the default of where it is asked,
+ * never above AI_MAX_EFFORT. What is stored and audited is this one, not what the browser sent.
+ */
+export const resolveEffort = (config: LlmConfiguration, requested: LlmEffort | undefined, fallback: LlmEffort): LlmEffort => {
+    const effort = requested ?? fallback
+    return aboveCap(config, effort) ? config.AI_MAX_EFFORT! : effort
 }
 
 /** Codes OpenAI-compatible providers put on errors sent mid-stream, which carry no HTTP status: Azure sends `no_capacity` when peak load rejects a large request. */

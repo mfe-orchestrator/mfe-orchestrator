@@ -64,6 +64,30 @@ describe("conversations", () => {
         expect(stored.confirmation?.details[0].value).toHaveLength(2_000)
     })
 
+    it("Given an answer with its reasoning and effort, when it is stored, then both are kept, the reasoning clipped and masked like the answer", () => {
+        const long = toStoredMessage({ ...answerWithTools, effort: "high", thinking: "z".repeat(100_000) })
+        const withSecret = toStoredMessage({ ...answerWithTools, effort: "low", thinking: "The pipeline sets NPM_TOKEN=abcdef1234567890." })
+
+        expect(long.effort).toBe("high")
+        expect(long.thinking).toHaveLength(64_000)
+        expect(withSecret.effort).toBe("low")
+        expect(withSecret.thinking).not.toContain("abcdef1234567890")
+    })
+
+    it("Given an effort this server does not know, when it is stored, then it is dropped and the rest is kept", () => {
+        const stored = toStoredMessage({ ...answerWithTools, effort: "turbo" as never, thinking: "Checked the logs." })
+
+        expect(stored).not.toHaveProperty("effort")
+        expect(stored.thinking).toBe("Checked the logs.")
+    })
+
+    it("Given an answer saved before reasoning was kept, when it is stored, then it gains no reasoning nor effort", () => {
+        const stored = toStoredMessage(answerWithTools)
+
+        expect(stored).not.toHaveProperty("thinking")
+        expect(stored).not.toHaveProperty("effort")
+    })
+
     it("Given a secret in the answer or in a confirmation card, when it is stored, then it is masked", () => {
         const withSecrets = {
             ...answerWithTools,

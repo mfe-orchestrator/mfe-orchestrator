@@ -43,6 +43,8 @@ import { Link, useSearchParams } from "react-router-dom"
 import AnswerUsage from "@/components/assistant/AnswerUsage"
 import { ApplyAllButton, jobErrorMessage, sumUsage } from "@/components/assistant/AssistantJobThread"
 import AssistantMessageText from "@/components/assistant/AssistantMessageText"
+import EffortSelect from "@/components/assistant/EffortSelect"
+import { useEffort, useFollowUpEffort } from "@/components/assistant/useEffort"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
 import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus, AiChangeTarget } from "@/hooks/apiClients/useAiChangesApi"
@@ -384,6 +386,7 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
                             usage={{ ...request.usage, cachedInputTokens: request.usage.cachedInputTokens ?? 0 }}
                             label={t("microfrontend.aiChange.usage_label")}
                             hint={t("microfrontend.aiChange.usage_hint")}
+                            effort={request.effort}
                         />
                         {request.jobRepositoryCount !== undefined && request.jobRepositoryCount > 1 && (
                             <p className="text-xs text-muted-foreground">{t("microfrontend.aiChange.usage_shared", { count: request.jobRepositoryCount })}</p>
@@ -585,7 +588,7 @@ const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposa
             {/* Live while the agent works: the cost of the job grows with every round. */}
             {(!active || job.usage.inputTokens > 0) && (
                 <div className="flex flex-col gap-0.5">
-                    <AnswerUsage usage={job.usage} label={t("microfrontend.aiChange.usage_label")} hint={t("microfrontend.aiChange.usage_hint")} />
+                    <AnswerUsage usage={job.usage} label={t("microfrontend.aiChange.usage_label")} hint={t("microfrontend.aiChange.usage_hint")} effort={job.effort} />
                     {/* Part of a wider job: the repositories not shown here share its cost. */}
                     {repositories.length < job.repositories.length && <p className="text-xs text-muted-foreground">{t("microfrontend.aiChange.usage_shared", { count: job.repositories.length })}</p>}
                 </div>
@@ -605,6 +608,8 @@ interface FollowUpFormProps {
     target: AiWorkspaceTarget
     /** The message whose proposal a follow-up refines: none while the agent works or once nothing is left to refine. */
     open?: Turn
+    /** The latest message: while nothing is open, its effort is shown, the one the running follow-up was sent with. */
+    latest?: Turn
     placeholder: string
     onSent: (child: AiJob) => void
     /** Refused: the conversation most likely moved on elsewhere (the assistant, another tab). */
@@ -612,16 +617,17 @@ interface FollowUpFormProps {
 }
 
 /** Goes on with the conversation: a follow-up starts from the open proposal and replaces it once it proposes. */
-const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, placeholder, onSent, onFailed }) => {
+const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, latest, placeholder, onSent, onFailed }) => {
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [draft, setDraft] = useState("")
+    const [effort, setEffort] = useFollowUpEffort((open ?? latest)?.job)
     const promptId = useId()
     const locked = !open
 
     const followUpMutation = useMutation({
         mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) =>
-            aiJobsApi.followUp(jobId, { prompt, ...followUpScope(target) }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
+            aiJobsApi.followUp(jobId, { prompt, effort, ...followUpScope(target) }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
         onSuccess: child => {
             setDraft("")
             onSent(child)
@@ -669,6 +675,7 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, placeholder, 
             <span id={`${promptId}-state`} className="sr-only" aria-live="polite">
                 {placeholder}
             </span>
+            <EffortSelect value={effort} onChange={setEffort} disabled={locked || followUpMutation.isPending} dataTestId="ai-change-follow-up-effort" />
             <Button
                 type="submit"
                 size="icon"
@@ -907,7 +914,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
                     </div>
                 )}
 
-                <FollowUpForm target={target} open={open} placeholder={t(`microfrontend.aiChange.follow_up_${followUpState}`)} onSent={onSent} onFailed={() => chainQuery.refetch()} />
+                <FollowUpForm target={target} open={open} latest={latest} placeholder={t(`microfrontend.aiChange.follow_up_${followUpState}`)} onSent={onSent} onFailed={() => chainQuery.refetch()} />
             </CardContent>
         </Card>
     )
@@ -1203,6 +1210,7 @@ interface ComposerProps {
 
 const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef, focusOnMount, extension }) => {
     const { t } = useTranslation()
+    const [effort, setEffort] = useEffort("code")
     const promptId = useId()
     const branchId = useId()
     // Read once: tied to the live value, the section would fold while the user clears the branch.
@@ -1286,10 +1294,13 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onP
                         <span className="text-xs text-muted-foreground" aria-live="polite">
                             {extension?.pending && extension.pendingLabel ? extension.pendingLabel : t("microfrontend.aiChange.composer_shortcut")}
                         </span>
-                        <Button type="submit" disabled={busy || extension?.blocked} dataTestId="ai-change-generate">
-                            {busy ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
-                            {t("microfrontend.aiChange.generate")}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <EffortSelect value={effort} onChange={setEffort} disabled={busy} dataTestId="ai-change-effort" />
+                            <Button type="submit" disabled={busy || extension?.blocked} dataTestId="ai-change-generate">
+                                {busy ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
+                                {t("microfrontend.aiChange.generate")}
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -1316,6 +1327,8 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
     const queryClient = useQueryClient()
     const [prompt, setPrompt] = useState("")
     const [baseBranch, setBaseBranch] = useState("")
+    // Picked in the composer, sent from here.
+    const [effort] = useEffort("code")
     const [submitted, setSubmitted] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const promptRef = useRef<HTMLTextAreaElement>(null)
@@ -1370,12 +1383,12 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
     const createMutation = useMutation({
         mutationFn: async (): Promise<string> => {
             if (!repository) {
-                const job = await aiJobsApi.create({ prompt: prompt.trim(), scope: "domain", domainId: target.id }, { customErrorMessage: error => jobErrorMessage(t, error, "create") })
+                const job = await aiJobsApi.create({ prompt: prompt.trim(), scope: "domain", domainId: target.id, effort }, { customErrorMessage: error => jobErrorMessage(t, error, "create") })
                 return job.rootJobId
             }
             const created = await aiChangesApi.create(
                 repository,
-                { prompt: prompt.trim(), baseBranch: baseBranch.trim() || undefined },
+                { prompt: prompt.trim(), baseBranch: baseBranch.trim() || undefined, effort },
                 {
                     customErrorMessage: error => {
                         const code = errorCodeOf(error)

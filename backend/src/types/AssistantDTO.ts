@@ -1,3 +1,5 @@
+import type { LlmEffort } from "../service/llm/types"
+
 export interface AssistantChatMessageDTO {
     role: "user" | "assistant"
     content: string
@@ -9,6 +11,8 @@ export interface AssistantChatRequestDTO {
      * `confirmation`, may be the assistant's message that asked for it.
      */
     messages: AssistantChatMessageDTO[]
+    /** How hard the model reasons before answering: `medium` when left out. */
+    effort?: LlmEffort
     /** The user's answer to a `confirm` frame: the turn resumes from the action it names. */
     confirmation?: {
         actionId: string
@@ -46,6 +50,10 @@ export interface AssistantConversationMessageDTO {
     id: string
     role: "user" | "assistant"
     content: string
+    /** The summary of the model's reasoning, shown above the answer. */
+    thinking?: string
+    /** The effort the answer was asked with. */
+    effort?: LlmEffort
     status?: "streaming" | "done" | "error"
     errorKey?: string
     tools?: {

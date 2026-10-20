@@ -1,5 +1,5 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
-import type { LlmMessage } from "../service/llm/types"
+import { LLM_EFFORTS, LlmEffort, LlmMessage } from "../service/llm/types"
 import { aiChangeEventSchema, IAiChangeEvent, IAiChangeUsage } from "./AiChangeRequestModel"
 
 export enum AiJobStatus {
@@ -41,6 +41,8 @@ export interface IAiChangeJob extends Document<ObjectId> {
     /** The services among them, shown after the microfrontends. */
     serviceIds: Schema.Types.ObjectId[]
     status: AiJobStatus
+    /** How hard the agent reasons: the user's choice, else the parent's for a follow-up, else `high`. */
+    effort: LlmEffort
     events: IAiChangeEvent[]
     summary?: string
     /**
@@ -68,6 +70,8 @@ const aiChangeJobSchema = new Schema<IAiChangeJob>(
         microfrontendIds: { type: [{ type: Schema.Types.ObjectId, ref: "Microfrontend" }], default: [] },
         serviceIds: { type: [{ type: Schema.Types.ObjectId, ref: "Service" }], default: [] },
         status: { type: String, enum: Object.values(AiJobStatus), default: AiJobStatus.PENDING, required: true },
+        // Jobs from before the effort could be chosen ran at high: they read so.
+        effort: { type: String, enum: [...LLM_EFFORTS], default: "high" },
         events: { type: [aiChangeEventSchema], default: [] },
         summary: { type: String },
         transcript: { type: [Schema.Types.Mixed], default: undefined },

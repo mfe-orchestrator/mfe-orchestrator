@@ -296,6 +296,12 @@ export default fastifyPlugin(
                     type: "boolean",
                     default: false
                 },
+                // The highest reasoning effort users may choose: low, medium, high, xhigh or max. Higher
+                // efforts take more tokens per answer; unset, every level the model takes is offered.
+                AI_MAX_EFFORT: {
+                    type: "string",
+                    enum: ["low", "medium", "high", "xhigh", "max"]
+                },
                 // Assistant questions per IP per minute. Each one is a paid model call, so
                 // the ceiling is separate from, and lower than, RATE_LIMIT_MAX.
                 ASSISTANT_RATE_LIMIT_MAX: {

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { isProtectedPath, isSecretPath, resolveInsideWorkingCopy, WorkspacePathError } from "../../utils/workspacePaths"
-import { LlmClient, LlmMessage, LlmTool, LlmUsage } from "../llm"
+import { LlmClient, LlmEffort, LlmMessage, LlmTool, LlmUsage } from "../llm"
 import { runAgentLoop, runToolsInOrder } from "../llm/agentLoop"
 import { compactTranscript } from "../llm/transcript"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
@@ -13,7 +13,8 @@ export const AI_CHANGE_LIMITS = {
     extraRoundsPerRepository: 20,
     /** Rounds of a job however many repositories it has. */
     maxRoundsTotal: 120,
-    maxTokensPerTurn: 32_000,
+    /** The reasoning counts towards it: the highest efforts get more room. */
+    maxTokensPerTurn: { low: 32_000, medium: 32_000, high: 32_000, xhigh: 64_000, max: 64_000 } satisfies Record<LlmEffort, number>,
     /** Files read are cut here: past it a file is generated or vendored, rarely something to edit by hand. */
     maxReadBytes: 100_000,
     /** Distinct paths the agent may write or delete in one repository. */
@@ -32,6 +33,9 @@ export const AI_CHANGE_LIMITS = {
      */
     rateLimitWaitsMs: [15_000, 30_000, 60_000, 60_000, 60_000]
 }
+
+/** When neither the user nor a parent job chose: code changes are worth reasoning hard. */
+export const AI_CHANGE_DEFAULT_EFFORT: LlmEffort = "high"
 
 /** The limits that grow with the number of repositories of a job. */
 export const agentLimitsFor = (repositoryCount: number) => {
@@ -82,6 +86,8 @@ export interface AiChangeAgentDomain {
 
 export interface AiChangeAgentInput {
     prompt: string
+    /** How hard the model reasons on every turn of the run: {@link AI_CHANGE_DEFAULT_EFFORT} when left out. */
+    effort?: LlmEffort
     project: { name: string; context?: string }
     /** The functional domain the job works on: its repositories are its frontend and its backend. */
     domain?: AiChangeAgentDomain
@@ -98,7 +104,7 @@ export interface AiChangeAgentInput {
 }
 
 export interface AiChangeAgentHooks {
-    onEvent: (kind: "info" | "tool" | "text", message: string) => Promise<void> | void
+    onEvent: (kind: "info" | "tool" | "text" | "thinking", message: string) => Promise<void> | void
     onUsage: (usage: LlmUsage) => Promise<void> | void
 }
 
@@ -641,20 +647,24 @@ export const runAiChangeAgent = async (client: LlmClient, input: AiChangeAgentIn
     )
     const messages: LlmMessage[] = input.history?.length ? [...input.history, { role: "user", text: describeNextMessage(input) }] : [{ role: "user", text: describeInput(input) }]
 
+    const effort = input.effort ?? AI_CHANGE_DEFAULT_EFFORT
     const loop = await runAgentLoop({
         client,
         system: systemPrompt(input.repositories),
         tools: toolsFor(input.repositories.length > 1),
         messages,
         maxRounds: agentLimitsFor(input.repositories.length).maxRounds,
-        maxTokens: AI_CHANGE_LIMITS.maxTokensPerTurn,
-        effort: "high",
+        maxTokens: AI_CHANGE_LIMITS.maxTokensPerTurn[effort],
+        effort,
         signal,
         rateLimitWaitsMs: AI_CHANGE_LIMITS.rateLimitWaitsMs,
         onRateLimited: () => hooks.onEvent("info", "rate-limited"),
         onTurn: async result => {
             await hooks.onUsage(result.usage)
-            if (result.stopReason !== "refusal" && result.text.trim()) await hooks.onEvent("text", result.text.trim().slice(0, 1_000))
+            if (result.stopReason === "refusal") return
+            // The reasoning first: the model thought it through before saying and doing what the turn holds.
+            if (result.thinking?.trim()) await hooks.onEvent("thinking", result.thinking.trim().slice(0, 1_000))
+            if (result.text.trim()) await hooks.onEvent("text", result.text.trim().slice(0, 1_000))
         },
         // One at a time: writes and reads of the same file must happen in the order the model asked for.
         runTools: async calls => ({

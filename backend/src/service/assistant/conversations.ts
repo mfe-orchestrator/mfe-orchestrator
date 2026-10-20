@@ -3,6 +3,7 @@ import { createBusinessException } from "../../errors/BusinessException"
 import AssistantConversation from "../../models/AssistantConversationModel"
 import { AssistantConversationDTO, AssistantConversationMessageDTO, AssistantConversationSummaryDTO } from "../../types/AssistantDTO"
 import { toObjectId } from "../../utils/mongooseUtils"
+import { LLM_EFFORTS } from "../llm/types"
 import { redactSecrets } from "./assistantTools"
 
 /** The history shows the most recent ones only. */
@@ -34,6 +35,10 @@ export const toStoredMessage = (message: AssistantConversationMessageDTO): Assis
         id: message.id,
         role: message.role,
         content: safe(message.content, MAX_CONTENT_CHARS),
+        // The reasoning can repeat what the tools returned: masked and clipped like the answer.
+        thinking: message.thinking === undefined ? undefined : safe(message.thinking, MAX_CONTENT_CHARS),
+        // Left unchecked by the schema, so that an unknown level never stops a save: dropped here.
+        effort: message.effort && LLM_EFFORTS.includes(message.effort) ? message.effort : undefined,
         // An answer saved while it streamed reads as finished when reopened.
         status: message.status === "streaming" ? "done" : message.status,
         errorKey: message.errorKey,

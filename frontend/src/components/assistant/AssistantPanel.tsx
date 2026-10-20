@@ -17,8 +17,10 @@ import AssistantJobThread from "./AssistantJobThread"
 import AssistantMessageText from "./AssistantMessageText"
 import AssistantNewJobDialog from "./AssistantNewJobDialog"
 import AssistantToolCallRow from "./AssistantToolCallRow"
+import EffortSelect from "./EffortSelect"
 import useAssistantEnabled from "./useAssistantEnabled"
 import useAssistantJobsWatcher from "./useAssistantJobsWatcher"
+import { useEffort } from "./useEffort"
 
 const MAX_QUESTION_CHARS = 4_000
 
@@ -50,11 +52,20 @@ interface AnswerBubbleProps {
 const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAnswerConfirmation }) => {
     const { t } = useTranslation()
     const tools = message.tools ?? []
-    // A running tool shows its own spinner.
-    const isThinking = message.status === "streaming" && !tools.some(tool => tool.status === "running")
+    const thinking = message.thinking?.trim()
+    const reasoning = Boolean(thinking) && message.status === "streaming" && !message.content
+    // A running tool shows its own spinner, the reasoning streaming in shows that the model is at work.
+    const isThinking = message.status === "streaming" && !tools.some(tool => tool.status === "running") && !reasoning
 
     return (
         <div className="flex flex-col gap-2 text-sm text-foreground">
+            {thinking && (
+                // Open while the model reasons, folded once the answer starts: the answer is what the user reads.
+                <details open={reasoning} className="text-xs text-foreground-secondary" data-testid="assistant-reasoning">
+                    <summary className="cursor-pointer select-none">{t("assistant.reasoning")}</summary>
+                    <p className="mt-1 whitespace-pre-wrap break-words border-l-2 border-divider pl-3">{thinking}</p>
+                </details>
+            )}
             {tools.length > 0 && (
                 <div className="flex flex-col gap-1">
                     {tools.map((tool, index) => (
@@ -67,7 +78,7 @@ const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAns
             {isThinking && <p className="text-foreground-secondary animate-pulse">{t("assistant.thinking")}</p>}
             {message.confirmation && <AssistantConfirmationCard confirmation={message.confirmation} disabled={isStreaming} onAnswer={onAnswerConfirmation} />}
             {message.errorKey && <p className={message.status === "error" ? "text-destructive" : "text-foreground-secondary"}>{t(`assistant.errors.${message.errorKey}`)}</p>}
-            {message.usage && <AnswerUsage usage={message.usage} />}
+            {message.usage && <AnswerUsage usage={message.usage} effort={message.effort} />}
         </div>
     )
 }
@@ -95,7 +106,8 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
     const { isOpen, messages, close, toggle, reset } = useAssistantStore()
     const pendingQuestion = useAssistantStore(state => state.pendingQuestion)
     const projectId = useProjectStore(state => state.project?._id)
-    const { send, answerConfirmation, stop, isStreaming } = useAssistantChat()
+    const [effort, setEffort] = useEffort("assistant")
+    const { send, answerConfirmation, stop, isStreaming } = useAssistantChat(effort)
     const jobTabs = useAssistantJobsStore(state => (projectId && state.tabsByProject[projectId]) || NO_TABS)
     const storedTab = useAssistantJobsStore(state => (projectId && state.activeTabByProject[projectId]) || "project")
     const setActiveTab = useAssistantJobsStore(state => state.setActiveTab)
@@ -309,7 +321,11 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
                                         </Button>
                                     )}
                                 </div>
-                                <p className="text-xs text-foreground-secondary">{t("assistant.disclaimer")}</p>
+                                {/* Below the field, not next to it: in the docked panel the question needs the width. */}
+                                <div className="flex items-start gap-2">
+                                    <p className="min-w-0 flex-1 text-xs text-foreground-secondary">{t("assistant.disclaimer")}</p>
+                                    <EffortSelect value={effort} onChange={setEffort} dataTestId="assistant-effort" />
+                                </div>
                             </form>
                         </>
                     )}

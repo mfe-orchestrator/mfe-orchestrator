@@ -6,17 +6,21 @@ import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import { AssistantChatRequestDTO, AssistantProjectDraftDTO } from "../../types/AssistantDTO"
 import { toObjectId } from "../../utils/mongooseUtils"
 import BaseAuthorizedService from "../BaseAuthorizedService"
-import { getLlmClient, LlmConfiguration, LlmMessage, LlmToolResult, LlmUsage } from "../llm"
+import { getLlmClient, LlmConfiguration, LlmEffort, LlmMessage, LlmToolResult, LlmUsage, resolveEffort } from "../llm"
 import { runAgentLoop } from "../llm/agentLoop"
 import { AssistantToolEvents, AssistantToolRunner, assistantToolDefinitions } from "./assistantActions"
 import { PendingAssistantAction, takePendingAction } from "./pendingActions"
 
 const MAX_TOKENS = 16_000
+/** The ceiling of each round of an answer: the reasoning counts towards it, so more effort gets more room. */
+const MAX_TOKENS_BY_EFFORT: Record<LlmEffort, number> = { low: 16_000, medium: 16_000, high: 32_000, xhigh: 64_000, max: 64_000 }
 /**
  * Upper bound on model ↔ tool round-trips for one question, so a confused turn cannot loop forever.
  * Room for a task of several steps: look ids up, change a few things, check the outcome.
  */
 const MAX_TOOL_ROUNDS = 16
+/** When the user did not choose: enough for a task of several steps, still quick to answer. */
+const DEFAULT_EFFORT: LlmEffort = "medium"
 
 const CHAT_SYSTEM_PROMPT = `You are Maestro, the assistant built into the MFE Orchestrator console, a platform to build, deploy and serve microfrontends.
 
@@ -80,6 +84,8 @@ const PROJECT_DRAFT_SCHEMA = {
 
 export interface AssistantStreamHandlers extends AssistantToolEvents {
     onText: (delta: string) => void
+    /** The summary of the model's reasoning as it is generated. */
+    onThinking: (delta: string) => void
 }
 
 export type AssistantStopReason = "end_turn" | "refusal" | "max_tokens" | "max_tool_rounds" | "awaiting_confirmation"
@@ -90,6 +96,8 @@ export interface AssistantChatOutcome {
     wrote: boolean
     /** Tokens of every model round of this answer, shown to the user under it. */
     usage: LlmUsage
+    /** The effort the answer was given with: the default or the installation's cap when they apply. */
+    effort: LlmEffort
 }
 
 /** The user's answer to a destructive action, already taken out of the store. */
@@ -218,20 +226,28 @@ class AssistantService extends BaseAuthorizedService {
         }
 
         // Each round is a new message: without a break its text would run into the previous one.
+        // The same goes for the reasoning, which each round summarises anew.
         let textRound: number | undefined
+        let thinkingRound: number | undefined
+        const effort = resolveEffort(this.config, request.effort, DEFAULT_EFFORT)
         const loop = await runAgentLoop({
             client: llm,
             system: CHAT_SYSTEM_PROMPT,
             tools: assistantToolDefinitions,
             messages,
             maxRounds: MAX_TOOL_ROUNDS,
-            maxTokens: MAX_TOKENS,
-            effort: "medium",
+            maxTokens: MAX_TOKENS_BY_EFFORT[effort],
+            effort,
             signal,
             onText: (delta, round) => {
                 if (textRound !== undefined && textRound !== round) handlers.onText("\n\n")
                 textRound = round
                 handlers.onText(delta)
+            },
+            onThinking: (delta, round) => {
+                if (thinkingRound !== undefined && thinkingRound !== round) handlers.onThinking("\n\n")
+                thinkingRound = round
+                handlers.onThinking(delta)
             },
             runTools: async calls => {
                 // The turn so far, after the user's last message: parked with an action waiting for the user.
@@ -243,7 +259,7 @@ class AssistantService extends BaseAuthorizedService {
             }
         })
         const stopReason: AssistantStopReason = awaitingConfirmation ? "awaiting_confirmation" : loop.stopReason === "max_rounds" ? "max_tool_rounds" : (loop.stopReason as AssistantStopReason)
-        return { stopReason, wrote, usage: loop.usage }
+        return { stopReason, wrote, usage: loop.usage, effort }
     }
 
     /**

@@ -1,7 +1,10 @@
 import type OpenAI from "openai"
 import { toResponseInputItems } from "openai/lib/responses/ResponseInputItems"
 import type { FunctionTool, Response, ResponseInputItem, ResponseOutputItem } from "openai/resources/responses/responses"
-import { assistantMessage, LlmClient, LlmJsonRequest, LlmMessage, LlmProvider, LlmStopReason, LlmTool, LlmTurnRequest, LlmTurnResult, toInputObject } from "./types"
+import { assistantMessage, LlmClient, LlmEffort, LlmJsonRequest, LlmMessage, LlmProvider, LlmStopReason, LlmTool, LlmTurnRequest, LlmTurnResult, toInputObject } from "./types"
+
+/** Deployments differ in the levels they accept: past `high` is sent as `high`, which every reasoning model takes. */
+const toReasoningEffort = (effort: LlmEffort): "low" | "medium" | "high" => (effort === "xhigh" || effort === "max" ? "high" : effort)
 
 const toTools = (tools: LlmTool[]): FunctionTool[] => tools.map(tool => ({ type: "function", name: tool.name, description: tool.description, parameters: tool.inputSchema, strict: false }))
 
@@ -70,8 +73,8 @@ export class AzureOpenAiLlmClient implements LlmClient {
         private readonly reasoning: boolean
     ) {}
 
-    private options(effort: LlmTurnRequest["effort"]) {
-        return this.reasoning ? { reasoning: { effort }, include: ["reasoning.encrypted_content" as const] } : {}
+    private options(effort: LlmEffort) {
+        return this.reasoning ? { reasoning: { effort: toReasoningEffort(effort) }, include: ["reasoning.encrypted_content" as const] } : {}
     }
 
     async turn(request: LlmTurnRequest): Promise<LlmTurnResult> {
@@ -117,7 +120,7 @@ export class AzureOpenAiLlmClient implements LlmClient {
                 max_output_tokens: request.maxTokens,
                 store: false,
                 text: { format: { type: "json_schema", name: "answer", schema: request.schema, strict: true } },
-                ...(this.reasoning ? { reasoning: { effort: request.effort } } : {})
+                ...(this.reasoning ? { reasoning: { effort: toReasoningEffort(request.effort) } } : {})
             },
             { signal: request.signal }
         )

@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom"
 import useAssistantJobsStore from "@/store/useAssistantJobsStore"
 import useAssistantStore, { AssistantRole, AssistantUsage, toStored } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
+import type { LlmEffort } from "@/types/ConfigResponseDTO"
 import useAiJobsApi from "./apiClients/useAiJobsApi"
 import useAssistantApi from "./apiClients/useAssistantApi"
 import useApiClient from "./useApiClient"
@@ -71,8 +72,10 @@ const buildHistory = (limit: number) => {
  * The answer arrives as Server-Sent Events over a POST, so it is read with fetch like the
  * build status stream: EventSource can neither POST nor carry the Authorization header.
  * The frames are described in `backend/src/service/assistant/assistantActions.ts`.
+ *
+ * `effort` goes with every request; undefined when the provider offers no choice, and the backend applies its default.
  */
-const useAssistantChat = () => {
+const useAssistantChat = (effort?: LlmEffort) => {
     const { getToken } = useApiClient()
     const { i18n } = useTranslation()
     const location = useLocation()
@@ -149,7 +152,7 @@ const useAssistantChat = () => {
                 headers,
                 signal: abortController.signal,
                 cache: "no-store",
-                body: JSON.stringify({ ...body, context: { page: location.pathname, environmentId: projectStore.environment?._id, locale: i18n.language } })
+                body: JSON.stringify({ ...body, effort, context: { page: location.pathname, environmentId: projectStore.environment?._id, locale: i18n.language } })
             })
 
             if (!response.ok || !response.body) {
@@ -174,6 +177,8 @@ const useAssistantChat = () => {
 
                     if (event === "text") {
                         updateMessage(answerId, message => ({ ...message, content: message.content + payload.delta }))
+                    } else if (event === "thinking") {
+                        updateMessage(answerId, message => ({ ...message, thinking: (message.thinking ?? "") + payload.delta }))
                     } else if (event === "tool_call") {
                         const { id, name, title, kind, input } = payload
                         updateMessage(answerId, message => ({ ...message, tools: [...(message.tools || []), { id, name, title: title || name, kind, input: input ?? {}, status: "running" }] }))
@@ -255,7 +260,7 @@ const useAssistantChat = () => {
         const answerId = newId()
         const conversationId = useAssistantStore.getState().ensureConversationId()
         addMessage({ id: newId(), role: "user", content: trimmed })
-        addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [] })
+        addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [], effort })
         // Saved with the question too: a reload during the answer would otherwise lose the turn, and a first question its conversation.
         save(conversationId)
 
@@ -280,7 +285,7 @@ const useAssistantChat = () => {
         updateTool(confirmation.callId, tool => ({ ...tool, status: approved ? "running" : "declined" }))
 
         const answerId = newId()
-        addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [] })
+        addMessage({ id: answerId, role: "assistant", content: "", status: "streaming", tools: [], effort })
         // The server takes the answer at once: reopened after a reload, the card must not ask again.
         const conversationId = useAssistantStore.getState().conversationId
         if (conversationId) save(conversationId)

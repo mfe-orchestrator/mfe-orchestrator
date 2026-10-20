@@ -14,6 +14,8 @@ import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobs
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import AnswerUsage from "./AnswerUsage"
 import AssistantMessageText from "./AssistantMessageText"
+import EffortSelect from "./EffortSelect"
+import { useFollowUpEffort } from "./useEffort"
 
 export const POLL_INTERVAL_MS = 2000
 export const PROMPT_MAX_LENGTH = 8000
@@ -144,7 +146,7 @@ const JobEntry: React.FC<{ job: AiJob }> = ({ job }) => {
                     <RepositoryCard key={repository.requestId} repository={repository} />
                 ))}
             </ul>
-            {!active && <AnswerUsage usage={job.usage} label={t("assistant.jobs.usage_job")} hint={t("assistant.jobs.usage_hint")} />}
+            {!active && <AnswerUsage usage={job.usage} label={t("assistant.jobs.usage_job")} hint={t("assistant.jobs.usage_hint")} effort={job.effort} />}
         </div>
     )
 }
@@ -205,9 +207,11 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target }
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [draft, setDraft] = useState("")
+    // While nothing is open to refine, the latest job's: what the running follow-up was sent with.
+    const [effort, setEffort] = useFollowUpEffort(target ?? latest)
 
     const followUpMutation = useMutation({
-        mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) => aiJobsApi.followUp(jobId, { prompt }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
+        mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) => aiJobsApi.followUp(jobId, { prompt, effort }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
         onSuccess: child => {
             useAssistantJobsStore.getState().openJob(projectId, child, true)
             setDraft("")
@@ -231,38 +235,42 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target }
 
     return (
         <form
-            className="flex items-end gap-2 border-t border-divider px-4 py-3"
+            className="flex flex-col gap-2 border-t border-divider px-4 py-3"
             onSubmit={event => {
                 event.preventDefault()
                 submit()
             }}
         >
-            <Textarea
-                value={draft}
-                maxLength={PROMPT_MAX_LENGTH}
-                rows={2}
-                className="min-h-[44px] resize-none"
-                disabled={!ready || followUpMutation.isPending}
-                placeholder={t(placeholder)}
-                aria-label={t("assistant.jobs.follow_up_placeholder")}
-                dataTestId="assistant-job-follow-up"
-                onChange={event => setDraft(event.target.value)}
-                onKeyDown={event => {
-                    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                        event.preventDefault()
-                        submit()
-                    }
-                }}
-            />
-            <Button
-                type="submit"
-                size="icon"
-                aria-label={t("assistant.jobs.follow_up_send")}
-                disabled={!draft.trim() || !ready || followUpMutation.isPending}
-                dataTestId="assistant-job-follow-up-send"
-            >
-                {followUpMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <ArrowUp />}
-            </Button>
+            <div className="flex items-end gap-2">
+                <Textarea
+                    value={draft}
+                    maxLength={PROMPT_MAX_LENGTH}
+                    rows={2}
+                    className="min-h-[44px] resize-none"
+                    disabled={!ready || followUpMutation.isPending}
+                    placeholder={t(placeholder)}
+                    aria-label={t("assistant.jobs.follow_up_placeholder")}
+                    dataTestId="assistant-job-follow-up"
+                    onChange={event => setDraft(event.target.value)}
+                    onKeyDown={event => {
+                        if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                            event.preventDefault()
+                            submit()
+                        }
+                    }}
+                />
+                <Button
+                    type="submit"
+                    size="icon"
+                    aria-label={t("assistant.jobs.follow_up_send")}
+                    disabled={!draft.trim() || !ready || followUpMutation.isPending}
+                    dataTestId="assistant-job-follow-up-send"
+                >
+                    {followUpMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <ArrowUp />}
+                </Button>
+            </div>
+            {/* Below the field, not next to it: the panel is too narrow for both. */}
+            <EffortSelect value={effort} onChange={setEffort} disabled={!ready || followUpMutation.isPending} className="self-end" dataTestId="assistant-job-follow-up-effort" />
         </form>
     )
 }
@@ -349,7 +357,7 @@ const AssistantJobThread: React.FC<AssistantJobThreadProps> = ({ projectId, tab 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex flex-col gap-1 border-b border-divider px-4 py-2" data-testid="assistant-job-header">
-                <AnswerUsage usage={latest.usage} label={t("assistant.jobs.usage_latest")} hint={t("assistant.jobs.usage_hint")} />
+                <AnswerUsage usage={latest.usage} label={t("assistant.jobs.usage_latest")} hint={t("assistant.jobs.usage_hint")} effort={latest.effort} />
                 {chain.length > 1 && <AnswerUsage usage={sumUsage(chain)} label={t("assistant.jobs.usage_total", { count: chain.length })} hint={t("assistant.jobs.usage_hint")} />}
                 {chainQuery.isError && <p className="text-xs text-destructive">{t("assistant.jobs.errors.load")}</p>}
                 {target && proposed.length > 0 && (

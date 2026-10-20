@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify"
-import { isLlmEnabled } from "../service/llm"
+import { effortsFor, isLlmEnabled } from "../service/llm"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import ConfigResponseDTO from "../types/ConfigResponseDTO"
 import { getOAuthConfig } from "../utils/oauthConfig"
@@ -18,6 +18,7 @@ export default async function configurationController(fastify: FastifyInstance) 
                 url: oauthConfig.enabled ? oauthConfig.resource : ""
             },
             assistantEnabled: isLlmEnabled(config),
+            aiEfforts: effortsFor(config),
             frontendUrl: config.FRONTEND_URL,
             providers: {},
             codeRepository: {

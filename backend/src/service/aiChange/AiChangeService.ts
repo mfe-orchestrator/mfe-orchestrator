@@ -1,7 +1,7 @@
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeRequest, { AiChangeStatus, IAiChangeRequest } from "../../models/AiChangeRequestModel"
-import { getLlmClient } from "../llm"
+import { getLlmClient, LlmEffort } from "../llm"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
 import { findComponent, ownerFields, RepositoryComponent, RepositoryComponentRef } from "../workspace/repositoryComponent"
 import AiChangeJobService from "./AiChangeJobService"
@@ -12,6 +12,8 @@ const LISTED_CONVERSATIONS = 20
 export interface AiChangeCreateInput {
     prompt: string
     baseBranch?: string
+    /** How hard the agent reasons: the job's default when left out. */
+    effort?: LlmEffort
 }
 
 /**
@@ -48,7 +50,8 @@ export class AiChangeService extends AiChangeBaseService {
                 projectId: component.projectId,
                 prompt: input.prompt,
                 scope: "selection",
-                repositories: [{ component, baseBranch: input.baseBranch?.trim() || workspace.defaultBranch }]
+                repositories: [{ component, baseBranch: input.baseBranch?.trim() || workspace.defaultBranch }],
+                effort: input.effort
             },
             client
         )

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 import { AnthropicLlmClient, ClaudeClient } from "./anthropicProvider"
 import { AzureOpenAiLlmClient } from "./azureOpenAiProvider"
 import { GeminiLlmClient } from "./geminiProvider"
-import { isLlmEnabled, isRateLimitError, LlmMessage, LlmProvider, LlmTurnRequest, resolveLlmProvider } from "./index"
+import { effortsFor, isLlmEnabled, isRateLimitError, LlmMessage, LlmProvider, LlmTurnRequest, resolveEffort, resolveLlmProvider } from "./index"
 
 const tool = { name: "read_file", description: "Reads a file", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] } }
 
@@ -43,6 +43,48 @@ describe("resolveLlmProvider", () => {
     })
 })
 
+describe("effortsFor", () => {
+    it("Given Claude, then every level is offered, on the Anthropic API as on Foundry", () => {
+        expect(effortsFor({ ANTHROPIC_API_KEY: "sk" })).toEqual(["low", "medium", "high", "xhigh", "max"])
+        expect(effortsFor({ AI_PROVIDER: "azure-foundry", AZURE_FOUNDRY_RESOURCE: "r", AZURE_FOUNDRY_API_KEY: "k" })).toEqual(["low", "medium", "high", "xhigh", "max"])
+    })
+
+    it("Given an Azure OpenAI reasoning deployment, then up to high; a deployment that does not reason takes none", () => {
+        const azure = { AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com", AZURE_OPENAI_API_KEY: "k", AZURE_OPENAI_DEPLOYMENT: "gpt" }
+
+        expect(effortsFor({ ...azure, AZURE_OPENAI_REASONING: true })).toEqual(["low", "medium", "high"])
+        expect(effortsFor(azure)).toEqual([])
+    })
+
+    it("Given Gemini, AI off or a provider missing its variables, then no level is offered", () => {
+        expect(effortsFor({ AI_PROVIDER: "gemini", GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-x" })).toEqual([])
+        expect(effortsFor({})).toEqual([])
+        expect(effortsFor({ AI_PROVIDER: "azure-openai", AZURE_OPENAI_REASONING: true })).toEqual([])
+    })
+
+    it("Given a cap, then the levels above it are not offered", () => {
+        const azure = { AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com", AZURE_OPENAI_API_KEY: "k", AZURE_OPENAI_DEPLOYMENT: "gpt", AZURE_OPENAI_REASONING: true }
+
+        expect(effortsFor({ ANTHROPIC_API_KEY: "sk", AI_MAX_EFFORT: "high" })).toEqual(["low", "medium", "high"])
+        expect(effortsFor({ ANTHROPIC_API_KEY: "sk", AI_MAX_EFFORT: "low" })).toEqual(["low"])
+        expect(effortsFor({ ...azure, AI_MAX_EFFORT: "medium" })).toEqual(["low", "medium"])
+        expect(effortsFor({ ...azure, AI_MAX_EFFORT: "max" })).toEqual(["low", "medium", "high"])
+    })
+})
+
+describe("resolveEffort", () => {
+    it("Given no cap, then the effort asked for is served, else the default", () => {
+        expect(resolveEffort({}, "max", "medium")).toBe("max")
+        expect(resolveEffort({}, undefined, "medium")).toBe("medium")
+    })
+
+    it("Given a cap, then an effort above it, asked for or by default, is served at the cap and one below is kept", () => {
+        expect(resolveEffort({ AI_MAX_EFFORT: "high" }, "max", "medium")).toBe("high")
+        expect(resolveEffort({ AI_MAX_EFFORT: "medium" }, undefined, "high")).toBe("medium")
+        expect(resolveEffort({ AI_MAX_EFFORT: "high" }, "low", "high")).toBe("low")
+    })
+})
+
 describe("isRateLimitError", () => {
     it("Given a 429, or a mid-stream error with no status and a rate-limit code or message, then it is a rate limit; any other error is not", () => {
         expect(isRateLimitError({ status: 429 })).toBe(true)
@@ -71,6 +113,82 @@ describe("AnthropicLlmClient", () => {
         expect(direct.stream.mock.calls[0][0]).toMatchObject({ fallbacks: "default", betas: ["server-side-fallback-2026-07-01"] })
         expect(foundry.stream.mock.calls[0][0]).toMatchObject({ model: "my-claude-deployment" })
         expect(foundry.stream.mock.calls[0][0]).not.toHaveProperty("fallbacks")
+    })
+
+    /** A Claude stream replaying the given thinking deltas, each with its snapshot as the SDK passes them, then ending on `content`. */
+    const thinkingClaude = (deltas: [string, string][], content: unknown[]) => {
+        const stream = vi.fn((_body: unknown) => ({
+            on: vi.fn((event: string, listener: (delta: string, snapshot: string) => void) => {
+                if (event === "thinking") for (const [delta, snapshot] of deltas) listener(delta, snapshot)
+            }),
+            finalMessage: async () => ({ content, stop_reason: "tool_use", usage: { input_tokens: 3, output_tokens: 4 } })
+        }))
+        return { client: { beta: { messages: { stream, create: vi.fn() } } } as unknown as ClaudeClient, stream }
+    }
+
+    it("Given an effort, then it is sent with summarized adaptive thinking, the reasoning streams to onThinking and the turn carries its summary", async () => {
+        const content = [
+            { type: "thinking", thinking: "Read the file first.", signature: "sig-1" },
+            { type: "tool_use", id: "toolu_1", name: "read_file", input: { path: "a.ts" } }
+        ]
+        const { client, stream } = thinkingClaude(
+            [
+                ["Read the file", "Read the file"],
+                [" first.", "Read the file first."]
+            ],
+            content
+        )
+        const streamed: string[] = []
+
+        const result = await new AnthropicLlmClient(LlmProvider.ANTHROPIC, client, "claude-opus-5-5").turn({
+            ...request([{ role: "user", text: "hi" }]),
+            effort: "max",
+            onThinking: delta => streamed.push(delta)
+        })
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ output_config: { effort: "max" }, thinking: { type: "adaptive", display: "summarized" } })
+        expect(streamed).toEqual(["Read the file", " first."])
+        expect(result.thinking).toBe("Read the file first.")
+        expect(result.message.native).toBe(content)
+    })
+
+    it("Given several thinking blocks in a turn, one of them empty, then they stream apart as in the turn's summary and nothing empty is streamed", async () => {
+        const content = [
+            { type: "thinking", thinking: "Read the file first.", signature: "sig-1" },
+            { type: "thinking", thinking: "", signature: "sig-2" },
+            { type: "thinking", thinking: "Then edit it.", signature: "sig-3" },
+            { type: "tool_use", id: "toolu_1", name: "read_file", input: { path: "a.ts" } }
+        ]
+        const { client } = thinkingClaude(
+            [
+                ["Read the file first.", "Read the file first."],
+                ["", ""],
+                ["Then", "Then"],
+                [" edit it.", "Then edit it."]
+            ],
+            content
+        )
+        const streamed: string[] = []
+
+        const result = await new AnthropicLlmClient(LlmProvider.ANTHROPIC, client, "claude-opus-5-5").turn({ ...request([{ role: "user", text: "hi" }]), onThinking: delta => streamed.push(delta) })
+
+        expect(streamed).toEqual(["Read the file first.", "\n\n", "Then", " edit it."])
+        expect(streamed.join("")).toBe(result.thinking)
+    })
+
+    it("Given a turn whose only reasoning is empty, then nothing is streamed", async () => {
+        const { client } = thinkingClaude([["", ""]], [{ type: "thinking", thinking: "", signature: "sig-1" }])
+        const streamed: string[] = []
+
+        await new AnthropicLlmClient(LlmProvider.ANTHROPIC, client, "claude-opus-5-5").turn({ ...request([{ role: "user", text: "hi" }]), onThinking: delta => streamed.push(delta) })
+
+        expect(streamed).toEqual([])
+    })
+
+    it("Given a turn without reasoning, then it carries no summary", async () => {
+        const { client } = fakeClaude([{ type: "text", text: "ok" }], "end_turn")
+
+        expect((await new AnthropicLlmClient(LlmProvider.ANTHROPIC, client, "claude-opus-5-5").turn(request([{ role: "user", text: "hi" }]))).thinking).toBeUndefined()
     })
 
     it("Given a prompt partly served from the cache, then the input tokens count the whole prompt and the cached part is reported apart", async () => {
@@ -217,6 +335,17 @@ describe("AzureOpenAiLlmClient", () => {
         expect(reasoning.stream.mock.calls[0][0]).toMatchObject({ reasoning: { effort: "high" }, include: ["reasoning.encrypted_content"] })
         expect(plain.stream.mock.calls[0][0]).not.toHaveProperty("reasoning")
         expect(plain.stream.mock.calls[0][0]).not.toHaveProperty("include")
+    })
+
+    it.each(["xhigh", "max"] as const)("Given a reasoning deployment and the %s effort, then it is sent as high, which every reasoning model takes", async effort => {
+        const { client, stream, create } = fakeAzure({ output: [message("{}")] })
+        const llm = new AzureOpenAiLlmClient(client, "gpt-6", true)
+
+        await llm.turn({ ...request([{ role: "user", text: "hi" }]), effort })
+        await llm.json({ system: "s", user: "u", schema: { type: "object" }, maxTokens: 100, effort })
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ reasoning: { effort: "high" } })
+        expect(create.mock.calls[0][0]).toMatchObject({ reasoning: { effort: "high" } })
     })
 
     it.each([

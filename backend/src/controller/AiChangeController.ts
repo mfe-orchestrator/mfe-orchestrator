@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest } from "fastify"
 import AiChangeService, { AiChangeCreateInput } from "../service/aiChange/AiChangeService"
+import { LLM_EFFORTS } from "../service/llm"
 import { RepositoryComponentKind } from "../service/workspace/repositoryComponent"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
@@ -9,7 +10,8 @@ const createBodySchema = {
     additionalProperties: false,
     properties: {
         prompt: { type: "string", minLength: 1, maxLength: 8_000 },
-        baseBranch: { type: "string", maxLength: 255 }
+        baseBranch: { type: "string", maxLength: 255 },
+        effort: { type: "string", enum: LLM_EFFORTS }
     }
 }
 

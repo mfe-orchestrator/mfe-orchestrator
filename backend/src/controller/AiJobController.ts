@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest } from "fastify"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import AiChangeJobService, { AiJobCreateInput, AiJobFollowUpInput } from "../service/aiChange/AiChangeJobService"
 import DomainPlanService, { DomainPlanInput } from "../service/aiChange/DomainPlanService"
+import { LLM_EFFORTS } from "../service/llm"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
@@ -10,12 +11,13 @@ const prompt = { type: "string", minLength: 1, maxLength: 8_000 }
 const microfrontendIds = { type: "array", maxItems: 100, items: { type: "string", pattern: "^[a-fA-F0-9]{24}$" } }
 const serviceIds = microfrontendIds
 const domainId = { type: "string", pattern: "^[a-fA-F0-9]{24}$" }
+const effort = { type: "string", enum: LLM_EFFORTS }
 
 const createBodySchema = {
     type: "object",
     required: ["prompt", "scope"],
     additionalProperties: false,
-    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds },
+    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds, effort },
     // A domain job works on the members of that domain: without it there is nothing to work on.
     if: { properties: { scope: { const: "domain" } } },
     then: { required: ["domainId"] }
@@ -37,7 +39,7 @@ const followUpBodySchema = {
     type: "object",
     required: ["prompt"],
     additionalProperties: false,
-    properties: { prompt, microfrontendIds, serviceIds }
+    properties: { prompt, microfrontendIds, serviceIds, effort }
 }
 
 const projectIdOf = (request: FastifyRequest) => {

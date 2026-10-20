@@ -4,7 +4,7 @@ import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import AssistantUsage from "../models/AssistantUsageModel"
 import AssistantService from "../service/assistant/AssistantService"
 import { deleteConversation, getConversation, listConversations, saveConversation } from "../service/assistant/conversations"
-import { isRateLimitError, LlmUsage, resolveLlmProvider } from "../service/llm"
+import { isRateLimitError, LLM_EFFORTS, LlmEffort, LlmUsage, resolveLlmProvider } from "../service/llm"
 import { AssistantChatRequestDTO, AssistantConversationSaveDTO, AssistantProjectDraftRequestDTO } from "../types/AssistantDTO"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { openEventStream, sendEvent } from "../utils/eventStream"
@@ -37,6 +37,7 @@ const chatBodySchema = {
                 }
             }
         },
+        effort: { type: "string", enum: LLM_EFFORTS },
         context: {
             type: "object",
             additionalProperties: false,
@@ -95,6 +96,8 @@ const conversationBodySchema = {
                     id: { type: "string", minLength: 1, maxLength: 100 },
                     role: { type: "string", enum: ["user", "assistant"] },
                     content: { type: "string" },
+                    thinking: { type: "string" },
+                    effort: SHORT_STRING,
                     status: { type: "string", enum: ["streaming", "done", "error"] },
                     errorKey: SHORT_STRING,
                     tools: {
@@ -148,9 +151,10 @@ export default async function assistantController(fastify: FastifyInstance) {
     /**
      * Answers a question about the current project, or carries on after the user answered a
      * confirmation, as a Server-Sent Events stream: `text` frames carry the answer as it is
-     * written, `tool_call` / `tool_result` frames what the tools do, `confirm` a destructive action
-     * waiting for the user, and a final `done` (or `error`) frame closes the stream. The frames are
-     * described in `service/assistant/assistantActions.ts`.
+     * written, `thinking` frames the summary of the model's reasoning, `tool_call` /
+     * `tool_result` frames what the tools do, `confirm` a destructive action waiting for the user,
+     * and a final `done` (or `error`) frame closes the stream. The frames are described in
+     * `service/assistant/assistantActions.ts`.
      */
     fastify.post<{ Body: AssistantChatRequestDTO }>("/assistant/chat", { schema: { body: chatBodySchema }, config: { authMethod: AuthenticationMethod.JWT, rateLimit } }, async (request, reply) => {
         const projectId = getProjectIdFromRequest(request)
@@ -183,13 +187,14 @@ export default async function assistantController(fastify: FastifyInstance) {
         // the stream silent for longer than a proxy's idle timeout; comment frames keep it open.
         const heartbeat = setInterval(() => reply.raw.write(HEARTBEAT), HEARTBEAT_INTERVAL_MS)
 
-        let answered: { stopReason: string; usage: LlmUsage } | undefined
+        let answered: { stopReason: string; usage: LlmUsage; effort: LlmEffort } | undefined
         try {
-            const { stopReason, wrote, usage } = await service.chat(
+            const { stopReason, wrote, usage, effort } = await service.chat(
                 projectId,
                 request.body,
                 {
                     onText: delta => sendEvent(reply, "text", { delta }),
+                    onThinking: delta => sendEvent(reply, "thinking", { delta }),
                     onToolCall: frame => sendEvent(reply, "tool_call", frame),
                     onToolResult: frame => sendEvent(reply, "tool_result", frame),
                     onConfirm: frame => sendEvent(reply, "confirm", frame)
@@ -198,7 +203,7 @@ export default async function assistantController(fastify: FastifyInstance) {
                 action && confirmation ? { action, approved: confirmation.approved } : undefined
             )
             sendEvent(reply, "done", { stopReason, wrote, usage })
-            answered = { stopReason, usage }
+            answered = { stopReason, usage, effort }
         } catch (error) {
             if (!abortController.signal.aborted) {
                 fastify.log.error({ err: error, projectId }, "Assistant chat failed")
@@ -210,13 +215,13 @@ export default async function assistantController(fastify: FastifyInstance) {
         reply.raw.end()
 
         if (answered) {
-            const { stopReason, usage } = answered
-            // One line and one document per answer: what the assistant costs, per user and project.
-            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, ...usage }, "Assistant answer usage")
+            const { stopReason, usage, effort } = answered
+            // One line and one document per answer: what the assistant costs, per user and project, and at which effort.
+            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, effort, ...usage }, "Assistant answer usage")
             // Once the stream is closed and not awaited: the browser does not wait on the write, and a failed one cannot become an error frame.
             void (async () => {
                 try {
-                    await AssistantUsage.create({ userId: request.databaseUser?._id, projectId: toObjectId(projectId), provider: resolveLlmProvider(fastify.config), stopReason, ...usage })
+                    await AssistantUsage.create({ userId: request.databaseUser?._id, projectId: toObjectId(projectId), provider: resolveLlmProvider(fastify.config), stopReason, effort, ...usage })
                 } catch (error) {
                     fastify.log.error({ err: error, projectId }, "Assistant usage not saved")
                 }

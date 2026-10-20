@@ -13,7 +13,8 @@ import Service from "../../models/ServiceModel"
 import { toObjectId } from "../../utils/mongooseUtils"
 import { withRepositoryLock } from "../../utils/repositoryLock"
 import { isProtectedPath, resolveInsideWorkingCopy } from "../../utils/workspacePaths"
-import { addUsage, getLlmClient, LlmClient, LlmUsage, NO_USAGE } from "../llm"
+import { redactSecrets } from "../assistant/assistantTools"
+import { addUsage, getLlmClient, LlmClient, LlmEffort, LlmUsage, NO_USAGE, resolveEffort } from "../llm"
 import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "../RepositoryFileService"
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
 import {
@@ -27,7 +28,7 @@ import {
     RepositoryComponentKind,
     RepositoryComponentRef
 } from "../workspace/repositoryComponent"
-import { AI_CHANGE_LIMITS, AiChangeAgentRepository, runAiChangeAgent } from "./aiChangeAgent"
+import { AI_CHANGE_DEFAULT_EFFORT, AI_CHANGE_LIMITS, AiChangeAgentRepository, runAiChangeAgent } from "./aiChangeAgent"
 import { AiChangeBaseService, ensureNotBeingRefined, followUpRunning, loggable, PROPOSAL_TTL_MS, STALE_AFTER_MS, staleOutcome, storable } from "./aiChangeShared"
 
 /** Repositories one job may work on: each is a clone and a share of the model's context. */
@@ -53,6 +54,8 @@ export interface AiJobCreateInput {
     domainId?: string
     microfrontendIds?: string[]
     serviceIds?: string[]
+    /** How hard the agent reasons: `high` when left out. */
+    effort?: LlmEffort
 }
 
 export interface AiJobFollowUpInput {
@@ -60,6 +63,8 @@ export interface AiJobFollowUpInput {
     /** The repositories of the parent job to refine; all those still proposed when both are left out. */
     microfrontendIds?: string[]
     serviceIds?: string[]
+    /** How hard the agent reasons: the parent's effort when left out. */
+    effort?: LlmEffort
 }
 
 export interface AiJobRepositoryView {
@@ -88,6 +93,7 @@ export interface AiJobView {
     scope: AiJobScope
     domainId?: string
     status: AiJobStatus
+    effort: LlmEffort
     /** Left out of lists. */
     events?: { at: Date; kind: IAiChangeEvent["kind"]; message: string }[]
     summary?: string
@@ -203,6 +209,7 @@ const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: 
     scope: job.scope,
     domainId: job.domainId ? String(job.domainId) : undefined,
     status: job.status,
+    effort: job.effort ?? AI_CHANGE_DEFAULT_EFFORT,
     events: withEvents ? (job.events ?? []).map(entry => ({ at: entry.at, kind: entry.kind, message: entry.message })) : undefined,
     summary: job.summary,
     error: job.error,
@@ -314,7 +321,7 @@ export class AiChangeJobService extends AiChangeBaseService {
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
         const repositories = await Promise.all(components.map(async component => ({ component, baseBranch: (await workspaceService.open(component)).defaultBranch })))
-        const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, domainId: domain?._id, repositories }, client)
+        const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, domainId: domain?._id, repositories, effort: input.effort }, client)
         return this.view(job, true)
     }
 
@@ -353,7 +360,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         })
 
         const scope = repositories.length === parentRefs.length ? parent.scope : "selection"
-        const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, domainId: parent.domainId, repositories, parentJob: parent }, client)
+        const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, domainId: parent.domainId, repositories, parentJob: parent, effort: input.effort }, client)
         return this.view(job, true)
     }
 
@@ -369,6 +376,8 @@ export class AiChangeJobService extends AiChangeBaseService {
             domainId?: IAiChangeJob["domainId"] | IDomain["_id"]
             repositories: JobRepository[]
             parentJob?: IAiChangeJob
+            /** Left out: the parent's for a follow-up, else `high`. */
+            effort?: LlmEffort
         },
         client: LlmClient
     ): Promise<{ job: IAiChangeJob; requests: IAiChangeRequest[] }> {
@@ -381,6 +390,8 @@ export class AiChangeJobService extends AiChangeBaseService {
         // Named before it is created: the first job of a chain is its own root.
         const jobId = new Types.ObjectId() as unknown as IAiChangeJob["_id"]
         const queued = () => [{ at: new Date(), kind: "info" as const, message: "queued" }]
+        // A follow-up goes on as hard as its parent went, unless the user chose otherwise; never above the installation's cap.
+        const effort = resolveEffort(this.config, input.effort ?? input.parentJob?.effort, AI_CHANGE_DEFAULT_EFFORT)
         const job = await AiChangeJob.create({
             _id: jobId,
             projectId: input.projectId,
@@ -390,6 +401,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             prompt: input.prompt,
             scope: input.scope,
             domainId: input.domainId,
+            effort,
             microfrontendIds: input.repositories.filter(({ component }) => component.kind === "microfrontend").map(({ component }) => component._id),
             serviceIds: input.repositories.filter(({ component }) => component.kind === "service").map(({ component }) => component._id),
             status: AiJobStatus.PENDING,
@@ -403,6 +415,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                     userId,
                     jobId,
                     jobRepositoryCount: input.repositories.length,
+                    effort,
                     parentId: repository.parentId,
                     conversationId: input.parentJob?.rootJobId ?? jobId,
                     prompt: input.prompt,
@@ -418,10 +431,14 @@ export class AiChangeJobService extends AiChangeBaseService {
         return { job, requests }
     }
 
-    /** One progress line, on the job and on each of its requests: the page of every repository stays live. */
+    /**
+     * One progress line, on the job and on each of its requests: the page of every repository stays live.
+     * What the model said or thought can repeat a secret it read: masked, as in the assistant's saved answers.
+     */
     private async log(jobId: string, kind: IAiChangeEvent["kind"], message: string) {
-        await AiChangeJob.updateOne({ _id: toObjectId(jobId) }, event(kind, message))
-        await AiChangeRequest.updateMany({ jobId: toObjectId(jobId) }, event(kind, message))
+        const shown = kind === "text" || kind === "thinking" ? redactSecrets(message) : message
+        await AiChangeJob.updateOne({ _id: toObjectId(jobId) }, event(kind, shown))
+        await AiChangeRequest.updateMany({ jobId: toObjectId(jobId) }, event(kind, shown))
     }
 
     /** The usage is the job's: every request of it carries the same total. */
@@ -508,7 +525,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             fastify.log.warn({ error: loggable(error), aiJobId: jobId }, "AI job failed")
             await this.fail(jobId, toErrorMessage(error))
         } finally {
-            fastify.log.info({ audit: "ai_job_usage", userId: String(job.userId), projectId: String(job.projectId), jobId, ...usage }, "AI job usage")
+            fastify.log.info({ audit: "ai_job_usage", userId: String(job.userId), projectId: String(job.projectId), jobId, effort: job.effort, ...usage }, "AI job usage")
         }
     }
 
@@ -549,6 +566,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                 client,
                 {
                     prompt: job.prompt,
+                    effort: job.effort,
                     project: { name: project.name, context: project.context },
                     domain: domain ? toAgentDomain(domain) : undefined,
                     memberDomains: memberDomains.map(toAgentDomain),
@@ -581,7 +599,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             })
 
             if (result?.stopReason === "refusal") throw new Error("The model declined this request")
-            if (result?.stopReason === "max_tokens") stopped = "The agent's answer was cut off: try a smaller request"
+            if (result?.stopReason === "max_tokens") stopped = "The agent's answer was cut off: try a smaller request or a lower effort"
 
             const proposals: { repository: RunningRepository; files: IAiChangeFile[] }[] = []
             for (const repository of repositories) {

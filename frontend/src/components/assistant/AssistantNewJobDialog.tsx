@@ -9,6 +9,8 @@ import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useServicesApi from "@/hooks/apiClients/useServicesApi"
 import useAssistantJobsStore from "@/store/useAssistantJobsStore"
 import { jobErrorMessage, PROMPT_MAX_LENGTH } from "./AssistantJobThread"
+import EffortSelect from "./EffortSelect"
+import { useEffort } from "./useEffort"
 
 /** Mirrors the backend: a job works on at most this many repositories. */
 const MAX_REPOSITORIES = 10
@@ -29,6 +31,7 @@ const NewJobForm: React.FC<NewJobFormProps> = ({ projectId, onCreated, onCancel 
     const [selected, setSelected] = useState<Set<string>>(new Set())
     const [prompt, setPrompt] = useState("")
     const [submitted, setSubmitted] = useState(false)
+    const [effort, setEffort] = useEffort("code")
     const promptRef = useRef<HTMLTextAreaElement>(null)
     const idPrefix = useId()
 
@@ -52,7 +55,9 @@ const NewJobForm: React.FC<NewJobFormProps> = ({ projectId, onCreated, onCancel 
     const createMutation = useMutation({
         mutationFn: () =>
             aiJobsApi.create(
-                all ? { prompt: prompt.trim(), scope: "global" } : { prompt: prompt.trim(), scope: "selection", microfrontendIds: selectedOf("microfrontend"), serviceIds: selectedOf("service") },
+                all
+                    ? { prompt: prompt.trim(), scope: "global", effort }
+                    : { prompt: prompt.trim(), scope: "selection", microfrontendIds: selectedOf("microfrontend"), serviceIds: selectedOf("service"), effort },
                 {
                     customErrorMessage: error => jobErrorMessage(t, error, "create")
                 }
@@ -161,6 +166,7 @@ const NewJobForm: React.FC<NewJobFormProps> = ({ projectId, onCreated, onCancel 
             </div>
 
             <DialogFooter>
+                <EffortSelect value={effort} onChange={setEffort} disabled={createMutation.isPending} className="mr-auto" dataTestId="assistant-new-job-effort" />
                 <Button type="button" variant="secondary" disabled={createMutation.isPending} onClick={onCancel}>
                     {t("common.cancel")}
                 </Button>

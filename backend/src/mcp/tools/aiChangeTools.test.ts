@@ -263,6 +263,43 @@ describe("AI change tools", () => {
         })
     })
 
+    describe("effort", () => {
+        it("given an effort, when a change, a job or a follow-up is started, then it reaches the service and the views carry the effort used", async () => {
+            createChange.mockResolvedValue({ ...changeDocument("PENDING"), effort: "low" })
+            createJob.mockResolvedValue({ ...jobView("PENDING"), effort: "xhigh" })
+            followUpJob.mockResolvedValue({ ...jobView("PENDING"), effort: "max" })
+
+            const change = await run("ai_change_start", { microfrontendId: MICROFRONTEND, prompt: "Add a footer", effort: "low" })
+            const job = await run("ai_job_start", { prompt: "Rename the price API", domainId: PROJECT, effort: "xhigh" })
+            const followUp = await run("ai_job_follow_up", { jobId: JOB, prompt: "Also rename the tests", effort: "max" })
+
+            expect(createChange).toHaveBeenCalledWith({ kind: "microfrontend", id: MICROFRONTEND }, expect.objectContaining({ effort: "low" }))
+            expect(createJob).toHaveBeenCalledWith(PROJECT, { prompt: "Rename the price API", scope: "domain", domainId: PROJECT, effort: "xhigh" })
+            expect(followUpJob).toHaveBeenCalledWith(JOB, expect.objectContaining({ effort: "max" }))
+            expect([change, job, followUp]).toEqual([expect.objectContaining({ effort: "low" }), expect.objectContaining({ effort: "xhigh" }), expect.objectContaining({ effort: "max" })])
+        })
+
+        it("given a level that does not exist, when the input is validated, then it is refused", () => {
+            expect(tool("ai_job_start").inputSchema.safeParse({ prompt: "x", effort: "turbo" }).success).toBe(false)
+        })
+
+        it("given progress with the agent's reasoning, when viewed, then the reasoning is left out and the latest steps fill the view", async () => {
+            const events = Array.from({ length: 12 }, (_, index) => [
+                { at: new Date(0), kind: "tool", message: `step ${index}` },
+                { at: new Date(0), kind: "thinking", message: "x".repeat(1_000) }
+            ]).flat()
+            getChange.mockResolvedValue({ ...changeDocument("RUNNING"), events })
+            getJob.mockResolvedValue({ ...jobView("RUNNING"), events })
+
+            const change = (await run("ai_change_get", { changeId: CHANGE })) as { recentEvents: { kind: string; message: string }[] }
+            const job = (await run("ai_job_get", { jobId: JOB })) as { recentEvents: { kind: string; message: string }[] }
+
+            for (const view of [change, job]) {
+                expect(view.recentEvents.map(entry => entry.message)).toEqual(Array.from({ length: 10 }, (_, index) => `step ${index + 2}`))
+            }
+        })
+    })
+
     describe("ai_job_get and ai_job_apply", () => {
         it("given a job, when read, then its status and usage are returned", async () => {
             getJob.mockResolvedValue(jobView("DONE"))

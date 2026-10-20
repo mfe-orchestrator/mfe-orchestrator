@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { Authenticate } from "fastify-auth0-verify"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 import UserModel from "../models/UserModel"
+import type { LlmEffort } from "../service/llm/types"
 import { FastifyInstanceWithConfig } from "./index"
 import { TelemetryDecisionDTO } from "./TelemetryDTO"
 
@@ -97,6 +98,7 @@ declare module "fastify" {
             AZURE_OPENAI_API_KEY?: string
             AZURE_OPENAI_DEPLOYMENT?: string
             AZURE_OPENAI_REASONING?: boolean
+            AI_MAX_EFFORT?: LlmEffort
             REPOSITORIES_FOLDER: string
             REPOSITORIES_MAX_SIZE_MB: number
             REPOSITORIES_EVICT_AFTER_DAYS: number

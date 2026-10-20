@@ -110,6 +110,14 @@ describe("AiChangeService", () => {
         )
     })
 
+    it("Given a chosen effort, when a change is requested, then the job it runs as reasons at it", async () => {
+        const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [{ _id: new Types.ObjectId() }] } as never)
+
+        await service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page", effort: "low" })
+
+        expect(start).toHaveBeenCalledWith(expect.objectContaining({ effort: "low" }), expect.anything())
+    })
+
     it("Given a service, when a change is requested on it, then the job runs on the service's repository", async () => {
         vi.spyOn(Service, "findById").mockResolvedValue({
             _id: serviceId,

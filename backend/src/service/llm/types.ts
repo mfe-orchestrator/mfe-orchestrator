@@ -48,7 +48,11 @@ export type LlmMessage =
     | { role: "assistant"; text: string; toolCalls: LlmToolCall[]; native?: unknown }
     | { role: "tool"; results: LlmToolResult[] }
 
-export type LlmEffort = "low" | "medium" | "high"
+/** How hard the model reasons before answering, lowest first: more effort, deeper reasoning, slower answers and more tokens. */
+export type LlmEffort = "low" | "medium" | "high" | "xhigh" | "max"
+
+/** Every level, lowest first: the enum of the request schemas. */
+export const LLM_EFFORTS: readonly LlmEffort[] = ["low", "medium", "high", "xhigh", "max"]
 
 export interface LlmTurnRequest {
     system: string
@@ -59,6 +63,8 @@ export interface LlmTurnRequest {
     signal?: AbortSignal
     /** Called with each piece of visible text as it is generated. */
     onText?: (delta: string) => void
+    /** Called with each piece of the reasoning summary as it is generated, on providers that return one. */
+    onThinking?: (delta: string) => void
 }
 
 export type LlmStopReason = "end_turn" | "tool_use" | "max_tokens" | "refusal"
@@ -84,6 +90,8 @@ export interface LlmTurnResult {
     toolCalls: LlmToolCall[]
     stopReason: LlmStopReason
     usage: LlmUsage
+    /** The summary of the reasoning of the turn, when the provider returns one (Claude only). */
+    thinking?: string
     /** The assistant message to append to the conversation to continue it. */
     message: Extract<LlmMessage, { role: "assistant" }>
 }

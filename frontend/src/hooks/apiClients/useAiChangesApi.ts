@@ -1,3 +1,4 @@
+import type { LlmEffort } from "@/types/ConfigResponseDTO"
 import useApiClient, { IClientRequestMetadataExtended } from "../useApiClient"
 
 export type AiChangeStatus = "PENDING" | "RUNNING" | "PROPOSED" | "APPLYING" | "APPLIED" | "DISCARDED" | "FAILED"
@@ -16,8 +17,8 @@ export interface AiChangeFile {
 
 export interface AiChangeEvent {
     at: string
-    /** `info` carries a machine code, `tool` a tool call, `text` what the model said. */
-    kind: "info" | "tool" | "text"
+    /** `info` carries a machine code, `tool` a tool call, `text` what the model said, `thinking` the summary of its reasoning. */
+    kind: "info" | "tool" | "text" | "thinking"
     message: string
 }
 
@@ -59,6 +60,8 @@ export interface AiChangeRequest {
     jobRepositoryCount?: number
     /** The cost of the whole job, the same on each of its requests; updated while the agent works. */
     usage: { inputTokens: number; cachedInputTokens?: number; outputTokens: number }
+    /** The reasoning effort of the job, the same on each of its requests. */
+    effort: LlmEffort
     createdAt: string
     updatedAt: string
 }
@@ -66,6 +69,8 @@ export interface AiChangeRequest {
 export interface CreateAiChangeDTO {
     prompt: string
     baseBranch?: string
+    /** Without it, the backend works at `high`. */
+    effort?: LlmEffort
 }
 
 const useAiChangesApi = () => {

@@ -119,6 +119,28 @@ describe("AssistantController", () => {
         )
     })
 
+    it("Given an effort the model does not know, when a question is sent, then the schema rejects it", async () => {
+        const response = await app.inject({ method: "POST", url: "/assistant/chat", headers: { "project-id": "project-1" }, payload: { ...question, effort: "extreme" } })
+
+        expect(response.statusCode).toBe(400)
+        expect(chat).not.toHaveBeenCalled()
+    })
+
+    it("Given a chosen effort, when the question is answered, then it reaches the service, the reasoning streams as thinking frames and the usage records the effort", async () => {
+        const usage = { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5 }
+        chat.mockImplementation(async (_projectId, _request, handlers) => {
+            handlers.onThinking("Check the logs.")
+            handlers.onText("Lint failed.")
+            return { stopReason: "end_turn", wrote: false, usage, effort: "xhigh" }
+        })
+
+        const response = await app.inject({ method: "POST", url: "/assistant/chat", headers: { "project-id": "64b7f0c2a1b2c3d4e5f60718" }, payload: { ...question, effort: "xhigh" } })
+
+        expect(chat.mock.calls[0][1]).toMatchObject({ effort: "xhigh" })
+        expect(response.body).toContain('event: thinking\ndata: {"delta":"Check the logs."}\n\nevent: text\ndata: {"delta":"Lint failed."}')
+        expect(saveUsage).toHaveBeenCalledWith(expect.objectContaining({ stopReason: "end_turn", effort: "xhigh", ...usage }))
+    })
+
     it("Given a destructive call, when the turn stops on it, then a confirm frame and a done frame awaiting confirmation are streamed", async () => {
         const confirm = { actionId: "a1", callId: "c1", name: "environment_delete", title: "Delete environment", input: { environmentId: "e1" }, expiresAt: "2026-10-15T10:15:00.000Z" }
         chat.mockImplementation(async (_projectId, _request, handlers) => {
@@ -255,6 +277,19 @@ describe("AssistantController", () => {
 
         it("Given a conversation, when it is saved, then it is stored for the user and project", async () => {
             const messages = [{ id: "m1", role: "user", content: "Why did the build fail?" }]
+
+            const response = await app.inject({ method: "PUT", url: "/assistant/conversations/conversation-1", headers, payload: { messages } })
+
+            expect(response.statusCode).toBe(204)
+            expect(conversations.saveConversation).toHaveBeenCalledWith("user-1", headers["project-id"], "conversation-1", messages)
+        })
+
+        it("Given answers with their reasoning and effort, a level unknown to this server among them, when saved, then nothing is rejected and all reach the store", async () => {
+            const messages = [
+                { id: "m1", role: "user", content: "Why did the build fail?" },
+                { id: "m2", role: "assistant", content: "Lint failed.", thinking: "Check the logs.", effort: "xhigh" },
+                { id: "m3", role: "assistant", content: "Fixed.", effort: "turbo" }
+            ]
 
             const response = await app.inject({ method: "PUT", url: "/assistant/conversations/conversation-1", headers, payload: { messages } })
 

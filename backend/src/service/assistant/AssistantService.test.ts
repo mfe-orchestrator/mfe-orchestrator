@@ -38,11 +38,12 @@ vi.mock("../EnvironmentService", () => ({
     }
 }))
 
-/** A fake MessageStream: replays the text deltas to the listener, then resolves with the message. */
+/** A fake MessageStream: replays the text and thinking deltas to their listeners, then resolves with the message. */
 const fakeStream = (message: { stop_reason: string; content: unknown[]; usage?: Record<string, number> }) => ({
-    on: (_event: string, listener: (delta: string) => void) => {
-        for (const block of message.content as { type: string; text?: string }[]) {
-            if (block.type === "text" && block.text) listener(block.text)
+    on: (event: string, listener: (delta: string) => void) => {
+        for (const block of message.content as { type: string; text?: string; thinking?: string }[]) {
+            if (event === "text" && block.type === "text" && block.text) listener(block.text)
+            if (event === "thinking" && block.type === "thinking" && block.thinking) listener(block.thinking)
         }
     },
     finalMessage: async () => ({ usage: { input_tokens: 0, output_tokens: 0 }, ...message })
@@ -56,6 +57,7 @@ const recordingHandlers = () => {
     const frames: { event: string; frame: unknown }[] = []
     const handlers: AssistantStreamHandlers = {
         onText: delta => frames.push({ event: "text", frame: delta }),
+        onThinking: delta => frames.push({ event: "thinking", frame: delta }),
         onToolCall: frame => frames.push({ event: "tool_call", frame }),
         onToolResult: frame => frames.push({ event: "tool_result", frame }),
         onConfirm: frame => frames.push({ event: "confirm", frame })
@@ -121,6 +123,60 @@ describe("AssistantService", () => {
         const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "?" }] }, recordingHandlers().handlers)
 
         expect(outcome.usage).toEqual({ inputTokens: 920, cachedInputTokens: 800, outputTokens: 14 })
+    })
+
+    it("Given a chosen effort and a model reasoning over two rounds, then the effort is sent, and the reasoning streams apart from the text with a break between rounds", async () => {
+        getEnvironments.mockResolvedValue([])
+        stream
+            .mockReturnValueOnce(
+                fakeStream({
+                    stop_reason: "tool_use",
+                    content: [
+                        { type: "thinking", thinking: "Look the environments up.", signature: "sig-1" },
+                        { type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }
+                    ]
+                })
+            )
+            .mockReturnValueOnce(
+                fakeStream({
+                    stop_reason: "end_turn",
+                    content: [
+                        { type: "thinking", thinking: "There are none.", signature: "sig-2" },
+                        { type: "text", text: "None." }
+                    ]
+                })
+            )
+        const { frames, handlers } = recordingHandlers()
+
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "?" }], effort: "xhigh" }, handlers)
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ max_tokens: 64_000, output_config: { effort: "xhigh" }, thinking: { type: "adaptive", display: "summarized" } })
+        expect(stream.mock.calls[1][0]).toMatchObject({ max_tokens: 64_000, output_config: { effort: "xhigh" } })
+        expect(outcome.effort).toBe("xhigh")
+        expect(frames.filter(entry => entry.event === "thinking").map(entry => entry.frame)).toEqual(["Look the environments up.", "\n\n", "There are none."])
+        expect(frames.filter(entry => entry.event === "text").map(entry => entry.frame)).toEqual(["None."])
+    })
+
+    it("Given no effort chosen, when a question is answered, then it is answered at medium", async () => {
+        stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Hi." }] }))
+
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "Hi" }] }, recordingHandlers().handlers)
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ max_tokens: 16_000, output_config: { effort: "medium" } })
+        expect(outcome.effort).toBe("medium")
+    })
+
+    it("Given an installation capped at high, when max is asked for, then the answer is given at high, with the room of high", async () => {
+        stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Hi." }] }))
+
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key", AI_MAX_EFFORT: "high" }).chat(
+            "project-1",
+            { messages: [{ role: "user", content: "Hi" }], effort: "max" },
+            recordingHandlers().handlers
+        )
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ max_tokens: 32_000, output_config: { effort: "high" } })
+        expect(outcome.effort).toBe("high")
     })
 
     it("Given a refusal, when answered, then no tool runs and the refusal is reported", async () => {

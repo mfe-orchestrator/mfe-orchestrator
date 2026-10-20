@@ -1841,6 +1841,19 @@
             "output": "{{formatted}} in uscita",
             "hint": "Token usati per questa risposta, sommando tutti i passaggi del modello. I token letti dalla cache costano molto meno."
         },
+        "effort": {
+            "label": "Livello di ragionamento",
+            "hint": "Più ragionamento significa analisi più approfondite, risposte più lente e più token.",
+            "used": "Effort: {{level}}",
+            "levels": {
+                "low": "Basso",
+                "medium": "Medio",
+                "high": "Alto",
+                "xhigh": "Molto alto",
+                "max": "Massimo"
+            }
+        },
+        "reasoning": "Ragionamento",
         "jobs": {
             "tabs_label": "Conversazioni",
             "project_tab": "Progetto",

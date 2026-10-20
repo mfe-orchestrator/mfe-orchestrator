@@ -1822,6 +1822,19 @@
             "output": "{{formatted}} output",
             "hint": "Tokens used for this answer, every model step summed. Tokens read from the cache cost far less."
         },
+        "effort": {
+            "label": "Reasoning effort",
+            "hint": "More effort means deeper reasoning, slower answers and more tokens.",
+            "used": "Effort: {{level}}",
+            "levels": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "xhigh": "Extra high",
+                "max": "Max"
+            }
+        },
+        "reasoning": "Reasoning",
         "jobs": {
             "tabs_label": "Conversations",
             "project_tab": "Project",

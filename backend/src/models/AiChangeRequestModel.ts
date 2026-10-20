@@ -1,4 +1,5 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import { LLM_EFFORTS, LlmEffort } from "../service/llm/types"
 
 export enum AiChangeStatus {
     /** Created, waiting for the working copy (another request may be holding it). */
@@ -27,8 +28,8 @@ export interface IAiChangeFile {
 
 export interface IAiChangeEvent {
     at: Date
-    /** `tool` for a step of the agent, `info` for the job itself, `text` for what the model said. */
-    kind: "info" | "tool" | "text"
+    /** `tool` for a step of the agent, `info` for the job itself, `text` for what the model said, `thinking` for the summary of its reasoning. */
+    kind: "info" | "tool" | "text" | "thinking"
     message: string
 }
 
@@ -49,6 +50,8 @@ export interface IAiChangeRequest extends Document<ObjectId> {
     jobId?: Schema.Types.ObjectId
     /** How many repositories the job worked on: its usage is shared among them. */
     jobRepositoryCount?: number
+    /** The effort the job's agent reasoned with, shown next to the usage it explains. */
+    effort: LlmEffort
     /** The proposal this request refines: the agent started from its files, and this one replaces it once proposed. */
     parentId?: Schema.Types.ObjectId
     /**
@@ -94,7 +97,7 @@ const fileSchema = new Schema<IAiChangeFile>(
 export const aiChangeEventSchema = new Schema<IAiChangeEvent>(
     {
         at: { type: Date, required: true },
-        kind: { type: String, enum: ["info", "tool", "text"], required: true },
+        kind: { type: String, enum: ["info", "tool", "text", "thinking"], required: true },
         message: { type: String, required: true }
     },
     { _id: false }
@@ -108,6 +111,8 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         jobId: { type: Schema.Types.ObjectId, ref: "AiChangeJob", index: true },
         jobRepositoryCount: { type: Number },
+        // Requests from before the effort could be chosen ran at high: they read so.
+        effort: { type: String, enum: [...LLM_EFFORTS], default: "high" },
         parentId: { type: Schema.Types.ObjectId, ref: "AiChangeRequest", index: true },
         conversationId: { type: Schema.Types.ObjectId, required: true, index: true },
         prompt: { type: String, required: true, maxlength: 8_000 },

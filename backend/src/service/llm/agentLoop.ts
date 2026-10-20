@@ -37,6 +37,8 @@ export interface AgentLoopOptions {
     runTools: (calls: LlmToolCall[]) => Promise<AgentToolsOutcome>
     /** Each piece of visible text as it is generated, with the round it belongs to. */
     onText?: (delta: string, round: number) => void
+    /** Each piece of the reasoning summary as it is generated, with the round it belongs to. */
+    onThinking?: (delta: string, round: number) => void
     /** Every turn the model answered, before its tools run. */
     onTurn?: (result: LlmTurnResult) => Promise<void> | void
     /** Waits before each retry of a rate-limited turn; none retries nothing. */
@@ -84,7 +86,8 @@ export const runAgentLoop = async (options: AgentLoopOptions): Promise<AgentLoop
             maxTokens: options.maxTokens,
             effort: options.effort,
             signal,
-            onText: options.onText && (delta => options.onText!(delta, round))
+            onText: options.onText && (delta => options.onText!(delta, round)),
+            onThinking: options.onThinking && (delta => options.onThinking!(delta, round))
         })
         usage = addUsage(usage, result.usage)
         await options.onTurn?.(result)

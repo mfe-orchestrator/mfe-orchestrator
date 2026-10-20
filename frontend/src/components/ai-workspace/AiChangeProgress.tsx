@@ -1,4 +1,5 @@
 import { format } from "date-fns"
+import { Brain } from "lucide-react"
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import type { IBadgeProps } from "@/components/atoms"
@@ -52,6 +53,14 @@ export const ProgressLog: React.FC<{ events: AiChangeEvent[]; live: boolean }> =
                             {event.kind === "info" && <span className="font-medium">{t(`microfrontend.aiChange.events.${event.message}`, { defaultValue: event.message })}</span>}
                             {event.kind === "tool" && <span className="break-all font-mono text-muted-foreground">{event.message}</span>}
                             {event.kind === "text" && <span className="whitespace-pre-wrap break-words">{event.message}</span>}
+                            {/* Muted and apart from what the agent said: how it reasoned, not what it did. */}
+                            {event.kind === "thinking" && (
+                                <span className="flex min-w-0 gap-1 italic text-muted-foreground">
+                                    <Brain className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
+                                    <span className="sr-only">{t("assistant.reasoning")}:</span>
+                                    <span className="whitespace-pre-wrap break-words">{event.message}</span>
+                                </span>
+                            )}
                         </li>
                     ))}
                 </ol>

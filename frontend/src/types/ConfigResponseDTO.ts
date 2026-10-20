@@ -27,6 +27,11 @@ export interface AuthProvidersConfig {
     google?: GoogleProviderConfig
 }
 
+/** How hard the model reasons before answering, lowest first. */
+export const LLM_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const
+
+export type LlmEffort = (typeof LLM_EFFORTS)[number]
+
 export default interface GlobalConfigDTO {
     frontendUrl: string
     registrationAllowed: boolean
@@ -34,6 +39,8 @@ export default interface GlobalConfigDTO {
     marketingOptInEnabled: boolean
     /** True when the backend has an ANTHROPIC_API_KEY: the console then shows the assistant. */
     assistantEnabled?: boolean
+    /** The effort levels the configured AI provider honours, lowest first; empty when it offers no choice. */
+    aiEfforts?: LlmEffort[]
     providers: AuthProvidersConfig
     mcp: {
         enabled: boolean
