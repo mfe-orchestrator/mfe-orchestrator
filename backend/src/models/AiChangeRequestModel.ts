@@ -8,8 +8,9 @@ export enum AiChangeStatus {
     RUNNING = "RUNNING",
     /** The agent is done: the proposal waits for the user. */
     PROPOSED = "PROPOSED",
-    /** Committing, pushing and opening the pull request. */
+    /** Pushing the proposal onto the base branch. */
     APPLYING = "APPLYING",
+    /** On the base branch. */
     APPLIED = "APPLIED",
     DISCARDED = "DISCARDED",
     FAILED = "FAILED"
@@ -66,10 +67,14 @@ export interface IAiChangeRequest extends Document<ObjectId> {
     files: IAiChangeFile[]
     summary?: string
     events: IAiChangeEvent[]
+    /** The feature branch the proposal is pushed on: named by the first message of the conversation, every follow-up force-pushes it. */
     branch?: string
+    /** The proposal's commit on `branch`, then, once applied, the commit on the base branch. */
     commit?: string
+    /** Set when the proposal could not be pushed on its branch: it can still be applied, and the pull request pushes it again. */
+    pushError?: string
     pullRequestUrl?: string
-    /** Set when the branch was pushed but the pull request could not be opened. */
+    /** Set when the pull request could not be opened. */
     pullRequestError?: string
     error?: string
     /** The usage of the whole job, the same on every request of it: one agent worked on all its repositories. */
@@ -124,6 +129,7 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
         events: { type: [aiChangeEventSchema], default: [] },
         branch: { type: String },
         commit: { type: String },
+        pushError: { type: String },
         pullRequestUrl: { type: String },
         pullRequestError: { type: String },
         error: { type: String },

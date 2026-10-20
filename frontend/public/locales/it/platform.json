@@ -838,7 +838,7 @@
             "status_description": {
                 "PENDING": "La richiesta è in coda e partirà a breve.",
                 "RUNNING": "L'agente sta lavorando sul repository.",
-                "APPLYING": "Commit delle modifiche, push del branch e apertura della pull request in corso."
+                "APPLYING": "Pubblicazione delle modifiche sul branch di partenza in corso."
             },
             "events": {
                 "queued": "Richiesta in coda",
@@ -852,7 +852,8 @@
                 "superseded": "Sostituita da una proposta più recente",
                 "applying-previous": "Riparto dalla proposta precedente",
                 "applying": "Applicazione delle modifiche",
-                "apply-failed": "Non è stato possibile applicare le modifiche"
+                "apply-failed": "Non è stato possibile applicare le modifiche",
+                "pushing": "Pubblicazione della proposta sul suo branch"
             },
             "progress_log": "Avanzamento dell'agente",
             "progress_empty": "Ancora nessuna attività.",
@@ -864,11 +865,10 @@
             "failed_title": "La richiesta non è andata a buon fine",
             "try_again": "Riprova",
             "applied_title": "Modifiche applicate",
-            "branch": "Branch",
-            "open_pull_request": "Apri la pull request",
+            "open_pull_request": "Apri una pull request",
             "pull_request": "Pull request",
             "opens_new_tab": "(si apre in una nuova scheda)",
-            "pull_request_error_title": "Il branch è stato pubblicato, ma non è stato possibile aprire la pull request: aprila a mano",
+            "pull_request_error_title": "Non è stato possibile aprire la pull request",
             "discarded_description": "Questa proposta è stata scartata: non è stato pubblicato nulla.",
             "no_changes_title": "Niente da modificare",
             "no_changes_description": "L'agente non ha modificato alcun file.",
@@ -882,10 +882,9 @@
             },
             "show_diff": "Mostra le modifiche a {{path}}",
             "hide_diff": "Nascondi le modifiche a {{path}}",
-            "apply": "Applica e apri la pull request",
-            "apply_runs_ci": "Tutti i file proposti vengono applicati insieme: dipendono l'uno dall'altro, quindi nessuno può essere escluso. Applicando, un nuovo branch viene pubblicato sul repository e la sua CI parte subito, con i segreti del repository: controlla il diff prima di confermare.",
+            "apply": "Applica su {{branch}}",
             "discard": "Scarta",
-            "applied_success": "Modifiche applicate e pull request aperta",
+            "applied_success": "Modifiche applicate su {{branch}}",
             "discarded_success": "Proposta scartata",
             "usage_label": "Token usati",
             "usage_hint": "Token usati finora dall'agente, sommando tutti i passaggi del modello. I token letti dalla cache costano molto meno.",
@@ -919,7 +918,9 @@
                 "AI_CHANGE_CONFLICT": "Questi file sono cambiati sul branch di partenza dopo la proposta: {{files}}. Richiedi di nuovo la modifica.",
                 "AI_CHANGE_NOT_PROPOSED": "Questa richiesta non è più in attesa di approvazione.",
                 "AI_CHANGE_FORBIDDEN_service": "Non hai i permessi per modificare questo servizio con l'AI.",
-                "WORKSPACE_NO_REPOSITORY_service": "Questo servizio non ha un repository di codice collegato."
+                "WORKSPACE_NO_REPOSITORY_service": "Questo servizio non ha un repository di codice collegato.",
+                "pull_request": "Non è stato possibile aprire la pull request.",
+                "AI_CHANGE_PUSH_REFUSED": "{{branch}} ha rifiutato il push: se il branch è protetto, apri invece una pull request."
             },
             "new_change": "Nuova modifica",
             "queue_label": "Richieste di modifica con AI",
@@ -961,7 +962,13 @@
             "kind": {
                 "microfrontend": "microfrontend",
                 "service": "servizio"
-            }
+            },
+            "apply_description": "Tutti i file proposti vanno insieme: dipendono l'uno dall'altro, quindi nessuno può essere escluso. Applica li pubblica direttamente su {{branch}}, senza revisione, e la sua CI parte subito: controlla prima il diff, oppure apri una pull request per farlo rivedere nel repository.",
+            "applied_onto": "Pubblicate su",
+            "pushed_on": "Pubblicata sul branch",
+            "push_error_title": "Non è stato possibile pubblicare la proposta sul suo branch: applicandola o aprendo la sua pull request si riprova",
+            "view_pull_request": "Vedi la pull request",
+            "pull_request_opened": "Pull request aperta"
         },
         "workspace": {
             "back": "Tutti i microfrontend",
@@ -1883,11 +1890,11 @@
             "apply_all_one": "Applica la proposta",
             "apply_all_other": "Applica tutto ({{count}})",
             "apply_all_title": "Applicare tutte le proposte?",
-            "apply_all_description_one": "Sul repository con una proposta viene pubblicato un nuovo branch con tutti i file proposti e viene aperta una pull request. La sua CI parte subito, con i segreti del repository: controlla prima il diff.",
-            "apply_all_description_other": "Su ciascuno dei {{count}} repository con una proposta viene pubblicato un nuovo branch con tutti i file proposti e viene aperta una pull request. La loro CI parte subito, con i segreti dei repository: controlla prima i diff.",
-            "apply_all_confirm": "Applica e apri le pull request",
+            "apply_all_description_one": "La proposta viene pubblicata direttamente sul branch di partenza del suo repository, con tutti i file proposti e senza revisione. La sua CI parte subito, con i segreti del repository: controlla prima il diff.",
+            "apply_all_description_other": "Ciascuna delle {{count}} proposte viene pubblicata direttamente sul branch di partenza del suo repository, con tutti i file proposti e senza revisione. La loro CI parte subito, con i segreti dei repository: controlla prima i diff.",
+            "apply_all_confirm": "Applica sui branch di partenza",
             "apply_all_applying": "Applicazione in corso…",
-            "apply_all_success": "Proposte applicate: le pull request sono aperte",
+            "apply_all_success": "Proposte applicate sui branch di partenza",
             "follow_up_placeholder": "Chiedi una modifica o fai una domanda all'agente…",
             "follow_up_running": "Attendi che l'agente finisca per chiedere altro…",
             "follow_up_failed": "Questo job non è andato a buon fine: avviane uno nuovo per riprovare.",
@@ -1925,7 +1932,7 @@
                 "AI_DOMAIN_PLAN_HAS_MEMBERS": "Il dominio ha già microfrontend o servizi: ricarica la pagina.",
                 "AI_DOMAIN_PLAN_FAILED": "L'AI non è riuscita a proporre i componenti: riprova o descrivi la richiesta in un altro modo."
             },
-            "apply_all_started": "Applicazione delle proposte in corso: le pull request si aprono tra un momento",
+            "apply_all_started": "Applicazione delle proposte sui branch di partenza in corso",
             "apply_all_failed_one": "{{count}} proposta su {{total}} non è stata applicata: guarda l'errore sul suo repository",
             "apply_all_failed_other": "{{count}} proposte su {{total}} non sono state applicate: guarda gli errori sui loro repository",
             "follow_up_no_proposal": "Non ci sono proposte da rifinire: avvia un nuovo job per altre modifiche.",

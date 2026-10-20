@@ -38,7 +38,7 @@ import AiChangeJobService from "./AiChangeJobService"
 
 type WithGates = { ensureAccessToProject: () => Promise<void>; isOrganizationAdmin: () => Promise<boolean> }
 type WithProcess = { process: (jobId: string, client: LlmClient) => Promise<void> }
-type WithApplyClaimed = { applyClaimed: (request: unknown, files: unknown, related: string[]) => Promise<{ pullRequestUrl?: string }> }
+type WithApplyClaimed = { applyClaimed: (request: unknown, files: unknown) => Promise<unknown> }
 
 const user = { _id: new Types.ObjectId(), email: "ada@example.com", name: "Ada" } as unknown as IUser
 const projectId = new Types.ObjectId().toString()
@@ -188,6 +188,8 @@ describe("AiChangeJobService", () => {
                 expect.objectContaining({ microfrontendId: cart._id, jobId: expect.anything(), jobRepositoryCount: 2, baseBranch: "main", status: AiChangeStatus.PENDING }),
                 expect.objectContaining({ microfrontendId: catalog._id, jobRepositoryCount: 2 })
             ])
+            // Each repository gets the feature branch of the conversation, named after it.
+            expect(requests.map(request => request.branch)).toEqual([expect.stringMatching(/^ai\/cart-\d{8}-\d{6}$/), expect.stringMatching(/^ai\/catalog-\d{8}-\d{6}$/)])
             expect(String(requests[0].jobId)).toBe(job._id)
         })
 
@@ -303,7 +305,16 @@ describe("AiChangeJobService", () => {
     describe("followUp", () => {
         const parentJobId = new Types.ObjectId()
         const rootJobId = new Types.ObjectId()
-        const parentRequest = (status: AiChangeStatus) => ({ _id: new Types.ObjectId(), jobId: parentJobId, microfrontendId: catalog._id, baseBranch: "develop", status, files: [] })
+        const parentRequest = (status: AiChangeStatus) => ({
+            _id: new Types.ObjectId(),
+            jobId: parentJobId,
+            microfrontendId: catalog._id,
+            baseBranch: "develop",
+            branch: "ai/catalog-20261020-090000",
+            pullRequestUrl: "https://github.com/acme/catalog/pull/4",
+            status,
+            files: []
+        })
         let parentStatus: AiJobStatus
         let requests: ReturnType<typeof parentRequest>[]
 
@@ -332,6 +343,8 @@ describe("AiChangeJobService", () => {
 
             expect(child).toMatchObject({ parentJobId: String(parentJobId), rootJobId: String(rootJobId), scope: "global" })
             expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ microfrontendId: catalog._id, parentId: requests[0]._id, baseBranch: "develop" }))
+            // The follow-up goes on on the parent's branch: its pull request follows it.
+            expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ branch: "ai/catalog-20261020-090000", pullRequestUrl: "https://github.com/acme/catalog/pull/4" }))
         })
 
         it("Given a parent that reasoned at low, when it is followed up, then the child reasons at low too unless another effort is chosen", async () => {
@@ -433,7 +446,7 @@ describe("AiChangeJobService", () => {
         let dir: string
         let jobId: Types.ObjectId
         let parentJobId: Types.ObjectId
-        let parent: { _id: Types.ObjectId; files: Record<string, unknown>[] }
+        let parent: { _id: Types.ObjectId; prompt: string; files: Record<string, unknown>[]; commit?: string; baseCommit?: string }
         let request: Record<string, unknown>
         let workingCopy: Record<string, ReturnType<typeof vi.fn> | string>
         let microfrontendIds: Types.ObjectId[]
@@ -446,19 +459,29 @@ describe("AiChangeJobService", () => {
             parentJobId = new Types.ObjectId()
             parent = {
                 _id: new Types.ObjectId(),
+                prompt: "Show the price",
                 files: [
                     { path: "src/App.tsx", action: "update", baseBlobOid: "app-blob", proposedContent: "first proposal\n" },
                     { path: "src/Price.tsx", action: "create", proposedContent: "export const Price = () => null\n" }
                 ]
             }
-            request = { _id: new Types.ObjectId(), jobId, microfrontendId: catalog._id, baseBranch: "main", parentId: parent._id }
+            request = {
+                _id: new Types.ObjectId(),
+                jobId,
+                microfrontendId: catalog._id,
+                prompt: "Also show the currency",
+                baseBranch: "main",
+                branch: "ai/catalog-20261020-090000",
+                parentId: parent._id
+            }
             workingCopy = {
                 dir,
                 blobOid: vi.fn(async (_commit: string, file: string) => (file === "src/App.tsx" ? "app-blob" : undefined)),
                 changes: vi.fn(async () => [{ path: "src/App.tsx", action: "update", baseBlobOid: "app-blob" }]),
                 readHeadFile: vi.fn(async () => "base\n"),
                 readWorkingFile: vi.fn(async (file: string) => fs.readFileSync(path.join(dir, file), "utf8")),
-                discardChanges: vi.fn(async () => undefined)
+                discardChanges: vi.fn(async () => undefined),
+                commitAndPush: vi.fn(async () => "branch-commit")
             }
             workspaces.set(String(catalog._id), { target: {}, workingCopy, defaultBranch: "main" })
             microfrontends = [catalog]
@@ -519,6 +542,33 @@ describe("AiChangeJobService", () => {
                 expect.objectContaining({ model: "job", filter: { _id: jobId, status: AiJobStatus.RUNNING }, update: expect.objectContaining({ status: AiJobStatus.DONE }) })
             )
             expect(workingCopy.discardChanges).toHaveBeenCalled()
+        })
+
+        it("Given a proposal, when the job ends, then it is pushed on the conversation's branch, named after its first message, before it is saved", async () => {
+            await run()
+
+            expect(workingCopy.commitAndPush).toHaveBeenCalledWith({
+                branch: "ai/catalog-20261020-090000",
+                message: "Show the price\n\nShows the price with its currency",
+                author: { name: "Ada", email: "ada@example.com" },
+                files: [{ path: "src/App.tsx", action: "update", content: "first proposal with currency\n" }]
+            })
+            expect((workingCopy.commitAndPush as ReturnType<typeof vi.fn>).mock.calls[0][0].pushTo).toBeUndefined()
+            const proposal = updates.find(({ update }) => update.status === AiChangeStatus.PROPOSED)
+            expect(proposal?.update).toMatchObject({ branch: "ai/catalog-20261020-090000", commit: "branch-commit" })
+            expect(pushed(updates)).toContain("pushing")
+        })
+
+        it("Given a push the remote refuses, when the job ends, then the proposal is saved anyway with the error", async () => {
+            workingCopy.commitAndPush = vi.fn(async () => {
+                throw new Error("403 Forbidden")
+            })
+
+            await run()
+
+            const proposal = updates.find(({ update }) => update.status === AiChangeStatus.PROPOSED)
+            expect(proposal?.update).toMatchObject({ pushError: "403 Forbidden" })
+            expect(proposal?.update.commit).toBeUndefined()
         })
 
         it("Given a job at max effort, when it runs, then the agent reasons at max, its reasoning is logged on the job and its request, and the usage is audited with the effort", async () => {
@@ -587,10 +637,15 @@ describe("AiChangeJobService", () => {
                     return { summary: "To keep the price apart.", stopReason: "end_turn", transcript: answer }
                 })
 
+                Object.assign(parent, { commit: "parent-commit", baseCommit: "base-commit" })
+
                 await run()
 
                 const proposal = updates.find(({ update }) => update.status === AiChangeStatus.PROPOSED)
                 expect(proposal?.update).toMatchObject({ summary: "Adds the price to the catalog" })
+                // The branch already holds these very files: pushing them again would only run the CI again.
+                expect(workingCopy.commitAndPush).not.toHaveBeenCalled()
+                expect(proposal?.update).toMatchObject({ commit: "parent-commit" })
                 expect(updates).toContainEqual(
                     expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.DONE, summary: "To keep the price apart.", transcript: answer }) })
                 )
@@ -854,7 +909,7 @@ describe("AiChangeJobService", () => {
             expect(applyClaimed).not.toHaveBeenCalled()
         })
 
-        it("Given two proposals, when the job is applied, then it answers with both claimed and opens the pull requests afterwards, each naming the other", async () => {
+        it("Given two proposals, when the job is applied, then it answers with both claimed and brings them onto their base afterwards, one after the other", async () => {
             let release: () => void = () => undefined
             const firstDone = new Promise<void>(resolve => {
                 release = resolve
@@ -863,9 +918,9 @@ describe("AiChangeJobService", () => {
                 .spyOn(AiChangeJobService.prototype as unknown as WithApplyClaimed, "applyClaimed")
                 .mockImplementationOnce(async () => {
                     await firstDone
-                    return { pullRequestUrl: "https://github.com/acme/catalog/pull/1" }
+                    return {}
                 })
-                .mockResolvedValueOnce({ pullRequestUrl: "https://github.com/acme/cart/pull/2" })
+                .mockResolvedValueOnce({})
 
             await service().apply(String(jobId))
 
@@ -873,7 +928,7 @@ describe("AiChangeJobService", () => {
             expect(applyClaimed.mock.calls.length).toBeLessThanOrEqual(1)
             release()
             await vi.waitFor(() => expect(applyClaimed).toHaveBeenCalledTimes(2))
-            expect(applyClaimed.mock.calls.map(([, , related]) => related)).toEqual([["Cart"], ["Catalog: https://github.com/acme/catalog/pull/1"]])
+            expect(applyClaimed.mock.calls.map(([request]) => String((request as { microfrontendId: unknown }).microfrontendId))).toEqual([String(catalog._id), String(cart._id)])
             expect(pushed(updates)).toContain("applying")
         })
 

@@ -192,4 +192,64 @@ describe.skipIf(!hasGit)("GitWorkingCopy against a local smart HTTP remote", () 
         expect(fs.readdirSync(outside)).toEqual([])
         expect(() => run(seed, "ls-remote", "--exit-code", "origin", "ai/escape")).toThrow()
     })
+
+    it("Given a proposal pushed on its branch, when its commit is pushed onto the base, then the base fast-forwards to that same commit", async () => {
+        const copy = new GitWorkingCopy(workspace, remoteUrl, credentials)
+        await copy.prepare("main")
+        const commit = await copy.commitAndPush({
+            branch: "ai/app-ff",
+            message: "feat: fast-forward",
+            author: { name: "Ada", email: "ada@example.com" },
+            files: [{ path: "FF.md", action: "create", content: "ff\n" }]
+        })
+
+        await copy.pushCommit(commit, "main")
+
+        expect(run(seed, "ls-remote", "origin", "refs/heads/main").split("\t")[0]).toBe(commit)
+        expect(await copy.changes()).toEqual([])
+    })
+
+    it("Given a base that moved on, when a commit made on the old base is pushed onto it, then the push is refused and the base is untouched", async () => {
+        const copy = new GitWorkingCopy(workspace, remoteUrl, credentials)
+        await copy.prepare("main")
+        run(seed, "pull", "origin", "main")
+        fs.writeFileSync(path.join(seed, "MOVED.md"), "moved\n")
+        run(seed, "add", ".")
+        run(seed, "commit", "-m", "moved")
+        run(seed, "push", "origin", "main")
+
+        await expect(
+            copy.commitAndPush({ branch: "ai/app-stale", pushTo: "main", message: "x", author: { name: "a", email: "a@a" }, files: [{ path: "STALE.md", action: "create", content: "x" }] })
+        ).rejects.toThrow()
+
+        expect(run(seed, "ls-remote", "origin", "refs/heads/main").split("\t")[0]).toBe(run(seed, "rev-parse", "HEAD"))
+    })
+
+    it("Given files committed with pushTo, when they are pushed, then they land on the base and no other branch is created", async () => {
+        const copy = new GitWorkingCopy(workspace, remoteUrl, credentials)
+        const head = await copy.prepare("main")
+
+        const commit = await copy.commitAndPush({
+            branch: "ai/app-direct",
+            pushTo: "main",
+            message: "feat: straight onto main",
+            author: { name: "Ada", email: "ada@example.com" },
+            files: [{ path: "DIRECT.md", action: "create", content: "direct\n" }]
+        })
+
+        run(seed, "fetch", "origin", "main")
+        expect(run(seed, "rev-parse", "FETCH_HEAD")).toBe(commit)
+        expect(run(seed, "rev-parse", "FETCH_HEAD^")).toBe(head)
+        expect(() => run(seed, "ls-remote", "--exit-code", "origin", "ai/app-direct")).toThrow()
+    })
+
+    it("Given a branch on the remote, when it is deleted, then the remote no longer has it", async () => {
+        const copy = new GitWorkingCopy(workspace, remoteUrl, credentials)
+        await copy.prepare("main")
+        await copy.commitAndPush({ branch: "ai/app-gone", message: "x", author: { name: "a", email: "a@a" }, files: [{ path: "GONE.md", action: "create", content: "x" }] })
+
+        await copy.deleteRemoteBranch("ai/app-gone")
+
+        expect(() => run(seed, "ls-remote", "--exit-code", "origin", "ai/app-gone")).toThrow()
+    })
 })

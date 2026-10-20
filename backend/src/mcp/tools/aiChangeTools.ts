@@ -48,6 +48,8 @@ const toChangeView = (request: IAiChangeRequest) => ({
     summary: request.summary,
     files: (request.files ?? []).map(file => ({ path: file.path, action: file.action })),
     branch: request.branch,
+    commit: request.commit,
+    pushError: request.pushError,
     pullRequestUrl: request.pullRequestUrl,
     pullRequestError: request.pullRequestError,
     error: request.error,
@@ -81,7 +83,10 @@ const toJobView = (job: AiJobView) => ({
         status: repository.status,
         files: repository.files,
         error: repository.error,
+        baseBranch: repository.baseBranch,
         branch: repository.branch,
+        commit: repository.commit,
+        pushError: repository.pushError,
         pullRequestUrl: repository.pullRequestUrl,
         pullRequestError: repository.pullRequestError
     })),
@@ -92,7 +97,8 @@ const toJobView = (job: AiJobView) => ({
 
 /**
  * Console-only tools for the AI code changes of a microfrontend: an agent proposes a change on its
- * repository, the user applies it as a pull request or discards it. Starting one runs a paid agent
+ * repository and pushes it on a feature branch, the user applies it onto the base branch, opens a
+ * pull request from it or discards it. Starting one runs a paid agent
  * for minutes, which is why MCP clients do not get these.
  */
 export const aiChangeTools = [
@@ -100,10 +106,10 @@ export const aiChangeTools = [
         name: "ai_change_start",
         title: "Start AI code change",
         description:
-            "Starts an AI agent that proposes a code change on the repository of a microfrontend. It only proposes: nothing is pushed until ai_change_apply. It runs in the background for minutes; follow it with ai_change_get. It runs as an AI job on this repository alone: its jobId works with ai_job_get and ai_job_follow_up. At most 3 jobs run at once in a project.",
+            "Starts an AI agent that proposes a code change on the repository of a microfrontend. It only proposes: the proposal is pushed on a feature branch of its own (branch), never on the base, until ai_change_apply. It runs in the background for minutes; follow it with ai_change_get. It runs as an AI job on this repository alone: its jobId works with ai_job_get and ai_job_follow_up. At most 3 jobs run at once in a project.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
-        // Clones the repository from its provider: nothing is written there yet
+        // Clones the repository from its provider and, once done, pushes the proposal on a feature branch: never on the base
         annotations: WRITE_EXTERNAL,
         inputSchema: z.object({
             microfrontendId,
@@ -128,7 +134,7 @@ export const aiChangeTools = [
         name: "ai_change_get",
         title: "Get AI code change",
         description:
-            "Status of one AI code change (PENDING, RUNNING, PROPOSED, APPLYING, APPLIED, DISCARDED, FAILED), its summary, the files it proposes to create, update or delete, its latest progress lines and, once applied, the pull request. The diff itself is shown in the console.",
+            "Status of one AI code change (PENDING, RUNNING, PROPOSED, APPLYING, APPLIED, DISCARDED, FAILED), its summary, the files it proposes to create, update or delete, its latest progress lines, the feature branch it is pushed on and its pull request once opened. The diff itself is shown in the console.",
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY,
@@ -139,12 +145,25 @@ export const aiChangeTools = [
         name: "ai_change_apply",
         title: "Apply AI code change",
         description:
-            "Commits a PROPOSED change on a new branch of the microfrontend's repository, pushes it and opens a pull request. Every proposed file is committed: they depend on each other, so a proposal cannot be applied in part.",
+            "Pushes a PROPOSED change straight onto the base branch of the microfrontend's repository, without a review: to have it reviewed first, use ai_change_open_pull_request. Every proposed file is applied: they depend on each other, so a proposal cannot be applied in part. A protected base branch refuses it with AI_CHANGE_PUSH_REFUSED.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         annotations: DESTRUCTIVE_EXTERNAL,
         inputSchema: z.object({ changeId }),
         run: async (args, { principal }) => toChangeView(await service(principal).apply(args.changeId))
+    }),
+    defineTool({
+        name: "ai_change_open_pull_request",
+        title: "Open a pull request for an AI code change",
+        description:
+            "Opens a pull request (a merge request on GitLab) from the feature branch of a PROPOSED change onto its base branch, for a review in the repository. The change stays PROPOSED: a follow-up updates the pull request, ai_change_apply still applies it. pullRequestError tells why the provider refused it.",
+        scope: MCP_SCOPE_WRITE,
+        consoleOnly: true,
+        // Others see it on the repository: the assistant asks the user first.
+        requiresConfirmation: true,
+        annotations: WRITE_EXTERNAL,
+        inputSchema: z.object({ changeId }),
+        run: async (args, { principal }) => toChangeView(await service(principal).openPullRequest(args.changeId))
     }),
     defineTool({
         name: "ai_change_discard",
@@ -162,7 +181,7 @@ export const aiChangeTools = [
         name: "ai_job_start",
         title: "Start AI job",
         description:
-            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. With domainId it works on the microfrontends and services of that functional domain, frontend and backend together, and is told what the domain is for. Without domainId nor microfrontendIds it works on every microfrontend and service of the project with a repository (at most 10). Each repository gets its own proposal, applied as its own pull request; nothing is pushed until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
+            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. With domainId it works on the microfrontends and services of that functional domain, frontend and backend together, and is told what the domain is for. Without domainId nor microfrontendIds it works on every microfrontend and service of the project with a repository (at most 10). Each repository gets its own proposal, pushed on a feature branch of its own; nothing reaches a base branch until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Clones the repositories from their provider: nothing is written there yet
@@ -217,7 +236,7 @@ export const aiChangeTools = [
         name: "ai_job_get",
         title: "Get AI job",
         description:
-            "Status of an AI job (PENDING, RUNNING, DONE, FAILED), its summary, the tokens it used, its latest progress lines and, per repository (a microfrontend's or a service's, see kind), the status of its proposal (a changeId for ai_change_get), the files it touches and, once applied, the pull request.",
+            "Status of an AI job (PENDING, RUNNING, DONE, FAILED), its summary, the tokens it used, its latest progress lines and, per repository (a microfrontend's or a service's, see kind), the status of its proposal (a changeId for ai_change_get), the files it touches, its feature branch and its pull request once opened.",
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY,
@@ -228,7 +247,7 @@ export const aiChangeTools = [
         name: "ai_job_apply",
         title: "Apply AI job",
         description:
-            "Applies every PROPOSED change of a finished AI job: one branch and one pull request per repository, each description naming the others. It answers at once with the proposals APPLYING and opens the pull requests in the background; follow it with ai_job_get. A repository that cannot be applied goes back to PROPOSED with its error and does not stop the others.",
+            "Pushes every PROPOSED change of a finished AI job straight onto the base branch of its repository, without a review. It answers at once with the proposals APPLYING and pushes them in the background; follow it with ai_job_get. A repository that cannot be applied goes back to PROPOSED with its error and does not stop the others.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         requiresConfirmation: true,

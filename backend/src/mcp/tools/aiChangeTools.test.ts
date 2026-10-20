@@ -8,6 +8,7 @@ const createChange = vi.fn()
 const listChanges = vi.fn()
 const getChange = vi.fn()
 const applyChange = vi.fn()
+const openPullRequest = vi.fn()
 const discardChange = vi.fn()
 const createJob = vi.fn()
 const followUpJob = vi.fn()
@@ -26,6 +27,7 @@ vi.mock("../../service/aiChange/AiChangeService", () => ({
         list = (...args: unknown[]) => listChanges(...args)
         get = (...args: unknown[]) => getChange(...args)
         apply = (...args: unknown[]) => applyChange(...args)
+        openPullRequest = (...args: unknown[]) => openPullRequest(...args)
         discard = (...args: unknown[]) => discardChange(...args)
     }
 }))
@@ -102,7 +104,7 @@ const forbidden = () => createBusinessException({ code: "AI_CHANGE_FORBIDDEN", m
 
 describe("AI change tools", () => {
     beforeEach(() => {
-        for (const mock of [createChange, listChanges, getChange, applyChange, discardChange, createJob, followUpJob, getJob, applyJob]) {
+        for (const mock of [createChange, listChanges, getChange, applyChange, openPullRequest, discardChange, createJob, followUpJob, getJob, applyJob]) {
             mock.mockReset()
         }
         constructed.length = 0
@@ -172,19 +174,31 @@ describe("AI change tools", () => {
     })
 
     describe("ai_change_apply", () => {
-        it("given a proposal, when applied, then the whole change reaches the service and the pull request comes back", async () => {
-            applyChange.mockResolvedValue({ ...changeDocument("APPLIED"), pullRequestUrl: "https://github.com/acme/cart/pull/7" })
+        it("given a proposal, when applied, then the whole change reaches the service and its commit on the base comes back", async () => {
+            applyChange.mockResolvedValue({ ...changeDocument("APPLIED"), commit: "abc123" })
 
             const result = await run("ai_change_apply", { changeId: CHANGE })
 
             expect(applyChange).toHaveBeenCalledWith(CHANGE)
-            expect(result).toMatchObject({ status: "APPLIED", pullRequestUrl: "https://github.com/acme/cart/pull/7" })
+            expect(result).toMatchObject({ status: "APPLIED", commit: "abc123" })
         })
 
         it("given a viewer, when applied, then the service's refusal surfaces", async () => {
             applyChange.mockRejectedValue(forbidden())
 
             await expect(run("ai_change_apply", { changeId: CHANGE })).rejects.toMatchObject({ code: "AI_CHANGE_FORBIDDEN" })
+        })
+    })
+
+    describe("ai_change_open_pull_request", () => {
+        it("given a proposal, when a pull request is opened, then the assistant asks first and the pull request comes back with the change still proposed", async () => {
+            openPullRequest.mockResolvedValue({ ...changeDocument("PROPOSED"), branch: "ai/cart-20261020-090000", pullRequestUrl: "https://github.com/acme/cart/pull/7" })
+
+            const result = await run("ai_change_open_pull_request", { changeId: CHANGE })
+
+            expect(tool("ai_change_open_pull_request").requiresConfirmation).toBe(true)
+            expect(openPullRequest).toHaveBeenCalledWith(CHANGE)
+            expect(result).toMatchObject({ status: "PROPOSED", branch: "ai/cart-20261020-090000", pullRequestUrl: "https://github.com/acme/cart/pull/7" })
         })
     })
 

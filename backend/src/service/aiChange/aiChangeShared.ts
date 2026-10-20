@@ -11,7 +11,8 @@ import { isProtectedPath } from "../../utils/workspacePaths"
 import BaseAuthorizedService from "../BaseAuthorizedService"
 import { LlmConfiguration } from "../llm"
 import { toErrorMessage } from "../RepositoryFileService"
-import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
+import { isPushRefused } from "../workspace/GitWorkingCopy"
+import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
 import { componentIdOf, componentOf, findComponent } from "../workspace/repositoryComponent"
 
 /** Proposals nobody approves or discards are removed after this, and so are finished jobs. */
@@ -63,11 +64,21 @@ export const timestamp = (date = new Date()) => date.toISOString().replace(/[-:]
 /** How far back the messages of a conversation are looked up for its pull request. */
 const MAX_CONVERSATION_LENGTH = 50
 
+/** The feature branch of a conversation on one repository. */
+export const branchName = (slug: string) => `ai/${slug}-${timestamp()}`
+
+/** Who a commit is by: the user who asked for the change, or applied it. */
+export const authorOf = (user: { name?: string; surname?: string; email: string }) => ({ name: [user.name, user.surname].filter(Boolean).join(" ") || user.email, email: user.email })
+
+export const commitMessage = (title: string, summary?: string) => `${title}\n\n${summary ?? ""}`.trim()
+
+export const toCommitFiles = (files: IAiChangeFile[]) => files.map(file => ({ path: file.path, action: file.action, content: file.proposedContent }))
+
 /**
  * What was asked in the conversation that led to a proposal, oldest first: a follow-up ("also translate
  * it") alone would make a poor pull request title.
  */
-const conversationPrompts = async (request: IAiChangeRequest): Promise<string[]> => {
+export const conversationPrompts = async (request: IAiChangeRequest): Promise<string[]> => {
     const prompts = [request.prompt]
     let parentId = request.parentId
     while (parentId && prompts.length < MAX_CONVERSATION_LENGTH) {
@@ -127,14 +138,37 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
     }
 
     /**
-     * Commits the files of a request already claimed (APPLYING) on a new branch, pushes it and opens
-     * a pull request. The request ends APPLIED, or back to PROPOSED with the error, which is thrown.
-     *
-     * The working copy is reset to the latest base first, and every file is checked to still be
-     * what the agent saw: a file changed on the remote since would otherwise be silently overwritten.
-     * `related` lists the other repositories of the same job, one per line.
+     * Resets the working copy to the latest base and checks every file is still what the agent saw: a
+     * file changed on the remote since would otherwise be silently overwritten. Returns the base's head.
      */
-    protected async applyClaimed(request: IAiChangeRequest, files: IAiChangeFile[], related: string[] = []): Promise<IAiChangeRequest> {
+    private async latestBase(workspaceService: RepositoryWorkspaceService, workspace: OpenedWorkspace, request: IAiChangeRequest, files: IAiChangeFile[]): Promise<string> {
+        const head = await workspaceService.prepare(workspace, request.baseBranch)
+        const conflicts: string[] = []
+        for (const file of files) {
+            const current = await workspace.workingCopy.blobOid(head, file.path)
+            if (current !== file.baseBlobOid) conflicts.push(file.path)
+        }
+        if (conflicts.length) {
+            throw createBusinessException({
+                code: "AI_CHANGE_CONFLICT",
+                message: `These files changed on ${request.baseBranch} after the proposal: ${conflicts.join(", ")}. Ask for the change again.`,
+                details: { conflicts },
+                statusCode: 409
+            })
+        }
+        return head
+    }
+
+    /**
+     * Brings the files of a request already claimed (APPLYING) onto its base branch. The request ends
+     * APPLIED, or back to PROPOSED with the error, which is thrown.
+     *
+     * When the base has not moved since the proposal, the base fast-forwards to the very commit of the
+     * feature branch, so a pull request opened from it reads merged. Otherwise the files are committed
+     * again on top of the latest base. The push is never forced: a protected base turns it down, and
+     * the user opens a pull request instead.
+     */
+    protected async applyClaimed(request: IAiChangeRequest, files: IAiChangeFile[]): Promise<IAiChangeRequest> {
         const component = await findComponent(componentOf(request))
         const user = this.getUser()!
         try {
@@ -146,61 +180,43 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
             const result = await withRepositoryLock(
                 workspace.workingCopy.dir,
                 async () => {
-                    const head = await workspaceService.prepare(workspace, request.baseBranch)
-                    const conflicts: string[] = []
-                    for (const file of files) {
-                        const current = await workspace.workingCopy.blobOid(head, file.path)
-                        if (current !== file.baseBlobOid) conflicts.push(file.path)
-                    }
-                    if (conflicts.length) {
+                    const head = await this.latestBase(workspaceService, workspace, request, files)
+                    let commit: string
+                    try {
+                        if (request.commit && head === request.baseCommit && (await workspace.workingCopy.hasCommit(request.commit))) {
+                            await workspace.workingCopy.pushCommit(request.commit, request.baseBranch)
+                            commit = request.commit
+                        } else {
+                            commit = await workspace.workingCopy.commitAndPush({
+                                branch: request.branch ?? branchName(component.slug),
+                                pushTo: request.baseBranch,
+                                message: commitMessage(firstLine(prompts[0], 72), request.summary),
+                                author: authorOf(user),
+                                files: toCommitFiles(files)
+                            })
+                        }
+                    } catch (error) {
+                        if (!isPushRefused(error)) throw error
                         throw createBusinessException({
-                            code: "AI_CHANGE_CONFLICT",
-                            message: `These files changed on ${request.baseBranch} after the proposal: ${conflicts.join(", ")}. Ask for the change again.`,
-                            details: { conflicts },
+                            code: "AI_CHANGE_PUSH_REFUSED",
+                            message: `${request.baseBranch} refused the push (${toErrorMessage(error)}): if it is protected, open a pull request instead`,
                             statusCode: 409
                         })
                     }
-
-                    const title = firstLine(prompts[0], 72)
-                    // Named once and saved before pushing: an apply retried after a crash pushes to the
-                    // same branch (forced, it is ours) instead of leaving a second one behind.
-                    const branch = request.branch ?? `ai/${component.slug}-${timestamp()}`
-                    await AiChangeRequest.updateOne({ _id: request._id }, { branch })
-                    const commit = await workspace.workingCopy.commitAndPush({
-                        branch,
-                        message: `${title}\n\n${request.summary ?? ""}`.trim(),
-                        author: { name: [user.name, user.surname].filter(Boolean).join(" ") || user.email, email: user.email },
-                        files: files.map(file => ({ path: file.path, action: file.action, content: file.proposedContent }))
-                    })
-
-                    let pullRequestUrl: string | undefined
-                    let pullRequestError: string | undefined
-                    try {
-                        pullRequestUrl = await workspaceService.openPullRequest(workspace.target, {
-                            sourceBranch: branch,
-                            targetBranch: request.baseBranch,
-                            title,
-                            description: [
-                                request.summary,
-                                related.length ? `Part of a change across ${related.length + 1} repositories:\n${related.map(line => `- ${line}`).join("\n")}` : undefined,
-                                `---\nRequested in MFE Orchestrator by ${user.email}:\n\n${prompts.map(prompt => `> ${prompt.split("\n").join("\n> ")}`).join("\n\n")}`
-                            ]
-                                .filter(Boolean)
-                                .join("\n\n")
-                        })
-                    } catch (error) {
-                        // The branch is pushed: the change is not lost, the user opens the pull request by hand.
-                        pullRequestError = toErrorMessage(error)
-                        fastify.log.warn({ error: loggable(error), aiChangeId: String(request._id) }, "Could not open the pull request")
+                    // Its work is on the base now. One with a pull request is left to it: deleting it would close the pull request on some providers.
+                    if (request.branch && request.commit && !request.pullRequestUrl) {
+                        await workspace.workingCopy
+                            .deleteRemoteBranch(request.branch)
+                            .catch(error => fastify.log.warn({ error: loggable(error), aiChangeId: String(request._id) }, "Could not delete the branch of an applied change"))
                     }
-                    return { branch, commit, pullRequestUrl, pullRequestError }
+                    return { commit }
                 },
                 { waitMs: APPLY_LOCK_WAIT_MS }
             )
 
             const applied = await AiChangeRequest.findByIdAndUpdate(
                 request._id,
-                { status: AiChangeStatus.APPLIED, ...result, $unset: { expiresAt: 1 }, $push: { events: { at: new Date(), kind: "info", message: "applied" } } },
+                { status: AiChangeStatus.APPLIED, ...result, $unset: { expiresAt: 1, pushError: 1 }, $push: { events: { at: new Date(), kind: "info", message: "applied" } } },
                 { new: true }
             )
             // The push is done: failing to keep the history must not turn the request back into a proposal.
@@ -210,5 +226,80 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
             await AiChangeRequest.updateOne({ _id: request._id }, { status: AiChangeStatus.PROPOSED, error: toErrorMessage(error) })
             throw error
         }
+    }
+
+    /**
+     * Opens a pull request from the feature branch of a proposal onto its base, for a review in the
+     * repository before it reaches the base. The proposal stays open: a follow-up force-pushes the
+     * branch, so the pull request follows it. A proposal whose push failed is pushed first, from the
+     * latest base. A provider refusing the pull request leaves its error on the request, which is returned.
+     * `related` lists the other repositories of the same job, one per line.
+     */
+    protected async openPullRequestFor(request: IAiChangeRequest, files: IAiChangeFile[], related: string[] = []): Promise<IAiChangeRequest> {
+        const component = await findComponent(componentOf(request))
+        if (!component) throw new EntityNotFoundError(componentIdOf(request))
+        const user = this.getUser()!
+        const workspaceService = new RepositoryWorkspaceService(this.user)
+        const workspace = await workspaceService.open(component)
+        const prompts = await conversationPrompts(request)
+        const title = firstLine(prompts[0], 72)
+
+        let branch = request.branch
+        if (!branch || !request.commit) {
+            const pushed = await withRepositoryLock(
+                workspace.workingCopy.dir,
+                async () => {
+                    await this.latestBase(workspaceService, workspace, request, files)
+                    const name = request.branch ?? branchName(component.slug)
+                    const commit = await workspace.workingCopy.commitAndPush({ branch: name, message: commitMessage(title, request.summary), author: authorOf(user), files: toCommitFiles(files) })
+                    return { branch: name, commit }
+                },
+                { waitMs: APPLY_LOCK_WAIT_MS }
+            )
+            await AiChangeRequest.updateOne({ _id: request._id }, { ...pushed, $unset: { pushError: 1 } })
+            branch = pushed.branch
+        }
+
+        try {
+            const pullRequestUrl = await workspaceService.openPullRequest(workspace.target, {
+                sourceBranch: branch,
+                targetBranch: request.baseBranch,
+                title,
+                description: [
+                    request.summary,
+                    related.length ? `Part of a change across ${related.length + 1} repositories:\n${related.map(line => `- ${line}`).join("\n")}` : undefined,
+                    `---\nRequested in MFE Orchestrator by ${user.email}:\n\n${prompts.map(prompt => `> ${prompt.split("\n").join("\n> ")}`).join("\n\n")}`
+                ]
+                    .filter(Boolean)
+                    .join("\n\n")
+            })
+            const opened = await AiChangeRequest.findByIdAndUpdate(request._id, { pullRequestUrl, $unset: { pullRequestError: 1 } }, { new: true })
+            // A follow-up started meanwhile pushes the same branch: it carries the pull request on, or applying it would delete the branch under it.
+            const owner = request.serviceId ? { serviceId: request.serviceId } : { microfrontendId: request.microfrontendId }
+            await AiChangeRequest.updateMany(
+                {
+                    conversationId: request.conversationId,
+                    ...owner,
+                    branch,
+                    status: { $in: [AiChangeStatus.PENDING, AiChangeStatus.RUNNING, AiChangeStatus.PROPOSED] },
+                    pullRequestUrl: { $exists: false }
+                },
+                { pullRequestUrl }
+            )
+            return opened!
+        } catch (error) {
+            // The branch is pushed: the change is not lost, the user can open the pull request by hand.
+            fastify.log.warn({ error: loggable(error), aiChangeId: String(request._id) }, "Could not open the pull request")
+            return (await AiChangeRequest.findByIdAndUpdate(request._id, { pullRequestError: toErrorMessage(error) }, { new: true }))!
+        }
+    }
+
+    /** Deletes the feature branch of a discarded proposal, unless a pull request is open on it. Best effort: a branch left behind harms nobody. */
+    protected async dropBranch(request: IAiChangeRequest): Promise<void> {
+        if (!request.branch || !request.commit || request.pullRequestUrl) return
+        const component = await findComponent(componentOf(request))
+        if (!component) return
+        const workspace = await new RepositoryWorkspaceService(this.user).open(component)
+        await workspace.workingCopy.deleteRemoteBranch(request.branch)
     }
 }

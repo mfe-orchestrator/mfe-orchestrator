@@ -29,6 +29,8 @@ import {
     ClipboardCheck,
     ExternalLink,
     GitBranch,
+    GitMerge,
+    GitPullRequest,
     LayoutDashboard,
     LoaderCircle,
     Plus,
@@ -104,27 +106,44 @@ const WarningAlert: React.FC<{ title: string; children: React.ReactNode }> = ({ 
     </Alert>
 )
 
-const AppliedAlert: React.FC<{ branch?: string; pullRequestUrl?: string }> = ({ branch, pullRequestUrl }) => {
+const PullRequestLink: React.FC<{ url: string }> = ({ url }) => {
+    const { t } = useTranslation()
+    return (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
+            {t("microfrontend.aiChange.view_pull_request")}
+            <ExternalLink className="size-3.5" aria-hidden="true" />
+            <span className="sr-only">{t("microfrontend.aiChange.opens_new_tab")}</span>
+        </a>
+    )
+}
+
+const AppliedAlert: React.FC<{ baseBranch: string; commit?: string; pullRequestUrl?: string }> = ({ baseBranch, commit, pullRequestUrl }) => {
     const { t } = useTranslation()
     return (
         <Alert>
             <CheckCircle2 className="size-4 text-green-600 dark:text-green-400" aria-hidden="true" />
             <AlertTitle>{t("microfrontend.aiChange.applied_title")}</AlertTitle>
             <AlertDescription className="flex flex-col gap-1">
-                {branch && (
-                    <span>
-                        {t("microfrontend.aiChange.branch")}: <code className="font-mono text-xs">{branch}</code>
-                    </span>
-                )}
-                {pullRequestUrl && (
-                    <a href={pullRequestUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
-                        {t("microfrontend.aiChange.open_pull_request")}
-                        <ExternalLink className="size-3.5" aria-hidden="true" />
-                        <span className="sr-only">{t("microfrontend.aiChange.opens_new_tab")}</span>
-                    </a>
-                )}
+                <span>
+                    {t("microfrontend.aiChange.applied_onto")} <code className="font-mono text-xs">{baseBranch}</code>
+                    {commit && <code className="ml-2 font-mono text-xs text-muted-foreground">{commit.slice(0, 7)}</code>}
+                </span>
+                {pullRequestUrl && <PullRequestLink url={pullRequestUrl} />}
             </AlertDescription>
         </Alert>
+    )
+}
+
+/** Where the proposal is in the repository already: its feature branch, or why it is not there. */
+const BranchStatus: React.FC<{ request: AiChangeRequest }> = ({ request }) => {
+    const { t } = useTranslation()
+    if (request.pushError) return <WarningAlert title={t("microfrontend.aiChange.push_error_title")}>{request.pushError}</WarningAlert>
+    if (!request.branch || !request.commit) return null
+    return (
+        <p className="flex flex-wrap items-center gap-1.5 text-sm text-foreground-secondary">
+            <GitBranch className="size-4 shrink-0" aria-hidden="true" />
+            {t("microfrontend.aiChange.pushed_on")} <code className="break-all font-mono text-xs">{request.branch}</code>
+        </p>
     )
 }
 
@@ -149,12 +168,31 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
                     const code = errorCodeOf(error)
                     if (code === "AI_CHANGE_CONFLICT") return t("microfrontend.aiChange.errors.AI_CHANGE_CONFLICT", { files: conflictsOf(error).join(", ") })
                     if (code === "AI_CHANGE_NOT_PROPOSED") return t("microfrontend.aiChange.errors.AI_CHANGE_NOT_PROPOSED")
+                    if (code === "AI_CHANGE_PUSH_REFUSED") return t("microfrontend.aiChange.errors.AI_CHANGE_PUSH_REFUSED", { branch: request.baseBranch })
                     return t("microfrontend.aiChange.errors.apply")
                 }
             }),
         onSuccess: applied => {
-            notifications.showSuccessNotification({ message: t("microfrontend.aiChange.applied_success") })
+            notifications.showSuccessNotification({ message: t("microfrontend.aiChange.applied_success", { branch: request.baseBranch }) })
             onApplied(applied)
+        },
+        onError: () => onConflict()
+    })
+
+    const pullRequestMutation = useMutation({
+        mutationFn: () =>
+            aiChangesApi.openPullRequest(request._id, {
+                customErrorMessage: error => {
+                    const code = errorCodeOf(error)
+                    if (code === "AI_CHANGE_CONFLICT") return t("microfrontend.aiChange.errors.AI_CHANGE_CONFLICT", { files: conflictsOf(error).join(", ") })
+                    if (code === "AI_CHANGE_NOT_PROPOSED") return t("microfrontend.aiChange.errors.AI_CHANGE_NOT_PROPOSED")
+                    return t("microfrontend.aiChange.errors.pull_request")
+                }
+            }),
+        onSuccess: opened => {
+            // A provider refusing it answers with the error on the proposal: it shows there.
+            if (opened.pullRequestUrl) notifications.showSuccessNotification({ message: t("microfrontend.aiChange.pull_request_opened") })
+            onApplied(opened)
         },
         onError: () => onConflict()
     })
@@ -167,7 +205,7 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
         }
     })
 
-    const busy = applyMutation.isPending || discardMutation.isPending
+    const busy = applyMutation.isPending || discardMutation.isPending || pullRequestMutation.isPending
 
     const toggle = (set: Set<string>, path: string) => {
         const next = new Set(set)
@@ -230,15 +268,25 @@ const Proposal: React.FC<ProposalProps> = ({ request, onApplied, onConflict, onD
                     )
                 })}
             </ul>
-            <p className="text-sm text-foreground-secondary">{t("microfrontend.aiChange.apply_runs_ci")}</p>
-            <div className="flex flex-wrap justify-end gap-2">
+            <BranchStatus request={request} />
+            {request.pullRequestError && <WarningAlert title={t("microfrontend.aiChange.pull_request_error_title")}>{request.pullRequestError}</WarningAlert>}
+            <p className="text-sm text-foreground-secondary">{t("microfrontend.aiChange.apply_description", { branch: request.baseBranch })}</p>
+            <div className="flex flex-wrap items-center justify-end gap-2">
                 <Button type="button" variant="secondary" disabled={busy} onClick={() => discardMutation.mutate()}>
                     <Trash2 aria-hidden="true" />
                     {t("microfrontend.aiChange.discard")}
                 </Button>
+                {request.pullRequestUrl ? (
+                    <PullRequestLink url={request.pullRequestUrl} />
+                ) : (
+                    <Button type="button" variant="secondary" disabled={busy} onClick={() => pullRequestMutation.mutate()}>
+                        {pullRequestMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <GitPullRequest aria-hidden="true" />}
+                        {t("microfrontend.aiChange.open_pull_request")}
+                    </Button>
+                )}
                 <Button type="button" disabled={busy} onClick={() => applyMutation.mutate()}>
-                    {applyMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <GitBranch aria-hidden="true" />}
-                    {t("microfrontend.aiChange.apply")}
+                    {applyMutation.isPending ? <Spinner size={16} centerScreen={false} /> : <GitMerge aria-hidden="true" />}
+                    {t("microfrontend.aiChange.apply", { branch: request.baseBranch })}
                 </Button>
             </div>
         </div>
@@ -341,9 +389,7 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
                     </Alert>
                 )}
 
-                {request.status === "APPLIED" && <AppliedAlert branch={request.branch} pullRequestUrl={request.pullRequestUrl} />}
-
-                {request.status === "APPLIED" && request.pullRequestError && <WarningAlert title={t("microfrontend.aiChange.pull_request_error_title")}>{request.pullRequestError}</WarningAlert>}
+                {request.status === "APPLIED" && <AppliedAlert baseBranch={request.baseBranch} commit={request.commit} pullRequestUrl={request.pullRequestUrl} />}
 
                 {request.status === "DISCARDED" && <p className="text-sm text-muted-foreground">{t("microfrontend.aiChange.discarded_description")}</p>}
 
@@ -452,8 +498,7 @@ const RepositoryResult: React.FC<RepositoryResultProps> = ({ job, repository, la
 
             {proposal}
 
-            {repository.status === "APPLIED" && <AppliedAlert branch={repository.branch} pullRequestUrl={repository.pullRequestUrl} />}
-            {repository.status === "APPLIED" && repository.pullRequestError && <WarningAlert title={t("microfrontend.aiChange.pull_request_error_title")}>{repository.pullRequestError}</WarningAlert>}
+            {repository.status === "APPLIED" && <AppliedAlert baseBranch={repository.baseBranch} commit={repository.commit} pullRequestUrl={repository.pullRequestUrl} />}
 
             {repository.status === "DISCARDED" && (
                 <p className="text-sm text-muted-foreground">{t(superseded ? "microfrontend.aiChange.superseded" : "microfrontend.aiChange.discarded_description")}</p>
@@ -797,7 +842,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
         changed()
     }
 
-    // Pushed in the background: polling follows each repository to its pull request, or back to its proposal with the error.
+    // Pushed in the background: polling follows each repository onto its base branch, or back to its proposal with the error.
     const onApplying = async (applied: AiJob, requestIds: string[]) => {
         notifications.showInfoNotification({ message: t("assistant.jobs.apply_all_started") })
         // A poll that left before the apply would bring back the proposals as they were, and end the wait too early.

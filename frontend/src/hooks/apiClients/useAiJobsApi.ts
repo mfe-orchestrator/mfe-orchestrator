@@ -27,7 +27,12 @@ export interface AiJobRepository {
     status: AiChangeStatus
     files: { path: string; action: "create" | "update" | "delete" }[]
     error?: string
+    baseBranch: string
+    /** The feature branch the proposal is pushed on. */
     branch?: string
+    /** On the feature branch while proposed, on the base once applied. */
+    commit?: string
+    pushError?: string
     pullRequestUrl?: string
     pullRequestError?: string
 }

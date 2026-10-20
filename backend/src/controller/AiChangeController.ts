@@ -27,7 +27,8 @@ const applyBodySchema = {
  * A request is then reached by its own id, whatever owns it.
  *
  * Creating one starts a background job and answers at once; the console polls the request until
- * the proposal is ready, then applies or discards it. Console sessions only: an API key or an MCP
+ * the proposal is ready, then applies it onto the base branch, opens a pull request from its
+ * feature branch, or discards it. Console sessions only: an API key or an MCP
  * client cannot start an agent that spends the installation's model budget.
  */
 export default async function aiChangeController(fastify: FastifyInstance) {
@@ -61,6 +62,8 @@ export default async function aiChangeController(fastify: FastifyInstance) {
     fastify.post<{ Params: { id: string }; Body: Record<string, never> }>("/ai-changes/:id/apply", { schema: { body: applyBodySchema }, config }, async (request, reply) =>
         reply.send(await service(request).apply(request.params.id))
     )
+
+    fastify.post<{ Params: { id: string } }>("/ai-changes/:id/pull-request", { config }, async (request, reply) => reply.send(await service(request).openPullRequest(request.params.id)))
 
     fastify.post<{ Params: { id: string } }>("/ai-changes/:id/discard", { config }, async (request, reply) => reply.send(await service(request).discard(request.params.id)))
 }

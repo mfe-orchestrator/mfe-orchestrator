@@ -1,11 +1,12 @@
+import { fastify } from "../.."
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeRequest, { AiChangeStatus, IAiChangeRequest } from "../../models/AiChangeRequestModel"
 import { getLlmClient, LlmEffort } from "../llm"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
-import { findComponent, ownerFields, RepositoryComponent, RepositoryComponentRef } from "../workspace/repositoryComponent"
+import { componentIdOf, componentOf, findComponent, findComponents, ownerFields, RepositoryComponent, RepositoryComponentRef } from "../workspace/repositoryComponent"
 import AiChangeJobService from "./AiChangeJobService"
-import { AiChangeBaseService, ensureNotBeingRefined, staleOutcome } from "./aiChangeShared"
+import { AiChangeBaseService, ensureNotBeingRefined, loggable, staleOutcome } from "./aiChangeShared"
 
 const LISTED_CONVERSATIONS = 20
 
@@ -17,11 +18,12 @@ export interface AiChangeCreateInput {
 }
 
 /**
- * Code changes to a microfrontend or a backend service proposed by an AI agent and applied as a pull request.
+ * Code changes to a microfrontend or a backend service proposed by an AI agent.
  *
- * The agent works on the local working copy of the repository and never pushes: its changes are
- * stored here as a proposal and the copy is reset. Only {@link apply}, a user's explicit action,
- * writes to the remote, and only on a new branch with a pull request.
+ * The agent works on the local working copy of the repository and never pushes. Once it is done, its
+ * changes are stored here as a proposal and pushed on a feature branch of their own, never on the
+ * base. Only {@link apply}, a user's explicit action, brings them onto the base branch;
+ * {@link openPullRequest} asks for a review of the feature branch instead.
  */
 export class AiChangeService extends AiChangeBaseService {
     private async getComponent(ref: RepositoryComponentRef): Promise<RepositoryComponent> {
@@ -96,15 +98,39 @@ export class AiChangeService extends AiChangeBaseService {
     async discard(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)
         await this.ensureCanChangeProject(request.projectId)
+        // A follow-up running on it pushes the same branch: deleting it now would take the follow-up's work away.
+        await ensureNotBeingRefined(request)
         const discarded = await AiChangeRequest.findOneAndUpdate({ _id: request._id, status: AiChangeStatus.PROPOSED }, { status: AiChangeStatus.DISCARDED }, { new: true })
         if (!discarded) throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: "Only a proposal can be discarded", statusCode: 409 })
+        // Detached: the remote may take seconds to answer, and nothing waits for the branch to go.
+        this.dropBranch(discarded).catch(error => fastify.log.warn({ error: loggable(error), aiChangeId: id }, "Could not delete the branch of a discarded change"))
         return discarded
     }
 
     /**
-     * Commits every file of the proposal on a new branch, pushes it and opens a pull request. The
-     * files depend on each other, so a proposal is applied whole. Refused while a follow-up is
-     * refining the proposal.
+     * Opens a pull request from the feature branch of the proposal onto its base. The proposal stays
+     * open: it can still be refined, applied or discarded. Refused while a follow-up is refining it.
+     */
+    async openPullRequest(id: string): Promise<IAiChangeRequest> {
+        const request = await this.getRequest(id)
+        await this.ensureCanChangeProject(request.projectId)
+        if (request.status !== AiChangeStatus.PROPOSED) throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: "This change is not waiting for approval", statusCode: 409 })
+        if (request.pullRequestUrl) return request
+        const files = this.filesToCommit(request)
+        await ensureNotBeingRefined(request)
+
+        // Each description names the other repositories of the job, with their pull requests once opened.
+        const siblings = request.jobId ? await AiChangeRequest.find({ jobId: request.jobId, _id: { $ne: request._id } }, { microfrontendId: 1, serviceId: 1, pullRequestUrl: 1 }) : []
+        const components = await findComponents(siblings.map(componentOf), { name: 1 })
+        const related = siblings.map(sibling =>
+            [components.find(component => String(component._id) === componentIdOf(sibling))?.name ?? componentIdOf(sibling), sibling.pullRequestUrl].filter(Boolean).join(": ")
+        )
+        return this.openPullRequestFor(request, files, related)
+    }
+
+    /**
+     * Brings every file of the proposal onto its base branch. The files depend on each other, so a
+     * proposal is applied whole. Refused while a follow-up is refining the proposal.
      */
     async apply(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)

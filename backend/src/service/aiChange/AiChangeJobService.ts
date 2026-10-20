@@ -29,7 +29,22 @@ import {
     RepositoryComponentRef
 } from "../workspace/repositoryComponent"
 import { AI_CHANGE_DEFAULT_EFFORT, AI_CHANGE_LIMITS, AiChangeAgentRepository, runAiChangeAgent } from "./aiChangeAgent"
-import { AiChangeBaseService, ensureNotBeingRefined, followUpRunning, loggable, PROPOSAL_TTL_MS, STALE_AFTER_MS, staleOutcome, storable } from "./aiChangeShared"
+import {
+    AiChangeBaseService,
+    authorOf,
+    branchName,
+    commitMessage,
+    conversationPrompts,
+    ensureNotBeingRefined,
+    firstLine,
+    followUpRunning,
+    loggable,
+    PROPOSAL_TTL_MS,
+    STALE_AFTER_MS,
+    staleOutcome,
+    storable,
+    toCommitFiles
+} from "./aiChangeShared"
 
 /** Repositories one job may work on: each is a clone and a share of the model's context. */
 const MAX_REPOSITORIES_PER_JOB = 10
@@ -77,7 +92,12 @@ export interface AiJobRepositoryView {
     status: AiChangeStatus
     files: { path: string; action: AiChangeFileAction }[]
     error?: string
+    baseBranch: string
+    /** The feature branch the proposal is pushed on. */
     branch?: string
+    /** On the feature branch while proposed, on the base once applied. */
+    commit?: string
+    pushError?: string
     pullRequestUrl?: string
     pullRequestError?: string
 }
@@ -117,6 +137,9 @@ interface JobRepository {
     baseBranch: string
     /** The request of the parent job on the same repository, for a follow-up. */
     parentId?: IAiChangeRequest["_id"]
+    /** A follow-up goes on on its parent's feature branch, and with its pull request. */
+    branch?: string
+    pullRequestUrl?: string
 }
 
 /** A repository of a running job: its request and its prepared working copy. */
@@ -129,6 +152,8 @@ interface RunningRepository {
     previousFiles?: IAiChangeFile[]
     /** The pull request description of the parent request: kept when the agent only answers. */
     previousSummary?: string
+    /** The commit of the parent request on the feature branch, when made on the same base: still the proposal if the agent only answers. */
+    previousCommit?: string
 }
 
 const isStale = (job: Pick<IAiChangeJob, "status" | "updatedAt">) => ACTIVE_JOB_STATUSES.includes(job.status) && Date.now() - job.updatedAt.getTime() > STALE_AFTER_MS
@@ -229,7 +254,10 @@ const toJobView = (job: IAiChangeJob, requests: IAiChangeRequest[], components: 
                 status: staleOutcome(request) ?? request.status,
                 files: (request.files ?? []).map(file => ({ path: file.path, action: file.action })),
                 error: request.error,
+                baseBranch: request.baseBranch,
                 branch: request.branch,
+                commit: request.commit,
+                pushError: request.pushError,
                 pullRequestUrl: request.pullRequestUrl,
                 pullRequestError: request.pullRequestError
             }
@@ -356,7 +384,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             if (request?.status !== AiChangeStatus.PROPOSED) {
                 throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: `The proposal for ${component.name} is not waiting for approval anymore`, statusCode: 409 })
             }
-            return { component, baseBranch: request.baseBranch, parentId: request._id }
+            return { component, baseBranch: request.baseBranch, parentId: request._id, branch: request.branch, pullRequestUrl: request.pullRequestUrl }
         })
 
         const scope = repositories.length === parentRefs.length ? parent.scope : "selection"
@@ -420,6 +448,8 @@ export class AiChangeJobService extends AiChangeBaseService {
                     conversationId: input.parentJob?.rootJobId ?? jobId,
                     prompt: input.prompt,
                     baseBranch: repository.baseBranch,
+                    branch: repository.branch ?? branchName(repository.component.slug),
+                    pullRequestUrl: repository.pullRequestUrl,
                     status: AiChangeStatus.PENDING,
                     events: queued()
                 })
@@ -635,6 +665,13 @@ export class AiChangeJobService extends AiChangeBaseService {
             // An answer without a change of its own is no pull request description: the proposal keeps its parent's.
             const answered = (repository: RunningRepository, files: IAiChangeFile[]) =>
                 result?.stopReason === "end_turn" && repository.previousFiles !== undefined && sameFiles(repository.previousFiles, files)
+            const summaryOf = (repository: RunningRepository, files: IAiChangeFile[]) => (answered(repository, files) ? repository.previousSummary : summary)
+            // Pushed before they are saved: a proposal shows up with its branch already there.
+            // Not for a job declared dead meanwhile: none of its proposals will be saved, the branch must keep the one that is.
+            const alive = (await AiChangeJob.findById(job._id, { status: 1 }))?.status === AiJobStatus.RUNNING
+            if (anyChange && alive) await this.log(jobId, "info", "pushing")
+            const pushed = new Map<RunningRepository, Awaited<ReturnType<AiChangeJobService["pushProposal"]>>>()
+            if (alive) for (const { repository, files } of proposals) pushed.set(repository, await this.pushProposal(repository, files, summaryOf(repository, files)))
             // Requests first: the console stops polling once the job is done. Guarded: a job get()
             // already declared dead must not come back to life.
             let saved = 0
@@ -646,7 +683,8 @@ export class AiChangeJobService extends AiChangeBaseService {
                         {
                             status: AiChangeStatus.PROPOSED,
                             files,
-                            summary: answered(repository, files) ? repository.previousSummary : summary,
+                            summary: summaryOf(repository, files),
+                            ...pushed.get(repository),
                             error: incomplete,
                             expiresAt: expiry(),
                             ...event("info", files.length ? "proposed" : "no-changes")
@@ -683,6 +721,31 @@ export class AiChangeJobService extends AiChangeBaseService {
     }
 
     /**
+     * Pushes a proposal on its feature branch, forced, from the base the agent started on: it can be
+     * looked at in the repository, and a pull request opened from it follows every follow-up. A push
+     * that fails leaves the proposal as it is: applying it, or opening its pull request, pushes it again.
+     */
+    private async pushProposal(repository: RunningRepository, files: IAiChangeFile[], summary: string | undefined): Promise<{ branch?: string; commit?: string; pushError?: string }> {
+        if (files.length === 0) return {}
+        const branch = repository.request.branch ?? branchName(repository.component.slug)
+        // The agent only answered: the branch already holds this very proposal, pushing it again would only run the CI again.
+        if (repository.previousCommit && sameFiles(repository.previousFiles ?? [], files)) return { branch, commit: repository.previousCommit }
+        try {
+            const prompts = await conversationPrompts(repository.request)
+            const commit = await repository.workspace.workingCopy.commitAndPush({
+                branch,
+                message: commitMessage(firstLine(prompts[0], 72), summary),
+                author: authorOf(this.getUser()!),
+                files: toCommitFiles(files)
+            })
+            return { branch, commit }
+        } catch (error) {
+            fastify.log.warn({ error: loggable(error), aiChangeId: String(repository.request._id) }, "Could not push the proposal on its branch")
+            return { branch, pushError: toErrorMessage(error) }
+        }
+    }
+
+    /**
      * Writes the files each parent request proposed onto the working copy of a follow-up. Every file
      * must still be what the parent saw on the base branch: otherwise the job fails rather than
      * silently overwriting what was pushed since.
@@ -697,6 +760,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             parents.set(repository, parent)
             repository.previousFiles = parent.files
             repository.previousSummary = parent.summary
+            repository.previousCommit = parent.baseCommit === repository.baseCommit ? parent.commit : undefined
             for (const file of parent.files) {
                 if ((await repository.workspace.workingCopy.blobOid(repository.baseCommit!, file.path)) !== file.baseBlobOid) conflicts.push(`${repository.component.slug}/${file.path}`)
             }
@@ -823,8 +887,8 @@ export class AiChangeJobService extends AiChangeBaseService {
     }
 
     /**
-     * Applies every proposal of a finished job in the background, one after the other, each as its
-     * own pull request. Every proposal is claimed (APPLYING) before answering, so a second click finds
+     * Brings every proposal of a finished job onto its base branch in the background, one after the
+     * other. Every proposal is claimed (APPLYING) before answering, so a second click finds
      * nothing left; each then ends APPLIED, or back to PROPOSED with its error.
      */
     async apply(jobId: string): Promise<AiJobView> {
@@ -854,23 +918,16 @@ export class AiChangeJobService extends AiChangeBaseService {
 
         if (claimed.length) {
             await AiChangeJob.updateOne({ _id: job._id }, event("info", "applying"))
-            const components = await findComponents(componentsOfJob(job), { name: 1 })
-            const nameOf = (request: IAiChangeRequest) => components.find(component => String(component._id) === componentIdOf(request))?.name ?? componentIdOf(request)
-            const siblings = requests.filter(request => request.status === AiChangeStatus.APPLIED || claimed.some(entry => entry.request === request))
-            // Detached on purpose: one pull request per repository takes minutes, the console follows it by polling.
-            this.applyAll(claimed, siblings, nameOf).catch(error => fastify.log.error({ error: loggable(error), aiJobId: jobId }, "AI job apply crashed"))
+            // Detached on purpose: a push per repository takes a while, the console follows it by polling.
+            this.applyAll(claimed).catch(error => fastify.log.error({ error: loggable(error), aiJobId: jobId }, "AI job apply crashed"))
         }
         return this.view((await AiChangeJob.findById(job._id)) ?? job, true)
     }
 
-    /** Each description names every other repository of the job, with its pull request once opened. */
-    private async applyAll(claimed: { request: IAiChangeRequest; files: IAiChangeFile[] }[], siblings: IAiChangeRequest[], nameOf: (request: IAiChangeRequest) => string) {
-        const pullRequests = new Map(siblings.filter(request => request.pullRequestUrl).map(request => [String(request._id), request.pullRequestUrl!]))
+    private async applyAll(claimed: { request: IAiChangeRequest; files: IAiChangeFile[] }[]) {
         for (const { request, files } of claimed) {
-            const related = siblings.filter(other => other !== request).map(other => [nameOf(other), pullRequests.get(String(other._id))].filter(Boolean).join(": "))
             try {
-                const result = await this.applyClaimed(request, files, related)
-                if (result.pullRequestUrl) pullRequests.set(String(request._id), result.pullRequestUrl)
+                await this.applyClaimed(request, files)
             } catch (error) {
                 // Kept on the request, back to a proposal: the others are applied anyway.
                 fastify.log.warn({ error: loggable(error), aiChangeId: String(request._id) }, "AI job could not apply a proposal")

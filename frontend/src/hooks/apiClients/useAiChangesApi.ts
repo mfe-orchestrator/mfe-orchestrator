@@ -45,8 +45,12 @@ export interface AiChangeRequest {
     summary?: string
     /** Missing on the list endpoint. */
     events?: AiChangeEvent[]
+    /** The feature branch the proposal is pushed on. */
     branch?: string
+    /** On the feature branch while proposed, on the base once applied. */
     commit?: string
+    /** The proposal could not be pushed on its branch: applying it, or opening its pull request, pushes it again. */
+    pushError?: string
     pullRequestUrl?: string
     pullRequestError?: string
     error?: string
@@ -111,6 +115,18 @@ const useAiChangesApi = () => {
         return response.data
     }
 
+    /** Opens a pull request from the proposal's branch onto its base: the proposal stays open. */
+    const openPullRequest = async (id: string, metadata?: IClientRequestMetadataExtended): Promise<AiChangeRequest> => {
+        const response = await apiClient.doRequest<AiChangeRequest>({
+            url: `/api/ai-changes/${id}/pull-request`,
+            method: "POST",
+            // The client always sends a JSON content type, and Fastify rejects an empty JSON body.
+            data: {},
+            ...metadata
+        })
+        return response.data
+    }
+
     const discard = async (id: string): Promise<AiChangeRequest> => {
         const response = await apiClient.doRequest<AiChangeRequest>({
             url: `/api/ai-changes/${id}/discard`,
@@ -126,6 +142,7 @@ const useAiChangesApi = () => {
         getByTarget,
         getSingle,
         apply,
+        openPullRequest,
         discard
     }
 }

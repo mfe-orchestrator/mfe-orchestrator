@@ -27,6 +27,10 @@ export class BranchNotFoundError extends Error {}
 
 export const ORCHESTRATOR_COMMITTER: GitAuthor = { name: "MFE Orchestrator", email: "noreply@mfe-orchestrator.dev" }
 
+/** The remote turned a push down: not a fast-forward, a protected branch, a token without write access. */
+export const isPushRefused = (error: unknown) =>
+    error instanceof git.Errors.PushRejectedError || error instanceof git.Errors.GitPushError || (error instanceof git.Errors.HttpError && error.data.statusCode === 403)
+
 const textDecoder = new TextDecoder("utf-8", { fatal: false })
 
 /**
@@ -213,16 +217,20 @@ export class GitWorkingCopy {
     }
 
     /**
-     * Commits `files` on a new branch started from the current HEAD and pushes it. The working copy
-     * is left on the base branch, clean, whatever happens.
+     * Commits `files` on a new branch started from the current HEAD and pushes it, or, with `pushTo`,
+     * pushes that commit onto the remote branch `pushTo` instead. The working copy is left on the base
+     * branch, clean, whatever happens.
      */
     async commitAndPush({
         branch,
+        pushTo,
         message,
         author,
         files
     }: {
         branch: string
+        /** A remote branch someone else may push to too (the base): never forced, refused when it moved on. */
+        pushTo?: string
         message: string
         author: GitAuthor
         files: { path: string; content?: string; action: FileChangeAction }[]
@@ -251,12 +259,62 @@ export class GitWorkingCopy {
                 }
             }
             const commit = await git.commit({ fs, dir: this.dir, message, author, committer: ORCHESTRATOR_COMMITTER })
-            // Forced: the branch is one the orchestrator named, and a retry after a crash reuses it.
-            await git.push({ fs, http, dir: this.dir, remote: "origin", ref: branch, force: true, onAuth: this.onAuth, headers: { "User-Agent": "mfe-orchestrator" }, corsProxy: NO_PROXY })
+            // Forced on a branch the orchestrator named: a follow-up replaces the proposal, a retry after a crash reuses it.
+            await git.push({
+                fs,
+                http,
+                dir: this.dir,
+                remote: "origin",
+                ref: branch,
+                // A full ref: a bare name is matched against the remote's tags before its branches.
+                remoteRef: pushTo && `refs/heads/${pushTo}`,
+                force: !pushTo,
+                onAuth: this.onAuth,
+                headers: { "User-Agent": "mfe-orchestrator" },
+                corsProxy: NO_PROXY
+            })
             return commit
         } finally {
             await this.restoreOrDrop(baseBranch, branch)
         }
+    }
+
+    /** Pushes a commit already in the copy onto the remote `branch`. Never forced: refused unless it is a fast-forward. */
+    async pushCommit(commit: string, branch: string): Promise<void> {
+        const ref = "refs/heads/mfe-orchestrator-push"
+        await git.writeRef({ fs, dir: this.dir, ref, value: commit, force: true })
+        try {
+            await git.push({
+                fs,
+                http,
+                dir: this.dir,
+                remote: "origin",
+                ref,
+                remoteRef: `refs/heads/${branch}`,
+                onAuth: this.onAuth,
+                headers: { "User-Agent": "mfe-orchestrator" },
+                corsProxy: NO_PROXY
+            })
+        } finally {
+            await git.deleteRef({ fs, dir: this.dir, ref }).catch(() => undefined)
+        }
+    }
+
+    /** Deletes `branch` on the remote. */
+    async deleteRemoteBranch(branch: string): Promise<void> {
+        // isomorphic-git resolves `ref` locally even to delete: HEAD is always there, `remoteRef` says what goes.
+        await git.push({
+            fs,
+            http,
+            dir: this.dir,
+            remote: "origin",
+            ref: "HEAD",
+            remoteRef: `refs/heads/${branch}`,
+            delete: true,
+            onAuth: this.onAuth,
+            headers: { "User-Agent": "mfe-orchestrator" },
+            corsProxy: NO_PROXY
+        })
     }
 
     /** Size on disk in bytes, `.git` included. */
