@@ -4,15 +4,17 @@ import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisD
 import UserCannotAccessThisEnvironmentError from "../errors/UserCannotAccessThisEnvironmentError"
 import UserCannotAccessThisOrganizationError from "../errors/UserCannotAccessThisOrganizationError"
 import UserCannotAccessThisProjectError from "../errors/UserCannotAccessThisProjectError"
+import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import Deployment from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
-import { IMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { ICodeRepositoryMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
-import { IService } from "../models/ServiceModel"
+import Service, { IService } from "../models/ServiceModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { ORGANIZATION_ADMIN_ROLES, RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
+import { linksToRepository, RepositoryLinkOwner } from "./repositoryLinks"
 
 /**
  * Who a service acts for.
@@ -409,6 +411,29 @@ export default abstract class BaseAuthorizedService {
      */
     protected async ensureInDomainScope(projectId: string | Schema.Types.ObjectId | ObjectId, domainId: unknown): Promise<void> {
         if (!isInDomainScope(await this.getDomainScope(projectId), domainId)) {
+            throw domainScopeForbidden()
+        }
+    }
+
+    /**
+     * Refuses a domain-scoped member a write to the repository `link` points to (a commit, a branch, a pull
+     * request, a tag) when a microfrontend or a service of another domain, or of none, is linked to the same
+     * repository: what they write there becomes the code of components nobody assigned to them. `owner` is
+     * the component the write is for; `provider` spares reading the connection when the caller holds it. A
+     * member of the whole project passes without a query.
+     */
+    protected async ensureRepositoryInDomainScope(owner: RepositoryLinkOwner, link: ICodeRepositoryMicrofrontend | undefined, provider?: CodeRepositoryProvider): Promise<void> {
+        const scope = await this.getDomainScope(owner.projectId)
+        if (!scope || !link?.codeRepositoryId) return
+        // The provider decides whether a name or a GitLab path tells the repository
+        const links = linksToRepository(owner, provider ?? (await CodeRepository.findById(link.codeRepositoryId, { provider: 1 }))?.provider, link)
+        // $nin also matches a document with no domain at all
+        const outside = { domainId: { $nin: scope.map(id => toObjectId(id)) } }
+        const [microfrontendOutside, serviceOutside] = await Promise.all([
+            links.microfrontends ? Microfrontend.exists({ ...links.microfrontends, ...outside }) : null,
+            links.services ? Service.exists({ ...links.services, ...outside }) : null
+        ])
+        if (microfrontendOutside || serviceOutside) {
             throw domainScopeForbidden()
         }
     }

@@ -30,11 +30,13 @@ vi.mock("../workspace/RepositoryWorkspaceService", () => ({
 
 import AiChangeJob from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
+import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
 import Service from "../../models/ServiceModel"
 import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
+import BaseAuthorizedService from "../BaseAuthorizedService"
 import AiChangeJobService from "./AiChangeJobService"
 import AiChangeService from "./AiChangeService"
 
@@ -380,5 +382,72 @@ describe("AiChangeService", () => {
         await service().discard(new Types.ObjectId().toString())
 
         await vi.waitFor(() => expect(workingCopy.deleteRemoteBranch).toHaveBeenCalledWith("ai/catalog-20261020-090000"))
+    })
+
+    describe("by a member assigned to some domains", () => {
+        const ownDomain = new Types.ObjectId()
+        let microfrontendsOutside: ReturnType<typeof vi.spyOn>
+
+        beforeEach(() => {
+            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
+            const catalog = {
+                _id: microfrontendId,
+                projectId,
+                slug: "catalog",
+                name: "Catalog",
+                domainId: ownDomain,
+                codeRepository: { enabled: true, codeRepositoryId: new Types.ObjectId(), name: "shop-web" }
+            }
+            vi.spyOn(Microfrontend, "findById").mockResolvedValue(catalog as never)
+            vi.spyOn(Microfrontend, "find").mockResolvedValue([catalog] as never)
+            vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
+            // The repository is also the code of a microfrontend outside their domains
+            microfrontendsOutside = vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
+            vi.spyOn(Service, "exists").mockResolvedValue(null as never)
+        })
+
+        it("Given a repository shared with another domain, when a change is requested, then it is refused before the workspace is opened", async () => {
+            const start = vi.spyOn(AiChangeJobService.prototype, "start")
+
+            await expect(service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page" })).rejects.toMatchObject({
+                code: "DOMAIN_SCOPE_FORBIDDEN",
+                statusCode: 403
+            })
+            expect(workspaceService.open).not.toHaveBeenCalled()
+            expect(start).not.toHaveBeenCalled()
+        })
+
+        it("Given a repository used only by components of their domains, when a change is requested, then it runs", async () => {
+            microfrontendsOutside.mockResolvedValue(null as never)
+            const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [{ _id: new Types.ObjectId() }] } as never)
+
+            await service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page" })
+
+            expect(start).toHaveBeenCalledTimes(1)
+        })
+
+        it("Given a repository shared with another domain, when a proposal is applied, then it is refused before it is claimed", async () => {
+            vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(pushedProposal() as never)
+            const claim = vi.spyOn(AiChangeRequest, "findOneAndUpdate")
+
+            await expect(service().apply(new Types.ObjectId().toString())).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN" })
+            expect(claim).not.toHaveBeenCalled()
+            expect(workingCopy.pushCommit).not.toHaveBeenCalled()
+        })
+
+        it("Given a repository shared with another domain, when a pull request is opened, then it is refused", async () => {
+            vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal({ pushError: "timeout" }) as never)
+
+            await expect(service().openPullRequest(new Types.ObjectId().toString())).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN" })
+            expect(workingCopy.commitAndPush).not.toHaveBeenCalled()
+            expect(workspaceService.openPullRequest).not.toHaveBeenCalled()
+        })
+
+        it("Given a repository shared with another domain, when a proposal is discarded, then it is allowed: nothing reaches the base", async () => {
+            vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal() as never)
+            vi.spyOn(AiChangeRequest, "findOneAndUpdate").mockResolvedValue({ status: AiChangeStatus.DISCARDED } as never)
+
+            await expect(service().discard(new Types.ObjectId().toString())).resolves.toMatchObject({ status: AiChangeStatus.DISCARDED })
+        })
     })
 })

@@ -51,6 +51,7 @@ export class AiChangeService extends AiChangeBaseService {
         const client = getLlmClient(this.config)
         const component = await this.getComponent(ref)
         await this.ensureCanChangeProject(component.projectId)
+        await this.ensureRepositoryInDomainScope(component, component.codeRepository)
         const workspace = await new RepositoryWorkspaceService(this.user).open(component)
 
         const { requests } = await new AiChangeJobService(this.user, this.config).start(
@@ -120,6 +121,7 @@ export class AiChangeService extends AiChangeBaseService {
     async openPullRequest(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)
         await this.ensureCanChangeProject(request.projectId)
+        await this.ensureRepositoriesInDomainScope(request.projectId, [componentOf(request)])
         if (request.status !== AiChangeStatus.PROPOSED) throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: "This change is not waiting for approval", statusCode: 409 })
         if (request.pullRequestUrl) return request
         const files = this.filesToCommit(request)
@@ -141,6 +143,7 @@ export class AiChangeService extends AiChangeBaseService {
     async apply(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)
         await this.ensureCanChangeProject(request.projectId)
+        await this.ensureRepositoriesInDomainScope(request.projectId, [componentOf(request)])
         const files = this.filesToCommit(request)
         await ensureNotBeingRefined(request)
 

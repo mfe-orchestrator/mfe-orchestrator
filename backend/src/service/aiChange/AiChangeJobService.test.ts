@@ -264,6 +264,35 @@ describe("AiChangeJobService", () => {
                 expect(job).toMatchObject({ scope: "domain", domainId: String(checkoutId) })
             })
 
+            describe("by a member assigned to it", () => {
+                let servicesOutside: ReturnType<typeof vi.spyOn>
+
+                beforeEach(() => {
+                    vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(checkoutId)])
+                    withRepository = [{ ...cart, domainId: checkoutId } as never]
+                    services = [{ ...catalogApi, domainId: checkoutId } as never]
+                    vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
+                    vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
+                    servicesOutside = vi.spyOn(Service, "exists").mockResolvedValue(null as never)
+                })
+
+                it("Given a member's repository shared with a service of another domain, when its job is started, then it is refused before anything is created", async () => {
+                    servicesOutside.mockResolvedValue({ _id: new Types.ObjectId() } as never)
+
+                    await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })).rejects.toMatchObject({
+                        code: "DOMAIN_SCOPE_FORBIDDEN",
+                        statusCode: 403
+                    })
+                    expect(AiChangeJob.create).not.toHaveBeenCalled()
+                })
+
+                it("Given repositories used by the domain's members only, when its job is started, then it runs", async () => {
+                    await service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })
+
+                    expect(AiChangeJob.create).toHaveBeenCalledTimes(1)
+                })
+            })
+
             it("Given a domain whose members have no repository, when its job is started, then it is refused naming the domain", async () => {
                 withRepository = [catalog]
 
@@ -905,6 +934,21 @@ describe("AiChangeJobService", () => {
             const applyClaimed = vi.spyOn(AiChangeJobService.prototype as unknown as WithApplyClaimed, "applyClaimed")
 
             await expect(service().apply(String(jobId))).rejects.toMatchObject({ code: "AI_JOB_FOLLOW_UP_RUNNING", statusCode: 409 })
+            expect(claims()).toEqual([])
+            expect(applyClaimed).not.toHaveBeenCalled()
+        })
+
+        it("Given a member assigned to a domain and a repository of the job shared with another domain, when the job is applied, then nothing is claimed", async () => {
+            const ownDomain = new Types.ObjectId()
+            const link = { enabled: true, codeRepositoryId: connectionId, name: "shop-web" }
+            microfrontends = [catalog, cart].map(candidate => ({ ...candidate, domainId: ownDomain, codeRepository: link }))
+            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
+            vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
+            vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
+            vi.spyOn(Service, "exists").mockResolvedValue(null as never)
+            const applyClaimed = vi.spyOn(AiChangeJobService.prototype as unknown as WithApplyClaimed, "applyClaimed")
+
+            await expect(service().apply(String(jobId))).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
             expect(claims()).toEqual([])
             expect(applyClaimed).not.toHaveBeenCalled()
         })

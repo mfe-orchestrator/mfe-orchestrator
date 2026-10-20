@@ -21,6 +21,7 @@ import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "../Rep
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
 import {
     componentIdOf,
+    componentOf,
     componentsOfJob,
     findComponents,
     fromMicrofrontend,
@@ -357,6 +358,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         const domain = input.scope === "domain" ? await this.domainOf(projectId, input.domainId) : undefined
         if (domain) await this.ensureInDomainScope(projectId, domain._id)
         const components = await this.selectRepositories(projectId, input, domain)
+        for (const component of components) await this.ensureRepositoryInDomainScope(component, component.codeRepository)
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
         const repositories = await Promise.all(components.map(async component => ({ component, baseBranch: (await workspaceService.open(component)).defaultBranch })))
@@ -397,6 +399,8 @@ export class AiChangeJobService extends AiChangeBaseService {
             }
             return { component, baseBranch: request.baseBranch, parentId: request._id, branch: request.branch, pullRequestUrl: request.pullRequestUrl }
         })
+        // A follow-up pushes to the repositories it refines as a new job would, whoever started the parent
+        for (const { component } of repositories) await this.ensureRepositoryInDomainScope(component, component.codeRepository)
 
         const scope = repositories.length === parentRefs.length ? parent.scope : "selection"
         const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, domainId: parent.domainId, repositories, parentJob: parent, effort: input.effort }, client)
@@ -951,6 +955,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         requests.sort((a, b) => order.indexOf(componentIdOf(a)) - order.indexOf(componentIdOf(b)))
         const candidates = requests.filter(request => request.status === AiChangeStatus.PROPOSED && request.files.length > 0)
         for (const request of candidates) await ensureNotBeingRefined(request)
+        await this.ensureRepositoriesInDomainScope(job.projectId, candidates.map(componentOf))
 
         const claimed: { request: IAiChangeRequest; files: IAiChangeFile[] }[] = []
         for (const request of candidates) {

@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
+import Microfrontend from "../../models/MicrofrontendModel"
+import Service from "../../models/ServiceModel"
 import { LocalChangeService } from "./LocalChangeService"
 
 const HEAD = "a".repeat(40)
@@ -151,5 +154,44 @@ describe("LocalChangeService.submit", () => {
         await instance.submit(ref, input())
         expect(workingCopy.commitAndPush.mock.calls[0][0].author).toEqual({ name: "MFE Orchestrator", email: "noreply@mfe-orchestrator.dev" })
         expect(openPullRequest.mock.calls[0][1].description).toContain("the API key key-1")
+    })
+})
+
+describe("LocalChangeService by a member assigned to some domains", () => {
+    const OWN_DOMAIN = "eeeeeeeeeeeeeeeeeeeeeeee"
+    const scoped = () => {
+        const instance = allowProjectAccess(new LocalChangeService(user as never))
+        vi.spyOn(instance as unknown as { getDomainScope: () => Promise<string[] | undefined> }, "getDomainScope").mockResolvedValue([OWN_DOMAIN])
+        return instance
+    }
+
+    beforeEach(() => {
+        findComponent.mockResolvedValue({
+            kind: "microfrontend",
+            _id: MICROFRONTEND,
+            projectId: PROJECT,
+            slug: "cart",
+            name: "Cart",
+            domainId: OWN_DOMAIN,
+            codeRepository: { enabled: true, codeRepositoryId: "ffffffffffffffffffffffff", name: "shop-fe" }
+        })
+        vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
+        // The repository is also the code of a service outside their domains
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
+        vi.spyOn(Service, "exists").mockResolvedValue({ _id: "service-elsewhere" } as never)
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it("refuses to submit to a repository shared with another domain, before anything is pushed", async () => {
+        await expect(scoped().submit(ref, input())).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
+        expect(prepare).not.toHaveBeenCalled()
+        expect(workingCopy.commitAndPush).not.toHaveBeenCalled()
+    })
+
+    it("still hands out the checkout of that repository: reading it writes nothing", async () => {
+        await expect(scoped().checkout(ref)).resolves.toMatchObject({ slug: "cart" })
     })
 })

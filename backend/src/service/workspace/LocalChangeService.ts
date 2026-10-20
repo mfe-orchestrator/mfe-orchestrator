@@ -132,6 +132,7 @@ export class LocalChangeService extends BaseAuthorizedService {
     async submit(ref: RepositoryComponentRef, input: LocalChangeInput): Promise<LocalChangeResult> {
         const component = await this.getComponent(ref)
         await new AiChangeService(this.user, fastify.config).ensureCanChangeProject(component.projectId)
+        await this.ensureRepositoryInDomainScope(component, component.codeRepository)
         const files = this.validFiles(input.files)
         const author = this.author()
         const workspaceService = new RepositoryWorkspaceService(this.user)

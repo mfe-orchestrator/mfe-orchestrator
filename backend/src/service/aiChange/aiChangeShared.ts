@@ -13,7 +13,7 @@ import { LlmConfiguration } from "../llm"
 import { toErrorMessage } from "../RepositoryFileService"
 import { isPushRefused } from "../workspace/GitWorkingCopy"
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
-import { componentIdOf, componentOf, findComponent } from "../workspace/repositoryComponent"
+import { componentIdOf, componentOf, findComponent, findComponents, RepositoryComponentRef } from "../workspace/repositoryComponent"
 
 /** Proposals nobody approves or discards are removed after this, and so are finished jobs. */
 export const PROPOSAL_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -122,6 +122,16 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
         const project = await Project.findById(projectId, { organizationId: 1 })
         if (project && (await this.isOrganizationAdmin(project.organizationId))) return
         throw createBusinessException({ code: "AI_CHANGE_FORBIDDEN", message: "A viewer cannot change the code of a microfrontend or a service", statusCode: 403 })
+    }
+
+    /**
+     * As {@link ensureRepositoryInDomainScope} for the repositories of the components `refs` names, read
+     * only for a domain-scoped member: what was proposed on a repository shared since with another domain
+     * must not reach it either.
+     */
+    protected async ensureRepositoriesInDomainScope(projectId: IMicrofrontend["projectId"], refs: RepositoryComponentRef[]) {
+        if (!(await this.getDomainScope(projectId))) return
+        for (const component of await findComponents(refs)) await this.ensureRepositoryInDomainScope(component, component.codeRepository)
     }
 
     /** The files of a proposal that will be committed, refused when none is left or one cannot be. */

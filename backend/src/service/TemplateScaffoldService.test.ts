@@ -64,6 +64,7 @@ import { IMarket } from "../models/MarketModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 import MarketService from "./MarketService"
 import MicrofrontendService from "./MicrofrontendService"
 import ServiceService from "./ServiceService"
@@ -604,6 +605,33 @@ describe("TemplateScaffoldService.createTag", () => {
         await new MicrofrontendService().build(String(new Types.ObjectId()), "1.2.0")
 
         expect(createTag).toHaveBeenCalledTimes(1)
+    })
+
+    describe("by a member assigned to some domains", () => {
+        const ownDomain = new Types.ObjectId()
+
+        /** Builds a microfrontend of their domain, whose repository is also linked to a service of another domain when `shared`. */
+        const build = (shared: boolean) => {
+            connectionOf(projectId)
+            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
+            vi.spyOn(Microfrontend, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId, slug: "cart", domainId: ownDomain, codeRepository: link } as never)
+            vi.spyOn(MicrofrontendService.prototype as unknown as { ensureAccessToMicrofrontend: () => Promise<void> }, "ensureAccessToMicrofrontend").mockResolvedValue(undefined)
+            vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
+            vi.spyOn(Service, "exists").mockResolvedValue((shared ? { _id: new Types.ObjectId() } : null) as never)
+            return new MicrofrontendService({ _id: new Types.ObjectId() } as never).build(String(new Types.ObjectId()), "1.2.0")
+        }
+
+        it("given a repository shared with a component of another domain, when it is built, then no tag is created: it would release that one too", async () => {
+            await expect(build(true)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
+            expect(getBranchCommitSha).not.toHaveBeenCalled()
+            expect(createTag).not.toHaveBeenCalled()
+        })
+
+        it("given a repository used by components of their domains only, when it is built, then the tag is created", async () => {
+            await build(false)
+
+            expect(createTag).toHaveBeenCalledTimes(1)
+        })
     })
 
     it("given a service linked to a connection of another project, when it is built, then it is refused before the provider is called", async () => {

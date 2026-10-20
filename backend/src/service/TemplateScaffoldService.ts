@@ -669,6 +669,10 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         if (!codeRepository || String(codeRepository.projectId) !== String(projectId)) {
             throw new EntityNotFoundError(String(link.codeRepositoryId))
         }
+        // The tag is named after the version alone, and it starts the pipeline of the whole repository: on one
+        // shared with a component of another domain it releases that one too. The caller has checked the
+        // component being built, so only the other links to the repository are looked at.
+        await this.ensureRepositoryInDomainScope({ projectId: codeRepository.projectId }, link, codeRepository.provider)
 
         const repositoryId = link.repositoryId
         const branchName = ref || "main"
