@@ -1010,4 +1010,78 @@ describe("AiChangeJobService", () => {
             expect(conversations.map(view => view.prompt)).toEqual(["And in the email", "Accept coupons", "Show the shipping cost"])
         })
     })
+
+    describe("list", () => {
+        it("Given a domain-scoped member whose latest jobs are all out of their scope, when the jobs are listed, then an older one of theirs still fills the list", async () => {
+            const ownDomain = new Types.ObjectId()
+            const otherDomain = new Types.ObjectId()
+            const job = (domainId: Types.ObjectId, prompt: string, minutes: number) => ({
+                _id: new Types.ObjectId(),
+                projectId,
+                userId: user._id,
+                prompt,
+                scope: "domain",
+                domainId,
+                status: AiJobStatus.DONE,
+                microfrontendIds: [],
+                serviceIds: [],
+                createdAt: new Date(Date.UTC(2026, 9, 19, 10, minutes)),
+                updatedAt: new Date()
+            })
+            // A full page of jobs of a domain they have since lost, newer than the one of their own domain
+            const jobs = [...Array.from({ length: 20 }, (_, index) => job(otherDomain, `Elsewhere ${index}`, 59 - index)), job(ownDomain, "Show the shipping cost", 0)]
+            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
+            type Cursor = { createdAt: Date; _id: Types.ObjectId }
+            /** The jobs after the cursor a page starts from, as the database would answer. */
+            const after = (filter: { $and?: [unknown, { $or: [unknown, Cursor] }] }) => {
+                const cursor = filter.$and?.[1].$or[1]
+                return cursor
+                    ? jobs.filter(candidate => candidate.createdAt < cursor.createdAt || (candidate.createdAt.getTime() === cursor.createdAt.getTime() && String(candidate._id) < String(cursor._id)))
+                    : jobs
+            }
+            const sorts: unknown[] = []
+            const find = vi.spyOn(AiChangeJob, "find").mockImplementation(((filter: Parameters<typeof after>[0]) => ({
+                sort: (order: unknown) => {
+                    sorts.push(order)
+                    return { limit: (limit: number) => Promise.resolve(after(filter).slice(0, limit)) }
+                }
+            })) as never)
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
+
+            const listed = await service().list(projectId)
+
+            expect(listed.map(view => view.prompt)).toEqual(["Show the shipping cost"])
+            // The second page starts after the last job of the first, ties of createdAt broken by the id:
+            // no job read twice nor skipped, even with jobs created between the pages
+            const last = jobs[19]
+            expect(find.mock.calls[1][0]).toMatchObject({ $and: [{ projectId }, { $or: [{ createdAt: { $lt: last.createdAt } }, { createdAt: last.createdAt, _id: { $lt: last._id } }] }] })
+            expect(sorts).toEqual([
+                { createdAt: -1, _id: -1 },
+                { createdAt: -1, _id: -1 }
+            ])
+        })
+
+        it("Given a domain-scoped member whose whole long history is out of their scope, when the jobs are listed, then the reading stops after ten pages", async () => {
+            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(new Types.ObjectId())])
+            const elsewhere = () => ({
+                _id: new Types.ObjectId(),
+                projectId,
+                scope: "domain",
+                domainId: new Types.ObjectId(),
+                status: AiJobStatus.DONE,
+                microfrontendIds: [],
+                serviceIds: [],
+                createdAt: new Date(),
+                updatedAt: new Date()
+            })
+            const find = vi.spyOn(AiChangeJob, "find").mockImplementation((() => ({
+                sort: () => ({ limit: (limit: number) => Promise.resolve(Array.from({ length: limit }, elsewhere)) })
+            })) as never)
+
+            const listed = await service().list(projectId)
+
+            expect(listed).toEqual([])
+            expect(find).toHaveBeenCalledTimes(10)
+        })
+    })
 })

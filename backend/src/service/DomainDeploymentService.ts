@@ -163,11 +163,14 @@ export class DomainDeploymentService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<DomainDeployments[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        // A domain-scoped member gets their domains only: their members are all in one of them, so the
+        // entry for the members in no domain never shows up for them
+        const [domainsInScope, membersInScope] = await Promise.all([this.domainScopeFilter(projectIdObj, "_id"), this.domainScopeFilter(projectIdObj)])
         const [domains, environments, microfrontends, services] = await Promise.all([
-            Domain.find({ projectId: projectIdObj }, { name: 1, slug: 1 }).sort({ name: 1 }),
+            Domain.find({ projectId: projectIdObj, ...domainsInScope }, { name: 1, slug: 1 }).sort({ name: 1 }),
             findEnvironments(projectIdObj),
-            Microfrontend.find({ projectId: projectIdObj }, MEMBER_FIELDS).sort({ name: 1 }),
-            Service.find({ projectId: projectIdObj }, MEMBER_FIELDS).sort({ name: 1 })
+            Microfrontend.find({ projectId: projectIdObj, ...membersInScope }, MEMBER_FIELDS).sort({ name: 1 }),
+            Service.find({ projectId: projectIdObj, ...membersInScope }, MEMBER_FIELDS).sort({ name: 1 })
         ])
         const versions = await findVersions(environments, services)
 

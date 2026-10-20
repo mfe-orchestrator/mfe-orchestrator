@@ -51,7 +51,7 @@ const alreadyLinked = (kind: RepositoryComponentKind) => createBusinessException
 const NOT_LINKED = { "codeRepository.enabled": { $ne: true } }
 
 /** What a microfrontend and a service share of what creating their repository reads. */
-type Member = Pick<IMicrofrontend, "projectId" | "slug" | "codeRepository"> & { template?: string }
+type Member = Pick<IMicrofrontend, "projectId" | "slug" | "codeRepository" | "domainId"> & { template?: string }
 
 /**
  * Creates the code repository of a microfrontend or a service that has none yet, scaffolded from a
@@ -106,7 +106,7 @@ export class RepositoryCreationService extends BaseAuthorizedService {
 
     /** Everything checked before anything is created at the provider: a refusal after it would leave an orphan repository behind. */
     private async prepare(member: Member, kind: RepositoryComponentKind, input: CreateRepositoryInput): Promise<{ connection: ICodeRepository; template: IMarket; target: CodeRepositoryTarget }> {
-        await this.ensureAccessToProject(member.projectId)
+        await this.ensureAccessToDomainMember(member)
         await this.ensureNotViewer(member.projectId, { code: "REPOSITORY_CREATE_FORBIDDEN", message: "A viewer cannot create a code repository" })
         if (member.codeRepository?.enabled) throw alreadyLinked(kind)
 

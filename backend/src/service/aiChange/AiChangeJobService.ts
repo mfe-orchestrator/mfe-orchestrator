@@ -8,12 +8,14 @@ import AiChangeJob, { AiJobScope, AiJobStatus, IAiChangeJob } from "../../models
 import AiChangeRequest, { AI_CHANGE_MAX_EVENTS, AiChangeFileAction, AiChangeStatus, IAiChangeEvent, IAiChangeFile, IAiChangeRequest } from "../../models/AiChangeRequestModel"
 import CodeRepository from "../../models/CodeRepositoryModel"
 import Domain, { IDomain } from "../../models/DomainModel"
+import Microfrontend from "../../models/MicrofrontendModel"
 import Project, { IProject } from "../../models/ProjectModel"
 import Service from "../../models/ServiceModel"
 import { toObjectId } from "../../utils/mongooseUtils"
 import { withRepositoryLock } from "../../utils/repositoryLock"
 import { isProtectedPath, resolveInsideWorkingCopy } from "../../utils/workspacePaths"
 import { redactSecrets } from "../assistant/assistantTools"
+import { domainScopeForbidden, isInDomainScope } from "../BaseAuthorizedService"
 import { addUsage, getLlmClient, LlmClient, LlmEffort, LlmUsage, NO_USAGE, resolveEffort } from "../llm"
 import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "../RepositoryFileService"
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
@@ -52,6 +54,8 @@ const MAX_REPOSITORIES_PER_JOB = 10
 const MAX_ACTIVE_JOBS_PER_PROJECT = 3
 const ACTIVE_JOB_STATUSES = [AiJobStatus.PENDING, AiJobStatus.RUNNING]
 const LISTED_JOBS = 20
+/** Pages of LISTED_JOBS a list reads at most, filling the places of the jobs out of a member's domain scope. */
+const MAX_LISTED_PAGES = 10
 /** How far back a follow-up looks for the requests that came before it. */
 const MAX_CHAIN_LENGTH = 50
 /** How long a job waits for all its working copies together: well before it would look dead. */
@@ -330,9 +334,10 @@ export class AiChangeJobService extends AiChangeBaseService {
         ]
         if (refs.length === 0) throw noRepositories("Select at least one microfrontend or service")
         if (refs.length > MAX_REPOSITORIES_PER_JOB) throw tooMany()
-        const inProject = (await findComponents(refs, { name: 1, projectId: 1 })).filter(component => String(component.projectId) === projectId)
+        const inProject = (await findComponents(refs, { name: 1, projectId: 1, domainId: 1 })).filter(component => String(component.projectId) === projectId)
         const missing = refs.find(ref => !inProject.some(sameComponent(ref)))
         if (missing) throw new EntityNotFoundError(missing.id)
+        for (const component of inProject) await this.ensureInDomainScope(projectId, component.domainId)
         const withoutRepository = inProject.filter(component => !available.some(sameComponent({ kind: component.kind, id: String(component._id) })))
         if (withoutRepository.length) {
             throw noRepositories(`No code repository is connected to ${withoutRepository.map(component => component.name).join(", ")}`)
@@ -347,7 +352,10 @@ export class AiChangeJobService extends AiChangeBaseService {
     async create(projectId: string, input: AiJobCreateInput): Promise<AiJobView> {
         const client = getLlmClient(this.config)
         await this.ensureCanChangeProject(toObjectId(projectId))
+        // A domain-scoped member works on their domains only: never on every repository of the project
+        if (input.scope === "global") await this.ensureWholeProject(projectId)
         const domain = input.scope === "domain" ? await this.domainOf(projectId, input.domainId) : undefined
+        if (domain) await this.ensureInDomainScope(projectId, domain._id)
         const components = await this.selectRepositories(projectId, input, domain)
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
@@ -797,7 +805,21 @@ export class AiChangeJobService extends AiChangeBaseService {
         const job = await AiChangeJob.findById(id)
         if (!job) throw new EntityNotFoundError(id)
         await this.ensureAccessToProject(job.projectId)
+        if ((await this.inDomainScope(job.projectId, [job])).length === 0) throw domainScopeForbidden()
         return this.failIfStale(job)
+    }
+
+    /**
+     * The jobs a domain-scoped member may see: those working only on microfrontends and services they
+     * see, and never one on the whole project. Anyone else sees them all, without a query.
+     */
+    private async inDomainScope<T extends ListedJob>(projectId: IAiChangeJob["projectId"], jobs: T[]): Promise<T[]> {
+        const scope = await this.getDomainScope(projectId)
+        if (!scope || jobs.length === 0) return jobs
+        const refs = jobs.flatMap(job => componentsOfJob(job)).filter((ref, index, all) => all.findIndex(other => other.id === ref.id) === index)
+        const components = await findComponents(refs, { domainId: 1 })
+        const visible = new Set(components.filter(component => isInDomainScope(scope, component.domainId)).map(component => String(component._id)))
+        return jobs.filter(job => job.scope !== "global" && (!job.domainId || isInDomainScope(scope, job.domainId)) && componentsOfJob(job).every(ref => visible.has(ref.id)))
     }
 
     /** A job whose process died is reported as failed, and so are its requests still waiting for it. */
@@ -830,7 +852,7 @@ export class AiChangeJobService extends AiChangeBaseService {
     /** Every job of the conversation the given one belongs to, from the first to the latest. */
     async chain(id: string): Promise<AiJobView[]> {
         const job = await this.getJob(id)
-        const jobs = await AiChangeJob.find({ rootJobId: job.rootJobId, projectId: job.projectId }, { transcript: 0 }).sort({ createdAt: 1 })
+        const jobs = await this.inDomainScope(job.projectId, await AiChangeJob.find({ rootJobId: job.rootJobId, projectId: job.projectId }, { transcript: 0 }).sort({ createdAt: 1 }))
         return this.views(await Promise.all(jobs.map(candidate => this.failIfStale(candidate))), true)
     }
 
@@ -840,6 +862,7 @@ export class AiChangeJobService extends AiChangeBaseService {
      */
     async domainConversations(projectId: string, domainId: string): Promise<AiJobView[]> {
         await this.ensureAccessToProject(toObjectId(projectId))
+        await this.ensureInDomainScope(projectId, domainId)
         // By their roots: a chain with many follow-ups must not push the other conversations out.
         const roots = await AiChangeJob.find({ projectId: toObjectId(projectId), domainId: toObjectId(domainId), $expr: { $eq: ["$_id", "$rootJobId"] } }, JOB_LISTED)
             .sort({ createdAt: -1 })
@@ -862,7 +885,24 @@ export class AiChangeJobService extends AiChangeBaseService {
             const proposed = await AiChangeRequest.distinct("jobId", { ...filter, status: AiChangeStatus.PROPOSED, jobId: { $exists: true } })
             filter.$or = [{ status: { $in: ACTIVE_JOB_STATUSES } }, { _id: { $in: proposed } }]
         }
-        const jobs = await Promise.all((await AiChangeJob.find(filter, JOB_LISTED).sort({ createdAt: -1 }).limit(LISTED_JOBS)).map(job => this.failIfStale(job)))
+        // Read on page after page until the list is full: a domain-scoped member's jobs out of their scope are
+        // dropped after reading, and must not take the places of those they may see. Each page starts after the
+        // last job of the one before, by createdAt and then _id for the ties: a job created meanwhile shifts no
+        // page, so none is read twice nor skipped. At most MAX_LISTED_PAGES pages: a member whose history is
+        // mostly out of their scope gets a shorter list, not a scan of all of it.
+        const listed: ListedJob[] = []
+        let after: Record<string, unknown> | undefined
+        for (let pages = 0; listed.length < LISTED_JOBS && pages < MAX_LISTED_PAGES; pages++) {
+            const page = await AiChangeJob.find(after ? { $and: [filter, after] } : filter, JOB_LISTED)
+                .sort({ createdAt: -1, _id: -1 })
+                .limit(LISTED_JOBS)
+            listed.push(...(await this.inDomainScope(toObjectId(projectId), page)))
+            if (page.length < LISTED_JOBS) break
+            const last = page[page.length - 1]
+            after = { $or: [{ createdAt: { $lt: last.createdAt } }, { createdAt: last.createdAt, _id: { $lt: last._id } }] }
+        }
+        listed.splice(LISTED_JOBS)
+        const jobs = await Promise.all(listed.map(job => this.failIfStale(job)))
         const views = await this.views(jobs, false)
         return active ? views.filter(view => ACTIVE_JOB_STATUSES.includes(view.status) || view.repositories.some(repository => repository.status === AiChangeStatus.PROPOSED)) : views
     }
@@ -885,6 +925,13 @@ export class AiChangeJobService extends AiChangeBaseService {
         const agents = new Map<string, number>()
         for (const id of [...jobs.flatMap(job => componentsOfJob(job).map(ref => ref.id)), ...requests.map(componentIdOf)]) {
             agents.set(id, (agents.get(id) ?? 0) + 1)
+        }
+        // A domain-scoped member is told about the microfrontends and services they see only
+        const inScope = await this.domainScopeFilter(projectId)
+        if (Object.keys(inScope).length > 0) {
+            const projectFilter = { projectId: toObjectId(projectId), ...inScope }
+            const visible = new Set((await Promise.all([Microfrontend.find(projectFilter, { _id: 1 }), Service.find(projectFilter, { _id: 1 })])).flat().map(component => String(component._id)))
+            for (const id of agents.keys()) if (!visible.has(id)) agents.delete(id)
         }
         return [...agents].map(([microfrontendId, count]) => ({ microfrontendId, agents: count }))
     }

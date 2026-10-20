@@ -13,11 +13,11 @@ import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
 import ServiceDTO, { ServiceVersionRegistrationDTO } from "../types/ServiceDTO"
 import { isServiceTemplateType, isServiceUrl, parseRuntime, SERVICE_SLUG, SERVICE_URL_MAX_LENGTH, SERVICE_VERSION } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
-import BaseAuthorizedService from "./BaseAuthorizedService"
+import BaseAuthorizedService, { ensureOnlyNewRepositoryLinked, ensureRepositoryLinkUnchanged } from "./BaseAuthorizedService"
 import { resolveDomainId } from "./DomainService"
 import MarketService from "./MarketService"
 import TemplateScaffoldService, { placeholderDomain } from "./TemplateScaffoldService"
-import { resolveAttachedMaps } from "./VariableMapService"
+import { ensureAttachableMaps, resolveAttachedMaps } from "./VariableMapService"
 import { forgetServices } from "./workspace/workspaceCleanup"
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0
@@ -178,7 +178,7 @@ export class ServiceService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IService[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        return await Service.find({ projectId: projectIdObj }).sort({ name: 1 })
+        return await Service.find({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) }).sort({ name: 1 })
     }
 
     async create(dto: ServiceDTO, projectId: string | Schema.Types.ObjectId): Promise<IService> {
@@ -193,6 +193,11 @@ export class ServiceService extends BaseAuthorizedService {
         if (service.domainId !== undefined) {
             service.domainId = await resolveDomainId(service.domainId, projectIdObj)
         }
+        // A domain-scoped member creates only inside their domains: one in no domain would be out of their reach at once
+        await this.ensureInDomainScope(projectIdObj, service.domainId)
+        const scope = await this.getDomainScope(projectIdObj)
+        await ensureAttachableMaps(scope, projectIdObj, service)
+        ensureOnlyNewRepositoryLinked(scope, service.codeRepository)
 
         // Both before the repository is created: a refused save would leave an orphan repository behind
         if (await Service.exists({ slug, projectId: projectIdObj })) {
@@ -267,7 +272,12 @@ export class ServiceService extends BaseAuthorizedService {
         const allowed = await withNormalizedReferences(fields, service.projectId, service)
         if (allowed.domainId !== undefined) {
             allowed.domainId = await resolveDomainId(allowed.domainId, service.projectId)
+            // Moved only between the domains of a domain-scoped member, never out of their reach
+            await this.ensureInDomainScope(service.projectId, allowed.domainId)
         }
+        const scope = await this.getDomainScope(service.projectId)
+        await ensureAttachableMaps(scope, service.projectId, allowed, service)
+        if (ensureRepositoryLinkUnchanged(scope, allowed.codeRepository, service.codeRepository)) delete allowed.codeRepository
         if (allowed.codeRepository) {
             allowed.codeRepository = { ...allowed.codeRepository, createData: undefined }
             if (allowed.codeRepository.enabled || allowed.codeRepository.codeRepositoryId) {

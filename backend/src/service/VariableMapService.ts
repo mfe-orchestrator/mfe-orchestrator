@@ -8,7 +8,7 @@ import { SERVICE_VARIABLE_KEY } from "../types/ServiceStack"
 import VariableMapDTO, { VARIABLE_MAP_NAME, VariableMapEntryDTO, VariableMapKind } from "../types/VariableMapDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { isEncryptedSecret, SECRET_PLACEHOLDER } from "../utils/secretCrypto"
-import BaseAuthorizedService from "./BaseAuthorizedService"
+import BaseAuthorizedService, { domainScopeForbidden } from "./BaseAuthorizedService"
 import GitOpsService from "./GitOpsService"
 
 /** Per map: well past any real service, short of a document Mongo would refuse */
@@ -140,6 +140,50 @@ export const resolveAttachedMaps = async <T extends { configMapIds?: unknown; se
     }
 }
 
+/**
+ * The maps of this kind a domain-scoped member may see and edit: those attached to at least one service,
+ * all of them in `scope`. A map shared with a service of another domain, or of none, or attached to
+ * nothing, belongs to nobody assigned to only some domains.
+ */
+export const mapIdsInScope = async (kind: VariableMapKind, projectId: Schema.Types.ObjectId, scope: string[]): Promise<Set<string>> => {
+    const field = SERVICE_FIELD[kind]
+    const attaching = { projectId, [field]: { $exists: true, $ne: [] } }
+    const fields = { domainId: 1, configMapIds: 1, secretIds: 1 }
+    const components = await Service.find(attaching, fields)
+    const inScope = new Set<string>()
+    const outOfScope = new Set<string>()
+    for (const component of components) {
+        const target = component.domainId && scope.includes(String(component.domainId)) ? inScope : outOfScope
+        for (const id of component[field] ?? []) target.add(String(id))
+    }
+    return new Set([...inScope].filter(id => !outOfScope.has(id)))
+}
+
+/**
+ * A domain-scoped member attaches to a service only the config maps and secrets they can see, those
+ * attached exclusively to services of their domains: anything else would hand them the values of another
+ * domain. The maps the service already attaches stay, whoever attached them. `scope` is the
+ * caller's domain scope, nothing to check without one.
+ */
+export const ensureAttachableMaps = async (
+    scope: string[] | undefined,
+    projectId: Schema.Types.ObjectId,
+    dto: { configMapIds?: unknown; secretIds?: unknown },
+    existing?: { configMapIds?: unknown[]; secretIds?: unknown[] }
+) => {
+    if (!scope) return
+    for (const [kind, field] of [
+        ["configMap", "configMapIds"],
+        ["secret", "secretIds"]
+    ] as const) {
+        const attached = new Set((existing?.[field] ?? []).map(String))
+        const added = ((dto[field] as unknown[] | undefined) ?? []).map(String).filter(id => !attached.has(id))
+        if (added.length === 0) continue
+        const visible = await mapIdsInScope(kind, projectId, scope)
+        if (added.some(id => !visible.has(id))) throw domainScopeForbidden()
+    }
+}
+
 /** The config maps or the secrets of a project, which its backend services attach */
 export class VariableMapService extends BaseAuthorizedService {
     constructor(
@@ -160,7 +204,9 @@ export class VariableMapService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IVariableMap[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        return await this.model.find({ projectId: projectIdObj }).sort({ name: 1 })
+        const scope = await this.getDomainScope(projectIdObj)
+        const visible = scope ? { _id: { $in: [...(await mapIdsInScope(this.kind, projectIdObj, scope))].map(id => toObjectId(id)) } } : {}
+        return await this.model.find({ projectId: projectIdObj, ...visible }).sort({ name: 1 })
     }
 
     async getById(id: string | ObjectId): Promise<IVariableMap> {
@@ -169,6 +215,10 @@ export class VariableMapService extends BaseAuthorizedService {
             throw new EntityNotFoundError(String(id))
         }
         await this.ensureAccessToProject(map.projectId)
+        const scope = await this.getDomainScope(map.projectId)
+        if (scope && !(await mapIdsInScope(this.kind, map.projectId, scope)).has(String(map._id))) {
+            throw domainScopeForbidden()
+        }
         return map
     }
 
@@ -213,6 +263,8 @@ export class VariableMapService extends BaseAuthorizedService {
     async create(dto: VariableMapDTO, projectId: string | Schema.Types.ObjectId): Promise<IVariableMap> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        // A new map is attached to nothing yet, so it would be outside any domain scope from the start
+        await this.ensureWholeProject(projectIdObj)
 
         return new GitOpsService(this.user).saveVariableMap(projectIdObj, this.kind, async () => {
             const fields = await this.normalize({ entries: [], ...dto, name: dto.name ?? "" }, projectIdObj)
@@ -288,6 +340,7 @@ export class VariableMapService extends BaseAuthorizedService {
     /** Refused while a service attaches it: deleting it would silently take variables away from a running container */
     async delete(id: string | ObjectId): Promise<IVariableMap | null> {
         const { projectId } = await this.getById(id)
+        await this.ensureWholeProject(projectId)
         return new GitOpsService(this.user).saveVariableMap(projectId, this.kind, async () => {
             const map = await this.getById(id)
             const services = await Service.find({ projectId: map.projectId, [this.serviceField]: map._id }, { name: 1 })

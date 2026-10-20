@@ -142,6 +142,9 @@ export class MicrofrontendDependencyService extends BaseAuthorizedService {
      * That base branch is never committed on.
      */
     async applyAlignment(projectId: string | Schema.Types.ObjectId, request: AlignmentApplyRequestDTO = {}): Promise<AlignmentApplyResultDTO> {
+        // Aligns the versions across every microfrontend of the project: those reaching the whole project
+        // only. The access to the project itself is checked when the repositories are resolved.
+        await this.ensureWholeProject(projectId)
         const snapshots = await this.collectSnapshots(projectId, request)
         const targetBranch = this.resolveBranchName(request.branchName)
         const plan = this.buildPlan(snapshots, request)

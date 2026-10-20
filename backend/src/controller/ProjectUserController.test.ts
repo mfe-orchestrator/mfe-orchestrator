@@ -38,7 +38,7 @@ describe("ProjectUserController", () => {
 
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({ message: "User role updated successfully", userProject: { userId: MEMBER, role: "VIEWER" } })
-        expect(updateUserRole).toHaveBeenCalledWith(PROJECT, MEMBER, "VIEWER")
+        expect(updateUserRole).toHaveBeenCalledWith(PROJECT, MEMBER, "VIEWER", undefined)
     })
 
     it("Given a removal, when it succeeds, then the answer is empty", async () => {

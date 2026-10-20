@@ -16,7 +16,7 @@ import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeReposi
 import { IMarket } from "../models/MarketModel"
 import { ICodeRepositoryMicrofrontend } from "../models/MicrofrontendModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
-import { ApiKeyService } from "./ApiKeyService"
+import { createSystemDeployKey } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
 import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
@@ -163,7 +163,10 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         }
     }
 
-    /** Stores a deploy API key as a secret of the GitHub repository, so its pipeline can call back */
+    /**
+     * Stores a deploy API key as a secret of the GitHub repository, so its pipeline can call back. Reached
+     * through createRepository only, whose callers checked the access to the component and its domain.
+     */
     async gitHubInjectApiKey(codeRepository: ICodeRepository, slug: string, repositoryName?: string) {
         if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
         if (codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return
@@ -181,7 +184,9 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             return
         }
 
-        const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
+        // A system action, not one of the user: a domain-scoped member creating the repository of a component of
+        // theirs must not leave it at the provider without its deploy secret (see createSystemDeployKey)
+        const apiKey = await createSystemDeployKey(codeRepository.projectId.toString(), {
             name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + slug,
             role: ApiKeyRole.MANAGER,
             expiresAt: deployKeyExpiry()

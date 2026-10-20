@@ -311,4 +311,55 @@ describe("RepositoryRenameService.renameMicrofrontendRepository", () => {
         expect(error).toMatchObject({ code: "REPOSITORY_RENAMED_NOT_RECORDED", statusCode: 500 })
         expect(error.message).toContain('"checkout-web"')
     })
+
+    describe("by a member assigned to some domains", () => {
+        const ownDomain = new Types.ObjectId()
+        const scopedDocument = () => {
+            const document = microfrontend({ name: "checkout", repositoryId: "42" })
+            document.domainId = ownDomain as never
+            return document
+        }
+        /** As `rename`, by a principal: the domain scope is read from their membership. */
+        const scopedRename = (document: ReturnType<typeof microfrontend>, name: string) => {
+            vi.spyOn(Microfrontend, "findById").mockResolvedValue(document as never)
+            return new RepositoryRenameService({ _id: new Types.ObjectId() } as never).renameMicrofrontendRepository(document._id.toString(), name)
+        }
+
+        beforeEach(() => {
+            vi.spyOn(UserProject, "findOne").mockResolvedValue({ role: RoleInProject.MEMBER, domainScoped: true, domainIds: [ownDomain] } as never)
+            vi.spyOn(Project, "findOne").mockResolvedValue(null as never)
+            findCodeRepository.mockResolvedValue(connection(CodeRepositoryProvider.GITHUB, { githubData: { userName: "jane" } }))
+            githubRename.mockResolvedValue({ id: 42, name: "checkout-web" })
+        })
+
+        it.each([
+            ["a microfrontend", "microfrontend"],
+            ["a service", "service"]
+        ])("given %s of another domain or of none linked to the same repository, when renamed, then it is refused before the provider is reached", async (_case, outside) => {
+            const microfrontendsOutside = vi.spyOn(Microfrontend, "exists").mockResolvedValue((outside === "microfrontend" ? { _id: new Types.ObjectId() } : null) as never)
+            vi.spyOn(Service, "exists").mockResolvedValue((outside === "service" ? { _id: new Types.ObjectId() } : null) as never)
+            const document = scopedDocument()
+
+            await expect(scopedRename(document, "checkout-web")).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
+            expect(githubRename).not.toHaveBeenCalled()
+            expect(updateMicrofrontends).not.toHaveBeenCalled()
+            // The same links the rename writes to, outside the scope: $nin also takes those of no domain
+            expect(microfrontendsOutside).toHaveBeenCalledWith({
+                projectId,
+                "codeRepository.codeRepositoryId": codeRepositoryId,
+                $or: [{ _id: document._id }, { "codeRepository.repositoryId": "42" }, { "codeRepository.name": "checkout" }],
+                domainId: { $nin: [String(ownDomain)] }
+            })
+        })
+
+        it("given every link to the repository in their domains, when renamed, then it goes through", async () => {
+            vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
+            vi.spyOn(Service, "exists").mockResolvedValue(null as never)
+
+            await scopedRename(scopedDocument(), "checkout-web")
+
+            expect(githubRename).toHaveBeenCalledTimes(1)
+            expect(updateMicrofrontends).toHaveBeenCalledTimes(1)
+        })
+    })
 })

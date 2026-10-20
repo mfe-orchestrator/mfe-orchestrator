@@ -30,6 +30,8 @@ class EnvironmentService extends BaseAuthorizedService {
     async create(environmentData: EnvironmentDTO, projectId: string): Promise<IEnvironment> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        // Every domain is deployed to the environments: only those reaching the whole project change them
+        await this.ensureWholeProject(projectIdObj)
         const environment = new Environment(environmentData)
         environment.projectId = projectIdObj
         if (environment.order === undefined || environment.order === null) {
@@ -43,6 +45,7 @@ class EnvironmentService extends BaseAuthorizedService {
     async createBulk(body: EnvironmentDTO[], projectId: string) {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        await this.ensureWholeProject(projectIdObj)
         const environments = body.map(env => new Environment(env))
         let maxOrder = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
         environments.forEach(env => {
@@ -59,6 +62,7 @@ class EnvironmentService extends BaseAuthorizedService {
 
     async update(environmentId: string | ObjectId, updateData: EnvironmentDTO) {
         await this.ensureAccessToEnvironment(environmentId)
+        await this.ensureWholeProjectOfEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
         const previousSlug = (await Environment.findById(environmentIdObj, { slug: 1 }))?.slug
         const updatedEnvironment = await Environment.findOneAndUpdate({ _id: environmentIdObj }, updateData, { new: true })
@@ -82,6 +86,7 @@ class EnvironmentService extends BaseAuthorizedService {
      */
     async updateOrder(projectId: string, ids: (string | ObjectId)[]): Promise<IEnvironment[]> {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
         const projectIdObj = toObjectId(projectId)
 
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -136,6 +141,7 @@ class EnvironmentService extends BaseAuthorizedService {
 
     async deleteSingle(environmentId: string | ObjectId) {
         await this.ensureAccessToEnvironment(environmentId)
+        await this.ensureWholeProjectOfEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
 
         const projectId = await runInTransaction(async session => {
@@ -159,6 +165,7 @@ class EnvironmentService extends BaseAuthorizedService {
         const idsObj = await Promise.all(
             ids.map(async id => {
                 await this.ensureAccessToEnvironment(id)
+                await this.ensureWholeProjectOfEnvironment(id)
                 return toObjectId(id)
             })
         )

@@ -11,7 +11,7 @@ import Service from "../models/ServiceModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { NormalizedRepository, normalizeRepository } from "../utils/codeRepositoryUtils"
 import { toObjectId } from "../utils/mongooseUtils"
-import BaseAuthorizedService from "./BaseAuthorizedService"
+import BaseAuthorizedService, { domainScopeForbidden } from "./BaseAuthorizedService"
 import CodeRepositoryService from "./CodeRepositoryService"
 import { repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
 
@@ -48,6 +48,27 @@ const isNameTaken = ({ status, message }: { status?: number; message: string }) 
 export const isRepositoryNameTakenError = (error: unknown): boolean => axios.isAxiosError(error) && isNameTaken(describeProviderError(error))
 
 /**
+ * What links to the same repository as `link` in the project: the microfrontend itself among the
+ * microfrontends, and the services with the same id, path or name.
+ */
+const linksToRepository = (microfrontend: IMicrofrontend, codeRepository: ICodeRepository, link: ICodeRepositoryMicrofrontend) => {
+    // Names are unique per owner on GitHub and per project on Azure DevOps, but a GitLab
+    // connection can reach two groups with a repository of the same name: there the path tells.
+    const sameRepository: Record<string, unknown>[] = []
+    if (link.repositoryId) sameRepository.push({ "codeRepository.repositoryId": link.repositoryId })
+    if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+        if (link.gitlab?.path) sameRepository.push({ "codeRepository.gitlab.path": link.gitlab.path })
+    } else if (link.name) {
+        sameRepository.push({ "codeRepository.name": link.name })
+    }
+    const linksToIt = { projectId: microfrontend.projectId, "codeRepository.codeRepositoryId": link.codeRepositoryId }
+    return {
+        microfrontends: { ...linksToIt, $or: [{ _id: microfrontend._id }, ...sameRepository] },
+        services: sameRepository.length > 0 ? { ...linksToIt, $or: sameRepository } : undefined
+    }
+}
+
+/**
  * Renames the repository of a microfrontend at its provider, then updates what the console keeps
  * about it. The microfrontend itself keeps its name and slug: those are what deployments and
  * uploaded bundles are addressed by.
@@ -67,6 +88,7 @@ export class RepositoryRenameService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendId)
         }
         await this.ensureCanChangeRepository(microfrontend.projectId)
+        await this.ensureInDomainScope(microfrontend.projectId, microfrontend.domainId)
 
         const link = microfrontend.codeRepository
         if (!link?.enabled || !link.codeRepositoryId) {
@@ -81,6 +103,7 @@ export class RepositoryRenameService extends BaseAuthorizedService {
         if (link.name === newName) {
             return microfrontend
         }
+        await this.ensureEveryLinkInScope(microfrontend, codeRepository, link)
 
         let renamed: NormalizedRepository | undefined
         try {
@@ -122,6 +145,25 @@ export class RepositoryRenameService extends BaseAuthorizedService {
         const project = await Project.findById(projectId, { organizationId: 1 })
         if (project && (await this.isOrganizationAdmin(project.organizationId))) return
         throw createBusinessException({ code: "REPOSITORY_RENAME_FORBIDDEN", message: "A viewer cannot rename the repository of a microfrontend", statusCode: 403 })
+    }
+
+    /**
+     * The new name is written into every link to the repository: a domain-scoped member renames it only
+     * when every microfrontend and service linked to it is of their domains, none of another or of none.
+     */
+    private async ensureEveryLinkInScope(microfrontend: IMicrofrontend, codeRepository: ICodeRepository, link: ICodeRepositoryMicrofrontend) {
+        const scope = await this.getDomainScope(microfrontend.projectId)
+        if (!scope) return
+        const links = linksToRepository(microfrontend, codeRepository, link)
+        // $nin also matches a document with no domain at all
+        const outside = { domainId: { $nin: scope.map(id => toObjectId(id)) } }
+        const [microfrontendOutside, serviceOutside] = await Promise.all([
+            Microfrontend.exists({ ...links.microfrontends, ...outside }),
+            links.services ? Service.exists({ ...links.services, ...outside }) : null
+        ])
+        if (microfrontendOutside || serviceOutside) {
+            throw domainScopeForbidden()
+        }
     }
 
     /**
@@ -192,21 +234,8 @@ export class RepositoryRenameService extends BaseAuthorizedService {
         if (renamed.cloneUrlSsh) set["codeRepository.cloneUrlSsh"] = renamed.cloneUrlSsh
         if (renamed.gitlab?.path) set["codeRepository.gitlab.path"] = renamed.gitlab.path
 
-        // Names are unique per owner on GitHub and per project on Azure DevOps, but a GitLab
-        // connection can reach two groups with a repository of the same name: there the path tells.
-        const sameRepository: Record<string, unknown>[] = []
-        if (link.repositoryId) sameRepository.push({ "codeRepository.repositoryId": link.repositoryId })
-        if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
-            if (link.gitlab?.path) sameRepository.push({ "codeRepository.gitlab.path": link.gitlab.path })
-        } else if (link.name) {
-            sameRepository.push({ "codeRepository.name": link.name })
-        }
-        const linksToIt = { projectId: microfrontend.projectId, "codeRepository.codeRepositoryId": link.codeRepositoryId }
-
-        await Promise.all([
-            Microfrontend.updateMany({ ...linksToIt, $or: [{ _id: microfrontend._id }, ...sameRepository] }, { $set: set }),
-            sameRepository.length > 0 ? Service.updateMany({ ...linksToIt, $or: sameRepository }, { $set: set }) : undefined
-        ])
+        const links = linksToRepository(microfrontend, codeRepository, link)
+        await Promise.all([Microfrontend.updateMany(links.microfrontends, { $set: set }), links.services ? Service.updateMany(links.services, { $set: set }) : undefined])
     }
 }
 

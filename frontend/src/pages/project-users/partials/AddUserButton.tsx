@@ -8,15 +8,16 @@ import { useTranslation } from "react-i18next"
 import { z } from "zod"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
+import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useProjectApi, { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 import useProjectUserApi from "@/hooks/apiClients/useProjectUserApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useUserStore from "@/store/useUserStore"
+import { AccessFormValues, DomainAccessFields, refineDomainAccess, toDomainIds } from "./DomainAccessFields"
 
-interface InviteUserFormValues {
+interface InviteUserFormValues extends AccessFormValues {
     email: string
-    role: RoleInProject
 }
 
 interface AddUserButtonProps {
@@ -31,6 +32,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
     const projectUserApi = useProjectUserApi()
     const { project } = useProjectStore()
     const queryClient = useQueryClient()
+    const domainsApi = useDomainsApi()
     const currentUserEmail = useUserStore(state => state.user?.email?.toLowerCase())
 
     // Same key as the ProjectUsers page, so this reads from the already-fetched cache.
@@ -46,14 +48,25 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
         refetchOnMount: false
     })
 
+    const domainsQuery = useQuery({
+        queryKey: ["domains", project?._id],
+        queryFn: domainsApi.getAll,
+        enabled: !!project?._id && isInviteModalOpen
+    })
+    const domains = domainsQuery.data ?? []
+
     const inviteUserSchema = useMemo(
         () =>
-            z.object({
-                email: z.string().email(t("auth.invalid_email")),
-                role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
-                    error: t("project_users.role_required")
+            z
+                .object({
+                    email: z.string().email(t("auth.invalid_email")),
+                    role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
+                        error: t("project_users.role_required")
+                    }),
+                    access: z.enum(["all", "domains"]),
+                    domainIds: z.array(z.string())
                 })
-            }),
+                .superRefine((values, ctx) => refineDomainAccess(values, ctx, t("project_users.access.domains_required"))),
         [t]
     )
 
@@ -61,7 +74,9 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
         resolver: zodResolver(inviteUserSchema),
         defaultValues: {
             email: "",
-            role: RoleInProject.VIEWER
+            role: RoleInProject.VIEWER,
+            access: "all",
+            domainIds: []
         }
     })
 
@@ -83,6 +98,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
         await inviteUserMutation.mutateAsync({
             email: values.email!,
             role: values.role,
+            domainIds: toDomainIds(values),
             projectId: project._id
         })
         notifications.showSuccessNotification({
@@ -125,6 +141,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
                                     ]}
                                 />
                             </div>
+                            <DomainAccessFields domains={domains} disabled={!domainsQuery.isSuccess} />
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="secondary" onClick={() => setIsInviteModalOpen(false)} disabled={inviteUserMutation.isPending} dataTestId="cancel-invitation">

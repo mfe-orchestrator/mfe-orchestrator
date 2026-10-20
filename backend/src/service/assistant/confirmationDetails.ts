@@ -224,11 +224,16 @@ class DetailResolver {
         for (const environmentId of environmentIds) {
             details.push({ label: "environment", value: (await this.environmentName(environmentId).catch(() => undefined)) ?? environmentId })
             try {
-                const deployments = await new DeploymentService(this.principal).getByEnvironmentId(environmentId)
+                const deploymentService = new DeploymentService(this.principal)
+                const deployments = await deploymentService.getByEnvironmentId(environmentId)
                 const current = deployments.find(deployment => deployment.active) ?? deployments[0]
+                // A domain-scoped member's deploy keeps the variables served now: the live ones would show a change it does not ship
+                const servedVariables = current && (await deploymentService.shipsServedVariables(environmentId))
                 const next: Served = {
                     microfrontends: await this.microfrontends(),
-                    variables: (await new GlobalVariablesService(this.principal).getAll(environmentId)).map(variable => ({ key: variable.key, value: variable.value }))
+                    variables: servedVariables
+                        ? servedOf(current).variables
+                        : (await new GlobalVariablesService(this.principal).getAll(environmentId)).map(variable => ({ key: variable.key, value: variable.value }))
                 }
                 details.push(...this.comparison(current, next))
             } catch {
@@ -241,11 +246,15 @@ class DetailResolver {
     /** A rollback: which deployment comes back, and what that changes compared to the one served now. */
     private async rollback(deploymentId: string): Promise<ConfirmationDetail[]> {
         const service = new DeploymentService(this.principal)
-        const target = await service.getById(deploymentId)
-        if (!target) return [{ label: "deployment", value: deploymentId }]
-        const environment = await new EnvironmentService(this.principal).getById(target.environmentId)
+        const found = await service.getById(deploymentId)
+        if (!found) return [{ label: "deployment", value: deploymentId }]
+        const environment = await new EnvironmentService(this.principal).getById(found.environmentId)
         if (!environment) return [{ label: "deployment", value: deploymentId }]
-        const deployments = await service.getByEnvironmentId(target.environmentId)
+        const deployments = await service.getByEnvironmentId(found.environmentId)
+        // The target as the principal may read it: getById answers the whole snapshot, the microfrontends of
+        // every domain included, while the list keeps a domain-scoped member's own only
+        const target = deployments.find(deployment => String(deployment._id) === String(found._id))
+        if (!target) return [{ label: "deployment", value: deploymentId }]
         const current = deployments.find(deployment => deployment.active) ?? deployments[0]
         return [
             { label: "environment", value: environment.name },

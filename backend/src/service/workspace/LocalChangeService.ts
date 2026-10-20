@@ -65,7 +65,7 @@ export class LocalChangeService extends BaseAuthorizedService {
     private async getComponent(ref: RepositoryComponentRef): Promise<RepositoryComponent> {
         const component = await findComponent(ref)
         if (!component) throw new EntityNotFoundError(ref.id)
-        await this.ensureAccessToProject(component.projectId)
+        await this.ensureAccessToDomainMember(component)
         return component
     }
 

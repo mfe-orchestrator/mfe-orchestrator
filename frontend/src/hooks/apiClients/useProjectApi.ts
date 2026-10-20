@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next"
 import useApiClient from "../useApiClient"
 import { EnvironmentDTO } from "./useEnvironmentsApi"
+import { domainScopeErrorMessage } from "./useProjectUserApi"
 
 export enum RoleInProject {
     OWNER = "OWNER",
@@ -65,10 +67,13 @@ export interface ProjectUpdateDTO {
 interface AddUserToProjectDTO {
     email: string
     role: RoleInProject
+    /** Omitted or empty means the whole project */
+    domainIds?: string[]
 }
 
 const useProjectApi = () => {
     const apiClient = useApiClient()
+    const { t } = useTranslation()
 
     /**
      * The projects the user can open. Narrowed to one organization when given, which is what every
@@ -135,7 +140,8 @@ const useProjectApi = () => {
         await apiClient.doRequest({
             url: `/api/projects/${dto.projectId}/users`,
             method: "POST",
-            data: dto
+            data: dto,
+            customErrorMessage: error => domainScopeErrorMessage(t, error)
         })
     }
 

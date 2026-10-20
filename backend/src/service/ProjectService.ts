@@ -23,7 +23,7 @@ import { ConfigMap, Secret } from "../models/VariableMapModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
-import BaseAuthorizedService from "./BaseAuthorizedService"
+import BaseAuthorizedService, { domainScopeForbidden, isInDomainScope } from "./BaseAuthorizedService"
 import GitOpsService, { GitOpsSettingsInput } from "./GitOpsService"
 import UserProjectService from "./UserProjectService"
 import { prepareProjectCleanup } from "./workspace/workspaceCleanup"
@@ -84,6 +84,12 @@ const toContextEntry = (item: { _id: unknown; slug: string; name: string; contex
     context: item.context as string
 })
 
+/**
+ * A project as the switcher lists it, with the domains the user is confined to there: none for a member
+ * of the whole project. `domainScoped` tells a scope left over nothing by deleted domains from the whole project.
+ */
+export type ProjectOfUser = IProject & { domainIds: string[]; domainScoped: boolean }
+
 export interface ProjectSummaryDTO {
     project: IProject
     count: {
@@ -107,11 +113,11 @@ export class ProjectService extends BaseAuthorizedService {
      * administering the organization that owns it. The second is what keeps a project reachable when
      * its members leave, and it is why this cannot be a single lookup from UserProject any more.
      */
-    async findMine(userId: ObjectId, organizationId?: string | Schema.Types.ObjectId): Promise<IProject[]> {
+    async findMine(userId: ObjectId, organizationId?: string | Schema.Types.ObjectId): Promise<ProjectOfUser[]> {
         try {
             // A pending invitation is not a membership yet: it must be accepted first, otherwise the
             // project would show up in the switcher as if it were already the user's.
-            const memberships = await UserProject.find({ userId: toObjectId(userId), invitationToken: null }, { projectId: 1 }).lean()
+            const memberships = await UserProject.find({ userId: toObjectId(userId), invitationToken: null }, { projectId: 1, role: 1, domainScoped: 1, domainIds: 1 }).lean()
             const administeredOrganizations = await this.getAdministeredOrganizationIds()
 
             const reachable: Record<string, unknown>[] = [{ _id: { $in: memberships.map(membership => membership.projectId) } }]
@@ -124,7 +130,20 @@ export class ProjectService extends BaseAuthorizedService {
                 filter.organizationId = toObjectId(organizationId)
             }
 
-            return await Project.find(filter).sort({ name: 1 })
+            // The scope comes with the membership read above; owning the project or administering the
+            // organization overrides it, as it does on every check
+            const administered = new Set(administeredOrganizations.map(String))
+            const scopes = new Map(
+                memberships
+                    .filter(membership => membership.domainScoped && membership.role !== RoleInProject.OWNER)
+                    .map(membership => [String(membership.projectId), (membership.domainIds ?? []).map(String)])
+            )
+            const projects = await Project.find(filter).sort({ name: 1 })
+            return projects.map(project => {
+                const scope = administered.has(String(project.organizationId)) ? undefined : scopes.get(String(project._id))
+                const fields = typeof project.toJSON === "function" ? project.toJSON() : project
+                return { ...fields, domainIds: scope ?? [], domainScoped: Boolean(scope) } as unknown as ProjectOfUser
+            })
         } catch (error) {
             if (error instanceof BusinessException) throw error
 
@@ -169,7 +188,7 @@ export class ProjectService extends BaseAuthorizedService {
             count: {
                 environments: await Environment.countDocuments({ projectId: projectIdObj }),
                 users: await UserProject.countDocuments({ projectId: projectIdObj }),
-                microfrontends: await Microfrontend.countDocuments({ projectId: projectIdObj }),
+                microfrontends: await Microfrontend.countDocuments({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) }),
                 apiKeys: await ApiKey.countDocuments({ projectId: projectIdObj }),
                 storages: await Storage.countDocuments({ projectId: projectIdObj }),
                 databases: await Database.countDocuments({ projectId: projectIdObj }),
@@ -201,24 +220,36 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
-    /** A focus outside the project is refused as not found: a context never reaches across projects. */
+    /**
+     * A focus outside the project is refused as not found: a context never reaches across projects. A
+     * domain-scoped member reads the contexts of their domains and of what is in them only, and is
+     * refused a focus outside them.
+     */
     private async contextFilters(projectId: Schema.Types.ObjectId, focus?: ContextFocus): Promise<ContextFilters> {
+        const scope = await this.getDomainScope(projectId)
         if (!focus) {
-            return { domains: {}, microfrontends: {}, services: {} }
+            const members = await this.domainScopeFilter(projectId)
+            return { domains: await this.domainScopeFilter(projectId, "_id"), microfrontends: members, services: members }
         }
         const domainOf = (domainId?: unknown) => (domainId ? { _id: domainId } : undefined)
+        const ensureInScope = (domainId: unknown) => {
+            if (!isInDomainScope(scope, domainId)) throw domainScopeForbidden()
+        }
         if ("domainId" in focus) {
             const domain = await Domain.findOne({ _id: toObjectId(focus.domainId), projectId }, { _id: 1 })
             if (!domain) throw new EntityNotFoundError(focus.domainId)
+            ensureInScope(domain._id)
             return { domains: { _id: domain._id }, microfrontends: { domainId: domain._id }, services: { domainId: domain._id } }
         }
         if ("microfrontendId" in focus) {
             const microfrontend = await Microfrontend.findOne({ _id: toObjectId(focus.microfrontendId), projectId }, { domainId: 1 })
             if (!microfrontend) throw new EntityNotFoundError(focus.microfrontendId)
+            ensureInScope(microfrontend.domainId)
             return { domains: domainOf(microfrontend.domainId), microfrontends: { _id: microfrontend._id } }
         }
         const service = await Service.findOne({ _id: toObjectId(focus.serviceId), projectId }, { domainId: 1 })
         if (!service) throw new EntityNotFoundError(focus.serviceId)
+        ensureInScope(service.domainId)
         return { domains: domainOf(service.domainId), services: { _id: service._id } }
     }
 
@@ -285,6 +316,8 @@ export class ProjectService extends BaseAuthorizedService {
 
     async update(projectId: string, projectData: ProjectUpdateInput): Promise<IProject | null> {
         await this.ensureAccessToProject(projectId)
+        // The settings, the shared context and the GitOps repository are the whole project's
+        await this.ensureWholeProject(projectId)
         try {
             if (!Types.ObjectId.isValid(projectId)) {
                 throw createBusinessException({
@@ -348,6 +381,7 @@ export class ProjectService extends BaseAuthorizedService {
 
     async delete(projectId: string): Promise<DeleteResult> {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
         const cleanup = await prepareProjectCleanup(projectId)
         const result = await runInTransaction(session => this.deleteRaw(projectId, session))
         await cleanup()

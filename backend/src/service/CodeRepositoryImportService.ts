@@ -9,7 +9,7 @@ import ImportRepositoriesDTO, { ImportTarget } from "../types/ImportRepositories
 import { SERVICE_SLUG } from "../types/ServiceStack"
 import { buildUniqueSlug, NormalizedRepository, normalizeRepository } from "../utils/codeRepositoryUtils"
 import { toObjectId } from "../utils/mongooseUtils"
-import BaseAuthorizedService from "./BaseAuthorizedService"
+import BaseAuthorizedService, { isInDomainScope } from "./BaseAuthorizedService"
 import CodeRepositoryService from "./CodeRepositoryService"
 import { resolveDomainId } from "./DomainService"
 
@@ -17,7 +17,7 @@ const defaultEntryPoint = "assets/remoteEntry.js"
 const defaultVersion = "1.0.0"
 
 /** What a repository can already be linked to: a microfrontend or a service */
-type LinkedMember = Pick<IMicrofrontend | IService, "_id" | "slug" | "name" | "codeRepository">
+type LinkedMember = Pick<IMicrofrontend | IService, "_id" | "slug" | "name" | "codeRepository" | "domainId">
 
 /** Anything but the two targets is refused: a typo must not quietly import microfrontends */
 const ensureTarget = (target: unknown) => {
@@ -82,15 +82,19 @@ export class CodeRepositoryImportService extends BaseAuthorizedService {
         const repositories = await this.fetchRepositories(codeRepositoryService, codeRepository, groupId)
         const linkedMembers = await this.getLinkedMembers(codeRepository)
         const takenSlugs = await this.getTakenSlugs(codeRepository.projectId, target)
+        const scope = await this.getDomainScope(codeRepository.projectId)
 
         return repositories.map(repository => {
-            const member = this.findLinkedMember(linkedMembers, repository)
+            const linked = this.findLinkedMember(linkedMembers, repository)
+            // A domain-scoped member learns that a repository is taken, not by what: the microfrontend or the
+            // service of another domain stays out of their sight, as everywhere else
+            const member = linked && isInDomainScope(scope, linked.domainId) ? linked : undefined
 
             return {
                 ...repository,
                 // Already imported repositories keep the slug they were imported with, so it stays recognizable.
                 slug: member?.slug ?? this.reserveSlug(repository.name, takenSlugs, target),
-                alreadyImported: Boolean(member),
+                alreadyImported: Boolean(linked),
                 importedAs: member
                     ? {
                           _id: member._id.toString(),
@@ -114,6 +118,8 @@ export class CodeRepositoryImportService extends BaseAuthorizedService {
             throw new EntityNotFoundError(codeRepositoryId)
         }
 
+        // Imports into any domain, or none: a connection of the project is managed by those reaching all of it
+        await this.ensureWholeProject(codeRepository.projectId)
         ensureTarget(body.target)
         const isService = body.target === "service"
         // Before anything is created: a domain of another project, or a missing one, refuses the whole batch

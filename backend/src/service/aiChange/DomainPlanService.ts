@@ -146,6 +146,7 @@ export class DomainPlanService extends AiChangeBaseService {
         await this.ensureCanChangeProject(projectIdObj)
         const domain = await Domain.findOne({ _id: toObjectId(input.domainId), projectId: projectIdObj })
         if (!domain) throw new EntityNotFoundError(input.domainId)
+        await this.ensureInDomainScope(projectIdObj, domain._id)
 
         // Members already there are what the job works on: planning new ones would duplicate them.
         const inDomain = { projectId: projectIdObj, domainId: domain._id }

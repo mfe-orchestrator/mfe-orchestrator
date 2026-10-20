@@ -10,6 +10,7 @@ import DomainLink from "../models/DomainLinkModel"
 import Domain from "../models/DomainModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
+import UserProject from "../models/UserProjectModel"
 import DomainService, { resolveDomainId } from "./DomainService"
 
 const projectId = new Types.ObjectId().toString()
@@ -148,6 +149,7 @@ describe("DomainService.delete", () => {
         const deleteMicrofrontends = vi.spyOn(Microfrontend, "deleteMany")
         const deleteServices = vi.spyOn(Service, "deleteMany")
         const deleteLinks = vi.spyOn(DomainLink, "deleteMany").mockResolvedValue({ deletedCount: 1 } as never)
+        const pullFromScopes = vi.spyOn(UserProject, "updateMany").mockResolvedValue({ modifiedCount: 1 } as never)
         const remove = vi.spyOn(Domain, "findByIdAndDelete").mockResolvedValue(domain as never)
 
         const deleted = await new DomainService().delete(String(domainId))
@@ -156,6 +158,8 @@ describe("DomainService.delete", () => {
         expect(unsetMicrofrontends).toHaveBeenCalledWith(members, { $set: { domainId: null } }, expect.anything())
         expect(unsetServices).toHaveBeenCalledWith(members, { $set: { domainId: null } }, expect.anything())
         expect(deleteLinks).toHaveBeenCalledWith({ $or: [{ sourceDomainId: domainId }, { targetDomainId: domainId }] }, expect.anything())
+        // Pulled from the scopes and nothing else: `domainScoped` stays, so an emptied scope reaches nothing rather than the whole project
+        expect(pullFromScopes).toHaveBeenCalledWith({ projectId, domainIds: domainId }, { $pull: { domainIds: domainId } }, expect.anything())
         expect(remove).toHaveBeenCalledWith(domainId, expect.anything())
         expect(deleteMicrofrontends).not.toHaveBeenCalled()
         expect(deleteServices).not.toHaveBeenCalled()

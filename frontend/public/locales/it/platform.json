@@ -417,7 +417,29 @@
         "resend_invite": "Rinvia",
         "revoke_invite": "Revoca invito",
         "confirm_revoke_title": "Revoca invito",
-        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
+        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?",
+        "access": {
+            "label": "Accesso",
+            "whole_project": "Intero progetto",
+            "specific_domains": "Domini specifici",
+            "domains_label": "Domini",
+            "domains_required": "Seleziona almeno un dominio",
+            "no_domain": "Nessun dominio",
+            "no_domains_hint": "L'accesso è all'intero progetto. Crea dei domini per limitare un membro ad alcuni di essi.",
+            "no_domains_scoped": "Il progetto non ha più domini: scegli Intero progetto oppure crea prima dei domini."
+        },
+        "edit_access": {
+            "action": "Modifica accesso",
+            "title": "Modifica accesso",
+            "description": "Cambia il ruolo e l'accesso di {{name}}.",
+            "success": "Accesso aggiornato",
+            "last_owner": "Il progetto deve avere almeno un admin: promuovi prima un altro membro."
+        },
+        "errors": {
+            "domain_scope_forbidden": "Questa azione è fuori dai domini a cui hai accesso.",
+            "invalid_domain": "Uno dei domini selezionati non appartiene a questo progetto.",
+            "domain_scope_not_for_owner": "Un admin ha sempre accesso all'intero progetto."
+        }
     },
     "project_invitation": {
         "title": "Invito al progetto",

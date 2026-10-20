@@ -144,6 +144,8 @@ export class StorageService extends BaseAuthorizedService {
     async createRaw(projectId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
         await this.ensureAccessToProject(projectId, session)
         await this.ensureNotViewer(projectId, WRITE_FORBIDDEN)
+        // Every microfrontend of the project may be served from a storage: they are no domain's own
+        await this.ensureWholeProject(projectId)
 
         const storage = new Storage({
             ...withUnchangedSecrets(storageData),
@@ -160,6 +162,7 @@ export class StorageService extends BaseAuthorizedService {
     async updateRaw(storageId: string, storageData: StorageDTO, session?: ClientSession): Promise<IStorage> {
         const storage = await this.getByIdRaw(storageId, session)
         await this.ensureNotViewer(storage.projectId, WRITE_FORBIDDEN)
+        await this.ensureWholeProject(storage.projectId)
 
         const updated = await Storage.findByIdAndUpdate(
             storage._id,
@@ -187,6 +190,7 @@ export class StorageService extends BaseAuthorizedService {
 
         await this.ensureAccessToProject(storage.projectId)
         await this.ensureNotViewer(storage.projectId, WRITE_FORBIDDEN)
+        await this.ensureWholeProject(storage.projectId)
 
         return await Storage.deleteOne({ _id: toObjectId(storageId) })
     }
@@ -195,6 +199,7 @@ export class StorageService extends BaseAuthorizedService {
         const storageIdObj = toObjectId(storageId)
         const storage = await this.getById(storageIdObj)
         await this.ensureNotViewer(storage.projectId, WRITE_FORBIDDEN)
+        await this.ensureWholeProject(storage.projectId)
 
         if (storage.default) return storage
 
@@ -216,6 +221,8 @@ export class StorageService extends BaseAuthorizedService {
         const projectId = stored?.projectId ?? (scope as { projectId: string }).projectId
         if (!stored) await this.ensureAccessToProject(projectId)
         await this.ensureNotViewer(projectId, WRITE_FORBIDDEN)
+        // Probes with the stored credentials of a storage of the project, as an update would
+        await this.ensureWholeProject(projectId)
 
         const project = await Project.findById(projectId, { slug: 1 })
         if (!project) {

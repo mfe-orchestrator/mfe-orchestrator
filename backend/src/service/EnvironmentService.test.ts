@@ -41,8 +41,9 @@ describe("EnvironmentService cascade on delete", () => {
         const instance = new EnvironmentService({ _id: newId() } as never)
         // Authorization is BaseAuthorizedService's job and has its own tests; here it would only
         // stand between the test and the cascade. Cast because the method is protected.
-        const gate = instance as unknown as { ensureAccessToEnvironment: () => Promise<boolean> }
+        const gate = instance as unknown as { ensureAccessToEnvironment: () => Promise<boolean>; ensureWholeProjectOfEnvironment: () => Promise<void> }
         vi.spyOn(gate, "ensureAccessToEnvironment").mockResolvedValue(true)
+        vi.spyOn(gate, "ensureWholeProjectOfEnvironment").mockResolvedValue()
         return instance
     }
 

@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify"
 import { Types } from "mongoose"
 import { BusinessException } from "../errors/BusinessException"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
+import UserOrganization, { ORGANIZATION_ADMIN_ROLES } from "../models/UserOrganizationModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserProjectService, { PROJECT_LAST_OWNER } from "../service/UserProjectService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
@@ -10,6 +11,7 @@ interface PopulatedProject {
     _id: Types.ObjectId
     name: string
     description?: string
+    organizationId?: Types.ObjectId
 }
 
 interface UserProjectWithProject extends Omit<IUserProject, "projectId"> {
@@ -21,10 +23,14 @@ interface UserProjectWithProject extends Omit<IUserProject, "projectId"> {
 interface AddUserToProjectDTO {
     email: string
     role: RoleInProject
+    /** The domains the member is confined to; left out or empty, the whole project. */
+    domainIds?: string[]
 }
 
 interface UpdateUserRoleDTO {
     role: RoleInProject
+    /** Replaces the domain scope when given, an empty list opening the whole project; left out, it stays. */
+    domainIds?: string[]
 }
 
 interface AcceptInvitationDTO {
@@ -53,9 +59,9 @@ export default async function projectUserController(fastify: FastifyInstance) {
         if (!projectId) {
             throw new ProjectHeaderNotFoundError()
         }
-        const { email, role } = request.body
+        const { email, role, domainIds } = request.body
 
-        reply.send(await new UserProjectService(request.databaseUser).addUserToProjectByEmail(projectId, email, role))
+        reply.send(await new UserProjectService(request.databaseUser).addUserToProjectByEmail(projectId, email, role, domainIds))
     })
 
     // Resend a pending invitation email
@@ -89,7 +95,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
         Body: UpdateUserRoleDTO
     }>("/projects/:projectId/users/:userId", async (request, reply) => {
         const { projectId, userId } = request.params
-        const userProject = await new UserProjectService(request.databaseUser).updateUserRole(projectId, userId, request.body.role)
+        const userProject = await new UserProjectService(request.databaseUser).updateUserRole(projectId, userId, request.body.role, request.body.domainIds)
         return reply.send({
             message: "User role updated successfully",
             userProject
@@ -134,15 +140,28 @@ export default async function projectUserController(fastify: FastifyInstance) {
         // Pending invitations are not memberships yet, so they are left out
         const userProjects = (await UserProject.find({ userId, invitationToken: null }).populate<{
             projectId: PopulatedProject
-        }>("projectId", "name description")) as unknown as UserProjectWithProject[]
+        }>("projectId", "name description organizationId")) as unknown as UserProjectWithProject[]
 
-        const projects = userProjects.map(up => ({
-            projectId: up.projectId._id,
-            name: up.projectId.name,
-            description: up.projectId.description,
-            role: up.role,
-            joinedAt: up.createdAt
-        }))
+        // An owner reaches their project whole, and an organization administrator every project of it, whatever
+        // the membership says: the organizations are read only when some membership is scoped, which most users have none of
+        const administered = userProjects.some(up => up.domainScoped)
+            ? new Set(
+                  (await UserOrganization.find({ userId, role: { $in: ORGANIZATION_ADMIN_ROLES }, invitationToken: null }, { organizationId: 1 })).map(membership => String(membership.organizationId))
+              )
+            : new Set<string>()
+
+        const projects = userProjects.map(up => {
+            const domainScoped = Boolean(up.domainScoped) && up.role !== RoleInProject.OWNER && !administered.has(String(up.projectId.organizationId))
+            return {
+                projectId: up.projectId._id,
+                name: up.projectId.name,
+                description: up.projectId.description,
+                role: up.role,
+                domainIds: domainScoped ? (up.domainIds ?? []).map(String) : [],
+                domainScoped,
+                joinedAt: up.createdAt
+            }
+        })
 
         return reply.send(projects)
     })

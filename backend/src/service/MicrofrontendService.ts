@@ -21,7 +21,7 @@ import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
 import { isServiceTemplateType } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
-import BaseAuthorizedService from "./BaseAuthorizedService"
+import BaseAuthorizedService, { domainScopeForbidden, ensureOnlyNewRepositoryLinked, ensureRepositoryLinkUnchanged, isInDomainScope } from "./BaseAuthorizedService"
 import { resolveDomainId } from "./DomainService"
 import MarketService from "./MarketService"
 import TemplateScaffoldService from "./TemplateScaffoldService"
@@ -47,7 +47,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        return await Microfrontend.find({ projectId: projectIdObj })
+        return await Microfrontend.find({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) })
     }
 
     async create(microfrontend: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
@@ -58,6 +58,11 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (microfrontend.domainId !== undefined) {
             microfrontend.domainId = await resolveDomainId(microfrontend.domainId, projectIdObj)
         }
+        // A domain-scoped member creates only inside their domains: one in no domain would be out of their reach at once
+        await this.ensureInDomainScope(projectIdObj, microfrontend.domainId)
+        const scope = await this.getDomainScope(projectIdObj)
+        await this.ensureReferencesInScope(projectIdObj, scope, microfrontend)
+        ensureOnlyNewRepositoryLinked(scope, microfrontend.codeRepository)
         if (await Microfrontend.exists({ slug: microfrontend.slug, projectId: projectIdObj })) {
             throw createBusinessException({ code: "MICROFRONTEND_SLUG_TAKEN", message: `A microfrontend with slug "${microfrontend.slug}" already exists in this project`, statusCode: 409 })
         }
@@ -112,6 +117,31 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     /**
+     * A domain-scoped member references only the microfrontends and services they can see, as setRelation
+     * and linkService require: a parent or a service of another domain given in the body would tie theirs to
+     * something out of their reach. The references already stored stay, whoever added them.
+     */
+    private async ensureReferencesInScope(projectId: Schema.Types.ObjectId, scope: string[] | undefined, fields: { parentIds?: unknown; serviceIds?: unknown }, existing?: IMicrofrontend) {
+        if (!scope) return
+        const added = (given: unknown, stored: unknown[] = []) => {
+            if (given === undefined || given === null) return []
+            const kept = new Set(stored.map(String))
+            return [...new Set((Array.isArray(given) ? given : [given]).map(String))].filter(id => !kept.has(id))
+        }
+        const parentIds = added(fields.parentIds, existing?.parentIds)
+        const serviceIds = added(fields.serviceIds, existing?.serviceIds)
+        const ofProject = (ids: string[]) => ({ _id: { $in: ids.map(id => toObjectId(id)) }, projectId })
+        const referenced = [
+            ...(parentIds.length > 0 ? await Microfrontend.find(ofProject(parentIds), { domainId: 1 }) : []),
+            ...(serviceIds.length > 0 ? await Service.find(ofProject(serviceIds), { domainId: 1 }) : [])
+        ]
+        // One not found is of another project or deleted: as much out of their reach
+        if (referenced.length !== parentIds.length + serviceIds.length || referenced.some(component => !isInDomainScope(scope, component.domainId))) {
+            throw domainScopeForbidden()
+        }
+    }
+
+    /**
      * The hosting the console preselects for a new microfrontend: the project's default storage,
      * or the MFE Orchestrator hub when it has none, with the template's entry point when it was
      * created from one. Applied when a caller (the assistant, an MCP client) creates one without
@@ -139,6 +169,20 @@ export class MicrofrontendService extends BaseAuthorizedService {
         const { _id: _mongoId, projectId: _projectId, slug: _slug, ...allowed } = updates as Partial<MicrofrontendDTO> & { _id?: unknown; projectId?: unknown }
         if (allowed.domainId !== undefined) {
             allowed.domainId = await resolveDomainId(allowed.domainId, microfrontend.projectId)
+            // Moved only between the domains of a domain-scoped member, never out of their reach
+            await this.ensureInDomainScope(microfrontend.projectId, allowed.domainId)
+        }
+        const scope = await this.getDomainScope(microfrontend.projectId)
+        await this.ensureReferencesInScope(microfrontend.projectId, scope, allowed, microfrontend)
+        if (ensureRepositoryLinkUnchanged(scope, allowed.codeRepository, microfrontend.codeRepository)) delete allowed.codeRepository
+        // Checked once the link is enabled, as in create: a disabled link lends no token, and refusing it
+        // would block every edit of a microfrontend whose connection was deleted since
+        if (allowed.codeRepository?.enabled) {
+            const codeRepository = await CodeRepository.findById(allowed.codeRepository.codeRepositoryId)
+            // A connection of another project would lend this one its access token
+            if (!codeRepository || String(codeRepository.projectId) !== String(microfrontend.projectId)) {
+                throw new EntityNotFoundError(String(allowed.codeRepository.codeRepositoryId))
+            }
         }
 
         const result = await Microfrontend.findByIdAndUpdate(microfrontendIdObj, allowed, { new: true })
@@ -381,6 +425,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (!service || service.projectId.toString() !== microfrontend.projectId.toString()) {
             throw new EntityNotFoundError(serviceId)
         }
+        // A domain-scoped member links only services they can see
+        await this.ensureInDomainScope(service.projectId, service.domainId)
 
         if (!microfrontend.serviceIds?.some(id => id.toString() === service._id.toString())) {
             microfrontend.serviceIds = [...(microfrontend.serviceIds ?? []), service._id]
@@ -429,7 +475,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
-        return this.ensureAccessToProject(microfrontend.projectId)
+        return this.ensureAccessToDomainMember(microfrontend)
     }
 }
 

@@ -93,12 +93,15 @@ export class DatabaseService extends BaseAuthorizedService {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
         await this.ensureNotViewer(projectIdObj, WRITE_FORBIDDEN)
+        // The databases are shared by the whole project, not owned by one of its domains
+        await this.ensureWholeProject(projectIdObj)
         return Database.create({ ...toDocument(dto), projectId: projectIdObj })
     }
 
     async update(databaseId: string, dto: DatabaseDTO): Promise<IDatabase> {
         const database = await this.getById(databaseId)
         await this.ensureNotViewer(database.projectId, WRITE_FORBIDDEN)
+        await this.ensureWholeProject(database.projectId)
         database.set(toDocument(dto, database))
         return database.save()
     }
@@ -106,6 +109,7 @@ export class DatabaseService extends BaseAuthorizedService {
     async delete(databaseId: string | ObjectId): Promise<void> {
         const database = await this.getById(databaseId)
         await this.ensureNotViewer(database.projectId, WRITE_FORBIDDEN)
+        await this.ensureWholeProject(database.projectId)
         await Database.deleteOne({ _id: database._id })
     }
 
@@ -119,6 +123,8 @@ export class DatabaseService extends BaseAuthorizedService {
         const projectId = stored?.projectId ?? toObjectId((scope as { projectId: string }).projectId)
         if (!stored) await this.ensureAccessToProject(projectId)
         await this.ensureNotViewer(projectId, WRITE_FORBIDDEN)
+        // Connects with the stored credentials of a database of the project, as an update would
+        await this.ensureWholeProject(projectId)
 
         const { type, connection } = toConnection(dto, stored)
         const secrets = connection.authType === "credentials" ? [connection.password] : [connection.connectionString]

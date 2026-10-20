@@ -87,7 +87,9 @@ export class RepositoryFileService extends BaseAuthorizedService {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
-        const microfrontends = await Microfrontend.find({ projectId: projectIdObj }).sort({ slug: 1 })
+        // A domain-scoped member reaches the repositories of their microfrontends only: the dependency
+        // report and the integration plans built on these are theirs too
+        const microfrontends = await Microfrontend.find({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) }).sort({ slug: 1 })
         const withRepository = microfrontends.filter(microfrontend => microfrontend.codeRepository?.enabled && microfrontend.codeRepository?.codeRepositoryId)
 
         if (withRepository.length === 0) {

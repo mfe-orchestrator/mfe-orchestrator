@@ -148,6 +148,7 @@ describe("findMine", () => {
 /** The protected gate the update goes through, surfaced so the spy has something to type against. */
 interface WithAuthorizationGate {
     ensureAccessToProject: () => Promise<void>
+    getDomainScope: () => Promise<string[] | undefined>
 }
 
 describe("update", () => {
@@ -159,6 +160,7 @@ describe("update", () => {
         // The route carries no body schema, so authorization is the only gate before the write: stub
         // it open and watch what comes out the other side.
         vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "ensureAccessToProject").mockResolvedValue(undefined)
+        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "getDomainScope").mockResolvedValue(undefined)
         vi.spyOn(Project, "findByIdAndUpdate").mockImplementation(((_id: unknown, update: Record<string, unknown>) => {
             written = update
             return Promise.resolve({ name: "whatever" })
@@ -235,6 +237,8 @@ describe("getContext", () => {
     beforeEach(() => {
         filters = { domain: undefined, microfrontend: undefined, service: undefined }
         vi.spyOn(ProjectService.prototype, "findById").mockResolvedValue({ _id: newId(), name: "Portal", context: "shared rules" } as never)
+        // A member of the whole project: the domain scope has tests of its own
+        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "getDomainScope").mockResolvedValue(undefined)
         recordFind(Domain, "domain", { _id: domainId, slug: "payments", name: "Payments", context: "payments rules" })
         recordFind(Microfrontend, "microfrontend", { _id: microfrontendId, slug: "catalog", name: "Catalog", context: "catalog rules" })
         recordFind(Service, "service", { _id: serviceId, slug: "orders", name: "Orders", context: "orders rules" })

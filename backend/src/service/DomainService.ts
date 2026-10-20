@@ -4,6 +4,7 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Domain, { IDomain } from "../models/DomainModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
+import UserProject from "../models/UserProjectModel"
 import DomainDTO, { DomainMembersDTO } from "../types/DomainDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
@@ -75,6 +76,7 @@ export class DomainService extends BaseAuthorizedService {
             return null
         }
         await this.ensureAccessToProject(domain.projectId)
+        await this.ensureInDomainScope(domain.projectId, domain._id)
         return domain
     }
 
@@ -82,8 +84,10 @@ export class DomainService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId) {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        // The counts need no filter of their own: every member of a domain in scope is in scope too
+        const inScope = await this.domainScopeFilter(projectIdObj, "_id")
         const [domains, microfrontends, services] = await Promise.all([
-            Domain.find({ projectId: projectIdObj }).sort({ name: 1 }),
+            Domain.find({ projectId: projectIdObj, ...inScope }).sort({ name: 1 }),
             Microfrontend.find({ projectId: projectIdObj, domainId: { $ne: null } }, { domainId: 1 }),
             Service.find({ projectId: projectIdObj, domainId: { $ne: null } }, { domainId: 1 })
         ])
@@ -99,6 +103,8 @@ export class DomainService extends BaseAuthorizedService {
     async create(dto: DomainDTO, projectId: string | Schema.Types.ObjectId): Promise<IDomain> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        // The domains are the map of the whole project: drawn by those who reach all of it
+        await this.ensureWholeProject(projectIdObj)
 
         ensureOptionalString("name", dto.name)
         ensureOptionalString("slug", dto.slug)
@@ -129,6 +135,7 @@ export class DomainService extends BaseAuthorizedService {
         if (!domain) {
             throw new EntityNotFoundError(String(id))
         }
+        await this.ensureWholeProject(domain.projectId)
         // Never moved to another project nor given another slug through an update
         ensureOptionalString("name", updates.name)
         ensureOptionalString("description", updates.description)
@@ -162,6 +169,8 @@ export class DomainService extends BaseAuthorizedService {
         if (!domain) {
             throw new EntityNotFoundError(String(id))
         }
+        // Moving members between domains moves them in or out of the scopes of other members
+        await this.ensureWholeProject(domain.projectId)
         const microfrontendIds = ensureIdList("microfrontendIds", dto?.microfrontendIds)
         const serviceIds = ensureIdList("serviceIds", dto?.serviceIds)
         return runInTransaction(async session => {
@@ -172,17 +181,23 @@ export class DomainService extends BaseAuthorizedService {
         })
     }
 
-    /** Deletes the domain only: its microfrontends and services stay, without a domain */
+    /**
+     * Deletes the domain only: its microfrontends and services stay, without a domain. The memberships
+     * scoped to it lose it from their scope and stay scoped, even when it was their last domain: they
+     * then reach nothing rather than the whole project, until an owner gives them a new scope.
+     */
     async delete(id: string | ObjectId): Promise<IDomain | null> {
         const domain = await this.getById(id)
         if (!domain) {
             throw new EntityNotFoundError(String(id))
         }
+        await this.ensureWholeProject(domain.projectId)
         return runInTransaction(async session => {
             const members = { projectId: domain.projectId, domainId: domain._id }
             // null, as the forms store "no domain": the filters and the counts treat it as a missing domainId
             await Microfrontend.updateMany(members, { $set: { domainId: null } }, { session })
             await Service.updateMany(members, { $set: { domainId: null } }, { session })
+            await UserProject.updateMany({ projectId: domain.projectId, domainIds: domain._id }, { $pull: { domainIds: domain._id } }, { session })
             await deleteLinksOfDomain(domain._id, session)
             return await Domain.findByIdAndDelete(domain._id, { session })
         })

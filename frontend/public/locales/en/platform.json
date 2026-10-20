@@ -513,7 +513,29 @@
         "resend_invite": "Resend",
         "revoke_invite": "Revoke invitation",
         "confirm_revoke_title": "Revoke invitation",
-        "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?"
+        "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?",
+        "access": {
+            "label": "Access",
+            "whole_project": "Whole project",
+            "specific_domains": "Specific domains",
+            "domains_label": "Domains",
+            "domains_required": "Select at least one domain",
+            "no_domain": "No domain",
+            "no_domains_hint": "Access is on the whole project. Create domains to limit a member to some of them.",
+            "no_domains_scoped": "The project has no domains any more: choose Whole project, or create domains first."
+        },
+        "edit_access": {
+            "action": "Edit access",
+            "title": "Edit access",
+            "description": "Change the role and the access of {{name}}.",
+            "success": "Access updated",
+            "last_owner": "The project needs at least one admin: promote another member first."
+        },
+        "errors": {
+            "domain_scope_forbidden": "This action is outside the domains you have access to.",
+            "invalid_domain": "One of the selected domains does not belong to this project.",
+            "domain_scope_not_for_owner": "An admin always has access to the whole project."
+        }
     },
     "project_invitation": {
         "title": "Project invitation",

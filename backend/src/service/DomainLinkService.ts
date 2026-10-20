@@ -25,13 +25,18 @@ export class DomainLinkService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IDomainLink[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        return DomainLink.find({ projectId: projectIdObj }).sort({ createdAt: 1 })
+        // Only the links a domain-scoped member sees both ends of
+        const scope = await this.getDomainScope(projectIdObj)
+        const visible = scope ? { sourceDomainId: { $in: scope.map(id => toObjectId(id)) }, targetDomainId: { $in: scope.map(id => toObjectId(id)) } } : {}
+        return DomainLink.find({ projectId: projectIdObj, ...visible }).sort({ createdAt: 1 })
     }
 
     /** Links two domains of the project, one way: a link back is a relation of its own */
     async create(dto: DomainLinkDTO, projectId: string | Schema.Types.ObjectId): Promise<IDomainLink> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
+        // The links between domains are part of the map of the whole project, as the domains are
+        await this.ensureWholeProject(projectIdObj)
         if (dto?.label !== undefined && dto.label !== null && typeof dto.label !== "string") {
             throw createBusinessException({ code: "DOMAIN_LINK_INVALID", message: "label must be a string" })
         }
@@ -63,6 +68,7 @@ export class DomainLinkService extends BaseAuthorizedService {
             throw new EntityNotFoundError(String(id))
         }
         await this.ensureAccessToProject(link.projectId)
+        await this.ensureWholeProject(link.projectId)
         return DomainLink.findByIdAndDelete(link._id)
     }
 }

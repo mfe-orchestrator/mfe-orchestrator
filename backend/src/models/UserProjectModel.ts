@@ -10,6 +10,15 @@ export interface IUserProject extends Document<ObjectId> {
     userId: Schema.Types.ObjectId
     projectId: Schema.Types.ObjectId
     role: RoleInProject
+    /**
+     * Set when the membership is confined to some functional domains of the project: the member then
+     * reaches only the microfrontends and services of `domainIds`. Kept apart from the list because
+     * deleting a domain pulls its id from every list: a scope whose last domain is deleted must stay
+     * a scope over nothing, never turn into the whole project because its list became empty.
+     */
+    domainScoped?: boolean
+    /** The domains of a scoped membership; meaningless when `domainScoped` is not set. */
+    domainIds?: Schema.Types.ObjectId[]
     invitationToken?: string
     inviationTokenExpiresAt?: Date
     createdAt: Date
@@ -35,6 +44,14 @@ const userProjectSchema = new Schema<IUserProject>(
             enum: [RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER],
             default: RoleInProject.MEMBER,
             required: true
+        },
+        domainScoped: {
+            type: Boolean,
+            default: false
+        },
+        domainIds: {
+            type: [{ type: Schema.Types.ObjectId, ref: "Domain" }],
+            default: []
         },
         invitationToken: {
             type: String,

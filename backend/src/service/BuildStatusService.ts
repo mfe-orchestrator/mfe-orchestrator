@@ -198,7 +198,32 @@ class BuildStatusService extends BaseAuthorizedService {
      */
     async getByProjectId(projectId: string | Schema.Types.ObjectId | ObjectId): Promise<ProjectBuildStatusDTO> {
         await this.ensureAccessToProject(projectId)
+        return this.withinDomainScope(projectId, await this.getSnapshot(projectId))
+    }
 
+    /**
+     * The snapshot as a domain-scoped member may read it: the rows of their microfrontends and services
+     * only. Filtered after the cache, which holds the whole project and is shared by everyone reading it.
+     */
+    private async withinDomainScope(projectId: string | Schema.Types.ObjectId | ObjectId, snapshot: ProjectBuildStatusDTO): Promise<ProjectBuildStatusDTO> {
+        const inScope = await this.domainScopeFilter(projectId)
+        if (Object.keys(inScope).length === 0) {
+            return snapshot
+        }
+        const projectIdObj = toObjectId(projectId)
+        const [microfrontends, services] = await Promise.all([
+            Microfrontend.find({ projectId: projectIdObj, ...inScope }, { _id: 1 }),
+            Service.find({ projectId: projectIdObj, ...inScope }, { _id: 1 })
+        ])
+        const visible = new Set([...microfrontends, ...services].map(component => String(component._id)))
+        return {
+            ...snapshot,
+            microfrontends: snapshot.microfrontends.filter(row => visible.has(row.microfrontendId)),
+            services: snapshot.services.filter(row => visible.has(row.serviceId))
+        }
+    }
+
+    private async getSnapshot(projectId: string | Schema.Types.ObjectId | ObjectId): Promise<ProjectBuildStatusDTO> {
         const key = projectId.toString()
         const cached = snapshotCache.get(key)
         if (cached && Date.now() - cached.fetchedAtMs < SNAPSHOT_TTL_MS) {
@@ -230,7 +255,7 @@ class BuildStatusService extends BaseAuthorizedService {
         if (!component || component.projectId.toString() !== projectId) {
             throw new Error(`${label} not found in this project`)
         }
-        await this.ensureAccessToProject(component.projectId)
+        await this.ensureAccessToDomainMember(component as BuildableComponent & { domainId?: unknown })
 
         const codeRepositoryId = component.codeRepository?.enabled ? component.codeRepository.codeRepositoryId : undefined
         const repository = codeRepositoryId ? await CodeRepository.findById(codeRepositoryId) : null

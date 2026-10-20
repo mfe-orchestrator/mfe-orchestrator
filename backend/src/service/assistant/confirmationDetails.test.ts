@@ -7,6 +7,7 @@ const environmentById = vi.fn()
 const microfrontends = vi.fn()
 const deploymentsOf = vi.fn()
 const deploymentById = vi.fn()
+const shipsServedVariables = vi.fn()
 const variablesOf = vi.fn()
 const projectById = vi.fn()
 const projectUsers = vi.fn()
@@ -30,6 +31,7 @@ vi.mock("../DeploymentService", () => ({
     default: class {
         getByEnvironmentId = deploymentsOf
         getById = deploymentById
+        shipsServedVariables = shipsServedVariables
     }
 }))
 vi.mock("../GlobalVariablesService", () => ({
@@ -119,7 +121,21 @@ describe("describeServedChanges", () => {
 
 describe("describeConfirmation", () => {
     beforeEach(() => {
-        for (const mock of [environments, environmentById, microfrontends, deploymentsOf, deploymentById, variablesOf, projectById, projectUsers, aiChange, aiJob, serviceById, domainById])
+        for (const mock of [
+            environments,
+            environmentById,
+            microfrontends,
+            deploymentsOf,
+            deploymentById,
+            shipsServedVariables,
+            variablesOf,
+            projectById,
+            projectUsers,
+            aiChange,
+            aiJob,
+            serviceById,
+            domainById
+        ])
             mock.mockReset()
         projectById.mockResolvedValue({ name: "Shop" })
         environments.mockResolvedValue([
@@ -158,6 +174,16 @@ describe("describeConfirmation", () => {
         const details = await describeConfirmation(toolNamed("deploy"), { environmentIds: [PRODUCTION] }, context)
 
         expect(details).toContainEqual({ label: "no_changes", value: "#2" })
+    })
+
+    it("Given a domain-scoped member, when their deploy is described, then the variables are those served now, which their deploy carries over", async () => {
+        deploymentsOf.mockResolvedValue([{ _id: "d2", deploymentId: "#2", active: true, microfrontends: [checkout("1.0.0")], variables: [{ key: "API_URL", value: "https://released" }] }])
+        shipsServedVariables.mockResolvedValue(true)
+        variablesOf.mockResolvedValue([{ key: "API_URL", value: "https://unreleased" }])
+
+        const details = await describeConfirmation(toolNamed("deploy"), { environmentIds: [PRODUCTION] }, context)
+
+        expect(details).toContainEqual({ label: "changes", value: "Checkout: 1.0.0 → 1.1.0" })
     })
 
     it("Given a role change, when described, then the user is named by name and email and the role is shown as sent", async () => {
@@ -267,7 +293,10 @@ describe("describeConfirmation", () => {
     it("Given a rollback, when described, then the deployment coming back and what it changes are shown", async () => {
         deploymentById.mockResolvedValue({ _id: "d1", environmentId: PRODUCTION, deploymentId: "#1", deployedAt: new Date("2026-10-01T10:00:00Z"), microfrontends: [checkout("1.0.0")], variables: [] })
         environmentById.mockResolvedValue({ name: "Production" })
-        deploymentsOf.mockResolvedValue([{ _id: "d2", deploymentId: "#2", active: true, microfrontends: [checkout("1.1.0")], variables: [] }])
+        deploymentsOf.mockResolvedValue([
+            { _id: "d2", deploymentId: "#2", active: true, microfrontends: [checkout("1.1.0")], variables: [] },
+            { _id: "d1", deploymentId: "#1", deployedAt: new Date("2026-10-01T10:00:00Z"), microfrontends: [checkout("1.0.0")], variables: [] }
+        ])
 
         const details = await describeConfirmation(toolNamed("deployment_rollback"), { deploymentId: "123456789012345678901234" }, context)
 
@@ -277,5 +306,28 @@ describe("describeConfirmation", () => {
             { label: "deployment", value: "#1 (2026-10-01 10:00)" },
             { label: "changes", value: "Checkout: 1.1.0 → 1.0.0" }
         ])
+    })
+
+    it("Given a domain-scoped member, when a rollback is described, then the microfrontends of other domains in the deployment coming back stay hidden", async () => {
+        const otherDomains = { slug: "catalog", name: "Catalog", version: "3.0.0" }
+        deploymentById.mockResolvedValue({
+            _id: "d1",
+            environmentId: PRODUCTION,
+            deploymentId: "#1",
+            deployedAt: new Date("2026-10-01T10:00:00Z"),
+            microfrontends: [checkout("1.0.0"), otherDomains],
+            variables: []
+        })
+        environmentById.mockResolvedValue({ name: "Production" })
+        // The list answers the snapshots as the member may read them: their own microfrontends only
+        deploymentsOf.mockResolvedValue([
+            { _id: "d2", deploymentId: "#2", active: true, microfrontends: [checkout("1.1.0")], variables: [] },
+            { _id: "d1", deploymentId: "#1", deployedAt: new Date("2026-10-01T10:00:00Z"), microfrontends: [checkout("1.0.0")], variables: [] }
+        ])
+
+        const details = await describeConfirmation(toolNamed("deployment_rollback"), { deploymentId: "123456789012345678901234" }, context)
+
+        expect(details).toContainEqual({ label: "changes", value: "Checkout: 1.1.0 → 1.0.0" })
+        expect(JSON.stringify(details)).not.toContain("Catalog")
     })
 })

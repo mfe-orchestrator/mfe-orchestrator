@@ -52,6 +52,8 @@ export class ProjectWizardService extends BaseAuthorizedService {
 
     async persistState(projectId: string | ObjectId, state: Partial<IWizardProjectState>) {
         await this.ensureAccessToProject(projectId)
+        // The setup of the project as a whole, which prev and next move through here too: not for a member of some domains only
+        await this.ensureWholeProject(projectId)
         const projectIdObj = toObjectId(projectId)
         const wizardProjectData = await WizardProjectState.findOne({ projectId: projectIdObj })
 

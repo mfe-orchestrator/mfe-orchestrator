@@ -29,7 +29,7 @@ export class AiChangeService extends AiChangeBaseService {
     private async getComponent(ref: RepositoryComponentRef): Promise<RepositoryComponent> {
         const component = await findComponent(ref)
         if (!component) throw new EntityNotFoundError(ref.id)
-        await this.ensureAccessToProject(component.projectId)
+        await this.ensureAccessToDomainMember(component)
         return component
     }
 
@@ -37,6 +37,12 @@ export class AiChangeService extends AiChangeBaseService {
         const request = await AiChangeRequest.findById(id)
         if (!request) throw new EntityNotFoundError(id)
         await this.ensureAccessToProject(request.projectId)
+        // A domain-scoped member reaches the changes of the microfrontends and services they see only;
+        // one whose component is gone belongs to no domain any more
+        if (await this.getDomainScope(request.projectId)) {
+            const component = await findComponent(componentOf(request))
+            await this.ensureInDomainScope(request.projectId, component?.domainId)
+        }
         return request
     }
 

@@ -6,6 +6,7 @@ vi.mock("..", () => ({
     fastify: { log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }, config: {} }
 }))
 
+import Domain from "../models/DomainModel"
 import Project from "../models/ProjectModel"
 import User, { IUser, UserStatus } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
@@ -24,7 +25,16 @@ const ORGANIZATION_ID = newId()
 
 const aUser = (email: string): IUser => ({ _id: newId(), email }) as unknown as IUser
 
-type ProjectMembership = { _id?: ObjectId; userId: ObjectId; projectId: ObjectId; role: RoleInProject; invitationToken?: string; save?: () => Promise<unknown> }
+type ProjectMembership = {
+    _id?: ObjectId
+    userId: ObjectId
+    projectId: ObjectId
+    role: RoleInProject
+    invitationToken?: string
+    domainScoped?: boolean
+    domainIds?: unknown[]
+    save?: () => Promise<unknown>
+}
 
 let projectMemberships: ProjectMembership[]
 let organizationMemberships: { userId: ObjectId; organizationId: ObjectId; role: RoleInOrganization }[]
@@ -277,6 +287,143 @@ describe("UserProjectService", () => {
 
             expect(prune).toHaveBeenCalledWith(invited._id, ORGANIZATION_ID)
             expect(dropAccount).toHaveBeenCalledTimes(1)
+        })
+
+        describe("domain scope", () => {
+            const payments = newId()
+            const shipping = newId()
+            const ofAnotherProject = newId()
+
+            const scopeOf = (user: IUser) => {
+                const membership = projectMemberships.find(candidate => sameId(candidate.userId, user._id))!
+                return { domainScoped: membership.domainScoped, domainIds: (membership.domainIds ?? []).map(String) }
+            }
+
+            beforeEach(() => {
+                // The domains of the project: one of another project is not among them
+                vi.spyOn(Domain, "find").mockImplementation(((filter: { _id: { $in: unknown[] } }) =>
+                    thenable([payments, shipping].filter(id => filter._id.$in.some(candidate => sameId(candidate, id))).map(_id => ({ _id })))) as never)
+                // The administrators of the organization, as the member list reads them
+                vi.spyOn(UserOrganization, "find").mockImplementation(((filter: { organizationId: unknown; role: { $in: RoleInOrganization[] } }) =>
+                    thenable(organizationMemberships.filter(membership => sameId(membership.organizationId, filter.organizationId) && filter.role.$in.includes(membership.role)))) as never)
+            })
+
+            it("Given an owner, when they invite a member to some domains, then the invitation is scoped to them", async () => {
+                vi.spyOn(User, "findOne").mockImplementation((() => thenable(aUser("collega@example.com"))) as never)
+                vi.spyOn(UserOrganizationService.prototype, "ensureMembership").mockResolvedValue({} as never)
+
+                const invited = await new UserProjectService(owner).addUserToProjectByEmail(PROJECT_ID, "collega@example.com", RoleInProject.MEMBER, [String(payments), String(payments)])
+
+                expect(invited).toMatchObject({ domainScoped: true })
+                expect(invited?.domainIds?.map(String)).toEqual([String(payments)])
+            })
+
+            it("Given a domain of another project, when a member is invited to it, then it is refused before anyone is looked up", async () => {
+                const findUser = vi.spyOn(User, "findOne")
+
+                await expect(new UserProjectService(owner).addUserToProjectByEmail(PROJECT_ID, "collega@example.com", RoleInProject.MEMBER, [String(ofAnotherProject)])).rejects.toMatchObject({
+                    code: "INVALID_DOMAIN",
+                    statusCode: 400
+                })
+                expect(findUser).not.toHaveBeenCalled()
+            })
+
+            it("Given an owner invited to some domains, when the invitation is created, then it is refused: an owner manages the whole project", async () => {
+                await expect(new UserProjectService(owner).addUserToProjectByEmail(PROJECT_ID, "collega@example.com", RoleInProject.OWNER, [String(payments)])).rejects.toMatchObject({
+                    code: "DOMAIN_SCOPE_NOT_FOR_OWNER",
+                    statusCode: 400
+                })
+            })
+
+            it("Given domains in a role change, when it is saved, then they replace the scope", async () => {
+                await new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.MEMBER, [String(shipping)])
+
+                expect(scopeOf(member)).toEqual({ domainScoped: true, domainIds: [String(shipping)] })
+            })
+
+            it("Given an empty list in a role change, when it is saved, then the member reaches the whole project again", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [payments] })
+
+                await new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.VIEWER, [])
+
+                expect(scopeOf(member)).toEqual({ domainScoped: false, domainIds: [] })
+            })
+
+            /** Deleting the last domain of a scope must not hand the whole project to the member on their next role change. */
+            it("Given a scope emptied by deleted domains, when only the role changes, then the member stays confined to nothing", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [] })
+
+                await new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.VIEWER)
+
+                expect(scopeOf(member)).toEqual({ domainScoped: true, domainIds: [] })
+            })
+
+            it("Given a scoped member, when they are made owner without opening the whole project to them, then it is refused", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [payments] })
+
+                await expect(new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.OWNER)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_NOT_FOR_OWNER" })
+                expect(roleOf(member)).toBe(RoleInProject.MEMBER)
+            })
+
+            it("Given a member whose every domain was deleted, when they are made owner without opening the whole project to them, then it is refused all the same", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [] })
+
+                await expect(new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.OWNER)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_NOT_FOR_OWNER" })
+                expect(scopeOf(member)).toEqual({ domainScoped: true, domainIds: [] })
+            })
+
+            it("Given a member whose every domain was deleted, when they are made owner with the whole project opened explicitly, then it is saved", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [] })
+
+                await new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.OWNER, [])
+
+                expect(roleOf(member)).toBe(RoleInProject.OWNER)
+                expect(scopeOf(member)).toEqual({ domainScoped: false, domainIds: [] })
+            })
+
+            it("Given an organization administrator whose membership is scoped, when the members are listed, then they are reported on the whole project", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [payments] })
+                organizationMemberships.push({ userId: member._id, organizationId: ORGANIZATION_ID, role: RoleInOrganization.ADMIN })
+                vi.spyOn(UserProject, "find").mockImplementation((() => ({
+                    populate: () => ({ lean: () => Promise.resolve(projectMemberships.map(membership => ({ ...membership, userId: { _id: membership.userId } }))) })
+                })) as never)
+
+                const users = await new UserProjectService(owner).getProjectUsers(PROJECT_ID)
+
+                expect(users?.find(user => sameId(user._id, member._id))).toMatchObject({ domainScoped: false, domainIds: [] })
+            })
+
+            it("Given an owner whose membership is somehow scoped, when the members are listed, then they are reported on the whole project", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, owner._id))!, { domainScoped: true, domainIds: [payments] })
+                vi.spyOn(UserProject, "find").mockImplementation((() => ({
+                    populate: () => ({ lean: () => Promise.resolve(projectMemberships.map(membership => ({ ...membership, userId: { _id: membership.userId } }))) })
+                })) as never)
+
+                const users = await new UserProjectService(owner).getProjectUsers(PROJECT_ID)
+
+                expect(users?.find(user => sameId(user._id, owner._id))).toMatchObject({ domainScoped: false, domainIds: [] })
+            })
+
+            it("Given an owner whose membership is somehow scoped, when they change a role, then it is refused: members are a whole-project decision", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, owner._id))!, { domainScoped: true, domainIds: [payments] })
+
+                await expect(new UserProjectService(owner).updateUserRole(PROJECT_ID, member._id, RoleInProject.VIEWER)).rejects.toMatchObject({ code: "PROJECT_OWNER_REQUIRED" })
+            })
+
+            it("Given scoped and whole-project members, when the members are listed, then each carries its domains", async () => {
+                Object.assign(projectMemberships.find(candidate => sameId(candidate.userId, member._id))!, { domainScoped: true, domainIds: [payments] })
+                vi.spyOn(UserProject, "find").mockImplementation((() => ({
+                    populate: () => ({ lean: () => Promise.resolve(projectMemberships.map(membership => ({ ...membership, userId: { _id: membership.userId } }))) })
+                })) as never)
+
+                const users = await new UserProjectService(owner).getProjectUsers(PROJECT_ID)
+
+                expect(users?.map(user => ({ id: String(user._id), domainIds: user.domainIds }))).toEqual([
+                    { id: String(owner._id), domainIds: [] },
+                    { id: String(member._id), domainIds: [String(payments)] },
+                    { id: String(viewer._id), domainIds: [] }
+                ])
+            })
         })
     })
 })

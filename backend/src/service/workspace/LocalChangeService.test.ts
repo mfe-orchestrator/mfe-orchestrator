@@ -40,6 +40,7 @@ const user = { _id: "user-1", email: "dev@example.com", name: "Ada", surname: "L
 // The project membership is the authorization layer's: every call is allowed here.
 const allowProjectAccess = (instance: LocalChangeService) => {
     vi.spyOn(instance as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
+    vi.spyOn(instance as unknown as { getDomainScope: () => Promise<string[] | undefined> }, "getDomainScope").mockResolvedValue(undefined)
     return instance
 }
 const service = () => allowProjectAccess(new LocalChangeService(user as never))

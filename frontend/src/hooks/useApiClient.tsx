@@ -2,6 +2,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import { AccountInfo } from "@azure/msal-browser"
 import { useMsal } from "@azure/msal-react"
 import { AxiosError, AxiosResponse } from "axios"
+import { useTranslation } from "react-i18next"
 import { deleteToken, getToken as getTokenFromStorage, IToken, setToken } from "@/authentication/tokenUtils"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
@@ -47,6 +48,7 @@ export const useApiClient = (options?: IApiClientOptions) => {
     const auth0Auth = useAuth0()
     const notifications = useToastNotificationStore()
     const projectStore = useProjectStore()
+    const { t } = useTranslation()
 
     const logout = () => {
         deleteToken()
@@ -221,6 +223,8 @@ export const useApiClient = (options?: IApiClientOptions) => {
         const custom = typeof customErrorMessage === "function" ? customErrorMessage(e as Error) : customErrorMessage
         if (custom) return custom
         if (!e) return "Error"
+        // Any endpoint refuses a member assigned to some domains what lies outside them: said the same way everywhere
+        if (errorCodeOf(e) === "DOMAIN_SCOPE_FORBIDDEN") return t("project_users.errors.domain_scope_forbidden")
         const axiosError = e as AxiosError<IErrorResponse>
         const responseData = axiosError?.response?.data
         if (responseData) {

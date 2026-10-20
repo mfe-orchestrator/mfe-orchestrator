@@ -193,8 +193,20 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         return repository
     }
 
+    /**
+     * A connection about to be changed: the connections lend their token to every microfrontend and
+     * service of the project, so only those reaching the whole project manage them.
+     */
+    private async findForWrite(repositoryId: string, session?: ClientSession): Promise<ICodeRepository | null> {
+        const repository = await this.findById(repositoryId, session)
+        if (repository) {
+            await this.ensureWholeProject(repository.projectId)
+        }
+        return repository
+    }
+
     async makeDefault(repositoryId: string) {
-        const repository = await this.findById(repositoryId)
+        const repository = await this.findForWrite(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }
@@ -312,6 +324,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async create(projectId: string, repositoryData: CodeRepositoryCreateInput): Promise<ICodeRepository> {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
 
         try {
             const repository = new CodeRepository({
@@ -344,7 +357,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async update(repositoryId: string, repositoryData: CodeRepositoryUpdateInput): Promise<ICodeRepository | null> {
-        await this.findById(repositoryId)
+        await this.findForWrite(repositoryId)
 
         try {
             const updated = await CodeRepository.findOneAndUpdate({ _id: toObjectId(repositoryId) }, repositoryData, { new: true, runValidators: true })
@@ -375,7 +388,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async updateGithubRaw(repositoryId: string, body: UpdateGithubDTO, session?: ClientSession): Promise<ICodeRepository | null> {
-        const repository = await this.findById(repositoryId, session)
+        const repository = await this.findForWrite(repositoryId, session)
 
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
@@ -404,7 +417,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async delete(repositoryId: string): Promise<DeleteResult> {
-        const repository = await this.findById(repositoryId)
+        const repository = await this.findForWrite(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }
@@ -427,6 +440,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
      */
     async revokeGithubGrant(projectId: string, repositoryId?: string): Promise<void> {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
 
         let repositories: ICodeRepository[]
         if (repositoryId) {
@@ -447,6 +461,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async addRepositoryGithub(code: string, state: string, projectId: string, codeRepositoryId: string) {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
         const githubClient = new GithubClient()
         const responseGithub = await githubClient.getAccessToken({
             client_id: fastify.config.CODE_REPOSITORY_GITHUB_CLIENT_ID,
@@ -482,6 +497,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async addRepositoryAzureRaw(body: CreateAzureDevOpsRepositoryDTO, projectId: string, session?: ClientSession) {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
 
         const repository = new CodeRepository({
             name: body.name,
@@ -508,7 +524,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async editRepositoryAzureDevOpsRaw(body: CreateAzureDevOpsRepositoryDTO, repositoryId: string, session?: ClientSession) {
-        const repository = await this.findById(repositoryId, session)
+        const repository = await this.findForWrite(repositoryId, session)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }
@@ -553,6 +569,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
 
     async addRepositoryGitlabRaw(body: CreateGitlabRepositoryDto, projectId: string, session?: ClientSession) {
         await this.ensureAccessToProject(projectId)
+        await this.ensureWholeProject(projectId)
 
         const repository = new CodeRepository({
             name: body.name,
@@ -579,7 +596,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async editRepositoryGitlabRaw(body: CreateGitlabRepositoryDto, repositoryId: string, session?: ClientSession) {
-        const repository = await this.findById(repositoryId, session)
+        const repository = await this.findForWrite(repositoryId, session)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
         }

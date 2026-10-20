@@ -154,6 +154,9 @@ export class FederationIntegrationService extends BaseAuthorizedService {
         request: FederationIntegrationApplyRequestDTO,
         scope: IntegrationScope = IntegrationScope.MODULE_FEDERATION
     ): Promise<FederationIntegrationApplyResultDTO> {
+        // Wires the microfrontends of the project to each other, across domains: those reaching the whole
+        // project only. The access to the project itself is checked by the plan.
+        await this.ensureWholeProject(projectId)
         const selected = new Set(request.microfrontendIds || [])
         const plan = await this.getPlan(projectId, scope)
         const targets = await this.repositoryFiles.resolveTargets(projectId)
@@ -208,7 +211,8 @@ export class FederationIntegrationService extends BaseAuthorizedService {
      * own remotes declared just as much.
      */
     private async resolveRemotesByParent(projectId: string | Schema.Types.ObjectId): Promise<Map<string, FederationRemote[]>> {
-        const microfrontends = await Microfrontend.find({ projectId: toObjectId(projectId) }).sort({ slug: 1 })
+        // A domain-scoped member reads the plans of their microfrontends wiring the ones they see only
+        const microfrontends = await Microfrontend.find({ projectId: toObjectId(projectId), ...(await this.domainScopeFilter(projectId)) }).sort({ slug: 1 })
         const remotesByParent = new Map<string, FederationRemote[]>()
 
         for (const microfrontend of microfrontends) {
