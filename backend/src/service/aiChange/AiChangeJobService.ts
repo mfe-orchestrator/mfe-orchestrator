@@ -140,6 +140,11 @@ const event = (kind: IAiChangeEvent["kind"], message: string) => ({ $push: { eve
 
 const sameComponent = (ref: RepositoryComponentRef) => (component: RepositoryComponent) => component.kind === ref.kind && String(component._id) === ref.id
 
+/** Whether a working copy holds exactly the files a follow-up started from: the agent changed nothing of its own. */
+const sameFiles = (previous: IAiChangeFile[], files: IAiChangeFile[]) =>
+    files.length === previous.length &&
+    files.every(file => previous.some(candidate => candidate.path === file.path && candidate.action === file.action && candidate.proposedContent === file.proposedContent))
+
 /**
  * The slug the paths of each repository start with in a multi-repository job. A service may share
  * its slug with a microfrontend of the project: the later one gets its kind appended, so every
@@ -517,6 +522,8 @@ export class AiChangeJobService extends AiChangeBaseService {
             // A job declared dead (or failed) while the agent works stops at the next round instead of spending on.
             const abort = new AbortController()
             const slugs = pathSlugs(repositories.map(repository => repository.component))
+            // The agent may stop midway, the provider failing or its answer cut off: what it wrote until then is still proposed.
+            let stopped: string | undefined
             const result = await runAiChangeAgent(
                 client,
                 {
@@ -543,10 +550,16 @@ export class AiChangeJobService extends AiChangeBaseService {
                     }
                 },
                 abort.signal
-            )
+            ).catch(error => {
+                // Aborted, the job was declared dead: nothing of it is saved.
+                if (abort.signal.aborted) throw error
+                stopped = toErrorMessage(error)
+                fastify.log.warn({ error: loggable(error), aiJobId: jobId }, "AI job agent stopped before finishing")
+                return undefined
+            })
 
-            if (result.stopReason === "refusal") throw new Error("The model declined this request")
-            if (result.stopReason === "max_tokens") throw new Error("The agent's answer was cut off: try a smaller request")
+            if (result?.stopReason === "refusal") throw new Error("The model declined this request")
+            if (result?.stopReason === "max_tokens") stopped = "The agent's answer was cut off: try a smaller request"
 
             const proposals: { repository: RunningRepository; files: IAiChangeFile[] }[] = []
             for (const repository of repositories) {
@@ -570,8 +583,15 @@ export class AiChangeJobService extends AiChangeBaseService {
                 proposals.push({ repository, files })
             }
 
-            const incomplete = result.stopReason === "max_rounds" ? "The agent ran out of steps: the proposal may be incomplete" : undefined
-            const summary = result.summary || undefined
+            const anyChange = proposals.some(proposal => proposal.files.length > 0)
+            // Nothing written but the parent's files: a proposal would only discard the parent.
+            if (stopped && proposals.every(({ repository, files }) => sameFiles(repository.previousFiles ?? [], files))) throw new Error(stopped)
+            const incomplete = stopped
+                ? `The agent stopped before finishing, so this proposal is incomplete: review it, or ask a follow-up to finish it. Reason: ${stopped}`
+                : result?.stopReason === "max_rounds"
+                  ? "The agent ran out of steps: the proposal may be incomplete"
+                  : undefined
+            const summary = result?.summary || undefined
             // Requests first: the console stops polling once the job is done. Guarded: a job get()
             // already declared dead must not come back to life.
             let saved = 0
@@ -596,7 +616,6 @@ export class AiChangeJobService extends AiChangeBaseService {
                     { status: AiChangeStatus.FAILED, error: partial, expiresAt: expiry() }
                 )
             }
-            const anyChange = proposals.some(proposal => proposal.files.length > 0)
             await AiChangeJob.updateOne(
                 { _id: job._id, status: AiJobStatus.RUNNING },
                 { status: AiJobStatus.DONE, summary, error: partial ?? incomplete, expiresAt: expiry(), ...event("info", anyChange ? "proposed" : "no-changes") }

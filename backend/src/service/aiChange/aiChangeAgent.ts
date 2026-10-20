@@ -1,7 +1,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import { isProtectedPath, isSecretPath, resolveInsideWorkingCopy, WorkspacePathError } from "../../utils/workspacePaths"
-import { LlmClient, LlmMessage, LlmTool, LlmToolResult, LlmUsage } from "../llm"
+import { isRateLimitError, LlmClient, LlmMessage, LlmTool, LlmToolResult, LlmTurnRequest, LlmTurnResult, LlmUsage } from "../llm"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
 
 export const AI_CHANGE_LIMITS = {
@@ -23,7 +23,12 @@ export const AI_CHANGE_LIMITS = {
     maxListedFiles: 2_000,
     maxSearchMatches: 100,
     /** Files bigger than this are skipped by search. */
-    maxSearchedFileBytes: 200_000
+    maxSearchedFileBytes: 200_000,
+    /**
+     * Waits before each retry of a turn the provider rate-limited. Its quota is per minute, so the
+     * later waits span a whole window; all of them together stay well short of a job looking dead.
+     */
+    rateLimitWaitsMs: [15_000, 30_000, 60_000, 60_000, 60_000]
 }
 
 /** The limits that grow with the number of repositories of a job. */
@@ -86,7 +91,7 @@ export interface AiChangeAgentInput {
 }
 
 export interface AiChangeAgentHooks {
-    onEvent: (kind: "tool" | "text", message: string) => Promise<void> | void
+    onEvent: (kind: "info" | "tool" | "text", message: string) => Promise<void> | void
     onUsage: (usage: LlmUsage) => Promise<void> | void
 }
 
@@ -605,6 +610,26 @@ export const describeToolCall = (name: string, input: unknown): string => {
     return path ? `${name} ${path}` : name
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+/**
+ * One turn, sent again while the provider rate-limits it. A long job sends its whole conversation
+ * every few seconds and can run into the per-minute token quota: waiting is cheaper than losing
+ * minutes of work.
+ */
+const turnRetryingRateLimits = async (client: LlmClient, request: LlmTurnRequest, hooks: AiChangeAgentHooks): Promise<LlmTurnResult> => {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            return await client.turn(request)
+        } catch (error) {
+            const wait = AI_CHANGE_LIMITS.rateLimitWaitsMs[attempt]
+            if (wait === undefined || !isRateLimitError(error)) throw error
+            await hooks.onEvent("info", "rate-limited")
+            await sleep(wait)
+        }
+    }
+}
+
 /**
  * Runs the agent on prepared working copies until it calls finish or runs out of rounds. It only
  * ever touches files inside those working copies; reading the resulting changes is up to the caller.
@@ -620,7 +645,7 @@ export const runAiChangeAgent = async (client: LlmClient, input: AiChangeAgentIn
     for (let round = 0; round < agentLimitsFor(input.repositories.length).maxRounds; round++) {
         // Checked here too: a provider may not stop on its own between two turns.
         signal?.throwIfAborted()
-        const result = await client.turn({ system, tools, messages, maxTokens: AI_CHANGE_LIMITS.maxTokensPerTurn, effort: "high", signal })
+        const result = await turnRetryingRateLimits(client, { system, tools, messages, maxTokens: AI_CHANGE_LIMITS.maxTokensPerTurn, effort: "high", signal }, hooks)
         await hooks.onUsage(result.usage)
 
         if (result.stopReason === "refusal") return { summary: "", stopReason: "refusal" }

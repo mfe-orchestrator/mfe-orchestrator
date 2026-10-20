@@ -740,6 +740,7 @@
             "events": {
                 "queued": "Request queued",
                 "waiting-for-repository": "Waiting for the repository to be free",
+                "rate-limited": "The model hit its rate limit: retrying shortly",
                 "preparing": "Preparing the repository",
                 "working": "The agent is working",
                 "proposed": "Proposal ready",

@@ -44,10 +44,11 @@ describe("resolveLlmProvider", () => {
 })
 
 describe("isRateLimitError", () => {
-    it("Given a 429, or a mid-stream error with no status and a rate-limit code, then it is a rate limit; any other error is not", () => {
+    it("Given a 429, or a mid-stream error with no status and a rate-limit code or message, then it is a rate limit; any other error is not", () => {
         expect(isRateLimitError({ status: 429 })).toBe(true)
         expect(isRateLimitError({ status: undefined, code: "no_capacity" })).toBe(true)
         expect(isRateLimitError({ code: "rate_limit_exceeded" })).toBe(true)
+        expect(isRateLimitError(new Error("Your requests to gpt-6.1-sol for gpt-6.1-sol in northcentralus have exceeded token rate limit."))).toBe(true)
         expect(isRateLimitError({ status: 500, code: "server_error" })).toBe(false)
         expect(isRateLimitError(new Error("boom"))).toBe(false)
         expect(isRateLimitError(null)).toBe(false)

@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { LlmClient, LlmProvider, LlmTurnRequest, LlmTurnResult } from "../llm"
 import { GitWorkingCopy } from "../workspace/GitWorkingCopy"
 import { AI_CHANGE_LIMITS, AiChangeToolbox, agentLimitsFor, runAiChangeAgent } from "./aiChangeAgent"
@@ -328,6 +328,57 @@ describe.skipIf(!hasGit)("runAiChangeAgent", () => {
 
         expect(result.stopReason).toBe("max_tokens")
         expect(await workingCopy.changes()).toEqual([])
+    })
+
+    describe("on a provider that rate-limits", () => {
+        const rateLimit = () => new Error("Your requests to gpt-6.1-sol for gpt-6.1-sol in northcentralus have exceeded token rate limit.")
+        /** The scripted model behind a provider that rejects its first `times` turns. */
+        const limited = (client: LlmClient, times: number, error = rateLimit): LlmClient => ({
+            ...client,
+            turn: async request => {
+                if (times-- > 0) throw error()
+                return client.turn(request)
+            }
+        })
+
+        beforeEach(() => vi.useFakeTimers({ toFake: ["setTimeout"] }))
+        afterEach(() => vi.useRealTimers())
+
+        it("Given a turn rate-limited once, when it runs, then it says so, waits, and sends the same turn again", async () => {
+            const { client, sent } = scriptedClient([
+                { stopReason: "tool_use", text: "", toolCalls: [toolUse("1", "write_file", { path: "src/pages/NotFound.tsx", content: "export const NotFound = () => null\n" })] },
+                { stopReason: "tool_use", text: "", toolCalls: [toolUse("2", "finish", { summary: "Added src/pages/NotFound.tsx" })] }
+            ])
+            const { events, hooks: agentHooks } = hooks()
+
+            const running = runAiChangeAgent(limited(client, 1), input(), agentHooks)
+            await vi.advanceTimersByTimeAsync(AI_CHANGE_LIMITS.rateLimitWaitsMs[0] - 1)
+            expect(sent).toHaveLength(0)
+            await vi.advanceTimersByTimeAsync(1)
+
+            expect(await running).toEqual({ summary: "Added src/pages/NotFound.tsx", stopReason: "finished" })
+            expect(events).toEqual(["rate-limited", "write_file src/pages/NotFound.tsx", "finish"])
+            expect(sent).toHaveLength(2)
+        })
+
+        it("Given a turn rate-limited past every retry, when it runs, then the rate limit is thrown", async () => {
+            const { client } = scriptedClient([])
+            const { events, hooks: agentHooks } = hooks()
+
+            const outcome = expect(runAiChangeAgent(limited(client, Number.POSITIVE_INFINITY), input(), agentHooks)).rejects.toThrow(/rate limit/)
+            await vi.advanceTimersByTimeAsync(AI_CHANGE_LIMITS.rateLimitWaitsMs.reduce((total, wait) => total + wait, 0))
+
+            await outcome
+            expect(events.filter(message => message === "rate-limited")).toHaveLength(AI_CHANGE_LIMITS.rateLimitWaitsMs.length)
+        })
+
+        it("Given any other provider error, when it runs, then it is thrown at once", async () => {
+            const failing = limited(scriptedClient([]).client, 1, () => new Error("server error"))
+            const { events, hooks: agentHooks } = hooks()
+
+            await expect(runAiChangeAgent(failing, input(), agentHooks)).rejects.toThrow("server error")
+            expect(events).toEqual([])
+        })
     })
 
     it("Given two repositories and an earlier request, when it runs, then the prompt lists both repositories and the chain, and paths start with a slug", async () => {

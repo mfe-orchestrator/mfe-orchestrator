@@ -837,6 +837,7 @@
             "events": {
                 "queued": "Richiesta in coda",
                 "waiting-for-repository": "In attesa che il repository sia libero",
+                "rate-limited": "Il modello ha raggiunto il limite di richieste: riprovo tra poco",
                 "preparing": "Preparazione del repository",
                 "working": "L'agente è al lavoro",
                 "proposed": "Proposta pronta",

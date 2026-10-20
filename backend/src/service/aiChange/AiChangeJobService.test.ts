@@ -586,6 +586,65 @@ describe("AiChangeJobService", () => {
             expect(done?.update.error).toContain("document too large")
             expect(updates.some(({ model, update }) => model === "job" && update.status === AiJobStatus.FAILED)).toBe(false)
         })
+
+        const rateLimit = () => new Error("Your requests to gpt-6.1-sol for gpt-6.1-sol in northcentralus have exceeded token rate limit.")
+        const failed = () => updates.some(({ update }) => update.status === AiChangeStatus.FAILED || update.status === AiJobStatus.FAILED)
+
+        it("Given an agent that stops midway after writing files, when the job ends, then what it wrote is proposed as incomplete and the job is done", async () => {
+            runAgent.mockImplementationOnce(async () => {
+                fs.writeFileSync(path.join(dir, "src/App.tsx"), "half done\n")
+                throw rateLimit()
+            })
+
+            await run()
+
+            const proposal = updates.find(({ model, update }) => model === "request" && update.status === AiChangeStatus.PROPOSED)
+            expect(proposal?.update.files).toEqual([expect.objectContaining({ path: "src/App.tsx", proposedContent: "half done\n" })])
+            expect(proposal?.update.error).toMatch(/incomplete.*exceeded token rate limit/)
+            expect(updates).toContainEqual(expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.DONE }) }))
+            expect(failed()).toBe(false)
+            expect(workingCopy.discardChanges).toHaveBeenCalled()
+        })
+
+        it("Given an agent that stops before writing anything, when the job ends, then it fails with the provider's error", async () => {
+            vi.mocked(workingCopy.changes as ReturnType<typeof vi.fn>).mockResolvedValue([])
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ ...request, parentId: undefined }] as never)
+            runAgent.mockRejectedValueOnce(rateLimit())
+
+            await run()
+
+            expect(updates.some(({ update }) => update.status === AiChangeStatus.PROPOSED)).toBe(false)
+            expect(updates).toContainEqual(expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.FAILED, error: expect.stringContaining("rate limit") }) }))
+        })
+
+        it("Given a follow-up whose agent stops before changing the parent's files, when the job ends, then it fails and the parent stays applicable", async () => {
+            // The working copy holds the parent's files, restored before the agent ran.
+            vi.mocked(workingCopy.changes as ReturnType<typeof vi.fn>).mockResolvedValue([
+                { path: "src/App.tsx", action: "update", baseBlobOid: "app-blob" },
+                { path: "src/Price.tsx", action: "create" }
+            ])
+            runAgent.mockRejectedValueOnce(rateLimit())
+
+            await run()
+
+            expect(updates.some(({ update }) => update.status === AiChangeStatus.PROPOSED || update.status === AiChangeStatus.DISCARDED)).toBe(false)
+            expect(updates).toContainEqual(expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.FAILED, error: expect.stringContaining("rate limit") }) }))
+        })
+
+        it("Given a job declared dead while its agent works, when the agent stops, then nothing it wrote is proposed", async () => {
+            runAgent.mockImplementationOnce(async (_client: unknown, _input: unknown, hooks: { onUsage: (usage: unknown) => Promise<void> }, signal: AbortSignal) => {
+                fs.writeFileSync(path.join(dir, "src/App.tsx"), "half done\n")
+                const job = (await AiChangeJob.findById(jobId)) as unknown as { status: AiJobStatus }
+                job.status = AiJobStatus.FAILED
+                await hooks.onUsage({ inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 })
+                signal.throwIfAborted()
+                return { summary: "", stopReason: "finished" }
+            })
+
+            await run()
+
+            expect(updates.some(({ update }) => update.status === AiChangeStatus.PROPOSED)).toBe(false)
+        })
     })
 
     describe("apply", () => {
