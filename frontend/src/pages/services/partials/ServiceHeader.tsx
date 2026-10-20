@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import WorkspaceHeader from "@/components/ai-workspace/WorkspaceHeader"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge } from "@/components/atoms"
+import RepositoryLink from "@/components/RepositoryLink"
 import TemplateRepositoryLink from "@/components/TemplateRepositoryLink"
 import type { Service } from "@/hooks/apiClients/useServicesApi"
 import RuntimeBadge from "./RuntimeBadge"
@@ -33,6 +34,7 @@ export const ServiceHeader: React.FC<ServiceHeaderProps> = ({ service, active, a
                     <span className="font-mono">{service.slug}</span>
                     <RuntimeBadge service={service} />
                     {service.version && <Badge variant="outline">{t("services.version_short", { version: service.version })}</Badge>}
+                    <RepositoryLink repository={service.codeRepository} />
                     <TemplateRepositoryLink slug={service.template} />
                 </>
             }

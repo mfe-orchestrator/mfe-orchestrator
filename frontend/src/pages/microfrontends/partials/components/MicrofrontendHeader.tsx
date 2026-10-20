@@ -1,7 +1,8 @@
-import { GitBranch, Info, Sparkles } from "lucide-react"
+import { Info, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import WorkspaceHeader from "@/components/ai-workspace/WorkspaceHeader"
 import { Badge } from "@/components/atoms"
+import RepositoryLink from "@/components/RepositoryLink"
 import TemplateRepositoryLink from "@/components/TemplateRepositoryLink"
 import type { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 
@@ -28,12 +29,7 @@ export const MicrofrontendHeader: React.FC<MicrofrontendHeaderProps> = ({ microf
                 <>
                     <span className="font-mono">{microfrontend.slug}</span>
                     <Badge variant="outline">{t("microfrontend.workspace.version", { version: microfrontend.version })}</Badge>
-                    {microfrontend.codeRepository?.enabled && microfrontend.codeRepository.name && (
-                        <span className="inline-flex items-center gap-1">
-                            <GitBranch className="size-3.5" aria-hidden="true" />
-                            {microfrontend.codeRepository.name}
-                        </span>
-                    )}
+                    <RepositoryLink repository={microfrontend.codeRepository} />
                     <TemplateRepositoryLink slug={microfrontend.template} />
                 </>
             }

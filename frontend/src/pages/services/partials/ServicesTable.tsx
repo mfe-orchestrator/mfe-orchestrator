@@ -2,8 +2,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Badge } from "@/components/atoms"
+import RepositoryLink from "@/components/RepositoryLink"
 import type { Service } from "@/hooks/apiClients/useServicesApi"
-import RepositoryLink from "./RepositoryLink"
 import RuntimeBadge from "./RuntimeBadge"
 
 export const ServicesTable: React.FC<{ services: Service[] }> = ({ services }) => {
@@ -36,7 +36,7 @@ export const ServicesTable: React.FC<{ services: Service[] }> = ({ services }) =
                             </TableCell>
                             <TableCell>{service.version ? <Badge>{service.version}</Badge> : <span className="text-foreground-secondary">—</span>}</TableCell>
                             <TableCell className="max-w-[16rem]">
-                                <RepositoryLink service={service} />
+                                <RepositoryLink repository={service.codeRepository} fallback={<span className="text-foreground-secondary">—</span>} />
                             </TableCell>
                         </TableRow>
                     ))}

@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
+import RepositoryLink from "@/components/RepositoryLink"
 import type { Service } from "@/hooks/apiClients/useServicesApi"
-import RepositoryLink from "./RepositoryLink"
 import RuntimeBadge from "./RuntimeBadge"
 import { isServiceAiAvailable } from "./ServiceHeader"
 
@@ -34,7 +34,7 @@ export const ServicesGrid: React.FC<{ services: Service[] }> = ({ services }) =>
                         </CardHeader>
                         <CardContent className="flex flex-grow flex-col items-start gap-3 py-3 text-sm">
                             <RuntimeBadge service={service} />
-                            <RepositoryLink service={service} />
+                            <RepositoryLink repository={service.codeRepository} />
                         </CardContent>
                         <CardFooter className="border-t border-divider pt-3">
                             <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(aiAvailable ? `/service/${service._id}` : `/service/${service._id}/overview`)}>

@@ -8,6 +8,7 @@ import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
 import { jobErrorMessage } from "@/components/assistant/AssistantJobThread"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge } from "@/components/atoms"
+import { repositoryWebUrl } from "@/components/RepositoryLink"
 import useAiJobsApi, { AiJob, DomainPlan } from "@/hooks/apiClients/useAiJobsApi"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -27,6 +28,8 @@ interface DomainRepository {
     /** Market slug of the template it was created from: the one its repository is scaffolded with when it has none. */
     template?: string
     linked: boolean
+    /** Its page on the provider, when the provider exposed a clone url. */
+    url?: string
 }
 
 /** The rows of the creation dialog for what the AI proposes in an empty domain. */
@@ -67,12 +70,23 @@ const DomainRepositoriesContext: React.FC<{ repositories: DomainRepository[] }> 
                 <ul className="flex flex-wrap gap-2">
                     {linked.map(repository => {
                         const Icon = repository.kind === "service" ? Server : LayoutDashboard
+                        const label = (
+                            <>
+                                {repository.name}
+                                <span className="sr-only"> ({t(`microfrontend.aiChange.kind.${repository.kind}`)})</span>
+                            </>
+                        )
                         return (
                             <li key={repository.id}>
                                 <Badge variant="outline">
                                     <Icon className="size-3" aria-hidden="true" />
-                                    {repository.name}
-                                    <span className="sr-only"> ({t(`microfrontend.aiChange.kind.${repository.kind}`)})</span>
+                                    {repository.url ? (
+                                        <a href={repository.url} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                                            {label}
+                                        </a>
+                                    ) : (
+                                        label
+                                    )}
                                 </Badge>
                             </li>
                         )
@@ -159,7 +173,8 @@ const DomainAiWorkspace: React.FC = () => {
                 name: microfrontend.name,
                 slug: microfrontend.slug,
                 template: microfrontend.template,
-                linked: Boolean(microfrontend.codeRepository?.enabled)
+                linked: Boolean(microfrontend.codeRepository?.enabled),
+                url: repositoryWebUrl(microfrontend.codeRepository)
             })),
         ...(servicesQuery.data ?? [])
             .filter(service => service.domainId === id && service._id)
@@ -169,7 +184,8 @@ const DomainAiWorkspace: React.FC = () => {
                 name: service.name,
                 slug: service.slug,
                 template: service.template,
-                linked: Boolean(service.codeRepository?.enabled)
+                linked: Boolean(service.codeRepository?.enabled),
+                url: repositoryWebUrl(service.codeRepository)
             }))
     ]
     const linked = repositories.filter(repository => repository.linked)

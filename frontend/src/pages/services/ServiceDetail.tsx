@@ -8,11 +8,11 @@ import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
 import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
+import RepositoryLink from "@/components/RepositoryLink"
 import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useServicesApi, { Service } from "@/hooks/apiClients/useServicesApi"
 import { useVariableMapsQuery } from "@/pages/variable-maps/partials/variableMaps"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import RepositoryLink from "./partials/RepositoryLink"
 import ServiceBuildDialog from "./partials/ServiceBuildDialog"
 import ServiceHeader, { isServiceAiAvailable } from "./partials/ServiceHeader"
 import ServiceVariableMapsSection from "./partials/ServiceVariableMapsSection"
@@ -148,7 +148,7 @@ const ServiceRepositorySection: React.FC<{ service: Service }> = ({ service }) =
                 <CardTitle className="mb-0">{t("services.code_repository")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-3 text-sm">
-                {service.codeRepository?.enabled ? <RepositoryLink service={service} /> : <p className="text-foreground-secondary">{t("services.no_repository")}</p>}
+                {service.codeRepository?.enabled ? <RepositoryLink repository={service.codeRepository} /> : <p className="text-foreground-secondary">{t("services.no_repository")}</p>}
             </CardContent>
         </Card>
     )
