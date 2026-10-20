@@ -12,11 +12,8 @@ const SentryInit: React.FC<React.PropsWithChildren> = ({ children }) => {
 
         Sentry.init({
             dsn: window?.globalConfiguration?.SENTRY_DSN,
-            // Setting this option to true will send default PII data to Sentry.
-            // For example, automatic IP address collection on events
-            enableLogs: true,
+            // User info, IP address included, is collected by default (`dataCollection`)
             enabled: true,
-            sendDefaultPii: true,
             release: window?.globalConfiguration?.VERSION,
             environment: window?.globalConfiguration?.ENVIRONMENT,
             integrations: [

@@ -80,13 +80,16 @@ const initSentry = async (fastify: AppInstance) => {
         fastify.log.warn("Sentry DSN not found")
         return
     }
+    // Errors of the routes are captured by the Fastify integration through its diagnostics channel.
     await Sentry.init({
         dsn: process.env.SENTRY_DSN,
-        sendDefaultPii: true,
-        enableLogs: true
+        // Collected by default since Sentry 11 and never sent before: query parameters and local
+        // variables can hold the secrets of a project or a token.
+        dataCollection: {
+            databaseQueryData: false,
+            stackFrameVariables: false
+        }
     })
-
-    await Sentry.setupFastifyErrorHandler(fastify)
 }
 
 const start = async () => {
