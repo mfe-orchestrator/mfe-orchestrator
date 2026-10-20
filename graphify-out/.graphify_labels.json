@@ -272,7 +272,18 @@
   "270": "fastify.d.ts",
   "271": ".isCanary",
   "272": "encryptedFieldsPlugin.ts",
+  "273": "MicrofrontendDependencyService",
+  "274": "App.tsx",
   "275": "BuildController.ts",
+  "276": "AiJobController.ts",
   "277": "DeploymentController.ts",
-  "278": "DomainDeploymentController.test.ts"
+  "278": "DomainDeploymentController.test.ts",
+  "279": "IProject",
+  "280": "NpmRegistryClient.ts",
+  "281": "AssistantService.ts",
+  "282": "ProjectService.test.ts",
+  "283": "integration",
+  "284": "DomainDeploymentController.test.ts",
+  "285": "curl",
+  "286": "roles"
 }

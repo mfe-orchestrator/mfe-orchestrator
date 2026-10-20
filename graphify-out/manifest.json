@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1792525546.6148186,
-    "ast_hash": "28253a430722bb53ec2a5f6db83056ce",
+    "mtime": 1792526212.1460652,
+    "ast_hash": "087fd836bcd717b6237563a12c7e24a8",
     "semantic_hash": ""
   },
   "frontend/postcss.config.js": {
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "frontend/src/authentication/MicrosoftAuthWrapper.tsx": {
-    "mtime": 1787812331.3870966,
-    "ast_hash": "e6d0a9b8648dd7a15c6d4bbd87754db8",
+    "mtime": 1792526278.4779139,
+    "ast_hash": "09ed9d03ab567f1565f8b6b58f8137a4",
     "semantic_hash": ""
   },
   "frontend/src/authentication/components/AuthenticationLayout.tsx": {
@@ -860,9 +860,9 @@
     "semantic_hash": "69e33cb09cb8a1fa896110e7c0353b62"
   },
   "frontend/src/global.d.ts": {
-    "mtime": 1785912357.5872622,
-    "ast_hash": "be543aee3e5b9f7c1197155d4f9ee3bc",
-    "semantic_hash": "be543aee3e5b9f7c1197155d4f9ee3bc"
+    "mtime": 1792526180.2894082,
+    "ast_hash": "f40f26003ee0d015973995f8150c4974",
+    "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useApiKeysApi.ts": {
     "mtime": 1787812331.3923967,
@@ -910,8 +910,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useMicrofrontendsApi.ts": {
-    "mtime": 1792421509.9937203,
-    "ast_hash": "bde576d5dd9a7e0e6d4b0df902ffbd48",
+    "mtime": 1792526180.3038075,
+    "ast_hash": "f38c629fa0cb5263871a227d987c669d",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useProjectApi.ts": {
@@ -965,9 +965,9 @@
     "semantic_hash": "95996ea924cf338a8b413ed67711ca5e"
   },
   "frontend/src/i18n.ts": {
-    "mtime": 1785912357.5878959,
-    "ast_hash": "ef937bd59a12aff78485d07b8cff63f6",
-    "semantic_hash": "ef937bd59a12aff78485d07b8cff63f6"
+    "mtime": 1792526180.294268,
+    "ast_hash": "6e364a40603531c74ed0e59b652f3fde",
+    "semantic_hash": ""
   },
   "frontend/src/main.tsx": {
     "mtime": 1787812331.3959224,
@@ -1180,8 +1180,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/AddMicrofrontend.tsx": {
-    "mtime": 1792420761.0083249,
-    "ast_hash": "f1f490c7327113252302e95b6389cf7e",
+    "mtime": 1792526180.327015,
+    "ast_hash": "89cea6b9e6b5bc78cbff17bb30c2be7a",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/Microfrontends.tsx": {
@@ -1210,8 +1210,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/DangerZoneRemoveMicrofrontend.tsx": {
-    "mtime": 1787812331.4050617,
-    "ast_hash": "3773a26d0ab09f4d1efbcaa8445200ce",
+    "mtime": 1792526180.3128116,
+    "ast_hash": "a9eabf32a4050bfeb35317b8827aa9f7",
     "semantic_hash": ""
   },
   "frontend/src/pages/microfrontends/partials/components/HostingSection.tsx": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/project-users/partials/AddUserButton.tsx": {
-    "mtime": 1787812331.4096508,
-    "ast_hash": "cb43fa7a04b3cb555e21e5cd0abe6559",
+    "mtime": 1792526180.3223662,
+    "ast_hash": "5c3508acb456163be56ddf59017ee65a",
     "semantic_hash": ""
   },
   "frontend/src/pages/project-users/partials/UserPicture.tsx": {
@@ -1660,8 +1660,8 @@
     "semantic_hash": "f9dff89adf98833e676de2205921996a"
   },
   "lefthook.yml": {
-    "mtime": 1787812331.4816713,
-    "ast_hash": "4d9b699d3a75940686d4dc9c322b34c2",
+    "mtime": 1792526212.1550765,
+    "ast_hash": "afd4bdab1ba9346d407e8edff9277506",
     "semantic_hash": ""
   },
   "pnpm-workspace.yaml": {
@@ -1830,8 +1830,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/dependencies/Dependencies.tsx": {
-    "mtime": 1791316479.1863515,
-    "ast_hash": "27ea32181f5225d16f6dab51ce56cb9a",
+    "mtime": 1792526278.4786966,
+    "ast_hash": "c3efc419ff90b9b913681e514663f732",
     "semantic_hash": ""
   },
   "frontend/src/pages/dependencies/partials/AlignPeerDependenciesDialog.tsx": {
@@ -2335,8 +2335,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/organization-users/partials/AddOrganizationUserButton.tsx": {
-    "mtime": 1787812331.408272,
-    "ast_hash": "7e7bff95d56a1612fcba538ea6b30d54",
+    "mtime": 1792526180.317631,
+    "ast_hash": "4c6de5cea0778a33345ea3505636f4cf",
     "semantic_hash": ""
   },
   "frontend/src/pages/organization-users/partials/index.ts": {
@@ -2930,8 +2930,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/useLogout.ts": {
-    "mtime": 1792155190.1845193,
-    "ast_hash": "60311bc86dc49997814dd4ce68319934",
+    "mtime": 1792526192.0749383,
+    "ast_hash": "7a54c8dec2894bdef6bc45195fa4eb61",
     "semantic_hash": ""
   },
   "frontend/src/pages/mcp-clients/McpClients.tsx": {
@@ -3145,13 +3145,13 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/aiChangeTools.test.ts": {
-    "mtime": 1792523363.1023228,
-    "ast_hash": "d762440d9810e2cce015711a755e0751",
+    "mtime": 1792526244.7698972,
+    "ast_hash": "2c958fbc42901f47d11e9a17253fe82a",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/aiChangeTools.ts": {
-    "mtime": 1792525446.8265698,
-    "ast_hash": "dbe93f22319ec725e2a986d5106df056",
+    "mtime": 1792526244.7652237,
+    "ast_hash": "3bf9eef1e5f2a20ca00c1621e07c4fa5",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/organizationAdminTools.test.ts": {

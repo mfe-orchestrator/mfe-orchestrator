@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1792507699.6763048,
-    "ast_hash": "3c0c78a909cdaea5270952fbd60e3997",
+    "mtime": 1792525661.6411588,
+    "ast_hash": "c89f7aafe350621bd263039a4aa07463",
     "semantic_hash": ""
   },
   "backend/postbuild.js": {
@@ -220,8 +220,8 @@
     "semantic_hash": "ad73d207855f82eaf4d943a705f3dc22"
   },
   "backend/src/index.ts": {
-    "mtime": 1791317876.7013648,
-    "ast_hash": "28d1bbbfd9bccfd7a462253f40ee57ef",
+    "mtime": 1792525787.7618825,
+    "ast_hash": "cfebe169bf20f39c064d439998d6bf77",
     "semantic_hash": ""
   },
   "backend/src/models/ApiKeyModel.ts": {
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/EmailSenderService.ts": {
-    "mtime": 1787812331.3603265,
-    "ast_hash": "691cb56caf6d93d76235edc30f904684",
+    "mtime": 1792525658.1628764,
+    "ast_hash": "5e44f63ecaad07875455e47eff7f6719",
     "semantic_hash": ""
   },
   "backend/src/service/EnvironmentService.ts": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "e2e/package.json": {
-    "mtime": 1787812331.3721502,
-    "ast_hash": "2f8a2d7fce0111bcf7d9430f861e7c68",
+    "mtime": 1792525546.614801,
+    "ast_hash": "84645388e32bd57b829492e8f91a793e",
     "semantic_hash": ""
   },
   "e2e/playwright.config.ts": {
@@ -650,8 +650,8 @@
     "semantic_hash": ""
   },
   "frontend/package.json": {
-    "mtime": 1792522415.184103,
-    "ast_hash": "62e740cf40228a9cd9de5deb3ad10942",
+    "mtime": 1792525546.6148186,
+    "ast_hash": "28253a430722bb53ec2a5f6db83056ce",
     "semantic_hash": ""
   },
   "frontend/postcss.config.js": {
@@ -1435,9 +1435,9 @@
     "semantic_hash": ""
   },
   "frontend/src/theme/SentryInit.tsx": {
-    "mtime": 1785880210.0202909,
-    "ast_hash": "9ad581d3d9c4b2e295a1e5633f4ee201",
-    "semantic_hash": "9ad581d3d9c4b2e295a1e5633f4ee201"
+    "mtime": 1792525788.8741736,
+    "ast_hash": "9b5f2d7bda17fa49c340faf80b547ee2",
+    "semantic_hash": ""
   },
   "frontend/src/theme/ThemeHandler.tsx": {
     "mtime": 1787812331.4139016,
@@ -1515,8 +1515,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1787812331.4817958,
-    "ast_hash": "a610edc49f0d2f9d7fcb509d6bcd0316",
+    "mtime": 1792525246.743567,
+    "ast_hash": "4b02a948c545604c92374c65436238e8",
     "semantic_hash": ""
   },
   "start.sh": {
@@ -1620,8 +1620,8 @@
     "semantic_hash": "ecd9a756ef05656dcc84192a91668427"
   },
   "README.md": {
-    "mtime": 1791929833.296598,
-    "ast_hash": "461a4ef019e1667a1326c0784ad8fe67",
+    "mtime": 1792525357.797517,
+    "ast_hash": "4a638b3d925453d0514e244df3a1b841",
     "semantic_hash": ""
   },
   "SECURITY.md": {
@@ -1740,8 +1740,8 @@
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/README.md": {
-    "mtime": 1791318868.4347284,
-    "ast_hash": "679bbe188edf44b736f492e8e67e1d59",
+    "mtime": 1792525357.8079152,
+    "ast_hash": "2ad4c7f5f3bf2c9f69285a32d42e79e7",
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/templates/NOTES.txt": {
@@ -1790,8 +1790,8 @@
     "semantic_hash": ""
   },
   "helm/mfe-orchestrator/values.yaml": {
-    "mtime": 1791928388.5652313,
-    "ast_hash": "8f281080199a5e6b404306fa8b35e410",
+    "mtime": 1792525363.7687984,
+    "ast_hash": "1c207ffcd0a419390272147f07983012",
     "semantic_hash": ""
   },
   "docs/assets/promo-video.gif": {
@@ -2835,13 +2835,13 @@
     "semantic_hash": ""
   },
   "backend/src/utils/oauthConfig.test.ts": {
-    "mtime": 1791317913.000899,
-    "ast_hash": "34c7502b6ea7360da05115e98294ab3a",
+    "mtime": 1792525356.5773973,
+    "ast_hash": "dd48f5967f481ee41814e9c86152bb43",
     "semantic_hash": ""
   },
   "backend/src/utils/oauthConfig.ts": {
-    "mtime": 1791318699.00205,
-    "ast_hash": "7eaa78fdf6ebaa4864459b83d26f3250",
+    "mtime": 1792525355.411434,
+    "ast_hash": "fcf709208528b7d82f99e3b7962a842b",
     "semantic_hash": ""
   },
   "backend/src/utils/pkce.test.ts": {
@@ -2970,8 +2970,8 @@
     "semantic_hash": ""
   },
   "docs/MCP.md": {
-    "mtime": 1792415428.5956182,
-    "ast_hash": "1a5457b30ea41fcb5a2806e4e771e1d1",
+    "mtime": 1792525357.801338,
+    "ast_hash": "03565bac5172890ddfd47fe52901b4a5",
     "semantic_hash": ""
   },
   "backend/src/utils/apiKeyCredentialCache.ts": {
@@ -3040,8 +3040,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/AiChangeService.ts": {
-    "mtime": 1792523860.8781571,
-    "ast_hash": "32c7820a50da10dff0f21ac097747514",
+    "mtime": 1792525446.8220587,
+    "ast_hash": "aa7eac9e7f16ae809d8caa114392bd36",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/aiChangeAgent.test.ts": {
@@ -3150,8 +3150,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/aiChangeTools.ts": {
-    "mtime": 1792523860.8790877,
-    "ast_hash": "71463a0a946c0d9a6b5aa9dde79ee306",
+    "mtime": 1792525446.8265698,
+    "ast_hash": "dbe93f22319ec725e2a986d5106df056",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/organizationAdminTools.test.ts": {
@@ -3250,8 +3250,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/AiChangeJobService.ts": {
-    "mtime": 1792523860.8788798,
-    "ast_hash": "890b0d63bc7f4ed4135466bfc39be2df",
+    "mtime": 1792525446.817099,
+    "ast_hash": "944129b95796c77e23e0e57613845adf",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/aiChangeShared.ts": {
@@ -3840,8 +3840,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/VariableMapService.ts": {
-    "mtime": 1792422703.7455385,
-    "ast_hash": "4a0296ebda072fb6d6f0b0eef6040443",
+    "mtime": 1792525391.697415,
+    "ast_hash": "bf9404442d2c6627f34c9a51e3b0e2ee",
     "semantic_hash": ""
   },
   "backend/src/service/aiChange/DomainPlanService.test.ts": {
