@@ -151,6 +151,15 @@ describe("AI change tools", () => {
             expect(listChanges).toHaveBeenCalledWith({ kind: "microfrontend", id: MICROFRONTEND })
         })
 
+        it("given changes read without their progress, when listed, then the view has no progress rather than an empty one", async () => {
+            const { events: _events, ...withoutEvents } = changeDocument("PROPOSED")
+            listChanges.mockResolvedValue([withoutEvents])
+
+            const [change] = (await run("ai_changes_list", { microfrontendId: MICROFRONTEND })) as Record<string, unknown>[]
+
+            expect(change).not.toHaveProperty("recentEvents")
+        })
+
         it("given a microfrontend of another project, when listed, then the refusal surfaces", async () => {
             listChanges.mockRejectedValue(new UserCannotAccessThisProjectError())
 

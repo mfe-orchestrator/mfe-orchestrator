@@ -55,7 +55,8 @@ const toChangeView = (request: Omit<IAiChangeRequest, "events"> & Partial<Pick<I
     error: request.error,
     // The job's usage: shared by every repository of the job.
     usage: request.usage,
-    recentEvents: recentEvents(request.events ?? []),
+    // Lists read the changes without their progress: an empty list would say nothing happened
+    ...(request.events ? { recentEvents: recentEvents(request.events) } : {}),
     createdAt: request.createdAt,
     updatedAt: request.updatedAt
 })
