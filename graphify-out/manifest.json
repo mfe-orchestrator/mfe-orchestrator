@@ -3185,8 +3185,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/assistant/assistantActions.test.ts": {
-    "mtime": 1792237944.111749,
-    "ast_hash": "21eb3c1fe63042bae7b94e437e958267",
+    "mtime": 1792524424.4069421,
+    "ast_hash": "5a33e44cc36e32354887fbe408f832cb",
     "semantic_hash": ""
   },
   "backend/src/service/assistant/assistantActions.ts": {
