@@ -1126,7 +1126,8 @@
                 "cancel": "Cancel",
                 "create": "Create",
                 "update": "Update"
-            }
+            },
+            "host": "Host"
         },
         "add_environment": "Add Environment",
         "form": {
@@ -1150,6 +1151,7 @@
             "subdomain": "Subdomain",
             "subdomain_placeholder": "dev",
             "subdomain_description": "Exposed on {{host}}. Left empty, on the domain of the project itself.",
+            "subdomain_description_no_domain": "Set the domain of the project in Settings → Exposure: until then the environment is not exposed.",
             "subdomain_invalid": "DNS labels of lowercase letters, digits and dashes, separated by dots"
         }
     },

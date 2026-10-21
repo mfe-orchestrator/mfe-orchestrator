@@ -65,7 +65,7 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
     // Il namespace serve solo a GitOps: senza, l'ambiente non finisce in nessun cluster
     const isGitOpsEnabled = Boolean(useProjectStore(state => state.project?.gitOps?.enabled))
     const slug = form.watch("slug")
-    // Il sottodominio vale solo sul dominio del progetto: senza, l'ambiente non e' esposto da GitOps
+    // Il sottodominio vale sul dominio del progetto: finche' non c'e', l'ambiente non e' esposto da GitOps
     const domain = useProjectStore(state => state.project?.exposure?.domain)
     const subdomain = form.watch("subdomain")?.trim().toLowerCase()
 
@@ -138,13 +138,17 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                                 }}
                             />
                         )}
-                        {isGitOpsEnabled && domain && (
+                        {isGitOpsEnabled && (
                             <TextField
                                 name="subdomain"
                                 dataTestId="environment-subdomain"
                                 label={t("environment.form.subdomain")}
                                 placeholder={t("environment.form.subdomain_placeholder")}
-                                description={t("environment.form.subdomain_description", { host: subdomain ? `${subdomain}.${domain}` : domain })}
+                                description={
+                                    domain
+                                        ? t("environment.form.subdomain_description", { host: subdomain ? `${subdomain}.${domain}` : domain })
+                                        : t("environment.form.subdomain_description_no_domain")
+                                }
                                 // Il backend toglie gli spazi e porta in minuscolo: qui si controlla quello che salverà
                                 rules={{ validate: value => SUBDOMAIN.test((value ?? "").trim().toLowerCase()) || t("environment.form.subdomain_invalid") }}
                             />
@@ -189,6 +193,10 @@ export default function EnvironmentsPage() {
     const [currentEnvironment, setCurrentEnvironment] = useState<EnvironmentDTO>()
     const [orderedEnvironments, setOrderedEnvironments] = useState<EnvironmentDTO[]>([])
     const { project, setEnvironments } = useProjectStore()
+    const isGitOpsEnabled = Boolean(project?.gitOps?.enabled)
+    const domain = project?.exposure?.domain
+    // Senza dominio non c'e' ancora un host: si mostra almeno il sottodominio impostato
+    const hostOf = (env: EnvironmentDTO) => (domain ? (env.subdomain ? `${env.subdomain}.${domain}` : domain) : env.subdomain || "-")
 
     const environmentQuery = useQuery({
         queryKey: ["environments", project._id],
@@ -293,6 +301,7 @@ export default function EnvironmentsPage() {
                                 <TableHead className="w-10" />
                                 <TableHead>{t("environment.form.name")}</TableHead>
                                 <TableHead>{t("environment.form.slug")}</TableHead>
+                                {isGitOpsEnabled && <TableHead>{domain ? t("environment.page.host") : t("environment.form.subdomain")}</TableHead>}
                                 <TableHead>{t("environment.production")}</TableHead>
                                 <TableHead>{t("environment.form.domains")}</TableHead>
                                 <TableHead>{t("environment.page.color")}</TableHead>
@@ -321,6 +330,7 @@ export default function EnvironmentsPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{env.name}</TableCell>
                                     <TableCell>{env.slug}</TableCell>
+                                    {isGitOpsEnabled && <TableCell className="font-mono text-sm">{hostOf(env)}</TableCell>}
                                     <TableCell>{env.isProduction ? <Check /> : <X />}</TableCell>
                                     <TableCell>{env.domains?.join(", ") || "-"}</TableCell>
                                     <TableCell>
