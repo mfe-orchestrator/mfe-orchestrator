@@ -216,9 +216,9 @@
             "tooLong": "Il contesto può contenere al massimo {{max}} caratteri"
         },
         "gitOps": {
-            "title": "GitOps per config map e secret",
-            "subtitle": "Ogni volta che salvi una config map o un secret viene fatto un commit su un repository come manifest Kubernetes: configMaps/<ambiente>/<nome>.yaml e secrets/<ambiente>/<nome>.yaml, sul branch di default.",
-            "enabled": "Fai il commit di config map e secret su un repository",
+            "title": "GitOps per ambienti, config map e secret",
+            "subtitle": "Salvare config map, secret o ambienti non fa alcun commit: ogni Deploy fa il commit di ciò che rilascia. Sul repository di configurazione, sul branch di default: namespaces/<ambiente>.yaml, configMaps/<ambiente>/<nome>.yaml e secrets/<ambiente>/<nome>.yaml. Facoltativamente, sul repository delle applicazioni: un branch per ambiente con un file di values Helm per ogni servizio e frontend che ha un'immagine e una versione, più un chart Helm condiviso in microservice-chart/, scritto solo se manca così puoi personalizzarlo.",
+            "enabled": "Fai il commit su un repository a ogni Deploy",
             "connection": "Connessione",
             "connectionPlaceholder": "Scegli una connessione",
             "repository": "Repository",
@@ -226,19 +226,28 @@
             "noConnections": "Il progetto non ha ancora connessioni a repository di codice: aggiungine una in Repository di codice.",
             "secretsWarningTitle": "I secret finiscono nel repository in chiaro",
             "secretsWarning": "Chiunque possa leggere il repository, e la sua history, vede i valori dei secret. Usa un repository privato con accesso ristretto.",
-            "exportHint": "Salvando queste impostazioni con GitOps attivo viene fatto il commit di tutte le config map e i secret esistenti, e vengono rimossi i manifest di quelli eliminati nel frattempo: usalo per riallineare il repository. Con GitOps attivo, una modifica di cui non si riesce a fare il commit non viene salvata.",
             "saved": "Impostazioni GitOps salvate",
+            "configRepository": "Repository di configurazione",
+            "applicationsRepository": "Repository delle applicazioni",
+            "applicationsEnabled": "Fai il commit anche delle applicazioni",
+            "applicationsDescription": "Scrive i values Helm di ogni servizio e frontend su un secondo repository, organizzato come un repository applications-infra.",
+            "createRepository": "+ Crea un nuovo repository",
+            "newRepositoryName": "Nome del nuovo repository",
+            "newRepositoryHint": "Viene creato privato, al salvataggio.",
+            "newRepositoryInvalid": "Nome non valido: usa lettere, cifre, punti, trattini e underscore, inizia con una lettera o una cifra, massimo 100 caratteri, e non finire con un punto, .git o .atom.",
+            "deployHint": "Il salvataggio non fa alcun commit: ogni Deploy fa il commit di ciò che rilascia; se il commit fallisce il deploy non parte.",
             "errors": {
                 "repository_required": "Scegli la connessione e il repository",
                 "repository_invalid": "La connessione non raggiunge questo repository, o non esiste più: scegline un'altra nelle Impostazioni",
-                "commit_failed": "Non salvato: il commit su {{repository}} non è andato a buon fine ({{reason}})",
+                "commit_failed": "Il commit su {{repository}} non è andato a buon fine ({{reason}}): niente è stato rilasciato o salvato",
                 "settings_invalid": "Le impostazioni GitOps non sono valide: ricarica la pagina",
                 "repositories_not_available": "Non è possibile elencare i repository di questa connessione: verifica la connessione",
                 "owner_required": "Solo un owner del progetto può modificare le impostazioni GitOps",
-                "viewer_forbidden": "Un viewer non può modificare ciò che viene committato sul repository GitOps",
-                "busy": "È in corso un altro commit sul repository GitOps: riprova tra un momento",
-                "environment_slug_invalid": "Lo slug dell'ambiente {{slug}} non può essere una cartella del repository: usa lettere minuscole, cifre e trattini",
-                "sync_failed": "Salvato, ma il repository GitOps non è allineato ({{reason}}): salva di nuovo le impostazioni GitOps per riesportare"
+                "viewer_forbidden": "Un viewer non può rilasciare ciò che viene committato sui repository GitOps",
+                "busy": "È in corso il commit di un altro deploy sul repository GitOps: riprova tra un momento",
+                "environment_slug_invalid": "Lo slug dell'ambiente {{slug}} non può essere un namespace Kubernetes: usa fino a 63 lettere minuscole, cifre e trattini, iniziando e finendo con una lettera o una cifra",
+                "invalid_repository_name": "Il nome del repository non è valido: usa lettere, cifre, punti, trattini e underscore",
+                "repository_name_taken": "Esiste già un repository con questo nome sul provider, forse lasciato da un tentativo fallito: sceglilo dall'elenco o scegli un altro nome"
             }
         },
         "dangerZone": {

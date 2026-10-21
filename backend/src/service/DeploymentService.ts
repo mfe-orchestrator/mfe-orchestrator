@@ -10,6 +10,7 @@ import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService, { isInDomainScope } from "./BaseAuthorizedService"
 import DeploymentCanaryUsersService from "./DeploymentCanaryUsersService"
+import GitOpsService from "./GitOpsService"
 
 class DeploymentService extends BaseAuthorizedService {
     async getById(deploymentId: string | Schema.Types.ObjectId): Promise<IDeployment | null> {
@@ -163,12 +164,13 @@ class DeploymentService extends BaseAuthorizedService {
         return deployments
     }
 
+    /** With GitOps on, what the deploy ships is committed first: when the commit does not go through, nothing is deployed */
     async create(environmentId: string | Schema.Types.ObjectId) {
-        return runInTransaction(async session => this.createRaw(environmentId, session))
+        return new GitOpsService(this.user).deploy([environmentId], () => runInTransaction(async session => this.createRaw(environmentId, session)))
     }
 
     async createMultiple(environmentIds: (string | Schema.Types.ObjectId)[]) {
-        return runInTransaction(async session => this.createMultipleRaw(environmentIds, session))
+        return new GitOpsService(this.user).deploy(environmentIds, () => runInTransaction(async session => this.createMultipleRaw(environmentIds, session)))
     }
 
     async redeploy(deploymentId: string | Schema.Types.ObjectId) {

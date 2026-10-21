@@ -5,7 +5,7 @@ import DeploymentService from "../../service/DeploymentService"
 import EnvironmentService from "../../service/EnvironmentService"
 import { EnvironmentDTO } from "../../types/EnvironmentDTO"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
+import { DESTRUCTIVE, DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 
 const environmentId = objectId("Id of the environment")
 const deploymentId = objectId("Id of the deployment")
@@ -105,9 +105,11 @@ export const environmentTools = [
     defineTool({
         name: "deploy",
         title: "Deploy",
-        description: "Deploys the current configuration (microfrontends, versions, global variables) to the given environments: what they serve changes immediately.",
+        description:
+            "Deploys the current configuration (microfrontends, versions, global variables) to the given environments: what they serve changes immediately. With GitOps on for the project, the Namespace, the config maps and the secrets of each environment are committed to its repository first, secrets in plaintext; when that commit fails nothing is deployed.",
         scope: MCP_SCOPE_WRITE,
-        annotations: DESTRUCTIVE,
+        // With GitOps on it pushes to the project's repository
+        annotations: DESTRUCTIVE_EXTERNAL,
         inputSchema: z.object({ environmentIds: z.array(environmentId).min(1) }),
         run: async (args, { principal }) => (await new DeploymentService(principal).createMultiple(args.environmentIds)).map(toDeploymentView)
     }),

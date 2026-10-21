@@ -9,6 +9,8 @@ export interface IProjectGitOps {
     enabled: boolean
     /** Linked like the repository of a microfrontend, through one of the connections of the project */
     codeRepository?: ICodeRepositoryMicrofrontend
+    /** Where the Helm values of the applications go, one branch per environment; none when left out */
+    applicationsCodeRepository?: ICodeRepositoryMicrofrontend
 }
 
 export interface IProject extends Document<ObjectId> {
@@ -66,7 +68,8 @@ const projectSchema = new Schema<IProject>(
         gitOps: {
             enabled: { type: Boolean, default: false },
             // Written by GitOpsService only, from what the provider answered: never from the request body
-            codeRepository: { type: Schema.Types.Mixed }
+            codeRepository: { type: Schema.Types.Mixed },
+            applicationsCodeRepository: { type: Schema.Types.Mixed }
         },
         // No default: an empty array would turn AI off, where unset means every AI of the organization
         aiModelIds: { type: [String], default: undefined }

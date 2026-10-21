@@ -1,4 +1,5 @@
 import useApiClient from "../useApiClient"
+import useGitOpsErrorMessage from "./useGitOpsErrorMessage"
 import { GlobalVariable } from "./useGlobalVariablesApi"
 import { Microfrontend } from "./useMicrofrontendsApi"
 
@@ -17,6 +18,8 @@ export interface DeploymentDTO {
 
 const useDeploymentsApi = () => {
     const apiClient = useApiClient()
+    // Il deploy fa il commit sul repository GitOps: se fallisce, il deploy non parte
+    const customErrorMessage = useGitOpsErrorMessage()
 
     const getDeployments = async (environmentId: string) => {
         const response = await apiClient.doRequest<DeploymentDTO[]>({
@@ -30,6 +33,7 @@ const useDeploymentsApi = () => {
         const response = await apiClient.doRequest<DeploymentDTO>({
             url: `/api/deployment`,
             method: "POST",
+            customErrorMessage,
             data: {
                 environmentIds
             }
@@ -56,7 +60,8 @@ const useDeploymentsApi = () => {
     const redeploy = async (deploymentId: string) => {
         const response = await apiClient.doRequest<DeploymentDTO>({
             url: `/api/deployment/${deploymentId}/redeployment`,
-            method: "POST"
+            method: "POST",
+            customErrorMessage
         })
         return response.data
     }

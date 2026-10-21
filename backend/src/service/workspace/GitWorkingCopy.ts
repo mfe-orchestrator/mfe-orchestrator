@@ -279,6 +279,44 @@ export class GitWorkingCopy {
         }
     }
 
+    /** True when the remote has `branch`: asked of the remote, the copy may hold none of its branches */
+    async hasRemoteBranch(branch: string): Promise<boolean> {
+        const ref = `refs/heads/${branch}`
+        const refs = await git.listServerRefs({ http, url: this.url, prefix: ref, onAuth: this.onAuth, headers: { "User-Agent": "mfe-orchestrator" }, corsProxy: NO_PROXY })
+        return refs.some(candidate => candidate.ref === ref)
+    }
+
+    /**
+     * Makes the first commit of an empty repository, with `files`, and pushes it as `branch`: a repository
+     * just created at the provider has no branch to clone until then. Not for a repository that has commits.
+     */
+    async initialize({ branch, message, author, files }: { branch: string; message: string; author: GitAuthor; files: { path: string; content: string }[] }): Promise<string> {
+        await fs.promises.rm(this.dir, { recursive: true, force: true })
+        await fs.promises.mkdir(this.dir, { recursive: true })
+        await git.init({ fs, dir: this.dir, defaultBranch: branch })
+        for (const file of files) {
+            // A fresh folder with nothing in it: no symlink to resolve, unlike commitAndPush
+            await fs.promises.mkdir(path.dirname(path.join(this.dir, file.path)), { recursive: true })
+            await fs.promises.writeFile(path.join(this.dir, file.path), file.content, "utf8")
+            await git.add({ fs, dir: this.dir, filepath: file.path })
+        }
+        const commit = await git.commit({ fs, dir: this.dir, message, author, committer: ORCHESTRATOR_COMMITTER })
+        await git.addRemote({ fs, dir: this.dir, remote: "origin", url: this.url })
+        // Never forced: a repository that already has the branch refuses it
+        await git.push({
+            fs,
+            http,
+            dir: this.dir,
+            remote: "origin",
+            ref: branch,
+            remoteRef: `refs/heads/${branch}`,
+            onAuth: this.onAuth,
+            headers: { "User-Agent": "mfe-orchestrator" },
+            corsProxy: NO_PROXY
+        })
+        return commit
+    }
+
     /** Pushes a commit already in the copy onto the remote `branch`. Never forced: refused unless it is a fast-forward. */
     async pushCommit(commit: string, branch: string): Promise<void> {
         const ref = "refs/heads/mfe-orchestrator-push"

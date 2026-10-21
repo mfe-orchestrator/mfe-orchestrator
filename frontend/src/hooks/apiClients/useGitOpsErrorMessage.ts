@@ -2,7 +2,7 @@ import { AxiosError } from "axios"
 import { useTranslation } from "react-i18next"
 import { errorCodeOf } from "../useApiClient"
 
-/** I rifiuti del GitOps arrivano da ogni salvataggio che finisce nel repository: impostazioni, config map, secret, ambienti */
+/** I rifiuti del GitOps arrivano dal salvataggio delle impostazioni e dal deploy, che fa il commit sui repository */
 const GITOPS_ERROR_KEYS: Record<string, string> = {
     GITOPS_SETTINGS_INVALID: "settings.gitOps.errors.settings_invalid",
     GITOPS_REPOSITORY_REQUIRED: "settings.gitOps.errors.repository_required",
@@ -13,7 +13,8 @@ const GITOPS_ERROR_KEYS: Record<string, string> = {
     GITOPS_COMMIT_FAILED: "settings.gitOps.errors.commit_failed",
     GITOPS_BUSY: "settings.gitOps.errors.busy",
     GITOPS_ENVIRONMENT_SLUG_INVALID: "settings.gitOps.errors.environment_slug_invalid",
-    GITOPS_SYNC_FAILED: "settings.gitOps.errors.sync_failed"
+    INVALID_REPOSITORY_NAME: "settings.gitOps.errors.invalid_repository_name",
+    REPOSITORY_NAME_TAKEN: "settings.gitOps.errors.repository_name_taken"
 }
 
 interface GitOpsErrorDetails {

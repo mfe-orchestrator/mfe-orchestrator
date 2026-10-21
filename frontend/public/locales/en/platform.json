@@ -215,9 +215,9 @@
             "tooLong": "The context can be at most {{max}} characters long"
         },
         "gitOps": {
-            "title": "GitOps for config maps and secrets",
-            "subtitle": "Every time a config map or a secret is saved, it is committed to a repository as a Kubernetes manifest: configMaps/<environment>/<name>.yaml and secrets/<environment>/<name>.yaml, on the default branch.",
-            "enabled": "Commit config maps and secrets to a repository",
+            "title": "GitOps for environments, config maps and secrets",
+            "subtitle": "Nothing is committed when you save config maps, secrets or environments: each Deploy commits what it ships. To the configuration repository, on the default branch: namespaces/<environment>.yaml, configMaps/<environment>/<name>.yaml and secrets/<environment>/<name>.yaml. Optionally, to the applications repository: one branch per environment with a Helm values file for every service and frontend that has an image and a version, plus a shared Helm chart in microservice-chart/, written only when missing so you can customize it.",
+            "enabled": "Commit to a repository on every Deploy",
             "connection": "Connection",
             "connectionPlaceholder": "Pick a connection",
             "repository": "Repository",
@@ -225,19 +225,28 @@
             "noConnections": "The project has no code repository connection yet: add one in Code Repositories.",
             "secretsWarningTitle": "Secrets are committed in plaintext",
             "secretsWarning": "Anyone who can read the repository, and its history, sees the values of the secrets. Use a private repository with restricted access.",
-            "exportHint": "Saving these settings with GitOps on commits every existing config map and secret, and removes the manifests of those deleted meanwhile: use it to realign the repository. With GitOps on, a change that cannot be committed is not saved.",
             "saved": "GitOps settings saved",
+            "configRepository": "Configuration repository",
+            "applicationsRepository": "Applications repository",
+            "applicationsEnabled": "Also commit the applications",
+            "applicationsDescription": "Writes the Helm values of each service and frontend to a second repository, laid out like an applications-infra repository.",
+            "createRepository": "+ Create a new repository",
+            "newRepositoryName": "Name of the new repository",
+            "newRepositoryHint": "It is created private, when you save.",
+            "newRepositoryInvalid": "Invalid name: use letters, digits, dots, dashes and underscores, start with a letter or digit, up to 100 characters, and do not end with a dot, .git or .atom.",
+            "deployHint": "Nothing is committed when saving: each Deploy commits what it ships; if the commit fails the deploy does not start.",
             "errors": {
                 "repository_required": "Pick the connection and the repository",
                 "repository_invalid": "The connection cannot reach this repository, or no longer exists: pick another one in Settings",
-                "commit_failed": "Not saved: the commit to {{repository}} did not go through ({{reason}})",
+                "commit_failed": "The commit to {{repository}} did not go through ({{reason}}): nothing was deployed or saved",
                 "settings_invalid": "The GitOps settings are not valid: reload the page",
                 "repositories_not_available": "The repositories of this connection cannot be listed: check the connection",
                 "owner_required": "Only an owner of the project can change the GitOps settings",
-                "viewer_forbidden": "A viewer cannot change what is committed to the GitOps repository",
-                "busy": "Another change is being committed to the GitOps repository: try again in a moment",
-                "environment_slug_invalid": "The slug of environment {{slug}} cannot be a folder of the repository: use lowercase letters, digits and dashes",
-                "sync_failed": "Saved, but the GitOps repository is not aligned ({{reason}}): save the GitOps settings again in Settings to export"
+                "viewer_forbidden": "A viewer cannot deploy what is committed to the GitOps repositories",
+                "busy": "Another deploy is being committed to the GitOps repository: try again in a moment",
+                "environment_slug_invalid": "The slug of environment {{slug}} cannot be a Kubernetes namespace: use up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit",
+                "invalid_repository_name": "The repository name is not valid: use letters, digits, dots, dashes and underscores",
+                "repository_name_taken": "A repository with this name already exists at the provider, maybe left by a failed attempt: pick it from the list or choose another name"
             }
         },
         "dangerZone": {

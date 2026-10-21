@@ -58,7 +58,7 @@ export const projectAdminTools = [
         name: "project_gitops_set",
         title: "Set GitOps repository",
         description:
-            "Switches GitOps on or off for the project. When on, every config map and secret of the project is committed to a repository as Kubernetes manifests, every time one is saved, starting with all of them at once. Secret values are committed in plaintext: say so to the user. Only an owner of the project (or an administrator of its organization) can do it. Switched off, nothing more is committed and the repository is remembered. The current setting is in project_get (gitOps).",
+            "Switches GitOps on or off for the project. When on, every deploy commits to a repository, as Kubernetes manifests, the Namespace of each deployed environment and every config map and secret of the project as they are in it; saving a map or an environment commits nothing. Secret values are committed in plaintext: say so to the user. Pass repositoryId to commit to an existing repository, or newRepositoryName to have a private one created through the connection. Only an owner of the project (or an administrator of its organization) can do it. Switched off, nothing more is committed and the repository is remembered. The current setting is in project_get (gitOps).",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Pushes every config map and secret of the project, values in plaintext, to a repository: confirmed by the user
@@ -68,9 +68,19 @@ export const projectAdminTools = [
             .object({
                 enabled: z.boolean(),
                 codeRepositoryId: objectId("Id of the code repository connection, from code_repositories_list").optional(),
-                repositoryId: z.string().trim().min(1).max(255).optional().describe('The repositoryId of the repository to commit to, from code_repository_importable with target "service"')
+                repositoryId: z.string().trim().min(1).max(255).optional().describe('The repositoryId of the repository to commit to, from code_repository_importable with target "service"'),
+                newRepositoryName: z
+                    .string()
+                    .trim()
+                    .min(1)
+                    .max(100)
+                    .optional()
+                    .describe("In place of repositoryId: the name of a private repository to create through the connection, e.g. <project slug>-gitops")
             })
-            .refine(args => !args.enabled || (args.codeRepositoryId && args.repositoryId), { message: "Pass codeRepositoryId and repositoryId to switch GitOps on" }),
+            .refine(args => !args.enabled || (args.codeRepositoryId && (args.repositoryId || args.newRepositoryName)), {
+                message: "Pass codeRepositoryId and repositoryId, or newRepositoryName, to switch GitOps on"
+            })
+            .refine(args => !(args.repositoryId && args.newRepositoryName), { message: "Pass repositoryId or newRepositoryName, not both" }),
         run: async (args, { principal, projectId }) => {
             const project = await new ProjectService(principal).update(projectId, { gitOps: args })
             return { gitOps: project?.gitOps }

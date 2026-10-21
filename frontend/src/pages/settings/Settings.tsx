@@ -73,6 +73,8 @@ export const Settings: React.FC = () => {
         mutationFn: (values: GitOpsFormValues) => projectApi.updateProject(project._id, { gitOps: values }, gitOpsErrorMessage),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
+            // Un repository appena creato deve comparire nell'elenco
+            queryClient.invalidateQueries({ queryKey: ["importable-repositories"] })
             notifications.showSuccessNotification({ message: t("settings.gitOps.saved") })
         }
     })
@@ -87,7 +89,13 @@ export const Settings: React.FC = () => {
                 {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
 
                 {projectData && (
-                    <GitOpsSection projectId={projectData._id} gitOps={projectData.gitOps} onUpdate={values => updateGitOpsMutation.mutate(values)} isUpdating={updateGitOpsMutation.isPending} />
+                    <GitOpsSection
+                        projectId={projectData._id}
+                        projectSlug={projectData.slug}
+                        gitOps={projectData.gitOps}
+                        onUpdate={values => updateGitOpsMutation.mutate(values)}
+                        isUpdating={updateGitOpsMutation.isPending}
+                    />
                 )}
 
                 <ProjectStatsSection

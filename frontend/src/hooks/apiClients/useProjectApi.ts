@@ -9,14 +9,17 @@ export enum RoleInProject {
     VIEWER = "VIEWER"
 }
 
-/** Config maps and secrets committed to a repository of the project every time one is saved */
+export interface ProjectGitOpsRepository {
+    codeRepositoryId: string
+    repositoryId: string
+    name: string
+}
+
+/** Ogni deploy fa il commit di namespace, config map e secret (repository di configurazione) e, se presente, dei values Helm delle applicazioni (repository delle applicazioni) */
 export interface ProjectGitOps {
     enabled: boolean
-    codeRepository?: {
-        codeRepositoryId: string
-        repositoryId: string
-        name: string
-    }
+    codeRepository?: ProjectGitOpsRepository
+    applicationsCodeRepository?: ProjectGitOpsRepository
 }
 
 export interface Project {
@@ -61,7 +64,15 @@ export interface ProjectUpdateDTO {
     context?: string | null
     isActive?: boolean
     /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga */
-    gitOps?: { enabled: boolean; codeRepositoryId?: string; repositoryId?: string }
+    gitOps?: {
+        enabled: boolean
+        codeRepositoryId?: string
+        repositoryId?: string
+        /** Al posto di repositoryId: il backend crea un repository PRIVATO con questo nome tramite la connessione */
+        newRepositoryName?: string
+        /** Secondo repository opzionale per le applicazioni: null o assente = nessuno */
+        applications?: { codeRepositoryId: string; repositoryId?: string; newRepositoryName?: string } | null
+    }
 }
 
 interface AddUserToProjectDTO {

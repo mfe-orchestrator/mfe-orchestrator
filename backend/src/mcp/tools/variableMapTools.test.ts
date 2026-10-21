@@ -51,12 +51,12 @@ describe("variable map tools", () => {
         kinds.length = 0
     })
 
-    it("given their definitions, when read, then no secret can be written and every write reaches outside, for GitOps", () => {
+    it("given their definitions, when read, then no secret can be written and no write reaches outside: GitOps commits on deploy", () => {
         const names = variableMapTools.map(definition => definition.name)
         expect(names).not.toContain("secret_create")
         expect(names).not.toContain("secret_update")
         for (const definition of variableMapTools.filter(candidate => candidate.scope === MCP_SCOPE_WRITE)) {
-            expect(definition.annotations.openWorldHint, definition.name).toBe(true)
+            expect(definition.annotations.openWorldHint, definition.name).toBe(false)
         }
         expect(variableMapTools.filter(definition => definition.annotations.destructiveHint).map(definition => definition.name)).toEqual(["config_map_delete", "secret_delete"])
     })

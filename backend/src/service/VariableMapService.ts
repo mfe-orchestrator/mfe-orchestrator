@@ -10,7 +10,6 @@ import VariableMapDTO, { VARIABLE_MAP_NAME, VariableMapEntryDTO, VariableMapKind
 import { toObjectId } from "../utils/mongooseUtils"
 import { isEncryptedSecret, SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BaseAuthorizedService, { domainScopeForbidden } from "./BaseAuthorizedService"
-import GitOpsService from "./GitOpsService"
 
 /** Per map: well past any real service, short of a document Mongo would refuse */
 const MAX_VARIABLE_MAP_ENTRIES = 200
@@ -267,52 +266,25 @@ export class VariableMapService extends BaseAuthorizedService {
         // A new map is attached to nothing yet, so it would be outside any domain scope from the start
         await this.ensureWholeProject(projectIdObj)
 
-        return new GitOpsService(this.user).saveVariableMap(projectIdObj, this.kind, async () => {
-            const fields = await this.normalize({ entries: [], ...dto, name: dto.name ?? "" }, projectIdObj)
-            // Checked before the commit too: the unique index would only refuse it once the files are pushed
-            if (await this.model.exists({ projectId: projectIdObj, name: fields.name })) {
-                this.refuseTakenName({ code: 11000 }, fields.name)
-            }
-            return {
-                before: null,
-                after: { name: fields.name!, entries: fields.entries ?? [] },
-                write: async () => {
-                    try {
-                        return await this.model.create({ ...fields, projectId: projectIdObj } as unknown as IVariableMap)
-                    } catch (error) {
-                        this.refuseTakenName(error, fields.name)
-                    }
-                }
-            }
-        })
+        const fields = await this.normalize({ entries: [], ...dto, name: dto.name ?? "" }, projectIdObj)
+        try {
+            return await this.model.create({ ...fields, projectId: projectIdObj } as unknown as IVariableMap)
+        } catch (error) {
+            this.refuseTakenName(error, fields.name)
+        }
     }
 
     async update(id: string | ObjectId, dto: Partial<VariableMapDTO>): Promise<IVariableMap | null> {
-        const { projectId } = await this.getById(id)
-        return new GitOpsService(this.user).saveVariableMap(projectId, this.kind, async () => {
-            // Read again under the lock of the GitOps repository: another save may have changed it meanwhile
-            const map = await this.getById(id)
-            const fields = await this.normalize(dto, map.projectId, map)
-            if (fields.entries) {
-                await this.ensureNoClashInAttachingServices(map, fields.entries)
-            }
-            const renamed = Boolean(fields.name) && fields.name !== map.name
-            if (renamed && (await this.model.exists({ projectId: map.projectId, name: fields.name }))) {
-                this.refuseTakenName({ code: 11000 }, fields.name)
-            }
-            return {
-                before: map,
-                // A change of the description alone is not in the manifests: nothing to commit
-                after: fields.entries || renamed ? { name: fields.name ?? map.name, entries: fields.entries ?? map.entries } : undefined,
-                write: async () => {
-                    try {
-                        return await this.model.findByIdAndUpdate(map._id, { $set: fields }, { new: true, runValidators: true })
-                    } catch (error) {
-                        this.refuseTakenName(error, fields.name)
-                    }
-                }
-            }
-        })
+        const map = await this.getById(id)
+        const fields = await this.normalize(dto, map.projectId, map)
+        if (fields.entries) {
+            await this.ensureNoClashInAttachingServices(map, fields.entries)
+        }
+        try {
+            return await this.model.findByIdAndUpdate(map._id, { $set: fields }, { new: true, runValidators: true })
+        } catch (error) {
+            this.refuseTakenName(error, fields.name)
+        }
     }
 
     /** What attaches this map: its backend services and its FRONTEND microfrontends, each a container of its own */
@@ -349,21 +321,18 @@ export class VariableMapService extends BaseAuthorizedService {
 
     /** Refused while a service attaches it: deleting it would silently take variables away from a running container */
     async delete(id: string | ObjectId): Promise<IVariableMap | null> {
-        const { projectId } = await this.getById(id)
-        await this.ensureWholeProject(projectId)
-        return new GitOpsService(this.user).saveVariableMap(projectId, this.kind, async () => {
-            const map = await this.getById(id)
-            const services = await this.attachedTo(map)
-            if (services.length > 0) {
-                throw createBusinessException({
-                    code: "VARIABLE_MAP_IN_USE",
-                    message: `"${map.name}" is attached to ${services.map(service => service.name).join(", ")}: detach it first`,
-                    statusCode: 409,
-                    details: { services: services.map(service => service.name) }
-                })
-            }
-            return { before: map, after: null, write: () => this.model.findByIdAndDelete(map._id) }
-        })
+        const map = await this.getById(id)
+        await this.ensureWholeProject(map.projectId)
+        const services = await this.attachedTo(map)
+        if (services.length > 0) {
+            throw createBusinessException({
+                code: "VARIABLE_MAP_IN_USE",
+                message: `"${map.name}" is attached to ${services.map(service => service.name).join(", ")}: detach it first`,
+                statusCode: 409,
+                details: { services: services.map(service => service.name) }
+            })
+        }
+        return this.model.findByIdAndDelete(map._id)
     }
 }
 

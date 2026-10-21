@@ -5,25 +5,11 @@ import Microfrontend from "../models/MicrofrontendModel"
 import Service from "../models/ServiceModel"
 import { ConfigMap, Secret } from "../models/VariableMapModel"
 import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
-import GitOpsService, { VariableMapChange } from "./GitOpsService"
 import VariableMapService, { normalizeEntries } from "./VariableMapService"
 
 const projectId = new Types.ObjectId().toString()
 const development = new Types.ObjectId().toString()
 const production = new Types.ObjectId().toString()
-
-let commit: ReturnType<typeof vi.fn>
-let changes: VariableMapChange<unknown>[]
-
-beforeEach(() => {
-    changes = []
-    // GitOps off: the save prepares the change and runs its database write, and the change is kept to look at
-    commit = vi.spyOn(GitOpsService.prototype, "saveVariableMap").mockImplementation(async (_projectId, _kind, prepare) => {
-        const change = await prepare()
-        changes.push(change)
-        return change.write()
-    }) as unknown as ReturnType<typeof vi.fn>
-})
 
 afterEach(() => {
     vi.restoreAllMocks()
@@ -252,56 +238,52 @@ describe("normalizeEntries", () => {
     })
 })
 
-describe("VariableMapService with GitOps", () => {
+describe("VariableMapService create and update of a map", () => {
     const mapId = new Types.ObjectId()
     const map = { _id: mapId, projectId, name: "orders", entries: [{ key: "LOG_LEVEL", values: [{ environmentId: production, value: "info" }] }] }
 
     beforeEach(() => {
         allowAccess()
+        vi.spyOn(VariableMapService.prototype as unknown as { ensureWholeProject: () => Promise<void> }, "ensureWholeProject").mockResolvedValue(undefined)
         vi.spyOn(ConfigMap, "findById").mockResolvedValue(map as never)
         vi.spyOn(Environment, "find").mockResolvedValue([{ _id: development }, { _id: production }] as never)
         vi.spyOn(Service, "find").mockResolvedValue([] as never)
         vi.spyOn(Microfrontend, "find").mockResolvedValue([] as never)
     })
 
-    it("given a rename, when the map is updated, then the commit gets the old name and the new one and runs the write", async () => {
-        vi.spyOn(ConfigMap, "exists").mockResolvedValue(null as never)
+    it("given a name, when a map is created, then it is written to the database for the project", async () => {
+        const create = vi.spyOn(ConfigMap, "create").mockResolvedValue(map as never)
+
+        await new VariableMapService("configMap").create({ name: "orders" }, projectId)
+
+        expect(create.mock.calls[0][0]).toMatchObject({ name: "orders", entries: [], projectId: expect.anything() })
+    })
+
+    it("given a name already taken, when a map is created, then the unique index error is refused as VARIABLE_MAP_NAME_TAKEN", async () => {
+        vi.spyOn(ConfigMap, "create").mockRejectedValue({ code: 11000 })
+
+        await expect(new VariableMapService("configMap").create({ name: "orders" }, projectId)).rejects.toMatchObject({ code: "VARIABLE_MAP_NAME_TAKEN" })
+    })
+
+    it("given a name already taken, when a map is renamed, then the unique index error is refused as VARIABLE_MAP_NAME_TAKEN", async () => {
+        vi.spyOn(ConfigMap, "findByIdAndUpdate").mockRejectedValue({ code: 11000 })
+
+        await expect(new VariableMapService("configMap").update(mapId.toString(), { name: "billing" })).rejects.toMatchObject({ code: "VARIABLE_MAP_NAME_TAKEN" })
+    })
+
+    it("given a rename, when the map is updated, then the new name is written to the database", async () => {
         const write = vi.spyOn(ConfigMap, "findByIdAndUpdate").mockResolvedValue(map as never)
 
         await new VariableMapService("configMap").update(mapId.toString(), { name: "billing" })
 
-        expect(changes[0]).toMatchObject({ before: map, after: { name: "billing", entries: map.entries } })
-        expect(write).toHaveBeenCalled()
+        expect(write.mock.calls[0][1]).toEqual({ $set: { name: "billing" } })
     })
 
-    it("given a change of the description alone, when the map is updated, then nothing is committed", async () => {
-        vi.spyOn(ConfigMap, "findByIdAndUpdate").mockResolvedValue(map as never)
-
-        await new VariableMapService("configMap").update(mapId.toString(), { description: "Orders settings" })
-
-        expect(changes[0].after).toBeUndefined()
-    })
-
-    it("given a commit that does not go through, when the map is updated, then nothing is saved", async () => {
-        commit.mockRejectedValue(new Error("push refused"))
-        const write = vi.spyOn(ConfigMap, "findByIdAndUpdate").mockResolvedValue(map as never)
-
-        await expect(new VariableMapService("configMap").update(mapId.toString(), { entries: [] })).rejects.toThrow("push refused")
-        expect(write).not.toHaveBeenCalled()
-    })
-
-    it("given a map, when it is deleted, then the commit removes it", async () => {
+    it("given a map, when it is deleted, then it is removed from the database", async () => {
         vi.spyOn(ConfigMap, "findByIdAndDelete").mockResolvedValue(map as never)
 
         await new VariableMapService("configMap").delete(mapId.toString())
 
-        expect(changes[0]).toMatchObject({ before: map, after: null })
-    })
-
-    it("given a name already taken, when a map is created, then it is refused before any commit", async () => {
-        vi.spyOn(ConfigMap, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
-
-        await expect(new VariableMapService("configMap").create({ name: "orders" }, projectId)).rejects.toMatchObject({ code: "VARIABLE_MAP_NAME_TAKEN" })
-        expect(changes).toHaveLength(0)
+        expect(ConfigMap.findByIdAndDelete).toHaveBeenCalledWith(mapId)
     })
 })

@@ -66,6 +66,11 @@ export interface ScaffoldOptions {
      * `federationName(slug)`, the name a host configured by the console looks the remote up by.
      */
     microfrontendSlug?: string
+    /**
+     * False for a repository no pipeline of the console builds, as the GitOps one: on GitHub it gets no
+     * deploy secret, so no deploy key is issued for it.
+     */
+    deploySecret?: boolean
 }
 
 /**
@@ -155,7 +160,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             target.cloneUrlHttps = createdRepository.clone_url
             target.cloneUrlSsh = createdRepository.ssh_url
             // Now will inject api key
-            await this.gitHubInjectApiKey(codeRepository, slug, target.name)
+            if (options?.deploySecret !== false) await this.gitHubInjectApiKey(codeRepository, slug, target.name)
             // Now will inject the template
             if (template) {
                 await this.injectTemplateGithub(slug, codeRepository.accessToken, createdRepository.clone_url, "github", template, options)

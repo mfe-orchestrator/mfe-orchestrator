@@ -2,7 +2,7 @@ import { z } from "zod"
 import { VariableMapService } from "../../service/VariableMapService"
 import VariableMapDTO, { VARIABLE_MAP_NAME } from "../../types/VariableMapDTO"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE_EXTERNAL } from "../toolDefinition"
+import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 
 const configMapId = objectId("Id of the config map, from config_maps_list")
 const secretId = objectId("Id of the secret, from secrets_list")
@@ -25,8 +25,8 @@ const secrets = (principal: ConstructorParameters<typeof VariableMapService>[1])
 
 /**
  * The config maps and the secrets of the project, which its backend services and FRONTEND microfrontends
- * attach (configMapIds, secretIds). With GitOps on, every save is also committed to the project's
- * repository, hence the open world hints. Secrets are read with their values masked, and creating or
+ * attach (configMapIds, secretIds). A save stays in the console: with GitOps on, the maps reach the
+ * project's repository when an environment is deployed. Secrets are read with their values masked, and creating or
  * editing one stays in the console: its input is a secret, as for storages and databases.
  */
 export const variableMapTools = [
@@ -54,7 +54,7 @@ export const variableMapTools = [
         description:
             "Adds a config map to the project. Its values are readable by anyone who sees the project: put secrets in a secret, from the console. Attach it with service_update or microfrontend_update (configMapIds).",
         scope: MCP_SCOPE_WRITE,
-        annotations: WRITE_EXTERNAL,
+        annotations: WRITE,
         inputSchema: z.object({
             name: z.string().regex(VARIABLE_MAP_NAME, "at most 63 lowercase letters, digits or dashes, starting and ending with a letter or digit"),
             description: z.string().max(2000).optional(),
@@ -67,7 +67,7 @@ export const variableMapTools = [
         title: "Update config map",
         description: "Renames a config map or changes its description or its keys (replaced as a whole: read it first with config_map_get to keep the others).",
         scope: MCP_SCOPE_WRITE,
-        annotations: { ...WRITE_EXTERNAL, idempotentHint: true },
+        annotations: { ...WRITE, idempotentHint: true },
         inputSchema: z.object({
             configMapId,
             name: z.string().regex(VARIABLE_MAP_NAME, "at most 63 lowercase letters, digits or dashes, starting and ending with a letter or digit").optional(),
@@ -81,7 +81,7 @@ export const variableMapTools = [
         title: "Delete config map",
         description: "Deletes a config map of the project. Refused while a service or a FRONTEND microfrontend still attaches it.",
         scope: MCP_SCOPE_WRITE,
-        annotations: DESTRUCTIVE_EXTERNAL,
+        annotations: DESTRUCTIVE,
         inputSchema: z.object({ configMapId }),
         run: async (args, { principal }) => {
             await configMaps(principal).delete(args.configMapId)
@@ -111,7 +111,7 @@ export const variableMapTools = [
         title: "Delete secret",
         description: "Deletes a secret of the project with its values. Refused while a service or a FRONTEND microfrontend still attaches it.",
         scope: MCP_SCOPE_WRITE,
-        annotations: DESTRUCTIVE_EXTERNAL,
+        annotations: DESTRUCTIVE,
         inputSchema: z.object({ secretId }),
         run: async (args, { principal }) => {
             await secrets(principal).delete(args.secretId)

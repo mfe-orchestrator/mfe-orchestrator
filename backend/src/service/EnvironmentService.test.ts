@@ -17,7 +17,6 @@ import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import ServiceDeployment from "../models/ServiceDeploymentModel"
 import EnvironmentService from "./EnvironmentService"
-import GitOpsService from "./GitOpsService"
 
 const newId = () => new Types.ObjectId() as unknown as ObjectId
 
@@ -49,8 +48,6 @@ describe("EnvironmentService cascade on delete", () => {
 
     beforeEach(() => {
         calls = []
-        // The GitOps repository is aligned after the delete, and has its own tests
-        vi.spyOn(GitOpsService.prototype, "syncEnvironments").mockResolvedValue(undefined)
         vi.spyOn(Environment, "find").mockResolvedValue([] as never)
 
         const record = (model: string) => (filter: Record<string, unknown>) => {
