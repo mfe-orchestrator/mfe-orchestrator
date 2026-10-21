@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792606840.7024577,
-    "ast_hash": "81552f7af03a9c2c602bb07888b0d361",
+    "mtime": 1792607039.4645789,
+    "ast_hash": "a392f592b2af85d1f2d29f721436ca18",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792606840.7025568,
-    "ast_hash": "6708c42703a42e3d1a23f73b147f8138",
+    "mtime": 1792607039.4652324,
+    "ast_hash": "32aafa2e5d47126f18ba5e6b30b3ce72",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -4075,13 +4075,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/GitOpsService.test.ts": {
-    "mtime": 1792579927.4798481,
-    "ast_hash": "1c7c3844adf893ad51a7ee7dcf299bee",
+    "mtime": 1792607039.4656153,
+    "ast_hash": "7d2ce14953bd34408e97c640e5271035",
     "semantic_hash": ""
   },
   "backend/src/service/GitOpsService.ts": {
-    "mtime": 1792580390.9869914,
-    "ast_hash": "b154e88bfb2172ec93fc8a53052be9c7",
+    "mtime": 1792607028.4772904,
+    "ast_hash": "12c649ffa4312b58338be860eded850c",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useGitOpsErrorMessage.ts": {
@@ -4115,8 +4115,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/GitOpsService.git.test.ts": {
-    "mtime": 1792579930.9414954,
-    "ast_hash": "be038e2b0ce27c5486ae2a449d792eb9",
+    "mtime": 1792607028.4785147,
+    "ast_hash": "f891a6cf47d14d68168bf3da0ea92ab8",
     "semantic_hash": ""
   },
   "backend/src/service/MicrofrontendService.kind.test.ts": {
@@ -4295,8 +4295,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/gitops/argoCdManifests.test.ts": {
-    "mtime": 1792580694.6097527,
-    "ast_hash": "bd9934dbeb9bf5895771026a8aa0c6cc",
+    "mtime": 1792607028.4789202,
+    "ast_hash": "96a723fab21ef137aaf99260880a8025",
     "semantic_hash": ""
   },
   "backend/src/service/gitops/argoCdManifests.ts": {
@@ -4315,8 +4315,8 @@
     "semantic_hash": ""
   },
   "docs/ARGOCD.md": {
-    "mtime": 1792606670.5182655,
-    "ast_hash": "99bd768cf4387a874e6fc1e34c1c19ea",
+    "mtime": 1792607039.4637911,
+    "ast_hash": "b5b84017d2ae3a695ad77f3b4fb988d8",
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/partials/DeploymentServiceCard.tsx": {

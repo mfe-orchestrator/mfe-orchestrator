@@ -24,7 +24,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryImportService from "./CodeRepositoryImportService"
 import CodeRepositoryService from "./CodeRepositoryService"
 import { applicationValuesPath, CHART_FILES, GitOpsApplication, isDeployable, renderApplicationValues } from "./gitops/applicationManifests"
-import { applicationListener, EnvironmentGateway, GATEWAYS_FOLDER, gatewayName, HTTPS_LISTENER, renderGateway } from "./gitops/gatewayManifests"
+import { applicationListener, EnvironmentGateway, gatewayName, HTTPS_LISTENER, renderGateway } from "./gitops/gatewayManifests"
 import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
 import { isValidRepositoryName } from "./RepositoryRenameService"
 import { CodeRepositoryTarget, TemplateScaffoldService } from "./TemplateScaffoldService"
@@ -55,11 +55,14 @@ export interface CommittedVariableMap {
     entries: Array<{ key: string; values?: Array<{ environmentId: unknown; value?: string }> }>
 }
 
-/** The folder of each kind at the root of the repository, then one folder per environment slug */
+/** The folder of each kind inside the folder of the environment, named as its slug at the root of the repository */
 export const GITOPS_FOLDER: Record<VariableMapKind, string> = { configMap: "configMaps", secret: "secrets" }
 
-/** The Namespace manifest of every environment, in a file named after its slug */
-export const NAMESPACES_FOLDER = "namespaces"
+/** The Namespace manifest of every environment, in the folder of the environment */
+export const NAMESPACE_FILE = "namespace.yaml"
+
+/** The Gateway of the environment, its Certificate and its redirect to HTTPS, in the folder of the environment */
+export const GATEWAY_FILE = "gateway.yaml"
 
 /** Local branch the commit is made on before it is pushed onto the default one */
 const GITOPS_BRANCH = "mfe-orchestrator-gitops"
@@ -104,15 +107,11 @@ export const environmentNamespace = (environment: Pick<IEnvironment, "slug" | "n
     return environment.namespace
 }
 
-export const gitOpsFilePath = (kind: VariableMapKind, environment: Pick<IEnvironment, "slug">, name: string) => `${GITOPS_FOLDER[kind]}/${environmentSlug(environment)}/${name}.yaml`
+export const gitOpsFilePath = (kind: VariableMapKind, environment: Pick<IEnvironment, "slug">, name: string) => `${environmentSlug(environment)}/${GITOPS_FOLDER[kind]}/${name}.yaml`
 
-export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `${NAMESPACES_FOLDER}/${environmentSlug(environment)}.yaml`
+export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `${environmentSlug(environment)}/${NAMESPACE_FILE}`
 
-export const gatewayFilePath = (environment: Pick<IEnvironment, "slug">) => `${GATEWAYS_FOLDER}/${environmentSlug(environment)}.yaml`
-
-/** The manifests of one environment in the configuration repository, as a glob: its Namespace, its Gateway, its config maps and its secrets */
-export const environmentManifestsGlob = (environment: Pick<IEnvironment, "slug">) =>
-    `{${[namespaceFilePath(environment), gatewayFilePath(environment), ...Object.values(GITOPS_FOLDER).map(folder => `${folder}/${environmentSlug(environment)}/*.yaml`)].join(",")}}`
+export const gatewayFilePath = (environment: Pick<IEnvironment, "slug">) => `${environmentSlug(environment)}/${GATEWAY_FILE}`
 
 /** A project as its Gateways are named and exposed */
 type ExposedProject = { _id: unknown; slug: string; exposure?: { domain: string; certificateIssuer?: string } }
@@ -194,10 +193,10 @@ const GITOPS_README: Record<GitOpsRepositoryKind, string> = {
 
 Committed by MFE Orchestrator every time environments of the project are deployed, for each of them:
 
-- \`namespaces/<environment>.yaml\`: the Namespace of the environment, named as set on it or as its slug in lowercase
-- \`gateways/<environment>.yaml\`: when the project has a domain, the Traefik Gateway answering on the host of the environment, its cert-manager Certificate and the redirect to HTTPS
-- \`configMaps/<environment>/<name>.yaml\`: the ConfigMaps, in that namespace
-- \`secrets/<environment>/<name>.yaml\`: the Secrets, in that namespace, values base64 encoded (not encrypted)
+- \`<environment>/namespace.yaml\`: the Namespace of the environment, named as set on it or as its slug in lowercase
+- \`<environment>/gateway.yaml\`: when the project has a domain, the Traefik Gateway answering on the host of the environment, its cert-manager Certificate and the redirect to HTTPS
+- \`<environment>/configMaps/<name>.yaml\`: the ConfigMaps, in that namespace
+- \`<environment>/secrets/<name>.yaml\`: the Secrets, in that namespace, values base64 encoded (not encrypted)
 
 Do not edit these manifests here: the next deploy of the environment overwrites them.
 `,
@@ -228,15 +227,16 @@ interface GitOpsFile {
  */
 type Commit = (message: string, files: GitOpsFile[], options?: { branch?: string; prune?: (path: string) => boolean }) => Promise<GitOpsFile[]>
 
-/** The environment slug a manifest belongs to: `namespaces/<slug>.yaml`, `gateways/<slug>.yaml`, or `<kind folder>/<slug>/<name>.yaml` */
-const environmentOfPath = (path: string): string => {
-    const [folder, second = ""] = path.split("/")
-    return folder === NAMESPACES_FOLDER || folder === GATEWAYS_FOLDER ? second.replace(/\.yaml$/, "") : second
+/** The environment slug a manifest belongs to: the folder it is in at the root */
+const environmentOfPath = (path: string): string => path.split("/")[0]
+
+const KIND_FOLDERS = new Set(Object.values(GITOPS_FOLDER))
+
+/** `<slug>/namespace.yaml`, `<slug>/gateway.yaml`, or `<slug>/<kind folder>/<name>.yaml` */
+const isConfigurationManifest = (path: string) => {
+    const [, second, third, ...rest] = path.split("/")
+    return rest.length === 0 && (third === undefined ? second === NAMESPACE_FILE || second === GATEWAY_FILE : KIND_FOLDERS.has(second) && third.endsWith(".yaml"))
 }
-
-const CONFIGURATION_FOLDERS = [...Object.values(GITOPS_FOLDER), NAMESPACES_FOLDER, GATEWAYS_FOLDER].map(folder => `${folder}/`)
-
-const isConfigurationManifest = (path: string) => path.endsWith(".yaml") && CONFIGURATION_FOLDERS.some(folder => path.startsWith(folder))
 
 /** A map as it is read for a deploy: its id is how services and frontends attach it */
 type DeployedMap = CommittedVariableMap & { _id: unknown }
@@ -268,8 +268,8 @@ const revertingOnFailure = async <T>(next: () => Promise<T>, revert: () => Promi
 
 /**
  * Commits what the deploys of a project ship to the repositories picked in its settings. The configuration
- * one gets the Namespace of each deployed environment, `namespaces/<environment>.yaml`, and its config maps
- * and secrets, `configMaps/<environment>/<name>.yaml` and `secrets/<environment>/<name>.yaml`, on its default
+ * one gets the Namespace of each deployed environment, `<environment>/namespace.yaml`, and its config maps
+ * and secrets, `<environment>/configMaps/<name>.yaml` and `<environment>/secrets/<name>.yaml`, on its default
  * branch. The applications one, when there is one, gets on the branch of each deployed environment the Helm
  * values of every service and frontend, `<application>.yaml`, and the chart they are installed with. Saving a
  * map or an environment commits nothing: the repositories say what is deployed.

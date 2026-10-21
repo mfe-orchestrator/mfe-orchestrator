@@ -5,16 +5,18 @@ import {
     buildApplicationSet,
     buildAppProject,
     buildArgoCdState,
-    buildConfigurationApplication,
+    buildEnvironmentsApplicationSet,
     COMPONENT_LABEL,
-    configurationApplicationName,
+    ENVIRONMENT_LABEL,
+    environmentApplicationName,
+    environmentsApplicationSetName,
     IN_CLUSTER_SERVER,
     MANAGED_BY_LABEL,
     PROJECT_ID_LABEL
 } from "./argoCdManifests"
 
-const development = { slug: "development", namespace: "development", manifestsGlob: "{namespaces/development.yaml,configMaps/development/*.yaml,secrets/development/*.yaml}" }
-const production = { slug: "production", namespace: "prod", manifestsGlob: "{namespaces/production.yaml,configMaps/production/*.yaml,secrets/production/*.yaml}" }
+const development = { slug: "development", namespace: "development" }
+const production = { slug: "production", namespace: "prod" }
 const projectId = "64b000000000000000000001"
 const target = {
     projectId,
@@ -33,21 +35,22 @@ describe("names", () => {
     })
 
     it("given an environment, when its objects are named, then the parts are separated by dots", () => {
-        expect(configurationApplicationName(projectId, "shop", "production")).toBe(`${PROJECT_NAME}.production.config`)
+        expect(environmentApplicationName(projectId, "shop", "production")).toBe(`${PROJECT_NAME}.production`)
+        expect(environmentsApplicationSetName(projectId, "shop")).toBe(`${PROJECT_NAME}.environments`)
         expect(applicationSetName(projectId, "shop", "production")).toBe(`${PROJECT_NAME}.production.applications`)
     })
 
     it("given two projects whose slug and environment join the same way, when they are named, then the names differ", () => {
         const other = "64b000000000000000000002"
 
-        expect(configurationApplicationName(projectId, "shop-eu", "prod")).not.toBe(configurationApplicationName(other, "shop", "eu-prod"))
-        expect(configurationApplicationName(projectId, "shop-eu", "prod")).not.toBe(configurationApplicationName(projectId, "shop", "eu-prod"))
+        expect(environmentApplicationName(projectId, "shop-eu", "prod")).not.toBe(environmentApplicationName(other, "shop", "eu-prod"))
+        expect(environmentApplicationName(projectId, "shop-eu", "prod")).not.toBe(environmentApplicationName(projectId, "shop", "eu-prod"))
     })
 
     it("given slugs with characters Kubernetes refuses or too long, when they are named, then the names are valid and fit 63", () => {
         const names = [
             appProjectName(projectId, `My_Shop ${"a".repeat(80)}`),
-            configurationApplicationName(projectId, "a".repeat(80), "B".repeat(63)),
+            environmentApplicationName(projectId, "a".repeat(80), "B".repeat(63)),
             applicationSetName(projectId, "shop", "x".repeat(63))
         ]
 
@@ -58,7 +61,7 @@ describe("names", () => {
     })
 
     it("given two long environments that differ after the cut, when they are named, then they stay apart", () => {
-        expect(configurationApplicationName(projectId, "shop", `${"a".repeat(60)}-1`)).not.toBe(configurationApplicationName(projectId, "shop", `${"a".repeat(60)}-2`))
+        expect(environmentApplicationName(projectId, "shop", `${"a".repeat(60)}-1`)).not.toBe(environmentApplicationName(projectId, "shop", `${"a".repeat(60)}-2`))
     })
 })
 
@@ -83,19 +86,40 @@ describe("buildAppProject", () => {
     })
 })
 
-describe("buildConfigurationApplication", () => {
-    const application = buildConfigurationApplication(target, production)
+describe("buildEnvironmentsApplicationSet", () => {
+    const applicationSet = buildEnvironmentsApplicationSet(target)
 
-    it("given an environment, when its configuration Application is built, then it is labelled after the project and the environment", () => {
-        expect(application.metadata.name).toBe(configurationApplicationName(projectId, "shop", "production"))
-        expect(application.metadata.labels).toMatchObject({ [PROJECT_ID_LABEL]: projectId, [COMPONENT_LABEL]: "configuration" })
+    it("given a project, when the ApplicationSet of its environments is built, then it is one for the project, labelled after it", () => {
+        expect(applicationSet.metadata.name).toBe(environmentsApplicationSetName(projectId, "shop"))
+        expect(applicationSet.metadata.labels).toEqual({ [MANAGED_BY_LABEL]: "mfe-orchestrator", [PROJECT_ID_LABEL]: projectId, [COMPONENT_LABEL]: "configuration" })
     })
 
-    it("given an environment, when its configuration Application is built, then it syncs only the manifests of the environment into its namespace", () => {
-        expect(application.spec).toEqual({
+    it("given two environments, when the ApplicationSet is built, then it lists them, not the repository, with the name, folder and namespace of each", () => {
+        expect(applicationSet.spec.generators).toEqual([
+            {
+                list: {
+                    elements: [
+                        { name: environmentApplicationName(projectId, "shop", "development"), slug: "development", namespace: "development" },
+                        { name: environmentApplicationName(projectId, "shop", "production"), slug: "production", namespace: "prod" }
+                    ]
+                }
+            }
+        ])
+    })
+
+    it("given an environment that leaves the list, when Argo CD deletes its Application, then what it deployed stays", () => {
+        expect(applicationSet.spec.syncPolicy).toEqual({ preserveResourcesOnDeletion: true })
+    })
+
+    it("given an environment, when its Application is generated, then it syncs the folder of the environment from the configuration repository into its namespace", () => {
+        expect(applicationSet.spec.template.metadata).toEqual({
+            name: "{{ .name }}",
+            labels: { [MANAGED_BY_LABEL]: "mfe-orchestrator", [PROJECT_ID_LABEL]: projectId, [ENVIRONMENT_LABEL]: "{{ .slug }}", [COMPONENT_LABEL]: "environment" }
+        })
+        expect(applicationSet.spec.template.spec).toEqual({
             project: PROJECT_NAME,
-            source: { repoURL: target.configurationRepoUrl, targetRevision: "HEAD", path: ".", directory: { recurse: true, include: production.manifestsGlob } },
-            destination: { server: IN_CLUSTER_SERVER, namespace: "prod" },
+            source: { repoURL: target.configurationRepoUrl, targetRevision: "HEAD", path: "{{ .slug }}", directory: { recurse: true } },
+            destination: { server: IN_CLUSTER_SERVER, namespace: "{{ .namespace }}" },
             syncPolicy: { automated: { prune: true, selfHeal: true } }
         })
     })
@@ -124,9 +148,9 @@ describe("buildApplicationSet", () => {
         expect(applicationSet.spec.syncPolicy).toEqual({ applicationsSync: "create-update" })
     })
 
-    it("given an environment, when its ApplicationSet is built, then a generated application can never take the name of the configuration Application", () => {
+    it("given an environment, when its ApplicationSet is built, then a generated application can never take the name of the Application of the environment", () => {
         expect(templateName.startsWith(`${PROJECT_NAME}.production.app.`)).toBe(true)
-        expect(configurationApplicationName(projectId, "shop", "production").startsWith(`${PROJECT_NAME}.production.app.`)).toBe(false)
+        expect(environmentApplicationName(projectId, "shop", "production").startsWith(`${PROJECT_NAME}.production.app.`)).toBe(false)
     })
 
     it("given an environment, when its ApplicationSet is built, then the slug in the name of a generated application is cut and hashed past what fits 63", () => {
@@ -154,35 +178,41 @@ describe("buildApplicationSet", () => {
 })
 
 describe("buildArgoCdState", () => {
-    it("given both repositories, when the state is built, then each environment has a configuration Application and an ApplicationSet", () => {
+    it("given both repositories, when the state is built, then there is the ApplicationSet of the environments and one per environment", () => {
         const state = buildArgoCdState(target)
 
         expect(state.appProject.metadata.name).toBe(PROJECT_NAME)
-        expect(state.applications.map(application => application.metadata.name)).toEqual([
-            configurationApplicationName(projectId, "shop", "development"),
-            configurationApplicationName(projectId, "shop", "production")
-        ])
+        expect(state.environmentApplications).toEqual([environmentApplicationName(projectId, "shop", "development"), environmentApplicationName(projectId, "shop", "production")])
         expect(state.applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([
+            environmentsApplicationSetName(projectId, "shop"),
             applicationSetName(projectId, "shop", "development"),
             applicationSetName(projectId, "shop", "production")
         ])
     })
 
-    it("given no applications repository, when the state is built, then there is no ApplicationSet", () => {
-        expect(buildArgoCdState({ ...target, applicationsRepoUrl: undefined }).applicationSets).toEqual([])
+    it("given no applications repository, when the state is built, then the ApplicationSet of the environments is the only one", () => {
+        expect(buildArgoCdState({ ...target, applicationsRepoUrl: undefined }).applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([
+            environmentsApplicationSetName(projectId, "shop")
+        ])
     })
 
     it("given an environment slug in uppercase, when the state is built, then the names are lowercase and the branch and the folders keep the slug", () => {
-        const environment = { slug: "DEV", namespace: "dev", manifestsGlob: "{namespaces/DEV.yaml,configMaps/DEV/*.yaml,secrets/DEV/*.yaml}" }
-        const state = buildArgoCdState({ ...target, environments: [environment] })
+        const state = buildArgoCdState({ ...target, environments: [{ slug: "DEV", namespace: "dev" }] })
+        const [environments, applications] = state.applicationSets
 
-        expect(state.applications[0].metadata.name).toBe(`${PROJECT_NAME}.dev.config`)
-        expect(state.applications[0].spec.source.directory.include).toBe(environment.manifestsGlob)
-        expect(state.applicationSets[0].spec.generators[0].git.revision).toBe("DEV")
-        expect(state.applicationSets[0].spec.template.metadata.name.startsWith(`${PROJECT_NAME}.dev.app.`)).toBe(true)
+        expect(state.environmentApplications).toEqual([`${PROJECT_NAME}.dev`])
+        expect((environments.spec.generators[0] as { list?: { elements: unknown } }).list?.elements).toEqual([{ name: `${PROJECT_NAME}.dev`, slug: "DEV", namespace: "dev" }])
+        expect((applications.spec.generators[0] as { git?: { revision: string } }).git?.revision).toBe("DEV")
+        expect(applications.spec.template.metadata.name.startsWith(`${PROJECT_NAME}.dev.app.`)).toBe(true)
     })
 
-    it("given no configuration repository, when the state is built, then there is no configuration Application", () => {
-        expect(buildArgoCdState({ ...target, configurationRepoUrl: undefined }).applications).toEqual([])
+    it("given no configuration repository, when the state is built, then there is no ApplicationSet of the environments", () => {
+        const state = buildArgoCdState({ ...target, configurationRepoUrl: undefined })
+
+        expect(state.environmentApplications).toEqual([])
+        expect(state.applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([
+            applicationSetName(projectId, "shop", "development"),
+            applicationSetName(projectId, "shop", "production")
+        ])
     })
 })

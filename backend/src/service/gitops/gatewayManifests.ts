@@ -21,8 +21,6 @@ export const GATEWAY_HTTPS_PORT = 8443
 export const HTTP_LISTENER = "http"
 export const HTTPS_LISTENER = "https"
 
-export const GATEWAYS_FOLDER = "gateways"
-
 /** What is exposed of one environment of a project */
 export interface EnvironmentGateway {
     /** The Gateway, named after the project: two projects sharing a namespace do not take each other's */

@@ -12,7 +12,7 @@ import Environment from "../models/EnvironmentModel"
 import Project, { IArgoCdRepositoryCredential, IProjectArgoCd } from "../models/ProjectModel"
 import ArgoCdService from "./ArgoCdService"
 import GitOpsService, { renderNamespace } from "./GitOpsService"
-import { applicationSetName, appProjectName, configurationApplicationName, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
+import { applicationSetName, appProjectName, environmentApplicationName, environmentsApplicationSetName, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
 
 const projectId = new Types.ObjectId()
 const gitlabConnectionId = new Types.ObjectId()
@@ -31,7 +31,8 @@ const ARGO_URL = "https://argocd.example.com"
 const CONFIG_REPO = "https://gitlab.example.com/acme/shop-config.git"
 const APPS_REPO = "https://github.com/acme/shop-apps.git"
 const PROJECT_NAME = appProjectName(String(projectId), "shop")
-const configName = (environment: string) => configurationApplicationName(String(projectId), "shop", environment)
+const environmentName = (environment: string) => environmentApplicationName(String(projectId), "shop", environment)
+const ENVIRONMENTS_SET = environmentsApplicationSetName(String(projectId), "shop")
 const applicationSetNameOf = (environment: string) => applicationSetName(String(projectId), "shop", environment)
 
 /** Every call to Argo CD and to GitLab, in the order it was made */
@@ -116,9 +117,6 @@ beforeEach(() => {
     })
     vi.spyOn(ArgoCdClient.prototype, "deleteRepository").mockImplementation(async (repo, project) => {
         calls.push(`argo:deleteRepository:${repo}:${project ?? "global"}`)
-    })
-    vi.spyOn(ArgoCdClient.prototype, "upsertApplication").mockImplementation(async application => {
-        calls.push(`argo:upsertApplication:${application.metadata.name}`)
     })
     vi.spyOn(ArgoCdClient.prototype, "upsertApplicationSet").mockImplementation(async applicationSet => {
         calls.push(`argo:upsertApplicationSet:${applicationSet.metadata.name}`)
@@ -206,7 +204,7 @@ describe("ArgoCdService.initialize", () => {
         await expect(initialize()).rejects.toMatchObject({ code: "ARGOCD_LEASE_LOST", statusCode: 409 })
 
         expect(calls).toContain("gitlab:revokeDeployToken:101:8")
-        expect(calls.some(call => call.startsWith("argo:upsertApplication"))).toBe(false)
+        expect(calls.some(call => call.startsWith("argo:upsertApplicationSet"))).toBe(false)
     })
 
     it("given a GitLab repository with a deploy token, when it is initialized again, then a new token is created, handed to Argo CD and only then the old one revoked", async () => {
@@ -258,7 +256,7 @@ describe("ArgoCdService.initialize", () => {
     })
 
     it("given a credential handed to Argo CD, when a later step fails, then it was stored before the failure", async () => {
-        vi.mocked(ArgoCdClient.prototype.upsertApplication).mockRejectedValue(new Error("boom"))
+        vi.mocked(ArgoCdClient.prototype.upsertApplicationSet).mockRejectedValue(new Error("boom"))
 
         await expect(initialize()).rejects.toThrow("boom")
 
@@ -267,28 +265,40 @@ describe("ArgoCdService.initialize", () => {
     })
 
     it("given the failure cannot be stored, when it is initialized, then the original error goes on", async () => {
-        vi.mocked(ArgoCdClient.prototype.upsertApplication).mockRejectedValue(new Error("boom"))
+        vi.mocked(ArgoCdClient.prototype.upsertApplicationSet).mockRejectedValue(new Error("boom"))
         vi.mocked(Project.updateOne).mockImplementation(((_filter: unknown, update: { $set?: { argoCd: IProjectArgoCd } }) =>
             update.$set?.argoCd.lastError ? Promise.reject(new Error("database down")) : Promise.resolve({ matchedCount: 1 })) as never)
 
         await expect(initialize()).rejects.toThrow("boom")
     })
 
-    it("given an environment deleted since, when it is initialized again, then its Application and ApplicationSet are deleted and the generated applications are left alone", async () => {
-        applications = [resource(configName("development")), resource(configName("staging"))]
+    it("given an environment deleted since, when it is initialized again, then its ApplicationSet is deleted and the generated applications are left alone", async () => {
         applicationSets = [
+            resource(ENVIRONMENTS_SET, { template: { spec: { project: PROJECT_NAME } } }),
             resource(applicationSetNameOf("production"), { template: { spec: { project: PROJECT_NAME } } }),
             resource(applicationSetNameOf("staging"), { template: { spec: { project: PROJECT_NAME } } })
         ]
 
         await initialize()
 
-        expect(calls.filter(call => call.startsWith("argo:delete"))).toEqual([`argo:deleteApplication:${configName("staging")}`, `argo:deleteApplicationSet:${applicationSetNameOf("staging")}`])
+        expect(calls.filter(call => call.startsWith("argo:delete"))).toEqual([`argo:deleteApplicationSet:${applicationSetNameOf("staging")}`])
+        expect(ArgoCdClient.prototype.listApplicationSets).toHaveBeenCalledWith(`${PROJECT_ID_LABEL}=${projectId}`, PROJECT_NAME)
+    })
+
+    it("given the configuration Applications an earlier initialization made per environment, when it is initialized again, then they are deleted", async () => {
+        applications = [resource(`${environmentName("development")}.config`), resource(`${environmentName("staging")}.config`)]
+
+        await initialize()
+
+        expect(calls.filter(call => call.startsWith("argo:deleteApplication:"))).toEqual([
+            `argo:deleteApplication:${environmentName("development")}.config`,
+            `argo:deleteApplication:${environmentName("staging")}.config`
+        ])
         expect(ArgoCdClient.prototype.listApplications).toHaveBeenCalledWith(`${PROJECT_ID_LABEL}=${projectId},mfe-orchestrator/component=configuration`, PROJECT_NAME)
     })
 
     it("given a labelled Application of another AppProject, when it is initialized, then it is not deleted", async () => {
-        applications = [resource(configName("staging"), { project: "someone-else" })]
+        applications = [resource(`${environmentName("staging")}.config`, { project: "someone-else" })]
 
         await initialize()
 
@@ -332,14 +342,17 @@ describe("ArgoCdService.initialize", () => {
         expect(calls.some(call => call.startsWith("argo:upsert") || call.startsWith("gitlab:"))).toBe(false)
     })
 
-    it("given a project, when it is initialized, then each environment gets its Application and its ApplicationSet", async () => {
+    it("given a project, when it is initialized, then the console makes no Application: the ApplicationSet of the environments and one per environment", async () => {
         await initialize()
 
+        expect(calls.filter(call => call.startsWith("argo:upsertApplication"))).toEqual([
+            `argo:upsertApplicationSet:${ENVIRONMENTS_SET}`,
+            `argo:upsertApplicationSet:${applicationSetNameOf("development")}`,
+            `argo:upsertApplicationSet:${applicationSetNameOf("production")}`
+        ])
         expect(calls).toEqual(
             expect.arrayContaining([
                 `argo:upsertProject:${PROJECT_NAME}`,
-                `argo:upsertApplication:${configName("development")}`,
-                `argo:upsertApplication:${configName("production")}`,
                 `argo:upsertApplicationSet:${applicationSetNameOf("development")}`,
                 `argo:upsertApplicationSet:${applicationSetNameOf("production")}`
             ])

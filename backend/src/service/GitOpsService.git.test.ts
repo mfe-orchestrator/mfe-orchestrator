@@ -117,8 +117,8 @@ describe.skipIf(!hasGit)("GitOpsService against a local smart HTTP remote", () =
 
         expect(await deployProduction()).toBe("deployed")
 
-        expect(parse(show("namespaces/production.yaml"))).toMatchObject({ kind: "Namespace", metadata: { name: "production" } })
-        expect(parse(show("secrets/production/database.yaml")).data).toEqual({ DATABASE_PASSWORD: base64("first") })
+        expect(parse(show("production/namespace.yaml"))).toMatchObject({ kind: "Namespace", metadata: { name: "production" } })
+        expect(parse(show("production/secrets/database.yaml")).data).toEqual({ DATABASE_PASSWORD: base64("first") })
         expect(log()[0]).toBe("Deploy production")
         expect(fs.readdirSync(remote.root, { recursive: true }).some(entry => String(entry).endsWith("variables.gitops"))).toBe(false)
         expect(fs.readdirSync(remote.root, { recursive: true }).some(entry => String(entry).endsWith("config.gitops"))).toBe(false)
@@ -130,7 +130,7 @@ describe.skipIf(!hasGit)("GitOpsService against a local smart HTTP remote", () =
         await expect(deployProduction(() => Promise.reject(new Error("rollout failed")))).rejects.toThrow("rollout failed")
 
         expect(log().slice(0, 2)).toEqual(["Revert: deploy production", "Deploy production"])
-        expect(parse(show("secrets/production/database.yaml")).data).toEqual({ DATABASE_PASSWORD: base64("first") })
+        expect(parse(show("production/secrets/database.yaml")).data).toEqual({ DATABASE_PASSWORD: base64("first") })
     })
 
     describe("with an applications repository", () => {

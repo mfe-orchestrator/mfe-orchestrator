@@ -16,7 +16,7 @@ Traefik and the applications.
 
 | Repository | File | Content |
 |---|---|---|
-| Configuration | `gateways/<environment>.yaml` | The `Gateway` of the environment, on its host: an `http` listener and, with an issuer, an `https` one, the `Certificate` it serves and an `HTTPRoute` redirecting `http` to `https` |
+| Configuration | `<environment>/gateway.yaml` | The `Gateway` of the environment, on its host: an `http` listener and, with an issuer, an `https` one, the `Certificate` it serves and an `HTTPRoute` redirecting `http` to `https` |
 | Applications, branch of the environment | `<application>.yaml` | `route:` with the Gateway, the listener and the path |
 | Applications, branch of the environment | `microservice-chart/templates/httproute.yaml` | The `HTTPRoute` of an application, written once like the rest of the chart |
 
@@ -50,8 +50,8 @@ Two applications of the project at the same path, `/api` and `/api/` included, r
 answers carry `Strict-Transport-Security: max-age=31536000`, without `includeSubDomains`, as an environment
 on the domain itself would otherwise force HTTPS on every host under it.
 
-Argo CD picks up `gateways/` only once its configuration Applications include it: initialize Argo CD again
-from the settings after upgrading.
+The Application Argo CD has for each environment syncs its whole folder, so the Gateway is applied with the
+rest: nothing to set up again.
 
 ## Moving off one Kong per environment
 
