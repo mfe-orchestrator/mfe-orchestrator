@@ -75,8 +75,10 @@ describe("renderManifest", () => {
         })
     })
 
-    it("given a secret, when it is rendered, then it is an Opaque Secret carrying the values as stringData", () => {
-        expect(parse(renderManifest("secret", map, String(production)))).toMatchObject({ kind: "Secret", type: "Opaque", stringData: { LOG_LEVEL: "info", FEATURE_X: "true" } })
+    it("given a secret, when it is rendered, then it is an Opaque Secret carrying the values base64 encoded as data", () => {
+        const manifest = parse(renderManifest("secret", map, String(production)))
+        expect(manifest).toMatchObject({ kind: "Secret", type: "Opaque", data: { LOG_LEVEL: "aW5mbw==", FEATURE_X: "dHJ1ZQ==" } })
+        expect(manifest.stringData).toBeUndefined()
     })
 
     it("given a value YAML would read as another type, when it is rendered, then it stays a string", () => {

@@ -58,10 +58,10 @@ export const projectAdminTools = [
         name: "project_gitops_set",
         title: "Set GitOps repository",
         description:
-            "Switches GitOps on or off for the project. When on, every deploy commits to a repository, as Kubernetes manifests, the Namespace of each deployed environment and every config map and secret of the project as they are in it; saving a map or an environment commits nothing. Secret values are committed in plaintext: say so to the user. Pass repositoryId to commit to an existing repository, or newRepositoryName to have a private one created through the connection. Only an owner of the project (or an administrator of its organization) can do it. Switched off, nothing more is committed and the repository is remembered. The current setting is in project_get (gitOps).",
+            "Switches GitOps on or off for the project. When on, every deploy commits to a repository, as Kubernetes manifests, the Namespace of each deployed environment and every config map and secret of the project as they are in it; saving a map or an environment commits nothing. Secret values are committed base64 encoded, which is not encryption: anyone who can read the repository can decode them, say so to the user. Pass repositoryId to commit to an existing repository, or newRepositoryName to have a private one created through the connection. Only an owner of the project (or an administrator of its organization) can do it. Switched off, nothing more is committed and the repository is remembered. The current setting is in project_get (gitOps).",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
-        // Pushes every config map and secret of the project, values in plaintext, to a repository: confirmed by the user
+        // Pushes every config map and secret of the project, values only base64 encoded, to a repository: confirmed by the user
         requiresConfirmation: true,
         annotations: WRITE_EXTERNAL,
         inputSchema: z

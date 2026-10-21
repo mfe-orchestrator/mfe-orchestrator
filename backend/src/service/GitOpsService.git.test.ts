@@ -108,6 +108,7 @@ describe.skipIf(!hasGit)("GitOpsService against a local smart HTTP remote", () =
     })
 
     const secret = (password: string) => ({ _id: new Types.ObjectId(), name: "database", entries: [{ key: "DATABASE_PASSWORD", values: [{ environmentId: String(production), value: password }] }] })
+    const base64 = (value: string) => Buffer.from(value).toString("base64")
     const withSecret = (password: string) => vi.spyOn(Secret, "find").mockResolvedValue([secret(password)] as never)
     const deployProduction = (task: () => Promise<unknown> = async () => "deployed") => new GitOpsService().deploy([production] as never, task)
 
@@ -117,7 +118,7 @@ describe.skipIf(!hasGit)("GitOpsService against a local smart HTTP remote", () =
         expect(await deployProduction()).toBe("deployed")
 
         expect(parse(show("namespaces/production.yaml"))).toMatchObject({ kind: "Namespace", metadata: { name: "production" } })
-        expect(parse(show("secrets/production/database.yaml")).stringData).toEqual({ DATABASE_PASSWORD: "first" })
+        expect(parse(show("secrets/production/database.yaml")).data).toEqual({ DATABASE_PASSWORD: base64("first") })
         expect(log()[0]).toBe("Deploy production")
         expect(fs.readdirSync(remote.root, { recursive: true }).some(entry => String(entry).endsWith("variables.gitops"))).toBe(false)
         expect(fs.readdirSync(remote.root, { recursive: true }).some(entry => String(entry).endsWith("config.gitops"))).toBe(false)
@@ -129,7 +130,7 @@ describe.skipIf(!hasGit)("GitOpsService against a local smart HTTP remote", () =
         await expect(deployProduction(() => Promise.reject(new Error("rollout failed")))).rejects.toThrow("rollout failed")
 
         expect(log().slice(0, 2)).toEqual(["Revert: deploy production", "Deploy production"])
-        expect(parse(show("secrets/production/database.yaml")).stringData).toEqual({ DATABASE_PASSWORD: "first" })
+        expect(parse(show("secrets/production/database.yaml")).data).toEqual({ DATABASE_PASSWORD: base64("first") })
     })
 
     describe("with an applications repository", () => {

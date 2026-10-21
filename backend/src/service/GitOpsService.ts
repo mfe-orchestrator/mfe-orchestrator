@@ -108,8 +108,9 @@ export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `$
 
 /**
  * The Kubernetes manifest of a map in one environment. A key with no value there is left out, as the
- * container would not get it. Secrets go as `stringData`: the values are in plaintext in the repository,
- * which is what the project asked for by turning GitOps on. With `namespace` the manifest says where it goes.
+ * container would not get it. Secrets go as `data`, base64 encoded: encoded, not encrypted, so anyone who
+ * reads the repository can decode them, which is what the project asked for by turning GitOps on. With
+ * `namespace` the manifest says where it goes.
  */
 export const renderManifest = (kind: VariableMapKind, map: CommittedVariableMap, environmentId: string, namespace?: string): string => {
     const data: Record<string, string> = {}
@@ -118,7 +119,10 @@ export const renderManifest = (kind: VariableMapKind, map: CommittedVariableMap,
         if (value !== undefined && value !== "") data[entry.key] = value
     }
     const metadata = { name: map.name, ...(namespace ? { namespace } : {}), labels: { [MANAGED_BY_LABEL]: MANAGED_BY } }
-    const manifest = kind === "secret" ? { apiVersion: "v1", kind: "Secret", metadata, type: "Opaque", stringData: data } : { apiVersion: "v1", kind: "ConfigMap", metadata, data }
+    const manifest =
+        kind === "secret"
+            ? { apiVersion: "v1", kind: "Secret", metadata, type: "Opaque", data: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, Buffer.from(value).toString("base64")])) }
+            : { apiVersion: "v1", kind: "ConfigMap", metadata, data }
     return stringify(manifest)
 }
 
@@ -134,7 +138,7 @@ Committed by MFE Orchestrator every time environments of the project are deploye
 
 - \`namespaces/<environment>.yaml\`: the Namespace of the environment, named as set on it or as its slug in lowercase
 - \`configMaps/<environment>/<name>.yaml\`: the ConfigMaps, in that namespace
-- \`secrets/<environment>/<name>.yaml\`: the Secrets, in that namespace, values in plaintext
+- \`secrets/<environment>/<name>.yaml\`: the Secrets, in that namespace, values base64 encoded (not encrypted)
 
 Do not edit these manifests here: the next deploy of the environment overwrites them.
 `,
