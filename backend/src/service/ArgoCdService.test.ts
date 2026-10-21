@@ -12,6 +12,7 @@ import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IArgoCdRepositoryCredential, IProjectArgoCd } from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
+import { toObjectId } from "../utils/mongooseUtils"
 import ArgoCdService from "./ArgoCdService"
 import CodeRepositoryService from "./CodeRepositoryService"
 import GitOpsService, { renderNamespace } from "./GitOpsService"
@@ -482,7 +483,7 @@ describe("ArgoCdService.initialize", () => {
 })
 
 describe("ArgoCdService.alignApplications", () => {
-    const align = () => new ArgoCdService().alignApplications(projectId)
+    const align = () => new ArgoCdService().alignApplications(toObjectId(String(projectId)))
     const initialized = (overrides: Partial<IProjectArgoCd> = {}): IProjectArgoCd => ({
         url: ARGO_URL,
         token: "argo-token",
