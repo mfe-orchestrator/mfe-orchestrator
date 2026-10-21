@@ -122,6 +122,7 @@
   "120": "DomainDeploymentService",
   "121": "runPipeline",
   "122": "RepositoryRenameService.ts",
+  "123": "DeploymentCanaryUsersController.ts",
   "124": "projectContentTools.test.ts",
   "125": "NpmRegistryClient.ts"
 }

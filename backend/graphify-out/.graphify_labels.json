@@ -124,5 +124,7 @@
   "122": "RepositoryRenameService.ts",
   "123": "DeploymentCanaryUsersController.ts",
   "124": "projectContentTools.test.ts",
-  "125": "NpmRegistryClient.ts"
+  "125": "NpmRegistryClient.ts",
+  "126": "LocalChangeService.test.ts",
+  "127": "ServiceService.repository.test.ts"
 }
