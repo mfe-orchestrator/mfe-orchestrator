@@ -338,6 +338,23 @@ describe("GitOpsService.deploy", () => {
         expect(parse(files[1].content!).metadata.namespace).toBe("production")
     })
 
+    it("given environments made by the console with uppercase slugs, when they are deployed, then the files go under the slug and the namespace set wins over it", async () => {
+        gitOpsOn()
+        vi.spyOn(Environment, "find").mockResolvedValue([
+            { _id: development, slug: "DEV", namespace: "tnb-ai-applications-development", projectId },
+            { _id: production, slug: "PROD", projectId }
+        ] as never)
+
+        await deployOf(development, production)()
+
+        const [, files] = commit.mock.calls[0]
+        const byPath = Object.fromEntries(files.map(file => [file.path, parse(file.content!)]))
+        expect(byPath["namespaces/DEV.yaml"].metadata.name).toBe("tnb-ai-applications-development")
+        expect(byPath["configMaps/DEV/logging.yaml"].metadata.namespace).toBe("tnb-ai-applications-development")
+        expect(byPath["namespaces/PROD.yaml"].metadata.name).toBe("prod")
+        expect(byPath["secrets/PROD/database.yaml"].metadata.namespace).toBe("prod")
+    })
+
     it("given an environment namespace that is not a DNS label, when it is deployed, then it is refused before anything is committed", async () => {
         gitOpsOn()
         vi.spyOn(Environment, "find").mockResolvedValue([{ _id: production, slug: "production", namespace: "Shop_Prod", projectId }] as never)

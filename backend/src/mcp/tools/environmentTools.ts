@@ -24,7 +24,7 @@ export const environmentFields = {
         .string()
         .regex(/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)?$/, "a DNS label: up to 63 lowercase letters, digits and dashes")
         .optional()
-        .describe("Kubernetes namespace GitOps commits the environment to; empty or left out, it is the slug")
+        .describe("Kubernetes namespace GitOps commits the environment to; empty or left out, it is the slug in lowercase")
 }
 
 /**

@@ -121,7 +121,7 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                                 name="namespace"
                                 dataTestId="environment-namespace"
                                 label={t("environment.form.namespace")}
-                                placeholder={slug || t("environment.form.namespace_placeholder")}
+                                placeholder={slug?.toLowerCase() || t("environment.form.namespace_placeholder")}
                                 description={t("environment.form.namespace_description")}
                                 rules={{
                                     pattern: {

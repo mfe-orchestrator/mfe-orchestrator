@@ -69,26 +69,30 @@ const MANAGED_BY = "mfe-orchestrator"
 const LOCK_WAIT_MS = 30_000
 
 /**
- * The slug is a folder of the repository and the name of a Kubernetes namespace: a DNS label. A slash or a
- * dot would nest folders or be refused by the working copy on every save, and the cluster refuses the rest.
+ * The slug is a folder and a branch of the repositories and, in lowercase, the namespace when none is set: a DNS
+ * label in any case, as the console makes `DEV` or `PROD`. A slash or a dot would nest folders or be refused by
+ * the working copy on every save, and the cluster refuses the rest.
  */
-const ENVIRONMENT_SLUG = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
+const ENVIRONMENT_SLUG = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/
+
+/** What Kubernetes takes as the name of a namespace */
+const NAMESPACE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
 const environmentSlug = (environment: Pick<IEnvironment, "slug">): string => {
     if (!ENVIRONMENT_SLUG.test(environment.slug ?? "")) {
         throw createBusinessException({
             code: "GITOPS_ENVIRONMENT_SLUG_INVALID",
-            message: `The environment slug "${environment.slug}" cannot be a namespace and a folder of the GitOps repository: up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit`,
+            message: `The environment slug "${environment.slug}" cannot be a folder of the GitOps repository and a namespace: up to 63 letters, digits and dashes, starting and ending with a letter or a digit`,
             details: { slug: environment.slug }
         })
     }
     return environment.slug
 }
 
-/** The namespace the environment is deployed to: the one set on it, its slug when it has none */
+/** The namespace the environment is deployed to: the one set on it, its slug in lowercase when it has none */
 const environmentNamespace = (environment: Pick<IEnvironment, "slug" | "namespace">): string => {
-    if (!environment.namespace) return environmentSlug(environment)
-    if (!ENVIRONMENT_SLUG.test(environment.namespace)) {
+    if (!environment.namespace) return environmentSlug(environment).toLowerCase()
+    if (!NAMESPACE.test(environment.namespace)) {
         throw createBusinessException({
             code: "GITOPS_ENVIRONMENT_NAMESPACE_INVALID",
             message: `The namespace "${environment.namespace}" of the environment ${environment.slug} is not a Kubernetes namespace: up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit`,
@@ -128,7 +132,7 @@ const GITOPS_README: Record<GitOpsRepositoryKind, string> = {
 
 Committed by MFE Orchestrator every time environments of the project are deployed, for each of them:
 
-- \`namespaces/<environment>.yaml\`: the Namespace of the environment, named as set on it or as its slug
+- \`namespaces/<environment>.yaml\`: the Namespace of the environment, named as set on it or as its slug in lowercase
 - \`configMaps/<environment>/<name>.yaml\`: the ConfigMaps, in that namespace
 - \`secrets/<environment>/<name>.yaml\`: the Secrets, in that namespace, values in plaintext
 

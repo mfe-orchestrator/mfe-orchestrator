@@ -10,7 +10,7 @@ export interface IEnvironment extends Document<ObjectId> {
     url?: string
     order: number
     domains?: string[]
-    /** The Kubernetes namespace GitOps commits the environment to; its slug when unset */
+    /** The Kubernetes namespace GitOps commits the environment to; its slug in lowercase when unset */
     namespace?: string
 }
 
