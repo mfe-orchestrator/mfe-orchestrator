@@ -115,4 +115,8 @@ const start = async () => {
     })
 }
 
-start()
+// Services import the `fastify` instance from here: under Vitest that import must not start the
+// server, or the plugin autoload runs in the test worker and logs its failure after the file ends.
+if (!process.env.VITEST) {
+    start()
+}
