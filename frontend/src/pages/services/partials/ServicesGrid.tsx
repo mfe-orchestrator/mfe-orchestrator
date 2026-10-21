@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@mfe-orche
 import { Cog, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import RepositoryLink from "@/components/RepositoryLink"
 import type { Service } from "@/hooks/apiClients/useServicesApi"
@@ -12,7 +12,7 @@ import { isServiceAiAvailable } from "./ServiceHeader"
 export const ServicesGrid: React.FC<{ services: Service[] }> = ({ services }) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
-    const assistantEnabled = useAssistantEnabled()
+    const assistantEnabled = useProjectAiModels().enabled
 
     return (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">

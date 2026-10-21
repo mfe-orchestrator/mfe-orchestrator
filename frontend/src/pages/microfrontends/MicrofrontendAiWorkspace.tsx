@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams, useSearchParams } from "react-router-dom"
 import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import { isAiEditAvailable, MicrofrontendHeader } from "@/pages/microfrontends/partials/components"
 
@@ -12,7 +12,7 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
-    const assistantEnabled = useAssistantEnabled()
+    const aiModels = useProjectAiModels()
     const microfrontendsApi = useMicrofrontendsApi()
 
     const frontendQuery = useQuery({
@@ -25,7 +25,8 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
     if (legacyTab && legacyTab !== "aiChange") return <Navigate to={`/microfrontend/${id}/settings?tab=${encodeURIComponent(legacyTab)}`} replace />
 
     // Not an ApiStatusHandler: it unmounts its children on every background refetch, and the workspace holds a draft prompt.
-    if (frontendQuery.isPending) {
+    // The project's AIs decide where the page goes: it waits for them as for the microfrontend.
+    if (frontendQuery.isPending || aiModels.isPending) {
         return (
             <div className="flex min-h-[200px] items-center justify-center">
                 <Spinner size={32} />
@@ -42,7 +43,7 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
     }
 
     const microfrontend = frontendQuery.data
-    if (!isAiEditAvailable(microfrontend, assistantEnabled)) return <Navigate to={`/microfrontend/${id}/settings`} replace />
+    if (!isAiEditAvailable(microfrontend, aiModels.enabled)) return <Navigate to={`/microfrontend/${id}/settings`} replace />
 
     return (
         <div className="flex min-h-full flex-col gap-6">

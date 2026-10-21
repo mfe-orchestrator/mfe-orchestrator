@@ -11,7 +11,9 @@ const createBodySchema = {
     properties: {
         prompt: { type: "string", minLength: 1, maxLength: 8_000 },
         baseBranch: { type: "string", maxLength: 255 },
-        effort: { type: "string", enum: LLM_EFFORTS }
+        effort: { type: "string", enum: LLM_EFFORTS },
+        // An id of the organization's AIs, or `system`
+        aiModelId: { type: "string", minLength: 1, maxLength: 64 }
     }
 }
 

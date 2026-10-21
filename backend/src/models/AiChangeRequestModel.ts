@@ -53,6 +53,8 @@ export interface IAiChangeRequest extends Document<ObjectId> {
     jobRepositoryCount?: number
     /** The effort the job's agent reasoned with, shown next to the usage it explains. */
     effort: LlmEffort
+    /** The AI the job's agent ran on, as on the job. */
+    aiModelId?: string
     /** The proposal this request refines: the agent started from its files, and this one replaces it once proposed. */
     parentId?: Schema.Types.ObjectId
     /**
@@ -118,6 +120,7 @@ const aiChangeRequestSchema = new Schema<IAiChangeRequest>(
         jobRepositoryCount: { type: Number },
         // Requests from before the effort could be chosen ran at high: they read so.
         effort: { type: String, enum: [...LLM_EFFORTS], default: "high" },
+        aiModelId: { type: String },
         parentId: { type: Schema.Types.ObjectId, ref: "AiChangeRequest", index: true },
         conversationId: { type: Schema.Types.ObjectId, required: true, index: true },
         prompt: { type: String, required: true, maxlength: 8_000 },

@@ -17,7 +17,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
 import AssistantPanel, { ASSISTANT_PAGE_PATH } from "@/components/assistant/AssistantPanel"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Sidebar, type SidebarNavSection } from "@/components/ui/Sidebar/Sidebar"
 import { cn } from "@/utils/styleUtils"
 import Header from "./Header"
@@ -29,7 +29,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const { t } = useTranslation()
     const location = useLocation()
-    const assistantEnabled = useAssistantEnabled()
+    const assistantEnabled = useProjectAiModels().enabled
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     // La pagina dell'agente e' gia' la conversazione: il pannello laterale ne sarebbe un doppione.
     const isAssistantPage = location.pathname === ASSISTANT_PAGE_PATH

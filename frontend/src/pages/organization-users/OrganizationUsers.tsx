@@ -13,7 +13,7 @@ import useOrganizationApi, { canAdministerOrganization, OrganizationUser, RoleIn
 import useOrganizationStore from "@/store/useOrganizationStore"
 import useThemeStore from "@/store/useThemeStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { AddOrganizationUserButton, ORGANIZATION_USERS_QUERY_KEY, OrganizationDetailsSection } from "./partials"
+import { AddOrganizationUserButton, ORGANIZATION_USERS_QUERY_KEY, OrganizationAiModelsSection, OrganizationDetailsSection } from "./partials"
 
 const getUserInitials = (user: { name?: string; surname?: string; email: string }) => {
     if (user.name && user.surname) return `${user.name[0]} ${user.surname[0]}`.toUpperCase()
@@ -239,6 +239,9 @@ const OrganizationUsers: React.FC = () => {
                             </Card>
                         </div>
                     )}
+
+                    {/* After the people: the AIs are a setting of the organization, which every member sees. */}
+                    {organization && <OrganizationAiModelsSection organizationId={organization._id} canAdminister={canAdminister} />}
                 </div>
             </SinglePageLayout>
 

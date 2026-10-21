@@ -98,6 +98,11 @@ declare module "fastify" {
             AZURE_OPENAI_API_KEY?: string
             AZURE_OPENAI_DEPLOYMENT?: string
             AZURE_OPENAI_REASONING?: boolean
+            AZURE_OPENAI_ENDPOINT_SUFFIXES?: string
+            AWS_BEDROCK_REGION?: string
+            AWS_BEDROCK_ACCESS_KEY_ID?: string
+            AWS_BEDROCK_SECRET_ACCESS_KEY?: string
+            AWS_BEDROCK_MODEL?: string
             AI_MAX_EFFORT?: LlmEffort
             REPOSITORIES_FOLDER: string
             REPOSITORIES_MAX_SIZE_MB: number

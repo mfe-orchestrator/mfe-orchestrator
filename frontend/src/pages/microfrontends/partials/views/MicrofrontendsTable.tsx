@@ -3,7 +3,7 @@ import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server, Sparkles } fr
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, HostedOn, Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { BuildDialog, CloneRepositoryPopover, isAiEditAvailable, MicrofrontendKindBadge, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
@@ -88,7 +88,7 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
     const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false)
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
     const agents = useWorkingAgents(mfe._id)
-    const aiAvailable = isAiEditAvailable(mfe, useAssistantEnabled())
+    const aiAvailable = isAiEditAvailable(mfe, useProjectAiModels().enabled)
     // Served by its own container: MFE Orchestrator neither hosts it nor runs a canary for it
     const isFrontend = mfe.kind === MicrofrontendKind.FRONTEND
 

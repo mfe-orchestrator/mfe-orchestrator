@@ -1,7 +1,7 @@
 import { Sparkles } from "lucide-react"
 import { Button } from "@/components/atoms"
 import useAssistantStore from "@/store/useAssistantStore"
-import useAssistantEnabled from "./useAssistantEnabled"
+import useProjectAiModels from "./useProjectAiModels"
 
 interface AskAssistantButtonProps {
     /** The question sent to the assistant, already translated and filled with what the page knows. */
@@ -17,7 +17,7 @@ interface AskAssistantButtonProps {
  * Renders nothing on installations without the assistant.
  */
 const AskAssistantButton: React.FC<AskAssistantButtonProps> = ({ question, label, size = "default", variant = "secondary", dataTestId }) => {
-    const enabled = useAssistantEnabled()
+    const enabled = useProjectAiModels().enabled
     const ask = useAssistantStore(state => state.ask)
 
     if (!enabled) return null

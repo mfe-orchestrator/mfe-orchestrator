@@ -12,12 +12,14 @@ const microfrontendIds = { type: "array", maxItems: 100, items: { type: "string"
 const serviceIds = microfrontendIds
 const domainId = { type: "string", pattern: "^[a-fA-F0-9]{24}$" }
 const effort = { type: "string", enum: LLM_EFFORTS }
+// An id of the organization's AIs, or `system`
+const aiModelId = { type: "string", minLength: 1, maxLength: 64 }
 
 const createBodySchema = {
     type: "object",
     required: ["prompt", "scope"],
     additionalProperties: false,
-    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds, effort },
+    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds, effort, aiModelId },
     // A domain job works on the members of that domain: without it there is nothing to work on.
     if: { properties: { scope: { const: "domain" } } },
     then: { required: ["domainId"] }
@@ -27,7 +29,7 @@ const domainPlanBodySchema = {
     type: "object",
     required: ["prompt", "domainId"],
     additionalProperties: false,
-    properties: { prompt, domainId }
+    properties: { prompt, domainId, aiModelId }
 }
 
 const listQuerySchema = {
@@ -39,7 +41,7 @@ const followUpBodySchema = {
     type: "object",
     required: ["prompt"],
     additionalProperties: false,
-    properties: { prompt, microfrontendIds, serviceIds, effort }
+    properties: { prompt, microfrontendIds, serviceIds, effort, aiModelId }
 }
 
 const projectIdOf = (request: FastifyRequest) => {

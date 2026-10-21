@@ -13,6 +13,8 @@ export interface AssistantChatRequestDTO {
     messages: AssistantChatMessageDTO[]
     /** How hard the model reasons before answering: `medium` when left out. */
     effort?: LlmEffort
+    /** The AI that answers, one the project may use: the project's default when left out. */
+    aiModelId?: string
     /** The user's answer to a `confirm` frame: the turn resumes from the action it names. */
     confirmation?: {
         actionId: string
@@ -27,8 +29,12 @@ export interface AssistantChatRequestDTO {
 }
 
 export interface AssistantProjectDraftRequestDTO {
+    /** The organization the project is created in: its AIs write the draft. */
+    organizationId: string
     description: string
     locale?: string
+    /** One of the organization's AIs: its default when left out. */
+    aiModelId?: string
 }
 
 export interface AssistantProjectDraftDTO {

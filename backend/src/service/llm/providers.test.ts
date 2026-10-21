@@ -1,10 +1,27 @@
+import { AnthropicBedrockMantle } from "@anthropic-ai/bedrock-sdk"
 import type { GoogleGenAI } from "@google/genai"
 import type OpenAI from "openai"
 import { describe, expect, it, vi } from "vitest"
 import { AnthropicLlmClient, ClaudeClient } from "./anthropicProvider"
 import { AzureOpenAiLlmClient } from "./azureOpenAiProvider"
 import { GeminiLlmClient } from "./geminiProvider"
-import { effortsFor, isLlmEnabled, isRateLimitError, LlmMessage, LlmProvider, LlmTurnRequest, resolveEffort, resolveLlmProvider } from "./index"
+import {
+    AiModelSettings,
+    aiProviderError,
+    createLlmClient,
+    DEFAULT_CLAUDE_MODEL,
+    effortsFor,
+    forgetLlmClient,
+    getLlmClient,
+    isRateLimitError,
+    LlmMessage,
+    LlmProvider,
+    LlmTurnRequest,
+    resolveEffort,
+    resolveLlmProvider,
+    SYSTEM_AI_MODEL_ID,
+    systemAiModel
+} from "./index"
 
 const tool = { name: "read_file", description: "Reads a file", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] } }
 
@@ -22,16 +39,18 @@ describe("resolveLlmProvider", () => {
         expect(resolveLlmProvider({ ANTHROPIC_API_KEY: "sk" })).toBe(LlmProvider.ANTHROPIC)
     })
 
-    it("Given nothing, then AI is off", () => {
+    it("Given nothing, then there is no system AI", () => {
         expect(resolveLlmProvider({})).toBeUndefined()
-        expect(isLlmEnabled({})).toBe(false)
+        expect(systemAiModel({})).toBeUndefined()
     })
 
     it("Given a provider without its variables, then it names what is missing", () => {
         expect(() => resolveLlmProvider({ AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com" })).toThrow(
             "AI_PROVIDER=azure-openai needs AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT"
         )
-        expect(isLlmEnabled({ AI_PROVIDER: "gemini", GEMINI_API_KEY: "k" })).toBe(false)
+        expect(() => resolveLlmProvider({ AI_PROVIDER: "aws-bedrock", AWS_BEDROCK_REGION: "eu-west-1" })).toThrow(
+            "AI_PROVIDER=aws-bedrock needs AWS_BEDROCK_ACCESS_KEY_ID, AWS_BEDROCK_SECRET_ACCESS_KEY, AWS_BEDROCK_MODEL"
+        )
     })
 
     it("Given an unknown provider, then it is refused", () => {
@@ -43,32 +62,75 @@ describe("resolveLlmProvider", () => {
     })
 })
 
+describe("systemAiModel", () => {
+    it("Given only an Anthropic key, then the system AI is Claude on the default model, under the fixed id", () => {
+        expect(systemAiModel({ ANTHROPIC_API_KEY: "sk", AI_MAX_EFFORT: "high" })).toEqual({
+            id: SYSTEM_AI_MODEL_ID,
+            name: "System",
+            provider: LlmProvider.ANTHROPIC,
+            model: DEFAULT_CLAUDE_MODEL,
+            config: { apiKey: "sk" },
+            maxEffort: "high"
+        })
+    })
+
+    it("Given each provider's variables, then the model and the config are read from them", () => {
+        expect(systemAiModel({ AI_PROVIDER: "azure-foundry", AZURE_FOUNDRY_RESOURCE: "res", AZURE_FOUNDRY_API_KEY: "k", AZURE_FOUNDRY_MODEL: "my-claude" })).toMatchObject({
+            model: "my-claude",
+            config: { resource: "res", apiKey: "k" }
+        })
+        expect(
+            systemAiModel({ AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com", AZURE_OPENAI_API_KEY: "k", AZURE_OPENAI_DEPLOYMENT: "gpt", AZURE_OPENAI_REASONING: true })
+        ).toMatchObject({ model: "gpt", config: { endpoint: "https://x.openai.azure.com", apiKey: "k", reasoning: true } })
+        expect(
+            systemAiModel({
+                AI_PROVIDER: "aws-bedrock",
+                AWS_BEDROCK_REGION: "eu-west-1",
+                AWS_BEDROCK_ACCESS_KEY_ID: "AKIA",
+                AWS_BEDROCK_SECRET_ACCESS_KEY: "secret",
+                AWS_BEDROCK_MODEL: "anthropic.claude-opus-5-5"
+            })
+        ).toMatchObject({ provider: LlmProvider.AWS_BEDROCK, model: "anthropic.claude-opus-5-5", config: { region: "eu-west-1", accessKeyId: "AKIA", secretAccessKey: "secret" } })
+    })
+})
+
+/** An AI as the model layer takes it. */
+const settings = (overrides: Partial<AiModelSettings>): AiModelSettings => ({
+    id: "ai-1",
+    name: "AI",
+    provider: LlmProvider.ANTHROPIC,
+    model: "claude-opus-5-5",
+    config: { apiKey: "sk" },
+    ...overrides
+})
+
 describe("effortsFor", () => {
-    it("Given Claude, then every level is offered, on the Anthropic API as on Foundry", () => {
-        expect(effortsFor({ ANTHROPIC_API_KEY: "sk" })).toEqual(["low", "medium", "high", "xhigh", "max"])
-        expect(effortsFor({ AI_PROVIDER: "azure-foundry", AZURE_FOUNDRY_RESOURCE: "r", AZURE_FOUNDRY_API_KEY: "k" })).toEqual(["low", "medium", "high", "xhigh", "max"])
+    it("Given Claude, then every level is offered, on the Anthropic API as on Foundry and on Bedrock", () => {
+        for (const provider of [LlmProvider.ANTHROPIC, LlmProvider.AZURE_FOUNDRY, LlmProvider.AWS_BEDROCK]) {
+            expect(effortsFor(settings({ provider }))).toEqual(["low", "medium", "high", "xhigh", "max"])
+        }
     })
 
     it("Given an Azure OpenAI reasoning deployment, then up to high; a deployment that does not reason takes none", () => {
-        const azure = { AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com", AZURE_OPENAI_API_KEY: "k", AZURE_OPENAI_DEPLOYMENT: "gpt" }
-
-        expect(effortsFor({ ...azure, AZURE_OPENAI_REASONING: true })).toEqual(["low", "medium", "high"])
-        expect(effortsFor(azure)).toEqual([])
+        expect(effortsFor(settings({ provider: LlmProvider.AZURE_OPENAI, config: { reasoning: true } }))).toEqual(["low", "medium", "high"])
+        expect(effortsFor(settings({ provider: LlmProvider.AZURE_OPENAI, config: {} }))).toEqual([])
     })
 
-    it("Given Gemini, AI off or a provider missing its variables, then no level is offered", () => {
-        expect(effortsFor({ AI_PROVIDER: "gemini", GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-x" })).toEqual([])
-        expect(effortsFor({})).toEqual([])
-        expect(effortsFor({ AI_PROVIDER: "azure-openai", AZURE_OPENAI_REASONING: true })).toEqual([])
+    it("Given Gemini, then no level is offered", () => {
+        expect(effortsFor(settings({ provider: LlmProvider.GEMINI }))).toEqual([])
     })
 
-    it("Given a cap, then the levels above it are not offered", () => {
-        const azure = { AI_PROVIDER: "azure-openai", AZURE_OPENAI_ENDPOINT: "https://x.openai.azure.com", AZURE_OPENAI_API_KEY: "k", AZURE_OPENAI_DEPLOYMENT: "gpt", AZURE_OPENAI_REASONING: true }
+    it("Given a maxEffort, then the levels above it are not offered", () => {
+        const azure = settings({ provider: LlmProvider.AZURE_OPENAI, config: { reasoning: true } })
 
-        expect(effortsFor({ ANTHROPIC_API_KEY: "sk", AI_MAX_EFFORT: "high" })).toEqual(["low", "medium", "high"])
-        expect(effortsFor({ ANTHROPIC_API_KEY: "sk", AI_MAX_EFFORT: "low" })).toEqual(["low"])
-        expect(effortsFor({ ...azure, AI_MAX_EFFORT: "medium" })).toEqual(["low", "medium"])
-        expect(effortsFor({ ...azure, AI_MAX_EFFORT: "max" })).toEqual(["low", "medium", "high"])
+        expect(effortsFor(settings({ maxEffort: "high" }))).toEqual(["low", "medium", "high"])
+        expect(effortsFor(settings({ provider: LlmProvider.AWS_BEDROCK, maxEffort: "low" }))).toEqual(["low"])
+        expect(effortsFor({ ...azure, maxEffort: "medium" })).toEqual(["low", "medium"])
+        expect(effortsFor({ ...azure, maxEffort: "max" })).toEqual(["low", "medium", "high"])
+    })
+
+    it("Given the system AI capped by AI_MAX_EFFORT, then the cap applies to it as a maxEffort", () => {
+        expect(effortsFor(systemAiModel({ ANTHROPIC_API_KEY: "sk", AI_MAX_EFFORT: "medium" })!)).toEqual(["low", "medium"])
     })
 })
 
@@ -79,9 +141,92 @@ describe("resolveEffort", () => {
     })
 
     it("Given a cap, then an effort above it, asked for or by default, is served at the cap and one below is kept", () => {
-        expect(resolveEffort({ AI_MAX_EFFORT: "high" }, "max", "medium")).toBe("high")
-        expect(resolveEffort({ AI_MAX_EFFORT: "medium" }, undefined, "high")).toBe("medium")
-        expect(resolveEffort({ AI_MAX_EFFORT: "high" }, "low", "high")).toBe("low")
+        expect(resolveEffort({ maxEffort: "high" }, "max", "medium")).toBe("high")
+        expect(resolveEffort({ maxEffort: "medium" }, undefined, "high")).toBe("medium")
+        expect(resolveEffort({ maxEffort: "high" }, "low", "high")).toBe("low")
+    })
+})
+
+describe("createLlmClient", () => {
+    it("Given an AWS Bedrock AI, then Claude is served through Bedrock's Messages API with the AI's keys and model, without the server-side fallback", async () => {
+        const client = createLlmClient(
+            settings({ provider: LlmProvider.AWS_BEDROCK, model: "anthropic.claude-opus-5-5", config: { region: "eu-west-1", accessKeyId: "AKIA", secretAccessKey: "secret" } })
+        )
+
+        expect(client).toBeInstanceOf(AnthropicLlmClient)
+        expect(client.provider).toBe(LlmProvider.AWS_BEDROCK)
+        const bedrock = (client as unknown as { client: AnthropicBedrockMantle }).client
+        expect(bedrock).toBeInstanceOf(AnthropicBedrockMantle)
+        expect(bedrock).toMatchObject({ awsRegion: "eu-west-1", awsAccessKey: "AKIA" })
+        expect(bedrock.baseURL).toContain("bedrock-mantle.eu-west-1")
+        const stream = vi
+            .spyOn(bedrock.beta.messages, "stream")
+            .mockReturnValue({ on: vi.fn(), finalMessage: async () => ({ content: [], stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 1 } }) } as never)
+
+        await client.turn(request([{ role: "user", text: "hi" }]))
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ model: "anthropic.claude-opus-5-5", output_config: { effort: "high" }, thinking: { type: "adaptive", display: "summarized" } })
+        expect(stream.mock.calls[0][0]).not.toHaveProperty("fallbacks")
+    })
+
+    /** Without its keys an SDK would read ANTHROPIC_API_KEY, AWS_ACCESS_KEY_ID... from the process: the installation's. */
+    it("Given an organization's AI without its credentials, then no client is built; the system AI is the operator's and is not checked", () => {
+        expect(() => createLlmClient(settings({ config: {} }))).toThrow("The AI ai-1 has no apiKey")
+        expect(() => createLlmClient(settings({ provider: LlmProvider.AWS_BEDROCK, config: { region: "eu-west-1" } }))).toThrow("has no accessKeyId, secretAccessKey")
+        expect(createLlmClient(settings({ id: SYSTEM_AI_MODEL_ID, config: { apiKey: "sk" } }))).toBeInstanceOf(AnthropicLlmClient)
+    })
+
+    it("Given an organization's Azure OpenAI AI stored with an endpoint outside Azure, then no client is built, unless the installation allows the suffix", () => {
+        const sovereign = settings({ provider: LlmProvider.AZURE_OPENAI, model: "gpt", config: { endpoint: "https://a.openai.azure.us/", apiKey: "k" } })
+
+        expect(() => createLlmClient(settings({ provider: LlmProvider.AZURE_OPENAI, model: "gpt", config: { endpoint: "https://10.0.0.1/", apiKey: "k" } }))).toThrow("is an IP address")
+        expect(() => createLlmClient(sovereign)).toThrow("is not an Azure OpenAI host")
+        expect(createLlmClient(sovereign, { AZURE_OPENAI_ENDPOINT_SUFFIXES: ".openai.azure.us" })).toBeInstanceOf(AzureOpenAiLlmClient)
+    })
+
+    it("Given an Azure OpenAI AI, then its client does not follow redirects", () => {
+        const client = createLlmClient(settings({ provider: LlmProvider.AZURE_OPENAI, model: "gpt", config: { endpoint: "https://a.openai.azure.com/", apiKey: "k" } }))
+
+        expect((client as unknown as { client: { fetchOptions?: RequestInit } }).client.fetchOptions).toEqual({ redirect: "manual" })
+    })
+
+    it("Given each other provider, then its adapter is built with the AI's model", () => {
+        expect(createLlmClient(settings({ provider: LlmProvider.AZURE_FOUNDRY, config: { resource: "res", apiKey: "k" } })).provider).toBe(LlmProvider.AZURE_FOUNDRY)
+        expect(createLlmClient(settings({ provider: LlmProvider.GEMINI, model: "gemini-x" }))).toBeInstanceOf(GeminiLlmClient)
+        expect(createLlmClient(settings({ provider: LlmProvider.AZURE_OPENAI, model: "gpt", config: { endpoint: "https://x.openai.azure.com", apiKey: "k" } }))).toBeInstanceOf(AzureOpenAiLlmClient)
+    })
+})
+
+describe("getLlmClient", () => {
+    it("Given the same AI asked twice, then one client serves both; once the AI is edited, a new one is built", () => {
+        const first = getLlmClient(settings({ id: "cached", updatedAt: new Date(1) }))
+
+        expect(getLlmClient(settings({ id: "cached", updatedAt: new Date(1) }))).toBe(first)
+        expect(getLlmClient(settings({ id: "cached", updatedAt: new Date(2) }))).not.toBe(first)
+    })
+
+    it("Given a deleted AI, when it is forgotten, then its client is not served again", () => {
+        const first = getLlmClient(settings({ id: "deleted", updatedAt: new Date(1) }))
+
+        forgetLlmClient("deleted")
+
+        expect(getLlmClient(settings({ id: "deleted", updatedAt: new Date(1) }))).not.toBe(first)
+    })
+
+    it("Given the system AI, which has no edit date, then a client is kept per configuration", () => {
+        const system = systemAiModel({ ANTHROPIC_API_KEY: "sk-1" })!
+
+        expect(getLlmClient(system)).toBe(getLlmClient(systemAiModel({ ANTHROPIC_API_KEY: "sk-1" })!))
+        expect(getLlmClient(systemAiModel({ ANTHROPIC_API_KEY: "sk-2" })!)).not.toBe(getLlmClient(system))
+    })
+})
+
+describe("aiProviderError", () => {
+    it("Given a rate limit, then it keeps a code of its own; any other failure is generic, without the provider's message", () => {
+        expect(aiProviderError({ status: 429, message: "slow down" })).toMatchObject({ code: "RATE_LIMITED", statusCode: 429 })
+        const other = aiProviderError(Object.assign(new Error("404 <html>internal admin console</html>"), { status: 404 }))
+        expect(other).toMatchObject({ code: "AI_PROVIDER_ERROR", statusCode: 502 })
+        expect(other.message).not.toContain("internal")
     })
 })
 

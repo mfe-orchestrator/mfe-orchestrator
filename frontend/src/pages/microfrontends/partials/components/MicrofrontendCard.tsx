@@ -3,7 +3,7 @@ import { Cog, GitBranch, Hammer, Sparkles, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 import { cn } from "@/utils/styleUtils"
@@ -30,7 +30,7 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
     const showCanaryShare = Boolean(canary) && canary?.type !== CanaryType.ON_USER
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
     const agents = useWorkingAgents(mfe._id)
-    const aiAvailable = isAiEditAvailable(mfe, useAssistantEnabled())
+    const aiAvailable = isAiEditAvailable(mfe, useProjectAiModels().enabled)
 
     return (
         <Card className={cn("flex h-full flex-col transition-colors duration-200 hover:border-primary", agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none")}>

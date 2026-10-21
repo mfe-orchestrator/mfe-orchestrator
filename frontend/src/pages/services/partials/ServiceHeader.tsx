@@ -1,7 +1,7 @@
 import { Info, Settings, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import WorkspaceHeader from "@/components/ai-workspace/WorkspaceHeader"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge } from "@/components/atoms"
 import RepositoryLink from "@/components/RepositoryLink"
 import TemplateRepositoryLink from "@/components/TemplateRepositoryLink"
@@ -22,7 +22,7 @@ const PAGE_TITLE_KEY: Record<ServiceHeaderProps["active"], string> = { overview:
 
 export const ServiceHeader: React.FC<ServiceHeaderProps> = ({ service, active, actions }) => {
     const { t } = useTranslation()
-    const aiAvailable = isServiceAiAvailable(service, useAssistantEnabled())
+    const aiAvailable = isServiceAiAvailable(service, useProjectAiModels().enabled)
 
     return (
         <WorkspaceHeader

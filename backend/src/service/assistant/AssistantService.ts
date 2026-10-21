@@ -5,8 +5,9 @@ import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import { AssistantChatRequestDTO, AssistantProjectDraftDTO } from "../../types/AssistantDTO"
 import { toObjectId } from "../../utils/mongooseUtils"
+import AiModelService from "../AiModelService"
 import BaseAuthorizedService from "../BaseAuthorizedService"
-import { getLlmClient, LlmConfiguration, LlmEffort, LlmMessage, LlmToolResult, LlmUsage, resolveEffort } from "../llm"
+import { aiProviderError, LlmConfiguration, LlmEffort, LlmMessage, LlmProvider, LlmToolResult, LlmUsage, resolveEffort } from "../llm"
 import { runAgentLoop } from "../llm/agentLoop"
 import { AssistantToolEvents, AssistantToolRunner, assistantToolDefinitions } from "./assistantActions"
 import { PendingAssistantAction, takePendingAction } from "./pendingActions"
@@ -96,8 +97,11 @@ export interface AssistantChatOutcome {
     wrote: boolean
     /** Tokens of every model round of this answer, shown to the user under it. */
     usage: LlmUsage
-    /** The effort the answer was given with: the default or the installation's cap when they apply. */
+    /** The effort the answer was given with: the default or the AI's cap when they apply. */
     effort: LlmEffort
+    /** The AI that answered, and its provider: what the usage is recorded against. */
+    aiModelId: string
+    provider: LlmProvider
 }
 
 /** The user's answer to a destructive action, already taken out of the store. */
@@ -157,13 +161,17 @@ class AssistantService extends BaseAuthorizedService {
         super(user)
     }
 
+    private aiModels() {
+        return new AiModelService(this.user, this.config)
+    }
+
     /**
      * Checks that a question can be asked at all, before the controller commits to a stream:
-     * once the SSE headers are out, an access error can no longer become an HTTP status.
+     * once the SSE headers are out, an access error, a project without AI or an AI it may not use
+     * can no longer become an HTTP status.
      */
-    async ensureCanChat(projectId: string): Promise<void> {
-        getLlmClient(this.config)
-        await this.ensureAccessToProject(projectId)
+    async ensureCanChat(projectId: string, aiModelId?: string): Promise<void> {
+        await this.aiModels().resolveForProject(projectId, aiModelId)
     }
 
     /**
@@ -199,7 +207,7 @@ class AssistantService extends BaseAuthorizedService {
         if (!user) {
             throw new AssistantDisabledError()
         }
-        const llm = getLlmClient(this.config)
+        const { settings, client: llm } = await this.aiModels().resolveForProject(projectId, request.aiModelId)
         const runner = new AssistantToolRunner({ user, projectId, role: await this.getRoleInProject(projectId), log: this.log })
 
         const newestUserMessage = request.messages.map(message => message.role).lastIndexOf("user")
@@ -229,7 +237,7 @@ class AssistantService extends BaseAuthorizedService {
         // The same goes for the reasoning, which each round summarises anew.
         let textRound: number | undefined
         let thinkingRound: number | undefined
-        const effort = resolveEffort(this.config, request.effort, DEFAULT_EFFORT)
+        const effort = resolveEffort(settings, request.effort, DEFAULT_EFFORT)
         const loop = await runAgentLoop({
             client: llm,
             system: CHAT_SYSTEM_PROMPT,
@@ -259,7 +267,7 @@ class AssistantService extends BaseAuthorizedService {
             }
         })
         const stopReason: AssistantStopReason = awaitingConfirmation ? "awaiting_confirmation" : loop.stopReason === "max_rounds" ? "max_tool_rounds" : (loop.stopReason as AssistantStopReason)
-        return { stopReason, wrote, usage: loop.usage, effort }
+        return { stopReason, wrote, usage: loop.usage, effort, aiModelId: settings.id, provider: settings.provider }
     }
 
     /**
@@ -279,18 +287,28 @@ class AssistantService extends BaseAuthorizedService {
         return RoleInProject.VIEWER
     }
 
-    /** A first draft of a new project from a free-text description, to prefill the wizard. */
-    async draftProject(description: string, locale?: string): Promise<AssistantProjectDraftDTO | null> {
+    /**
+     * A first draft of a new project from a free-text description, to prefill the wizard. No project
+     * exists yet: the AIs are those of the organization it is created in.
+     */
+    async draftProject(organizationId: string, description: string, locale?: string, aiModelId?: string): Promise<AssistantProjectDraftDTO | null> {
         if (!this.getUser()) {
             throw new AssistantDisabledError()
         }
-        const draft = await getLlmClient(this.config).json({
-            system: DRAFT_SYSTEM_PROMPT,
-            user: `locale: ${locale || "en"}\n\n${description}`,
-            schema: PROJECT_DRAFT_SCHEMA,
-            maxTokens: MAX_TOKENS,
-            effort: "low"
-        })
+        const { client } = await this.aiModels().resolveForOrganization(organizationId, aiModelId)
+        const draft = await client
+            .json({
+                system: DRAFT_SYSTEM_PROMPT,
+                user: `locale: ${locale || "en"}\n\n${description}`,
+                schema: PROJECT_DRAFT_SCHEMA,
+                maxTokens: MAX_TOKENS,
+                effort: "low"
+            })
+            .catch(error => {
+                // The provider's own message stays in the log: it may quote what the endpoint answered.
+                this.log?.warn({ err: { message: (error as Error)?.message, status: (error as { status?: unknown })?.status } }, "Assistant project draft failed")
+                throw aiProviderError(error)
+            })
         return isProjectDraft(draft) ? sanitizeDraft(draft) : null
     }
 }

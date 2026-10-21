@@ -1,18 +1,26 @@
 import { z } from "zod"
 import { fastify } from "../.."
 import { IAiChangeEvent, IAiChangeRequest } from "../../models/AiChangeRequestModel"
+import AiModelService from "../../service/AiModelService"
 import AiChangeJobService, { AiJobView } from "../../service/aiChange/AiChangeJobService"
 import AiChangeService from "../../service/aiChange/AiChangeService"
 import { AuthorizedPrincipal } from "../../service/BaseAuthorizedService"
 import { LLM_EFFORTS } from "../../service/llm"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE_EXTERNAL, defineTool, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
+import { DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
 
 const microfrontendId = objectId("Id of the microfrontend, from microfrontends_list")
 const changeId = objectId("Id of the AI change, from ai_change_start or ai_changes_list")
 const jobId = objectId("Id of the AI job, from ai_job_start, ai_job_follow_up or the jobId of an AI change")
 const prompt = z.string().trim().min(1).max(8_000).describe("What to change, written as a request to a developer")
 const effort = z.enum(LLM_EFFORTS).optional().describe("Reasoning effort of the agent. Leave it out unless the user asked for a level: the default fits most changes.")
+const aiModelId = z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .optional()
+    .describe("Id of the AI the agent runs on, from ai_models_list. Leave it out unless the user named an AI: the project's default is used, the parent's for a follow-up.")
 
 /** Progress lines kept in a view: the latest ones say where the agent is. */
 const RECENT_EVENTS = 10
@@ -29,6 +37,7 @@ const recentEvents = (events: Pick<IAiChangeEvent, "at" | "kind" | "message">[])
 
 const service = (principal: AuthorizedPrincipal) => new AiChangeService(principal, fastify.config)
 const jobService = (principal: AuthorizedPrincipal) => new AiChangeJobService(principal, fastify.config)
+const aiModelService = (principal: AuthorizedPrincipal) => new AiModelService(principal, fastify.config)
 
 /**
  * A change request as the model sees it: what was asked, where it stands and which files it
@@ -44,6 +53,7 @@ const toChangeView = (request: Omit<IAiChangeRequest, "events"> & Partial<Pick<I
     status: request.status,
     prompt: request.prompt,
     effort: request.effort,
+    aiModelId: request.aiModelId,
     baseBranch: request.baseBranch,
     summary: request.summary,
     files: (request.files ?? []).map(file => ({ path: file.path, action: file.action })),
@@ -71,6 +81,7 @@ const toJobView = (job: AiJobView) => ({
     scope: job.scope,
     domainId: job.domainId,
     effort: job.effort,
+    aiModelId: job.aiModelId,
     summary: job.summary,
     error: job.error,
     usage: job.usage,
@@ -104,6 +115,17 @@ const toJobView = (job: AiJobView) => ({
  */
 export const aiChangeTools = [
     defineTool({
+        name: "ai_models_list",
+        title: "List AI models",
+        description:
+            "The AIs the project may run its agents on (id, name, provider, model, the effort levels each takes) and defaultId, the one used when aiModelId is left out. Pass an id as aiModelId to ai_change_start, ai_job_start or ai_job_follow_up only when the user asked for a specific AI.",
+        scope: MCP_SCOPE_READ,
+        consoleOnly: true,
+        annotations: READ_ONLY,
+        inputSchema: NO_INPUT,
+        run: async (_args, { principal, projectId }) => aiModelService(principal).availableForProject(projectId)
+    }),
+    defineTool({
         name: "ai_change_start",
         title: "Start AI code change",
         description:
@@ -116,10 +138,16 @@ export const aiChangeTools = [
             microfrontendId,
             prompt,
             baseBranch: z.string().trim().min(1).max(255).optional().describe("Branch to start from, the repository's default branch when omitted"),
-            effort
+            effort,
+            aiModelId
         }),
         run: async (args, { principal }) =>
-            toChangeView(await service(principal).create({ kind: "microfrontend", id: args.microfrontendId }, { prompt: args.prompt, baseBranch: args.baseBranch, effort: args.effort }))
+            toChangeView(
+                await service(principal).create(
+                    { kind: "microfrontend", id: args.microfrontendId },
+                    { prompt: args.prompt, baseBranch: args.baseBranch, effort: args.effort, aiModelId: args.aiModelId }
+                )
+            )
     }),
     defineTool({
         name: "ai_changes_list",
@@ -197,7 +225,8 @@ export const aiChangeTools = [
                     .max(10)
                     .optional()
                     .describe("The microfrontends to change, without domainId; all the microfrontends and services with a repository when both are omitted"),
-                effort
+                effort,
+                aiModelId
             })
             .refine(args => !(args.domainId && args.microfrontendIds), { message: "Pass domainId or microfrontendIds, not both" }),
         run: async (args, { principal, projectId }) =>
@@ -205,10 +234,10 @@ export const aiChangeTools = [
                 await jobService(principal).create(
                     projectId,
                     args.domainId
-                        ? { prompt: args.prompt, scope: "domain", domainId: args.domainId, effort: args.effort }
+                        ? { prompt: args.prompt, scope: "domain", domainId: args.domainId, effort: args.effort, aiModelId: args.aiModelId }
                         : args.microfrontendIds
-                          ? { prompt: args.prompt, scope: "selection", microfrontendIds: args.microfrontendIds, effort: args.effort }
-                          : { prompt: args.prompt, scope: "global", effort: args.effort }
+                          ? { prompt: args.prompt, scope: "selection", microfrontendIds: args.microfrontendIds, effort: args.effort, aiModelId: args.aiModelId }
+                          : { prompt: args.prompt, scope: "global", effort: args.effort, aiModelId: args.aiModelId }
                 )
             )
     }),
@@ -229,9 +258,11 @@ export const aiChangeTools = [
                 .max(10)
                 .optional()
                 .describe("The repositories of the job to refine; all those still proposed when omitted"),
-            effort
+            effort,
+            aiModelId
         }),
-        run: async (args, { principal }) => toJobView(await jobService(principal).followUp(args.jobId, { prompt: args.prompt, microfrontendIds: args.microfrontendIds, effort: args.effort }))
+        run: async (args, { principal }) =>
+            toJobView(await jobService(principal).followUp(args.jobId, { prompt: args.prompt, microfrontendIds: args.microfrontendIds, effort: args.effort, aiModelId: args.aiModelId }))
     }),
     defineTool({
         name: "ai_job_get",

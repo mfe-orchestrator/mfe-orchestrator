@@ -3,21 +3,24 @@ import { Brain } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { LlmEffort } from "@/types/ConfigResponseDTO"
 import { cn } from "@/utils/styleUtils"
-import useAiEfforts from "./useAiEfforts"
+import useProjectAiModels from "./useProjectAiModels"
 
 interface EffortSelectProps {
     value?: LlmEffort
     onChange: (effort: LlmEffort) => void
+    /** The levels of the AI the request goes to: those of the AI picked in the project when missing. */
+    efforts?: LlmEffort[]
     disabled?: boolean
     /** On the trigger, e.g. to push it away from the buttons it sits with. */
     className?: string
     dataTestId: string
 }
 
-/** How hard the agent reasons on the next request; hidden when the provider offers no choice. */
-const EffortSelect: React.FC<EffortSelectProps> = ({ value, onChange, disabled, className, dataTestId }) => {
+/** How hard the agent reasons on the next request; hidden when the AI offers no choice. */
+const EffortSelect: React.FC<EffortSelectProps> = ({ value, onChange, efforts, disabled, className, dataTestId }) => {
     const { t } = useTranslation()
-    const available = useAiEfforts()
+    const projectEfforts = useProjectAiModels().efforts
+    const available = efforts ?? projectEfforts
 
     if (!value || available.length === 0) return null
 

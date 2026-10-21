@@ -6,6 +6,8 @@ export interface IAssistantUsage {
     userId: Schema.Types.ObjectId
     projectId: Schema.Types.ObjectId
     provider?: string
+    /** The AI that answered: an id of the organization's AIs, or `system`. */
+    aiModelId?: string
     stopReason: string
     /** The effort the answer was asked with: more effort, more tokens. */
     effort?: LlmEffort
@@ -20,6 +22,7 @@ const assistantUsageSchema = new Schema<IAssistantUsage>(
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
         projectId: { type: Schema.Types.ObjectId, ref: "Project", required: true, index: true },
         provider: { type: String },
+        aiModelId: { type: String },
         stopReason: { type: String, required: true },
         effort: { type: String, enum: [...LLM_EFFORTS] },
         inputTokens: { type: Number, default: 0 },

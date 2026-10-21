@@ -8,6 +8,7 @@ import Project from "../../models/ProjectModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import { withRepositoryLock } from "../../utils/repositoryLock"
 import { isProtectedPath } from "../../utils/workspacePaths"
+import AiModelService from "../AiModelService"
 import BaseAuthorizedService from "../BaseAuthorizedService"
 import { LlmConfiguration } from "../llm"
 import { toErrorMessage } from "../RepositoryFileService"
@@ -107,6 +108,11 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
         protected readonly config: LlmConfiguration
     ) {
         super(user)
+    }
+
+    /** Where the AI a request runs on is chosen, among those the project may use. */
+    protected aiModels() {
+        return new AiModelService(this.user, this.config)
     }
 
     /**

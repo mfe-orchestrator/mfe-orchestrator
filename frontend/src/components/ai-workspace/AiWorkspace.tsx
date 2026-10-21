@@ -42,15 +42,18 @@ import {
 import { Fragment, useEffect, useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useSearchParams } from "react-router-dom"
+import AiModelSelect from "@/components/assistant/AiModelSelect"
 import AnswerUsage from "@/components/assistant/AnswerUsage"
 import { ApplyAllButton, jobErrorMessage, sumUsage } from "@/components/assistant/AssistantJobThread"
 import AssistantMessageText from "@/components/assistant/AssistantMessageText"
 import EffortSelect from "@/components/assistant/EffortSelect"
-import { useEffort, useFollowUpEffort } from "@/components/assistant/useEffort"
+import { useEffort, useFollowUpAiModel, useFollowUpEffort } from "@/components/assistant/useEffort"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
 import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus, AiChangeTarget } from "@/hooks/apiClients/useAiChangesApi"
 import useAiJobsApi, { AiJob, AiJobRepository, isAiJobActive } from "@/hooks/apiClients/useAiJobsApi"
+import { effortsOf } from "@/hooks/apiClients/useAiModelsApi"
 import { errorCodeOf } from "@/hooks/useApiClient"
 import useThemeStore from "@/store/useThemeStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
@@ -67,7 +70,7 @@ export type AiWorkspaceTarget = AiChangeTarget | { kind: "domain"; id: string }
 const isRepositoryTarget = (target: AiWorkspaceTarget): target is AiChangeTarget => target.kind !== "domain"
 
 /** Error codes of the create endpoint that have a message of their own. */
-const CREATE_ERROR_CODES = new Set(["ASSISTANT_DISABLED", "AI_CHANGE_FORBIDDEN", "WORKSPACE_NO_REPOSITORY"])
+const CREATE_ERROR_CODES = new Set(["ASSISTANT_DISABLED", "AI_CHANGE_FORBIDDEN", "WORKSPACE_NO_REPOSITORY", "AI_MODEL_NOT_AVAILABLE"])
 
 const ACTION_VARIANT: Record<AiChangeFile["action"], IBadgeProps["variant"]> = {
     create: "accent",
@@ -666,13 +669,14 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, latest, place
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [draft, setDraft] = useState("")
-    const [effort, setEffort] = useFollowUpEffort((open ?? latest)?.job)
+    const [aiModel, setAiModel] = useFollowUpAiModel((open ?? latest)?.job)
+    const [effort, setEffort] = useFollowUpEffort((open ?? latest)?.job, aiModel)
     const promptId = useId()
     const locked = !open
 
     const followUpMutation = useMutation({
         mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) =>
-            aiJobsApi.followUp(jobId, { prompt, effort, ...followUpScope(target) }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
+            aiJobsApi.followUp(jobId, { prompt, effort, aiModelId: aiModel?.id, ...followUpScope(target) }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
         onSuccess: child => {
             setDraft("")
             onSent(child)
@@ -720,7 +724,8 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, latest, place
             <span id={`${promptId}-state`} className="sr-only" aria-live="polite">
                 {placeholder}
             </span>
-            <EffortSelect value={effort} onChange={setEffort} disabled={locked || followUpMutation.isPending} dataTestId="ai-change-follow-up-effort" />
+            <AiModelSelect value={aiModel?.id} onChange={setAiModel} disabled={locked || followUpMutation.isPending} dataTestId="ai-change-follow-up-ai-model" />
+            <EffortSelect value={effort} onChange={setEffort} efforts={effortsOf(aiModel)} disabled={locked || followUpMutation.isPending} dataTestId="ai-change-follow-up-effort" />
             <Button
                 type="submit"
                 size="icon"
@@ -1256,6 +1261,7 @@ interface ComposerProps {
 const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef, focusOnMount, extension }) => {
     const { t } = useTranslation()
     const [effort, setEffort] = useEffort("code")
+    const { selected: aiModel, setSelected: setAiModel } = useProjectAiModels()
     const promptId = useId()
     const branchId = useId()
     // Read once: tied to the live value, the section would fold while the user clears the branch.
@@ -1340,6 +1346,7 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onP
                             {extension?.pending && extension.pendingLabel ? extension.pendingLabel : t("microfrontend.aiChange.composer_shortcut")}
                         </span>
                         <div className="flex items-center gap-2">
+                            <AiModelSelect value={aiModel?.id} onChange={setAiModel} disabled={busy} dataTestId="ai-change-ai-model" />
                             <EffortSelect value={effort} onChange={setEffort} disabled={busy} dataTestId="ai-change-effort" />
                             <Button type="submit" disabled={busy || extension?.blocked} dataTestId="ai-change-generate">
                                 {busy ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
@@ -1374,6 +1381,7 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
     const [baseBranch, setBaseBranch] = useState("")
     // Picked in the composer, sent from here.
     const [effort] = useEffort("code")
+    const aiModelId = useProjectAiModels().selected?.id
     const [submitted, setSubmitted] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const promptRef = useRef<HTMLTextAreaElement>(null)
@@ -1428,12 +1436,15 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
     const createMutation = useMutation({
         mutationFn: async (): Promise<string> => {
             if (!repository) {
-                const job = await aiJobsApi.create({ prompt: prompt.trim(), scope: "domain", domainId: target.id, effort }, { customErrorMessage: error => jobErrorMessage(t, error, "create") })
+                const job = await aiJobsApi.create(
+                    { prompt: prompt.trim(), scope: "domain", domainId: target.id, effort, aiModelId },
+                    { customErrorMessage: error => jobErrorMessage(t, error, "create") }
+                )
                 return job.rootJobId
             }
             const created = await aiChangesApi.create(
                 repository,
-                { prompt: prompt.trim(), baseBranch: baseBranch.trim() || undefined, effort },
+                { prompt: prompt.trim(), baseBranch: baseBranch.trim() || undefined, effort, aiModelId },
                 {
                     customErrorMessage: error => {
                         const code = errorCodeOf(error)

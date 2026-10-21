@@ -886,7 +886,7 @@
                 "apply": "Could not apply the changes.",
                 "load": "Could not load the request.",
                 "history": "Could not load the previous requests.",
-                "ASSISTANT_DISABLED": "AI editing is not enabled on this installation.",
+                "ASSISTANT_DISABLED": "AI editing is not enabled in this project: it has no AI available.",
                 "AI_CHANGE_FORBIDDEN": "You do not have permission to edit this microfrontend with AI.",
                 "WORKSPACE_NO_REPOSITORY": "This microfrontend has no linked code repository.",
                 "AI_CHANGE_CONFLICT": "These files changed on the base branch after the proposal: {{files}}. Ask for the change again.",
@@ -894,7 +894,8 @@
                 "AI_CHANGE_FORBIDDEN_service": "You do not have permission to edit this service with AI.",
                 "WORKSPACE_NO_REPOSITORY_service": "This service has no linked code repository.",
                 "pull_request": "Could not open the pull request.",
-                "AI_CHANGE_PUSH_REFUSED": "{{branch}} refused the push: if the branch is protected, open a pull request instead."
+                "AI_CHANGE_PUSH_REFUSED": "{{branch}} refused the push: if the branch is protected, open a pull request instead.",
+                "AI_MODEL_NOT_AVAILABLE": "The AI you picked is no longer available to the project: pick another one."
             },
             "new_change": "New change",
             "queue_label": "AI change requests",
@@ -1529,7 +1530,8 @@
                 "GITHUB": "GitHub",
                 "GITLAB": "GitLab",
                 "AZURE_DEV_OPS": "Azure DevOps"
-            }
+            },
+            "provider_error": "The AI provider answered with an error: try again shortly, or fill in the fields by hand."
         }
     },
     "dependencies": {
@@ -1866,11 +1868,12 @@
         "errors": {
             "generic": "I could not answer. Please try again shortly.",
             "rate_limited": "Too many questions in a short time. Wait a minute and try again.",
-            "disabled": "Maestro is not enabled on this installation.",
+            "disabled": "Maestro is not enabled in this project: it has no AI available.",
             "refusal": "I can't help with this request.",
             "incomplete": "The answer is incomplete: try a more specific question.",
             "stopped": "Answer stopped.",
-            "confirmation_expired": "The confirmation expired or was already answered, so nothing was done. Ask again if you still want to proceed."
+            "confirmation_expired": "The confirmation expired or was already answered, so nothing was done. Ask again if you still want to proceed.",
+            "ai_model_not_available": "The AI you picked is no longer available to the project: pick another one and ask again."
         },
         "suggestions": {
             "overview": "Give me an overview of the project",
@@ -1972,7 +1975,7 @@
                 "create": "Could not start the job.",
                 "follow_up": "Could not send the request.",
                 "apply": "Could not apply the proposals.",
-                "ASSISTANT_DISABLED": "AI editing is not enabled on this installation.",
+                "ASSISTANT_DISABLED": "AI editing is not enabled in this project: it has no AI available.",
                 "AI_CHANGE_FORBIDDEN": "You do not have permission to edit microfrontends and services with AI.",
                 "AI_CHANGE_TOO_MANY": "Too many jobs are running in this project: wait for one to finish.",
                 "AI_JOB_NOT_DONE": "The job has not finished yet.",
@@ -1982,7 +1985,9 @@
                 "AI_CHANGE_NOT_PROPOSED": "These proposals are no longer waiting for approval.",
                 "plan": "The AI could not propose the components.",
                 "AI_DOMAIN_PLAN_HAS_MEMBERS": "The domain already has microfrontends or services: reload the page.",
-                "AI_DOMAIN_PLAN_FAILED": "The AI could not propose the components: try again or describe the request differently."
+                "AI_DOMAIN_PLAN_FAILED": "The AI could not propose the components: try again or describe the request differently.",
+                "AI_MODEL_NOT_AVAILABLE": "The AI you picked is no longer available to the project: pick another one.",
+                "AI_PROVIDER_ERROR": "The AI provider answered with an error: try again shortly."
             },
             "apply_all_started": "Applying the proposals onto their base branches",
             "apply_all_failed_one": "{{count}} of {{total}} proposals could not be applied: see the error on its repository",
@@ -2286,7 +2291,7 @@
         },
         "ai": {
             "open": "Edit with AI",
-            "unavailable": "AI editing is not available on this installation: no AI provider is configured.",
+            "unavailable": "AI editing is not available in this project: the organization has no AI it can use.",
             "context_title": "Repositories the agent works on",
             "no_members": "This domain has no microfrontend or service yet: Generate first asks the AI which ones your request needs, and creates them with their repositories once you confirm.",
             "no_repositories": "No microfrontend or service of this domain has a linked code repository: Generate offers to create one for each of them, from a template.",
@@ -2442,6 +2447,116 @@
             "key_clash": "{{key}} is set both by {{first}} and by {{second}}: a service cannot attach both",
             "map_unknown": "One of the selected maps no longer exists: reload the page",
             "description_invalid": "At most 2000 characters"
+        }
+    },
+    "ai_models": {
+        "title": "Artificial intelligences",
+        "subtitle": "The AIs the projects of the organization use for the assistant and every AI feature. Each project can use all of them, unless restricted below.",
+        "add": "Add AI",
+        "edit": "Edit {{name}}",
+        "delete": "Delete {{name}}",
+        "empty": "The organization has no AI yet: ask an owner or an administrator to add one.",
+        "empty_admin": "The organization has no AI yet: add one to turn on the assistant and the AI features in its projects.",
+        "system_name": "System AI",
+        "system_hint": "Configured in the installation's environment: it cannot be edited here.",
+        "created": "AI added",
+        "updated": "AI updated",
+        "deleted": "AI deleted",
+        "confirm_delete_title": "Delete AI",
+        "confirm_delete": "Delete {{name}}? It is also removed from every project that uses it: a project left with no AI has the AI features turned off.",
+        "columns": {
+            "name": "Name",
+            "provider": "Provider",
+            "model": "Model"
+        },
+        "badges": {
+            "default": "Default",
+            "system": "System"
+        },
+        "providers": {
+            "anthropic": "Claude (Anthropic)",
+            "azure-foundry": "Claude (Azure AI Foundry)",
+            "gemini": "Gemini (Google)",
+            "azure-openai": "GPT (Azure OpenAI)",
+            "aws-bedrock": "Claude (AWS Bedrock)"
+        },
+        "select": {
+            "label": "AI",
+            "hint": "The AI the request goes to."
+        },
+        "form": {
+            "add_title": "Add AI",
+            "edit_title": "Edit AI",
+            "description": "The credentials are stored encrypted and never shown again: leave a hidden value as it is to keep it.",
+            "name": "Name",
+            "name_placeholder": "e.g. Claude for the teams",
+            "provider": "Provider",
+            "model": "Model",
+            "deployment": "Deployment",
+            "model_default_hint": "Leave empty to use {{model}}.",
+            "reasoning": "Reasoning model",
+            "reasoning_hint": "On when the deployment is a reasoning model (e.g. o-series, GPT-5): it then accepts an effort level.",
+            "max_effort": "Maximum effort",
+            "max_effort_hint": "The highest reasoning effort users can pick with this AI.",
+            "max_effort_none": "No limit",
+            "default": "Default AI",
+            "default_hint": "Preselected in every project that can use it. Only one AI of the organization is the default.",
+            "fields": {
+                "apiKey": "API key",
+                "resource": "Resource",
+                "endpoint": "Endpoint",
+                "region": "Region",
+                "accessKeyId": "Access key ID",
+                "secretAccessKey": "Secret access key"
+            },
+            "placeholders": {
+                "apiKey": "The provider's API key",
+                "resource": "e.g. my-foundry-resource",
+                "endpoint": "e.g. https://my-resource.openai.azure.com",
+                "region": "e.g. us-east-1",
+                "accessKeyId": "e.g. AKIA...",
+                "secretAccessKey": "The secret of the access key",
+                "deployment": "e.g. gpt-5",
+                "model_gemini": "e.g. gemini-2.5-pro",
+                "model_aws-bedrock": "Model id or inference profile, e.g. us.anthropic.claude-opus-...",
+                "model_anthropic": "claude-opus-5-5",
+                "model_azure-foundry": "claude-opus-5-5"
+            },
+            "secret_retype_hint": "The AI now points elsewhere: type this key again, the stored one is kept only for the provider, resource, endpoint and access key it was saved with."
+        },
+        "access": {
+            "title": "Project access",
+            "subtitle": "Which AIs each project can use. By default a project uses all of them, including those added later.",
+            "project": "Project",
+            "models": "AIs",
+            "all_default": "All (default)",
+            "disabled": "AI turned off",
+            "edit": "Edit the AIs of {{project}}",
+            "no_projects": "The organization has no projects yet.",
+            "dialog_title": "AIs of {{project}}",
+            "dialog_description": "Choose the AIs the project can use for the assistant and the AI features.",
+            "mode_label": "Access",
+            "all": "All the AIs of the organization (default)",
+            "all_hint": "Including those added later.",
+            "selected": "Only the selected AIs",
+            "selected_hint": "An AI added later is not included.",
+            "models_label": "AIs the project can use",
+            "none_warning": "No AI selected: the assistant and the AI features are turned off in this project.",
+            "saved": "AIs of {{project}} updated"
+        },
+        "errors": {
+            "load": "Could not load the AIs of the organization.",
+            "load_access": "Could not load the AIs of the projects.",
+            "name_taken": "Another AI of the organization already has this name.",
+            "invalid": "The AI is missing some required settings for its provider.",
+            "not_available": "This AI is no longer available to the project: pick another one.",
+            "system_readonly": "The system AI comes from the installation's configuration and cannot be changed here.",
+            "secret_required": "Type the {{field}} again: a stored one is kept only while the provider, resource, endpoint and access key stay the same.",
+            "endpoint_invalid": "The endpoint is not valid: it must be an Azure HTTPS endpoint, like https://my-resource.openai.azure.com/.",
+            "region_invalid": "The region is not valid: use an AWS region name, like eu-west-1.",
+            "resource_invalid": "The resource is not valid: use the name of the Azure AI Foundry resource, like my-foundry, not a URL.",
+            "missing_fields": "Some required settings are missing: {{fields}}.",
+            "default_conflict": "Another AI was just made the default: reload the page and try again."
         }
     }
 }

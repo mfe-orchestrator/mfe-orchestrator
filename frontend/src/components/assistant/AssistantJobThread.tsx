@@ -9,13 +9,15 @@ import { ProgressLog, StatusBadge } from "@/components/ai-workspace/AiChangeProg
 import { Badge, Button } from "@/components/atoms"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
 import useAiJobsApi, { AiJob, AiJobRepository, AiUsage, isAiJobActive } from "@/hooks/apiClients/useAiJobsApi"
+import { effortsOf } from "@/hooks/apiClients/useAiModelsApi"
 import { errorCodeOf } from "@/hooks/useApiClient"
 import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobsStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import AiModelSelect from "./AiModelSelect"
 import AnswerUsage from "./AnswerUsage"
 import AssistantMessageText from "./AssistantMessageText"
 import EffortSelect from "./EffortSelect"
-import { useFollowUpEffort } from "./useEffort"
+import { useFollowUpAiModel, useFollowUpEffort } from "./useEffort"
 
 export const POLL_INTERVAL_MS = 2000
 export const PROMPT_MAX_LENGTH = 8000
@@ -31,12 +33,16 @@ const JOB_ERROR_CODES = new Set([
     "AI_JOB_NO_REPOSITORIES",
     "AI_JOB_TOO_MANY_REPOSITORIES",
     "AI_DOMAIN_PLAN_HAS_MEMBERS",
-    "AI_DOMAIN_PLAN_FAILED"
+    "AI_DOMAIN_PLAN_FAILED",
+    "AI_MODEL_NOT_AVAILABLE",
+    "AI_PROVIDER_ERROR"
 ])
 
 /** The translated message of a failed job call; `fallback` is a key under `assistant.jobs.errors`. */
 export const jobErrorMessage = (t: TFunction, error: Error, fallback: string) => {
     const code = errorCodeOf(error)
+    // The provider's rate limit: said as the chat says it.
+    if (code === "RATE_LIMITED") return t("assistant.errors.rate_limited")
     return t(`assistant.jobs.errors.${code && JOB_ERROR_CODES.has(code) ? code : fallback}`)
 }
 
@@ -208,10 +214,12 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target }
     const aiJobsApi = useAiJobsApi()
     const [draft, setDraft] = useState("")
     // While nothing is open to refine, the latest job's: what the running follow-up was sent with.
-    const [effort, setEffort] = useFollowUpEffort(target ?? latest)
+    const [aiModel, setAiModel] = useFollowUpAiModel(target ?? latest)
+    const [effort, setEffort] = useFollowUpEffort(target ?? latest, aiModel)
 
     const followUpMutation = useMutation({
-        mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) => aiJobsApi.followUp(jobId, { prompt, effort }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
+        mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) =>
+            aiJobsApi.followUp(jobId, { prompt, effort, aiModelId: aiModel?.id }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
         onSuccess: child => {
             useAssistantJobsStore.getState().openJob(projectId, child, true)
             setDraft("")
@@ -270,7 +278,10 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ projectId, latest, target }
                 </Button>
             </div>
             {/* Below the field, not next to it: the panel is too narrow for both. */}
-            <EffortSelect value={effort} onChange={setEffort} disabled={!ready || followUpMutation.isPending} className="self-end" dataTestId="assistant-job-follow-up-effort" />
+            <div className="flex items-center justify-end gap-2">
+                <AiModelSelect value={aiModel?.id} onChange={setAiModel} disabled={!ready || followUpMutation.isPending} dataTestId="assistant-job-follow-up-ai-model" />
+                <EffortSelect value={effort} onChange={setEffort} efforts={effortsOf(aiModel)} disabled={!ready || followUpMutation.isPending} dataTestId="assistant-job-follow-up-effort" />
+            </div>
         </form>
     )
 }

@@ -4,7 +4,7 @@ import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
 import AssistantUsage from "../models/AssistantUsageModel"
 import AssistantService from "../service/assistant/AssistantService"
 import { deleteConversation, getConversation, listConversations, saveConversation } from "../service/assistant/conversations"
-import { isRateLimitError, LLM_EFFORTS, LlmEffort, LlmUsage, resolveLlmProvider } from "../service/llm"
+import { isRateLimitError, LLM_EFFORTS, LlmEffort, LlmProvider, LlmUsage } from "../service/llm"
 import { AssistantChatRequestDTO, AssistantConversationSaveDTO, AssistantProjectDraftRequestDTO } from "../types/AssistantDTO"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 import { openEventStream, sendEvent } from "../utils/eventStream"
@@ -16,6 +16,8 @@ const MAX_MESSAGES = 40
 const MAX_MESSAGE_CHARS = 8_000
 const MAX_DESCRIPTION_CHARS = 4_000
 const HEARTBEAT = ": ping\n\n"
+/** An id of the organization's AIs, or `system`. */
+const AI_MODEL_ID = { type: "string", minLength: 1, maxLength: 64 }
 const HEARTBEAT_INTERVAL_MS = 15_000
 
 const chatBodySchema = {
@@ -38,6 +40,7 @@ const chatBodySchema = {
             }
         },
         effort: { type: "string", enum: LLM_EFFORTS },
+        aiModelId: AI_MODEL_ID,
         context: {
             type: "object",
             additionalProperties: false,
@@ -61,11 +64,13 @@ const chatBodySchema = {
 
 const draftBodySchema = {
     type: "object",
-    required: ["description"],
+    required: ["organizationId", "description"],
     additionalProperties: false,
     properties: {
+        organizationId: { type: "string", pattern: "^[a-fA-F0-9]{24}$" },
         description: { type: "string", minLength: 1, maxLength: MAX_DESCRIPTION_CHARS },
-        locale: { type: "string", maxLength: 20 }
+        locale: { type: "string", maxLength: 20 },
+        aiModelId: AI_MODEL_ID
     }
 }
 
@@ -168,7 +173,7 @@ export default async function assistantController(fastify: FastifyInstance) {
         }
 
         const service = new AssistantService(request.databaseUser, fastify.config, request.log)
-        await service.ensureCanChat(projectId)
+        await service.ensureCanChat(projectId, request.body.aiModelId)
         // Taken before the stream opens, so an expired or foreign action is an HTTP error, and only
         // once: a second answer to the same card finds nothing.
         const action = confirmation ? await service.takeConfirmation(projectId, confirmation.actionId) : undefined
@@ -187,9 +192,9 @@ export default async function assistantController(fastify: FastifyInstance) {
         // the stream silent for longer than a proxy's idle timeout; comment frames keep it open.
         const heartbeat = setInterval(() => reply.raw.write(HEARTBEAT), HEARTBEAT_INTERVAL_MS)
 
-        let answered: { stopReason: string; usage: LlmUsage; effort: LlmEffort } | undefined
+        let answered: { stopReason: string; usage: LlmUsage; effort: LlmEffort; aiModelId: string; provider: LlmProvider } | undefined
         try {
-            const { stopReason, wrote, usage, effort } = await service.chat(
+            const { stopReason, wrote, usage, effort, aiModelId, provider } = await service.chat(
                 projectId,
                 request.body,
                 {
@@ -203,7 +208,7 @@ export default async function assistantController(fastify: FastifyInstance) {
                 action && confirmation ? { action, approved: confirmation.approved } : undefined
             )
             sendEvent(reply, "done", { stopReason, wrote, usage })
-            answered = { stopReason, usage, effort }
+            answered = { stopReason, usage, effort, aiModelId, provider }
         } catch (error) {
             if (!abortController.signal.aborted) {
                 fastify.log.error({ err: error, projectId }, "Assistant chat failed")
@@ -215,13 +220,13 @@ export default async function assistantController(fastify: FastifyInstance) {
         reply.raw.end()
 
         if (answered) {
-            const { stopReason, usage, effort } = answered
-            // One line and one document per answer: what the assistant costs, per user and project, and at which effort.
-            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, effort, ...usage }, "Assistant answer usage")
+            const { stopReason, usage, effort, aiModelId, provider } = answered
+            // One line and one document per answer: what the assistant costs, per user and project, on which AI and at which effort.
+            fastify.log.info({ audit: "assistant_usage", userId: request.databaseUser?._id?.toString(), projectId, stopReason, effort, aiModelId, provider, ...usage }, "Assistant answer usage")
             // Once the stream is closed and not awaited: the browser does not wait on the write, and a failed one cannot become an error frame.
             void (async () => {
                 try {
-                    await AssistantUsage.create({ userId: request.databaseUser?._id, projectId: toObjectId(projectId), provider: resolveLlmProvider(fastify.config), stopReason, effort, ...usage })
+                    await AssistantUsage.create({ userId: request.databaseUser?._id, projectId: toObjectId(projectId), provider, aiModelId, stopReason, effort, ...usage })
                 } catch (error) {
                     fastify.log.error({ err: error, projectId }, "Assistant usage not saved")
                 }
@@ -234,7 +239,8 @@ export default async function assistantController(fastify: FastifyInstance) {
         "/assistant/project-draft",
         { schema: { body: draftBodySchema }, config: { authMethod: AuthenticationMethod.JWT, rateLimit } },
         async (request, reply) => {
-            const draft = await new AssistantService(request.databaseUser, fastify.config).draftProject(request.body.description, request.body.locale)
+            const { organizationId, description, locale, aiModelId } = request.body
+            const draft = await new AssistantService(request.databaseUser, fastify.config, request.log).draftProject(organizationId, description, locale, aiModelId)
             if (!draft) {
                 throw createBusinessException({ code: "ASSISTANT_NO_DRAFT", message: "The model returned no usable draft", statusCode: 422 })
             }

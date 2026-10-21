@@ -1,3 +1,4 @@
+import { fastify } from "../.."
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import Domain from "../../models/DomainModel"
@@ -7,12 +8,12 @@ import Project from "../../models/ProjectModel"
 import Service from "../../models/ServiceModel"
 import { SERVICE_SLUG } from "../../types/ServiceStack"
 import { toObjectId } from "../../utils/mongooseUtils"
-import { getLlmClient } from "../llm"
+import { aiProviderError } from "../llm"
 import MarketService from "../MarketService"
 import { defaultTemplateOf, isTemplateOfKind, REPOSITORY_NAME_SUFFIXES } from "../RepositoryCreationService"
 import { isValidRepositoryName } from "../RepositoryRenameService"
 import { RepositoryComponentKind } from "../workspace/repositoryComponent"
-import { AiChangeBaseService } from "./aiChangeShared"
+import { AiChangeBaseService, loggable } from "./aiChangeShared"
 
 /** Components of each kind a plan may propose: a domain starts small, the agent can be asked for more later. */
 export const MAX_PLANNED_PER_KIND = 3
@@ -24,6 +25,8 @@ const MAX_REPOSITORY_NAME_LENGTH = 100
 export interface DomainPlanInput {
     domainId: string
     prompt: string
+    /** The AI that plans, one the project may use: the project's default when left out. */
+    aiModelId?: string
 }
 
 /** A microfrontend or a service the AI proposes to create, with the repository it would be scaffolded in. */
@@ -141,9 +144,9 @@ export const sanitizePlan = (answer: unknown, templates: Template[], taken: Reco
  */
 export class DomainPlanService extends AiChangeBaseService {
     async plan(projectId: string, input: DomainPlanInput): Promise<DomainPlan> {
-        const client = getLlmClient(this.config)
         const projectIdObj = toObjectId(projectId)
         await this.ensureCanChangeProject(projectIdObj)
+        const { client } = await this.aiModels().resolveForProject(projectIdObj, input.aiModelId)
         const domain = await Domain.findOne({ _id: toObjectId(input.domainId), projectId: projectIdObj })
         if (!domain) throw new EntityNotFoundError(input.domainId)
         await this.ensureInDomainScope(projectIdObj, domain._id)
@@ -169,20 +172,26 @@ export class DomainPlanService extends AiChangeBaseService {
                 .join("\n")
         }
 
-        const answer = await client.json({
-            system: PLAN_SYSTEM_PROMPT,
-            user: [
-                `<request>\n${input.prompt}\n</request>`,
-                project?.context ? `<project_context project="${project.name}">\n${project.context}\n</project_context>` : `<project name="${project?.name ?? ""}" />`,
-                [`<domain_context domain="${domain.name}">`, domain.description, domain.context, "</domain_context>"].filter(Boolean).join("\n"),
-                `<microfrontend_templates>\n${templateList("microfrontend")}\n</microfrontend_templates>`,
-                `<service_templates>\n${templateList("service")}\n</service_templates>`,
-                `<taken_slugs>\nmicrofrontends: ${[...taken.microfrontend].join(", ") || "none"}\nservices: ${[...taken.service].join(", ") || "none"}\n</taken_slugs>`
-            ].join("\n\n"),
-            schema: PLAN_SCHEMA,
-            maxTokens: MAX_TOKENS,
-            effort: "low"
-        })
+        const answer = await client
+            .json({
+                system: PLAN_SYSTEM_PROMPT,
+                user: [
+                    `<request>\n${input.prompt}\n</request>`,
+                    project?.context ? `<project_context project="${project.name}">\n${project.context}\n</project_context>` : `<project name="${project?.name ?? ""}" />`,
+                    [`<domain_context domain="${domain.name}">`, domain.description, domain.context, "</domain_context>"].filter(Boolean).join("\n"),
+                    `<microfrontend_templates>\n${templateList("microfrontend")}\n</microfrontend_templates>`,
+                    `<service_templates>\n${templateList("service")}\n</service_templates>`,
+                    `<taken_slugs>\nmicrofrontends: ${[...taken.microfrontend].join(", ") || "none"}\nservices: ${[...taken.service].join(", ") || "none"}\n</taken_slugs>`
+                ].join("\n\n"),
+                schema: PLAN_SCHEMA,
+                maxTokens: MAX_TOKENS,
+                effort: "low"
+            })
+            .catch(error => {
+                // The provider's own message stays in the log: it may quote what the endpoint answered.
+                fastify.log.warn({ error: loggable(error), projectId }, "AI domain plan failed")
+                throw aiProviderError(error)
+            })
         if (!answer) {
             throw createBusinessException({
                 code: "AI_DOMAIN_PLAN_FAILED",

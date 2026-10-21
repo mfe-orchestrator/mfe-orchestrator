@@ -37,10 +37,6 @@ export default interface GlobalConfigDTO {
     registrationAllowed: boolean
     canSendEmail: boolean
     marketingOptInEnabled: boolean
-    /** True when the backend has an ANTHROPIC_API_KEY: the console then shows the assistant. */
-    assistantEnabled?: boolean
-    /** The effort levels the configured AI provider honours, lowest first; empty when it offers no choice. */
-    aiEfforts?: LlmEffort[]
     providers: AuthProvidersConfig
     mcp: {
         enabled: boolean

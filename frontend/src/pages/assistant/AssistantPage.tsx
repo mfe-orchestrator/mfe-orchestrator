@@ -1,8 +1,9 @@
+import { Spinner } from "@mfe-orchestrator/design-system"
 import { useTranslation } from "react-i18next"
 import { Navigate } from "react-router-dom"
 import AssistantHistory from "@/components/assistant/AssistantHistory"
 import AssistantPanel from "@/components/assistant/AssistantPanel"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import PageHead from "@/components/PageHead"
 import useProjectStore from "@/store/useProjectStore"
 
@@ -12,10 +13,18 @@ import useProjectStore from "@/store/useProjectStore"
  */
 const AssistantPage: React.FC = () => {
     const { t } = useTranslation()
-    const enabled = useAssistantEnabled()
+    const { enabled, isPending } = useProjectAiModels()
     const projectId = useProjectStore(state => state.project?._id)
 
-    // Without an AI provider the page has nothing to show; the menu does not link to it either.
+    if (isPending) {
+        return (
+            <div className="flex min-h-[200px] items-center justify-center">
+                <Spinner size={32} />
+            </div>
+        )
+    }
+
+    // Without an AI available to the project the page has nothing to show; the menu does not link to it either.
     if (!enabled) return <Navigate to="/microfrontends" replace />
 
     return (

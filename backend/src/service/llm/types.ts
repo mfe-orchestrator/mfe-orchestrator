@@ -14,7 +14,9 @@ export enum LlmProvider {
     /** Gemini through the Gemini API. */
     GEMINI = "gemini",
     /** GPT models deployed on Azure OpenAI. */
-    AZURE_OPENAI = "azure-openai"
+    AZURE_OPENAI = "azure-openai",
+    /** Claude on Amazon Bedrock. */
+    AWS_BEDROCK = "aws-bedrock"
 }
 
 export interface LlmTool {

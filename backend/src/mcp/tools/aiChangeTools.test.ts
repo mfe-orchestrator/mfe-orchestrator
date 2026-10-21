@@ -14,6 +14,7 @@ const createJob = vi.fn()
 const followUpJob = vi.fn()
 const getJob = vi.fn()
 const applyJob = vi.fn()
+const availableForProject = vi.fn()
 
 const { constructed } = vi.hoisted(() => ({ constructed: [] as unknown[][] }))
 
@@ -29,6 +30,12 @@ vi.mock("../../service/aiChange/AiChangeService", () => ({
         apply = (...args: unknown[]) => applyChange(...args)
         openPullRequest = (...args: unknown[]) => openPullRequest(...args)
         discard = (...args: unknown[]) => discardChange(...args)
+    }
+}))
+
+vi.mock("../../service/AiModelService", () => ({
+    default: class {
+        availableForProject = (...args: unknown[]) => availableForProject(...args)
     }
 }))
 
@@ -104,7 +111,7 @@ const forbidden = () => createBusinessException({ code: "AI_CHANGE_FORBIDDEN", m
 
 describe("AI change tools", () => {
     beforeEach(() => {
-        for (const mock of [createChange, listChanges, getChange, applyChange, openPullRequest, discardChange, createJob, followUpJob, getJob, applyJob]) {
+        for (const mock of [createChange, listChanges, getChange, applyChange, openPullRequest, discardChange, createJob, followUpJob, getJob, applyJob, availableForProject]) {
             mock.mockReset()
         }
         constructed.length = 0
@@ -283,6 +290,32 @@ describe("AI change tools", () => {
             followUpJob.mockRejectedValue(createBusinessException({ code: "AI_JOB_NOT_DONE", message: "The job has not finished yet", statusCode: 409 }))
 
             await expect(run("ai_job_follow_up", { jobId: JOB, prompt: "Also rename the tests" })).rejects.toMatchObject({ code: "AI_JOB_NOT_DONE" })
+        })
+    })
+
+    describe("AI models", () => {
+        it("given the tool's project, when its AIs are listed, then they come with the default", async () => {
+            const available = { models: [{ id: "system", name: "System", provider: "anthropic", model: "claude-opus-5-5", system: true, isDefault: false, efforts: ["low"] }], defaultId: "system" }
+            availableForProject.mockResolvedValue(available)
+
+            expect(await run("ai_models_list", {})).toEqual(available)
+            expect(availableForProject).toHaveBeenCalledWith(PROJECT)
+            expect(tool("ai_models_list").annotations).toMatchObject({ readOnlyHint: true })
+        })
+
+        it("given an AI, when a change, a job or a follow-up is started, then it reaches the service and the views carry the AI used", async () => {
+            createChange.mockResolvedValue({ ...changeDocument("PENDING"), aiModelId: "system" })
+            createJob.mockResolvedValue({ ...jobView("PENDING"), aiModelId: "system" })
+            followUpJob.mockResolvedValue({ ...jobView("PENDING"), aiModelId: "system" })
+
+            const change = await run("ai_change_start", { microfrontendId: MICROFRONTEND, prompt: "Add a footer", aiModelId: "system" })
+            const job = await run("ai_job_start", { prompt: "Rename the price API", aiModelId: "system" })
+            const followUp = await run("ai_job_follow_up", { jobId: JOB, prompt: "Also rename the tests", aiModelId: "system" })
+
+            expect(createChange).toHaveBeenCalledWith({ kind: "microfrontend", id: MICROFRONTEND }, expect.objectContaining({ aiModelId: "system" }))
+            expect(createJob).toHaveBeenCalledWith(PROJECT, { prompt: "Rename the price API", scope: "global", aiModelId: "system" })
+            expect(followUpJob).toHaveBeenCalledWith(JOB, expect.objectContaining({ aiModelId: "system" }))
+            expect([change, job, followUp].map(view => (view as { aiModelId?: string }).aiModelId)).toEqual(["system", "system", "system"])
         })
     })
 

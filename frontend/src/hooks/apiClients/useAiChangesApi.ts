@@ -66,6 +66,8 @@ export interface AiChangeRequest {
     usage: { inputTokens: number; cachedInputTokens?: number; outputTokens: number }
     /** The reasoning effort of the job, the same on each of its requests. */
     effort: LlmEffort
+    /** The AI of the organization the job worked with; missing on requests made before AIs were per organization. */
+    aiModelId?: string
     createdAt: string
     updatedAt: string
 }
@@ -75,6 +77,8 @@ export interface CreateAiChangeDTO {
     baseBranch?: string
     /** Without it, the backend works at `high`. */
     effort?: LlmEffort
+    /** Without it, the backend works with the default AI of the project. */
+    aiModelId?: string
 }
 
 const useAiChangesApi = () => {

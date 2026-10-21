@@ -28,6 +28,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { jobErrorMessage } from "@/components/assistant/AssistantJobThread"
 import { useEffort } from "@/components/assistant/useEffort"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import useAiJobsApi, { AiJob } from "@/hooks/apiClients/useAiJobsApi"
 import useCodeRepositoriesApi, { CodeRepositoryProvider } from "@/hooks/apiClients/useCodeRepositoriesApi"
@@ -130,8 +131,9 @@ const DomainScaffoldDialog: React.FC<DomainScaffoldDialogProps> = ({ open, onOpe
     const microfrontendsApi = useMicrofrontendsApi()
     const servicesApi = useServicesApi()
     const aiJobsApi = useAiJobsApi()
-    // The effort the composer that opened the dialog shows: the job starts with it.
+    // The effort and the AI the composer that opened the dialog shows: the job starts with them.
     const [effort] = useEffort("code")
+    const aiModelId = useProjectAiModels().selected?.id
     // Existing members only miss their repository: their name and slug are not edited here.
     const forMembers = proposed.some(item => item.memberId)
 
@@ -238,7 +240,7 @@ const DomainScaffoldDialog: React.FC<DomainScaffoldDialogProps> = ({ open, onOpe
                 queryClient.invalidateQueries({ queryKey: ["domains"] })
             ])
             if (failed) return undefined
-            return aiJobsApi.create({ prompt, scope: "domain", domainId, effort }, { customErrorMessage: error => jobErrorMessage(t, error, "create") })
+            return aiJobsApi.create({ prompt, scope: "domain", domainId, effort, aiModelId }, { customErrorMessage: error => jobErrorMessage(t, error, "create") })
         },
         onSuccess: job => {
             if (!job) return

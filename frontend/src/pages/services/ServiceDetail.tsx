@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams } from "react-router-dom"
 import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import RepositoryLink from "@/components/RepositoryLink"
@@ -160,9 +160,10 @@ const ServiceRepositorySection: React.FC<{ service: Service }> = ({ service }) =
  */
 const ServiceAiSection: React.FC<{ serviceQuery: { isPending: boolean; isError: boolean; error: unknown; data?: Service } }> = ({ serviceQuery }) => {
     const { t } = useTranslation()
-    const assistantEnabled = useAssistantEnabled()
+    const aiModels = useProjectAiModels()
 
-    if (serviceQuery.isPending) {
+    // The project's AIs decide where the page goes: it waits for them as for the service.
+    if (serviceQuery.isPending || aiModels.isPending) {
         return (
             <div className="flex min-h-[200px] items-center justify-center">
                 <Spinner size={32} />
@@ -179,7 +180,7 @@ const ServiceAiSection: React.FC<{ serviceQuery: { isPending: boolean; isError: 
     }
 
     const service = serviceQuery.data
-    if (!isServiceAiAvailable(service, assistantEnabled)) return <Navigate to={`/service/${service._id}/overview`} replace />
+    if (!isServiceAiAvailable(service, aiModels.enabled)) return <Navigate to={`/service/${service._id}/overview`} replace />
 
     return (
         <div className="flex min-h-full flex-col gap-6">

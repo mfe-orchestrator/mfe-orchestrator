@@ -9,6 +9,7 @@ import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobs
 import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
 import useProjectStore from "@/store/useProjectStore"
 import { cn } from "@/utils/styleUtils"
+import AiModelSelect from "./AiModelSelect"
 import AnswerUsage from "./AnswerUsage"
 import AssistantConfirmationCard from "./AssistantConfirmationCard"
 import AssistantHistory from "./AssistantHistory"
@@ -18,9 +19,9 @@ import AssistantMessageText from "./AssistantMessageText"
 import AssistantNewJobDialog from "./AssistantNewJobDialog"
 import AssistantToolCallRow from "./AssistantToolCallRow"
 import EffortSelect from "./EffortSelect"
-import useAssistantEnabled from "./useAssistantEnabled"
 import useAssistantJobsWatcher from "./useAssistantJobsWatcher"
 import { useEffort } from "./useEffort"
+import useProjectAiModels from "./useProjectAiModels"
 
 const MAX_QUESTION_CHARS = 4_000
 
@@ -101,13 +102,13 @@ interface AssistantPanelProps {
  */
 const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) => {
     const { t } = useTranslation()
-    const enabled = useAssistantEnabled()
+    const { enabled, selected: aiModel, setSelected: setAiModel } = useProjectAiModels()
     const location = useLocation()
     const { isOpen, messages, close, toggle, reset } = useAssistantStore()
     const pendingQuestion = useAssistantStore(state => state.pendingQuestion)
     const projectId = useProjectStore(state => state.project?._id)
     const [effort, setEffort] = useEffort("assistant")
-    const { send, answerConfirmation, stop, isStreaming } = useAssistantChat(effort)
+    const { send, answerConfirmation, stop, isStreaming } = useAssistantChat(effort, aiModel?.id)
     const jobTabs = useAssistantJobsStore(state => (projectId && state.tabsByProject[projectId]) || NO_TABS)
     const storedTab = useAssistantJobsStore(state => (projectId && state.activeTabByProject[projectId]) || "project")
     const setActiveTab = useAssistantJobsStore(state => state.setActiveTab)
@@ -324,6 +325,7 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) =>
                                 {/* Below the field, not next to it: in the docked panel the question needs the width. */}
                                 <div className="flex items-start gap-2">
                                     <p className="min-w-0 flex-1 text-xs text-foreground-secondary">{t("assistant.disclaimer")}</p>
+                                    <AiModelSelect value={aiModel?.id} onChange={setAiModel} dataTestId="assistant-ai-model" />
                                     <EffortSelect value={effort} onChange={setEffort} dataTestId="assistant-effort" />
                                 </div>
                             </form>

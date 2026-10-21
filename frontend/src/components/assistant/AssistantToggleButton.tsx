@@ -4,12 +4,12 @@ import { useLocation } from "react-router-dom"
 import { Button } from "@/components/atoms"
 import useAssistantStore from "@/store/useAssistantStore"
 import { ASSISTANT_PAGE_PATH } from "./AssistantPanel"
-import useAssistantEnabled from "./useAssistantEnabled"
+import useProjectAiModels from "./useProjectAiModels"
 
 /** Header entry point to the assistant panel; ⌘J / Ctrl+J does the same. */
 const AssistantToggleButton: React.FC = () => {
     const { t } = useTranslation()
-    const enabled = useAssistantEnabled()
+    const enabled = useProjectAiModels().enabled
     const { isOpen, toggle } = useAssistantStore()
     const { pathname } = useLocation()
 

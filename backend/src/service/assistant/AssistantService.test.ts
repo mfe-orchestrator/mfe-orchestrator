@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import AiModel from "../../models/AiModelModel"
+import Project from "../../models/ProjectModel"
 import { IUser } from "../../models/UserModel"
 import BaseAuthorizedService from "../BaseAuthorizedService"
 import AssistantService, { AssistantStreamHandlers } from "./AssistantService"
@@ -51,6 +53,8 @@ const fakeStream = (message: { stop_reason: string; content: unknown[]; usage?: 
 
 const user = { _id: "user-1" } as unknown as IUser
 const ENVIRONMENT = "bbbbbbbbbbbbbbbbbbbbbbbb"
+const ORGANIZATION = "cccccccccccccccccccccccc"
+const PROJECT = "dddddddddddddddddddddddd"
 
 /** Records every frame the service emits, in order. */
 const recordingHandlers = () => {
@@ -75,10 +79,44 @@ describe("AssistantService", () => {
         deleteEnvironment.mockReset().mockResolvedValue(undefined)
         vi.spyOn(BaseAuthorizedService.prototype as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue(undefined)
         vi.spyOn(AssistantService.prototype as unknown as { getRoleInProject: () => Promise<string> }, "getRoleInProject").mockResolvedValue("MEMBER")
+        vi.spyOn(BaseAuthorizedService.prototype as unknown as { ensureAccessToOrganization: () => Promise<void> }, "ensureAccessToOrganization").mockResolvedValue(undefined)
+        vi.spyOn(Project, "findById").mockResolvedValue({ _id: PROJECT, organizationId: ORGANIZATION } as never)
+        // The organization defines no AI: the system one, from the configuration the service is given, answers
+        vi.spyOn(AiModel, "find").mockResolvedValue([] as never)
     })
 
-    it("Given no API key, when a question is asked, then the assistant reports itself disabled", async () => {
-        await expect(new AssistantService(user, {}).ensureCanChat("project-1")).rejects.toMatchObject({ code: "ASSISTANT_DISABLED" })
+    it("Given no AI from the organization nor the installation, when a question is asked, then the assistant reports itself disabled", async () => {
+        await expect(new AssistantService(user, {}).ensureCanChat(PROJECT)).rejects.toMatchObject({ code: "ASSISTANT_DISABLED" })
+    })
+
+    it("Given an AI the project may not use, when a question is asked, then it is refused before the stream opens", async () => {
+        await expect(new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).ensureCanChat(PROJECT, "eeeeeeeeeeeeeeeeeeeeeeee")).rejects.toMatchObject({
+            code: "AI_MODEL_NOT_AVAILABLE",
+            statusCode: 422
+        })
+    })
+
+    it("Given an AI of the organization chosen, when a question is answered, then it answers with that AI's model and the outcome names it", async () => {
+        const opus = {
+            _id: "eeeeeeeeeeeeeeeeeeeeeeee",
+            name: "Org Claude",
+            provider: "anthropic",
+            modelId: "claude-sonnet-5-5",
+            config: { apiKey: "sk-org" },
+            isDefault: false,
+            updatedAt: new Date(0)
+        }
+        vi.spyOn(AiModel, "find").mockResolvedValue([opus] as never)
+        stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Hi" }] }))
+
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
+            PROJECT,
+            { messages: [{ role: "user", content: "Hello" }], aiModelId: opus._id },
+            recordingHandlers().handlers
+        )
+
+        expect(stream.mock.calls[0][0]).toMatchObject({ model: "claude-sonnet-5-5" })
+        expect(outcome).toMatchObject({ aiModelId: opus._id, provider: "anthropic" })
     })
 
     it("Given a question that needs data, when answered, then the tool runs on the request's project and its result goes back to the model", async () => {
@@ -89,7 +127,7 @@ describe("AssistantService", () => {
 
         const { frames, handlers } = recordingHandlers()
         const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
-            "project-1",
+            PROJECT,
             { messages: [{ role: "user", content: "Which environments do I have?" }], context: { page: "/environments" } },
             handlers
         )
@@ -98,7 +136,7 @@ describe("AssistantService", () => {
         expect(frames.map(entry => entry.event)).toEqual(["tool_call", "tool_result", "text"])
         expect(frames[0].frame).toEqual({ id: "toolu_1", name: "environments_list", title: "List environments", input: {}, kind: "read" })
         expect(frames[2].frame).toBe("You have one environment: Production.")
-        expect(getEnvironments).toHaveBeenCalledWith("project-1")
+        expect(getEnvironments).toHaveBeenCalledWith(PROJECT)
 
         const firstRequest = stream.mock.calls[0][0]
         expect(firstRequest.model).toBe("claude-opus-5-5")
@@ -120,7 +158,7 @@ describe("AssistantService", () => {
             .mockReturnValueOnce(fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }], usage }))
             .mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "None." }], usage }))
 
-        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "?" }] }, recordingHandlers().handlers)
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(PROJECT, { messages: [{ role: "user", content: "?" }] }, recordingHandlers().handlers)
 
         expect(outcome.usage).toEqual({ inputTokens: 920, cachedInputTokens: 800, outputTokens: 14 })
     })
@@ -148,7 +186,7 @@ describe("AssistantService", () => {
             )
         const { frames, handlers } = recordingHandlers()
 
-        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "?" }], effort: "xhigh" }, handlers)
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(PROJECT, { messages: [{ role: "user", content: "?" }], effort: "xhigh" }, handlers)
 
         expect(stream.mock.calls[0][0]).toMatchObject({ max_tokens: 64_000, output_config: { effort: "xhigh" }, thinking: { type: "adaptive", display: "summarized" } })
         expect(stream.mock.calls[1][0]).toMatchObject({ max_tokens: 64_000, output_config: { effort: "xhigh" } })
@@ -160,7 +198,7 @@ describe("AssistantService", () => {
     it("Given no effort chosen, when a question is answered, then it is answered at medium", async () => {
         stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Hi." }] }))
 
-        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "Hi" }] }, recordingHandlers().handlers)
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(PROJECT, { messages: [{ role: "user", content: "Hi" }] }, recordingHandlers().handlers)
 
         expect(stream.mock.calls[0][0]).toMatchObject({ max_tokens: 16_000, output_config: { effort: "medium" } })
         expect(outcome.effort).toBe("medium")
@@ -170,7 +208,7 @@ describe("AssistantService", () => {
         stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Hi." }] }))
 
         const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key", AI_MAX_EFFORT: "high" }).chat(
-            "project-1",
+            PROJECT,
             { messages: [{ role: "user", content: "Hi" }], effort: "max" },
             recordingHandlers().handlers
         )
@@ -182,7 +220,7 @@ describe("AssistantService", () => {
     it("Given a refusal, when answered, then no tool runs and the refusal is reported", async () => {
         stream.mockReturnValueOnce(fakeStream({ stop_reason: "refusal", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }] }))
 
-        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "..." }] }, recordingHandlers().handlers)
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(PROJECT, { messages: [{ role: "user", content: "..." }] }, recordingHandlers().handlers)
 
         expect(outcome.stopReason).toBe("refusal")
         expect(getEnvironments).not.toHaveBeenCalled()
@@ -192,7 +230,7 @@ describe("AssistantService", () => {
         getEnvironments.mockResolvedValue([])
         stream.mockImplementation(() => fakeStream({ stop_reason: "tool_use", content: [{ type: "tool_use", id: "toolu_1", name: "environments_list", input: {} }] }))
 
-        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "loop" }] }, recordingHandlers().handlers)
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(PROJECT, { messages: [{ role: "user", content: "loop" }] }, recordingHandlers().handlers)
 
         expect(outcome.stopReason).toBe("max_tool_rounds")
         expect(stream).toHaveBeenCalledTimes(16)
@@ -210,7 +248,7 @@ describe("AssistantService", () => {
         )
 
         const { frames, handlers } = recordingHandlers()
-        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat("project-1", { messages: [{ role: "user", content: "Delete staging" }] }, handlers)
+        const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(PROJECT, { messages: [{ role: "user", content: "Delete staging" }] }, handlers)
 
         expect(outcome).toMatchObject({ stopReason: "awaiting_confirmation", wrote: false })
         expect(stream).toHaveBeenCalledTimes(1)
@@ -220,11 +258,11 @@ describe("AssistantService", () => {
 
     it("Given an approved confirmation, when the turn resumes, then the action runs and the model carries on from its own call with the outcome", async () => {
         stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Staging is gone." }] }))
-        const action = { id: "a1", userId: "user-1", projectId: "project-1", tool: "environment_delete", args: { environmentId: ENVIRONMENT }, callId: "toolu_1", createdAt: 0, expiresAt: 0 }
+        const action = { id: "a1", userId: "user-1", projectId: PROJECT, tool: "environment_delete", args: { environmentId: ENVIRONMENT }, callId: "toolu_1", createdAt: 0, expiresAt: 0 }
 
         const { frames, handlers } = recordingHandlers()
         const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
-            "project-1",
+            PROJECT,
             {
                 messages: [
                     { role: "user", content: "Delete staging" },
@@ -255,10 +293,10 @@ describe("AssistantService", () => {
 
     it("Given a declined confirmation after a conversation ending with the user, when the turn resumes, then nothing runs and the model is told the user declined", async () => {
         stream.mockReturnValueOnce(fakeStream({ stop_reason: "end_turn", content: [{ type: "text", text: "Ok, I left it." }] }))
-        const action = { id: "a1", userId: "user-1", projectId: "project-1", tool: "environment_delete", args: { environmentId: ENVIRONMENT }, callId: "toolu_1", createdAt: 0, expiresAt: 0 }
+        const action = { id: "a1", userId: "user-1", projectId: PROJECT, tool: "environment_delete", args: { environmentId: ENVIRONMENT }, callId: "toolu_1", createdAt: 0, expiresAt: 0 }
 
         const outcome = await new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).chat(
-            "project-1",
+            PROJECT,
             { messages: [{ role: "user", content: "Delete staging" }] },
             recordingHandlers().handlers,
             undefined,
@@ -282,8 +320,8 @@ describe("AssistantService", () => {
             const service = new AssistantService(user, config)
             const { frames, handlers } = recordingHandlers()
             const messages = [{ role: "user" as const, content: "Delete staging" }, ...(confirmation ? [{ role: "assistant" as const, content: "Checking first." }] : [])]
-            const action = confirmation ? await takePendingAction(confirmation.actionId, "user-1", "project-1") : undefined
-            const outcome = await service.chat("project-1", { messages }, handlers, undefined, action && confirmation ? { action, approved: confirmation.approved } : undefined)
+            const action = confirmation ? await takePendingAction(confirmation.actionId, "user-1", PROJECT) : undefined
+            const outcome = await service.chat(PROJECT, { messages }, handlers, undefined, action && confirmation ? { action, approved: confirmation.approved } : undefined)
             return { outcome, frames }
         }
 
@@ -388,7 +426,7 @@ describe("AssistantService", () => {
         }
         create.mockResolvedValue({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(draft) }] })
 
-        await expect(new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).draftProject("A portal on AWS, code on GitHub", "en")).resolves.toEqual(draft)
+        await expect(new AssistantService(user, { ANTHROPIC_API_KEY: "test-key" }).draftProject(ORGANIZATION, "A portal on AWS, code on GitHub", "en")).resolves.toEqual(draft)
         expect(create.mock.calls[0][0].output_config.format.type).toBe("json_schema")
     })
 })

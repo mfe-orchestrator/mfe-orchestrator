@@ -29,12 +29,15 @@ export interface AssistantConversation extends AssistantConversationSummary {
 const useAssistantApi = () => {
     const apiClient = useApiClient()
 
-    /** A draft of a new project from a free-text description. The chat itself streams, see useAssistantChat. */
-    const draftProject = async (description: string, locale: string): Promise<ProjectDraft> => {
+    /**
+     * A draft of a new project from a free-text description, with an AI of `organizationId`, the organization the
+     * project will belong to. The chat itself streams, see useAssistantChat.
+     */
+    const draftProject = async (description: string, locale: string, organizationId: string, aiModelId?: string): Promise<ProjectDraft> => {
         const response = await apiClient.doRequest<ProjectDraft>({
             url: "/api/assistant/project-draft",
             method: "POST",
-            data: { description, locale },
+            data: { description, locale, organizationId, aiModelId },
             silent: true
         })
         return response.data

@@ -6,7 +6,7 @@ import type { LlmEffort } from "@/types/ConfigResponseDTO"
 export type EffortSurface = "assistant" | "code"
 
 /** localStorage when the browser allows it (not in private mode or a sandboxed frame): otherwise the choice lasts the session, in memory. */
-const safeLocalStorage: StateStorage = {
+export const safeLocalStorage: StateStorage = {
     getItem: name => {
         try {
             return localStorage.getItem(name)

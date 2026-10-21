@@ -14,6 +14,7 @@ vi.mock("../MarketService", () => ({
 }))
 
 import { BusinessException } from "../../errors/BusinessException"
+import AiModel from "../../models/AiModelModel"
 import Domain from "../../models/DomainModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
@@ -115,6 +116,8 @@ describe("DomainPlanService.plan", () => {
         vi.spyOn(gates, "isOrganizationAdmin").mockResolvedValue(false)
         vi.spyOn(UserProject, "findOne").mockImplementation((() => Promise.resolve({ role })) as never)
         vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: new Types.ObjectId(), name: "Shop", context: "Shop context" } as never)
+        // The organization defines no AI: the system one, from the configuration the service is given, answers
+        vi.spyOn(AiModel, "find").mockResolvedValue([] as never)
         vi.spyOn(Domain, "findOne").mockResolvedValue(domain as never)
         vi.spyOn(Microfrontend, "exists").mockImplementation((() => Promise.resolve(members.microfrontend ? { _id: new Types.ObjectId() } : null)) as never)
         vi.spyOn(Service, "exists").mockImplementation((() => Promise.resolve(members.service ? { _id: new Types.ObjectId() } : null)) as never)
@@ -173,5 +176,16 @@ describe("DomainPlanService.plan", () => {
         const error = await plan().catch(caught => caught)
         expect(error).toBeInstanceOf(BusinessException)
         expect(error).toMatchObject({ code: "AI_DOMAIN_PLAN_FAILED" })
+    })
+
+    it("given a provider that fails, when a plan is asked, then the user gets a generic error, a rate limit its own code, never the provider's message", async () => {
+        json.mockRejectedValueOnce(Object.assign(new Error("404 <html>internal admin console</html>"), { status: 404 }))
+        const failed = await plan().catch(caught => caught)
+        json.mockRejectedValueOnce(Object.assign(new Error("Too many requests"), { status: 429 }))
+        const limited = await plan().catch(caught => caught)
+
+        expect(failed).toMatchObject({ code: "AI_PROVIDER_ERROR", statusCode: 502 })
+        expect(failed.message).not.toContain("internal")
+        expect(limited).toMatchObject({ code: "RATE_LIMITED", statusCode: 429 })
     })
 })

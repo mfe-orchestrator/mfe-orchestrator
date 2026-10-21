@@ -14,9 +14,10 @@ import Service from "../../models/ServiceModel"
 import { toObjectId } from "../../utils/mongooseUtils"
 import { withRepositoryLock } from "../../utils/repositoryLock"
 import { isProtectedPath, resolveInsideWorkingCopy } from "../../utils/workspacePaths"
+import { ResolvedAiModel } from "../AiModelService"
 import { redactSecrets } from "../assistant/assistantTools"
 import { domainScopeForbidden, isInDomainScope } from "../BaseAuthorizedService"
-import { addUsage, getLlmClient, LlmClient, LlmEffort, LlmUsage, NO_USAGE, resolveEffort } from "../llm"
+import { addUsage, aiProviderError, LlmClient, LlmEffort, LlmUsage, NO_USAGE, resolveEffort } from "../llm"
 import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "../RepositoryFileService"
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
 import {
@@ -76,6 +77,8 @@ export interface AiJobCreateInput {
     serviceIds?: string[]
     /** How hard the agent reasons: `high` when left out. */
     effort?: LlmEffort
+    /** The AI the agent runs on, one the project may use: the project's default when left out. */
+    aiModelId?: string
 }
 
 export interface AiJobFollowUpInput {
@@ -85,6 +88,8 @@ export interface AiJobFollowUpInput {
     serviceIds?: string[]
     /** How hard the agent reasons: the parent's effort when left out. */
     effort?: LlmEffort
+    /** The AI the agent runs on: the parent's when left out and the project may still use it, else the project's default. */
+    aiModelId?: string
 }
 
 export interface AiJobRepositoryView {
@@ -119,6 +124,8 @@ export interface AiJobView {
     domainId?: string
     status: AiJobStatus
     effort: LlmEffort
+    /** The AI the agent ran on; unset on jobs from before AIs could be chosen. */
+    aiModelId?: string
     /** Left out of lists. */
     events?: { at: Date; kind: IAiChangeEvent["kind"]; message: string }[]
     summary?: string
@@ -243,6 +250,7 @@ const toJobView = (job: ListedJob, requests: Omit<IAiChangeRequest, "events">[],
     domainId: job.domainId ? String(job.domainId) : undefined,
     status: job.status,
     effort: job.effort ?? AI_CHANGE_DEFAULT_EFFORT,
+    aiModelId: job.aiModelId,
     events: withEvents ? (job.events ?? []).map(entry => ({ at: entry.at, kind: entry.kind, message: entry.message })) : undefined,
     summary: job.summary,
     error: job.error,
@@ -351,8 +359,8 @@ export class AiChangeJobService extends AiChangeBaseService {
      * one domain (its frontend and its backend at once), or on the selected ones.
      */
     async create(projectId: string, input: AiJobCreateInput): Promise<AiJobView> {
-        const client = getLlmClient(this.config)
         await this.ensureCanChangeProject(toObjectId(projectId))
+        const aiModel = await this.aiModels().resolveForProject(projectId, input.aiModelId)
         // A domain-scoped member works on their domains only: never on every repository of the project
         if (input.scope === "global") await this.ensureWholeProject(projectId)
         const domain = input.scope === "domain" ? await this.domainOf(projectId, input.domainId) : undefined
@@ -362,7 +370,7 @@ export class AiChangeJobService extends AiChangeBaseService {
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
         const repositories = await Promise.all(components.map(async component => ({ component, baseBranch: (await workspaceService.open(component)).defaultBranch })))
-        const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, domainId: domain?._id, repositories, effort: input.effort }, client)
+        const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, domainId: domain?._id, repositories, effort: input.effort }, aiModel)
         return this.view(job, true)
     }
 
@@ -371,9 +379,10 @@ export class AiChangeJobService extends AiChangeBaseService {
      * or on some of them. Each new request starts from the files of the request it refines.
      */
     async followUp(jobId: string, input: AiJobFollowUpInput): Promise<AiJobView> {
-        const client = getLlmClient(this.config)
         const parent = await this.getJob(jobId)
         await this.ensureCanChangeProject(parent.projectId)
+        // The transcript keeps no provider's own data, so a follow-up may run on another AI than its parent.
+        const aiModel = await this.aiModels().resolveForProject(parent.projectId, input.aiModelId, parent.aiModelId)
         if (parent.status !== AiJobStatus.DONE) throw notDone()
         // Two follow-ups of the same job would both start from its proposals, and the second to finish would win.
         const runningChild = await AiChangeJob.exists({ parentJobId: parent._id, status: { $in: ACTIVE_JOB_STATUSES }, updatedAt: { $gt: new Date(Date.now() - STALE_AFTER_MS) } })
@@ -403,7 +412,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         for (const { component } of repositories) await this.ensureRepositoryInDomainScope(component, component.codeRepository)
 
         const scope = repositories.length === parentRefs.length ? parent.scope : "selection"
-        const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, domainId: parent.domainId, repositories, parentJob: parent, effort: input.effort }, client)
+        const { job } = await this.start({ projectId: parent.projectId, prompt: input.prompt, scope, domainId: parent.domainId, repositories, parentJob: parent, effort: input.effort }, aiModel)
         return this.view(job, true)
     }
 
@@ -422,7 +431,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             /** Left out: the parent's for a follow-up, else `high`. */
             effort?: LlmEffort
         },
-        client: LlmClient
+        { settings, client }: ResolvedAiModel
     ): Promise<{ job: IAiChangeJob; requests: IAiChangeRequest[] }> {
         const active = await AiChangeJob.countDocuments({ projectId: input.projectId, status: { $in: ACTIVE_JOB_STATUSES }, updatedAt: { $gt: new Date(Date.now() - STALE_AFTER_MS) } })
         if (active >= MAX_ACTIVE_JOBS_PER_PROJECT) {
@@ -433,8 +442,8 @@ export class AiChangeJobService extends AiChangeBaseService {
         // Named before it is created: the first job of a chain is its own root.
         const jobId = new Types.ObjectId() as unknown as IAiChangeJob["_id"]
         const queued = () => [{ at: new Date(), kind: "info" as const, message: "queued" }]
-        // A follow-up goes on as hard as its parent went, unless the user chose otherwise; never above the installation's cap.
-        const effort = resolveEffort(this.config, input.effort ?? input.parentJob?.effort, AI_CHANGE_DEFAULT_EFFORT)
+        // A follow-up goes on as hard as its parent went, unless the user chose otherwise; never above the AI's cap.
+        const effort = resolveEffort(settings, input.effort ?? input.parentJob?.effort, AI_CHANGE_DEFAULT_EFFORT)
         const job = await AiChangeJob.create({
             _id: jobId,
             projectId: input.projectId,
@@ -445,6 +454,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             scope: input.scope,
             domainId: input.domainId,
             effort,
+            aiModelId: settings.id,
             microfrontendIds: input.repositories.filter(({ component }) => component.kind === "microfrontend").map(({ component }) => component._id),
             serviceIds: input.repositories.filter(({ component }) => component.kind === "service").map(({ component }) => component._id),
             status: AiJobStatus.PENDING,
@@ -459,6 +469,7 @@ export class AiChangeJobService extends AiChangeBaseService {
                     jobId,
                     jobRepositoryCount: input.repositories.length,
                     effort,
+                    aiModelId: settings.id,
                     parentId: repository.parentId,
                     conversationId: input.parentJob?.rootJobId ?? jobId,
                     prompt: input.prompt,
@@ -570,7 +581,7 @@ export class AiChangeJobService extends AiChangeBaseService {
             fastify.log.warn({ error: loggable(error), aiJobId: jobId }, "AI job failed")
             await this.fail(jobId, toErrorMessage(error))
         } finally {
-            fastify.log.info({ audit: "ai_job_usage", userId: String(job.userId), projectId: String(job.projectId), jobId, effort: job.effort, ...usage }, "AI job usage")
+            fastify.log.info({ audit: "ai_job_usage", userId: String(job.userId), projectId: String(job.projectId), jobId, effort: job.effort, aiModelId: job.aiModelId, ...usage }, "AI job usage")
         }
     }
 
@@ -638,7 +649,8 @@ export class AiChangeJobService extends AiChangeBaseService {
             ).catch(error => {
                 // Aborted, the job was declared dead: nothing of it is saved.
                 if (abort.signal.aborted) throw error
-                stopped = toErrorMessage(error)
+                // The provider's own message stays in the log: it may quote what the endpoint answered.
+                stopped = aiProviderError(error).message
                 fastify.log.warn({ error: loggable(error), aiJobId: jobId }, "AI job agent stopped before finishing")
                 return undefined
             })

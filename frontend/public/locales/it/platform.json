@@ -983,7 +983,7 @@
                 "apply": "Non è stato possibile applicare le modifiche.",
                 "load": "Non è stato possibile caricare la richiesta.",
                 "history": "Non è stato possibile caricare le richieste precedenti.",
-                "ASSISTANT_DISABLED": "La modifica con AI non è attiva su questa installazione.",
+                "ASSISTANT_DISABLED": "La modifica con AI non è attiva in questo progetto: non ha IA disponibili.",
                 "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare questo microfrontend con l'AI.",
                 "WORKSPACE_NO_REPOSITORY": "Questo microfrontend non ha un repository di codice collegato.",
                 "AI_CHANGE_CONFLICT": "Questi file sono cambiati sul branch di partenza dopo la proposta: {{files}}. Richiedi di nuovo la modifica.",
@@ -991,7 +991,8 @@
                 "AI_CHANGE_FORBIDDEN_service": "Non hai i permessi per modificare questo servizio con l'AI.",
                 "WORKSPACE_NO_REPOSITORY_service": "Questo servizio non ha un repository di codice collegato.",
                 "pull_request": "Non è stato possibile aprire la pull request.",
-                "AI_CHANGE_PUSH_REFUSED": "{{branch}} ha rifiutato il push: se il branch è protetto, apri invece una pull request."
+                "AI_CHANGE_PUSH_REFUSED": "{{branch}} ha rifiutato il push: se il branch è protetto, apri invece una pull request.",
+                "AI_MODEL_NOT_AVAILABLE": "L'IA scelta non è più disponibile per il progetto: scegline un'altra."
             },
             "new_change": "Nuova modifica",
             "queue_label": "Richieste di modifica con AI",
@@ -1548,7 +1549,8 @@
                 "GITHUB": "GitHub",
                 "GITLAB": "GitLab",
                 "AZURE_DEV_OPS": "Azure DevOps"
-            }
+            },
+            "provider_error": "Il provider IA ha risposto con un errore: riprova tra poco, o compila i campi a mano."
         }
     },
     "dependencies": {
@@ -1885,11 +1887,12 @@
         "errors": {
             "generic": "Non sono riuscito a rispondere. Riprova tra poco.",
             "rate_limited": "Troppe domande in poco tempo. Attendi un minuto e riprova.",
-            "disabled": "Maestro non è attivo su questa installazione.",
+            "disabled": "Maestro non è attivo in questo progetto: non ha IA disponibili.",
             "refusal": "Non posso rispondere a questa richiesta.",
             "incomplete": "La risposta è incompleta: prova a fare una domanda più specifica.",
             "stopped": "Risposta interrotta.",
-            "confirmation_expired": "La conferma è scaduta o ha già ricevuto una risposta, quindi non è stato fatto nulla. Chiedi di nuovo se vuoi ancora procedere."
+            "confirmation_expired": "La conferma è scaduta o ha già ricevuto una risposta, quindi non è stato fatto nulla. Chiedi di nuovo se vuoi ancora procedere.",
+            "ai_model_not_available": "L'IA scelta non è più disponibile per il progetto: scegline un'altra e chiedi di nuovo."
         },
         "suggestions": {
             "overview": "Riassumimi lo stato del progetto",
@@ -1991,7 +1994,7 @@
                 "create": "Impossibile avviare il job.",
                 "follow_up": "Impossibile inviare la richiesta.",
                 "apply": "Impossibile applicare le proposte.",
-                "ASSISTANT_DISABLED": "La modifica con AI non è attiva su questa installazione.",
+                "ASSISTANT_DISABLED": "La modifica con AI non è attiva in questo progetto: non ha IA disponibili.",
                 "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare microfrontend e servizi con AI.",
                 "AI_CHANGE_TOO_MANY": "Ci sono troppi job in corso in questo progetto: attendi che uno finisca.",
                 "AI_JOB_NOT_DONE": "Il job non è ancora finito.",
@@ -2001,7 +2004,9 @@
                 "AI_CHANGE_NOT_PROPOSED": "Queste proposte non sono più in attesa di approvazione.",
                 "plan": "L'AI non è riuscita a proporre i componenti.",
                 "AI_DOMAIN_PLAN_HAS_MEMBERS": "Il dominio ha già microfrontend o servizi: ricarica la pagina.",
-                "AI_DOMAIN_PLAN_FAILED": "L'AI non è riuscita a proporre i componenti: riprova o descrivi la richiesta in un altro modo."
+                "AI_DOMAIN_PLAN_FAILED": "L'AI non è riuscita a proporre i componenti: riprova o descrivi la richiesta in un altro modo.",
+                "AI_MODEL_NOT_AVAILABLE": "L'IA scelta non è più disponibile per il progetto: scegline un'altra.",
+                "AI_PROVIDER_ERROR": "Il provider IA ha risposto con un errore: riprova tra poco."
             },
             "apply_all_started": "Applicazione delle proposte sui branch di partenza in corso",
             "apply_all_failed_one": "{{count}} proposta su {{total}} non è stata applicata: guarda l'errore sul suo repository",
@@ -2305,7 +2310,7 @@
         },
         "ai": {
             "open": "Modifica con AI",
-            "unavailable": "La modifica con AI non è disponibile su questa installazione: nessun provider AI configurato.",
+            "unavailable": "La modifica con AI non è disponibile in questo progetto: l'organizzazione non ha IA che possa usare.",
             "context_title": "Repository su cui lavora l'agente",
             "no_members": "Questo dominio non ha ancora microfrontend né servizi: Genera chiede prima all'AI quali servono alla tua richiesta e li crea con i loro repository quando confermi.",
             "no_repositories": "Nessun microfrontend o servizio di questo dominio ha un repository di codice collegato: Genera propone di crearne uno per ciascuno, da un template.",
@@ -2461,6 +2466,116 @@
             "key_clash": "{{key}} è impostata sia da {{first}} sia da {{second}}: un servizio non può agganciarle entrambe",
             "map_unknown": "Una delle mappe selezionate non esiste più: ricarica la pagina",
             "description_invalid": "Al massimo 2000 caratteri"
+        }
+    },
+    "ai_models": {
+        "title": "Intelligenze artificiali",
+        "subtitle": "Le IA che i progetti dell'organizzazione usano per l'assistente e per ogni funzione IA. Ogni progetto le può usare tutte, salvo restrizioni qui sotto.",
+        "add": "Aggiungi IA",
+        "edit": "Modifica {{name}}",
+        "delete": "Elimina {{name}}",
+        "empty": "L'organizzazione non ha ancora IA: chiedi a un owner o a un amministratore di aggiungerne una.",
+        "empty_admin": "L'organizzazione non ha ancora IA: aggiungine una per attivare l'assistente e le funzioni IA nei suoi progetti.",
+        "system_name": "IA di sistema",
+        "system_hint": "Configurata nell'ambiente dell'installazione: qui non si può modificare.",
+        "created": "IA aggiunta",
+        "updated": "IA aggiornata",
+        "deleted": "IA eliminata",
+        "confirm_delete_title": "Elimina IA",
+        "confirm_delete": "Eliminare {{name}}? Viene tolta anche da tutti i progetti che la usano: un progetto che resta senza IA ha le funzioni IA disattivate.",
+        "columns": {
+            "name": "Nome",
+            "provider": "Provider",
+            "model": "Modello"
+        },
+        "badges": {
+            "default": "Default",
+            "system": "Sistema"
+        },
+        "providers": {
+            "anthropic": "Claude (Anthropic)",
+            "azure-foundry": "Claude (Azure AI Foundry)",
+            "gemini": "Gemini (Google)",
+            "azure-openai": "GPT (Azure OpenAI)",
+            "aws-bedrock": "Claude (AWS Bedrock)"
+        },
+        "select": {
+            "label": "IA",
+            "hint": "L'IA a cui va la richiesta."
+        },
+        "form": {
+            "add_title": "Aggiungi IA",
+            "edit_title": "Modifica IA",
+            "description": "Le credenziali sono salvate cifrate e non vengono più mostrate: lascia un valore nascosto così com'è per mantenerlo.",
+            "name": "Nome",
+            "name_placeholder": "es. Claude per i team",
+            "provider": "Provider",
+            "model": "Modello",
+            "deployment": "Deployment",
+            "model_default_hint": "Lascia vuoto per usare {{model}}.",
+            "reasoning": "Modello di ragionamento",
+            "reasoning_hint": "Attivo quando il deployment è un modello di ragionamento (es. serie o, GPT-5): accetta allora un livello di ragionamento.",
+            "max_effort": "Ragionamento massimo",
+            "max_effort_hint": "Il livello di ragionamento più alto che gli utenti possono scegliere con questa IA.",
+            "max_effort_none": "Nessun limite",
+            "default": "IA di default",
+            "default_hint": "Preselezionata in ogni progetto che la può usare. Una sola IA dell'organizzazione è quella di default.",
+            "fields": {
+                "apiKey": "API key",
+                "resource": "Risorsa",
+                "endpoint": "Endpoint",
+                "region": "Regione",
+                "accessKeyId": "Access key ID",
+                "secretAccessKey": "Secret access key"
+            },
+            "placeholders": {
+                "apiKey": "L'API key del provider",
+                "resource": "es. my-foundry-resource",
+                "endpoint": "es. https://my-resource.openai.azure.com",
+                "region": "es. eu-west-1",
+                "accessKeyId": "es. AKIA...",
+                "secretAccessKey": "Il segreto della access key",
+                "deployment": "es. gpt-5",
+                "model_gemini": "es. gemini-2.5-pro",
+                "model_aws-bedrock": "Id del modello o inference profile, es. eu.anthropic.claude-opus-...",
+                "model_anthropic": "claude-opus-5-5",
+                "model_azure-foundry": "claude-opus-5-5"
+            },
+            "secret_retype_hint": "L'IA ora punta altrove: inserisci di nuovo questa chiave, quella salvata vale solo per il provider, la risorsa, l'endpoint e l'access key con cui è stata salvata."
+        },
+        "access": {
+            "title": "Accesso dei progetti",
+            "subtitle": "Quali IA può usare ogni progetto. Di default un progetto le usa tutte, comprese quelle aggiunte in seguito.",
+            "project": "Progetto",
+            "models": "IA",
+            "all_default": "Tutte (default)",
+            "disabled": "IA disattivata",
+            "edit": "Modifica le IA di {{project}}",
+            "no_projects": "L'organizzazione non ha ancora progetti.",
+            "dialog_title": "IA di {{project}}",
+            "dialog_description": "Scegli le IA che il progetto può usare per l'assistente e le funzioni IA.",
+            "mode_label": "Accesso",
+            "all": "Tutte le IA dell'organizzazione (default)",
+            "all_hint": "Comprese quelle aggiunte in seguito.",
+            "selected": "Solo le IA selezionate",
+            "selected_hint": "Un'IA aggiunta in seguito non è inclusa.",
+            "models_label": "IA che il progetto può usare",
+            "none_warning": "Nessuna IA selezionata: l'assistente e le funzioni IA sono disattivati in questo progetto.",
+            "saved": "IA di {{project}} aggiornate"
+        },
+        "errors": {
+            "load": "Impossibile caricare le IA dell'organizzazione.",
+            "load_access": "Impossibile caricare le IA dei progetti.",
+            "name_taken": "Un'altra IA dell'organizzazione ha già questo nome.",
+            "invalid": "Mancano alcune impostazioni obbligatorie per il provider dell'IA.",
+            "not_available": "Questa IA non è più disponibile per il progetto: scegline un'altra.",
+            "system_readonly": "L'IA di sistema viene dalla configurazione dell'installazione e qui non si può modificare.",
+            "secret_required": "Inserisci di nuovo {{field}}: quella salvata resta valida solo finché provider, risorsa, endpoint e access key non cambiano.",
+            "endpoint_invalid": "L'endpoint non è valido: deve essere un endpoint Azure HTTPS, come https://my-resource.openai.azure.com/.",
+            "region_invalid": "La regione non è valida: usa il nome di una regione AWS, come eu-west-1.",
+            "resource_invalid": "La risorsa non è valida: usa il nome della risorsa Azure AI Foundry, come my-foundry, non un URL.",
+            "missing_fields": "Mancano alcune impostazioni obbligatorie: {{fields}}.",
+            "default_conflict": "Un'altra IA è appena stata impostata come default: ricarica la pagina e riprova."
         }
     }
 }

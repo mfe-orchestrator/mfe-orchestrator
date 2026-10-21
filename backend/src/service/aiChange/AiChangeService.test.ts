@@ -30,12 +30,14 @@ vi.mock("../workspace/RepositoryWorkspaceService", () => ({
 
 import AiChangeJob from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
+import AiModel from "../../models/AiModelModel"
 import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
 import Service from "../../models/ServiceModel"
 import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
+import AiModelService from "../AiModelService"
 import BaseAuthorizedService from "../BaseAuthorizedService"
 import AiChangeJobService from "./AiChangeJobService"
 import AiChangeService from "./AiChangeService"
@@ -75,8 +77,11 @@ describe("AiChangeService", () => {
         vi.spyOn(gates, "ensureAccessToProject").mockResolvedValue(undefined)
         vi.spyOn(gates, "ensureAccessToMicrofrontend").mockResolvedValue(undefined)
         vi.spyOn(gates, "isOrganizationAdmin").mockImplementation(async () => isAdmin)
+        vi.spyOn(AiModelService.prototype as unknown as WithGates, "ensureAccessToProject").mockResolvedValue(undefined)
         vi.spyOn(UserProject, "findOne").mockImplementation((() => Promise.resolve({ role })) as never)
         vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: new Types.ObjectId(), name: "Shop" } as never)
+        // The organization defines no AI: the system one, from the configuration the service is given, answers
+        vi.spyOn(AiModel, "find").mockResolvedValue([] as never)
         vi.spyOn(Microfrontend, "findById").mockResolvedValue({ _id: microfrontendId, projectId, slug: "catalog", name: "Catalog" } as never)
         vi.spyOn(AiChangeRequest, "updateOne").mockImplementation(((_filter: unknown, update: Record<string, unknown>) => {
             updates.push(update)

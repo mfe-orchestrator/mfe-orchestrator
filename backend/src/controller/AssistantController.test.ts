@@ -60,6 +60,17 @@ describe("AssistantController", () => {
         expect(chat).not.toHaveBeenCalled()
     })
 
+    it("Given an AI the project may not use, when a question asks for it, then it answers 422 with the code instead of opening a stream", async () => {
+        ensureCanChat.mockRejectedValue(createBusinessException({ code: "AI_MODEL_NOT_AVAILABLE", message: "not here", statusCode: 422 }))
+
+        const response = await app.inject({ method: "POST", url: "/assistant/chat", headers: { "project-id": "project-1" }, payload: { ...question, aiModelId: "system" } })
+
+        expect(ensureCanChat).toHaveBeenCalledWith("project-1", "system")
+        expect(response.statusCode).toBe(422)
+        expect(response.headers["content-type"]).not.toContain("text/event-stream")
+        expect(chat).not.toHaveBeenCalled()
+    })
+
     it("Given an installation without the assistant, when a question is asked, then it answers 404 instead of opening a stream", async () => {
         ensureCanChat.mockRejectedValue(new AssistantDisabledError())
 
@@ -131,14 +142,14 @@ describe("AssistantController", () => {
         chat.mockImplementation(async (_projectId, _request, handlers) => {
             handlers.onThinking("Check the logs.")
             handlers.onText("Lint failed.")
-            return { stopReason: "end_turn", wrote: false, usage, effort: "xhigh" }
+            return { stopReason: "end_turn", wrote: false, usage, effort: "xhigh", aiModelId: "system", provider: "anthropic" }
         })
 
         const response = await app.inject({ method: "POST", url: "/assistant/chat", headers: { "project-id": "64b7f0c2a1b2c3d4e5f60718" }, payload: { ...question, effort: "xhigh" } })
 
         expect(chat.mock.calls[0][1]).toMatchObject({ effort: "xhigh" })
         expect(response.body).toContain('event: thinking\ndata: {"delta":"Check the logs."}\n\nevent: text\ndata: {"delta":"Lint failed."}')
-        expect(saveUsage).toHaveBeenCalledWith(expect.objectContaining({ stopReason: "end_turn", effort: "xhigh", ...usage }))
+        expect(saveUsage).toHaveBeenCalledWith(expect.objectContaining({ stopReason: "end_turn", effort: "xhigh", aiModelId: "system", provider: "anthropic", ...usage }))
     })
 
     it("Given a destructive call, when the turn stops on it, then a confirm frame and a done frame awaiting confirmation are streamed", async () => {
@@ -231,11 +242,22 @@ describe("AssistantController", () => {
     it("Given a project description, when a draft is asked, then the draft is returned", async () => {
         draftProject.mockResolvedValue({ name: "Portal", description: "", environments: [], storage: "NONE", codeRepository: "NONE", notes: "" })
 
-        const response = await app.inject({ method: "POST", url: "/assistant/project-draft", payload: { description: "A portal", locale: "it" } })
+        const response = await app.inject({
+            method: "POST",
+            url: "/assistant/project-draft",
+            payload: { organizationId: "64b7f0c2a1b2c3d4e5f60719", description: "A portal", locale: "it", aiModelId: "system" }
+        })
 
         expect(response.statusCode).toBe(200)
         expect(response.json().name).toBe("Portal")
-        expect(draftProject).toHaveBeenCalledWith("A portal", "it")
+        expect(draftProject).toHaveBeenCalledWith("64b7f0c2a1b2c3d4e5f60719", "A portal", "it", "system")
+    })
+
+    it("Given a draft asked without the organization, when it is sent, then it is rejected: the AIs are the organization's", async () => {
+        const response = await app.inject({ method: "POST", url: "/assistant/project-draft", payload: { description: "A portal", locale: "it" } })
+
+        expect(response.statusCode).toBe(400)
+        expect(draftProject).not.toHaveBeenCalled()
     })
 
     it("Given a rate limit of the assistant's own, when it is exceeded, then further questions get 429 while the rest of the API is unaffected", async () => {

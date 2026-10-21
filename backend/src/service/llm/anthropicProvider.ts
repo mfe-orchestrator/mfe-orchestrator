@@ -1,12 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { assistantMessage, LlmClient, LlmJsonRequest, LlmMessage, LlmProvider, LlmTool, LlmTurnRequest, LlmTurnResult, toInputObject } from "./types"
 
-/** Server-side fallback when Claude declines: the API reroutes by refusal category. Anthropic API only, not Foundry. */
+/** Server-side fallback when Claude declines: the API reroutes by refusal category. Anthropic API only, not Foundry nor Bedrock. */
 const FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 type Block = Anthropic.Beta.BetaContentBlock
 
-/** What both the Anthropic and the Foundry client offer: the Foundry one has no batches. */
+/** What the Anthropic, the Foundry and the Bedrock clients all offer: the last two have no batches. */
 export type ClaudeClient = { beta: { messages: Pick<Anthropic["beta"]["messages"], "stream" | "create"> } }
 
 const toTools = (tools: LlmTool[]): Anthropic.Beta.BetaTool[] =>
@@ -36,13 +36,13 @@ const toMessages = (messages: LlmMessage[]): Anthropic.Beta.BetaMessageParam[] =
     })
 
 /**
- * Claude, through the Anthropic API or deployed on Microsoft Foundry: the same SDK surface, a
- * different client. Foundry has no server-side fallback, so a declined request is reported as a
- * refusal there.
+ * Claude, through the Anthropic API, deployed on Microsoft Foundry or on Amazon Bedrock: the same SDK
+ * surface, a different client. Foundry and Bedrock have no server-side fallback, so a declined request
+ * is reported as a refusal there.
  */
 export class AnthropicLlmClient implements LlmClient {
     constructor(
-        readonly provider: LlmProvider.ANTHROPIC | LlmProvider.AZURE_FOUNDRY,
+        readonly provider: LlmProvider.ANTHROPIC | LlmProvider.AZURE_FOUNDRY | LlmProvider.AWS_BEDROCK,
         private readonly client: ClaudeClient,
         private readonly model: string
     ) {}

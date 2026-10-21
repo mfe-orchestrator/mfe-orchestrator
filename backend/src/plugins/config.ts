@@ -249,9 +249,10 @@ export default fastifyPlugin(
                 TRUST_PROXY: {
                     type: "string"
                 },
-                // The model behind the assistant and the AI code changes: anthropic, azure-foundry,
-                // gemini or azure-openai. Unset, an ANTHROPIC_API_KEY alone turns Claude on; with
-                // neither, AI is off, its endpoints answer 404 and nothing is sent anywhere.
+                // The system AI, offered to every organization next to the ones it defines: anthropic,
+                // azure-foundry, gemini, azure-openai or aws-bedrock. Unset, an ANTHROPIC_API_KEY alone
+                // turns Claude on; with neither there is no system AI, and a project whose organization
+                // defines none has AI off: its endpoints answer 404 and nothing is sent anywhere.
                 AI_PROVIDER: {
                     type: "string"
                 },
@@ -296,8 +297,28 @@ export default fastifyPlugin(
                     type: "boolean",
                     default: false
                 },
-                // The highest reasoning effort users may choose: low, medium, high, xhigh or max. Higher
-                // efforts take more tokens per answer; unset, every level the model takes is offered.
+                // The host suffixes an organization's Azure OpenAI endpoint may name besides the public
+                // cloud's (.openai.azure.com, .cognitiveservices.azure.com, .services.ai.azure.com), comma
+                // separated: the sovereign clouds', e.g. .openai.azure.us,.openai.azure.cn
+                AZURE_OPENAI_ENDPOINT_SUFFIXES: {
+                    type: "string"
+                },
+                // Claude on Amazon Bedrock: the region, an access key allowed to invoke the model, and
+                // the model id or inference profile (e.g. anthropic.claude-opus-5-5), required.
+                AWS_BEDROCK_REGION: {
+                    type: "string"
+                },
+                AWS_BEDROCK_ACCESS_KEY_ID: {
+                    type: "string"
+                },
+                AWS_BEDROCK_SECRET_ACCESS_KEY: {
+                    type: "string"
+                },
+                AWS_BEDROCK_MODEL: {
+                    type: "string"
+                },
+                // The highest reasoning effort users may choose with the system AI: low, medium, high, xhigh
+                // or max. Higher efforts take more tokens per answer; unset, every level the model takes is offered.
                 AI_MAX_EFFORT: {
                     type: "string",
                     enum: ["low", "medium", "high", "xhigh", "max"]

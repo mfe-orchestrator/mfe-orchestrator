@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
 import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
 import { jobErrorMessage } from "@/components/assistant/AssistantJobThread"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge } from "@/components/atoms"
 import { repositoryWebUrl } from "@/components/RepositoryLink"
 import useAiJobsApi, { AiJob, DomainPlan } from "@/hooks/apiClients/useAiJobsApi"
@@ -124,7 +124,7 @@ const DomainAiWorkspace: React.FC = () => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const projectId = useProjectStore(state => state.project?._id)
-    const assistantEnabled = useAssistantEnabled()
+    const aiModels = useProjectAiModels()
     const domainsApi = useDomainsApi()
     const microfrontendsApi = useMicrofrontendsApi()
     const servicesApi = useServicesApi()
@@ -140,7 +140,7 @@ const DomainAiWorkspace: React.FC = () => {
     const servicesQuery = useQuery({ queryKey: ["services", projectId], queryFn: servicesApi.getAll, enabled: !!projectId })
 
     const planMutation = useMutation({
-        mutationFn: (prompt: string) => aiJobsApi.planDomain({ domainId: id!, prompt }, { customErrorMessage: error => jobErrorMessage(t, error, "plan") })
+        mutationFn: (prompt: string) => aiJobsApi.planDomain({ domainId: id!, prompt, aiModelId: aiModels.selected?.id }, { customErrorMessage: error => jobErrorMessage(t, error, "plan") })
     })
 
     // Not an ApiStatusHandler: it unmounts its children on every background refetch, and the workspace holds a draft prompt.
@@ -206,7 +206,11 @@ const DomainAiWorkspace: React.FC = () => {
     return (
         <div className="flex min-h-full flex-col gap-6">
             <DomainHeader domain={domain} active="ai" />
-            {assistantEnabled ? (
+            {aiModels.isPending ? (
+                <div className="flex min-h-[200px] items-center justify-center">
+                    <Spinner size={32} />
+                </div>
+            ) : aiModels.enabled ? (
                 // Keyed: the route instance is reused across domains, and a draft must not follow the user to another one.
                 <AiWorkspace
                     key={id}

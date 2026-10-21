@@ -1,10 +1,13 @@
 import { Alert, AlertDescription, AlertTitle, Textarea } from "@mfe-orchestrator/design-system"
+import { useQuery } from "@tanstack/react-query"
 import { Sparkles } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
 import { Button } from "@/components/atoms"
+import useAiModelsApi, { AVAILABLE_AI_MODELS_QUERY_KEY } from "@/hooks/apiClients/useAiModelsApi"
 import useAssistantApi, { ProjectDraft } from "@/hooks/apiClients/useAssistantApi"
+import { errorCodeOf } from "@/hooks/useApiClient"
+import useOrganizationStore from "@/store/useOrganizationStore"
 
 const MAX_DESCRIPTION_CHARS = 4_000
 
@@ -20,22 +23,33 @@ interface ProjectDraftAssistantProps {
  */
 const ProjectDraftAssistant: React.FC<ProjectDraftAssistantProps> = ({ draft, onDraft }) => {
     const { t, i18n } = useTranslation()
-    const enabled = useAssistantEnabled()
+    const organizationId = useOrganizationStore(state => state.organization?._id)
+    const aiModelsApi = useAiModelsApi()
     const assistantApi = useAssistantApi()
     const [description, setDescription] = useState("")
     const [loading, setLoading] = useState(false)
-    const [failed, setFailed] = useState(false)
+    // The key of the message of the last failure, if any.
+    const [failed, setFailed] = useState<string>()
 
-    if (!enabled) return null
+    // The project does not exist yet: the AIs are those of the organization it will belong to, and the draft takes its default.
+    const availableQuery = useQuery({
+        queryKey: [AVAILABLE_AI_MODELS_QUERY_KEY, "organization", organizationId],
+        queryFn: () => aiModelsApi.availableForOrganization(organizationId!, { silent: true }),
+        enabled: Boolean(organizationId)
+    })
+    const available = availableQuery.data
+
+    if (!organizationId || !available || available.models.length === 0) return null
 
     const generate = async () => {
         if (!description.trim()) return
         setLoading(true)
-        setFailed(false)
+        setFailed(undefined)
         try {
-            onDraft(await assistantApi.draftProject(description.trim(), i18n.language))
-        } catch {
-            setFailed(true)
+            onDraft(await assistantApi.draftProject(description.trim(), i18n.language, organizationId, available.defaultId))
+        } catch (error) {
+            const code = errorCodeOf(error as Error)
+            setFailed(code === "RATE_LIMITED" ? "assistant.errors.rate_limited" : code === "AI_PROVIDER_ERROR" ? "newProjectWizard.ai_draft.provider_error" : "newProjectWizard.ai_draft.error")
         } finally {
             setLoading(false)
         }
@@ -63,7 +77,7 @@ const ProjectDraftAssistant: React.FC<ProjectDraftAssistantProps> = ({ draft, on
                     {loading ? t("newProjectWizard.ai_draft.loading") : t("newProjectWizard.ai_draft.submit")}
                 </Button>
             </div>
-            {failed && <p className="text-sm text-destructive">{t("newProjectWizard.ai_draft.error")}</p>}
+            {failed && <p className="text-sm text-destructive">{t(failed)}</p>}
             {draft && !failed && (
                 <Alert className="border-primary/50" dataTestId="wizard-ai-draft-result">
                     <AlertTitle>{t("newProjectWizard.ai_draft.applied_title")}</AlertTitle>

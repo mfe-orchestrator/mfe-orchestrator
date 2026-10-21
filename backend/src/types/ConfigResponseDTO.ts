@@ -1,5 +1,3 @@
-import type { LlmEffort } from "../service/llm/types"
-
 export default interface ConfigResponseDTO {
     frontendUrl: string
     canSendEmail: boolean
@@ -11,10 +9,6 @@ export default interface ConfigResponseDTO {
         enabled: boolean
         url: string
     }
-    /** True when ANTHROPIC_API_KEY is set: the console then shows the assistant. */
-    assistantEnabled: boolean
-    /** The reasoning effort levels the configured model honours, lowest first: empty when it takes none, and the console then hides the choice. */
-    aiEfforts: LlmEffort[]
     codeRepository?: {
         github?: {
             clientId: string

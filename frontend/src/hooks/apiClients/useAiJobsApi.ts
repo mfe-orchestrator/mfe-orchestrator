@@ -58,6 +58,8 @@ export interface AiJob {
     usage: AiUsage
     /** The reasoning effort the agent worked at. */
     effort: LlmEffort
+    /** The AI of the organization the agent worked with; missing on jobs made before AIs were per organization. */
+    aiModelId?: string
     repositories: AiJobRepository[]
     createdAt: string
     updatedAt: string
@@ -68,12 +70,12 @@ export interface AiWorkingAgents {
     agents: number
 }
 
-/** Without `effort`, the backend works at `high`. */
+/** Without `effort`, the backend works at `high`; without `aiModelId`, with the default AI of the project. */
 export type CreateAiJobDTO = (
     | { prompt: string; scope: "global" }
     | { prompt: string; scope: "domain"; domainId: string }
     | { prompt: string; scope: "selection"; microfrontendIds: string[]; serviceIds?: string[] }
-) & { effort?: LlmEffort }
+) & { effort?: LlmEffort; aiModelId?: string }
 
 export interface FollowUpAiJobDTO {
     prompt: string
@@ -82,6 +84,8 @@ export interface FollowUpAiJobDTO {
     serviceIds?: string[]
     /** The parent's effort when missing. */
     effort?: LlmEffort
+    /** The parent's AI when missing and the project can still use it, else the default one. */
+    aiModelId?: string
 }
 
 /** A microfrontend or a service the AI proposes to create in a domain that has none, with the repository it would be scaffolded in. */
@@ -93,6 +97,13 @@ export interface DomainPlanComponent {
     repositoryName: string
     /** Why the request needs it. */
     reason: string
+}
+
+export interface DomainPlanDTO {
+    domainId: string
+    prompt: string
+    /** The default AI of the project when missing. */
+    aiModelId?: string
 }
 
 export interface DomainPlan {
@@ -175,8 +186,8 @@ const useAiJobsApi = () => {
     }
 
     /** What the AI proposes to create in a domain without microfrontends nor services, for the request: nothing is created yet. */
-    const planDomain = async (data: { domainId: string; prompt: string }, metadata?: IClientRequestMetadataExtended): Promise<DomainPlan> => {
-        const response = await apiClient.doRequest<DomainPlan, { domainId: string; prompt: string }>({
+    const planDomain = async (data: DomainPlanDTO, metadata?: IClientRequestMetadataExtended): Promise<DomainPlan> => {
+        const response = await apiClient.doRequest<DomainPlan, DomainPlanDTO>({
             url: "/api/ai-jobs/domain-plan",
             method: "POST",
             data,

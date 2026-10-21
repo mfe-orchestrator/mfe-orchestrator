@@ -1,11 +1,11 @@
 import { BusinessException } from "./BusinessException"
 
-/** The assistant was called on an installation that has no ANTHROPIC_API_KEY. */
+/** An AI feature was called where no AI is available: the organization defines none the project may use, and the installation has no system AI. */
 export default class AssistantDisabledError extends BusinessException {
     constructor() {
         super({
             code: "ASSISTANT_DISABLED",
-            message: "The assistant is not enabled on this installation",
+            message: "No AI is available to this project",
             statusCode: 404
         })
         this.name = "AssistantDisabledError"

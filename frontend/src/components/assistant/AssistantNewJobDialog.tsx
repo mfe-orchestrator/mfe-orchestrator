@@ -8,9 +8,11 @@ import useAiJobsApi from "@/hooks/apiClients/useAiJobsApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useServicesApi from "@/hooks/apiClients/useServicesApi"
 import useAssistantJobsStore from "@/store/useAssistantJobsStore"
+import AiModelSelect from "./AiModelSelect"
 import { jobErrorMessage, PROMPT_MAX_LENGTH } from "./AssistantJobThread"
 import EffortSelect from "./EffortSelect"
 import { useEffort } from "./useEffort"
+import useProjectAiModels from "./useProjectAiModels"
 
 /** Mirrors the backend: a job works on at most this many repositories. */
 const MAX_REPOSITORIES = 10
@@ -32,6 +34,7 @@ const NewJobForm: React.FC<NewJobFormProps> = ({ projectId, onCreated, onCancel 
     const [prompt, setPrompt] = useState("")
     const [submitted, setSubmitted] = useState(false)
     const [effort, setEffort] = useEffort("code")
+    const { selected: aiModel, setSelected: setAiModel } = useProjectAiModels()
     const promptRef = useRef<HTMLTextAreaElement>(null)
     const idPrefix = useId()
 
@@ -56,8 +59,8 @@ const NewJobForm: React.FC<NewJobFormProps> = ({ projectId, onCreated, onCancel 
         mutationFn: () =>
             aiJobsApi.create(
                 all
-                    ? { prompt: prompt.trim(), scope: "global", effort }
-                    : { prompt: prompt.trim(), scope: "selection", microfrontendIds: selectedOf("microfrontend"), serviceIds: selectedOf("service"), effort },
+                    ? { prompt: prompt.trim(), scope: "global", effort, aiModelId: aiModel?.id }
+                    : { prompt: prompt.trim(), scope: "selection", microfrontendIds: selectedOf("microfrontend"), serviceIds: selectedOf("service"), effort, aiModelId: aiModel?.id },
                 {
                     customErrorMessage: error => jobErrorMessage(t, error, "create")
                 }
@@ -166,7 +169,10 @@ const NewJobForm: React.FC<NewJobFormProps> = ({ projectId, onCreated, onCancel 
             </div>
 
             <DialogFooter>
-                <EffortSelect value={effort} onChange={setEffort} disabled={createMutation.isPending} className="mr-auto" dataTestId="assistant-new-job-effort" />
+                <div className="mr-auto flex items-center gap-2">
+                    <AiModelSelect value={aiModel?.id} onChange={setAiModel} disabled={createMutation.isPending} dataTestId="assistant-new-job-ai-model" />
+                    <EffortSelect value={effort} onChange={setEffort} disabled={createMutation.isPending} dataTestId="assistant-new-job-effort" />
+                </div>
                 <Button type="button" variant="secondary" disabled={createMutation.isPending} onClick={onCancel}>
                     {t("common.cancel")}
                 </Button>

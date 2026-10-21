@@ -2,7 +2,7 @@ import { fastify } from "../.."
 import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeRequest, { AiChangeStatus, IAiChangeRequest } from "../../models/AiChangeRequestModel"
-import { getLlmClient, LlmEffort } from "../llm"
+import { LlmEffort } from "../llm"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
 import { componentIdOf, componentOf, findComponent, findComponents, ownerFields, RepositoryComponent, RepositoryComponentRef } from "../workspace/repositoryComponent"
 import AiChangeJobService from "./AiChangeJobService"
@@ -15,6 +15,8 @@ export interface AiChangeCreateInput {
     baseBranch?: string
     /** How hard the agent reasons: the job's default when left out. */
     effort?: LlmEffort
+    /** The AI the agent runs on, one the project may use: the project's default when left out. */
+    aiModelId?: string
 }
 
 /**
@@ -48,9 +50,9 @@ export class AiChangeService extends AiChangeBaseService {
 
     /** A job on the repository of this microfrontend or service alone: the request is the job's only proposal. */
     async create(ref: RepositoryComponentRef, input: AiChangeCreateInput): Promise<IAiChangeRequest> {
-        const client = getLlmClient(this.config)
         const component = await this.getComponent(ref)
         await this.ensureCanChangeProject(component.projectId)
+        const aiModel = await this.aiModels().resolveForProject(component.projectId, input.aiModelId)
         await this.ensureRepositoryInDomainScope(component, component.codeRepository)
         const workspace = await new RepositoryWorkspaceService(this.user).open(component)
 
@@ -62,7 +64,7 @@ export class AiChangeService extends AiChangeBaseService {
                 repositories: [{ component, baseBranch: input.baseBranch?.trim() || workspace.defaultBranch }],
                 effort: input.effort
             },
-            client
+            aiModel
         )
         return requests[0]
     }

@@ -24,6 +24,7 @@ vi.mock("./aiChangeAgent", async importOriginal => ({ ...(await importOriginal<t
 
 import AiChangeJob, { AiJobStatus } from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
+import AiModel from "../../models/AiModelModel"
 import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
 import Domain from "../../models/DomainModel"
 import Microfrontend from "../../models/MicrofrontendModel"
@@ -91,6 +92,8 @@ describe("AiChangeJobService", () => {
         vi.spyOn(gates, "isOrganizationAdmin").mockResolvedValue(false)
         vi.spyOn(UserProject, "findOne").mockImplementation((() => Promise.resolve({ role })) as never)
         vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: new Types.ObjectId(), name: "Shop", context: "Shop context" } as never)
+        // The organization defines no AI: the system one, from the configuration the service is given, answers
+        vi.spyOn(AiModel, "find").mockResolvedValue([] as never)
         vi.spyOn(RepositoryFileService.prototype, "resolveTargets").mockImplementation(async () =>
             withRepository.map(candidate => ({ microfrontend: candidate, codeRepository: { projectId }, repositoryName: candidate.slug }) as never)
         )
@@ -130,6 +133,14 @@ describe("AiChangeJobService", () => {
     })
 
     const service = () => new AiChangeJobService(user, { ANTHROPIC_API_KEY: "sk-test" })
+
+    /** Two AIs of the organization, the second marked as its default. */
+    const orgModels = () => {
+        const model = (name: string, isDefault: boolean) => ({ _id: new Types.ObjectId(), name, provider: "anthropic", config: { apiKey: "sk-org" }, isDefault, updatedAt: new Date(0) })
+        const models = [model("Claude Sonnet", false), model("Claude Opus", true)]
+        vi.spyOn(AiModel, "find").mockResolvedValue(models as never)
+        return { sonnet: String(models[0]._id), opus: String(models[1]._id) }
+    }
 
     describe("create", () => {
         beforeEach(() => {
@@ -216,6 +227,37 @@ describe("AiChangeJobService", () => {
 
             expect(job.effort).toBe("high")
             expect(AiChangeRequest.create).toHaveBeenCalledWith(expect.objectContaining({ effort: "high" }))
+        })
+
+        it("Given no AI chosen, when a job is started, then it runs on the organization's default and the job and each request record it", async () => {
+            const { opus } = orgModels()
+
+            const job = await service().create(projectId, { prompt: "Rename the price API", scope: "global" })
+
+            expect(job.aiModelId).toBe(opus)
+            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ aiModelId: opus }))
+            const requests = (AiChangeRequest.create as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([document]) => document as Record<string, unknown>)
+            expect(requests.map(request => request.aiModelId)).toEqual([opus, opus])
+        })
+
+        it("Given the system AI and nothing defined by the organization, when a job is started, then it records the system AI", async () => {
+            const job = await service().create(projectId, { prompt: "Rename the price API", scope: "global" })
+
+            expect(job.aiModelId).toBe("system")
+        })
+
+        it("Given a project restricted to the system AI, when a job asks for an AI of the organization, then it is refused before anything is created", async () => {
+            const { sonnet } = orgModels()
+            vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: new Types.ObjectId(), name: "Shop", aiModelIds: ["system"] } as never)
+
+            await expect(service().create(projectId, { prompt: "Rename the price API", scope: "global", aiModelId: sonnet })).rejects.toMatchObject({ code: "AI_MODEL_NOT_AVAILABLE", statusCode: 422 })
+            expect(AiChangeJob.create).not.toHaveBeenCalled()
+        })
+
+        it("Given a project with AI turned off, when a job is started, then it answers as AI off", async () => {
+            vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: new Types.ObjectId(), name: "Shop", aiModelIds: [] } as never)
+
+            await expect(service().create(projectId, { prompt: "Rename the price API", scope: "global" })).rejects.toMatchObject({ code: "ASSISTANT_DISABLED" })
         })
 
         it("Given a job and a request stored before the effort could be chosen, when they are read, then they read as high", () => {
@@ -420,6 +462,43 @@ describe("AiChangeJobService", () => {
             const child = await new AiChangeJobService(user, { ANTHROPIC_API_KEY: "sk-test", AI_MAX_EFFORT: "medium" }).followUp(String(parentJobId), { prompt: "Also rename the tests" })
 
             expect(child.effort).toBe("medium")
+        })
+
+        /** The parent's job as stored, run on the given AI. */
+        const parentOn = (aiModelId: string) =>
+            vi.spyOn(AiChangeJob, "findById").mockImplementation((() =>
+                Promise.resolve({
+                    _id: parentJobId,
+                    rootJobId,
+                    projectId,
+                    userId: user._id,
+                    prompt: "Rename the price API",
+                    scope: "global",
+                    microfrontendIds: [catalog._id],
+                    status: parentStatus,
+                    aiModelId,
+                    usage: {},
+                    updatedAt: new Date()
+                })) as never)
+
+        it("Given a parent run on an AI that is not the default, when it is followed up without choosing, then the child keeps the parent's AI", async () => {
+            const { sonnet, opus } = orgModels()
+            parentOn(sonnet)
+
+            const inherited = await service().followUp(String(parentJobId), { prompt: "Also rename the tests" })
+            const chosen = await service().followUp(String(parentJobId), { prompt: "Also rename the mocks", aiModelId: opus })
+
+            expect(inherited.aiModelId).toBe(sonnet)
+            expect(chosen.aiModelId).toBe(opus)
+        })
+
+        it("Given a parent run on an AI deleted since, when it is followed up, then the child runs on the default", async () => {
+            const { opus } = orgModels()
+            parentOn(new Types.ObjectId().toString())
+
+            const child = await service().followUp(String(parentJobId), { prompt: "Also rename the tests" })
+
+            expect(child.aiModelId).toBe(opus)
         })
 
         it("Given a parent stored before the effort could be chosen, when it is followed up, then the child reasons at high", async () => {
@@ -856,7 +935,7 @@ describe("AiChangeJobService", () => {
 
             const proposal = updates.find(({ model, update }) => model === "request" && update.status === AiChangeStatus.PROPOSED)
             expect(proposal?.update.files).toEqual([expect.objectContaining({ path: "src/App.tsx", proposedContent: "half done\n" })])
-            expect(proposal?.update.error).toMatch(/incomplete.*exceeded token rate limit/)
+            expect(proposal?.update.error).toMatch(/incomplete.*rate limiting/)
             expect(updates).toContainEqual(expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.DONE }) }))
             expect(failed()).toBe(false)
             expect(workingCopy.discardChanges).toHaveBeenCalled()
@@ -871,6 +950,19 @@ describe("AiChangeJobService", () => {
 
             expect(updates.some(({ update }) => update.status === AiChangeStatus.PROPOSED)).toBe(false)
             expect(updates).toContainEqual(expect.objectContaining({ model: "job", update: expect.objectContaining({ status: AiJobStatus.FAILED, error: expect.stringContaining("rate limit") }) }))
+        })
+
+        /** An endpoint's answer quoted in the provider's error must not reach the job: it is what an endpoint inside the network would leak. */
+        it("Given a provider error quoting what the endpoint answered, when the job fails, then the job keeps a generic error, not the provider's", async () => {
+            vi.mocked(workingCopy.changes as ReturnType<typeof vi.fn>).mockResolvedValue([])
+            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ ...request, parentId: undefined }] as never)
+            runAgent.mockRejectedValueOnce(Object.assign(new Error("404 <html>internal admin console</html>"), { status: 404 }))
+
+            await run()
+
+            const failure = updates.find(({ model, update }) => model === "job" && update.status === AiJobStatus.FAILED)
+            expect(failure?.update.error).toContain("The AI provider could not answer")
+            expect(failure?.update.error).not.toContain("internal admin console")
         })
 
         it("Given a follow-up whose agent stops before changing the parent's files, when the job ends, then it fails and the parent stays applicable", async () => {

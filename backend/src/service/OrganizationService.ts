@@ -2,6 +2,7 @@ import { ClientSession, DeleteResult, ObjectId, Schema } from "mongoose"
 import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
 import { OrganizationNotFoundError } from "../errors/OrganizationNotFoundError"
+import AiModel from "../models/AiModelModel"
 import Organization, { IOrganization } from "../models/OrganizationModel"
 import Project from "../models/ProjectModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
@@ -198,6 +199,8 @@ export class OrganizationService extends BaseAuthorizedService {
 
         return runInTransaction(async session => {
             await UserOrganization.deleteMany({ organizationId: organizationIdObj }, { session })
+            // Its AIs hold credentials nobody could reach any more
+            await AiModel.deleteMany({ organizationId: organizationIdObj }, { session })
             return Organization.deleteOne({ _id: organizationIdObj }, { session })
         })
     }

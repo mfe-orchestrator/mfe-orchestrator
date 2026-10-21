@@ -7,6 +7,7 @@ import useAssistantStore, { AssistantRole, AssistantUsage, toStored } from "@/st
 import useProjectStore from "@/store/useProjectStore"
 import type { LlmEffort } from "@/types/ConfigResponseDTO"
 import useAiJobsApi from "./apiClients/useAiJobsApi"
+import { AVAILABLE_AI_MODELS_QUERY_KEY } from "./apiClients/useAiModelsApi"
 import useAssistantApi from "./apiClients/useAssistantApi"
 import useApiClient from "./useApiClient"
 import { drainFrames, parseFrame } from "./useEventStream"
@@ -73,9 +74,10 @@ const buildHistory = (limit: number) => {
  * build status stream: EventSource can neither POST nor carry the Authorization header.
  * The frames are described in `backend/src/service/assistant/assistantActions.ts`.
  *
- * `effort` goes with every request; undefined when the provider offers no choice, and the backend applies its default.
+ * `effort` and `aiModelId` go with every request; undefined when the AI offers no choice of effort, or while the AIs of
+ * the project are not known yet, and the backend applies its default.
  */
-const useAssistantChat = (effort?: LlmEffort) => {
+const useAssistantChat = (effort?: LlmEffort, aiModelId?: string) => {
     const { getToken } = useApiClient()
     const { i18n } = useTranslation()
     const location = useLocation()
@@ -152,12 +154,20 @@ const useAssistantChat = (effort?: LlmEffort) => {
                 headers,
                 signal: abortController.signal,
                 cache: "no-store",
-                body: JSON.stringify({ ...body, effort, context: { page: location.pathname, environmentId: projectStore.environment?._id, locale: i18n.language } })
+                body: JSON.stringify({ ...body, effort, aiModelId, context: { page: location.pathname, environmentId: projectStore.environment?._id, locale: i18n.language } })
             })
 
             if (!response.ok || !response.body) {
                 onRefused?.(response.status)
-                fail(ERROR_KEY_BY_STATUS[response.status] || "generic")
+                const code = await response.json().then(
+                    (data: { error?: { code?: string } }) => data?.error?.code,
+                    () => undefined
+                )
+                if (code === "AI_MODEL_NOT_AVAILABLE") {
+                    // Taken away from the project since the list was read: reading it again falls back to the default.
+                    queryClient.invalidateQueries({ queryKey: [AVAILABLE_AI_MODELS_QUERY_KEY] })
+                    fail("ai_model_not_available")
+                } else fail(ERROR_KEY_BY_STATUS[response.status] || "generic")
                 return
             }
 

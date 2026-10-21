@@ -6,7 +6,7 @@ import { FieldErrors, FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import * as z from "zod"
-import useAssistantEnabled from "@/components/assistant/useAssistantEnabled"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Button } from "@/components/atoms"
 import TextareaField from "@/components/input/TextareaField.rhf"
 import TextField from "@/components/input/TextField.rhf"
@@ -210,7 +210,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     // `?tab=` opens a tab straight away.
     const linkedTab = searchParams.get("tab")
     const [activeTab, setActiveTab] = useState<FormTab>(isFormTab(linkedTab) ? linkedTab : "general")
-    const assistantEnabled = useAssistantEnabled()
+    const assistantEnabled = useProjectAiModels().enabled
 
     const getStandardHost = (): FormInput["host"] => {
         const standardHost: FormInput["host"] = {

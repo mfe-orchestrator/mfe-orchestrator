@@ -21,6 +21,11 @@ export interface IProject extends Document<ObjectId> {
     context?: string
     isActive: boolean
     gitOps?: IProjectGitOps
+    /**
+     * The AIs of the organization the project may use, by id (`system` for the one of the environment).
+     * Unset: all of them, the ones added later included. Empty: AI is off for the project.
+     */
+    aiModelIds?: string[]
     createdAt: Date
     updatedAt: Date
 }
@@ -62,7 +67,9 @@ const projectSchema = new Schema<IProject>(
             enabled: { type: Boolean, default: false },
             // Written by GitOpsService only, from what the provider answered: never from the request body
             codeRepository: { type: Schema.Types.Mixed }
-        }
+        },
+        // No default: an empty array would turn AI off, where unset means every AI of the organization
+        aiModelIds: { type: [String], default: undefined }
     },
     {
         timestamps: true

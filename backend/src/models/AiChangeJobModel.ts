@@ -43,6 +43,8 @@ export interface IAiChangeJob extends Document<ObjectId> {
     status: AiJobStatus
     /** How hard the agent reasons: the user's choice, else the parent's for a follow-up, else `high`. */
     effort: LlmEffort
+    /** The AI the agent ran on: an id of the organization's AIs, or `system`. Unset on jobs from before AIs could be chosen. */
+    aiModelId?: string
     events: IAiChangeEvent[]
     summary?: string
     /**
@@ -72,6 +74,7 @@ const aiChangeJobSchema = new Schema<IAiChangeJob>(
         status: { type: String, enum: Object.values(AiJobStatus), default: AiJobStatus.PENDING, required: true },
         // Jobs from before the effort could be chosen ran at high: they read so.
         effort: { type: String, enum: [...LLM_EFFORTS], default: "high" },
+        aiModelId: { type: String },
         events: { type: [aiChangeEventSchema], default: [] },
         summary: { type: String },
         transcript: { type: [Schema.Types.Mixed], default: undefined },
