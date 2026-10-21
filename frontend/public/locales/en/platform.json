@@ -1705,6 +1705,13 @@
         "created": "Organization created",
         "menu_title": "Organization",
         "settings": "Organization settings",
+        "settings_subtitle": "Details, members and AI of {{organization}}",
+        "tabs": {
+            "label": "Settings sections",
+            "general": "General",
+            "members": "Members",
+            "ai": "AI"
+        },
         "switch": "Switch organization",
         "switch_or_create": "Switch or create organization",
         "switch_desc": "Select the organization to work in or create a new one.",
@@ -1743,7 +1750,6 @@
         "pending_count_one": "You've been invited to an organization"
     },
     "organization_users": {
-        "title": "Organization members",
         "subtitle": "Manage who belongs to {{organization}} and with which role",
         "user_count": "{{count}} members",
         "user_count_one": "One member",
@@ -2502,10 +2508,13 @@
             "key": "Key",
             "not_set": "Not set",
             "key_invalid": "Letters, digits and underscores only, not starting with a digit",
-            "key_duplicated": "This key appears more than once"
+            "key_duplicated": "This key appears more than once",
+            "search_placeholder": "Search by key or value",
+            "search_placeholder_secret": "Search by key",
+            "no_results": "No key matches \"{{searchTerm}}\"."
         },
         "list": {
-            "search_placeholder": "Search by name or key",
+            "search_placeholder": "Search by name, key or service",
             "clear_search": "Clear search",
             "keys": "Keys",
             "no_results_title": "No results",

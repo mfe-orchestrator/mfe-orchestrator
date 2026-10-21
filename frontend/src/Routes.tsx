@@ -33,7 +33,7 @@ const CanaryUsers = lazy(() => import("./pages/deployments/CanaryUsers"))
 const Integration = lazy(() => import("./pages/integration/Integration"))
 const Environments = lazy(() => import("./pages/environments/Environments"))
 const ProjectUsers = lazy(() => import("./pages/project-users/ProjectUsers"))
-const OrganizationUsers = lazy(() => import("./pages/organization-users/OrganizationUsers"))
+const OrganizationSettings = lazy(() => import("./pages/organization/OrganizationSettings"))
 const Storages = lazy(() => import("./pages/storages/Storages"))
 const AddStorage = lazy(() => import("./pages/storages/AddStorage"))
 const Databases = lazy(() => import("./pages/databases/Databases"))
@@ -150,9 +150,9 @@ const PrivateProjectRoutes: React.FC = () => {
                 </Route>
                 <Route path="/integration" element={<RouteWithSuspense element={<Integration />} />} />
                 <Route path="/project-users" element={<RouteWithSuspense element={<ProjectUsers />} />} />
-                <Route path="/organization" element={<RouteWithSuspense element={<OrganizationUsers />} />} />
+                <Route path="/organization" element={<RouteWithSuspense element={<OrganizationSettings />} />} />
                 {/* La pagina stava qui: i link e i preferiti che puntano al vecchio percorso restano validi. */}
-                <Route path="/organization-users" element={<Navigate to="/organization" replace />} />
+                <Route path="/organization-users" element={<Navigate to="/organization?tab=members" replace />} />
                 <Route path="/storages" element={<RouteWithSuspense element={<Storages />} />} />
                 <Route path="/storages/new" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/storages/:id" element={<RouteWithSuspense element={<AddStorage />} />} />

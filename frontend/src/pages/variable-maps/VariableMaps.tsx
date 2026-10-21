@@ -1,7 +1,7 @@
 import { EmptyState, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
 import { CirclePlus, PackageOpen, SearchX } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 import { Badge, Button } from "@/components/atoms"
@@ -25,10 +25,15 @@ const VariableMaps: React.FC<{ kind: VariableMapKind }> = ({ kind }) => {
     const mapsQuery = useVariableMapsQuery(kind)
     const servicesQuery = useQuery({ queryKey: ["services", projectId], queryFn: servicesApi.getAll, enabled: !!projectId })
 
+    const servicesOf = useCallback((mapId: string) => (servicesQuery.data ?? []).filter(service => service[field]?.includes(mapId)), [servicesQuery.data, field])
+
     const filtered = useMemo(() => {
-        const term = searchTerm.toLowerCase()
-        return (mapsQuery.data ?? []).filter(map => !term || map.name.includes(term) || map.entries.some(entry => entry.key.toLowerCase().includes(term)))
-    }, [mapsQuery.data, searchTerm])
+        const term = searchTerm.trim().toLowerCase()
+        if (!term) return mapsQuery.data ?? []
+        return (mapsQuery.data ?? []).filter(map =>
+            [map.name, map.description ?? "", ...map.entries.map(entry => entry.key), ...servicesOf(map._id!).map(service => service.name)].some(text => text.toLowerCase().includes(term))
+        )
+    }, [mapsQuery.data, searchTerm, servicesOf])
 
     const hasMaps = (mapsQuery.data?.length ?? 0) > 0
     const onCreate = () => navigate(detailPath("new"))
@@ -100,7 +105,7 @@ const VariableMaps: React.FC<{ kind: VariableMapKind }> = ({ kind }) => {
                             </TableHeader>
                             <TableBody>
                                 {filtered.map(map => {
-                                    const services = (servicesQuery.data ?? []).filter(service => service[field]?.includes(map._id!))
+                                    const services = servicesOf(map._id!)
                                     return (
                                         <TableRow key={map._id} className="cursor-pointer border-divider hover:bg-primary/5" onClick={() => navigate(detailPath(map._id!))}>
                                             <TableCell className="max-w-[16rem] truncate font-mono font-medium" title={map.name}>

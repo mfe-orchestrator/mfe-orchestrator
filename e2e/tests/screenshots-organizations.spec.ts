@@ -224,9 +224,9 @@ test("Given the documentation account When the organization page is opened Then 
 
     await seedPendingInvitation(api, accessToken, organization?._id as string)
 
-    // The page carries the details card, the members table, the pending invitations and the
-    // danger zone one under the other: the app scrolls inside its own container, so the viewport
-    // has to be tall enough to hold all of them rather than relying on `fullPage`.
+    // The general tab carries the details card and the danger zone, the members tab the members
+    // table and the pending invitations: the app scrolls inside its own container, so the viewport
+    // has to be tall enough to hold a whole tab rather than relying on `fullPage`.
     const { context, page } = await openConsole(browser, 2200)
     try {
         // A run interrupted before its cleanup leaves the second organization behind, and then the
@@ -237,7 +237,7 @@ test("Given the documentation account When the organization page is opened Then 
             await picker.click()
         }
         await page.goto("/organization")
-        await expect(page.getByTestId(`organization-member-${USER.email}`)).toBeVisible({ timeout: 60_000 })
+        await expect(page.getByTestId("organization-details-save")).toBeVisible({ timeout: 60_000 })
         await page.waitForTimeout(2_000)
 
         console.log("=== ORGANIZATION PAGE TEXT ===")
@@ -249,11 +249,20 @@ test("Given the documentation account When the organization page is opened Then 
         const details = page.locator('div.rounded-lg.border-2:has([data-testid="organization-details-save"])').first()
         await details.screenshot({ path: "screens/organization-details.png" })
 
+        // ---------- DANGER ZONE ----------
+        // Blocked on purpose: the organization holds a project, and deleting it is refused until
+        // the projects are gone. That refusal is the point of the shot.
+        const dangerZone = page.locator("div.border-destructive").first()
+        console.log("=== DANGER ZONE TEXT ===")
+        console.log(await dangerZone.innerText())
+        await dangerZone.screenshot({ path: "screens/organization-danger-zone.png" })
+
         // ---------- MEMBERS ----------
         // The section, not the bare table: the count above it ("One member") is part of what the
-        // shot is about. The pending invitations section is built the same way and carries a test
-        // id, which is what tells the two apart.
-        const members = page.locator("div.space-y-4:has(table):not([data-testid])").first()
+        // shot is about.
+        await page.getByTestId("organization-tab-members").click()
+        await expect(page.getByTestId(`organization-member-${USER.email}`)).toBeVisible({ timeout: 30_000 })
+        const members = page.getByTestId("organization-members")
         console.log("=== MEMBERS SECTION TEXT ===")
         console.log(await members.innerText())
         await members.screenshot({ path: "screens/organization-members.png" })
@@ -264,14 +273,6 @@ test("Given the documentation account When the organization page is opened Then 
         console.log("=== PENDING INVITATIONS TEXT ===")
         console.log(await pending.innerText())
         await pending.screenshot({ path: "screens/organization-pending-invitations.png" })
-
-        // ---------- DANGER ZONE ----------
-        // Blocked on purpose: the organization holds a project, and deleting it is refused until
-        // the projects are gone. That refusal is the point of the shot.
-        const dangerZone = page.locator("div.border-destructive").first()
-        console.log("=== DANGER ZONE TEXT ===")
-        console.log(await dangerZone.innerText())
-        await dangerZone.screenshot({ path: "screens/organization-danger-zone.png" })
 
         // ---------- INVITE DIALOG ----------
         await page.getByTestId("invite-organization-user").click()

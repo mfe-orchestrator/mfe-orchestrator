@@ -1724,6 +1724,13 @@
         "created": "Organizzazione creata",
         "menu_title": "Organizzazione",
         "settings": "Impostazioni organizzazione",
+        "settings_subtitle": "Dati, membri e intelligenze artificiali di {{organization}}",
+        "tabs": {
+            "label": "Sezioni delle impostazioni",
+            "general": "Generale",
+            "members": "Membri",
+            "ai": "IA"
+        },
         "switch": "Cambia organizzazione",
         "switch_or_create": "Cambia o crea organizzazione",
         "switch_desc": "Seleziona l'organizzazione in cui lavorare o creane una nuova.",
@@ -1762,7 +1769,6 @@
         "pending_count_one": "Sei stato invitato a un'organizzazione"
     },
     "organization_users": {
-        "title": "Membri dell'organizzazione",
         "subtitle": "Gestisci chi appartiene a {{organization}} e con quale ruolo",
         "user_count": "{{count}} membri",
         "user_count_one": "Un membro",
@@ -2521,10 +2527,13 @@
             "key": "Chiave",
             "not_set": "Non impostato",
             "key_invalid": "Solo lettere, cifre e underscore, senza iniziare con una cifra",
-            "key_duplicated": "Questa chiave compare più di una volta"
+            "key_duplicated": "Questa chiave compare più di una volta",
+            "search_placeholder": "Cerca per chiave o valore",
+            "search_placeholder_secret": "Cerca per chiave",
+            "no_results": "Nessuna chiave corrisponde a \"{{searchTerm}}\"."
         },
         "list": {
-            "search_placeholder": "Cerca per nome o chiave",
+            "search_placeholder": "Cerca per nome, chiave o servizio",
             "clear_search": "Cancella ricerca",
             "keys": "Chiavi",
             "no_results_title": "Nessun risultato",
