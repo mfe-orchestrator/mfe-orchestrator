@@ -303,6 +303,7 @@
             "initialized": "Argo CD allineato al progetto",
             "initializedAt": "Ultima inizializzazione: {{date}}",
             "lastErrorTitle": "L'ultima inizializzazione non è andata a buon fine",
+            "alignErrorTitle": "L'ultimo deploy non ha aggiornato le applicazioni su Argo CD",
             "realignHint": "Dopo aver aggiunto o eliminato un ambiente, o cambiato i repository GitOps, riallinea Argo CD: niente viene aggiornato da solo.",
             "errors": {
                 "gitops_required": "Attiva il GitOps e salva il repository di configurazione prima di inizializzare Argo CD",
@@ -315,6 +316,9 @@
                 "forbidden": "L'account del token non ha i permessi necessari su Argo CD: assegnagli role:orchestrator in argocd-rbac-cm (vedi docs/ARGOCD.md)",
                 "request_failed": "Argo CD ha rifiutato la richiesta ({{reason}})",
                 "name_conflict": "Su Argo CD esiste già un oggetto {{name}} che non è stato creato da questo progetto, o che l'account del token non può leggere: rinominalo o eliminalo, poi riprova",
+                "name_clash": "Due oggetti di questo progetto avrebbero lo stesso nome {{name}} su Argo CD: rinomina il servizio, il frontend o l'ambiente i cui slug lo compongono, poi riprova",
+                "reinitialize_required": "Argo CD è stato inizializzato con altri repository, o da una versione precedente della console: inizializzalo di nuovo",
+                "branches_failed": "Impossibile leggere i branch di {{repository}} ({{reason}}): verifica che la connessione raggiunga il repository",
                 "deploy_token_failed": "GitLab non ha creato il deploy token di {{repository}} ({{reason}}): il token della connessione deve avere il ruolo Maintainer sul progetto e lo scope api",
                 "url_insecure": "L'URL di Argo CD deve essere https: token e credenziali dei repository viaggerebbero in chiaro. Solo per un cluster locale l'installazione può permettere http con ARGOCD_ALLOW_INSECURE_HTTP=true",
                 "repository_conflict": "Su Argo CD il repository {{repository}} è già registrato, e non da questo progetto: rimuovilo da Argo CD, poi riprova",

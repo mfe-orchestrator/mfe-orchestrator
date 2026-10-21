@@ -75,6 +75,8 @@ export interface IProjectArgoCd {
     initializedAt?: Date
     /** Why the last initialization failed; gone once one goes through */
     lastError?: IArgoCdError
+    /** Why the last deploy did not align the ApplicationSets of the applications; gone once one does, or an initialization goes through */
+    alignError?: IArgoCdError
     /** Registrations of repositories no longer used that Argo CD did not delete yet: no credential in them */
     pendingRepositoryDeletions?: IArgoCdRepositoryRegistration[]
     /** Set while an initialization runs, and renewed by each of its saves: a second one waits for it to end, or to be this old */

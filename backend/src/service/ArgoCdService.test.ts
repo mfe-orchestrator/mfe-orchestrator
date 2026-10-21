@@ -9,10 +9,13 @@ import GitlabClient from "../client/GitlabClient"
 import { createBusinessException } from "../errors/BusinessException"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Environment from "../models/EnvironmentModel"
+import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IArgoCdRepositoryCredential, IProjectArgoCd } from "../models/ProjectModel"
+import Service from "../models/ServiceModel"
 import ArgoCdService from "./ArgoCdService"
+import CodeRepositoryService from "./CodeRepositoryService"
 import GitOpsService, { renderNamespace } from "./GitOpsService"
-import { applicationSetName, appProjectName, environmentApplicationName, environmentsApplicationSetName, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
+import { applicationName, applicationSetName, appProjectName, environmentApplicationName, environmentsApplicationSetName, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
 
 const projectId = new Types.ObjectId()
 const gitlabConnectionId = new Types.ObjectId()
@@ -33,7 +36,7 @@ const APPS_REPO = "https://github.com/acme/shop-apps.git"
 const PROJECT_NAME = appProjectName(String(projectId), "shop")
 const environmentName = (environment: string) => environmentApplicationName(String(projectId), "shop", environment)
 const ENVIRONMENTS_SET = environmentsApplicationSetName(String(projectId), "shop")
-const applicationSetNameOf = (environment: string) => applicationSetName(String(projectId), "shop", environment)
+const applicationSetNameOf = (application: string) => applicationSetName(String(projectId), "shop", application)
 
 /** Every call to Argo CD and to GitLab, in the order it was made */
 let calls: string[]
@@ -100,6 +103,12 @@ beforeEach(() => {
     vi.spyOn(CodeRepository, "findOne").mockImplementation(((filter: { _id: unknown }) =>
         Promise.resolve(String(filter._id) === String(gitlabConnectionId) ? gitlabConnection : githubConnection)) as never)
     vi.spyOn(CodeRepository, "find").mockResolvedValue([gitlabConnection, githubConnection] as never)
+    vi.spyOn(Service, "find").mockResolvedValue([{ slug: "orders", version: "1.0.0", image: { repository: "ghcr.io/acme/orders" } }, { slug: "draft" }] as never)
+    vi.spyOn(Microfrontend, "find").mockResolvedValue([{ slug: "checkout", version: "2.0.0", image: { repository: "ghcr.io/acme/checkout" } }] as never)
+    vi.spyOn(CodeRepositoryService.prototype, "getBranches").mockImplementation(async () => {
+        calls.push("branches")
+        return [{ branch: "main" }, { branch: "development" }] as never
+    })
 
     vi.spyOn(ArgoCdClient.prototype, "getUserInfo").mockImplementation(async () => {
         calls.push("argo:userinfo")
@@ -275,13 +284,13 @@ describe("ArgoCdService.initialize", () => {
     it("given an environment deleted since, when it is initialized again, then its ApplicationSet is deleted and the generated applications are left alone", async () => {
         applicationSets = [
             resource(ENVIRONMENTS_SET, { template: { spec: { project: PROJECT_NAME } } }),
-            resource(applicationSetNameOf("production"), { template: { spec: { project: PROJECT_NAME } } }),
-            resource(applicationSetNameOf("staging"), { template: { spec: { project: PROJECT_NAME } } })
+            resource(applicationSetNameOf("orders"), { template: { spec: { project: PROJECT_NAME } } }),
+            resource(applicationSetNameOf("deleted"), { template: { spec: { project: PROJECT_NAME } } })
         ]
 
         await initialize()
 
-        expect(calls.filter(call => call.startsWith("argo:delete"))).toEqual([`argo:deleteApplicationSet:${applicationSetNameOf("staging")}`])
+        expect(calls.filter(call => call.startsWith("argo:delete"))).toEqual([`argo:deleteApplicationSet:${applicationSetNameOf("deleted")}`])
         expect(ArgoCdClient.prototype.listApplicationSets).toHaveBeenCalledWith(`${PROJECT_ID_LABEL}=${projectId}`, PROJECT_NAME)
     })
 
@@ -342,21 +351,50 @@ describe("ArgoCdService.initialize", () => {
         expect(calls.some(call => call.startsWith("argo:upsert") || call.startsWith("gitlab:"))).toBe(false)
     })
 
-    it("given a project, when it is initialized, then the console makes no Application: the ApplicationSet of the environments and one per environment", async () => {
+    it("given a project, when it is initialized, then the console makes no Application: the ApplicationSet of the environments and one per deployable service and frontend", async () => {
         await initialize()
 
         expect(calls.filter(call => call.startsWith("argo:upsertApplication"))).toEqual([
             `argo:upsertApplicationSet:${ENVIRONMENTS_SET}`,
-            `argo:upsertApplicationSet:${applicationSetNameOf("development")}`,
-            `argo:upsertApplicationSet:${applicationSetNameOf("production")}`
+            `argo:upsertApplicationSet:${applicationSetNameOf("orders")}`,
+            `argo:upsertApplicationSet:${applicationSetNameOf("checkout")}`
         ])
-        expect(calls).toEqual(
-            expect.arrayContaining([
-                `argo:upsertProject:${PROJECT_NAME}`,
-                `argo:upsertApplicationSet:${applicationSetNameOf("development")}`,
-                `argo:upsertApplicationSet:${applicationSetNameOf("production")}`
-            ])
-        )
+        expect(calls).toContain(`argo:upsertProject:${PROJECT_NAME}`)
+    })
+
+    it("given the per-environment ApplicationSets of an earlier version, when it is initialized again, then they are deleted once those of the applications are in", async () => {
+        const earlier = `${environmentName("production")}.applications`
+        applicationSets = [resource(earlier, { template: { spec: { project: PROJECT_NAME } } })]
+
+        await initialize()
+
+        expect(calls.indexOf(`argo:deleteApplicationSet:${earlier}`)).toBeGreaterThan(calls.indexOf(`argo:upsertApplicationSet:${applicationSetNameOf("checkout")}`))
+    })
+
+    it("given an environment without a branch yet, when it is initialized, then the ApplicationSets of the applications leave it out", async () => {
+        let orders: ArgoCdResource | undefined
+        vi.mocked(ArgoCdClient.prototype.upsertApplicationSet).mockImplementation(async applicationSet => {
+            if (applicationSet.metadata.name === applicationSetNameOf("orders")) orders = applicationSet
+        })
+
+        await initialize()
+
+        expect(JSON.stringify(orders)).toContain(applicationName(String(projectId), "shop", "orders", "development"))
+        expect(JSON.stringify(orders)).not.toContain(applicationName(String(projectId), "shop", "orders", "production"))
+    })
+
+    it("given a service whose Application would take the name of another, when it is initialized, then it is refused before anything is written", async () => {
+        vi.mocked(Environment.find).mockResolvedValue([
+            { slug: "development", projectId },
+            { slug: "checkout-development", projectId }
+        ] as never)
+        vi.mocked(Service.find).mockResolvedValue([{ slug: "orders-checkout", version: "1", image: { repository: "orders" } }] as never)
+        vi.mocked(Microfrontend.find).mockResolvedValue([{ slug: "orders", version: "1", image: { repository: "orders" } }] as never)
+        vi.mocked(CodeRepositoryService.prototype.getBranches).mockResolvedValue([{ branch: "development" }, { branch: "checkout-development" }] as never)
+
+        await expect(initialize()).rejects.toMatchObject({ code: "ARGOCD_NAME_CLASH" })
+
+        expect(calls.some(call => call.startsWith("argo:upsert") || call.startsWith("gitlab:"))).toBe(false)
     })
 
     it("given a success, when it is initialized, then the URL has no trailing slash, the error is cleared and the answer holds no credential", async () => {
@@ -440,6 +478,122 @@ describe("ArgoCdService.initialize", () => {
 
         await expect(initialize()).rejects.toMatchObject({ code: "GITOPS_OWNER_REQUIRED" })
         expect(calls).toEqual([])
+    })
+})
+
+describe("ArgoCdService.alignApplications", () => {
+    const align = () => new ArgoCdService().alignApplications(projectId)
+    const initialized = (overrides: Partial<IProjectArgoCd> = {}): IProjectArgoCd => ({
+        url: ARGO_URL,
+        token: "argo-token",
+        initializedAt: new Date(),
+        repositories: { configuration: deployTokenCredential(), applications: manualCredential() },
+        ...overrides
+    })
+    const updates = () => vi.mocked(Project.updateOne).mock.calls.map(([filter, update]) => ({ filter, update: update as { $set?: Record<string, unknown>; $unset?: Record<string, unknown> } }))
+    const storedError = () => updates().find(({ update }) => update.$set?.["argoCd.alignError"])
+
+    it("given Argo CD initialized, when a deploy aligns it, then the ApplicationSet of every deployable service and frontend is upserted and nothing else", async () => {
+        previous = initialized()
+
+        await align()
+
+        expect(calls.filter(call => call.startsWith("argo:"))).toEqual([`argo:upsertApplicationSet:${applicationSetNameOf("orders")}`, `argo:upsertApplicationSet:${applicationSetNameOf("checkout")}`])
+        expect(storedError()).toBeUndefined()
+    })
+
+    it("given an environment added since the initialization, when a deploy aligns it, then the ApplicationSets leave it out until its namespace is in the AppProject", async () => {
+        previous = initialized()
+        vi.mocked(CodeRepositoryService.prototype.getBranches).mockResolvedValue([{ branch: "development" }, { branch: "production" }] as never)
+        vi.mocked(ArgoCdClient.prototype.getProject).mockResolvedValue(resource(PROJECT_NAME, { destinations: [{ server: "https://kubernetes.default.svc", namespace: "development" }] }))
+        let orders: ArgoCdResource | undefined
+        vi.mocked(ArgoCdClient.prototype.upsertApplicationSet).mockImplementation(async applicationSet => {
+            if (applicationSet.metadata.name === applicationSetNameOf("orders")) orders = applicationSet
+        })
+
+        await align()
+
+        expect(JSON.stringify(orders)).toContain(applicationName(String(projectId), "shop", "orders", "development"))
+        expect(JSON.stringify(orders)).not.toContain(applicationName(String(projectId), "shop", "orders", "production"))
+    })
+
+    it("given an alignment that failed before, when a deploy aligns it, then the stored failure goes", async () => {
+        previous = initialized({ alignError: { message: "earlier" } })
+
+        await align()
+
+        expect(updates().map(({ update }) => update)).toContainEqual({ $unset: { "argoCd.alignError": 1 } })
+    })
+
+    it.each([
+        ["never initialized", { initializedAt: undefined }],
+        ["being initialized", { initializingAt: new Date() }]
+    ])("given Argo CD %s, when a deploy aligns it, then nothing is sent to Argo CD nor stored", async (_case, overrides) => {
+        previous = initialized(overrides as Partial<IProjectArgoCd>)
+
+        await align()
+
+        expect(calls.some(call => call.startsWith("argo:"))).toBe(false)
+        expect(storedError()).toBeUndefined()
+    })
+
+    it.each([
+        ["initialized before the applications repository was linked", { repositories: { configuration: deployTokenCredential() } }],
+        ["initialized with another applications repository", { repositories: { applications: manualCredential({ repoUrl: "https://github.com/acme/old-apps.git" }) } }],
+        ["moved to another URL since", { url: "https://other.example.com" }]
+    ])("given Argo CD %s, when a deploy aligns it, then nothing is upserted and an initialization is asked for", async (_case, overrides) => {
+        previous = initialized(overrides as Partial<IProjectArgoCd>)
+
+        await align()
+
+        expect(calls.some(call => call.startsWith("argo:upsert"))).toBe(false)
+        expect(storedError()?.update.$set?.["argoCd.alignError"]).toMatchObject({ code: "ARGOCD_REINITIALIZE_REQUIRED" })
+    })
+
+    it("given the per-environment ApplicationSets of an earlier version, when a deploy aligns it, then the new ones are not made next to them and an initialization is asked for", async () => {
+        previous = initialized()
+        applicationSets = [resource(`${environmentName("production")}.applications`, { template: { spec: { project: PROJECT_NAME } } }, { "mfe-orchestrator/component": "applications" })]
+
+        await align()
+
+        expect(ArgoCdClient.prototype.listApplicationSets).toHaveBeenCalledWith(`${PROJECT_ID_LABEL}=${projectId},mfe-orchestrator/component=applications`, PROJECT_NAME)
+        expect(calls.some(call => call.startsWith("argo:upsert"))).toBe(false)
+        expect(storedError()?.update.$set?.["argoCd.alignError"]).toMatchObject({ code: "ARGOCD_REINITIALIZE_REQUIRED" })
+    })
+
+    it("given an ApplicationSet of the same name made for another project, when a deploy aligns it, then nothing is upserted and the failure is stored only while no initialization runs", async () => {
+        previous = initialized()
+        vi.mocked(ArgoCdClient.prototype.getApplicationSet).mockResolvedValue(resource("taken", {}, { [PROJECT_ID_LABEL]: "someone-else" }))
+
+        await expect(align()).resolves.toBeUndefined()
+
+        expect(calls.some(call => call.startsWith("argo:upsert"))).toBe(false)
+        expect(storedError()).toMatchObject({ filter: { "argoCd.initializingAt": { $exists: false } }, update: { $set: { "argoCd.alignError": { code: "ARGOCD_NAME_CONFLICT" } } } })
+    })
+
+    it("given a service named after the ApplicationSet of the environments, when a deploy aligns it, then that one is not overwritten", async () => {
+        previous = initialized()
+        vi.mocked(Service.find).mockResolvedValue([{ slug: "environments", version: "1", image: { repository: "environments" } }] as never)
+
+        await align()
+
+        expect(calls.some(call => call.startsWith("argo:upsert"))).toBe(false)
+        expect(storedError()?.update.$set?.["argoCd.alignError"]).toMatchObject({ code: "ARGOCD_NAME_CLASH" })
+    })
+
+    it("given branches that cannot be read, when a deploy aligns it, then the failure is stored by code", async () => {
+        previous = initialized()
+        vi.mocked(CodeRepositoryService.prototype.getBranches).mockRejectedValue(new Error("404"))
+
+        await align()
+
+        expect(storedError()?.update.$set?.["argoCd.alignError"]).toMatchObject({ code: "ARGOCD_BRANCHES_FAILED", details: { repository: "shop-apps" } })
+    })
+
+    it("given the database failing, when a deploy aligns it, then the deploy that went through is not failed", async () => {
+        vi.mocked(Project.findById).mockImplementation(() => Promise.reject(new Error("database down")) as never)
+
+        await expect(align()).resolves.toBeUndefined()
     })
 })
 

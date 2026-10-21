@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto"
-import { APPLICATIONS_CHART_FOLDER } from "./applicationManifests"
+import { APPLICATIONS_CHART_FOLDER, applicationValuesPath } from "./applicationManifests"
 
 /**
  * What Argo CD is given to deploy the GitOps repositories of a project: an AppProject that confines it to
  * them and to the namespaces of its environments, an ApplicationSet from which Argo CD makes an Application
- * per environment syncing its folder of the configuration repository, then per environment an
- * ApplicationSet making an Application of every values file on the branch of the environment in the
- * applications repository. Every environment deploys to the cluster Argo CD runs in.
+ * per environment syncing its folder of the configuration repository, then per service and frontend an
+ * ApplicationSet making an Application of it in every environment whose branch of the applications repository
+ * holds its values file. Every environment deploys to the cluster Argo CD runs in.
  */
 
 /** The cluster Argo CD runs in, as Argo CD names it */
@@ -17,9 +17,11 @@ export const MANAGED_BY = "mfe-orchestrator"
 /** What the console finds its own objects by, and tells them from those of a project with the same slug */
 export const PROJECT_ID_LABEL = "mfe-orchestrator/project-id"
 export const ENVIRONMENT_LABEL = "mfe-orchestrator/environment"
+/** The slug of the service or frontend an ApplicationSet, and what it generates, are of */
+export const APPLICATION_LABEL = "mfe-orchestrator/application"
 /**
  * `configuration` for the ApplicationSet of the environments, `environment` for what it generates;
- * `applications` for the ApplicationSet of an environment, `application` for what that one generates
+ * `applications` for the ApplicationSet of a service or frontend, `application` for what that one generates
  */
 export const COMPONENT_LABEL = "mfe-orchestrator/component"
 
@@ -29,8 +31,6 @@ const HASH_LENGTH = 6
 const PROJECT_PREFIX_MAX_LENGTH = 24
 /** `<project prefix>.<environment slug>`, the start of the names of an environment */
 const ENVIRONMENT_PREFIX_MAX_LENGTH = 32
-/** What is left of 63 for the slug of a generated application, after `<environment prefix>.app.` */
-const GENERATED_SLUG_MAX_LENGTH = NAME_MAX_LENGTH - ENVIRONMENT_PREFIX_MAX_LENGTH - ".app.".length
 
 const hashOf = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, HASH_LENGTH)
 
@@ -47,10 +47,10 @@ const bounded = (value: string, max: number) => (value.length <= max ? value : `
 
 /**
  * The names are made of dot-separated parts, and no part holds a dot: the project, with a hash of its id so
- * that `shop-eu` and `shop` never meet, then the environment, then what the object is. The Application of an
- * environment is the environment itself, the generated applications end in `.app.<slug>`: no service takes
- * the name of the Application that owns the namespace. Every name fits 63 characters, as Argo CD tracks
- * resources with the name in a label value.
+ * that `shop-eu` and `shop` never meet, then the environment or the application. The Application of an
+ * environment is the environment itself, the ApplicationSet of a service or frontend is its slug, and what it
+ * generates is `<slug>-<environment>`. Every name fits 63 characters, as Argo CD tracks resources with the name
+ * in a label value.
  */
 export const appProjectName = (projectId: string, projectSlug: string) => `${bounded(dnsPart(`mfe-${projectSlug}`), PROJECT_PREFIX_MAX_LENGTH - HASH_LENGTH - 1)}-${hashOf(projectId)}`
 
@@ -61,7 +61,14 @@ export const environmentApplicationName = environmentPrefix
 
 export const environmentsApplicationSetName = (projectId: string, projectSlug: string) => `${appProjectName(projectId, projectSlug)}.environments`
 
-export const applicationSetName = (projectId: string, projectSlug: string, environmentSlug: string) => `${environmentPrefix(projectId, projectSlug, environmentSlug)}.applications`
+export const applicationSetName = (projectId: string, projectSlug: string, applicationSlug: string) => bounded(`${appProjectName(projectId, projectSlug)}.${dnsPart(applicationSlug)}`, NAME_MAX_LENGTH)
+
+/** The Application of a service or frontend in one environment: `<project prefix>.<application>-<environment>` */
+export const applicationName = (projectId: string, projectSlug: string, applicationSlug: string, environmentSlug: string) =>
+    bounded(`${appProjectName(projectId, projectSlug)}.${dnsPart(applicationSlug)}-${dnsPart(environmentSlug)}`, NAME_MAX_LENGTH)
+
+/** A slug as a label value takes it */
+const labelValue = (slug: string) => bounded(dnsPart(slug), NAME_MAX_LENGTH)
 
 export interface ArgoCdEnvironment {
     /** The folder of the environment in the configuration repository, and its branch in the applications one */
@@ -76,6 +83,10 @@ export interface ArgoCdProjectTarget {
     configurationRepoUrl?: string
     applicationsRepoUrl?: string
     environments: ArgoCdEnvironment[]
+    /** The slugs of the services and frontends a deploy writes the values of */
+    applications?: string[]
+    /** The branches of the applications repository: an environment without one has no application yet */
+    applicationBranches?: string[]
 }
 
 const labels = (projectId: string, extra: Record<string, string> = {}): Record<string, string> => ({ [MANAGED_BY_LABEL]: MANAGED_BY, [PROJECT_ID_LABEL]: projectId, ...extra })
@@ -139,67 +150,98 @@ export const buildEnvironmentsApplicationSet = (target: ArgoCdProjectTarget & { 
     }
 })
 
-/** The values file the git generator found, without its extension: the slug of the application, and its Helm release */
-const APPLICATION_SLUG = '{{ trimSuffix ".yaml" .path.filename }}'
-
-/** The slug in the name of a generated application: as it is when it fits, cut and ended with a hash when it does not */
-const GENERATED_SLUG = `{{ $slug := trimSuffix ".yaml" .path.filename | lower }}{{ if le (len $slug) ${GENERATED_SLUG_MAX_LENGTH} }}{{ $slug }}{{ else }}{{ trunc ${GENERATED_SLUG_MAX_LENGTH - HASH_LENGTH - 1} $slug | trimSuffix "-" }}-{{ sha256sum $slug | trunc ${HASH_LENGTH} }}{{ end }}`
-
 /**
- * The ApplicationSet of one environment: an Application per values file at the root of the branch of the
- * environment, installed with the chart of that branch: the chart folder is left out of the generator, its
- * templates are not values files and do not even parse as YAML. The generated applications are named after
- * the project, the environment and the file, and carry the labels of the project.
+ * The ApplicationSet of one service or frontend: an Application per environment whose branch holds its values
+ * file, installed with the chart of that branch. The environments are listed, those without a branch left out:
+ * a git generator on a revision that does not exist fails the whole ApplicationSet. Per listed environment the
+ * git generator looks for the values file on its branch, so an environment the application was never deployed
+ * to gets no Application. The parameters of the environment sit under `environment`, a key no values file has,
+ * as the matrix merges them with the content of the file.
  *
  * `applicationsSync: create-update` lets the ApplicationSet create and update its applications, never delete
- * them: were the values files wiped from the branch by mistake, every application would otherwise go with
- * them, and its resources with it. An application whose file is gone for good is deleted by hand in Argo CD.
+ * them: were the values file wiped from a branch by mistake, the application would otherwise go with it, and
+ * its resources with it. An application whose file is gone for good is deleted by hand in Argo CD.
  */
-export const buildApplicationSet = (target: ArgoCdProjectTarget & { applicationsRepoUrl: string }, environment: ArgoCdEnvironment) => ({
+export const buildApplicationSet = (target: ArgoCdProjectTarget & { applicationsRepoUrl: string }, applicationSlug: string, environments: ArgoCdEnvironment[]) => ({
     apiVersion: "argoproj.io/v1alpha1",
     kind: "ApplicationSet",
     metadata: {
-        name: applicationSetName(target.projectId, target.projectSlug, environment.slug),
-        labels: labels(target.projectId, { [ENVIRONMENT_LABEL]: environment.slug, [COMPONENT_LABEL]: "applications" })
+        name: applicationSetName(target.projectId, target.projectSlug, applicationSlug),
+        labels: labels(target.projectId, { [APPLICATION_LABEL]: labelValue(applicationSlug), [COMPONENT_LABEL]: "applications" })
     },
     spec: {
         goTemplate: true,
         goTemplateOptions: ["missingkey=error"],
-        generators: [{ git: { repoURL: target.applicationsRepoUrl, revision: environment.slug, files: [{ path: "*.yaml" }, { path: `${APPLICATIONS_CHART_FOLDER}/**`, exclude: true }] } }],
+        generators: [
+            {
+                matrix: {
+                    generators: [
+                        {
+                            list: {
+                                elements: environments.map(environment => ({
+                                    environment: {
+                                        name: applicationName(target.projectId, target.projectSlug, applicationSlug, environment.slug),
+                                        slug: environment.slug,
+                                        namespace: environment.namespace
+                                    }
+                                }))
+                            }
+                        },
+                        { git: { repoURL: target.applicationsRepoUrl, revision: "{{ .environment.slug }}", files: [{ path: applicationValuesPath({ slug: applicationSlug }) }] } }
+                    ]
+                }
+            }
+        ],
         syncPolicy: { applicationsSync: "create-update" },
         template: {
             metadata: {
-                name: `${environmentPrefix(target.projectId, target.projectSlug, environment.slug)}.app.${GENERATED_SLUG}`,
-                labels: labels(target.projectId, { [ENVIRONMENT_LABEL]: environment.slug, [COMPONENT_LABEL]: "application" })
+                name: "{{ .environment.name }}",
+                labels: labels(target.projectId, { [APPLICATION_LABEL]: labelValue(applicationSlug), [ENVIRONMENT_LABEL]: "{{ .environment.slug }}", [COMPONENT_LABEL]: "application" })
             },
             spec: {
                 project: appProjectName(target.projectId, target.projectSlug),
                 source: {
                     repoURL: target.applicationsRepoUrl,
-                    targetRevision: environment.slug,
+                    targetRevision: "{{ .environment.slug }}",
                     path: APPLICATIONS_CHART_FOLDER,
-                    helm: { releaseName: APPLICATION_SLUG, valueFiles: ["../{{ .path.filename }}"] }
+                    helm: { releaseName: applicationSlug, valueFiles: [`../${applicationValuesPath({ slug: applicationSlug })}`] }
                 },
-                destination: { server: IN_CLUSTER_SERVER, namespace: environment.namespace },
+                destination: { server: IN_CLUSTER_SERVER, namespace: "{{ .environment.namespace }}" },
                 syncPolicy: { automated: AUTOMATED_SYNC, syncOptions: ["CreateNamespace=true"] }
             }
         }
     }
 })
 
+/** The environments that have a branch in the applications repository: the only ones an application can be on */
+const branchedEnvironments = (target: ArgoCdProjectTarget) => target.environments.filter(environment => target.applicationBranches?.includes(environment.slug))
+
+/** The ApplicationSets of the services and frontends, one each, when the project has an applications repository */
+export const buildApplicationSets = (target: ArgoCdProjectTarget) => {
+    const { applicationsRepoUrl } = target
+    if (!applicationsRepoUrl) return []
+    return (target.applications ?? []).map(slug => buildApplicationSet({ ...target, applicationsRepoUrl }, slug, branchedEnvironments(target)))
+}
+
 /**
  * Everything Argo CD should hold for the project: the ApplicationSet of the environments when there is a
- * configuration repository, one per environment when there is an applications one. `environmentApplications`
- * are the names Argo CD will give the Applications of the environments.
+ * configuration repository, one per service and frontend when there is an applications one.
+ * `environmentApplications` and `applications` are the names Argo CD will give the Applications they generate.
  */
 export const buildArgoCdState = (target: ArgoCdProjectTarget) => {
     const { configurationRepoUrl, applicationsRepoUrl } = target
     return {
         appProject: buildAppProject(target),
         environmentApplications: configurationRepoUrl ? target.environments.map(environment => environmentApplicationName(target.projectId, target.projectSlug, environment.slug)) : [],
-        applicationSets: [
-            ...(configurationRepoUrl ? [buildEnvironmentsApplicationSet({ ...target, configurationRepoUrl })] : []),
-            ...(applicationsRepoUrl ? target.environments.map(environment => buildApplicationSet({ ...target, applicationsRepoUrl }, environment)) : [])
-        ]
+        applicationSets: [...(configurationRepoUrl ? [buildEnvironmentsApplicationSet({ ...target, configurationRepoUrl })] : []), ...buildApplicationSets(target)],
+        applications: applicationsRepoUrl
+            ? (target.applications ?? []).flatMap(slug => branchedEnvironments(target).map(environment => applicationName(target.projectId, target.projectSlug, slug, environment.slug)))
+            : []
     }
+}
+
+/** A name two objects of the project would both take: two ApplicationSets, or two Applications, fight over it */
+export const clashingName = (state: ReturnType<typeof buildArgoCdState>): string | undefined => {
+    const repeated = (names: string[]) => names.find((name, index) => names.indexOf(name) !== index)
+    return repeated(state.applicationSets.map(applicationSet => applicationSet.metadata.name)) ?? repeated([...state.environmentApplications, ...state.applications])
 }

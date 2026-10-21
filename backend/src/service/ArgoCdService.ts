@@ -6,13 +6,16 @@ import { BusinessException, createBusinessException } from "../errors/BusinessEx
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
 import Environment from "../models/EnvironmentModel"
-import { ICodeRepositoryMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { ICodeRepositoryMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
 import Project, { IArgoCdError, IArgoCdRepositoryCredential, IArgoCdRepositoryRegistration, IProjectArgoCd, IProjectGitOps } from "../models/ProjectModel"
+import Service from "../models/ServiceModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import CodeRepositoryService from "./CodeRepositoryService"
 import GitOpsService, { environmentNamespace, environmentSlug } from "./GitOpsService"
-import { appProjectName, buildArgoCdState, COMPONENT_LABEL, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
+import { GitOpsApplication, isDeployable } from "./gitops/applicationManifests"
+import { APPLICATION_LABEL, appProjectName, buildApplicationSets, buildArgoCdState, COMPONENT_LABEL, clashingName, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
 import { repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
 import { cloneUrlFor, gitCredentialsFor } from "./workspace/RepositoryWorkspaceService"
 
@@ -35,6 +38,8 @@ export interface ArgoCdStatusDTO {
     configured: boolean
     initializedAt?: Date
     lastError?: IArgoCdError
+    /** Why the last deploy did not align the ApplicationSets of the applications */
+    alignError?: IArgoCdError
     repositories: Partial<Record<ArgoCdRepositoryKind, { source: IArgoCdRepositoryCredential["source"] }>>
     /** Some repository is not on GitLab: Argo CD reads it with the token the owner pastes */
     needsRepositoryToken: boolean
@@ -128,6 +133,31 @@ const projectOf = (resource: ArgoCdResource): unknown => {
 const errorOf = (error: unknown): IArgoCdError =>
     error instanceof BusinessException ? { code: error.code, message: error.message, ...(error.details ? { details: error.details } : {}) } : { message: toErrorMessage(error) }
 
+const nameClash = (name: string) =>
+    createBusinessException({
+        code: "ARGOCD_NAME_CLASH",
+        message: `Two objects of this project would both be named ${name} in Argo CD: rename the service, frontend or environment whose slugs join into it, then initialize again`,
+        statusCode: 409,
+        details: { name }
+    })
+
+/** The services and frontends a deploy writes the values of: those with an image and a version */
+const deployableSlugs = async (projectId: Schema.Types.ObjectId): Promise<string[]> => {
+    const fields = { slug: 1, version: 1, image: 1 }
+    const applications: GitOpsApplication[] = [...(await Service.find({ projectId }, fields)), ...(await Microfrontend.find({ projectId, kind: MicrofrontendKind.FRONTEND }, fields))]
+    return applications.filter(isDeployable).map(application => application.slug)
+}
+
+const environmentsOf = async (projectId: Schema.Types.ObjectId) =>
+    (await Environment.find({ projectId }, { slug: 1, namespace: 1 })).map(environment => ({ slug: environmentSlug(environment), namespace: environmentNamespace(environment) }))
+
+const reinitializeRequired = () =>
+    createBusinessException({
+        code: "ARGOCD_REINITIALIZE_REQUIRED",
+        message: "Argo CD was initialized with other repositories, or by an earlier version of the console: initialize it again to deploy the applications through it",
+        statusCode: 409
+    })
+
 const nameConflict = (kind: string, name: string) =>
     createBusinessException({
         code: "ARGOCD_NAME_CONFLICT",
@@ -160,10 +190,11 @@ const tokenRequired = () =>
 /**
  * Hands the GitOps repositories of a project to an Argo CD instance that runs on another cluster, through its
  * API: the credentials to read them, an AppProject confining the project to them and to the namespaces of its
- * environments, the ApplicationSet Argo CD makes the Application of each environment from, and per
- * environment the ApplicationSet of the applications. Running it again re-aligns Argo CD with the project: the environments added since get theirs,
- * those deleted lose theirs, the deploy tokens of GitLab are rotated and the credentials of a repository no
- * longer linked are withdrawn.
+ * environments, the ApplicationSet Argo CD makes the Application of each environment from, and per service and
+ * frontend the ApplicationSet of its applications. Running it again re-aligns Argo CD with the project: the
+ * environments added since get theirs, those deleted lose theirs, the deploy tokens of GitLab are rotated and
+ * the credentials of a repository no longer linked are withdrawn. Between two initializations, every deploy
+ * aligns the ApplicationSets of the services and frontends.
  *
  * The console owns the credentials: the token of Argo CD and those of the repositories are stored encrypted,
  * and none of them goes back to a client. The configuration repository, which holds the secrets in plaintext,
@@ -206,10 +237,7 @@ export class ArgoCdService extends BaseAuthorizedService {
         if (!retyped(input?.token) && project.argoCd?.url !== url) throw tokenRequired()
 
         // An environment whose slug or namespace Kubernetes refuses stops the run before anything is written
-        const environments = (await Environment.find({ projectId: projectIdObj }, { slug: 1, namespace: 1 })).map(environment => ({
-            slug: environmentSlug(environment),
-            namespace: environmentNamespace(environment)
-        }))
+        const environments = await environmentsOf(projectIdObj)
 
         const lease: Lease = { at: new Date() }
         await this.acquire(projectIdObj, lease)
@@ -243,13 +271,17 @@ export class ArgoCdService extends BaseAuthorizedService {
                     targets.push({ kind, link, connection, repoUrl, argoProject: kind === "configuration" ? projectName : undefined })
                 }
                 const repoUrlOf = (kind: ArgoCdRepositoryKind) => targets.find(target => target.kind === kind)?.repoUrl
+                const applicationsTarget = targets.find(target => target.kind === "applications")
                 const state = buildArgoCdState({
                     projectId: String(projectIdObj),
                     projectSlug: current.slug,
                     configurationRepoUrl: repoUrlOf("configuration"),
                     applicationsRepoUrl: repoUrlOf("applications"),
-                    environments
+                    environments,
+                    ...(applicationsTarget ? { applications: await deployableSlugs(projectIdObj), applicationBranches: await this.branchesOf(applicationsTarget) } : {})
                 })
+                const clash = clashingName(state)
+                if (clash) throw nameClash(clash)
 
                 // Every name is checked before the first write: one taken by something else stops the run with nothing changed.
                 // An object the account may not read is taken too, by something it cannot see
@@ -364,6 +396,85 @@ export class ArgoCdService extends BaseAuthorizedService {
         }
     }
 
+    /**
+     * Gives Argo CD the ApplicationSet of every service and frontend once a deploy has committed their values:
+     * a service deployed for the first time, or an environment whose branch the deploy just created, gets its
+     * Applications without initializing again. Only while the applications repository is the one Argo CD was
+     * handed; the environments and the AppProject wait for the next initialization. Never fails the deploy,
+     * which already went through: what goes wrong is stored on the project, for the settings to show.
+     */
+    async alignApplications(projectId: Schema.Types.ObjectId): Promise<void> {
+        // Stored only while no initialization runs: the one that runs re-aligns everything, and saves over it
+        const idle = { _id: projectId, "argoCd.initializingAt": { $exists: false } }
+        try {
+            const project = await Project.findById(projectId, { slug: 1, gitOps: 1, argoCd: 1 })
+            const argoCd = project?.argoCd
+            const link = project?.gitOps?.enabled ? project.gitOps.applicationsCodeRepository : undefined
+            if (!project || !link || !argoCd?.initializedAt || !argoCd.url || !argoCd.token) return
+            // An initialization running read the applications already: its cleanup would delete what this creates
+            if (argoCd.initializingAt && new Date(argoCd.initializingAt).getTime() > Date.now() - LEASE_MS) return
+
+            const registered = argoCd.repositories?.applications
+            const connection = await new GitOpsService(this.user).connectionOf(link, projectId)
+            const repoUrl = cloneUrlFor({ component: { codeRepository: link }, codeRepository: connection, repositoryName: repositoryNameFor(link, connection) })
+            // Argo CD was handed another repository, or none: only an initialization registers this one
+            if (registered?.argoCdUrl !== argoCd.url || registered.repoUrl !== repoUrl) throw reinitializeRequired()
+
+            const client = new ArgoCdClient(argoCd.url, argoCd.token)
+            const projectName = appProjectName(String(projectId), project.slug)
+            // The ApplicationSets of an earlier version, per environment, generate the same workloads: an initialization replaces them
+            const earlier = await client.listApplicationSets(`${PROJECT_ID_LABEL}=${projectId},${COMPONENT_LABEL}=applications`, projectName)
+            if (earlier.some(applicationSet => !applicationSet.metadata.labels?.[APPLICATION_LABEL])) throw reinitializeRequired()
+
+            const target = {
+                projectId: String(projectId),
+                projectSlug: project.slug,
+                // Only for the names its objects take, which no application may take too
+                configurationRepoUrl: argoCd.repositories?.configuration?.repoUrl,
+                applicationsRepoUrl: repoUrl,
+                environments: await environmentsOf(projectId),
+                applications: await deployableSlugs(projectId),
+                applicationBranches: await this.branchesOf({ link, connection })
+            }
+            const clash = clashingName(buildArgoCdState(target))
+            // An environment added since the initialization has no namespace in the AppProject yet: its Applications would only fail
+            const destinations = ((await client.getProject(projectName))?.spec?.destinations ?? []) as Array<{ namespace?: string }>
+            target.environments = target.environments.filter(environment => destinations.some(destination => destination.namespace === environment.namespace))
+            if (clash) throw nameClash(clash)
+
+            const applicationSets = buildApplicationSets(target)
+            for (const { metadata } of applicationSets) {
+                const existing = await client
+                    .getApplicationSet(metadata.name)
+                    .catch(error => Promise.reject(error instanceof BusinessException && error.code === "ARGOCD_FORBIDDEN" ? nameConflict("ApplicationSet", metadata.name) : error))
+                if (existing && (existing.metadata?.labels?.[PROJECT_ID_LABEL] !== String(projectId) || projectOf({ ...existing, kind: "ApplicationSet" }) !== projectName))
+                    throw nameConflict("ApplicationSet", metadata.name)
+            }
+            for (const applicationSet of applicationSets) await client.upsertApplicationSet(applicationSet)
+            if (argoCd.alignError) await Project.updateOne(idle, { $unset: { "argoCd.alignError": 1 } })
+        } catch (error) {
+            fastify.log.error({ error: toErrorMessage(error), projectId: String(projectId) }, "Argo CD ApplicationSets of the applications not aligned after a deploy")
+            await Project.updateOne(idle, { $set: { "argoCd.alignError": errorOf(error) } }).catch(saveError =>
+                fastify.log.error({ error: toErrorMessage(saveError) }, "Argo CD alignment failure not stored")
+            )
+        }
+    }
+
+    /** The branches of the applications repository: Argo CD fails an ApplicationSet listing a revision that does not exist */
+    private async branchesOf({ link, connection }: Pick<RepositoryTarget, "link" | "connection">): Promise<string[]> {
+        const branches = await new CodeRepositoryService(this.user).getBranches(String(connection._id), repositoryNameFor(link, connection)).catch(error =>
+            Promise.reject(
+                createBusinessException({
+                    code: "ARGOCD_BRANCHES_FAILED",
+                    message: `The branches of ${link.name} could not be read (${toErrorMessage(error)}): the connection must reach the repository`,
+                    statusCode: 502,
+                    details: { repository: link.name, reason: toErrorMessage(error) }
+                })
+            )
+        )
+        return branches.map(branch => branch.branch)
+    }
+
     private async status(projectId: Schema.Types.ObjectId, gitOps: IProjectGitOps | undefined, argoCd: IProjectArgoCd | undefined, canInitialize: boolean): Promise<ArgoCdStatusDTO> {
         const links = linksOf(gitOps)
         const connections = links.length > 0 ? await CodeRepository.find({ _id: { $in: links.map(([, link]) => link.codeRepositoryId) }, projectId }, { provider: 1 }) : []
@@ -378,6 +489,7 @@ export class ArgoCdService extends BaseAuthorizedService {
             configured: Boolean(argoCd?.url && argoCd.token),
             initializedAt: argoCd?.initializedAt,
             lastError: argoCd?.lastError,
+            alignError: argoCd?.alignError,
             repositories,
             needsRepositoryToken: repositoryTokenProviders.length > 0,
             repositoryTokenProviders,

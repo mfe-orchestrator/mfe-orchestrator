@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
+    APPLICATION_LABEL,
+    applicationName,
     applicationSetName,
     appProjectName,
     buildApplicationSet,
@@ -7,6 +9,7 @@ import {
     buildArgoCdState,
     buildEnvironmentsApplicationSet,
     COMPONENT_LABEL,
+    clashingName,
     ENVIRONMENT_LABEL,
     environmentApplicationName,
     environmentsApplicationSetName,
@@ -23,7 +26,9 @@ const target = {
     projectSlug: "shop",
     configurationRepoUrl: "https://gitlab.example.com/acme/shop-config.git",
     applicationsRepoUrl: "https://github.com/acme/shop-apps.git",
-    environments: [development, production]
+    environments: [development, production],
+    applications: ["orders", "checkout"],
+    applicationBranches: ["main", "development", "production"]
 }
 const PROJECT_NAME = appProjectName(projectId, "shop")
 /** A DNS label, or dot-separated labels as an Application name may be */
@@ -37,7 +42,8 @@ describe("names", () => {
     it("given an environment, when its objects are named, then the parts are separated by dots", () => {
         expect(environmentApplicationName(projectId, "shop", "production")).toBe(`${PROJECT_NAME}.production`)
         expect(environmentsApplicationSetName(projectId, "shop")).toBe(`${PROJECT_NAME}.environments`)
-        expect(applicationSetName(projectId, "shop", "production")).toBe(`${PROJECT_NAME}.production.applications`)
+        expect(applicationSetName(projectId, "shop", "orders")).toBe(`${PROJECT_NAME}.orders`)
+        expect(applicationName(projectId, "shop", "orders", "production")).toBe(`${PROJECT_NAME}.orders-production`)
     })
 
     it("given two projects whose slug and environment join the same way, when they are named, then the names differ", () => {
@@ -51,7 +57,8 @@ describe("names", () => {
         const names = [
             appProjectName(projectId, `My_Shop ${"a".repeat(80)}`),
             environmentApplicationName(projectId, "a".repeat(80), "B".repeat(63)),
-            applicationSetName(projectId, "shop", "x".repeat(63))
+            applicationSetName(projectId, "shop", "x".repeat(63)),
+            applicationName(projectId, "shop", "Orders_API", "y".repeat(63))
         ]
 
         for (const name of names) {
@@ -126,93 +133,131 @@ describe("buildEnvironmentsApplicationSet", () => {
 })
 
 describe("buildApplicationSet", () => {
-    const applicationSet = buildApplicationSet(target, production)
-    const templateName = applicationSet.spec.template.metadata.name
+    const applicationSet = buildApplicationSet(target, "orders", [development, production])
+    const [list, git] = (applicationSet.spec.generators[0] as { matrix: { generators: [{ list: { elements: unknown[] } }, { git: unknown }] } }).matrix.generators
 
-    it("given an environment, when its ApplicationSet is built, then the git generator reads the values files of the branch and leaves the chart out", () => {
-        expect(applicationSet.metadata.name).toBe(applicationSetName(projectId, "shop", "production"))
+    it("given a service, when its ApplicationSet is built, then it is named after it and labelled with its slug", () => {
+        expect(applicationSet.metadata.name).toBe(applicationSetName(projectId, "shop", "orders"))
+        expect(applicationSet.metadata.labels).toEqual({ [MANAGED_BY_LABEL]: "mfe-orchestrator", [PROJECT_ID_LABEL]: projectId, [APPLICATION_LABEL]: "orders", [COMPONENT_LABEL]: "applications" })
         expect(applicationSet.spec.goTemplate).toBe(true)
         expect(applicationSet.spec.goTemplateOptions).toEqual(["missingkey=error"])
-        expect(applicationSet.spec.generators).toEqual([
-            {
-                git: {
-                    repoURL: target.applicationsRepoUrl,
-                    revision: "production",
-                    files: [{ path: "*.yaml" }, { path: "microservice-chart/**", exclude: true }]
-                }
-            }
+    })
+
+    it("given two environments, when the ApplicationSet is built, then it lists them under a key of their own, with the name of the Application of each", () => {
+        expect(list.list.elements).toEqual([
+            { environment: { name: applicationName(projectId, "shop", "orders", "development"), slug: "development", namespace: "development" } },
+            { environment: { name: applicationName(projectId, "shop", "orders", "production"), slug: "production", namespace: "prod" } }
         ])
     })
 
-    it("given an environment, when its ApplicationSet is built, then it never deletes the applications it generated", () => {
+    it("given a listed environment, when the ApplicationSet is built, then the git generator looks for the values file of the service on its branch only", () => {
+        expect(git).toEqual({ git: { repoURL: target.applicationsRepoUrl, revision: "{{ .environment.slug }}", files: [{ path: "orders.yaml" }] } })
+    })
+
+    it("given a service, when its ApplicationSet is built, then it never deletes the applications it generated", () => {
         expect(applicationSet.spec.syncPolicy).toEqual({ applicationsSync: "create-update" })
     })
 
-    it("given an environment, when its ApplicationSet is built, then a generated application can never take the name of the Application of the environment", () => {
-        expect(templateName.startsWith(`${PROJECT_NAME}.production.app.`)).toBe(true)
-        expect(environmentApplicationName(projectId, "shop", "production").startsWith(`${PROJECT_NAME}.production.app.`)).toBe(false)
-    })
-
-    it("given an environment, when its ApplicationSet is built, then the slug in the name of a generated application is cut and hashed past what fits 63", () => {
-        const budget = 63 - `${PROJECT_NAME}.production.app.`.length
-
-        expect(templateName).toContain('{{ $slug := trimSuffix ".yaml" .path.filename | lower }}')
-        expect(templateName).toContain(`{{ if le (len $slug) 26 }}{{ $slug }}{{ else }}{{ trunc 19 $slug | trimSuffix "-" }}-{{ sha256sum $slug | trunc 6 }}{{ end }}`)
-        expect(budget).toBeGreaterThanOrEqual(26)
-    })
-
-    it("given an environment, when its ApplicationSet is built, then each application installs the chart of the branch with its own values file", () => {
-        expect(applicationSet.spec.template.metadata.labels).toMatchObject({ [PROJECT_ID_LABEL]: projectId, [COMPONENT_LABEL]: "application" })
+    it("given an environment, when its Application is generated, then it installs the chart of the branch with the values file of the service in the namespace of the environment", () => {
+        expect(applicationSet.spec.template.metadata).toEqual({
+            name: "{{ .environment.name }}",
+            labels: {
+                [MANAGED_BY_LABEL]: "mfe-orchestrator",
+                [PROJECT_ID_LABEL]: projectId,
+                [APPLICATION_LABEL]: "orders",
+                [ENVIRONMENT_LABEL]: "{{ .environment.slug }}",
+                [COMPONENT_LABEL]: "application"
+            }
+        })
         expect(applicationSet.spec.template.spec).toEqual({
             project: PROJECT_NAME,
             source: {
                 repoURL: target.applicationsRepoUrl,
-                targetRevision: "production",
+                targetRevision: "{{ .environment.slug }}",
                 path: "microservice-chart",
-                helm: { releaseName: '{{ trimSuffix ".yaml" .path.filename }}', valueFiles: ["../{{ .path.filename }}"] }
+                helm: { releaseName: "orders", valueFiles: ["../orders.yaml"] }
             },
-            destination: { server: IN_CLUSTER_SERVER, namespace: "prod" },
+            destination: { server: IN_CLUSTER_SERVER, namespace: "{{ .environment.namespace }}" },
             syncPolicy: { automated: { prune: true, selfHeal: true }, syncOptions: ["CreateNamespace=true"] }
         })
     })
 })
 
 describe("buildArgoCdState", () => {
-    it("given both repositories, when the state is built, then there is the ApplicationSet of the environments and one per environment", () => {
+    const environmentsOf = (applicationSet: { spec: { generators: unknown[] } }) =>
+        (applicationSet.spec.generators[0] as { matrix: { generators: [{ list: { elements: Array<{ environment: { slug: string } }> } }] } }).matrix.generators[0].list.elements.map(
+            element => element.environment.slug
+        )
+
+    it("given both repositories, when the state is built, then there is the ApplicationSet of the environments and one per service", () => {
         const state = buildArgoCdState(target)
 
         expect(state.appProject.metadata.name).toBe(PROJECT_NAME)
         expect(state.environmentApplications).toEqual([environmentApplicationName(projectId, "shop", "development"), environmentApplicationName(projectId, "shop", "production")])
         expect(state.applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([
             environmentsApplicationSetName(projectId, "shop"),
-            applicationSetName(projectId, "shop", "development"),
-            applicationSetName(projectId, "shop", "production")
+            applicationSetName(projectId, "shop", "orders"),
+            applicationSetName(projectId, "shop", "checkout")
         ])
+        expect(state.applications).toEqual([
+            applicationName(projectId, "shop", "orders", "development"),
+            applicationName(projectId, "shop", "orders", "production"),
+            applicationName(projectId, "shop", "checkout", "development"),
+            applicationName(projectId, "shop", "checkout", "production")
+        ])
+    })
+
+    it("given an environment whose branch is not there yet, when the state is built, then the ApplicationSets leave it out", () => {
+        const [, orders] = buildArgoCdState({ ...target, applicationBranches: ["main", "development"] }).applicationSets
+
+        expect(environmentsOf(orders)).toEqual(["development"])
     })
 
     it("given no applications repository, when the state is built, then the ApplicationSet of the environments is the only one", () => {
-        expect(buildArgoCdState({ ...target, applicationsRepoUrl: undefined }).applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([
-            environmentsApplicationSetName(projectId, "shop")
-        ])
+        const state = buildArgoCdState({ ...target, applicationsRepoUrl: undefined })
+
+        expect(state.applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([environmentsApplicationSetName(projectId, "shop")])
+        expect(state.applications).toEqual([])
     })
 
     it("given an environment slug in uppercase, when the state is built, then the names are lowercase and the branch and the folders keep the slug", () => {
-        const state = buildArgoCdState({ ...target, environments: [{ slug: "DEV", namespace: "dev" }] })
-        const [environments, applications] = state.applicationSets
+        const state = buildArgoCdState({ ...target, environments: [{ slug: "DEV", namespace: "dev" }], applications: ["orders"], applicationBranches: ["DEV"] })
+        const [environments, orders] = state.applicationSets
 
         expect(state.environmentApplications).toEqual([`${PROJECT_NAME}.dev`])
         expect((environments.spec.generators[0] as { list?: { elements: unknown } }).list?.elements).toEqual([{ name: `${PROJECT_NAME}.dev`, slug: "DEV", namespace: "dev" }])
-        expect((applications.spec.generators[0] as { git?: { revision: string } }).git?.revision).toBe("DEV")
-        expect(applications.spec.template.metadata.name.startsWith(`${PROJECT_NAME}.dev.app.`)).toBe(true)
+        expect(environmentsOf(orders)).toEqual(["DEV"])
+        expect(state.applications).toEqual([`${PROJECT_NAME}.orders-dev`])
     })
 
     it("given no configuration repository, when the state is built, then there is no ApplicationSet of the environments", () => {
         const state = buildArgoCdState({ ...target, configurationRepoUrl: undefined })
 
         expect(state.environmentApplications).toEqual([])
-        expect(state.applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([
-            applicationSetName(projectId, "shop", "development"),
-            applicationSetName(projectId, "shop", "production")
-        ])
+        expect(state.applicationSets.map(applicationSet => applicationSet.metadata.name)).toEqual([applicationSetName(projectId, "shop", "orders"), applicationSetName(projectId, "shop", "checkout")])
+    })
+})
+
+describe("clashingName", () => {
+    it("given distinct slugs, when the names are checked, then none clashes", () => {
+        expect(clashingName(buildArgoCdState(target))).toBeUndefined()
+    })
+
+    it("given a service and an environment whose slugs join the same way as another pair, when the names are checked, then the name they share comes back", () => {
+        const state = buildArgoCdState({
+            ...target,
+            environments: [
+                { slug: "dev", namespace: "dev" },
+                { slug: "api-dev", namespace: "api-dev" }
+            ],
+            applications: ["orders-api", "orders"],
+            applicationBranches: ["dev", "api-dev"]
+        })
+
+        expect(clashingName(state)).toBe(applicationName(projectId, "shop", "orders", "api-dev"))
+    })
+
+    it("given a service named environments, when the names are checked, then its ApplicationSet clashes with the one of the environments", () => {
+        expect(clashingName(buildArgoCdState({ ...target, applications: ["environments"] }))).toBe(environmentsApplicationSetName(projectId, "shop"))
     })
 })

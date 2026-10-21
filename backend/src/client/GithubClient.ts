@@ -565,6 +565,7 @@ class GithubClient {
     async getBranches(accessToken: string, repositoryName: string, orgName?: string, userName?: string): Promise<GithubBranch[]> {
         const response = await axios.request<GithubBranch[]>({
             url: `https://api.github.com/repos/${orgName || userName}/${repositoryName}/branches`,
+            params: { per_page: 100 },
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 Accept: "application/vnd.github.v3+json",

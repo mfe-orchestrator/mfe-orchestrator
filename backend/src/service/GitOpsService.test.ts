@@ -10,6 +10,7 @@ import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import { ConfigMap, Secret } from "../models/VariableMapModel"
+import ArgoCdService from "./ArgoCdService"
 import CodeRepositoryImportService from "./CodeRepositoryImportService"
 import GitOpsService, { renderManifest } from "./GitOpsService"
 import { CHART_FILES } from "./gitops/applicationManifests"
@@ -585,6 +586,24 @@ describe("GitOpsService.deploy", () => {
 
             expect(commit.mock.invocationCallOrder[0]).toBeLessThan(applicationsCommit.mock.invocationCallOrder[0])
             expect(applicationsCommit.mock.invocationCallOrder[0]).toBeLessThan(run.mock.invocationCallOrder[0])
+        })
+
+        it("given a deploy that went through, when the applications are committed, then Argo CD is aligned with them afterwards", async () => {
+            const align = vi.spyOn(ArgoCdService.prototype, "alignApplications").mockResolvedValue(undefined)
+            const run = vi.fn().mockResolvedValue("deployed")
+
+            await deployOf(production)(run)
+
+            expect(String(align.mock.calls[0][0])).toBe(String(projectId))
+            expect(run.mock.invocationCallOrder[0]).toBeLessThan(align.mock.invocationCallOrder[0])
+        })
+
+        it("given a deploy that fails, when the applications were committed, then Argo CD is not aligned", async () => {
+            const align = vi.spyOn(ArgoCdService.prototype, "alignApplications").mockResolvedValue(undefined)
+
+            await expect(deployOf(production)(() => Promise.reject(new Error("rollout failed")))).rejects.toThrow("rollout failed")
+
+            expect(align).not.toHaveBeenCalled()
         })
 
         it("given a deploy that fails, when both repositories were pushed, then the applications branches are reverted before the configuration", async () => {

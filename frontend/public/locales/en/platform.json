@@ -302,6 +302,7 @@
             "initialized": "Argo CD aligned with the project",
             "initializedAt": "Last initialization: {{date}}",
             "lastErrorTitle": "The last initialization failed",
+            "alignErrorTitle": "The last deploy did not update the applications in Argo CD",
             "realignHint": "After adding or deleting an environment, or changing the GitOps repositories, re-align Argo CD: nothing is updated on its own.",
             "errors": {
                 "gitops_required": "Turn GitOps on and save the configuration repository before initializing Argo CD",
@@ -314,6 +315,9 @@
                 "forbidden": "The account of the token lacks the permissions it needs on Argo CD: grant it role:orchestrator in argocd-rbac-cm (see docs/ARGOCD.md)",
                 "request_failed": "Argo CD refused the request ({{reason}})",
                 "name_conflict": "Argo CD already has an object {{name}} this project did not create, or one the account of the token may not read: rename or delete it, then try again",
+                "name_clash": "Two objects of this project would both be named {{name}} in Argo CD: rename the service, frontend or environment whose slugs join into it, then try again",
+                "reinitialize_required": "Argo CD was initialized with other repositories, or by an earlier version of the console: initialize it again",
+                "branches_failed": "The branches of {{repository}} could not be read ({{reason}}): check that the connection reaches the repository",
                 "deploy_token_failed": "GitLab did not create the deploy token of {{repository}} ({{reason}}): the token of the connection needs the Maintainer role on the project and the api scope",
                 "url_insecure": "The Argo CD URL must be https: the token and the repository credentials would travel in the clear. For a local cluster only, the installation can allow http with ARGOCD_ALLOW_INSECURE_HTTP=true",
                 "repository_conflict": "Argo CD already has the repository {{repository}} registered, and not by this project: remove it from Argo CD, then try again",

@@ -61,6 +61,7 @@ export const ArgoCdSection: React.FC<ArgoCdSectionProps> = ({ projectId }) => {
     const tokenRequired = !status?.configured || urlChanged
     const repositoryTokenRequired = Boolean(status?.needsRepositoryToken && (!status.repositoryTokenStored || urlChanged))
     const lastError = status?.lastError && (translateError(status.lastError.code, status.lastError.details) ?? status.lastError.message)
+    const alignError = status?.alignError && (translateError(status.alignError.code, status.alignError.details) ?? status.alignError.message)
     const canSubmit = !!normalizeUrl(url) && (!tokenRequired || !!token.trim()) && (!repositoryTokenRequired || !!repositoryToken.trim())
     const isPending = initializeMutation.isPending
     // Il backend rifiuta chiunque non sia owner o amministratore: agli altri il form resta in sola lettura
@@ -130,6 +131,13 @@ export const ArgoCdSection: React.FC<ArgoCdSectionProps> = ({ projectId }) => {
                         <Alert variant="destructive">
                             <AlertTitle>{t("settings.argoCd.lastErrorTitle")}</AlertTitle>
                             <AlertDescription>{lastError}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {alignError && (
+                        <Alert variant="destructive">
+                            <AlertTitle>{t("settings.argoCd.alignErrorTitle")}</AlertTitle>
+                            <AlertDescription>{alignError}</AlertDescription>
                         </Alert>
                     )}
 

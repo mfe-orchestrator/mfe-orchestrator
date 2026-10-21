@@ -225,7 +225,7 @@ class GitLabClient {
     }
 
     async getBranches(projectId: string | number): Promise<GitLabBranch[]> {
-        const res = await this.api.get<GitLabBranch[]>(`/projects/${projectId}/repository/branches`)
+        const res = await this.api.get<GitLabBranch[]>(`/projects/${projectId}/repository/branches`, { params: { per_page: 100 } })
         return res.data
     }
 

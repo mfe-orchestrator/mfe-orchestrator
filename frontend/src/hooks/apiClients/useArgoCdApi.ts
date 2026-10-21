@@ -16,6 +16,7 @@ export interface ArgoCdStatus {
     initializedAt?: string
     /** Per codice, da tradurre; il messaggio in inglese per cio che non ha un codice noto */
     lastError?: { code?: string; message: string; details?: GitOpsErrorDetails }
+    alignError?: { code?: string; message: string; details?: GitOpsErrorDetails }
     repositories: Partial<Record<ArgoCdRepositoryKind, { source: ArgoCdCredentialSource }>>
     /** Almeno un repository non e' su GitLab: serve un token in sola lettura incollato a mano */
     needsRepositoryToken: boolean

@@ -20,6 +20,7 @@ import { NormalizedRepository } from "../utils/codeRepositoryUtils"
 import { toObjectId } from "../utils/mongooseUtils"
 import { RepositoryLockTimeoutError, withRepositoryLock } from "../utils/repositoryLock"
 import { gitOpsWorkspacePath } from "../utils/workspacePaths"
+import ArgoCdService from "./ArgoCdService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryImportService from "./CodeRepositoryImportService"
 import CodeRepositoryService from "./CodeRepositoryService"
@@ -407,7 +408,7 @@ export class GitOpsService extends BaseAuthorizedService {
             ? () => this.inRepository(projectId, "applications", applicationsLink, commit => this.commitApplications(projectId, deployed, maps, gateways, commit, deploy, domainId))
             : deploy
 
-        return this.inRepository(projectId, "configuration", gitOps.codeRepository, async commit => {
+        const result = await this.inRepository(projectId, "configuration", gitOps.codeRepository, async commit => {
             const deployedSlugs = new Set(deployed.map(environment => environment.slug))
             const existingSlugs = new Set(environments.map(environment => environment.slug))
             const message = `Deploy ${[...deployedSlugs].join(", ")}`
@@ -420,6 +421,9 @@ export class GitOpsService extends BaseAuthorizedService {
                 if (undo.length > 0) await commit(`Revert: ${message.toLowerCase()}`, undo)
             })
         })
+        // Once the values are on the branches, outside the locks: a service or a branch new to Argo CD gets its Applications
+        if (applicationsLink) await new ArgoCdService(this.user).alignApplications(projectId)
+        return result
     }
 
     /**
