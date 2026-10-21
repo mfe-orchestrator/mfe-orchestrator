@@ -1,14 +1,13 @@
 import { Alert, AlertDescription, AlertTitle, Spinner } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { AlertTriangle, LayoutDashboard, Server } from "lucide-react"
-import { useId, useState } from "react"
+import { AlertTriangle } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
 import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
+import { workspaceRepositoriesOf } from "@/components/ai-workspace/RepositoryBranches"
 import { jobErrorMessage } from "@/components/assistant/AssistantJobThread"
 import useProjectAiModels from "@/components/assistant/useProjectAiModels"
-import { Badge } from "@/components/atoms"
-import { repositoryWebUrl } from "@/components/RepositoryLink"
 import useAiJobsApi, { AiJob, DomainPlan } from "@/hooks/apiClients/useAiJobsApi"
 import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -28,8 +27,6 @@ interface DomainRepository {
     /** Market slug of the template it was created from: the one its repository is scaffolded with when it has none. */
     template?: string
     linked: boolean
-    /** Its page on the provider, when the provider exposed a clone url. */
-    url?: string
 }
 
 /** The rows of the creation dialog for what the AI proposes in an empty domain. */
@@ -50,52 +47,17 @@ const memberItems = (repositories: DomainRepository[]): ScaffoldItem[] =>
         template: repository.template ?? ""
     }))
 
-/** Above the prompt: the repositories the agent sees, frontend and backend, and why some are left out. */
+/** Above the prompt: why the agent cannot work on the domain as it stands, or which of its members it leaves out. */
 const DomainRepositoriesContext: React.FC<{ repositories: DomainRepository[] }> = ({ repositories }) => {
     const { t } = useTranslation()
-    const headingId = useId()
     const linked = repositories.filter(repository => repository.linked)
     const unlinked = repositories.filter(repository => !repository.linked)
 
+    if (repositories.length === 0) return <p className="text-sm text-foreground-secondary">{t("domains.ai.no_members")}</p>
+    if (linked.length === 0) return <p className="text-sm text-foreground-secondary">{t("domains.ai.no_repositories")}</p>
     return (
-        <section className="flex flex-col gap-2" aria-labelledby={headingId}>
-            <h3 id={headingId} className="text-sm font-medium">
-                {t("domains.ai.context_title")}
-            </h3>
-            {repositories.length === 0 ? (
-                <p className="text-sm text-foreground-secondary">{t("domains.ai.no_members")}</p>
-            ) : linked.length === 0 ? (
-                <p className="text-sm text-foreground-secondary">{t("domains.ai.no_repositories")}</p>
-            ) : (
-                <ul className="flex flex-wrap gap-2">
-                    {linked.map(repository => {
-                        const Icon = repository.kind === "service" ? Server : LayoutDashboard
-                        const label = (
-                            <>
-                                {repository.name}
-                                <span className="sr-only"> ({t(`microfrontend.aiChange.kind.${repository.kind}`)})</span>
-                            </>
-                        )
-                        return (
-                            <li key={repository.id}>
-                                <Badge variant="outline">
-                                    <Icon className="size-3" aria-hidden="true" />
-                                    {repository.url ? (
-                                        <a href={repository.url} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                                            {label}
-                                        </a>
-                                    ) : (
-                                        label
-                                    )}
-                                </Badge>
-                            </li>
-                        )
-                    })}
-                </ul>
-            )}
-            {linked.length > 0 && unlinked.length > 0 && (
-                <p className="text-xs text-foreground-secondary">{t("domains.ai.unlinked", { names: unlinked.map(repository => repository.name).join(", ") })}</p>
-            )}
+        <>
+            {unlinked.length > 0 && <p className="text-xs text-foreground-secondary">{t("domains.ai.unlinked", { names: unlinked.map(repository => repository.name).join(", ") })}</p>}
             {linked.length > MAX_REPOSITORIES && (
                 <Alert variant="destructive">
                     <AlertTriangle className="size-4" aria-hidden="true" />
@@ -103,7 +65,7 @@ const DomainRepositoriesContext: React.FC<{ repositories: DomainRepository[] }> 
                     <AlertDescription>{t("domains.ai.too_many_description", { count: linked.length, max: MAX_REPOSITORIES })}</AlertDescription>
                 </Alert>
             )}
-        </section>
+        </>
     )
 }
 
@@ -164,29 +126,25 @@ const DomainAiWorkspace: React.FC = () => {
     }
 
     const domain = domainQuery.data
+    const microfrontends = (microfrontendsQuery.data ?? []).filter(microfrontend => microfrontend.domainId === id && microfrontend._id)
+    const services = (servicesQuery.data ?? []).filter(service => service.domainId === id && service._id)
     const repositories: DomainRepository[] = [
-        ...(microfrontendsQuery.data ?? [])
-            .filter(microfrontend => microfrontend.domainId === id && microfrontend._id)
-            .map(microfrontend => ({
-                kind: "microfrontend" as const,
-                id: microfrontend._id!,
-                name: microfrontend.name,
-                slug: microfrontend.slug,
-                template: microfrontend.template,
-                linked: Boolean(microfrontend.codeRepository?.enabled),
-                url: repositoryWebUrl(microfrontend.codeRepository)
-            })),
-        ...(servicesQuery.data ?? [])
-            .filter(service => service.domainId === id && service._id)
-            .map(service => ({
-                kind: "service" as const,
-                id: service._id!,
-                name: service.name,
-                slug: service.slug,
-                template: service.template,
-                linked: Boolean(service.codeRepository?.enabled),
-                url: repositoryWebUrl(service.codeRepository)
-            }))
+        ...microfrontends.map(microfrontend => ({
+            kind: "microfrontend" as const,
+            id: microfrontend._id!,
+            name: microfrontend.name,
+            slug: microfrontend.slug,
+            template: microfrontend.template,
+            linked: Boolean(microfrontend.codeRepository?.enabled)
+        })),
+        ...services.map(service => ({
+            kind: "service" as const,
+            id: service._id!,
+            name: service.name,
+            slug: service.slug,
+            template: service.template,
+            linked: Boolean(service.codeRepository?.enabled)
+        }))
     ]
     const linked = repositories.filter(repository => repository.linked)
 
@@ -216,6 +174,10 @@ const DomainAiWorkspace: React.FC = () => {
                     key={id}
                     target={{ kind: "domain", id: id! }}
                     name={domain.name}
+                    repositories={[
+                        ...microfrontends.flatMap(microfrontend => workspaceRepositoriesOf("microfrontend", microfrontend)),
+                        ...services.flatMap(service => workspaceRepositoriesOf("service", service))
+                    ]}
                     composer={{
                         context: <DomainRepositoriesContext repositories={repositories} />,
                         blocked: linked.length > MAX_REPOSITORIES,

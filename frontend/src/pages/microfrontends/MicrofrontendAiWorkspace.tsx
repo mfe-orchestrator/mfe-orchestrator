@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams, useSearchParams } from "react-router-dom"
 import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
+import { workspaceRepositoriesOf } from "@/components/ai-workspace/RepositoryBranches"
 import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import { isAiEditAvailable, MicrofrontendHeader } from "@/pages/microfrontends/partials/components"
@@ -49,7 +50,7 @@ const MicrofrontendAiWorkspacePage: React.FC = () => {
         <div className="flex min-h-full flex-col gap-6">
             <MicrofrontendHeader microfrontend={microfrontend} active="ai" aiAvailable />
             {/* Keyed: the route instance is reused across microfrontends, and a draft must not follow the user to another one. */}
-            <AiWorkspace key={id} target={{ kind: "microfrontend", id: id! }} name={microfrontend.name} />
+            <AiWorkspace key={id} target={{ kind: "microfrontend", id: id! }} name={microfrontend.name} repositories={workspaceRepositoriesOf("microfrontend", microfrontend)} />
         </div>
     )
 }

@@ -24,6 +24,8 @@ export interface AiJobRepository {
     microfrontendId: string
     microfrontendName: string
     microfrontendSlug: string
+    /** The repository on its provider; unset when the component has none any more. */
+    repository?: { name: string; cloneUrlHttps?: string }
     status: AiChangeStatus
     files: { path: string; action: "create" | "update" | "delete" }[]
     error?: string
@@ -75,7 +77,12 @@ export type CreateAiJobDTO = (
     | { prompt: string; scope: "global" }
     | { prompt: string; scope: "domain"; domainId: string }
     | { prompt: string; scope: "selection"; microfrontendIds: string[]; serviceIds?: string[] }
-) & { effort?: LlmEffort; aiModelId?: string }
+) & {
+    effort?: LlmEffort
+    aiModelId?: string
+    /** The branch each repository starts from, by microfrontend or service id: its default branch when left out. */
+    baseBranches?: Record<string, string>
+}
 
 export interface FollowUpAiJobDTO {
     prompt: string

@@ -75,6 +75,8 @@ export interface AiJobCreateInput {
     domainId?: string
     microfrontendIds?: string[]
     serviceIds?: string[]
+    /** The branch each repository starts from, by microfrontend or service id: its default branch when left out. */
+    baseBranches?: Record<string, string>
     /** How hard the agent reasons: `high` when left out. */
     effort?: LlmEffort
     /** The AI the agent runs on, one the project may use: the project's default when left out. */
@@ -99,6 +101,8 @@ export interface AiJobRepositoryView {
     microfrontendId: string
     microfrontendName: string
     microfrontendSlug: string
+    /** The repository on its provider, unset when the component has none any more. */
+    repository?: { name: string; cloneUrlHttps?: string }
     status: AiChangeStatus
     files: { path: string; action: AiChangeFileAction }[]
     error?: string
@@ -239,7 +243,12 @@ const sameRepositories = (a: IAiChangeJob, b: IAiChangeJob) => {
 /** A job as lists read it: without the conversation of the agent, and without its progress unless asked. */
 type ListedJob = Omit<IAiChangeJob, "events" | "transcript"> & Partial<Pick<IAiChangeJob, "events">>
 
-const toJobView = (job: ListedJob, requests: Omit<IAiChangeRequest, "events">[], components: Map<string, Pick<RepositoryComponent, "name" | "slug">>, withEvents: boolean): AiJobView => ({
+const toJobView = (
+    job: ListedJob,
+    requests: Omit<IAiChangeRequest, "events">[],
+    components: Map<string, Pick<RepositoryComponent, "name" | "slug" | "codeRepository">>,
+    withEvents: boolean
+): AiJobView => ({
     _id: String(job._id),
     projectId: String(job.projectId),
     userId: String(job.userId),
@@ -267,6 +276,7 @@ const toJobView = (job: ListedJob, requests: Omit<IAiChangeRequest, "events">[],
                 microfrontendId: ref.id,
                 microfrontendName: component?.name ?? "",
                 microfrontendSlug: component?.slug ?? "",
+                repository: component?.codeRepository?.name ? { name: component.codeRepository.name, cloneUrlHttps: component.codeRepository.cloneUrlHttps } : undefined,
                 status: staleOutcome(request) ?? request.status,
                 files: (request.files ?? []).map(file => ({ path: file.path, action: file.action })),
                 error: request.error,
@@ -369,7 +379,13 @@ export class AiChangeJobService extends AiChangeBaseService {
         for (const component of components) await this.ensureRepositoryInDomainScope(component, component.codeRepository)
 
         const workspaceService = new RepositoryWorkspaceService(this.user)
-        const repositories = await Promise.all(components.map(async component => ({ component, baseBranch: (await workspaceService.open(component)).defaultBranch })))
+        // Opened even when a branch is picked: it is what refuses a repository connection of another project.
+        const repositories = await Promise.all(
+            components.map(async component => {
+                const { defaultBranch } = await workspaceService.open(component)
+                return { component, baseBranch: input.baseBranches?.[String(component._id)]?.trim() || defaultBranch }
+            })
+        )
         const { job } = await this.start({ projectId: toObjectId(projectId), prompt: input.prompt, scope: input.scope, domainId: domain?._id, repositories, effort: input.effort }, aiModel)
         return this.view(job, true)
     }
@@ -851,7 +867,7 @@ export class AiChangeJobService extends AiChangeBaseService {
         if (jobs.length === 0) return []
         const requests = await AiChangeRequest.find({ jobId: { $in: jobs.map(job => job._id) } }, WITHOUT_CONTENTS)
         const refs = jobs.flatMap(job => componentsOfJob(job)).filter((ref, index, all) => all.findIndex(other => other.id === ref.id) === index)
-        const components = await findComponents(refs, { name: 1, slug: 1 })
+        const components = await findComponents(refs, { name: 1, slug: 1, "codeRepository.name": 1, "codeRepository.cloneUrlHttps": 1 })
         const byId = new Map(components.map(component => [String(component._id), component]))
         return jobs.map(job => toJobView(job, requests, byId, withEvents))
     }

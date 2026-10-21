@@ -7,7 +7,6 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-    Input,
     Label,
     Spinner,
     Tabs,
@@ -51,6 +50,7 @@ import { useEffort, useFollowUpAiModel, useFollowUpEffort } from "@/components/a
 import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
+import RepositoryLink from "@/components/RepositoryLink"
 import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus, AiChangeTarget } from "@/hooks/apiClients/useAiChangesApi"
 import useAiJobsApi, { AiJob, AiJobRepository, isAiJobActive } from "@/hooks/apiClients/useAiJobsApi"
 import { effortsOf } from "@/hooks/apiClients/useAiModelsApi"
@@ -60,6 +60,7 @@ import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { cn } from "@/utils/styleUtils"
 import { AiChangeDiff } from "./AiChangeDiff"
 import { ProgressLog, StatusBadge } from "./AiChangeProgress"
+import { AiWorkspaceRepository, BaseBranches, pickedBaseBranches, RepositoryBranches } from "./RepositoryBranches"
 
 const PROMPT_MAX_LENGTH = 8000
 const POLL_INTERVAL_MS = 2000
@@ -336,7 +337,7 @@ const RepositoryProposal: React.FC<RepositoryProposalProps> = ({ requestId, onUp
 /** A request made before requests became conversations: it has no job to follow up on. */
 interface RequestViewProps {
     request: AiChangeRequest
-    onRetry: (prompt: string, baseBranch?: string) => void
+    onRetry: (prompt: string, baseBranches?: BaseBranches) => void
     onUpdated: (request: AiChangeRequest) => void
     onConflict: () => void
 }
@@ -407,7 +408,7 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
 
                 {(request.status === "FAILED" || request.status === "DISCARDED") && (
                     <div className="flex justify-end">
-                        <Button type="button" variant="secondary" onClick={() => onRetry(request.prompt, request.baseBranch)}>
+                        <Button type="button" variant="secondary" onClick={() => onRetry(request.prompt, { [request.microfrontendId ?? request.serviceId ?? ""]: request.baseBranch })}>
                             <RotateCcw aria-hidden="true" />
                             {t("microfrontend.aiChange.try_again")}
                         </Button>
@@ -521,6 +522,20 @@ const RepositoryResult: React.FC<RepositoryResultProps> = ({ job, repository, la
                     <span className="sr-only"> ({t(`microfrontend.aiChange.kind.${repository.kind}`)})</span>
                 </Link>
                 <StatusBadge status={repository.status} />
+            </div>
+            {/* Where the agent works: the repository on its provider, the branch it started from and the one it pushes on. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-secondary">
+                {repository.repository && <RepositoryLink repository={{ enabled: true, ...repository.repository }} />}
+                <span className="flex min-w-0 items-center gap-1">
+                    <code className="font-mono">{repository.baseBranch}</code>
+                    {repository.branch && (
+                        <>
+                            <span aria-hidden="true">→</span>
+                            <span className="sr-only">{t("microfrontend.aiChange.feature_branch")}</span>
+                            <code className="break-all font-mono">{repository.branch}</code>
+                        </>
+                    )}
+                </span>
             </div>
             {result}
         </section>
@@ -749,7 +764,7 @@ interface ConversationThreadProps {
     baseBranch?: string
     /** Next to the status: a request of a job over several repositories says so. */
     badge?: React.ReactNode
-    onRetry: (prompt: string, baseBranch?: string) => void
+    onRetry: (prompt: string, baseBranches?: BaseBranches) => void
     /** Something the queue shows has changed: a new message, a proposal ready, applied or discarded. */
     onQueueChanged: () => void
     /** Shown when the conversation cannot be loaded (its jobs expired). */
@@ -954,7 +969,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
                                         .map(turn => turn.job.prompt)
                                         .join("\n\n")
                                         .slice(0, PROMPT_MAX_LENGTH),
-                                    baseBranch
+                                    Object.fromEntries((first?.repositories ?? []).map(repository => [repository.microfrontendId, repository.baseBranch]))
                                 )
                             }
                         >
@@ -973,7 +988,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
 interface RequestSelectionProps {
     requestId: string
     target: AiChangeTarget
-    onRetry: (prompt: string, baseBranch?: string) => void
+    onRetry: (prompt: string, baseBranches?: BaseBranches) => void
     onQueueChanged: () => void
 }
 
@@ -1243,12 +1258,13 @@ export interface AiWorkspaceComposerExtension {
 
 interface ComposerProps {
     name: string
-    /** Picks the wording where it differs (`_service` and `_domain` keys); a domain has no base branch to pick. */
+    /** Picks the wording where it differs (`_service` and `_domain` keys). */
     kind: AiWorkspaceTarget["kind"]
     prompt: string
-    baseBranch: string
+    repositories: AiWorkspaceRepository[]
+    baseBranches: BaseBranches
     onPromptChange: (value: string) => void
-    onBaseBranchChange: (value: string) => void
+    onBaseBranchesChange: (value: BaseBranches) => void
     onSubmit: () => void
     pending: boolean
     error?: string
@@ -1258,14 +1274,11 @@ interface ComposerProps {
     extension?: AiWorkspaceComposerExtension
 }
 
-const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onPromptChange, onBaseBranchChange, onSubmit, pending, error, promptRef, focusOnMount, extension }) => {
+const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, repositories, baseBranches, onPromptChange, onBaseBranchesChange, onSubmit, pending, error, promptRef, focusOnMount, extension }) => {
     const { t } = useTranslation()
     const [effort, setEffort] = useEffort("code")
     const { selected: aiModel, setSelected: setAiModel } = useProjectAiModels()
     const promptId = useId()
-    const branchId = useId()
-    // Read once: tied to the live value, the section would fold while the user clears the branch.
-    const [advancedOpen] = useState(() => Boolean(baseBranch))
     const context = kind === "microfrontend" ? undefined : kind
     const busy = pending || Boolean(extension?.pending)
 
@@ -1323,24 +1336,7 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onP
                             <span className="text-muted-foreground">{t("microfrontend.aiChange.prompt_counter", { count: prompt.length, max: PROMPT_MAX_LENGTH })}</span>
                         </div>
                     </div>
-                    {kind !== "domain" && (
-                        // Open when a retry brought a branch back, so the user sees where the agent will start from.
-                        <details className="text-sm" open={advancedOpen || undefined}>
-                            <summary className="cursor-pointer text-muted-foreground">{t("microfrontend.aiChange.advanced_options")}</summary>
-                            <div className="mt-3 flex flex-col gap-1.5">
-                                <Label htmlFor={branchId}>{t("microfrontend.aiChange.base_branch_label")}</Label>
-                                <Input
-                                    id={branchId}
-                                    value={baseBranch}
-                                    placeholder={t("microfrontend.aiChange.base_branch_placeholder")}
-                                    disabled={busy}
-                                    onChange={event => onBaseBranchChange(event.target.value)}
-                                    fullWidth
-                                    dataTestId="ai-change-base-branch"
-                                />
-                            </div>
-                        </details>
-                    )}
+                    <RepositoryBranches repositories={repositories} value={baseBranches} onChange={onBaseBranchesChange} disabled={busy} />
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-xs text-muted-foreground" aria-live="polite">
                             {extension?.pending && extension.pendingLabel ? extension.pendingLabel : t("microfrontend.aiChange.composer_shortcut")}
@@ -1363,6 +1359,8 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, baseBranch, onP
 interface AiWorkspaceProps {
     target: AiWorkspaceTarget
     name: string
+    /** The repositories the agent works on, shown in the composer with the branch each starts from. */
+    repositories: AiWorkspaceRepository[]
     composer?: AiWorkspaceComposerExtension
 }
 
@@ -1372,13 +1370,13 @@ interface AiWorkspaceProps {
  * the other. A microfrontend or a service works on its own repository, a domain on all of its repositories at once.
  * The selection lives in `?change=`, so the assistant can link a job straight to its diff.
  */
-export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer }) => {
+export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, repositories, composer }) => {
     const { t } = useTranslation()
     const aiChangesApi = useAiChangesApi()
     const aiJobsApi = useAiJobsApi()
     const queryClient = useQueryClient()
     const [prompt, setPrompt] = useState("")
-    const [baseBranch, setBaseBranch] = useState("")
+    const [baseBranches, setBaseBranches] = useState<BaseBranches>({})
     // Picked in the composer, sent from here.
     const [effort] = useEffort("code")
     const aiModelId = useProjectAiModels().selected?.id
@@ -1428,7 +1426,7 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
 
     const reset = () => {
         setPrompt("")
-        setBaseBranch("")
+        setBaseBranches({})
         setSubmitted(false)
         invalidateQueue()
     }
@@ -1437,14 +1435,14 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
         mutationFn: async (): Promise<string> => {
             if (!repository) {
                 const job = await aiJobsApi.create(
-                    { prompt: prompt.trim(), scope: "domain", domainId: target.id, effort, aiModelId },
+                    { prompt: prompt.trim(), scope: "domain", domainId: target.id, baseBranches: pickedBaseBranches(repositories, baseBranches), effort, aiModelId },
                     { customErrorMessage: error => jobErrorMessage(t, error, "create") }
                 )
                 return job.rootJobId
             }
             const created = await aiChangesApi.create(
                 repository,
-                { prompt: prompt.trim(), baseBranch: baseBranch.trim() || undefined, effort, aiModelId },
+                { prompt: prompt.trim(), baseBranch: baseBranches[repository.id]?.trim() || undefined, effort, aiModelId },
                 {
                     customErrorMessage: error => {
                         const code = errorCodeOf(error)
@@ -1485,9 +1483,9 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
         else focusComposer.current = true
     }
 
-    const retry = (retriedPrompt: string, retriedBaseBranch?: string) => {
+    const retry = (retriedPrompt: string, retriedBaseBranches?: BaseBranches) => {
         setPrompt(retriedPrompt)
-        setBaseBranch(retriedBaseBranch ?? "")
+        setBaseBranches(retriedBaseBranches ?? {})
         startNew()
     }
 
@@ -1512,9 +1510,10 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, composer
                         name={name}
                         kind={target.kind}
                         prompt={prompt}
-                        baseBranch={baseBranch}
+                        repositories={repositories}
+                        baseBranches={baseBranches}
                         onPromptChange={setPrompt}
-                        onBaseBranchChange={setBaseBranch}
+                        onBaseBranchesChange={setBaseBranches}
                         onSubmit={generate}
                         pending={createMutation.isPending}
                         error={promptError}

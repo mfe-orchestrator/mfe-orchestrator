@@ -14,12 +14,14 @@ const domainId = { type: "string", pattern: "^[a-fA-F0-9]{24}$" }
 const effort = { type: "string", enum: LLM_EFFORTS }
 // An id of the organization's AIs, or `system`
 const aiModelId = { type: "string", minLength: 1, maxLength: 64 }
+// The branch each repository starts from, by microfrontend or service id
+const baseBranches = { type: "object", maxProperties: 100, propertyNames: { pattern: "^[a-fA-F0-9]{24}$" }, additionalProperties: { type: "string", minLength: 1, maxLength: 255 } }
 
 const createBodySchema = {
     type: "object",
     required: ["prompt", "scope"],
     additionalProperties: false,
-    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds, effort, aiModelId },
+    properties: { prompt, scope: { type: "string", enum: ["global", "domain", "selection"] }, domainId, microfrontendIds, serviceIds, baseBranches, effort, aiModelId },
     // A domain job works on the members of that domain: without it there is nothing to work on.
     if: { properties: { scope: { const: "domain" } } },
     then: { required: ["domainId"] }

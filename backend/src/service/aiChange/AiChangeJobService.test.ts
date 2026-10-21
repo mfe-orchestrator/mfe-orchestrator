@@ -306,6 +306,16 @@ describe("AiChangeJobService", () => {
                 expect(job).toMatchObject({ scope: "domain", domainId: String(checkoutId) })
             })
 
+            it("Given a base branch picked for one member, when its job is started, then that repository starts from it and the others from their default", async () => {
+                withRepository = [{ ...cart, domainId: checkoutId } as never]
+                services = [{ ...catalogApi, domainId: checkoutId } as never]
+
+                await service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId), baseBranches: { [String(catalogApi._id)]: " develop " } })
+
+                const requests = (AiChangeRequest.create as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([document]) => document as Record<string, unknown>)
+                expect(requests).toEqual([expect.objectContaining({ microfrontendId: cart._id, baseBranch: "main" }), expect.objectContaining({ serviceId: catalogApi._id, baseBranch: "develop" })])
+            })
+
             describe("by a member assigned to it", () => {
                 let servicesOutside: ReturnType<typeof vi.spyOn>
 

@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, useParams } from "react-router-dom"
 import AiWorkspace from "@/components/ai-workspace/AiWorkspace"
+import { workspaceRepositoriesOf } from "@/components/ai-workspace/RepositoryBranches"
 import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
@@ -186,7 +187,7 @@ const ServiceAiSection: React.FC<{ serviceQuery: { isPending: boolean; isError: 
         <div className="flex min-h-full flex-col gap-6">
             <ServiceHeader service={service} active="ai" />
             {/* Keyed: the route instance is reused across services, and a draft must not follow the user to another one. */}
-            <AiWorkspace key={service._id} target={{ kind: "service", id: service._id! }} name={service.name} />
+            <AiWorkspace key={service._id} target={{ kind: "service", id: service._id! }} name={service.name} repositories={workspaceRepositoriesOf("service", service)} />
         </div>
     )
 }

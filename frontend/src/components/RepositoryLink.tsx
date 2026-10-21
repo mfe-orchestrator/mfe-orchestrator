@@ -7,10 +7,13 @@ type CodeRepository = Microfrontend["codeRepository"]
  * The page of a repository on its provider, from the clone url over https: GitHub and GitLab drop the `.git`,
  * Azure DevOps the `org@` before the host.
  */
-export const repositoryWebUrl = (repository: CodeRepository) => repository?.cloneUrlHttps?.replace(/\.git$/, "").replace(/^(https?:\/\/)[^@/]+@/, "$1")
+export const repositoryWebUrl = (repository: Pick<NonNullable<CodeRepository>, "cloneUrlHttps"> | undefined) => repository?.cloneUrlHttps?.replace(/\.git$/, "").replace(/^(https?:\/\/)[^@/]+@/, "$1")
 
 /** Repository name, linked to its page on the provider when it exposed a clone url. Renders the fallback without a repository. */
-export const RepositoryLink: React.FC<{ repository: CodeRepository; fallback?: React.ReactNode }> = ({ repository, fallback = null }) => {
+export const RepositoryLink: React.FC<{ repository: Pick<NonNullable<CodeRepository>, "enabled" | "name" | "cloneUrlHttps"> | undefined; fallback?: React.ReactNode }> = ({
+    repository,
+    fallback = null
+}) => {
     if (!repository?.enabled || !repository.name) return <>{fallback}</>
 
     const href = repositoryWebUrl(repository)

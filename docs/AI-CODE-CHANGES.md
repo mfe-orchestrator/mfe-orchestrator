@@ -2,6 +2,8 @@
 
 From **Edit with AI**, the screen a microfrontend opens on, a user describes a change ("add a 404 page"). An
 AI agent works on a local clone of the microfrontend's repository and proposes the change as a diff.
+Under the prompt, the console shows the repository it works on, linked to its page on the provider, and the
+branch it starts from: the repository's default branch unless another one is picked from its branches.
 Once the agent is done, the console commits the proposal on a feature branch of its own and pushes it:
 the base branch is never touched until the user acts. Then the user can:
 
@@ -57,7 +59,9 @@ needed in the image, and no repository hook is ever run.
 **Edit with AI** on a functional domain starts one agent on every microfrontend and service of the
 domain that has a code repository (at most 10), with the project and domain context. It sees them all
 at once, so one change can span an API and the screens that call it, and it still proposes one diff
-per repository, each on its own feature branch, applied or opened as a pull request on its own. Each message of the conversation shows
+per repository, each on its own feature branch, applied or opened as a pull request on its own. Each
+repository starts from the branch picked for it, its default branch otherwise; one choice sets them all at
+once, either back to their own default branches or to a branch every one of them has. Each message of the conversation shows
 one tab per repository, with its own files and diff, opened on the first proposal to review. Members without
 a repository are left out and listed under the request.
 
