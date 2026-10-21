@@ -301,8 +301,7 @@ export class ArgoCdService extends BaseAuthorizedService {
                 for (const target of targets) {
                     const before = previous?.repositories?.[target.kind]
                     const ours = before?.argoCdUrl === url && before.repoUrl === target.repoUrl && before.argoProject === target.argoProject
-                    const conflict = () => repositoryConflict(target.repoUrl)
-                    if (!ours && (await probe(client.getRepository(target.repoUrl, target.argoProject), conflict))) throw conflict()
+                    if (!ours && (await client.getRepository(target.repoUrl))) throw repositoryConflict(target.repoUrl)
                 }
 
                 await client.upsertProject(state.appProject)

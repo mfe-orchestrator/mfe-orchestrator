@@ -424,8 +424,7 @@ describe("ArgoCdService.initialize", () => {
     it.each([
         ["getProject", "ARGOCD_NAME_CONFLICT"],
         ["getApplication", "ARGOCD_NAME_CONFLICT"],
-        ["getApplicationSet", "ARGOCD_NAME_CONFLICT"],
-        ["getRepository", "ARGOCD_REPOSITORY_CONFLICT"]
+        ["getApplicationSet", "ARGOCD_NAME_CONFLICT"]
     ] as const)("given %s refused as forbidden, when it is initialized, then something the account cannot see is there and it is refused as %s", async (method, code) => {
         vi.mocked(ArgoCdClient.prototype[method]).mockRejectedValue(createBusinessException({ code: "ARGOCD_FORBIDDEN", message: "forbidden", statusCode: 422 }))
 

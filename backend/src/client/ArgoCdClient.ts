@@ -40,6 +40,17 @@ export interface ArgoCdRegisteredRepository {
     project?: string
 }
 
+/** As Argo CD compares the URLs of repositories: case, a trailing slash and .git aside */
+const sameRepoUrl = (a: string, b: string) => {
+    const normalize = (url: string) =>
+        url
+            .trim()
+            .toLowerCase()
+            .replace(/\/$/, "")
+            .replace(/\.git$/, "")
+    return normalize(a) === normalize(b)
+}
+
 /** How much of the message of an error of Argo CD goes into ours: the rest is not ours to show */
 const MESSAGE_MAX_LENGTH = 200
 
@@ -81,9 +92,13 @@ class ArgoCdClient {
         await this.call(`register the repository ${repository.repo}`, () => this.api.post("/repositories", { type: "git", ...repository }, { params: { upsert: true, credsOnly: false } }))
     }
 
-    /** The repository registered with that URL, globally or in `project`; null when there is none */
-    async getRepository(repo: string, project?: string): Promise<ArgoCdRegisteredRepository | null> {
-        return this.find(`read the repository ${repo}`, () => this.api.get<ArgoCdRegisteredRepository>(`/repositories/${encodeURIComponent(repo)}`, { params: { appProject: project } }))
+    /**
+     * The repository registered with that URL, globally or in any AppProject; null when the account sees none.
+     * Read from the list: Argo CD answers 403, not 404, for a URL it has no repository of, not to tell which exist
+     */
+    async getRepository(repo: string): Promise<ArgoCdRegisteredRepository | null> {
+        const list = await this.call("list the repositories", () => this.api.get<{ items?: ArgoCdRegisteredRepository[] | null }>("/repositories"))
+        return list?.items?.find(registered => sameRepoUrl(registered.repo, repo)) ?? null
     }
 
     /** One already gone is not an error */
