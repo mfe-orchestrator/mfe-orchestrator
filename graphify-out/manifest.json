@@ -30,13 +30,13 @@
     "semantic_hash": ""
   },
   "backend/src/client/GithubClient.ts": {
-    "mtime": 1792403469.8328035,
-    "ast_hash": "5e18119a55e4c49ea76aab6ad00f4792",
+    "mtime": 1792612288.3285773,
+    "ast_hash": "c1ab89f0c106733f16debf56fc22653a",
     "semantic_hash": ""
   },
   "backend/src/client/GitlabClient.ts": {
-    "mtime": 1792579005.647155,
-    "ast_hash": "e53ee1f72161454ce3f52d4a5b124ec8",
+    "mtime": 1792612288.3291173,
+    "ast_hash": "3de81acb7d09f3733ff22d3f5603a841",
     "semantic_hash": ""
   },
   "backend/src/client/GoogleStorageAccount.ts": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/ProjectModel.ts": {
-    "mtime": 1792611399.610547,
-    "ast_hash": "5515b8cedc0e379e000d66a3a48aa128",
+    "mtime": 1792612892.764478,
+    "ast_hash": "40c47fcef8de095959935555c910df30",
     "semantic_hash": ""
   },
   "backend/src/models/StorageModel.ts": {
@@ -410,7 +410,7 @@
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.ts": {
-    "mtime": 1792611399.6111903,
+    "mtime": 1792611649.605144,
     "ast_hash": "cdea11db5cecb35b18e41f75778df540",
     "semantic_hash": ""
   },
@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792611432.0078714,
-    "ast_hash": "092876f803a6eb4420c8347885979d9a",
+    "mtime": 1792612892.772297,
+    "ast_hash": "4fbe08a200e03623862fb24c0f9b811e",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792611432.0088553,
-    "ast_hash": "e164db0b5f10c0842fae766560cb1e45",
+    "mtime": 1792612892.7728777,
+    "ast_hash": "d4f24ec189cf0b03685c799577668364",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -915,7 +915,7 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useProjectApi.ts": {
-    "mtime": 1792611432.0057373,
+    "mtime": 1792611649.6054235,
     "ast_hash": "9923863edc78bf7420fd7fa9dc2f161d",
     "semantic_hash": ""
   },
@@ -1325,7 +1325,7 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/Settings.tsx": {
-    "mtime": 1792611432.006305,
+    "mtime": 1792611649.605509,
     "ast_hash": "ef6e33e0cd71d986de2a7da284bf1f06",
     "semantic_hash": ""
   },
@@ -2350,7 +2350,7 @@
     "semantic_hash": ""
   },
   "backend/src/service/ProjectService.test.ts": {
-    "mtime": 1792611432.0052228,
+    "mtime": 1792611649.6050794,
     "ast_hash": "e1da2498c5527092b1c62af082792b0b",
     "semantic_hash": ""
   },
@@ -2620,8 +2620,8 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectTools.ts": {
-    "mtime": 1792611399.6122875,
-    "ast_hash": "5aa69e1a44569e639db7e5a3cda93723",
+    "mtime": 1792611647.1882722,
+    "ast_hash": "84f4076dc88e6007f12fde351e80afe5",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/repositoryTools.ts": {
@@ -2940,8 +2940,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/workspace/RepositoryWorkspaceService.ts": {
-    "mtime": 1792527384.7112575,
-    "ast_hash": "1251cb89a8391295e93d4c1997c80e9a",
+    "mtime": 1792611554.256716,
+    "ast_hash": "b0e7004b7dc0d6e754e9b61dfb65bc57",
     "semantic_hash": ""
   },
   "backend/src/service/workspace/workspaceCleanup.ts": {
@@ -3035,13 +3035,13 @@
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectAdminTools.test.ts": {
-    "mtime": 1792611005.3830223,
-    "ast_hash": "d82203e6954af68e54f2123553813615",
+    "mtime": 1792611666.1860461,
+    "ast_hash": "10235bb7b2843b2c798e1582b9865123",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectAdminTools.ts": {
-    "mtime": 1792611020.5997508,
-    "ast_hash": "7d49f3df0fd3beed1e4de03d7c039d2a",
+    "mtime": 1792611554.2578235,
+    "ast_hash": "3cec5db8442fd5a0e2ee4413cac4c74f",
     "semantic_hash": ""
   },
   "backend/src/mcp/tools/projectContentTools.test.ts": {
@@ -3330,13 +3330,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.test.ts": {
-    "mtime": 1792611005.3833933,
-    "ast_hash": "f5355c1ade9d2597135b3486168b7868",
+    "mtime": 1792611654.1628282,
+    "ast_hash": "a770f7c35dd11c2bc96cc1afad7fb5eb",
     "semantic_hash": ""
   },
   "backend/src/service/TemplateScaffoldService.ts": {
-    "mtime": 1792611071.587442,
-    "ast_hash": "9119c45cd0686ad6e6f3bf5fdee6b4f4",
+    "mtime": 1792611655.8258708,
+    "ast_hash": "8141b7d1d8d8acc2eae3d10cae1d74fd",
     "semantic_hash": ""
   },
   "backend/src/service/workspace/repositoryComponent.ts": {
@@ -3950,18 +3950,18 @@
     "semantic_hash": ""
   },
   "backend/src/service/GitOpsService.test.ts": {
-    "mtime": 1792611451.7412565,
-    "ast_hash": "1240d77800205fb3148561b58120df9c",
+    "mtime": 1792612507.276007,
+    "ast_hash": "66d53ba0b1630dbbfb0438da09df9ee1",
     "semantic_hash": ""
   },
   "backend/src/service/GitOpsService.ts": {
-    "mtime": 1792611399.6118011,
-    "ast_hash": "b2f2bcd54eff9c121eb16f5718e4923a",
+    "mtime": 1792612297.7526355,
+    "ast_hash": "84348f353cea569569d591791767eca0",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useGitOpsErrorMessage.ts": {
-    "mtime": 1792611005.3836665,
-    "ast_hash": "fda72bd391ec852e3a93d5e5e71044fd",
+    "mtime": 1792612892.7658646,
+    "ast_hash": "9f2fddbc4d638a7b3b765506042e2fc7",
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/partials/GitOpsSection.tsx": {
@@ -4145,38 +4145,38 @@
     "semantic_hash": ""
   },
   "backend/src/service/ArgoCdService.test.ts": {
-    "mtime": 1792608862.7013206,
-    "ast_hash": "a7298beb599770f4ca18d7a7e0809efe",
+    "mtime": 1792612938.4525013,
+    "ast_hash": "a92c96180cbb2e4b6f4038203bae8431",
     "semantic_hash": ""
   },
   "backend/src/service/ArgoCdService.ts": {
-    "mtime": 1792607483.389756,
-    "ast_hash": "a32e531dec191c4577a16b7dd4a2d0c6",
+    "mtime": 1792612938.4518652,
+    "ast_hash": "240ace0264e6c4b683b1f6f116d18749",
     "semantic_hash": ""
   },
   "backend/src/service/gitops/argoCdManifests.test.ts": {
-    "mtime": 1792608862.7033467,
-    "ast_hash": "db647182414367767bbee96d6fa83b8d",
+    "mtime": 1792612507.2725952,
+    "ast_hash": "7000163e854f91f653ceab43d0c4987e",
     "semantic_hash": ""
   },
   "backend/src/service/gitops/argoCdManifests.ts": {
-    "mtime": 1792607477.2640984,
-    "ast_hash": "11bdeb7fc77d06f974e56b9742ed7129",
+    "mtime": 1792612507.2728283,
+    "ast_hash": "e7ce8b01232f4d88eaf09d15200590b0",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useArgoCdApi.ts": {
-    "mtime": 1792580683.6160173,
-    "ast_hash": "b3bbf3bfff005a087c9969eeace67429",
+    "mtime": 1792612892.7655258,
+    "ast_hash": "a64f4f626dd8f7e8d59d344ddf63f2f1",
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/partials/ArgoCdSection.tsx": {
-    "mtime": 1792580694.610365,
-    "ast_hash": "b565abf04c6f7a4428846807958f28ac",
+    "mtime": 1792612892.766361,
+    "ast_hash": "5184d8e5542d3e04a56d394e1dbc68d6",
     "semantic_hash": ""
   },
   "docs/ARGOCD.md": {
-    "mtime": 1792607531.912976,
-    "ast_hash": "7df8ad953a894e29691c15f2f63dbaa3",
+    "mtime": 1792612952.4468079,
+    "ast_hash": "7653a0946df08235616c466af6fffc60",
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/partials/DeploymentServiceCard.tsx": {
