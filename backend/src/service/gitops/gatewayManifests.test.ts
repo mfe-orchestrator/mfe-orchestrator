@@ -30,6 +30,12 @@ describe("renderGateway", () => {
         })
     })
 
+    it("given two listeners, when the Gateway is rendered, then the YAML has no anchors nor aliases", () => {
+        const rendered = renderGateway({ ...gateway, certificateIssuer: "letsencrypt" })
+
+        expect(rendered).not.toMatch(/[&*]a\d/)
+    })
+
     it("given any Gateway, when it is rendered, then every manifest is in the namespace and labelled as managed", () => {
         for (const document of documentsOf(renderGateway({ ...gateway, certificateIssuer: "letsencrypt" }))) {
             expect(document.metadata).toMatchObject({ namespace: "production", labels: { "app.kubernetes.io/managed-by": "mfe-orchestrator" } })

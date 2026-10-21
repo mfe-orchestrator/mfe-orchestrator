@@ -93,5 +93,6 @@ export const renderGateway = (gateway: EnvironmentGateway): string => {
         })
     }
 
-    return documents.map(document => stringify(document)).join("---\n")
+    // The listeners share allowedRoutes: without this the second one would be a YAML alias of the first
+    return documents.map(document => stringify(document, { aliasDuplicateObjects: false })).join("---\n")
 }
