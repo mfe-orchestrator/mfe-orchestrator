@@ -15,7 +15,7 @@ import {
     TextareaChipsField
 } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Check, GripVertical, Pencil, PlusCircle, Trash2, X } from "lucide-react"
+import { Check, ExternalLink, GripVertical, Pencil, PlusCircle, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -336,7 +336,24 @@ export default function EnvironmentsPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{env.name}</TableCell>
                                     <TableCell>{env.slug}</TableCell>
-                                    {isGitOpsEnabled && <TableCell className="font-mono text-sm">{hostOf(env)}</TableCell>}
+                                    {isGitOpsEnabled && (
+                                        <TableCell className="font-mono text-sm">
+                                            {domain ? (
+                                                <a
+                                                    href={`https://${hostOf(env)}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+                                                >
+                                                    {hostOf(env)}
+                                                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                                                    <span className="sr-only">{t("environment.page.opens_new_tab")}</span>
+                                                </a>
+                                            ) : (
+                                                hostOf(env)
+                                            )}
+                                        </TableCell>
+                                    )}
                                     <TableCell>{env.isProduction ? <Check /> : <X />}</TableCell>
                                     <TableCell>{env.domains?.join(", ") || "-"}</TableCell>
                                     <TableCell>

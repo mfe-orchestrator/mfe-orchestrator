@@ -1130,7 +1130,8 @@
                 "create": "Create",
                 "update": "Update"
             },
-            "host": "Host"
+            "host": "Host",
+            "opens_new_tab": "(opens in a new tab)"
         },
         "add_environment": "Add Environment",
         "form": {

@@ -595,7 +595,8 @@
             },
             "create_success": "Ambiente creato con successo",
             "update_success": "Ambiente aggiornato con successo",
-            "host": "Host"
+            "host": "Host",
+            "opens_new_tab": "(si apre in una nuova scheda)"
         },
         "form": {
             "name": "Nome",
