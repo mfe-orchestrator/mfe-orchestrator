@@ -42,11 +42,8 @@ upload a bundle.
 | Where | Fields |
 | --- | --- |
 | `storages` | `secretAccessKey`, `accountKey`, `connectionString`, `clientSecret`, `jsonKey` |
-| `databases` | `password`, `connectionString` |
 | `coderepositories` | `accessToken`, `refreshToken` |
 | `deployments` | the same storage fields, inside the snapshot a deployment freezes |
-| `secrets` | the value of every key in every environment, of the secrets backend services attach |
-| `projects` | `argoCd.token`, `argoCd.repositories.configuration.password`, `argoCd.repositories.applications.password`: the API token of Argo CD and the read-only repository credentials handed to it |
 
 Deployments are in the list because a deployment copies the storages of its project, credentials
 included, and the serve API reads the bucket keys from that copy. Encrypting the `storages`

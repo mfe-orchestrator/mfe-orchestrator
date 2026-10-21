@@ -31,11 +31,11 @@ layout it is `https://<your console>/api/mcp`.
 
 Two scopes, chosen on the consent page:
 
-- `mfe:read` — read the project: microfrontends, backend services, functional domains, environments,
+- `mfe:read` — read the project: microfrontends, environments,
   deployments, canary users, global variables, build status, storages and repository connections
   (credentials masked), dependency and integration plans.
 - `mfe:write` — everything the console does inside a project, **deploy and rollback included**:
-  create and edit microfrontends, services, domains and environments, trigger builds, import
+  create and edit microfrontends and environments, trigger builds, import
   repositories, change global variables, apply dependency alignments and integrations. It also
   allows **creating projects** (see below), which the consent page says next to "Allow changes".
 
@@ -56,64 +56,32 @@ API key creation, discarding an AI change, canary users).
 
 ## Project context
 
-Every project, functional domain, microfrontend and service can carry a **context**: free markdown
-the team writes for AI agents (domain, conventions, rules). The project one is edited in Settings →
-Project AI context, the domain one in the domain form, the microfrontend and service ones in their
-"AI context" tab. Each is limited to 20,000 characters.
+Every project and microfrontend can carry a **context**: free markdown
+the team writes for AI agents (conventions, rules). The project one is edited in Settings →
+Project AI context, the microfrontend one in its "AI context" tab. Each is limited to 20,000 characters.
 
 An agent always gets the contexts of what it works on, the project one included:
 
 | Working on | Contexts returned |
 | --- | --- |
-| a microfrontend (frontend) | the microfrontend, its domain, the project |
-| a service (backend) | the service, its domain, the project |
-| a domain | the domain, each of its microfrontends and services, the project |
+| a microfrontend | the microfrontend, the project |
 
-- `context_get` (`mfe:read`) takes at most one of `microfrontendId`, `serviceId`, `domainId` and
+- `context_get` (`mfe:read`) takes an optional `microfrontendId` and
   returns the contexts above. Without ids it returns every context of the project. The server
   instructions ask clients to call it before working on a project.
-- `microfrontend_get`, `service_get` and `domain_get` return the same contexts in `aiContext`, so an
+- `microfrontend_get` returns the same contexts in `aiContext`, so an
   agent that reads what it works on gets its notes without a second call.
-- `project_update`, `domain_create`/`domain_update`, `microfrontend_update` and `service_update`
-  (`mfe:write`) change them; `null` removes the project and the domain context.
+- `project_update` and `microfrontend_update` (`mfe:write`) change them; `null` removes the project context.
 - The console assistant reads the same notes through the same tools. The console's AI change jobs
-  put the project context, the domain context (of the job's domain, or of the domains its
-  microfrontends and services are in) and the context of each repository in the agent's prompt.
+  put the project context and the context of the microfrontend in the agent's prompt.
 
-## Domains and services
+## Scaffolding
 
-A project can group its microfrontends and backend services in **functional domains**. Membership
-lives on the member: each microfrontend or service has an optional `domainId`, so it is in one domain
-at most.
-
-- `domains_list` (`mfe:read`) returns the domains with how many microfrontends and services each one
-  groups; `domain_get` adds the id, name and slug of every member.
-- `domain_create` and `domain_update` (`mfe:write`) set the name and the description; the slug is
-  derived from the name when left out and fixed after creation. `domain_delete` is destructive: the
-  members are kept and end up in no domain.
-- `domain_links_list` (`mfe:read`) returns the relations the team drew by hand between two domains,
-  each from `sourceDomainId` to `targetDomainId` with an optional label; `domain_link_create` and
-  `domain_link_delete` (`mfe:write`, the delete destructive) draw and remove them. A relation goes one
-  way, and deleting a domain deletes its relations.
-- `domain_deployments_get` (`mfe:read`) tells, for one domain or for the whole project, which version of
-  each microfrontend and service runs in each environment: the frontend from the active deployment
-  snapshot, the backend from the versions the customer's deploy pipeline reported.
-- `services_list`, `service_get` (`mfe:read`) and `service_create`, `service_update`, `service_delete`
-  (`mfe:write`, the delete destructive) manage the backend services: name, description, domain,
-  context, port, probe and API documentation paths, image repository, the environment variables the
-  image reads (names only, never values) and a link to a repository that already exists. The slug is
-  fixed after creation. The version comes from the CI, never from a tool.
-- `microfrontend_scaffold` and `service_scaffold` (`mfe:write`) create the microfrontend or the service
-  together with a new repository at the provider, from a marketplace template (`templates_list`) and
-  through a repository connection of the project (`code_repositories_list`), with its CI pipeline and,
-  on GitHub, the deploy secret. Neither the connection's credentials nor that secret are ever part of
-  the input or of the result, and the console assistant asks the user before running them. Creating a
-  domain creates no repository: scaffold its members with these tools and its `domainId`.
-- `microfrontend_create`, `microfrontend_update`, `service_create` and `service_update` take an optional
-  `domainId`; `null` takes the item out of its domain. A domain of another project is refused before
-  anything is written.
-- `microfrontends_list` and `services_list` take an optional `domainId` filter: a domain id, or `none`
-  for the items in no domain.
+- `microfrontend_scaffold` (`mfe:write`) creates the microfrontend together with a new repository at the
+  provider, from a marketplace template (`templates_list`) and through a repository connection of the
+  project (`code_repositories_list`), with its CI pipeline and, on GitHub, the deploy secret. Neither the
+  connection's credentials nor that secret are ever part of the input or of the result, and the console
+  assistant asks the user before running it.
 
 ## Several projects in one connection
 
