@@ -603,14 +603,18 @@ export class GitOpsService extends BaseAuthorizedService {
     }
 
     /** Where the secrets of the project are pushed in plaintext, and who deploys them from there, is up to its owners and the organization administrators */
-    async ensureOwner(projectId: Schema.Types.ObjectId, organizationId: Schema.Types.ObjectId) {
+    async ensureOwner(
+        projectId: Schema.Types.ObjectId,
+        organizationId: Schema.Types.ObjectId,
+        forbidden = { code: "GITOPS_OWNER_REQUIRED", message: "Only an owner of the project can change its GitOps settings" }
+    ) {
         const user = this.getUser()
         // An API key has no person behind it to be an owner
         if (user && !this.user?.apiKeyId) {
             const membership = await UserProject.findOne({ userId: user._id, projectId, invitationToken: null })
             if (membership?.role === RoleInProject.OWNER || (await this.isOrganizationAdmin(organizationId))) return
         }
-        throw createBusinessException({ code: "GITOPS_OWNER_REQUIRED", message: "Only an owner of the project can change its GitOps settings", statusCode: 403 })
+        throw createBusinessException({ ...forbidden, statusCode: 403 })
     }
 
     private author(): GitAuthor {

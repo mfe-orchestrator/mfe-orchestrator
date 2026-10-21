@@ -163,7 +163,7 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
     }
 
     /** Size of the repository as the provider reports it, undefined when it cannot tell. */
-    private async providerSizeBytes({ codeRepository, repositoryName }: Pick<WorkspaceTarget, "codeRepository" | "repositoryName">): Promise<number | undefined> {
+    async providerSizeBytes({ codeRepository, repositoryName }: Pick<WorkspaceTarget, "codeRepository" | "repositoryName">): Promise<number | undefined> {
         try {
             switch (codeRepository.provider) {
                 case CodeRepositoryProvider.GITHUB: {

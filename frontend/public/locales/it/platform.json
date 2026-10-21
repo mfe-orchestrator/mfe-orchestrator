@@ -266,6 +266,25 @@
                 "repository_name_taken": "Esiste già un repository con questo nome sul provider, forse lasciato da un tentativo fallito: sceglilo dall'elenco o scegli un altro nome"
             }
         },
+        "pipelines": {
+            "title": "Template di pipeline",
+            "subtitle": "La pipeline che riceve un microfrontend o un servizio creato da un template quando viene creato il suo repository. Di default arriva dal repository ufficiale mfe-orchestrator/template-pipelines; collega al progetto un tuo repository con la stessa struttura per usare invece le tue pipeline. I repository già creati restano come sono.",
+            "enabled": "Usa i template di pipeline di un repository del progetto",
+            "repository": "Repository dei template di pipeline",
+            "ref": "Branch o tag",
+            "refPlaceholder": "main",
+            "refHint": "Se vuoto, il branch di default del repository.",
+            "refInvalid": "Non è un nome di branch o di tag: lettere, cifre, punti, trattini, underscore e slash, senza \"..\", trattino iniziale, slash finale o .lock finale.",
+            "layout": "Struttura: <tipo>/<compilatore>/<provider>/, dove provider è github, gitlab o azure_dev_ops, ad esempio service/docker/github/workflows/release.yml. Una cartella <tipo>/<compilatore>/<slugTemplate>/<provider>/ vince solo per quel template. Su GitHub la cartella diventa .github/ e sostituisce i workflow del template; su GitLab e Azure DevOps .gitlab-ci.yml e azure-pipelines.yml sostituiscono quelli nella root. Un template per cui il repository non ha una cartella tiene la pipeline che ha già: i template ufficiali non vengono usati al suo posto.",
+            "placeholders": "Sostituiti alla creazione del repository: %microfrontendSlug% e %serviceSlug% con lo slug, %domain% con l'URL di questa console.",
+            "saved": "Template di pipeline salvati",
+            "errors": {
+                "owner_required": "Solo un owner del progetto può cambiare da dove arrivano i suoi template di pipeline",
+                "repository_required": "Scegli la connessione e il repository dei template di pipeline",
+                "repository_invalid": "La connessione non raggiunge questo repository, o non è del progetto: scegline un altro",
+                "ref_invalid": "Il branch o il tag non ha un nome valido"
+            }
+        },
         "argoCd": {
             "title": "Argo CD",
             "subtitle": "Consegna i repository GitOps ad Argo CD, che gira su un altro cluster e si raggiunge dalla sua API: crea un AppProject del progetto, le credenziali in sola lettura dei repository un ApplicationSet da cui Argo CD crea un'Application per ogni ambiente, che sincronizza la cartella dell'ambiente (namespace, config map e secret) dal repository di configurazione, e, per ogni ambiente, un ApplicationSet per le applicazioni. Gli ambienti vengono deployati nel cluster di Argo CD.",
@@ -2469,7 +2488,8 @@
                     "REPOSITORY_ALREADY_LINKED": "Ha già un repository di codice collegato.",
                     "REPOSITORY_NAME_TAKEN": "Il repository esiste già presso il provider, forse lasciato da un tentativo fallito: scegli un altro nome oppure eliminalo presso il provider e riprova.",
                     "REPOSITORY_CREATE_FORBIDDEN": "Non hai i permessi per creare repository di codice in questo progetto.",
-                    "TEMPLATE_NOT_FOUND": "Il template non esiste più: scegline un altro."
+                    "TEMPLATE_NOT_FOUND": "Il template non esiste più: scegline un altro.",
+                    "PIPELINE_SOURCE_UNAVAILABLE": "Non è stato possibile leggere i template di pipeline del progetto: non è stato creato nulla. Correggi il repository o il branch nelle Impostazioni, oppure torna ai template ufficiali, e riprova."
                 }
             }
         },

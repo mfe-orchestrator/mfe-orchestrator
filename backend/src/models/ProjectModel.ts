@@ -16,6 +16,17 @@ export interface IProjectGitOps {
 }
 
 /**
+ * Where the pipelines copied into the repositories scaffolded from a template come from, in place of the
+ * official template-pipelines: a repository with the same layout. Unset, the official ones are used.
+ */
+export interface IProjectPipelines {
+    /** Linked like the repository of a microfrontend, through one of the connections of the project */
+    codeRepository: ICodeRepositoryMicrofrontend
+    /** The branch or tag read; the default branch of the repository when left out */
+    ref?: string
+}
+
+/**
  * How Argo CD reads one GitOps repository. A GitLab one gets a deploy token the console creates and rotates
  * on every initialization; GitHub and Azure DevOps cannot hand one out through their API, so the token is the
  * one the owner pasted, the same for both repositories.
@@ -96,6 +107,7 @@ export interface IProject extends Document<ObjectId> {
     /** Apart from gitOps: saving the GitOps settings replaces that object whole */
     argoCd?: IProjectArgoCd
     exposure?: IProjectExposure
+    pipelines?: IProjectPipelines
     /**
      * The AIs of the organization the project may use, by id (`system` for the one of the environment).
      * Unset: all of them, the ones added later included. Empty: AI is off for the project.
@@ -155,6 +167,11 @@ const projectSchema = new Schema<IProject>(
                 { _id: false }
             ),
             required: false
+        },
+        pipelines: {
+            // Written by ProjectService only, from what the provider answered: never from the request body
+            codeRepository: { type: Schema.Types.Mixed },
+            ref: { type: String, trim: true }
         },
         // No default: an empty array would turn AI off, where unset means every AI of the organization
         aiModelIds: { type: [String], default: undefined }

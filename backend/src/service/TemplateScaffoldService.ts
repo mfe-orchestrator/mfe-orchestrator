@@ -15,21 +15,85 @@ import { ApiKeyRole } from "../models/ApiKeyModel"
 import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
 import { IMarket } from "../models/MarketModel"
 import { ICodeRepositoryMicrofrontend } from "../models/MicrofrontendModel"
+import Project from "../models/ProjectModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { createSystemDeployKey } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
 import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
 import { federationName } from "./FederationConfigService"
+import { repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
 import { isRepositoryNameTakenError } from "./RepositoryRenameService"
+import RepositoryWorkspaceService, { cloneUrlFor, gitCredentialsFor } from "./workspace/RepositoryWorkspaceService"
 
 const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
+
+/** The folder of each provider in a pipeline templates repository */
+export type PipelineProvider = "github" | "gitlab" | "azure_dev_ops"
+
+/** The pipeline file a provider reads at the root of the repository; GitHub reads the whole `.github` folder instead */
+const ROOT_PIPELINE_FILES: Record<Exclude<PipelineProvider, "github">, string> = { gitlab: ".gitlab-ci.yml", azure_dev_ops: "azure-pipelines.yml" }
+
+/** The pipeline templates of one scaffold, on disk: the project's repository, or the official template-pipelines */
+export interface PipelineTemplates {
+    /** The folder `<type>/<compiler>/...` is looked up in */
+    root: string
+    /** Deleted once the repository is pushed */
+    dir: string
+    /** Where they come from, for the log */
+    source: string
+}
+
+/** One folder name, neither `.` nor `..`: what a template's type, compiler and slug must be to be looked up as folders */
+const isFolderName = (name: string | undefined): name is string => !!name && name !== "." && name !== ".." && !name.includes("\\") && path.basename(name) === name
+
+/** Whether `target` really is inside `root`, symlinks followed; false when it does not exist */
+const isInside = async (root: string, target: string): Promise<boolean> => {
+    try {
+        const [realRoot, real] = await Promise.all([fs.realpath(root), fs.realpath(target)])
+        return real === realRoot || real.startsWith(realRoot + path.sep)
+    } catch {
+        return false
+    }
+}
+
+/** Whether `dir` holds at least one regular file, at any depth; symlinks do not count */
+const hasRegularFile = async (dir: string): Promise<boolean> => {
+    const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => [])
+    for (const entry of entries) {
+        if (entry.isFile() || (entry.isDirectory() && (await hasRegularFile(join(dir, entry.name))))) return true
+    }
+    return false
+}
+
+/**
+ * Deletes every symlink under `dir`. isomorphic-git checks them out as real links, and a pipeline templates
+ * repository could commit one to any file of the server, which the copy would then push to the new repository.
+ */
+const removeSymlinks = async (dir: string): Promise<void> => {
+    for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name)
+        if (entry.isSymbolicLink()) await fs.unlink(full)
+        else if (entry.isDirectory() && entry.name !== ".git") await removeSymlinks(full)
+    }
+}
+
+const pipelineSourceUnavailable = (repository: string, reason: string, ref?: string) =>
+    createBusinessException({
+        code: "PIPELINE_SOURCE_UNAVAILABLE",
+        message: `Nothing was created: the pipeline templates could not be read from ${repository}${ref ? ` at ${ref}` : ""} (${reason}). Fix them, or go back to the official ones, in the settings of the project`,
+        statusCode: 502,
+        details: { repository, reason }
+    })
 
 /** What `%domain%` becomes in a scaffolded repository: the console its CI talks back to */
 export const placeholderDomain = () => process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev"
 
-/** The placeholders of a pipeline copied from template-pipelines, the same on every provider */
-const pipelinePlaceholders = (slug: string): Record<string, string> => ({ "%microfrontendSlug%": slug, "%domain%": placeholderDomain() })
+/**
+ * The placeholders of a pipeline copied from the pipeline templates, the same on every provider. Both slugs
+ * are the slug of what is scaffolded, so one pipeline can serve microfrontends and services alike.
+ */
+const pipelinePlaceholders = (slug: string): Record<string, string> => ({ "%microfrontendSlug%": slug, "%serviceSlug%": slug, "%domain%": placeholderDomain() })
 
 /** The repository part of a microfrontend or service DTO, filled in once the repository exists */
 export type CodeRepositoryTarget = MicrofrontendDTO["codeRepository"]
@@ -83,17 +147,28 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
      * GitHub and pushes the template, then writes what the provider answered back into `target`.
      */
     async createRepository(codeRepository: ICodeRepository, target: CodeRepositoryTarget, slug: string, template: IMarket | null, options?: ScaffoldOptions): Promise<void> {
+        // Before anything exists at the provider: pipeline templates that cannot be read leave no repository behind
+        const pipelines = target.createData && template?.type && template.compiler ? await this.fetchPipelineTemplates(codeRepository) : undefined
         try {
-            await this.createAtProvider(codeRepository, target, slug, template, options)
+            await this.createAtProvider(codeRepository, target, slug, template, options, pipelines)
         } catch (error) {
             // Often one left behind by an attempt that failed after it: the console says so instead of a provider error
             if (!isRepositoryNameTakenError(error)) throw error
             const name = target.createData?.name
             throw createBusinessException({ code: "REPOSITORY_NAME_TAKEN", message: `A repository named "${name}" already exists at the provider`, statusCode: 409 })
+        } finally {
+            if (pipelines) await fs.remove(pipelines.dir).catch(() => undefined)
         }
     }
 
-    private async createAtProvider(codeRepository: ICodeRepository, target: CodeRepositoryTarget, slug: string, template: IMarket | null, options?: ScaffoldOptions): Promise<void> {
+    private async createAtProvider(
+        codeRepository: ICodeRepository,
+        target: CodeRepositoryTarget,
+        slug: string,
+        template: IMarket | null,
+        options?: ScaffoldOptions,
+        pipelines?: PipelineTemplates
+    ): Promise<void> {
         const createData = target.createData
         if (!createData) return
 
@@ -109,7 +184,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             target.cloneUrlHttps = createdRepository.remoteUrl
             target.cloneUrlSsh = createdRepository.sshUrl
             if (template) {
-                await this.injectTemplateAzureDevOps(slug, codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template, options)
+                await this.injectTemplateAzureDevOps(slug, codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template, options, pipelines)
                 await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
             }
         } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
@@ -141,7 +216,8 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
                     codeRepository,
                     "gitlab",
                     template,
-                    options
+                    options,
+                    pipelines
                 )
             }
         } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
@@ -163,7 +239,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             if (options?.deploySecret !== false) await this.gitHubInjectApiKey(codeRepository, slug, target.name)
             // Now will inject the template
             if (template) {
-                await this.injectTemplateGithub(slug, codeRepository.accessToken, createdRepository.clone_url, "github", template, options)
+                await this.injectTemplateGithub(slug, codeRepository.accessToken, createdRepository.clone_url, "github", template, options, pipelines)
             }
         }
     }
@@ -213,9 +289,10 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         repositoryName: string,
         repositoryGroup: string,
         codeRepository: ICodeRepository,
-        repositoryType: string,
+        repositoryType: PipelineProvider,
         template: IMarket,
-        options?: ScaffoldOptions
+        options?: ScaffoldOptions,
+        pipelines?: PipelineTemplates
     ) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
@@ -244,26 +321,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
         await this.flattenTemplate(tempDir)
 
-        // Work on pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, ".gitlab-ci.yml")
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                const pipelineFile = join(tempDir, ".gitlab-ci.yml")
-                await fs.copyFile(pipelinePath, pipelineFile)
-                await this.replacePlaceholdersInFile(pipelineFile, pipelinePlaceholders(slug))
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
+        await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
 
         if (options?.placeholders) {
             await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
@@ -307,7 +365,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             })
 
             console.log("✅ Repo is ready and pushed!")
-            return tempDir
         } catch (e) {
             console.error("‼️ Error pushing to remote: ", e)
             const remotes = await git.listRemotes({ fs, dir: tempDir })
@@ -322,10 +379,21 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
             const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
             console.log("🔍 Remote branches:", remoteBranches)
+        } finally {
+            await fs.remove(tempDir).catch(() => undefined)
         }
     }
 
-    async injectTemplateAzureDevOps(slug: string, accessToken: string, repositoryName: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket, options?: ScaffoldOptions) {
+    async injectTemplateAzureDevOps(
+        slug: string,
+        accessToken: string,
+        repositoryName: string,
+        codeRepository: ICodeRepository,
+        repositoryType: PipelineProvider,
+        template: IMarket,
+        options?: ScaffoldOptions,
+        pipelines?: PipelineTemplates
+    ) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
             throw new Error("Template url is not set")
@@ -348,26 +416,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
         await this.flattenTemplate(tempDir)
 
-        // Copy pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, "azure-pipelines.yml")
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                const pipelineFile = join(tempDir, "azure-pipelines.yml")
-                await fs.copyFile(pipelinePath, pipelineFile)
-                await this.replacePlaceholdersInFile(pipelineFile, pipelinePlaceholders(slug))
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
+        await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
 
         if (options?.placeholders) {
             await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
@@ -411,7 +460,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             })
 
             console.log("✅ Repo is ready and pushed!")
-            return tempDir
         } catch (e) {
             console.error("‼️ Error pushing to remote: ", e)
             const remotes = await git.listRemotes({ fs, dir: tempDir })
@@ -426,6 +474,8 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
             const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
             console.log("🔍 Remote branches:", remoteBranches)
+        } finally {
+            await fs.remove(tempDir).catch(() => undefined)
         }
     }
 
@@ -462,7 +512,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         }
     }
 
-    async injectTemplateGithub(slug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket, options?: ScaffoldOptions) {
+    async injectTemplateGithub(slug: string, githubToken: string, repoUrl: string, repositoryType: PipelineProvider, template: IMarket, options?: ScaffoldOptions, pipelines?: PipelineTemplates) {
         const templateUrl = template.zipUrl
         if (!templateUrl) {
             throw new Error("Template url is not set")
@@ -479,33 +529,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
         await this.flattenTemplate(tempDir)
 
-        // Copy pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType)
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                const githubDir = join(tempDir, ".github")
-
-                // Ensure .github directory exists
-                await fs.ensureDir(githubDir)
-
-                // Copy all contents from pipeline path to .github directory
-                await fs.copy(pipelinePath, githubDir, { overwrite: true })
-
-                // Replace placeholders in all copied files
-                await this.replacePlaceholdersInDirectory(githubDir, pipelinePlaceholders(slug))
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
+        await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
 
         if (options?.placeholders) {
             await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
@@ -540,7 +564,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             })
 
             console.log("✅ Repo is ready and pushed!")
-            return tempDir
         } catch (e) {
             console.error("‼️ Error pushing to remote: ", e)
             const remotes = await git.listRemotes({ fs, dir: tempDir })
@@ -555,17 +578,133 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
 
             const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
             console.log("🔍 Remote branches:", remoteBranches)
+        } finally {
+            await fs.remove(tempDir).catch(() => undefined)
+        }
+    }
+
+    /**
+     * The pipeline templates a repository scaffolded through `codeRepository` gets: the repository its project
+     * picked, cloned at its ref, or the official template-pipelines. A repository of the project that cannot be
+     * read is refused, never replaced by the official one: the project asked for its own pipelines.
+     */
+    async fetchPipelineTemplates(codeRepository: ICodeRepository): Promise<PipelineTemplates> {
+        const project = await Project.findById(codeRepository.projectId, { pipelines: 1 })
+        const link = project?.pipelines?.codeRepository
+        if (!link) return this.officialPipelineTemplates()
+
+        const ref = project.pipelines?.ref || undefined
+        // Through an active connection of the project only: one of another project would lend this one its access token
+        const connection = await CodeRepository.findOne({ _id: link.codeRepositoryId, projectId: codeRepository.projectId, isActive: true })
+        const repositoryName = connection ? repositoryNameFor(link, connection) : link.name
+        if (!connection) throw pipelineSourceUnavailable(repositoryName, "its connection no longer exists", ref)
+        // Checked before the clone, as for a working copy: isomorphic-git holds the whole packfile in memory
+        const maxBytes = fastify.config.REPOSITORIES_MAX_SIZE_MB * 1024 * 1024
+        const reported = await new RepositoryWorkspaceService(this.user).providerSizeBytes({ codeRepository: connection, repositoryName })
+        if (reported !== undefined && reported > maxBytes) {
+            throw pipelineSourceUnavailable(repositoryName, `it is bigger than ${fastify.config.REPOSITORIES_MAX_SIZE_MB} MB`, ref)
+        }
+
+        const dir = await fs.mkdtemp(join(tmpdir(), "template-pipelines-"))
+        try {
+            await git.clone({
+                fs,
+                http,
+                dir,
+                url: cloneUrlFor({ component: { codeRepository: link }, codeRepository: connection, repositoryName }),
+                ref,
+                singleBranch: true,
+                depth: 1,
+                onAuth: () => gitCredentialsFor(connection),
+                headers: { "User-Agent": "mfe-orchestrator" },
+                // Never read from the cloned config: the token would go to whatever host it names
+                corsProxy: ""
+            })
+            await removeSymlinks(dir)
+        } catch (error) {
+            await fs.remove(dir).catch(() => undefined)
+            throw pipelineSourceUnavailable(repositoryName, toErrorMessage(error), ref)
+        }
+        return { root: dir, dir, source: `${repositoryName}${ref ? `@${ref}` : ""}` }
+    }
+
+    /** The official template-pipelines, downloaded, refused like the project's ones when they cannot be */
+    private async officialPipelineTemplates(): Promise<PipelineTemplates> {
+        let dir: string | undefined
+        try {
+            dir = await this.downloadZip("template-pipelines", pipelinesUrl)
+            await removeSymlinks(dir)
+            return { root: join(dir, "template-pipelines-main"), dir, source: "template-pipelines" }
+        } catch (error) {
+            if (dir) await fs.remove(dir).catch(() => undefined)
+            throw pipelineSourceUnavailable("template-pipelines", toErrorMessage(error))
+        }
+    }
+
+    /**
+     * Copies the pipeline of `provider` from `pipelines` into the template in `tempDir`, then replaces the
+     * placeholders of a pipeline in what it copied. The first folder found wins:
+     * `<type>/<compiler>/<template slug>/<provider>`, then `<type>/<compiler>/<provider>`. When the source has
+     * neither, the template keeps the pipeline it ships with; a GitHub folder counts only with a file under
+     * `workflows/`. On GitHub the template's own workflows go first, so that two release workflows named
+     * differently never run side by side; the rest of its `.github` stays. Nothing outside the source is ever
+     * copied, whatever symlink it holds. Left out, `pipelines` are the official ones, downloaded here.
+     */
+    private async copyPipeline(tempDir: string, pipelines: PipelineTemplates | undefined, template: IMarket, provider: PipelineProvider, slug: string): Promise<void> {
+        if (!isFolderName(template.type) || !isFolderName(template.compiler)) {
+            fastify.log.warn("⚠️ Template type or compiler not specified, or not a folder name: skipping pipeline setup")
+            return
+        }
+        const source = pipelines ?? (await this.officialPipelineTemplates())
+        try {
+            const base = join(source.root, template.type, template.compiler)
+            const folders = [...(isFolderName(template.slug) ? [join(base, template.slug, provider)] : []), join(base, provider)]
+            const file = provider === "github" ? undefined : ROOT_PIPELINE_FILES[provider]
+            const isUsable = async (folder: string) => {
+                if (!(await isInside(source.root, folder))) return false
+                if (!file) return hasRegularFile(join(folder, "workflows"))
+                const isFile = (await fs.lstat(join(folder, file)).catch(() => undefined))?.isFile() === true
+                return isFile && (await isInside(source.root, join(folder, file)))
+            }
+
+            let found: string | undefined
+            for (const folder of folders) {
+                if (await isUsable(folder)) {
+                    found = folder
+                    break
+                }
+            }
+            if (!found) {
+                fastify.log.warn(`⚠️ No ${provider} pipeline for ${template.type}/${template.compiler} in ${source.source}: the template keeps its own`)
+                return
+            }
+
+            if (file) {
+                const pipelineFile = join(tempDir, file)
+                await fs.copyFile(join(found, file), pipelineFile)
+                await this.replacePlaceholdersInFile(pipelineFile, pipelinePlaceholders(slug))
+            } else {
+                const githubDir = join(tempDir, ".github")
+                await fs.remove(join(githubDir, "workflows"))
+                await fs.copy(found, githubDir, { overwrite: true, filter: async item => !(await fs.lstat(item)).isSymbolicLink() })
+                await this.replacePlaceholdersInDirectory(githubDir, pipelinePlaceholders(slug))
+            }
+            fastify.log.info(`✅ Pipeline files copied from ${path.relative(source.root, found)} of ${source.source}`)
+        } finally {
+            // Downloaded here, deleted here: the ones of the caller are deleted by the caller
+            if (!pipelines) await fs.remove(source.dir).catch(() => undefined)
         }
     }
 
     async downloadZip(prefixDirectory: string, urlToDownload: string): Promise<string> {
-        const temporaryDirectory = join(tmpdir(), `${prefixDirectory}-${Date.now()}`)
         const responseDownload = await axios.get(urlToDownload, {
             responseType: "arraybuffer"
         })
         if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
 
         const zip = new AdmZip(Buffer.from(responseDownload.data))
+        // Its own folder: two scaffolds at once never share one, nor delete each other's
+        const temporaryDirectory = await fs.mkdtemp(join(tmpdir(), `${prefixDirectory}-`))
         // Keep the permissions: an executable such as mvnw must stay executable in the commit
         zip.extractAllTo(temporaryDirectory, true, true)
 

@@ -34,20 +34,20 @@ const NEW_REPOSITORY = "__new__"
 const REPOSITORY_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/
 const isValidRepositoryName = (name: string) => REPOSITORY_NAME_PATTERN.test(name) && !/(\.|\.git|\.atom)$/i.test(name)
 
-interface RepositoryChoice {
+export interface RepositoryChoice {
     codeRepositoryId?: string
     /** Id del repository esistente, oppure NEW_REPOSITORY */
     repositoryId?: string
     newName: string
 }
 
-const choiceFrom = (repository?: ProjectGitOpsRepository): RepositoryChoice => ({
+export const choiceFrom = (repository?: ProjectGitOpsRepository): RepositoryChoice => ({
     codeRepositoryId: repository?.codeRepositoryId,
     repositoryId: repository?.repositoryId,
     newName: ""
 })
 
-const isChoiceValid = (choice: RepositoryChoice) => !!choice.codeRepositoryId && (choice.repositoryId === NEW_REPOSITORY ? isValidRepositoryName(choice.newName) : !!choice.repositoryId)
+export const isChoiceValid = (choice: RepositoryChoice) => !!choice.codeRepositoryId && (choice.repositoryId === NEW_REPOSITORY ? isValidRepositoryName(choice.newName) : !!choice.repositoryId)
 
 const choiceToDTO = (choice: RepositoryChoice) => ({
     codeRepositoryId: choice.codeRepositoryId!,
@@ -64,9 +64,11 @@ interface RepositoryPickerProps {
     /** Il repository gia salvato sul progetto: il nome da mostrare finche' l'elenco non lo contiene */
     saved?: ProjectGitOpsRepository
     disabled: boolean
+    /** False per scegliere solo tra i repository esistenti: niente voce "crea un nuovo repository" */
+    allowCreate?: boolean
 }
 
-const RepositoryPicker: React.FC<RepositoryPickerProps> = ({ id, label, projectId, defaultName, choice, onChange, saved, disabled }) => {
+export const RepositoryPicker: React.FC<RepositoryPickerProps> = ({ id, label, projectId, defaultName, choice, onChange, saved, disabled, allowCreate = true }) => {
     const { t } = useTranslation()
     const codeRepositoriesApi = useCodeRepositoriesApi()
 
@@ -129,7 +131,7 @@ const RepositoryPicker: React.FC<RepositoryPickerProps> = ({ id, label, projectI
                             <SelectValue placeholder={t("settings.gitOps.repositoryPlaceholder")}>{selectedRepositoryName}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value={NEW_REPOSITORY}>{t("settings.gitOps.createRepository")}</SelectItem>
+                            {allowCreate && <SelectItem value={NEW_REPOSITORY}>{t("settings.gitOps.createRepository")}</SelectItem>}
                             {repositories.map(repository => (
                                 <SelectItem key={repository.repositoryId} value={repository.repositoryId}>
                                     {repository.name}

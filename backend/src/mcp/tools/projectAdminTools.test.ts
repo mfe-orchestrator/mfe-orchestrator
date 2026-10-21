@@ -157,6 +157,36 @@ describe("project admin tools", () => {
         })
     })
 
+    describe("project_pipelines_set", () => {
+        it("given a repository, when set, then the project is updated with it and the setting comes back", async () => {
+            const pipelines = { codeRepository: { codeRepositoryId: GRANT, repositoryId: "7", name: "acme-pipelines" }, ref: "v2" }
+            updateProject.mockResolvedValue({ _id: PROJECT, pipelines })
+
+            const result = await run("project_pipelines_set", { codeRepositoryId: GRANT, repositoryId: "7", ref: "v2" })
+
+            expect(updateProject).toHaveBeenCalledWith(PROJECT, { pipelines: { codeRepositoryId: GRANT, repositoryId: "7", ref: "v2" } })
+            expect(result).toEqual({ pipelines })
+        })
+
+        it("given a null repository, when set, then the official templates are used again", async () => {
+            // Mongoose hands back the nested path as an empty object once it is unset
+            updateProject.mockResolvedValue({ _id: PROJECT, pipelines: {} })
+
+            const result = await run("project_pipelines_set", { repositoryId: null })
+
+            expect(updateProject).toHaveBeenCalledWith(PROJECT, { pipelines: null })
+            expect(result).toEqual({ pipelines: null })
+        })
+
+        it("given its definition, when read, then it is confirmed by the user, and a repository needs its connection", () => {
+            const schema = tool("project_pipelines_set").inputSchema
+
+            expect(tool("project_pipelines_set").requiresConfirmation).toBe(true)
+            expect(schema.safeParse({ repositoryId: "7" }).success).toBe(false)
+            expect(schema.safeParse({ repositoryId: null }).success).toBe(true)
+        })
+    })
+
     describe("project_members_list", () => {
         it("given a project, when its members are listed, then the service's list is returned", async () => {
             getProjectUsers.mockResolvedValue([{ _id: MEMBER, email: "member@example.com", role: "MEMBER" }])

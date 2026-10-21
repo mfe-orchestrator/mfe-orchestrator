@@ -10,8 +10,9 @@ import useGitOpsErrorMessage from "@/hooks/apiClients/useGitOpsErrorMessage"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { ArgoCdSection, DangerZone, GitOpsSection, ProjectContextSection, ProjectExposureSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import { ArgoCdSection, DangerZone, GitOpsSection, PipelineTemplatesSection, ProjectContextSection, ProjectExposureSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
 import type { GitOpsFormValues } from "./partials/GitOpsSection"
+import type { PipelineTemplatesFormValues } from "./partials/PipelineTemplatesSection"
 import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
 import type { ProjectExposureFormValues } from "./partials/ProjectExposureSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
@@ -97,6 +98,14 @@ export const Settings: React.FC = () => {
         }
     })
 
+    const updatePipelinesMutation = useMutation({
+        mutationFn: (values: PipelineTemplatesFormValues) => projectApi.updateProject(project._id, { pipelines: values }, gitOpsErrorMessage),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
+            notifications.showSuccessNotification({ message: t("settings.pipelines.saved") })
+        }
+    })
+
     const projectData = projectQuery.data?.project
 
     return (
@@ -113,6 +122,15 @@ export const Settings: React.FC = () => {
                         gitOps={projectData.gitOps}
                         onUpdate={values => updateGitOpsMutation.mutate(values)}
                         isUpdating={updateGitOpsMutation.isPending}
+                    />
+                )}
+
+                {projectData && (
+                    <PipelineTemplatesSection
+                        projectId={projectData._id}
+                        pipelines={projectData.pipelines}
+                        onUpdate={values => updatePipelinesMutation.mutate(values)}
+                        isUpdating={updatePipelinesMutation.isPending}
                     />
                 )}
 

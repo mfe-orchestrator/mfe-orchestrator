@@ -22,6 +22,13 @@ export interface ProjectGitOps {
     applicationsCodeRepository?: ProjectGitOpsRepository
 }
 
+/** Il repository da cui si copiano le pipeline dei repository creati da un template, al posto dei template-pipelines ufficiali */
+export interface ProjectPipelines {
+    codeRepository: ProjectGitOpsRepository
+    /** Branch o tag letto; assente = il branch di default del repository */
+    ref?: string
+}
+
 /** Dove sono esposti gli ambienti: ognuno sul suo sottodominio di `domain` */
 export interface ProjectExposure {
     domain: string
@@ -39,6 +46,7 @@ export interface Project {
     context?: string
     gitOps?: ProjectGitOps
     exposure?: ProjectExposure
+    pipelines?: ProjectPipelines
     createdAt?: string
     updatedAt?: string
     _id: string
@@ -83,6 +91,8 @@ export interface ProjectUpdateDTO {
         /** Secondo repository opzionale per le applicazioni: null o assente = nessuno */
         applications?: { codeRepositoryId: string; repositoryId?: string; newRepositoryName?: string } | null
     }
+    /** `null` torna ai template-pipelines ufficiali; ref vuoto o null = il branch di default */
+    pipelines?: { codeRepositoryId: string; repositoryId: string; ref?: string | null } | null
 }
 
 interface AddUserToProjectDTO {

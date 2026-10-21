@@ -14,7 +14,7 @@ import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
-import Project, { IProject } from "../models/ProjectModel"
+import Project, { IProject, IProjectPipelines } from "../models/ProjectModel"
 import ServiceDeployment from "../models/ServiceDeploymentModel"
 import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
@@ -25,6 +25,8 @@ import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
 import BaseAuthorizedService, { domainScopeForbidden, isInDomainScope } from "./BaseAuthorizedService"
+import CodeRepositoryImportService from "./CodeRepositoryImportService"
+import CodeRepositoryService from "./CodeRepositoryService"
 import GitOpsService, { GitOpsSettingsInput } from "./GitOpsService"
 import UserProjectService from "./UserProjectService"
 import { prepareProjectCleanup } from "./workspace/workspaceCleanup"
@@ -49,7 +51,20 @@ export interface ProjectUpdateInput {
     gitOps?: GitOpsSettingsInput
     /** Replaced as a whole, `null` removes it: the next deploy of each environment takes its Gateway away */
     exposure?: { domain: string; certificateIssuer?: string | null } | null
+    /** Replaced as a whole, `null` goes back to the official template-pipelines */
+    pipelines?: PipelineTemplatesInput | null
 }
+
+/** The repository of the pipeline templates as the settings screen names it: by the provider id, the backend resolves the rest */
+export interface PipelineTemplatesInput {
+    codeRepositoryId: string
+    repositoryId: string
+    /** A branch or a tag; the default branch of the repository when empty */
+    ref?: string | null
+}
+
+/** What git takes as a branch or a tag name, without the forms it refuses: `..`, a leading dash, a trailing slash or `.lock` */
+const GIT_REF = /^(?!-)(?!.*\.\.)(?!.*\/$)(?!.*\.lock$)[A-Za-z0-9._/-]{1,255}$/
 
 /** The exposure to store, trimmed and in lowercase: refused with a 400 rather than by the model with a 500 */
 const exposureOf = (input: unknown): { domain: string; certificateIssuer?: string } => {
@@ -360,6 +375,11 @@ export class ProjectService extends BaseAuthorizedService {
             if (projectData.gitOps !== undefined) {
                 updateData.gitOps = await new GitOpsService(this.user).resolveSettings(projectId, projectData.gitOps)
             }
+            if (projectData.pipelines !== undefined) {
+                const pipelines = await this.resolvePipelines(projectId, projectData.pipelines)
+                if (pipelines) updateData.pipelines = pipelines
+                else updateData.$unset = { ...updateData.$unset, pipelines: 1 }
+            }
             if (projectData.exposure === null) {
                 updateData.$unset = { ...updateData.$unset, exposure: 1 }
             } else if (projectData.exposure !== undefined) {
@@ -400,6 +420,41 @@ export class ProjectService extends BaseAuthorizedService {
                 statusCode: 500
             })
         }
+    }
+
+    /**
+     * The pipeline templates to store from what the screen sent, none for the official ones. Owners only, as for
+     * GitOps: every repository scaffolded in the project runs what they pick. The repository must be reachable
+     * through one of the connections of the project: one of another project would lend this one its access token.
+     */
+    private async resolvePipelines(projectId: string, input: PipelineTemplatesInput | null): Promise<IProjectPipelines | undefined> {
+        const projectIdObj = toObjectId(projectId)
+        const project = await Project.findById(projectIdObj, { organizationId: 1 })
+        if (!project) throw new ProjectNotFoundError(projectId)
+        await new GitOpsService(this.user).ensureOwner(projectIdObj, project.organizationId, {
+            code: "PIPELINES_OWNER_REQUIRED",
+            message: "Only an owner of the project can change where its pipeline templates come from"
+        })
+        if (input === null) return undefined
+
+        if (!Types.ObjectId.isValid(input?.codeRepositoryId) || typeof input.repositoryId !== "string" || !input.repositoryId) {
+            throw createBusinessException({ code: "PIPELINES_REPOSITORY_REQUIRED", message: "Pick the connection and the repository of the pipeline templates" })
+        }
+        const ref = typeof input.ref === "string" ? input.ref.trim() : ""
+        if ((input.ref != null && typeof input.ref !== "string") || (ref && !GIT_REF.test(ref))) {
+            throw createBusinessException({ code: "PIPELINES_REF_INVALID", message: "The ref of the pipeline templates must be the name of a branch or a tag" })
+        }
+
+        const codeRepository = await CodeRepository.findOne({ _id: toObjectId(input.codeRepositoryId), projectId: projectIdObj, isActive: true })
+        if (!codeRepository) {
+            throw createBusinessException({ code: "PIPELINES_REPOSITORY_INVALID", message: "The code repository connection is not one of this project" })
+        }
+        const importService = new CodeRepositoryImportService(this.user)
+        const repository = (await importService.fetchRepositories(new CodeRepositoryService(this.user), codeRepository)).find(candidate => candidate.repositoryId === input.repositoryId)
+        if (!repository) {
+            throw createBusinessException({ code: "PIPELINES_REPOSITORY_INVALID", message: `The connection "${codeRepository.name}" cannot reach the repository ${input.repositoryId}` })
+        }
+        return { codeRepository: importService.buildMicrofrontendCodeRepository(codeRepository, repository), ...(ref ? { ref } : {}) }
     }
 
     async delete(projectId: string): Promise<DeleteResult> {

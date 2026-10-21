@@ -1,6 +1,7 @@
 export * from "./ArgoCdSection"
 export * from "./DangerZone"
 export * from "./GitOpsSection"
+export * from "./PipelineTemplatesSection"
 export * from "./ProjectContextSection"
 export * from "./ProjectExposureSection"
 export * from "./ProjectInfoSection"
