@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "backend/src/models/ProjectModel.ts": {
-    "mtime": 1792580450.0350626,
-    "ast_hash": "adaa9fa2fd554ff7af91df24058b7401",
+    "mtime": 1792606598.6962786,
+    "ast_hash": "c69f3f5ff2035d425a34105c84c78b36",
     "semantic_hash": ""
   },
   "backend/src/models/StorageModel.ts": {
@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792580683.6205807,
-    "ast_hash": "39f7d2ad272efd3de47d20fb957d3123",
+    "mtime": 1792606840.7024577,
+    "ast_hash": "81552f7af03a9c2c602bb07888b0d361",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792580683.6185765,
-    "ast_hash": "514ad8c34fcbd2d5b7d5a45053454759",
+    "mtime": 1792606840.7025568,
+    "ast_hash": "6708c42703a42e3d1a23f73b147f8138",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -4085,8 +4085,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useGitOpsErrorMessage.ts": {
-    "mtime": 1792580694.6100924,
-    "ast_hash": "df25f30f391944daaf351705668316b6",
+    "mtime": 1792606670.4990983,
+    "ast_hash": "13d1784528125f1128860240bf97986c",
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/partials/GitOpsSection.tsx": {
@@ -4285,13 +4285,13 @@
     "semantic_hash": ""
   },
   "backend/src/service/ArgoCdService.test.ts": {
-    "mtime": 1792580694.611861,
-    "ast_hash": "3f6e956572be98bb2374874e06c5c847",
+    "mtime": 1792606652.8406563,
+    "ast_hash": "bdf913de3e8217d4870dfae7ac3fd1f3",
     "semantic_hash": ""
   },
   "backend/src/service/ArgoCdService.ts": {
-    "mtime": 1792580694.612024,
-    "ast_hash": "ee897071a9ab9dd1106883a6cf70be69",
+    "mtime": 1792606598.697097,
+    "ast_hash": "b9943427673503c1c894f3b4338eade2",
     "semantic_hash": ""
   },
   "backend/src/service/gitops/argoCdManifests.test.ts": {
@@ -4300,8 +4300,8 @@
     "semantic_hash": ""
   },
   "backend/src/service/gitops/argoCdManifests.ts": {
-    "mtime": 1792580356.9619133,
-    "ast_hash": "91f693b6206291bb42b5c7f363c295f3",
+    "mtime": 1792606545.0444202,
+    "ast_hash": "e43e5c03bcdbbb7b4277022a538a4b4d",
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useArgoCdApi.ts": {
@@ -4315,8 +4315,8 @@
     "semantic_hash": ""
   },
   "docs/ARGOCD.md": {
-    "mtime": 1792580752.314486,
-    "ast_hash": "899ee00a4ab983fd8d7e1fc5474b83cc",
+    "mtime": 1792606670.5182655,
+    "ast_hash": "99bd768cf4387a874e6fc1e34c1c19ea",
     "semantic_hash": ""
   },
   "frontend/src/pages/deployments/partials/DeploymentServiceCard.tsx": {
