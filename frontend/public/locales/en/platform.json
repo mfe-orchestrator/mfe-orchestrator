@@ -305,7 +305,7 @@
         "argoCd": {
             "title": "Argo CD",
             "subtitle": "Argo CD deploys the environments from the GitOps repositories. It runs on another cluster: the console sets it up through its API.",
-            "details": "It creates an AppProject for the project, read-only credentials for the repositories, an ApplicationSet from which Argo CD makes one Application per environment, syncing the folder of the environment (namespace, config maps and secrets) from the configuration repository, and, for each environment, an ApplicationSet for the applications. Environments are deployed to the cluster of Argo CD.",
+            "details": "Creates an AppProject for the project, the read-only credentials of the repositories, an ApplicationSet from which Argo CD makes an Application per environment, syncing the folder of the environment (namespace, config maps and secrets) from the configuration repository, and, for each service and frontend, an ApplicationSet that makes an Application per environment, such as orders-dev and orders-prod. The environments are deployed to the cluster of Argo CD.",
             "url": "Argo CD URL",
             "token": "Argo CD API token",
             "tokenHint": "The token of the orchestrator account (argocd account generate-token --account orchestrator). It is stored encrypted and must be entered again if you change the URL.",
@@ -322,7 +322,7 @@
             "initializedAt": "Last initialization: {{date}}",
             "lastErrorTitle": "The last initialization failed",
             "alignErrorTitle": "The last deploy did not update the applications in Argo CD",
-            "realignHint": "After adding or deleting an environment, or changing the GitOps repositories, re-align Argo CD: nothing is updated on its own.",
+            "realignHint": "After adding or deleting an environment, or changing the GitOps repositories, re-align Argo CD. New services and frontends reach Argo CD on their own with their first deploy.",
             "errors": {
                 "gitops_required": "Turn GitOps on and save the configuration repository before initializing Argo CD",
                 "url_invalid": "The Argo CD URL must be an http or https address, such as https://argocd.example.com",
@@ -331,7 +331,7 @@
                 "unreachable": "Argo CD cannot be reached at {{url}} ({{reason}}): check the URL and that the orchestrator cluster can reach the Argo CD API",
                 "tls_untrusted": "The certificate of Argo CD at {{url}} is not trusted ({{reason}}): use a certificate of a trusted authority or add its CA to NODE_EXTRA_CA_CERTS of the orchestrator",
                 "unauthorized": "Argo CD at {{url}} does not accept the token: check that it is an API token of the orchestrator account and that it has not expired or been revoked",
-                "forbidden": "The account of the token lacks the permissions it needs on Argo CD: grant it role:orchestrator in argocd-rbac-cm (see docs/ARGOCD.md)",
+                "forbidden": "The account of the token lacks permissions in Argo CD: give it role:orchestrator in argocd-rbac-cm, as in \"Argo CD account permissions\" above",
                 "request_failed": "Argo CD refused the request ({{reason}})",
                 "name_conflict": "Argo CD already has an object {{name}} this project did not create, or one the account of the token may not read: rename or delete it, then try again",
                 "name_clash": "Two objects of this project would both be named {{name}} in Argo CD: rename the service, frontend or environment whose slugs join into it, then try again",
@@ -343,7 +343,23 @@
                 "busy": "Argo CD is already being initialized for this project: try again in a moment",
                 "lease_lost": "Another Argo CD initialization took over this project while this one ran: check its outcome and initialize again if needed"
             },
-            "ownerOnly": "Only an owner of the project or an administrator of its organization can initialize Argo CD."
+            "ownerOnly": "Only an owner of the project or an administrator of its organization can initialize Argo CD.",
+            "setup": {
+                "summary": "Argo CD account permissions",
+                "intro": "The console acts in Argo CD as the local account orchestrator, with an API token and no password. Everything it creates has a name starting with mfe-, so the permissions below let it touch only its own objects. Apply these ConfigMaps in the namespace of Argo CD.",
+                "account": "1. The account, in argocd-cm",
+                "rbac": "2. Its permissions, in argocd-rbac-cm",
+                "permissions": {
+                    "projects": "creates and updates the AppProject of the project, which confines its applications to the GitOps repositories and the namespaces of the environments",
+                    "applications": "reads the Applications of the project and deletes those made by earlier versions of the console",
+                    "applicationsets": "creates, updates and deletes the ApplicationSets of the environments and of the applications, on every deploy too",
+                    "repositories": "registers and withdraws the read-only credentials of the repositories. It cannot be narrowed to mfe-: the applications repository is registered globally, and the rule applies to its URL"
+                },
+                "mergeHint": "If argocd-cm or argocd-rbac-cm already hold other keys, add these lines rather than replacing the file.",
+                "controller": "3. The policy per ApplicationSet, in argocd-cmd-params-cm (then restart argocd-applicationset-controller): without it, a values file deleted by mistake would take its application with it",
+                "token": "4. The token to paste below",
+                "version": "Argo CD 2.8 or later is required."
+            }
         },
         "dangerZone": {
             "title": "Danger Zone",

@@ -6,6 +6,7 @@ import { Button } from "@/components/atoms"
 import useArgoCdApi from "@/hooks/apiClients/useArgoCdApi"
 import { useGitOpsErrorTranslation } from "@/hooks/apiClients/useGitOpsErrorMessage"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import { ArgoCdAccountSetup } from "./ArgoCdAccountSetup"
 import { SettingsDetails } from "./SettingsDetails"
 
 /** Stessa normalizzazione del backend: senza slash finale, cosi si capisce se l'URL e' cambiato */
@@ -79,6 +80,8 @@ export const ArgoCdSection: React.FC<ArgoCdSectionProps> = ({ projectId }) => {
                     <SettingsDetails summary={t("settings.howItWorks")} dataTestId="argocd-details">
                         <p>{t("settings.argoCd.details")}</p>
                     </SettingsDetails>
+
+                    <ArgoCdAccountSetup />
 
                     <div className="flex flex-col gap-1">
                         <Label htmlFor="argocd-url">{t("settings.argoCd.url")}</Label>
