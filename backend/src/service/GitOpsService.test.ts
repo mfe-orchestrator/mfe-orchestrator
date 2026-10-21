@@ -383,10 +383,11 @@ describe("GitOpsService.deploy", () => {
         const exposedOn = (exposure: object | undefined, gitOps: object = { enabled: true, codeRepository: link }) =>
             vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, slug: "shop", gitOps, exposure } as never)
         const documentsOf = (content: string) => parseAllDocuments(content).map(document => document.toJSON())
-        const subdomains = (ofDevelopment?: string, ofProduction?: string) =>
+        /** development, then production, which is the production environment unless told otherwise */
+        const subdomains = (ofDevelopment?: string, ofProduction?: string, { developmentInProduction = false } = {}) =>
             vi.spyOn(Environment, "find").mockResolvedValue([
-                { _id: development, slug: "development", subdomain: ofDevelopment, projectId },
-                { _id: production, slug: "production", subdomain: ofProduction, projectId }
+                { _id: development, slug: "development", subdomain: ofDevelopment, isProduction: developmentInProduction, projectId },
+                { _id: production, slug: "production", subdomain: ofProduction, isProduction: true, projectId }
             ] as never)
 
         it("given a domain with an issuer, when production is deployed, then its Gateway answers on its subdomain with a certificate and a redirect to HTTPS", async () => {
@@ -414,7 +415,7 @@ describe("GitOpsService.deploy", () => {
             expect(redirect).toMatchObject({ kind: "HTTPRoute", spec: { parentRefs: [{ name: gateway.metadata.name, sectionName: "http" }] } })
         })
 
-        it("given an environment with no subdomain, when it is deployed, then its Gateway answers on the domain itself", async () => {
+        it("given the production environment with no subdomain, when it is deployed, then its Gateway answers on the domain itself", async () => {
             exposedOn({ domain: "example.com" })
             subdomains("dev", undefined)
 
@@ -437,9 +438,30 @@ describe("GitOpsService.deploy", () => {
             expect(options!.prune!("development/gateway.yaml")).toBe(false)
         })
 
-        it("given two environments with no subdomain, when one is deployed, then it is refused before anything is committed", async () => {
+        it("given an environment out of production with no subdomain, when it is deployed, then its Gateway answers on its slug in lowercase", async () => {
             exposedOn({ domain: "example.com" })
-            subdomains(undefined, undefined)
+            vi.spyOn(Environment, "find").mockResolvedValue([
+                { _id: development, slug: "DEV", isProduction: false, projectId },
+                { _id: production, slug: "production", isProduction: true, projectId }
+            ] as never)
+
+            await deployOf(development)()
+
+            const gateway = documentsOf(commit.mock.calls[0][1].find(file => file.path === "DEV/gateway.yaml")!.content!)[0]
+            expect(gateway.spec.listeners[0].hostname).toBe("dev.example.com")
+        })
+
+        it("given a subdomain equal to the slug of another environment, when one is deployed, then it is refused before anything is committed", async () => {
+            exposedOn({ domain: "example.com" })
+            subdomains(undefined, "development")
+
+            await expect(deployOf(production)(vi.fn())).rejects.toMatchObject({ code: "GITOPS_ENVIRONMENT_HOST_TAKEN" })
+            expect(commit).not.toHaveBeenCalled()
+        })
+
+        it("given two production environments with no subdomain, when one is deployed, then it is refused before anything is committed", async () => {
+            exposedOn({ domain: "example.com" })
+            subdomains(undefined, undefined, { developmentInProduction: true })
             const run = vi.fn()
 
             await expect(deployOf(production)(run)).rejects.toMatchObject({ code: "GITOPS_ENVIRONMENT_HOST_TAKEN" })

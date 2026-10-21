@@ -12,7 +12,7 @@ export interface IEnvironment extends Document<ObjectId> {
     domains?: string[]
     /** The Kubernetes namespace GitOps commits the environment to; its slug in lowercase when unset */
     namespace?: string
-    /** What it is exposed under on the domain of the project, e.g. `dev`; unset, on the domain itself */
+    /** What it is exposed under on the domain of the project, e.g. `dev`; unset, the domain itself in production, the slug otherwise */
     subdomain?: string
 }
 

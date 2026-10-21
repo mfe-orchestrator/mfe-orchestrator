@@ -628,7 +628,7 @@
             },
             "subdomain": "Sottodominio",
             "subdomain_placeholder": "dev",
-            "subdomain_description": "Esposto su {{host}}. Se vuoto, sul dominio stesso del progetto.",
+            "subdomain_description": "Esposto su {{host}}. Se vuoto: il dominio stesso per un ambiente di produzione, lo slug per gli altri.",
             "subdomain_description_no_domain": "Imposta il dominio del progetto in Impostazioni → Esposizione: fino ad allora l'ambiente non è esposto.",
             "subdomain_invalid": "Etichette DNS di lettere minuscole, numeri e trattini, separate da punti"
         },

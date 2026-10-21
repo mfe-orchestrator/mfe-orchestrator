@@ -6,8 +6,9 @@ Traefik and the applications.
 
 - **Project** (Settings → Exposure): the `domain`, e.g. `example.com`, and optionally the cert-manager
   `ClusterIssuer` the TLS certificates are asked of. Without an issuer the environments answer in plain HTTP.
-- **Environment**: the `subdomain`, e.g. `dev`. The host is `dev.example.com`; with no subdomain it is the
-  domain itself. Two environments of the project cannot share a host: the deploy is refused.
+- **Environment**: the `subdomain`, e.g. `dev`. The host is `dev.example.com`. Left empty, a production
+  environment takes the domain itself and any other its slug in lowercase, so `UAT` lands on
+  `uat.example.com`. Two environments of the project cannot share a host: the deploy is refused.
 - **Service or frontend**: the `exposurePath`, e.g. `/api/orders`, the same in every environment. The prefix is
   stripped before the request reaches the container, so it answers at its root. Without one, the application
   gets no route.
@@ -20,7 +21,8 @@ Traefik and the applications.
 | Applications, branch of the environment | `<application>.yaml` | `route:` with the Gateway, the listener and the path |
 | Applications, branch of the environment | `microservice-chart/templates/httproute.yaml` | The `HTTPRoute` of an application, written once like the rest of the chart |
 
-Removing the domain takes the Gateway of each environment away on its next deploy.
+Removing the domain takes the Gateway of each environment away on its next deploy. A redeploy of an earlier deployment
+commits nothing, the Gateway included: it serves that snapshot again, GitOps is not involved.
 
 ## What the cluster needs
 

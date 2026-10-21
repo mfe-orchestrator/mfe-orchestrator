@@ -1153,7 +1153,7 @@
             "namespace_invalid": "Up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit",
             "subdomain": "Subdomain",
             "subdomain_placeholder": "dev",
-            "subdomain_description": "Exposed on {{host}}. Left empty, on the domain of the project itself.",
+            "subdomain_description": "Exposed on {{host}}. Left empty: the domain itself for a production environment, the slug for the others.",
             "subdomain_description_no_domain": "Set the domain of the project in Settings → Exposure: until then the environment is not exposed.",
             "subdomain_invalid": "DNS labels of lowercase letters, digits and dashes, separated by dots"
         }

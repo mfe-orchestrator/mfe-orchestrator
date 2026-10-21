@@ -30,7 +30,9 @@ export const environmentFields = {
         .string()
         .regex(SUBDOMAIN, "DNS labels separated by dots, e.g. dev or dev.eu")
         .optional()
-        .describe("What the environment is exposed under on the domain of the project, e.g. dev for dev.example.com; empty or left out, on the domain itself")
+        .describe(
+            "What the environment is exposed under on the domain of the project, e.g. dev for dev.example.com; empty or left out, the domain itself for a production environment and the slug in lowercase for the others"
+        )
 }
 
 /**

@@ -117,16 +117,23 @@ export const gatewayFilePath = (environment: Pick<IEnvironment, "slug">) => `${e
 type ExposedProject = { _id: unknown; slug: string; exposure?: { domain: string; certificateIssuer?: string } }
 
 /**
+ * What an environment is exposed under: the subdomain set on it, else nothing for a production one, which
+ * takes the domain itself, and its slug in lowercase for the others, so that `DEV` lands on `dev.<domain>`.
+ */
+export const effectiveSubdomain = (environment: Pick<IEnvironment, "slug" | "subdomain" | "isProduction">): string =>
+    environment.subdomain || (environment.isProduction ? "" : environment.slug.toLowerCase())
+
+/**
  * The Gateway of an environment, none when the project is exposed on no domain. Its host must be its own
  * among the environments of the project: two Gateways answering on the same host would split its traffic.
  */
 export const environmentGateway = (
     project: ExposedProject,
-    environment: Pick<IEnvironment, "_id" | "slug" | "namespace" | "subdomain">,
-    environments: Pick<IEnvironment, "_id" | "slug" | "subdomain">[]
+    environment: Pick<IEnvironment, "_id" | "slug" | "namespace" | "subdomain" | "isProduction">,
+    environments: Pick<IEnvironment, "_id" | "slug" | "subdomain" | "isProduction">[]
 ): EnvironmentGateway | undefined => {
     if (!project.exposure?.domain) return undefined
-    const subdomain = environment.subdomain ?? ""
+    const subdomain = effectiveSubdomain(environment)
     if (!SUBDOMAIN.test(subdomain)) {
         throw createBusinessException({
             code: "GITOPS_ENVIRONMENT_SUBDOMAIN_INVALID",
@@ -135,7 +142,7 @@ export const environmentGateway = (
         })
     }
     const host = exposedHost(project.exposure.domain, subdomain)
-    const sharing = environments.find(other => String(other._id) !== String(environment._id) && exposedHost(project.exposure!.domain, other.subdomain ?? "") === host)
+    const sharing = environments.find(other => String(other._id) !== String(environment._id) && exposedHost(project.exposure!.domain, effectiveSubdomain(other)) === host)
     if (sharing) {
         throw createBusinessException({
             code: "GITOPS_ENVIRONMENT_HOST_TAKEN",
@@ -386,7 +393,7 @@ export class GitOpsService extends BaseAuthorizedService {
         // With GitOps on, a deploy pushes to the provider with the token of the connection
         await this.ensureNotViewer(projectId, { code: "GITOPS_VIEWER_FORBIDDEN", message: "A viewer of the project cannot change what is committed to its GitOps repositories" })
 
-        const environments = await Environment.find({ projectId }, { slug: 1, namespace: 1, subdomain: 1 })
+        const environments = await Environment.find({ projectId }, { slug: 1, namespace: 1, subdomain: 1, isProduction: 1 })
         const deployed = environments.filter(environment => environmentIds.has(String(environment._id)))
         // Refused before anything is pushed: a subdomain the cluster would not take, or a host two environments share
         const gateways = new Map(deployed.map(environment => [String(environment._id), environmentGateway(project, environment, environments)] as const))

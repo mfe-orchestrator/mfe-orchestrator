@@ -48,6 +48,11 @@ interface EnvironmentDialogFormData {
 /** Come per il backend: etichette DNS separate da punti, oppure niente per il dominio stesso */
 const SUBDOMAIN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*)?$/
 
+/** Come il backend: il sottodominio impostato, altrimenti nessuno in produzione (il dominio stesso) e lo slug in minuscolo negli altri */
+const effectiveSubdomain = (env: { slug?: string; subdomain?: string; isProduction?: boolean }) => env.subdomain?.trim().toLowerCase() || (env.isProduction ? "" : (env.slug ?? "").toLowerCase())
+
+const exposedHost = (domain: string, subdomain: string) => (subdomain ? `${subdomain}.${domain}` : domain)
+
 interface EnvironmentDialogProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
@@ -67,7 +72,8 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
     const slug = form.watch("slug")
     // Il sottodominio vale sul dominio del progetto: finche' non c'e', l'ambiente non e' esposto da GitOps
     const domain = useProjectStore(state => state.project?.exposure?.domain)
-    const subdomain = form.watch("subdomain")?.trim().toLowerCase()
+    const subdomain = form.watch("subdomain")
+    const isProduction = form.watch("isProduction")
 
     const onSubmit = async (data: EnvironmentDialogFormData) => {
         if (isEdit) {
@@ -146,7 +152,7 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                                 placeholder={t("environment.form.subdomain_placeholder")}
                                 description={
                                     domain
-                                        ? t("environment.form.subdomain_description", { host: subdomain ? `${subdomain}.${domain}` : domain })
+                                        ? t("environment.form.subdomain_description", { host: exposedHost(domain, effectiveSubdomain({ slug, subdomain, isProduction })) })
                                         : t("environment.form.subdomain_description_no_domain")
                                 }
                                 // Il backend toglie gli spazi e porta in minuscolo: qui si controlla quello che salverà
@@ -196,7 +202,7 @@ export default function EnvironmentsPage() {
     const isGitOpsEnabled = Boolean(project?.gitOps?.enabled)
     const domain = project?.exposure?.domain
     // Senza dominio non c'e' ancora un host: si mostra almeno il sottodominio impostato
-    const hostOf = (env: EnvironmentDTO) => (domain ? (env.subdomain ? `${env.subdomain}.${domain}` : domain) : env.subdomain || "-")
+    const hostOf = (env: EnvironmentDTO) => (domain ? exposedHost(domain, effectiveSubdomain(env)) : env.subdomain || "-")
 
     const environmentQuery = useQuery({
         queryKey: ["environments", project._id],
