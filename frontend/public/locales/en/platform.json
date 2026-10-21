@@ -183,9 +183,18 @@
     "settings": {
         "title": "Settings",
         "subtitle": "Manage your project",
+        "tabs": {
+            "label": "Settings sections",
+            "general": "General",
+            "access": "Access",
+            "resources": "Resources",
+            "delivery": "Delivery"
+        },
+        "howItWorks": "How it works",
         "account": "Account",
         "stats": {
-            "title": "Configuration",
+            "accessTitle": "People and access",
+            "resourcesTitle": "Project resources",
             "viewAll": "View All",
             "teamMembers": "Team Members",
             "environments": "Environments",
@@ -216,7 +225,9 @@
         },
         "exposure": {
             "title": "Exposure",
-            "subtitle": "The domain the environments are exposed on, each under its subdomain. On every deploy GitOps commits a Traefik Gateway per environment and an HTTPRoute for each service and frontend with an exposure path.",
+            "subtitle": "The domain the environments are exposed on, each under its own subdomain.",
+            "details": "On every deploy GitOps commits a Traefik Gateway per environment and an HTTPRoute for each service and frontend with an exposure path.",
+            "advanced": "Traefik ports",
             "domain": "Domain",
             "domain_hint": "E.g. example.com. Left empty, the environments are not exposed: the next deploy removes their Gateway.",
             "domain_invalid": "A lowercase domain of at least two labels, e.g. example.com",
@@ -234,7 +245,8 @@
         },
         "gitOps": {
             "title": "GitOps for environments, config maps and secrets",
-            "subtitle": "Nothing is committed when you save config maps, secrets or environments: each Deploy commits what it ships. To the configuration repository, on the default branch: <environment>/namespace.yaml, <environment>/configMaps/<name>.yaml and <environment>/secrets/<name>.yaml. Optionally, to the applications repository: one branch per environment with a Helm values file for every service and frontend that has an image and a version, plus a shared Helm chart in microservice-chart/, written only when missing so you can customize it.",
+            "subtitle": "Every Deploy commits what it ships to a Git repository: the namespace of the environment, its config maps and its secrets.",
+            "details": "To the configuration repository, on the default branch: <environment>/namespace.yaml, <environment>/configMaps/<name>.yaml and <environment>/secrets/<name>.yaml. Optionally, to the applications repository: one branch per environment with a Helm values file for every service and frontend that has an image and a version, plus a shared Helm chart in microservice-chart/, written only when missing so you can customize it.",
             "enabled": "Commit to a repository on every Deploy",
             "connection": "Connection",
             "connectionPlaceholder": "Pick a connection",
@@ -272,7 +284,8 @@
         },
         "pipelines": {
             "title": "Pipeline templates",
-            "subtitle": "The pipeline a microfrontend or a service created from a template gets when its repository is created. By default it comes from the official mfe-orchestrator/template-pipelines repository; point the project at a repository of yours with the same layout to use your own pipelines instead. Repositories already created are left as they are.",
+            "subtitle": "The pipeline a new microfrontend or service gets when its repository is created. By default it comes from the official mfe-orchestrator/template-pipelines repository.",
+            "details": "Point the project at a repository of yours with the same layout to use your own pipelines instead. Repositories already created are left as they are.",
             "enabled": "Use the pipeline templates of a repository of the project",
             "repository": "Pipeline templates repository",
             "ref": "Branch or tag",
@@ -291,7 +304,8 @@
         },
         "argoCd": {
             "title": "Argo CD",
-            "subtitle": "Hands the GitOps repositories to Argo CD, which runs on another cluster and is reached through its API: it creates an AppProject for the project, read-only credentials for the repositories an ApplicationSet from which Argo CD makes one Application per environment, syncing the folder of the environment (namespace, config maps and secrets) from the configuration repository, and, for each environment, an ApplicationSet for the applications. Environments are deployed to the cluster of Argo CD.",
+            "subtitle": "Argo CD deploys the environments from the GitOps repositories. It runs on another cluster: the console sets it up through its API.",
+            "details": "It creates an AppProject for the project, read-only credentials for the repositories, an ApplicationSet from which Argo CD makes one Application per environment, syncing the folder of the environment (namespace, config maps and secrets) from the configuration repository, and, for each environment, an ApplicationSet for the applications. Environments are deployed to the cluster of Argo CD.",
             "url": "Argo CD URL",
             "token": "Argo CD API token",
             "tokenHint": "The token of the orchestrator account (argocd account generate-token --account orchestrator). It is stored encrypted and must be entered again if you change the URL.",

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import type { ProjectPipelines, ProjectUpdateDTO } from "@/hooks/apiClients/useProjectApi"
 import { choiceFrom, isChoiceValid, type RepositoryChoice, RepositoryPicker } from "./GitOpsSection"
+import { SettingsDetails } from "./SettingsDetails"
 
 export type PipelineTemplatesFormValues = ProjectUpdateDTO["pipelines"]
 
@@ -43,6 +44,12 @@ export const PipelineTemplatesSection: React.FC<PipelineTemplatesSectionProps> =
                 <CardDescription>{t("settings.pipelines.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 pt-4">
+                <SettingsDetails summary={t("settings.howItWorks")} dataTestId="pipelines-details">
+                    <p>{t("settings.pipelines.details")}</p>
+                    <p>{t("settings.pipelines.layout")}</p>
+                    <p>{t("settings.pipelines.placeholders")}</p>
+                </SettingsDetails>
+
                 <div className="flex items-center gap-3">
                     <Switch id="pipelines-enabled" checked={enabled} disabled={isUpdating} onCheckedChange={setEnabled} />
                     <Label htmlFor="pipelines-enabled">{t("settings.pipelines.enabled")}</Label>
@@ -80,9 +87,6 @@ export const PipelineTemplatesSection: React.FC<PipelineTemplatesSectionProps> =
                         </div>
                     </>
                 )}
-
-                <p className="text-sm text-muted-foreground">{t("settings.pipelines.layout")}</p>
-                <p className="text-sm text-muted-foreground">{t("settings.pipelines.placeholders")}</p>
 
                 <div className="flex justify-end">
                     <Button type="button" disabled={!canSave} loading={isUpdating} loadingLabel={t("common.loading")} dataTestId="pipelines-save" onClick={() => onUpdate(buildValues())}>

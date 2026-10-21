@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
 import { ProjectExposure } from "@/hooks/apiClients/useProjectApi"
+import { SettingsDetails } from "./SettingsDetails"
 
 /** Stesse regole del backend: un dominio di almeno due etichette, in minuscolo */
 const DOMAIN_NAME = /^(?=.{1,253}$)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/
@@ -85,6 +86,10 @@ export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ 
             <CardContent className="pt-4">
                 <FormProvider {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+                        <SettingsDetails summary={t("settings.howItWorks")} dataTestId="project-exposure-details">
+                            <p>{t("settings.exposure.details")}</p>
+                        </SettingsDetails>
+
                         <div className="flex flex-wrap gap-x-4 gap-y-2">
                             <TextField<ExposureFields>
                                 name="domain"
@@ -121,30 +126,33 @@ export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ 
                             />
                         )}
 
-                        <div className="flex flex-wrap gap-x-4 gap-y-2">
-                            <TextField<ExposureFields>
-                                name="httpPort"
-                                type="number"
-                                label={t("settings.exposure.http_port")}
-                                placeholder={String(DEFAULT_HTTP_PORT)}
-                                description={t("settings.exposure.http_port_hint")}
-                                dataTestId="project-exposure-http-port"
-                                containerClassName="flex-[1_1_200px]"
-                                rules={{ validate: value => isPort(value) || t("settings.exposure.port_invalid") }}
-                            />
-                            {issuerChoice !== NO_ISSUER && (
+                        {/* Le porte cambiano solo con un Traefik non standard: restano chiuse finché qualcuno non le cerca */}
+                        <SettingsDetails summary={t("settings.exposure.advanced")} dataTestId="project-exposure-ports">
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
                                 <TextField<ExposureFields>
-                                    name="httpsPort"
+                                    name="httpPort"
                                     type="number"
-                                    label={t("settings.exposure.https_port")}
-                                    placeholder={String(DEFAULT_HTTPS_PORT)}
-                                    description={t("settings.exposure.https_port_hint")}
-                                    dataTestId="project-exposure-https-port"
+                                    label={t("settings.exposure.http_port")}
+                                    placeholder={String(DEFAULT_HTTP_PORT)}
+                                    description={t("settings.exposure.http_port_hint")}
+                                    dataTestId="project-exposure-http-port"
                                     containerClassName="flex-[1_1_200px]"
                                     rules={{ validate: value => isPort(value) || t("settings.exposure.port_invalid") }}
                                 />
-                            )}
-                        </div>
+                                {issuerChoice !== NO_ISSUER && (
+                                    <TextField<ExposureFields>
+                                        name="httpsPort"
+                                        type="number"
+                                        label={t("settings.exposure.https_port")}
+                                        placeholder={String(DEFAULT_HTTPS_PORT)}
+                                        description={t("settings.exposure.https_port_hint")}
+                                        dataTestId="project-exposure-https-port"
+                                        containerClassName="flex-[1_1_200px]"
+                                        rules={{ validate: value => isPort(value) || t("settings.exposure.port_invalid") }}
+                                    />
+                                )}
+                            </div>
+                        </SettingsDetails>
 
                         <div className="flex justify-end">
                             <Button type="submit" loading={isUpdating} loadingLabel={t("common.loading")} dataTestId="project-exposure-save">

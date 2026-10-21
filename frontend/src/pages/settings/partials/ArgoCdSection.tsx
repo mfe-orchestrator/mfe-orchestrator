@@ -6,6 +6,7 @@ import { Button } from "@/components/atoms"
 import useArgoCdApi from "@/hooks/apiClients/useArgoCdApi"
 import { useGitOpsErrorTranslation } from "@/hooks/apiClients/useGitOpsErrorMessage"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import { SettingsDetails } from "./SettingsDetails"
 
 /** Stessa normalizzazione del backend: senza slash finale, cosi si capisce se l'URL e' cambiato */
 const normalizeUrl = (url: string) => url.trim().replace(/\/+$/, "")
@@ -75,6 +76,10 @@ export const ArgoCdSection: React.FC<ArgoCdSectionProps> = ({ projectId }) => {
             </CardHeader>
             {status && (
                 <CardContent className="flex flex-col gap-4 pt-4">
+                    <SettingsDetails summary={t("settings.howItWorks")} dataTestId="argocd-details">
+                        <p>{t("settings.argoCd.details")}</p>
+                    </SettingsDetails>
+
                     <div className="flex flex-col gap-1">
                         <Label htmlFor="argocd-url">{t("settings.argoCd.url")}</Label>
                         <Input id="argocd-url" value={url} placeholder="https://argocd.example.com" disabled={disabled} onChange={event => setUrl(event.target.value)} fullWidth />

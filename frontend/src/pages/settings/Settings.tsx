@@ -1,7 +1,9 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Bot, Database, GitBranch, HardDrive, Key, Server, Users } from "lucide-react"
+import { Bot, Database, FolderCog, GitBranch, HardDrive, Key, Rocket, Server, Settings2, Users } from "lucide-react"
+import React from "react"
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 // Components
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
@@ -17,6 +19,15 @@ import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
 import type { ProjectExposureFormValues } from "./partials/ProjectExposureSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
 
+const TABS = ["general", "access", "resources", "delivery"] as const
+type Tab = (typeof TABS)[number]
+
+const TAB_ICONS: Record<Tab, React.ComponentType> = { general: Settings2, access: Users, resources: FolderCog, delivery: Rocket }
+
+/**
+ * Le impostazioni del progetto, un tema per scheda: i dati e il contesto AI, chi vi accede, le sue risorse, come arriva
+ * nei cluster. La scheda sta nell'URL (`?tab=delivery`) cosi' un link puo' puntare dritto a una di esse.
+ */
 export const Settings: React.FC = () => {
     const notifications = useToastNotificationStore()
     const { t } = useTranslation()
@@ -25,6 +36,10 @@ export const Settings: React.FC = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const gitOpsErrorMessage = useGitOpsErrorMessage()
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const requestedTab = searchParams.get("tab")
+    const tab: Tab = TABS.includes(requestedTab as Tab) ? (requestedTab as Tab) : "general"
 
     const projectQuery = useQuery({
         queryKey: ["project-summary", project._id],
@@ -113,85 +128,115 @@ export const Settings: React.FC = () => {
     return (
         <ApiStatusHandler queries={[projectQuery]}>
             <SinglePageLayout title={t("settings.title")} description={t("settings.subtitle")}>
-                {projectData && <ProjectInfoSection {...projectData} onUpdate={values => updateProjectMutation.mutate(values)} isUpdating={updateProjectMutation.isPending} />}
+                <Tabs value={tab} onValueChange={value => setSearchParams({ tab: value }, { replace: true })}>
+                    <TabsList aria-label={t("settings.tabs.label")}>
+                        {TABS.map(value => {
+                            const Icon = TAB_ICONS[value]
+                            return (
+                                <TabsTrigger key={value} value={value} dataTestId={`settings-tab-${value}`}>
+                                    <Icon />
+                                    {t(`settings.tabs.${value}`)}
+                                </TabsTrigger>
+                            )
+                        })}
+                    </TabsList>
 
-                {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
+                    <TabsContent value="general" className="mt-6 flex flex-col gap-6">
+                        {projectData && <ProjectInfoSection {...projectData} onUpdate={values => updateProjectMutation.mutate(values)} isUpdating={updateProjectMutation.isPending} />}
 
-                {projectData && (
-                    <GitOpsSection
-                        projectId={projectData._id}
-                        projectSlug={projectData.slug}
-                        gitOps={projectData.gitOps}
-                        onUpdate={values => updateGitOpsMutation.mutate(values)}
-                        isUpdating={updateGitOpsMutation.isPending}
-                    />
-                )}
+                        {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
 
-                {projectData && (
-                    <PipelineTemplatesSection
-                        projectId={projectData._id}
-                        pipelines={projectData.pipelines}
-                        onUpdate={values => updatePipelinesMutation.mutate(values)}
-                        isUpdating={updatePipelinesMutation.isPending}
-                    />
-                )}
+                        <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
+                    </TabsContent>
 
-                {/* Argo CD deploya cio che il GitOps salvato committa: senza repository di configurazione non c'e' niente da consegnargli */}
-                {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && (
-                    <ProjectExposureSection exposure={projectData.exposure} onUpdate={values => updateExposureMutation.mutate(values)} isUpdating={updateExposureMutation.isPending} />
-                )}
+                    <TabsContent value="access" className="mt-6">
+                        <ProjectStatsSection
+                            title={t("settings.stats.accessTitle")}
+                            stats={[
+                                {
+                                    icon: <Users />,
+                                    title: t("settings.stats.teamMembers"),
+                                    value: projectQuery.data?.count?.users,
+                                    href: "/project-users"
+                                },
+                                {
+                                    icon: <Key />,
+                                    title: t("settings.stats.apiKeys"),
+                                    value: projectQuery.data?.count?.apiKeys,
+                                    href: "/api-keys"
+                                },
+                                {
+                                    icon: <Bot />,
+                                    title: t("settings.stats.mcpClients"),
+                                    value: "—",
+                                    buttonText: t("settings.stats.manage"),
+                                    href: "/mcp-clients"
+                                }
+                            ]}
+                        />
+                    </TabsContent>
 
-                {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && <ArgoCdSection projectId={projectData._id} />}
+                    <TabsContent value="resources" className="mt-6">
+                        <ProjectStatsSection
+                            title={t("settings.stats.resourcesTitle")}
+                            stats={[
+                                {
+                                    icon: <Server />,
+                                    title: t("settings.stats.environments"),
+                                    value: projectQuery.data?.count?.environments,
+                                    href: "/environments"
+                                },
+                                {
+                                    icon: <GitBranch />,
+                                    title: t("settings.stats.codeRepositories"),
+                                    value: projectQuery.data?.count?.codeRepositories,
+                                    href: "/code-repositories"
+                                },
+                                {
+                                    icon: <HardDrive />,
+                                    title: t("settings.stats.storages"),
+                                    value: projectQuery.data?.count?.storages,
+                                    href: "/storages"
+                                },
+                                {
+                                    icon: <Database />,
+                                    title: t("settings.stats.databases"),
+                                    value: projectQuery.data?.count?.databases,
+                                    href: "/databases"
+                                }
+                            ]}
+                        />
+                    </TabsContent>
 
-                <ProjectStatsSection
-                    stats={[
-                        {
-                            icon: <Server />,
-                            title: t("settings.stats.environments"),
-                            value: projectQuery.data?.count?.environments,
-                            href: "/environments"
-                        },
-                        {
-                            icon: <Users />,
-                            title: t("settings.stats.teamMembers"),
-                            value: projectQuery.data?.count?.users,
-                            href: "/project-users"
-                        },
-                        {
-                            icon: <HardDrive />,
-                            title: t("settings.stats.storages"),
-                            value: projectQuery.data?.count?.storages,
-                            href: "/storages"
-                        },
-                        {
-                            icon: <Database />,
-                            title: t("settings.stats.databases"),
-                            value: projectQuery.data?.count?.databases,
-                            href: "/databases"
-                        },
-                        {
-                            icon: <Key />,
-                            title: t("settings.stats.apiKeys"),
-                            value: projectQuery.data?.count?.apiKeys,
-                            href: "/api-keys"
-                        },
-                        {
-                            icon: <Bot />,
-                            title: t("settings.stats.mcpClients"),
-                            value: "—",
-                            buttonText: t("settings.stats.manage"),
-                            href: "/mcp-clients"
-                        },
-                        {
-                            icon: <GitBranch />,
-                            title: t("settings.stats.codeRepositories"),
-                            value: projectQuery.data?.count?.codeRepositories,
-                            href: "/code-repositories"
-                        }
-                    ]}
-                />
+                    {/* Nell'ordine in cui si configurano: Exposure e Argo CD lavorano su cio' che GitOps committa */}
+                    <TabsContent value="delivery" className="mt-6 flex flex-col gap-6">
+                        {projectData && (
+                            <GitOpsSection
+                                projectId={projectData._id}
+                                projectSlug={projectData.slug}
+                                gitOps={projectData.gitOps}
+                                onUpdate={values => updateGitOpsMutation.mutate(values)}
+                                isUpdating={updateGitOpsMutation.isPending}
+                            />
+                        )}
 
-                <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
+                        {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && (
+                            <ProjectExposureSection exposure={projectData.exposure} onUpdate={values => updateExposureMutation.mutate(values)} isUpdating={updateExposureMutation.isPending} />
+                        )}
+
+                        {/* Argo CD deploya cio che il GitOps salvato committa: senza repository di configurazione non c'e' niente da consegnargli */}
+                        {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && <ArgoCdSection projectId={projectData._id} />}
+
+                        {projectData && (
+                            <PipelineTemplatesSection
+                                projectId={projectData._id}
+                                pipelines={projectData.pipelines}
+                                onUpdate={values => updatePipelinesMutation.mutate(values)}
+                                isUpdating={updatePipelinesMutation.isPending}
+                            />
+                        )}
+                    </TabsContent>
+                </Tabs>
             </SinglePageLayout>
         </ApiStatusHandler>
     )

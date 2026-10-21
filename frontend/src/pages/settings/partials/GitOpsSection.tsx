@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import type { ProjectGitOps, ProjectGitOpsRepository, ProjectUpdateDTO } from "@/hooks/apiClients/useProjectApi"
+import { SettingsDetails } from "./SettingsDetails"
 
 export type GitOpsFormValues = NonNullable<ProjectUpdateDTO["gitOps"]>
 
@@ -199,6 +200,10 @@ export const GitOpsSection: React.FC<GitOpsSectionProps> = ({ projectId, project
                 <CardDescription>{t("settings.gitOps.subtitle")}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 pt-4">
+                <SettingsDetails summary={t("settings.howItWorks")} dataTestId="gitops-details">
+                    <p>{t("settings.gitOps.details")}</p>
+                </SettingsDetails>
+
                 <div className="flex items-center gap-3">
                     <Switch id="gitops-enabled" checked={enabled} disabled={isUpdating} onCheckedChange={setEnabled} />
                     <Label htmlFor="gitops-enabled">{t("settings.gitOps.enabled")}</Label>
