@@ -109,11 +109,6 @@ class ArgoCdClient {
         await this.call(`save the AppProject ${project.metadata.name}`, () => this.api.post("/projects", { project, upsert: true }))
     }
 
-    /** Not validated against the repository: Argo CD reports a source it cannot read in the status of the application instead */
-    async upsertApplication(application: ArgoCdResource): Promise<void> {
-        await this.call(`save the Application ${application.metadata.name}`, () => this.api.post("/applications", application, { params: { upsert: true, validate: false } }))
-    }
-
     /** The Applications of `project` with the labels of `selector` */
     async listApplications(selector: string, project: string): Promise<ArgoCdResource[]> {
         const list = await this.call("list the Applications", () => this.api.get<{ items?: ArgoCdResource[] | null }>("/applications", { params: { selector, projects: project } }))

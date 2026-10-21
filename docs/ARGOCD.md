@@ -35,7 +35,7 @@ project id>`, so two projects with the same slug, in two organizations, never me
 > **Never put a secret in the Helm values.** The applications repository is registered globally, so
 > every AppProject of the Argo CD instance may read it. Secrets belong in the secrets of the project,
 > committed to the configuration repository.
-| Application | `<project>.<environment>.config` | Syncs `namespaces/<environment>.yaml`, `configMaps/<environment>/*.yaml` and `secrets/<environment>/*.yaml` from the default branch of the configuration repository into the namespace of the environment. Automated, with prune and self-heal. |
+| ApplicationSet | `<project>.environments` | Lists the environments of the project. Argo CD makes from it an Application per environment, `<project>.<environment>`, syncing the folder `<environment>/` (its `namespace.yaml`, `configMaps/*.yaml` and `secrets/*.yaml`) from the default branch of the configuration repository into the namespace of the environment. Automated, with prune and self-heal. The environments are listed rather than found in the repository: a git generator would read the configuration repository outside of the AppProject, and it holds the secrets. |
 | ApplicationSet | `<project>.<environment>.applications` | Only with an applications repository. Makes an Application, `<project>.<environment>.app.<application>`, of every `<application>.yaml` at the root of the branch of the environment, installed with `microservice-chart/` of that branch and `../<application>.yaml` as values file. |
 
 Every name fits 63 characters, as Argo CD tracks resources with it in a label: a part that would not fit
@@ -65,8 +65,8 @@ data:
 
 The Namespace manifest the console commits carries
 `argocd.argoproj.io/sync-options: Prune=false,Delete=false`: the applications of the environment run in
-it, and a configuration repository emptied by mistake, or a configuration Application deleted, must not
-take them down with it.
+it, and a configuration repository emptied by mistake, or the Application of an environment deleted, must
+not take them down with it.
 
 ### The applications are never deleted by their ApplicationSet
 
@@ -93,11 +93,14 @@ initialization of a project runs at a time. One that has not saved anything for 
 for dead and the next may start; should the first come back, it stops instead of overwriting what the
 second stored.
 
-- The new environments get their Application and ApplicationSet.
-- Those of the environments that no longer exist are deleted. The configuration Application goes without
-  cascade, so what it deployed stays in the cluster until you remove it. Deleting an ApplicationSet
-  deletes the Applications it generated, through their owner references; their workloads stay, as the
-  generated Applications carry no finalizer.
+- The new environments join the list of `<project>.environments`, and get their ApplicationSet.
+- Those of the environments that no longer exist leave the list, and Argo CD deletes their Application:
+  the ApplicationSet has `preserveResourcesOnDeletion`, so what it deployed stays in the cluster until you
+  remove it. Their ApplicationSet is deleted too, and with it, through their owner references, the
+  Applications it generated; their workloads stay, as the generated Applications carry no finalizer.
+- The Applications an earlier version of the console made itself per environment,
+  `<project>.<environment>.config`, are deleted without cascade: the Applications of
+  `<project>.environments` take their place.
 - The credentials of a repository no longer linked, or linked at another URL, are deleted from Argo CD,
   and its GitLab deploy token is revoked through the connection that created it. A deletion Argo CD
   refuses is remembered, without the credentials, and tried again by the next initialization.

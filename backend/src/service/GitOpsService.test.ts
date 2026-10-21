@@ -256,9 +256,9 @@ describe("GitOpsService.deploy", () => {
         const [message, files] = commit.mock.calls[0]
         expect(message).toBe("Deploy production")
         expect(files.map(file => [file.path, file.action])).toEqual([
-            ["namespaces/production.yaml", "update"],
-            ["configMaps/production/logging.yaml", "update"],
-            ["secrets/production/database.yaml", "update"]
+            ["production/namespace.yaml", "update"],
+            ["production/configMaps/logging.yaml", "update"],
+            ["production/secrets/database.yaml", "update"]
         ])
         expect(parse(files[0].content!)).toMatchObject({ kind: "Namespace", metadata: { name: "production" } })
         expect(commit.mock.invocationCallOrder[0]).toBeLessThan(run.mock.invocationCallOrder[0])
@@ -270,7 +270,7 @@ describe("GitOpsService.deploy", () => {
         await deployOf(development, production)()
 
         expect(commit.mock.calls[0][1].map(file => file.path)).toEqual(
-            expect.arrayContaining(["namespaces/development.yaml", "namespaces/production.yaml", "configMaps/development/logging.yaml", "secrets/production/database.yaml"])
+            expect.arrayContaining(["development/namespace.yaml", "production/namespace.yaml", "development/configMaps/logging.yaml", "production/secrets/database.yaml"])
         )
     })
 
@@ -280,19 +280,21 @@ describe("GitOpsService.deploy", () => {
         await deployOf(production)()
 
         const prune = commit.mock.calls[0][2]!.prune!
-        expect(prune("configMaps/production/old.yaml")).toBe(true)
-        expect(prune("namespaces/production.yaml")).toBe(true)
-        expect(prune("secrets/deleted-env/database.yaml")).toBe(true)
-        expect(prune("namespaces/deleted-env.yaml")).toBe(true)
-        expect(prune("configMaps/development/logging.yaml")).toBe(false)
-        expect(prune("namespaces/development.yaml")).toBe(false)
+        expect(prune("production/configMaps/old.yaml")).toBe(true)
+        expect(prune("production/namespace.yaml")).toBe(true)
+        expect(prune("deleted-env/secrets/database.yaml")).toBe(true)
+        expect(prune("deleted-env/namespace.yaml")).toBe(true)
+        expect(prune("development/configMaps/logging.yaml")).toBe(false)
+        expect(prune("development/namespace.yaml")).toBe(false)
         expect(prune("README.md")).toBe(false)
-        expect(prune("configMaps/production/notes.txt")).toBe(false)
+        expect(prune("production/configMaps/notes.txt")).toBe(false)
+        expect(prune("production/notes.yaml")).toBe(false)
+        expect(prune("production/configMaps/nested/old.yaml")).toBe(false)
     })
 
     it("given a deploy that fails after the commit, when it is run, then the files are committed back and the failure goes on", async () => {
         gitOpsOn()
-        const undo = [{ path: "namespaces/production.yaml", action: "delete" }]
+        const undo = [{ path: "production/namespace.yaml", action: "delete" }]
         commit.mockResolvedValueOnce(undo)
 
         await expect(deployOf(production)(() => Promise.reject(new Error("rollout failed")))).rejects.toThrow("rollout failed")
@@ -325,7 +327,7 @@ describe("GitOpsService.deploy", () => {
         await deployOf(production)(vi.fn())
 
         const [, files] = commit.mock.calls[0]
-        expect(files.map(file => file.path)).toEqual(["namespaces/production.yaml", "configMaps/production/logging.yaml", "secrets/production/database.yaml"])
+        expect(files.map(file => file.path)).toEqual(["production/namespace.yaml", "production/configMaps/logging.yaml", "production/secrets/database.yaml"])
         expect(parse(files[0].content!)).toMatchObject({ kind: "Namespace", metadata: { name: "shop-prod" } })
         expect(parse(files[1].content!).metadata.namespace).toBe("shop-prod")
         expect(parse(files[2].content!).metadata.namespace).toBe("shop-prod")
@@ -351,10 +353,10 @@ describe("GitOpsService.deploy", () => {
 
         const [, files] = commit.mock.calls[0]
         const byPath = Object.fromEntries(files.map(file => [file.path, parse(file.content!)]))
-        expect(byPath["namespaces/DEV.yaml"].metadata.name).toBe("tnb-ai-applications-development")
-        expect(byPath["configMaps/DEV/logging.yaml"].metadata.namespace).toBe("tnb-ai-applications-development")
-        expect(byPath["namespaces/PROD.yaml"].metadata.name).toBe("prod")
-        expect(byPath["secrets/PROD/database.yaml"].metadata.namespace).toBe("prod")
+        expect(byPath["DEV/namespace.yaml"].metadata.name).toBe("tnb-ai-applications-development")
+        expect(byPath["DEV/configMaps/logging.yaml"].metadata.namespace).toBe("tnb-ai-applications-development")
+        expect(byPath["PROD/namespace.yaml"].metadata.name).toBe("prod")
+        expect(byPath["PROD/secrets/database.yaml"].metadata.namespace).toBe("prod")
     })
 
     it("given an environment namespace that is not a DNS label, when it is deployed, then it is refused before anything is committed", async () => {
@@ -440,7 +442,7 @@ describe("GitOpsService.deploy", () => {
         })
 
         it("given a deploy that fails, when both repositories were pushed, then the applications branches are reverted before the configuration", async () => {
-            const configurationUndo = [{ path: "namespaces/production.yaml", action: "delete" }]
+            const configurationUndo = [{ path: "production/namespace.yaml", action: "delete" }]
             const applicationsUndo = [{ path: "orders-api.yaml", action: "delete" }]
             commit.mockResolvedValueOnce(configurationUndo)
             applicationsCommit.mockResolvedValueOnce(applicationsUndo)

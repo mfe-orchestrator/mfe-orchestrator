@@ -11,7 +11,7 @@ import Project, { IArgoCdError, IArgoCdRepositoryCredential, IArgoCdRepositoryRe
 import { toObjectId } from "../utils/mongooseUtils"
 import { SECRET_PLACEHOLDER } from "../utils/secretCrypto"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import GitOpsService, { environmentManifestsGlob, environmentNamespace, environmentSlug } from "./GitOpsService"
+import GitOpsService, { environmentNamespace, environmentSlug } from "./GitOpsService"
 import { appProjectName, buildArgoCdState, COMPONENT_LABEL, PROJECT_ID_LABEL } from "./gitops/argoCdManifests"
 import { repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
 import { cloneUrlFor, gitCredentialsFor } from "./workspace/RepositoryWorkspaceService"
@@ -160,8 +160,8 @@ const tokenRequired = () =>
 /**
  * Hands the GitOps repositories of a project to an Argo CD instance that runs on another cluster, through its
  * API: the credentials to read them, an AppProject confining the project to them and to the namespaces of its
- * environments, and per environment the Application of the manifests and the ApplicationSet of the
- * applications. Running it again re-aligns Argo CD with the project: the environments added since get theirs,
+ * environments, the ApplicationSet Argo CD makes the Application of each environment from, and per
+ * environment the ApplicationSet of the applications. Running it again re-aligns Argo CD with the project: the environments added since get theirs,
  * those deleted lose theirs, the deploy tokens of GitLab are rotated and the credentials of a repository no
  * longer linked are withdrawn.
  *
@@ -208,8 +208,7 @@ export class ArgoCdService extends BaseAuthorizedService {
         // An environment whose slug or namespace Kubernetes refuses stops the run before anything is written
         const environments = (await Environment.find({ projectId: projectIdObj }, { slug: 1, namespace: 1 })).map(environment => ({
             slug: environmentSlug(environment),
-            namespace: environmentNamespace(environment),
-            manifestsGlob: environmentManifestsGlob(environment)
+            namespace: environmentNamespace(environment)
         }))
 
         const lease: Lease = { at: new Date() }
@@ -258,9 +257,10 @@ export class ArgoCdService extends BaseAuthorizedService {
                 const probe = <T>(request: Promise<T>, conflict: () => BusinessException) =>
                     request.catch(error => Promise.reject(error instanceof BusinessException && error.code === "ARGOCD_FORBIDDEN" ? conflict() : error))
                 if (!isOurs(await probe(client.getProject(projectName), () => nameConflict("AppProject", projectName)))) throw nameConflict("AppProject", projectName)
-                for (const { metadata } of state.applications) {
-                    const conflict = () => nameConflict("Application", metadata.name)
-                    if (!isOurs(await probe(client.getApplication(metadata.name, projectName), conflict))) throw conflict()
+                // Argo CD makes the Applications of the environments: one of the same name already there would not be its own
+                for (const name of state.environmentApplications) {
+                    const conflict = () => nameConflict("Application", name)
+                    if (!isOurs(await probe(client.getApplication(name, projectName), conflict))) throw conflict()
                 }
                 for (const { metadata } of state.applicationSets) {
                     const conflict = () => nameConflict("ApplicationSet", metadata.name)
@@ -331,17 +331,18 @@ export class ArgoCdService extends BaseAuthorizedService {
                 deletions = [...retried, ...undeleted]
                 await save({ ...previous, url, token, repositories })
 
-                for (const application of state.applications) await client.upsertApplication(application)
                 for (const applicationSet of state.applicationSets) await client.upsertApplicationSet(applicationSet)
 
                 // What the console created for an environment that is gone, or a repository no longer linked. The
-                // applications an ApplicationSet generated are left to it: they carry the label of the project too
-                const kept = new Set([...state.applications, ...state.applicationSets].map(resource => resource.metadata.name))
+                // applications an ApplicationSet generated are left to it: they carry the label of the project too.
+                // The console makes no Application itself any more: those an earlier initialization made per
+                // environment go, the ApplicationSet of the environments makes them again
+                const kept = new Set(state.applicationSets.map(resource => resource.metadata.name))
                 const selector = `${PROJECT_ID_LABEL}=${projectIdObj}`
                 for (const application of await client.listApplications(`${selector},${COMPONENT_LABEL}=configuration`, projectName)) {
-                    if (!kept.has(application.metadata.name) && projectOf(application) === projectName) await client.deleteApplication(application.metadata.name)
+                    if (projectOf(application) === projectName) await client.deleteApplication(application.metadata.name)
                 }
-                for (const applicationSet of await client.listApplicationSets(`${selector},${COMPONENT_LABEL}=applications`, projectName)) {
+                for (const applicationSet of await client.listApplicationSets(selector, projectName)) {
                     if (!kept.has(applicationSet.metadata.name) && projectOf({ ...applicationSet, kind: "ApplicationSet" }) === projectName)
                         await client.deleteApplicationSet(applicationSet.metadata.name)
                 }

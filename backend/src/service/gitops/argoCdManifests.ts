@@ -3,10 +3,10 @@ import { APPLICATIONS_CHART_FOLDER } from "./applicationManifests"
 
 /**
  * What Argo CD is given to deploy the GitOps repositories of a project: an AppProject that confines it to
- * them and to the namespaces of its environments, then per environment an Application syncing the
- * manifests of the configuration repository and an ApplicationSet making an Application of every values
- * file on the branch of the environment in the applications repository. Every environment deploys to the
- * cluster Argo CD runs in.
+ * them and to the namespaces of its environments, an ApplicationSet from which Argo CD makes an Application
+ * per environment syncing its folder of the configuration repository, then per environment an
+ * ApplicationSet making an Application of every values file on the branch of the environment in the
+ * applications repository. Every environment deploys to the cluster Argo CD runs in.
  */
 
 /** The cluster Argo CD runs in, as Argo CD names it */
@@ -17,7 +17,10 @@ export const MANAGED_BY = "mfe-orchestrator"
 /** What the console finds its own objects by, and tells them from those of a project with the same slug */
 export const PROJECT_ID_LABEL = "mfe-orchestrator/project-id"
 export const ENVIRONMENT_LABEL = "mfe-orchestrator/environment"
-/** `configuration` for the Application of the manifests, `applications` for the ApplicationSet, `application` for what it generates */
+/**
+ * `configuration` for the ApplicationSet of the environments, `environment` for what it generates;
+ * `applications` for the ApplicationSet of an environment, `application` for what that one generates
+ */
 export const COMPONENT_LABEL = "mfe-orchestrator/component"
 
 const NAME_MAX_LENGTH = 63
@@ -44,25 +47,26 @@ const bounded = (value: string, max: number) => (value.length <= max ? value : `
 
 /**
  * The names are made of dot-separated parts, and no part holds a dot: the project, with a hash of its id so
- * that `shop-eu` and `shop` never meet, then the environment, then what the object is. The configuration
- * Application ends in `.config`, the generated applications in `.app.<slug>`: a service named `config` does
- * not take the name of the Application that owns the namespace. Every name fits 63 characters, as Argo CD
- * tracks resources with the name in a label value.
+ * that `shop-eu` and `shop` never meet, then the environment, then what the object is. The Application of an
+ * environment is the environment itself, the generated applications end in `.app.<slug>`: no service takes
+ * the name of the Application that owns the namespace. Every name fits 63 characters, as Argo CD tracks
+ * resources with the name in a label value.
  */
 export const appProjectName = (projectId: string, projectSlug: string) => `${bounded(dnsPart(`mfe-${projectSlug}`), PROJECT_PREFIX_MAX_LENGTH - HASH_LENGTH - 1)}-${hashOf(projectId)}`
 
 const environmentPrefix = (projectId: string, projectSlug: string, environmentSlug: string) =>
     bounded(`${appProjectName(projectId, projectSlug)}.${dnsPart(environmentSlug)}`, ENVIRONMENT_PREFIX_MAX_LENGTH)
 
-export const configurationApplicationName = (projectId: string, projectSlug: string, environmentSlug: string) => `${environmentPrefix(projectId, projectSlug, environmentSlug)}.config`
+export const environmentApplicationName = environmentPrefix
+
+export const environmentsApplicationSetName = (projectId: string, projectSlug: string) => `${appProjectName(projectId, projectSlug)}.environments`
 
 export const applicationSetName = (projectId: string, projectSlug: string, environmentSlug: string) => `${environmentPrefix(projectId, projectSlug, environmentSlug)}.applications`
 
 export interface ArgoCdEnvironment {
+    /** The folder of the environment in the configuration repository, and its branch in the applications one */
     slug: string
     namespace: string
-    /** The manifests of the environment in the configuration repository, as a glob */
-    manifestsGlob: string
 }
 
 export interface ArgoCdProjectTarget {
@@ -95,19 +99,43 @@ export const buildAppProject = (target: ArgoCdProjectTarget) => ({
     }
 })
 
-/** The Application of the Namespace, the config maps and the secrets of one environment, from the default branch of the configuration repository */
-export const buildConfigurationApplication = (target: ArgoCdProjectTarget & { configurationRepoUrl: string }, environment: ArgoCdEnvironment) => ({
+/**
+ * The ApplicationSet of the environments: Argo CD makes from it an Application per environment, syncing the
+ * folder of the environment on the default branch of the configuration repository (its Namespace, config
+ * maps and secrets) into its namespace. The environments are listed here, not found in the repository: a
+ * git generator would read the repository outside of the AppProject, and it holds the secrets.
+ *
+ * An environment left out of the list loses its Application, never what it deployed: the Namespace refuses
+ * deletion anyway, and the config maps and the secrets stay for the applications running there.
+ */
+export const buildEnvironmentsApplicationSet = (target: ArgoCdProjectTarget & { configurationRepoUrl: string }) => ({
     apiVersion: "argoproj.io/v1alpha1",
-    kind: "Application",
-    metadata: {
-        name: configurationApplicationName(target.projectId, target.projectSlug, environment.slug),
-        labels: labels(target.projectId, { [ENVIRONMENT_LABEL]: environment.slug, [COMPONENT_LABEL]: "configuration" })
-    },
+    kind: "ApplicationSet",
+    metadata: { name: environmentsApplicationSetName(target.projectId, target.projectSlug), labels: labels(target.projectId, { [COMPONENT_LABEL]: "configuration" }) },
     spec: {
-        project: appProjectName(target.projectId, target.projectSlug),
-        source: { repoURL: target.configurationRepoUrl, targetRevision: "HEAD", path: ".", directory: { recurse: true, include: environment.manifestsGlob } },
-        destination: { server: IN_CLUSTER_SERVER, namespace: environment.namespace },
-        syncPolicy: { automated: AUTOMATED_SYNC }
+        goTemplate: true,
+        goTemplateOptions: ["missingkey=error"],
+        generators: [
+            {
+                list: {
+                    elements: target.environments.map(environment => ({
+                        name: environmentApplicationName(target.projectId, target.projectSlug, environment.slug),
+                        slug: environment.slug,
+                        namespace: environment.namespace
+                    }))
+                }
+            }
+        ],
+        syncPolicy: { preserveResourcesOnDeletion: true },
+        template: {
+            metadata: { name: "{{ .name }}", labels: labels(target.projectId, { [ENVIRONMENT_LABEL]: "{{ .slug }}", [COMPONENT_LABEL]: "environment" }) },
+            spec: {
+                project: appProjectName(target.projectId, target.projectSlug),
+                source: { repoURL: target.configurationRepoUrl, targetRevision: "HEAD", path: "{{ .slug }}", directory: { recurse: true } },
+                destination: { server: IN_CLUSTER_SERVER, namespace: "{{ .namespace }}" },
+                syncPolicy: { automated: AUTOMATED_SYNC }
+            }
+        }
     }
 })
 
@@ -160,14 +188,18 @@ export const buildApplicationSet = (target: ArgoCdProjectTarget & { applications
 })
 
 /**
- * Everything Argo CD should hold for the project. An Application of the manifests only when there is a
- * configuration repository, an ApplicationSet only when there is an applications one.
+ * Everything Argo CD should hold for the project: the ApplicationSet of the environments when there is a
+ * configuration repository, one per environment when there is an applications one. `environmentApplications`
+ * are the names Argo CD will give the Applications of the environments.
  */
 export const buildArgoCdState = (target: ArgoCdProjectTarget) => {
     const { configurationRepoUrl, applicationsRepoUrl } = target
     return {
         appProject: buildAppProject(target),
-        applications: configurationRepoUrl ? target.environments.map(environment => buildConfigurationApplication({ ...target, configurationRepoUrl }, environment)) : [],
-        applicationSets: applicationsRepoUrl ? target.environments.map(environment => buildApplicationSet({ ...target, applicationsRepoUrl }, environment)) : []
+        environmentApplications: configurationRepoUrl ? target.environments.map(environment => environmentApplicationName(target.projectId, target.projectSlug, environment.slug)) : [],
+        applicationSets: [
+            ...(configurationRepoUrl ? [buildEnvironmentsApplicationSet({ ...target, configurationRepoUrl })] : []),
+            ...(applicationsRepoUrl ? target.environments.map(environment => buildApplicationSet({ ...target, applicationsRepoUrl }, environment)) : [])
+        ]
     }
 }

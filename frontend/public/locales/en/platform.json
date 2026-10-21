@@ -216,7 +216,7 @@
         },
         "gitOps": {
             "title": "GitOps for environments, config maps and secrets",
-            "subtitle": "Nothing is committed when you save config maps, secrets or environments: each Deploy commits what it ships. To the configuration repository, on the default branch: namespaces/<environment>.yaml, configMaps/<environment>/<name>.yaml and secrets/<environment>/<name>.yaml. Optionally, to the applications repository: one branch per environment with a Helm values file for every service and frontend that has an image and a version, plus a shared Helm chart in microservice-chart/, written only when missing so you can customize it.",
+            "subtitle": "Nothing is committed when you save config maps, secrets or environments: each Deploy commits what it ships. To the configuration repository, on the default branch: <environment>/namespace.yaml, <environment>/configMaps/<name>.yaml and <environment>/secrets/<name>.yaml. Optionally, to the applications repository: one branch per environment with a Helm values file for every service and frontend that has an image and a version, plus a shared Helm chart in microservice-chart/, written only when missing so you can customize it.",
             "enabled": "Commit to a repository on every Deploy",
             "connection": "Connection",
             "connectionPlaceholder": "Pick a connection",
@@ -251,7 +251,7 @@
         },
         "argoCd": {
             "title": "Argo CD",
-            "subtitle": "Hands the GitOps repositories to Argo CD, which runs on another cluster and is reached through its API: it creates an AppProject for the project, read-only credentials for the repositories and, for each environment, an Application for namespace, config maps and secrets and an ApplicationSet for the applications. Environments are deployed to the cluster of Argo CD.",
+            "subtitle": "Hands the GitOps repositories to Argo CD, which runs on another cluster and is reached through its API: it creates an AppProject for the project, read-only credentials for the repositories an ApplicationSet from which Argo CD makes one Application per environment, syncing the folder of the environment (namespace, config maps and secrets) from the configuration repository, and, for each environment, an ApplicationSet for the applications. Environments are deployed to the cluster of Argo CD.",
             "url": "Argo CD URL",
             "token": "Argo CD API token",
             "tokenHint": "The token of the orchestrator account (argocd account generate-token --account orchestrator). It is stored encrypted and must be entered again if you change the URL.",
