@@ -279,7 +279,14 @@
   "277": "DeploymentController.ts",
   "278": "readOAuthResume",
   "279": "AssistantMessageText.tsx",
+  "280": "CodeRepositoryService.test.ts",
+  "281": "GitWorkingCopy.ts",
+  "282": "AzureStorageClient",
   "283": "account_activation",
+  "284": ".planGlobalVariablesFor",
   "285": "curl",
-  "286": "roles"
+  "286": "roles",
+  "287": "setup",
+  "288": "[3.0.0] - 2026-08-16",
+  "289": "[3.1.0] - 2026-08-16"
 }

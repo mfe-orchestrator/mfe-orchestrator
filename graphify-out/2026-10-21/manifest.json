@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792564136.8727753,
-    "ast_hash": "1ecb0f6327789d66e52fc337ad06756f",
+    "mtime": 1792564436.1601558,
+    "ast_hash": "96133066a1467e401977ef12c2c27910",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792564136.874702,
-    "ast_hash": "cc5cef2552600a2449ad9c95b62b959c",
+    "mtime": 1792564436.1637995,
+    "ast_hash": "8bde81ab7eb11aa91c1abc56436fb12d",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -2935,8 +2935,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/new-project-wizard/pages/ProjectDraftAssistant.tsx": {
-    "mtime": 1792562505.5960069,
-    "ast_hash": "02472c870213d1ddea5f07e7a05202d8",
+    "mtime": 1792564436.1560361,
+    "ast_hash": "d26c7d344f39570298c38ce4f90ca437",
     "semantic_hash": ""
   },
   "frontend/src/pages/oauth/OAuthConsent.tsx": {
@@ -3280,8 +3280,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AssistantJobThread.tsx": {
-    "mtime": 1792562772.4764316,
-    "ast_hash": "29f8357cd3fc9f8740f0bab7dea4ecf0",
+    "mtime": 1792564436.1213696,
+    "ast_hash": "9c33e3e3cf665ec5bc0ca1902a7c87fc",
     "semantic_hash": ""
   },
   "frontend/src/components/assistant/AssistantNewJobDialog.tsx": {
@@ -4210,8 +4210,8 @@
     "semantic_hash": ""
   },
   "frontend/src/hooks/apiClients/useAiModelsApi.ts": {
-    "mtime": 1792564136.7608716,
-    "ast_hash": "746cc84210da6c359a1ff46a71f8dd9c",
+    "mtime": 1792564436.1571863,
+    "ast_hash": "e821dc063304f125296531399945d5c5",
     "semantic_hash": ""
   },
   "frontend/src/pages/organization-users/partials/AiModelFormDialog.tsx": {
