@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792608296.6699972,
-    "ast_hash": "fd0401a0b07c9f130d248649a86e22c8",
+    "mtime": 1792608761.6970212,
+    "ast_hash": "37578522ea7ac94cf99fa973937e5b59",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792608296.6721284,
-    "ast_hash": "b5d0b1d8be78e3dd81be8172e963c147",
+    "mtime": 1792608761.699481,
+    "ast_hash": "3b75df7eff3db2cfea47f7148cedaebc",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -1105,8 +1105,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/environments/Environments.tsx": {
-    "mtime": 1792608097.3176615,
-    "ast_hash": "24192712a346691d2f6a0bbcda58045d",
+    "mtime": 1792608761.694594,
+    "ast_hash": "cbe145bd618703ad976ee36d4b9f6250",
     "semantic_hash": ""
   },
   "frontend/src/pages/environments/partials/EnvironmentList.tsx": {
