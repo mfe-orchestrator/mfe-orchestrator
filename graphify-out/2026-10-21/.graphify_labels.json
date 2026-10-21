@@ -301,6 +301,7 @@
   "300": "start-redis.sh",
   "301": "RouteWithSuspense.tsx",
   "302": "readOAuthResume",
-  "303": "account_activation",
-  "304": "start.sh"
+  "304": "start.sh",
+  "305": "start-redis.sh",
+  "306": "start.sh"
 }
