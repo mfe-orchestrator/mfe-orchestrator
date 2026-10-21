@@ -39,7 +39,6 @@
         "prop-types": "^15.8.1",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
-        "react-force-graph-2d": "^1.29.2",
         "react-gravatar": "^2.6.3",
         "react-helmet-async": "^3.0.0",
         "react-hook-form": "^7.90.0",
