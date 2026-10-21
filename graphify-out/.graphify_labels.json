@@ -291,13 +291,20 @@
   "289": "roles",
   "290": "projectWizardStateMachine.ts",
   "291": "TelemetryService",
+  "292": "notifications",
   "293": "environmentSlug",
+  "294": "connectionTest.ts",
   "295": "manifest.json",
   "296": "projectContext",
+  "297": "BuildController.ts",
   "298": "main",
   "299": "start-mongod.sh",
   "300": "start-redis.sh",
+  "301": "actions",
+  "302": "microfrontend_card",
+  "303": "columns",
   "304": "start.sh",
   "305": "start-redis.sh",
-  "306": "start.sh"
+  "306": "start.sh",
+  "307": "service_card"
 }
