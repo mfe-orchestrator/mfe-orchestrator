@@ -35,22 +35,23 @@ const PROJECT_NAME = appProjectName(projectId, "shop")
 const DNS_NAME = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/
 
 describe("names", () => {
-    it("given a project, when its AppProject is named, then it is the slug and a hash of the id, without dots", () => {
-        expect(PROJECT_NAME).toMatch(/^mfe-shop-[0-9a-f]{6}$/)
+    it("given a project, when its AppProject is named, then it is the slug and a hash of the id", () => {
+        expect(PROJECT_NAME).toMatch(/^shop-[0-9a-f]{6}$/)
     })
 
-    it("given an environment, when its objects are named, then the parts are separated by dots", () => {
-        expect(environmentApplicationName(projectId, "shop", "production")).toBe(`${PROJECT_NAME}.production`)
-        expect(environmentsApplicationSetName(projectId, "shop")).toBe(`${PROJECT_NAME}.environments`)
-        expect(applicationSetName(projectId, "shop", "orders")).toBe(`${PROJECT_NAME}.orders`)
-        expect(applicationName(projectId, "shop", "orders", "production")).toBe(`${PROJECT_NAME}.orders-production`)
+    it("given an environment, when its objects are named, then they are the project slug, the parts and the hash of the project", () => {
+        const hash = PROJECT_NAME.slice(-6)
+
+        expect(environmentApplicationName(projectId, "shop", "production")).toBe(`shop-production-${hash}`)
+        expect(environmentsApplicationSetName(projectId, "shop")).toBe(`shop-environments-${hash}`)
+        expect(applicationSetName(projectId, "shop", "orders")).toBe(`shop-orders-${hash}`)
+        expect(applicationName(projectId, "shop", "orders", "production")).toBe(`shop-orders-production-${hash}`)
     })
 
     it("given two projects whose slug and environment join the same way, when they are named, then the names differ", () => {
         const other = "64b000000000000000000002"
 
         expect(environmentApplicationName(projectId, "shop-eu", "prod")).not.toBe(environmentApplicationName(other, "shop", "eu-prod"))
-        expect(environmentApplicationName(projectId, "shop-eu", "prod")).not.toBe(environmentApplicationName(projectId, "shop", "eu-prod"))
     })
 
     it("given slugs with characters Kubernetes refuses or too long, when they are named, then the names are valid and fit 63", () => {
@@ -224,10 +225,12 @@ describe("buildArgoCdState", () => {
         const state = buildArgoCdState({ ...target, environments: [{ slug: "DEV", namespace: "dev" }], applications: ["orders"], applicationBranches: ["DEV"] })
         const [environments, orders] = state.applicationSets
 
-        expect(state.environmentApplications).toEqual([`${PROJECT_NAME}.dev`])
-        expect((environments.spec.generators[0] as { list?: { elements: unknown } }).list?.elements).toEqual([{ name: `${PROJECT_NAME}.dev`, slug: "DEV", namespace: "dev" }])
+        expect(state.environmentApplications).toEqual([environmentApplicationName(projectId, "shop", "dev")])
+        expect((environments.spec.generators[0] as { list?: { elements: unknown } }).list?.elements).toEqual([
+            { name: environmentApplicationName(projectId, "shop", "dev"), slug: "DEV", namespace: "dev" }
+        ])
         expect(environmentsOf(orders)).toEqual(["DEV"])
-        expect(state.applications).toEqual([`${PROJECT_NAME}.orders-dev`])
+        expect(state.applications).toEqual([applicationName(projectId, "shop", "orders", "dev")])
     })
 
     it("given no configuration repository, when the state is built, then there is no ApplicationSet of the environments", () => {

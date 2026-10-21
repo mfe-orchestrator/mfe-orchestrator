@@ -27,10 +27,6 @@ export const COMPONENT_LABEL = "mfe-orchestrator/component"
 
 const NAME_MAX_LENGTH = 63
 const HASH_LENGTH = 6
-/** The AppProject, and the start of every name: `mfe-<project slug>-<hash of the project id>` */
-const PROJECT_PREFIX_MAX_LENGTH = 24
-/** `<project prefix>.<environment slug>`, the start of the names of an environment */
-const ENVIRONMENT_PREFIX_MAX_LENGTH = 32
 
 const hashOf = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, HASH_LENGTH)
 
@@ -46,26 +42,25 @@ const dnsPart = (value: string) =>
 const bounded = (value: string, max: number) => (value.length <= max ? value : `${value.slice(0, max - HASH_LENGTH - 1).replace(/[-.]+$/, "")}-${hashOf(value)}`)
 
 /**
- * The names are made of dot-separated parts, and no part holds a dot: the project, with a hash of its id so
- * that `shop-eu` and `shop` never meet, then the environment or the application. The Application of an
- * environment is the environment itself, the ApplicationSet of a service or frontend is its slug, and what it
- * generates is `<slug>-<environment>`. Every name fits 63 characters, as Argo CD tracks resources with the name
- * in a label value.
+ * Every name is `<project slug>-<parts>-<hash of the project id>`, the AppProject `<project slug>-<hash>`: the hash keeps the projects apart, `shop-eu`
+ * and `shop` never meet. The Application of an environment is `<project slug>-<environment>-<hash>`, the
+ * ApplicationSet of a service or frontend `<project slug>-<slug>-<hash>`, and what it generates
+ * `<project slug>-<slug>-<environment>-<hash>`. Two objects of the same project that would meet are refused by
+ * clashingName. Every name fits 63 characters, as Argo CD tracks resources with the name in a label value.
  */
-export const appProjectName = (projectId: string, projectSlug: string) => `${bounded(dnsPart(`mfe-${projectSlug}`), PROJECT_PREFIX_MAX_LENGTH - HASH_LENGTH - 1)}-${hashOf(projectId)}`
+const scopedName = (projectId: string, projectSlug: string, ...parts: string[]) => `${bounded(dnsPart([projectSlug, ...parts].join("-")), NAME_MAX_LENGTH - HASH_LENGTH - 1)}-${hashOf(projectId)}`
 
-const environmentPrefix = (projectId: string, projectSlug: string, environmentSlug: string) =>
-    bounded(`${appProjectName(projectId, projectSlug)}.${dnsPart(environmentSlug)}`, ENVIRONMENT_PREFIX_MAX_LENGTH)
+/** The AppProject, and the Gateway of every environment: `<project slug>-<hash>` */
+export const appProjectName = (projectId: string, projectSlug: string) => scopedName(projectId, projectSlug)
 
-export const environmentApplicationName = environmentPrefix
+export const environmentApplicationName = (projectId: string, projectSlug: string, environmentSlug: string) => scopedName(projectId, projectSlug, environmentSlug)
 
-export const environmentsApplicationSetName = (projectId: string, projectSlug: string) => `${appProjectName(projectId, projectSlug)}.environments`
+export const environmentsApplicationSetName = (projectId: string, projectSlug: string) => scopedName(projectId, projectSlug, "environments")
 
-export const applicationSetName = (projectId: string, projectSlug: string, applicationSlug: string) => bounded(`${appProjectName(projectId, projectSlug)}.${dnsPart(applicationSlug)}`, NAME_MAX_LENGTH)
+export const applicationSetName = (projectId: string, projectSlug: string, applicationSlug: string) => scopedName(projectId, projectSlug, applicationSlug)
 
-/** The Application of a service or frontend in one environment: `<project prefix>.<application>-<environment>` */
-export const applicationName = (projectId: string, projectSlug: string, applicationSlug: string, environmentSlug: string) =>
-    bounded(`${appProjectName(projectId, projectSlug)}.${dnsPart(applicationSlug)}-${dnsPart(environmentSlug)}`, NAME_MAX_LENGTH)
+/** The Application of a service or frontend in one environment: `<project slug>-<application>-<environment>-<hash>` */
+export const applicationName = (projectId: string, projectSlug: string, applicationSlug: string, environmentSlug: string) => scopedName(projectId, projectSlug, applicationSlug, environmentSlug)
 
 /** A slug as a label value takes it */
 const labelValue = (slug: string) => bounded(dnsPart(slug), NAME_MAX_LENGTH)
