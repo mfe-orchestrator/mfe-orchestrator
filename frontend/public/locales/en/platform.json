@@ -249,6 +249,44 @@
                 "repository_name_taken": "A repository with this name already exists at the provider, maybe left by a failed attempt: pick it from the list or choose another name"
             }
         },
+        "argoCd": {
+            "title": "Argo CD",
+            "subtitle": "Hands the GitOps repositories to Argo CD, which runs on another cluster and is reached through its API: it creates an AppProject for the project, read-only credentials for the repositories and, for each environment, an Application for namespace, config maps and secrets and an ApplicationSet for the applications. Environments are deployed to the cluster of Argo CD.",
+            "url": "Argo CD URL",
+            "token": "Argo CD API token",
+            "tokenHint": "The token of the orchestrator account (argocd account generate-token --account orchestrator). It is stored encrypted and must be entered again if you change the URL.",
+            "unchanged": "Unchanged",
+            "repositoryToken": "Read-only repository token",
+            "repositoryTokenHint": "GitHub and Azure DevOps do not allow creating one through their API: paste a token that can read the GitOps repositories, used for every one that is not on GitLab. For GitLab the console creates a deploy token itself and rotates it on every initialization.",
+            "repositoryTokenProviderHint": {
+                "GITHUB": "GitHub: a fine-grained personal access token with Contents: Read-only on the two repositories.",
+                "AZURE_DEV_OPS": "Azure DevOps: a personal access token with Code: Read."
+            },
+            "initialize": "Initialize Argo CD",
+            "realign": "Re-align Argo CD",
+            "initialized": "Argo CD aligned with the project",
+            "initializedAt": "Last initialization: {{date}}",
+            "lastErrorTitle": "The last initialization failed",
+            "realignHint": "After adding or deleting an environment, or changing the GitOps repositories, re-align Argo CD: nothing is updated on its own.",
+            "errors": {
+                "gitops_required": "Turn GitOps on and save the configuration repository before initializing Argo CD",
+                "url_invalid": "The Argo CD URL must be an http or https address, such as https://argocd.example.com",
+                "token_required": "Enter the Argo CD API token: it must be entered again whenever the URL changes",
+                "repository_token_required": "Enter a read-only token Argo CD can clone {{repository}} with",
+                "unreachable": "Argo CD cannot be reached at {{url}} ({{reason}}): check the URL and that the orchestrator cluster can reach the Argo CD API",
+                "tls_untrusted": "The certificate of Argo CD at {{url}} is not trusted ({{reason}}): use a certificate of a trusted authority or add its CA to NODE_EXTRA_CA_CERTS of the orchestrator",
+                "unauthorized": "Argo CD at {{url}} does not accept the token: check that it is an API token of the orchestrator account and that it has not expired or been revoked",
+                "forbidden": "The account of the token lacks the permissions it needs on Argo CD: grant it role:orchestrator in argocd-rbac-cm (see docs/ARGOCD.md)",
+                "request_failed": "Argo CD refused the request ({{reason}})",
+                "name_conflict": "Argo CD already has an object {{name}} this project did not create, or one the account of the token may not read: rename or delete it, then try again",
+                "deploy_token_failed": "GitLab did not create the deploy token of {{repository}} ({{reason}}): the token of the connection needs the Maintainer role on the project and the api scope",
+                "url_insecure": "The Argo CD URL must be https: the token and the repository credentials would travel in the clear. For a local cluster only, the installation can allow http with ARGOCD_ALLOW_INSECURE_HTTP=true",
+                "repository_conflict": "Argo CD already has the repository {{repository}} registered, and not by this project: remove it from Argo CD, then try again",
+                "busy": "Argo CD is already being initialized for this project: try again in a moment",
+                "lease_lost": "Another Argo CD initialization took over this project while this one ran: check its outcome and initialize again if needed"
+            },
+            "ownerOnly": "Only an owner of the project or an administrator of its organization can initialize Argo CD."
+        },
         "dangerZone": {
             "title": "Danger Zone",
             "subtitle": "These actions are irreversible. Please be certain.",

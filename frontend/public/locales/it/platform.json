@@ -250,6 +250,44 @@
                 "repository_name_taken": "Esiste già un repository con questo nome sul provider, forse lasciato da un tentativo fallito: sceglilo dall'elenco o scegli un altro nome"
             }
         },
+        "argoCd": {
+            "title": "Argo CD",
+            "subtitle": "Consegna i repository GitOps ad Argo CD, che gira su un altro cluster e si raggiunge dalla sua API: crea un AppProject del progetto, le credenziali in sola lettura dei repository e, per ogni ambiente, un'Application per namespace, config map e secret e un ApplicationSet per le applicazioni. Gli ambienti vengono deployati nel cluster di Argo CD.",
+            "url": "URL di Argo CD",
+            "token": "Token API di Argo CD",
+            "tokenHint": "Il token dell'account orchestrator (argocd account generate-token --account orchestrator). Viene salvato cifrato e va reinserito se cambi l'URL.",
+            "unchanged": "Invariato",
+            "repositoryToken": "Token in sola lettura dei repository",
+            "repositoryTokenHint": "GitHub e Azure DevOps non permettono di crearne uno via API: incolla un token che legga i repository GitOps, usato per tutti quelli che non sono su GitLab. Per GitLab la console crea da sola un deploy token e lo ruota a ogni inizializzazione.",
+            "repositoryTokenProviderHint": {
+                "GITHUB": "GitHub: un fine-grained personal access token con Contents: Read-only sui due repository.",
+                "AZURE_DEV_OPS": "Azure DevOps: un personal access token con Code: Read."
+            },
+            "initialize": "Inizializza Argo CD",
+            "realign": "Riallinea Argo CD",
+            "initialized": "Argo CD allineato al progetto",
+            "initializedAt": "Ultima inizializzazione: {{date}}",
+            "lastErrorTitle": "L'ultima inizializzazione non è andata a buon fine",
+            "realignHint": "Dopo aver aggiunto o eliminato un ambiente, o cambiato i repository GitOps, riallinea Argo CD: niente viene aggiornato da solo.",
+            "errors": {
+                "gitops_required": "Attiva il GitOps e salva il repository di configurazione prima di inizializzare Argo CD",
+                "url_invalid": "L'URL di Argo CD deve essere un indirizzo http o https, ad esempio https://argocd.example.com",
+                "token_required": "Inserisci il token API di Argo CD: va reinserito ogni volta che cambi l'URL",
+                "repository_token_required": "Inserisci un token in sola lettura con cui Argo CD possa clonare {{repository}}",
+                "unreachable": "Argo CD non è raggiungibile su {{url}} ({{reason}}): verifica l'URL e che il cluster dell'orchestrator possa raggiungere l'API di Argo CD",
+                "tls_untrusted": "Il certificato di Argo CD su {{url}} non è attendibile ({{reason}}): usa un certificato di un'autorità riconosciuta o aggiungi la sua CA a NODE_EXTRA_CA_CERTS dell'orchestrator",
+                "unauthorized": "Argo CD su {{url}} non accetta il token: verifica che sia un token API dell'account orchestrator e che non sia scaduto o revocato",
+                "forbidden": "L'account del token non ha i permessi necessari su Argo CD: assegnagli role:orchestrator in argocd-rbac-cm (vedi docs/ARGOCD.md)",
+                "request_failed": "Argo CD ha rifiutato la richiesta ({{reason}})",
+                "name_conflict": "Su Argo CD esiste già un oggetto {{name}} che non è stato creato da questo progetto, o che l'account del token non può leggere: rinominalo o eliminalo, poi riprova",
+                "deploy_token_failed": "GitLab non ha creato il deploy token di {{repository}} ({{reason}}): il token della connessione deve avere il ruolo Maintainer sul progetto e lo scope api",
+                "url_insecure": "L'URL di Argo CD deve essere https: token e credenziali dei repository viaggerebbero in chiaro. Solo per un cluster locale l'installazione può permettere http con ARGOCD_ALLOW_INSECURE_HTTP=true",
+                "repository_conflict": "Su Argo CD il repository {{repository}} è già registrato, e non da questo progetto: rimuovilo da Argo CD, poi riprova",
+                "busy": "È già in corso un'inizializzazione di Argo CD per questo progetto: riprova tra un momento",
+                "lease_lost": "Un'altra inizializzazione di Argo CD ha preso il posto di questa mentre era in corso: controllane l'esito e, se serve, inizializza di nuovo"
+            },
+            "ownerOnly": "Solo un owner del progetto o un amministratore dell'organizzazione può inizializzare Argo CD."
+        },
         "dangerZone": {
             "title": "Zona Pericolosa",
             "subtitle": "Queste azioni sono irreversibili. Sii certo di quello che fai.",

@@ -10,7 +10,7 @@ import useGitOpsErrorMessage from "@/hooks/apiClients/useGitOpsErrorMessage"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { DangerZone, GitOpsSection, ProjectContextSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
+import { ArgoCdSection, DangerZone, GitOpsSection, ProjectContextSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
 import type { GitOpsFormValues } from "./partials/GitOpsSection"
 import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
@@ -97,6 +97,9 @@ export const Settings: React.FC = () => {
                         isUpdating={updateGitOpsMutation.isPending}
                     />
                 )}
+
+                {/* Argo CD deploya cio che il GitOps salvato committa: senza repository di configurazione non c'e' niente da consegnargli */}
+                {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && <ArgoCdSection projectId={projectData._id} />}
 
                 <ProjectStatsSection
                     stats={[

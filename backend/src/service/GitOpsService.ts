@@ -78,7 +78,7 @@ const ENVIRONMENT_SLUG = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/
 /** What Kubernetes takes as the name of a namespace */
 const NAMESPACE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
-const environmentSlug = (environment: Pick<IEnvironment, "slug">): string => {
+export const environmentSlug = (environment: Pick<IEnvironment, "slug">): string => {
     if (!ENVIRONMENT_SLUG.test(environment.slug ?? "")) {
         throw createBusinessException({
             code: "GITOPS_ENVIRONMENT_SLUG_INVALID",
@@ -90,7 +90,7 @@ const environmentSlug = (environment: Pick<IEnvironment, "slug">): string => {
 }
 
 /** The namespace the environment is deployed to: the one set on it, its slug in lowercase when it has none */
-const environmentNamespace = (environment: Pick<IEnvironment, "slug" | "namespace">): string => {
+export const environmentNamespace = (environment: Pick<IEnvironment, "slug" | "namespace">): string => {
     if (!environment.namespace) return environmentSlug(environment).toLowerCase()
     if (!NAMESPACE.test(environment.namespace)) {
         throw createBusinessException({
@@ -105,6 +105,10 @@ const environmentNamespace = (environment: Pick<IEnvironment, "slug" | "namespac
 export const gitOpsFilePath = (kind: VariableMapKind, environment: Pick<IEnvironment, "slug">, name: string) => `${GITOPS_FOLDER[kind]}/${environmentSlug(environment)}/${name}.yaml`
 
 export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `${NAMESPACES_FOLDER}/${environmentSlug(environment)}.yaml`
+
+/** The manifests of one environment in the configuration repository, as a glob: its Namespace, its config maps and its secrets */
+export const environmentManifestsGlob = (environment: Pick<IEnvironment, "slug">) =>
+    `{${[namespaceFilePath(environment), ...Object.values(GITOPS_FOLDER).map(folder => `${folder}/${environmentSlug(environment)}/*.yaml`)].join(",")}}`
 
 /**
  * The Kubernetes manifest of a map in one environment. A key with no value there is left out, as the
@@ -126,9 +130,21 @@ export const renderManifest = (kind: VariableMapKind, map: CommittedVariableMap,
     return stringify(manifest)
 }
 
-/** The Namespace of an environment, the one its config maps and secrets are meant to be applied in */
+/**
+ * The Namespace of an environment, the one its config maps and secrets are meant to be applied in. Argo CD
+ * never prunes nor deletes it: the applications of the environment run in it, and a configuration repository
+ * emptied by mistake, or an Application deleted, must not take them down with it.
+ */
 export const renderNamespace = (environment: Pick<IEnvironment, "slug" | "namespace">): string =>
-    stringify({ apiVersion: "v1", kind: "Namespace", metadata: { name: environmentNamespace(environment), labels: { [MANAGED_BY_LABEL]: MANAGED_BY } } })
+    stringify({
+        apiVersion: "v1",
+        kind: "Namespace",
+        metadata: {
+            name: environmentNamespace(environment),
+            labels: { [MANAGED_BY_LABEL]: MANAGED_BY },
+            annotations: { "argocd.argoproj.io/sync-options": "Prune=false,Delete=false" }
+        }
+    })
 
 /** The first commit of a repository created for GitOps: it gives the repository the default branch the deploys start from */
 const GITOPS_README: Record<GitOpsRepositoryKind, string> = {
@@ -392,7 +408,8 @@ export class GitOpsService extends BaseAuthorizedService {
         }, revert)
     }
 
-    private async connectionOf(link: ICodeRepositoryMicrofrontend, projectId: Schema.Types.ObjectId): Promise<ICodeRepository> {
+    /** The connection a GitOps repository is linked through: the one Argo CD is pointed at reads it with credentials of its own */
+    async connectionOf(link: ICodeRepositoryMicrofrontend, projectId: Schema.Types.ObjectId): Promise<ICodeRepository> {
         const codeRepository = await CodeRepository.findOne({ _id: link.codeRepositoryId, projectId })
         if (!codeRepository) {
             throw createBusinessException({
@@ -497,8 +514,8 @@ export class GitOpsService extends BaseAuthorizedService {
         return kind === "configuration" ? configuration : path.join(path.dirname(configuration), "applications.gitops")
     }
 
-    /** Where the secrets of the project are pushed in plaintext is up to its owners and the organization administrators */
-    private async ensureOwner(projectId: Schema.Types.ObjectId, organizationId: Schema.Types.ObjectId) {
+    /** Where the secrets of the project are pushed in plaintext, and who deploys them from there, is up to its owners and the organization administrators */
+    async ensureOwner(projectId: Schema.Types.ObjectId, organizationId: Schema.Types.ObjectId) {
         const user = this.getUser()
         // An API key has no person behind it to be an owner
         if (user && !this.user?.apiKeyId) {

@@ -7,6 +7,7 @@ import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepo
 import Database, { DATABASE_SECRET_PATHS } from "../models/DatabaseModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
+import Project, { PROJECT_SECRET_PATHS } from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import Storage, { STORAGE_SECRET_PATHS } from "../models/StorageModel"
 import { IVariableMapEntry, Secret, variableMapModels } from "../models/VariableMapModel"
@@ -104,6 +105,7 @@ const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> =>
         ["storage", Storage as unknown as SecretHolder, anyPlaintextIn(STORAGE_SECRET_PATHS) as SecretFilter],
         ["code repository", CodeRepository as unknown as SecretHolder, anyPlaintextIn(CODE_REPOSITORY_SECRET_PATHS) as SecretFilter],
         ["database", Database as unknown as SecretHolder, anyPlaintextIn(DATABASE_SECRET_PATHS) as SecretFilter],
+        ["project", Project as unknown as SecretHolder, anyPlaintextIn(PROJECT_SECRET_PATHS) as SecretFilter],
         // $elemMatch so both halves of the criterion have to be met by the same storage of the
         // snapshot: spelled out as a dotted path, a snapshot holding one already encrypted credential
         // beside a plaintext one would satisfy neither half on the element that still needs rewriting.

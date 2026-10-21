@@ -111,6 +111,7 @@ Project reference:
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
 - **[Remote MCP server](docs/MCP.md)** - Letting AI clients (Claude, Cursor, VS Code) use the console through OAuth, on the projects the user picks
+- **[Argo CD](docs/ARGOCD.md)** - Handing the GitOps repositories of a project to an Argo CD on another cluster: the account, its RBAC and the read-only repository tokens
 
 ## Run with Docker
 
@@ -300,6 +301,7 @@ falling back to it.
 | `SENTRY_DSN`                           | _(empty)_                                                                                         | Sentry DSN. Leave empty to disable error reporting.             |
 | `MCP_ENABLED`                          | `false`                                                                                           | Turns on the remote MCP server and its OAuth endpoints. Requires `FRONTEND_URL` and your own `JWT_SECRET` of at least 32 bytes (`openssl rand -hex 32`). See [docs/MCP.md](docs/MCP.md). |
 | `MCP_API_KEY_ENABLED`                  | `true`                                                                                            | Lets MCP clients that cannot do OAuth authenticate with a project API key (`Authorization: Bearer <key>` or `api-key` header). See [docs/MCP.md](docs/MCP.md#fallback-a-project-api-key). |
+| `ARGOCD_ALLOW_INSECURE_HTTP`           | `false`                                                                                           | Lets a project point Argo CD initialization at an `http://` Argo CD URL. For a local cluster only: the Argo CD token and the repository credentials would travel in the clear. See [docs/ARGOCD.md](docs/ARGOCD.md). |
 | `MCP_RATE_LIMIT_MAX`                   | `120`                                                                                             | MCP requests per minute for each OAuth grant or API key.        |
 | `MCP_DCR_ENABLED`                      | `true`                                                                                            | Lets MCP clients register themselves (RFC 7591).                |
 | `MCP_CIMD_ENABLED`                     | `true`                                                                                            | Accepts MCP clients identified by a metadata document URL.      |
