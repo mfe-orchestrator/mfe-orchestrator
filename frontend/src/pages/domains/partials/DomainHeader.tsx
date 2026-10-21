@@ -2,6 +2,7 @@ import { Sparkles, Workflow } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import WorkspaceHeader from "@/components/ai-workspace/WorkspaceHeader"
 import type { Domain } from "@/hooks/apiClients/useDomainsApi"
+import DomainDeployButton from "./DomainDeployDialog"
 
 interface DomainHeaderProps {
     domain: Domain
@@ -10,7 +11,7 @@ interface DomainHeaderProps {
     actions?: React.ReactNode
 }
 
-/** Shared by the two screens of a domain, in the same frame as those of a microfrontend and of a service. */
+/** Shared by the two screens of a domain, in the same frame as those of a microfrontend and of a service, with the deploy of the domain on both. */
 export const DomainHeader: React.FC<DomainHeaderProps> = ({ domain, active, actions }) => {
     const { t } = useTranslation()
 
@@ -31,7 +32,12 @@ export const DomainHeader: React.FC<DomainHeaderProps> = ({ domain, active, acti
                 { to: `/domain/${domain._id}`, label: t("domains.ai.open"), icon: Sparkles, end: true },
                 { to: `/domain/${domain._id}/structure`, label: t("domains.workspace.nav_structure"), icon: Workflow }
             ]}
-            actions={actions}
+            actions={
+                <>
+                    {actions}
+                    <DomainDeployButton domain={domain} />
+                </>
+            }
         />
     )
 }

@@ -2288,6 +2288,11 @@
         "created_success_message": "Dominio creato",
         "updated_success_message": "Dominio aggiornato",
         "no_domain": "Senza dominio",
+        "deploy": {
+            "title": "Deploy di {{domain}}",
+            "description": "Scegli l'ambiente: vengono deployati solo i microfrontend e i servizi di questo dominio, gli altri domini restano con le versioni che l'ambiente serve ora. Config map e secret vengono comunque deployati come sono adesso.",
+            "success": "{{domain}} deployato su {{environment}}"
+        },
         "deployments": {
             "open": "Versioni deployate",
             "title": "Versioni deployate",

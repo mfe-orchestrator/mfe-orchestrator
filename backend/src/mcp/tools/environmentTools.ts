@@ -123,8 +123,11 @@ export const environmentTools = [
         scope: MCP_SCOPE_WRITE,
         // With GitOps on it pushes to the project's repository
         annotations: DESTRUCTIVE_EXTERNAL,
-        inputSchema: z.object({ environmentIds: z.array(environmentId).min(1) }),
-        run: async (args, { principal }) => (await new DeploymentService(principal).createMultiple(args.environmentIds)).map(toDeploymentView)
+        inputSchema: z.object({
+            environmentIds: z.array(environmentId).min(1),
+            domainId: objectId("Id of a functional domain: only its microfrontends and services are deployed, the others keep what the environments serve now").optional()
+        }),
+        run: async (args, { principal }) => (await new DeploymentService(principal).createMultiple(args.environmentIds, args.domainId)).map(toDeploymentView)
     }),
     defineTool({
         name: "deployment_rollback",

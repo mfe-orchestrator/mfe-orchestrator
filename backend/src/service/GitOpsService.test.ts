@@ -569,6 +569,15 @@ describe("GitOpsService.deploy", () => {
             expect(applicationsCommit.mock.calls.map(call => call[2]?.branch)).toEqual(["development", "production"])
         })
 
+        it("given a deploy of one functional domain, when the applications are committed, then only the services and frontends of that domain are read", async () => {
+            const domainId = new Types.ObjectId()
+
+            await new GitOpsService().deploy([production] as never, async () => "deployed", String(domainId))
+
+            expect(vi.mocked(Service.find).mock.calls[0][0]).toEqual({ projectId: String(projectId), domainId: String(domainId) })
+            expect(vi.mocked(Microfrontend.find).mock.calls[0][0]).toMatchObject({ projectId: String(projectId), domainId: String(domainId) })
+        })
+
         it("given the configuration and the applications commits, when an environment is deployed, then the deploy runs after both", async () => {
             const run = vi.fn().mockResolvedValue("deployed")
 

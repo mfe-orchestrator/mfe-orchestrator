@@ -51,13 +51,15 @@ const useDeploymentsApi = () => {
         return response.data
     }
 
-    const createDeployment = async (environmentIds: string[]) => {
+    /** With `domainId`, only the microfrontends and services of that functional domain move */
+    const createDeployment = async (environmentIds: string[], domainId?: string) => {
         const response = await apiClient.doRequest<DeploymentDTO>({
             url: `/api/deployment`,
             method: "POST",
             customErrorMessage,
             data: {
-                environmentIds
+                environmentIds,
+                domainId
             }
         })
         return response.data

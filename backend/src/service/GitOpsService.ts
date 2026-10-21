@@ -375,17 +375,17 @@ export class GitOpsService extends BaseAuthorizedService {
      * applications repository, one commit on the branch of each of them. When `deploy` fails after the pushes,
      * the files are committed back to what the branches held before, so the repositories do not say it is deployed.
      */
-    async deploy<T>(environmentIds: (string | Schema.Types.ObjectId)[], deploy: () => Promise<T>): Promise<T> {
+    async deploy<T>(environmentIds: (string | Schema.Types.ObjectId)[], deploy: () => Promise<T>, domainId?: string): Promise<T> {
         // Checked before anything is pushed: deploy checks them again, too late for the repositories
         for (const environmentId of environmentIds) await this.ensureAccessToEnvironment(environmentId)
         const ids = new Set(environmentIds.map(String))
         const projectIds = [...new Set((await Environment.find({ _id: { $in: [...ids].map(toObjectId) } }, { projectId: 1 })).map(environment => String(environment.projectId)))]
         // One deploy is of one project; were it of several, each one's commits wrap the next
-        const run = projectIds.reduceRight<() => Promise<T>>((next, projectId) => () => this.deployProject(toObjectId(projectId), ids, next), deploy)
+        const run = projectIds.reduceRight<() => Promise<T>>((next, projectId) => () => this.deployProject(toObjectId(projectId), ids, next, domainId), deploy)
         return run()
     }
 
-    private async deployProject<T>(projectId: Schema.Types.ObjectId, environmentIds: Set<string>, deploy: () => Promise<T>): Promise<T> {
+    private async deployProject<T>(projectId: Schema.Types.ObjectId, environmentIds: Set<string>, deploy: () => Promise<T>, domainId?: string): Promise<T> {
         const project = await Project.findById(projectId, { gitOps: 1, slug: 1, exposure: 1 })
         const gitOps = project?.gitOps
         if (!project || !gitOps?.enabled || !gitOps.codeRepository) return deploy()
@@ -404,7 +404,7 @@ export class GitOpsService extends BaseAuthorizedService {
         const applicationsLink = gitOps.applicationsCodeRepository
         if (applicationsLink && [...gateways.values()].some(Boolean)) await this.ensureDistinctExposurePaths(projectId)
         const withApplications = applicationsLink
-            ? () => this.inRepository(projectId, "applications", applicationsLink, commit => this.commitApplications(projectId, deployed, maps, gateways, commit, deploy))
+            ? () => this.inRepository(projectId, "applications", applicationsLink, commit => this.commitApplications(projectId, deployed, maps, gateways, commit, deploy, domainId))
             : deploy
 
         return this.inRepository(projectId, "configuration", gitOps.codeRepository, async commit => {
@@ -425,7 +425,8 @@ export class GitOpsService extends BaseAuthorizedService {
     /**
      * Commits on the branch of each deployed environment the values of the services and frontends that can be
      * installed, and the chart when the branch has none, then runs `deploy`. A domain-scoped member writes the
-     * values of their own applications only; the values of an application that no longer exists go. In an
+     * values of their own applications only, a deploy of one domain those of that domain; the values of an
+     * application that no longer exists go. In an
      * environment with a Gateway, an application with an exposure path is routed on it.
      */
     private async commitApplications<T>(
@@ -434,9 +435,10 @@ export class GitOpsService extends BaseAuthorizedService {
         maps: Record<VariableMapKind, DeployedMap[]>,
         gateways: Map<string, EnvironmentGateway | undefined>,
         commit: Commit,
-        deploy: () => Promise<T>
+        deploy: () => Promise<T>,
+        domainId?: string
     ): Promise<T> {
-        const scope = await this.domainScopeFilter(projectId)
+        const scope = domainId ? { domainId: toObjectId(domainId) } : await this.domainScopeFilter(projectId)
         const applications: GitOpsApplication[] = [...(await Service.find({ projectId, ...scope })), ...(await Microfrontend.find({ projectId, kind: MicrofrontendKind.FRONTEND, ...scope }))]
         const existingSlugs = new Set([...(await Service.find({ projectId }, { slug: 1 })), ...(await Microfrontend.find({ projectId }, { slug: 1 }))].map(application => application.slug))
         const mapNames = {

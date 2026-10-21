@@ -30,6 +30,7 @@ import DeploymentCanaryUsersService from "./DeploymentCanaryUsersService"
 import DeploymentService from "./DeploymentService"
 import DomainService from "./DomainService"
 import EnvironmentService from "./EnvironmentService"
+import GitOpsService from "./GitOpsService"
 import MarketService from "./MarketService"
 import MicrofrontendService from "./MicrofrontendService"
 import ProjectWizardService from "./ProjectWizardService"
@@ -634,6 +635,51 @@ describe("deployment of a domain-scoped member", () => {
 
         expect(readServices).toEqual({ projectId: PROJECT_ID, domainId: { $in: [String(OWN_DOMAIN)] } })
         expect(((saved?.services ?? []) as { slug: string; version: string }[]).map(service => `${service.slug}@${service.version}`)).toEqual(["cart-be@3.0.0", "catalog-be@1.0.0"])
+    })
+
+    describe("of one functional domain", () => {
+        const domainsOfProject = (...domainIds: ObjectId[]) =>
+            vi
+                .spyOn(Domain, "exists")
+                .mockImplementation(((filter: { _id: unknown; projectId: unknown }) =>
+                    queryResult(sameId(filter.projectId, PROJECT_ID) && domainIds.some(id => sameId(id, filter._id)) ? { _id: filter._id } : null)) as never)
+
+        it("Given a member of the whole project, when they deploy one domain, then only its microfrontends and services move and everything else stays as served", async () => {
+            domainsOfProject(OWN_DOMAIN, OTHER_DOMAIN)
+            serving({ microfrontends: [ownServed, othersServed], variables: [{ key: "API_URL", value: "released" }], storages: [{ name: "released-bucket" }] })
+
+            await new DeploymentService(memberOf()).createRaw(String(environmentId), undefined, String(OWN_DOMAIN))
+
+            expect(readMicrofrontends).toEqual({ projectId: PROJECT_ID, domainId: { $in: [String(OWN_DOMAIN)] } })
+            expect(readServices).toEqual({ projectId: PROJECT_ID, domainId: { $in: [String(OWN_DOMAIN)] } })
+            expect(served()).toEqual(["cart@2.0.0", "catalog@1.0.0"])
+            expect(saved?.variables).toEqual([{ key: "API_URL", value: "released" }])
+        })
+
+        it("Given a scoped member, when they deploy a domain they are not assigned to, then it is refused", async () => {
+            domainsOfProject(OWN_DOMAIN, OTHER_DOMAIN)
+            serving(null)
+
+            await expect(new DeploymentService(memberOf([OWN_DOMAIN])).createRaw(String(environmentId), undefined, String(OTHER_DOMAIN))).rejects.toMatchObject(refusedOutOfScope)
+            expect(saved).toBeUndefined()
+        })
+
+        it("Given a domain of another project, when it is deployed, then it is not found and nothing is saved", async () => {
+            domainsOfProject(OWN_DOMAIN)
+            serving(null)
+
+            await expect(new DeploymentService(memberOf()).createRaw(String(environmentId), undefined, String(newId()))).rejects.toMatchObject({ statusCode: 404 })
+            expect(saved).toBeUndefined()
+        })
+
+        it("Given a scoped member deploying a domain they are not assigned to, when the deploy starts, then it is refused before GitOps pushes anything", async () => {
+            domainsOfProject(OWN_DOMAIN, OTHER_DOMAIN)
+            vi.spyOn(Environment, "find").mockImplementation((() => queryResult([{ _id: environmentId, projectId: PROJECT_ID }])) as never)
+            const gitOpsDeploy = vi.spyOn(GitOpsService.prototype, "deploy")
+
+            await expect(new DeploymentService(memberOf([OWN_DOMAIN])).createMultiple([String(environmentId)], String(OTHER_DOMAIN))).rejects.toMatchObject(refusedOutOfScope)
+            expect(gitOpsDeploy).not.toHaveBeenCalled()
+        })
     })
 })
 

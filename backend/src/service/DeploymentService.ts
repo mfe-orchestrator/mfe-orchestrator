@@ -2,6 +2,7 @@ import { ClientSession, Schema } from "mongoose"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { EnvironmentNotFoundError } from "../errors/EnvironmentNotFoundError"
 import Deployment, { IDeployedService, IDeployedVariableMap, IDeployment } from "../models/DeploymentModel"
+import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
 import Microfrontend, { IMicrofrontend } from "../models/MicrofrontendModel"
@@ -130,7 +131,31 @@ class DeploymentService extends BaseAuthorizedService {
         return [...replaced, ...current.filter(item => !servedIds.has(String(item._id)))]
     }
 
-    async createRaw(environmentId: string | Schema.Types.ObjectId, session?: ClientSession) {
+    /**
+     * The domains a deploy ships: `domainId` alone for a deploy of one functional domain, which must be of the
+     * project and, for a domain-scoped member, one of theirs; otherwise the principal's scope, none for the
+     * whole project. Everything outside them is carried over from what the environment serves.
+     */
+    private async deployScope(projectId: string | Schema.Types.ObjectId, domainId?: string, session?: ClientSession): Promise<string[] | undefined> {
+        if (!domainId) return this.getDomainScope(projectId)
+        if (!(await Domain.exists({ _id: toObjectId(domainId), projectId: toObjectId(projectId) }).session(session || null))) {
+            throw new EntityNotFoundError(domainId)
+        }
+        await this.ensureInDomainScope(projectId, domainId)
+        return [String(domainId)]
+    }
+
+    /** Checked before GitOps pushes anything for the deploy: createRaw checks it again, too late for the repositories */
+    private async ensureDeployableDomain(environmentIds: (string | Schema.Types.ObjectId)[], domainId?: string) {
+        if (!domainId) return
+        for (const environmentId of environmentIds) await this.ensureAccessToEnvironment(environmentId)
+        const environments = await Environment.find({ _id: { $in: environmentIds.map(id => toObjectId(id)) } }, { projectId: 1 })
+        for (const projectId of new Set(environments.map(environment => String(environment.projectId)))) {
+            await this.deployScope(projectId, domainId)
+        }
+    }
+
+    async createRaw(environmentId: string | Schema.Types.ObjectId, session?: ClientSession, domainId?: string) {
         await this.ensureAccessToEnvironment(environmentId, session)
         const environmentIdObj = toObjectId(environmentId)
         const environment = await Environment.findById(environmentIdObj).session(session || null)
@@ -138,8 +163,8 @@ class DeploymentService extends BaseAuthorizedService {
             throw new EnvironmentNotFoundError(environmentId.toString())
         }
 
-        const scope = await this.getDomainScope(environment.projectId)
-        const inScope = { projectId: environment.projectId, ...(await this.domainScopeFilter(environment.projectId)) }
+        const scope = await this.deployScope(environment.projectId, domainId, session)
+        const inScope = { projectId: environment.projectId, ...(scope && { domainId: { $in: scope.map(id => toObjectId(id)) } }) }
         const microfrontend = await Microfrontend.find(inScope).session(session || null)
         // With GitOps on, the deploy commits the values of these services at this version
         const service: IDeployedService[] = await Service.find(inScope, { slug: 1, name: 1, domainId: 1, version: 1, image: 1 })
@@ -158,10 +183,11 @@ class DeploymentService extends BaseAuthorizedService {
         const deploymentId = await this.getDeploymentId(environmentIdObj, session)
         const currentDeployment = await this.getCurrentDeployment(environmentIdObj, session)
 
-        // A domain-scoped member deploys their own microfrontends and services only: everything else the environment
-        // serves, the variables and the storages included, is carried over from the deployment it serves
-        // now, so that their deploy cannot ship what another domain has not released yet. A copy, for the
-        // same reason as the storages above: the snapshot encrypts in place what it saves.
+        // A domain-scoped member, or a deploy of one domain, ships the microfrontends and services of those
+        // domains only: everything else the environment serves, the variables and the storages included, is
+        // carried over from the deployment it serves now, so that their deploy cannot ship what another domain
+        // has not released yet. A copy, for the same reason as the storages above: the snapshot encrypts in
+        // place what it saves.
         let microfrontends: unknown[] = microfrontend
         let services: unknown[] = service
         if (scope && currentDeployment) {
@@ -198,11 +224,11 @@ class DeploymentService extends BaseAuthorizedService {
     }
 
     /** Sequential like setCanaryUserMultipleRaw: one session cannot carry two concurrent commands inside a transaction. */
-    async createMultipleRaw(environmentIds: (string | Schema.Types.ObjectId)[], session?: ClientSession) {
+    async createMultipleRaw(environmentIds: (string | Schema.Types.ObjectId)[], session?: ClientSession, domainId?: string) {
         const deployments: IDeployment[] = []
 
         for (const environmentId of environmentIds) {
-            deployments.push(await this.createRaw(environmentId, session))
+            deployments.push(await this.createRaw(environmentId, session, domainId))
         }
 
         return deployments
@@ -213,8 +239,10 @@ class DeploymentService extends BaseAuthorizedService {
         return new GitOpsService(this.user).deploy([environmentId], () => runInTransaction(async session => this.createRaw(environmentId, session)))
     }
 
-    async createMultiple(environmentIds: (string | Schema.Types.ObjectId)[]) {
-        return new GitOpsService(this.user).deploy(environmentIds, () => runInTransaction(async session => this.createMultipleRaw(environmentIds, session)))
+    /** With `domainId`, only the microfrontends and services of that functional domain move */
+    async createMultiple(environmentIds: (string | Schema.Types.ObjectId)[], domainId?: string) {
+        await this.ensureDeployableDomain(environmentIds, domainId)
+        return new GitOpsService(this.user).deploy(environmentIds, () => runInTransaction(async session => this.createMultipleRaw(environmentIds, session, domainId)), domainId)
     }
 
     async redeploy(deploymentId: string | Schema.Types.ObjectId) {
