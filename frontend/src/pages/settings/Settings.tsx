@@ -75,7 +75,9 @@ export const Settings: React.FC = () => {
         mutationFn: (values: ProjectExposureFormValues) =>
             projectApi.updateProject(project._id, {
                 // Un dominio svuotato vuol dire "non esposto", che l'API esprime con un null esplicito
-                exposure: values.domain.trim() ? { domain: values.domain.trim().toLowerCase(), certificateIssuer: values.certificateIssuer.trim() || null } : null
+                exposure: values.domain.trim()
+                    ? { domain: values.domain.trim().toLowerCase(), certificateIssuer: values.certificateIssuer.trim() || null, httpPort: values.httpPort, httpsPort: values.httpsPort }
+                    : null
             }),
         onSuccess: updated => {
             // Il dialog degli ambienti legge il dominio dallo store per mostrare l'host

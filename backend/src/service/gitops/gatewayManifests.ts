@@ -12,11 +12,12 @@ import { appProjectName, MANAGED_BY, MANAGED_BY_LABEL } from "./argoCdManifests"
 export const GATEWAY_CLASS = "traefik"
 
 /**
- * The listeners go by the port the Traefik entry points listen on inside the pod, not by the one the Service
- * exposes: 8000 and 8443 are those of `web` and `websecure` in the Traefik Helm chart.
+ * The ports of the listeners when the project sets none. Traefik binds a listener to the entry point listening
+ * on the same port inside the pod, not to the one the Service exposes: a Traefik Helm chart left at its
+ * defaults has `web` and `websecure` on 8000 and 8443, which the project then has to set.
  */
-export const GATEWAY_HTTP_PORT = 8000
-export const GATEWAY_HTTPS_PORT = 8443
+export const GATEWAY_HTTP_PORT = 80
+export const GATEWAY_HTTPS_PORT = 443
 
 export const HTTP_LISTENER = "http"
 export const HTTPS_LISTENER = "https"
@@ -29,6 +30,9 @@ export interface EnvironmentGateway {
     host: string
     /** The ClusterIssuer the certificate is asked of; without one the Gateway answers in plain HTTP only */
     certificateIssuer?: string
+    /** The ports of the listeners, GATEWAY_HTTP_PORT and GATEWAY_HTTPS_PORT when left out */
+    httpPort?: number
+    httpsPort?: number
 }
 
 export const gatewayName = (projectId: string, projectSlug: string) => appProjectName(projectId, projectSlug)
@@ -49,7 +53,7 @@ export const renderGateway = (gateway: EnvironmentGateway): string => {
         annotations: { "argocd.argoproj.io/sync-options": "SkipDryRunOnMissingResource=true" }
     })
     const allowedRoutes = { namespaces: { from: "Same" } }
-    const listeners: object[] = [{ name: HTTP_LISTENER, protocol: "HTTP", port: GATEWAY_HTTP_PORT, hostname: gateway.host, allowedRoutes }]
+    const listeners: object[] = [{ name: HTTP_LISTENER, protocol: "HTTP", port: gateway.httpPort ?? GATEWAY_HTTP_PORT, hostname: gateway.host, allowedRoutes }]
     const documents: object[] = []
 
     if (gateway.certificateIssuer) {
@@ -67,7 +71,7 @@ export const renderGateway = (gateway: EnvironmentGateway): string => {
         listeners.push({
             name: HTTPS_LISTENER,
             protocol: "HTTPS",
-            port: GATEWAY_HTTPS_PORT,
+            port: gateway.httpsPort ?? GATEWAY_HTTPS_PORT,
             hostname: gateway.host,
             tls: { mode: "Terminate", certificateRefs: [{ kind: "Secret", name: tlsSecretName(gateway) }] },
             allowedRoutes

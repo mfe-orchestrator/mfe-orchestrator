@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { parseAllDocuments } from "yaml"
-import { applicationListener, GATEWAY_HTTPS_PORT, renderGateway } from "./gatewayManifests"
+import { applicationListener, GATEWAY_HTTP_PORT, GATEWAY_HTTPS_PORT, renderGateway } from "./gatewayManifests"
 
 const documentsOf = (content: string) => parseAllDocuments(content).map(document => document.toJSON())
 
@@ -11,7 +11,7 @@ describe("renderGateway", () => {
         const documents = documentsOf(renderGateway(gateway))
 
         expect(documents.map(document => document.kind)).toEqual(["Gateway"])
-        expect(documents[0].spec.listeners).toEqual([{ name: "http", protocol: "HTTP", port: 8000, hostname: "app.example.com", allowedRoutes: { namespaces: { from: "Same" } } }])
+        expect(documents[0].spec.listeners).toEqual([{ name: "http", protocol: "HTTP", port: GATEWAY_HTTP_PORT, hostname: "app.example.com", allowedRoutes: { namespaces: { from: "Same" } } }])
     })
 
     it("given an issuer, when the Gateway is rendered, then the HTTPS listener serves the secret of the Certificate", () => {
@@ -19,6 +19,12 @@ describe("renderGateway", () => {
         const https = rendered.spec.listeners.find((listener: { name: string }) => listener.name === "https")
 
         expect(https).toMatchObject({ protocol: "HTTPS", port: GATEWAY_HTTPS_PORT, tls: { mode: "Terminate", certificateRefs: [{ kind: "Secret", name: certificate.spec.secretName }] } })
+    })
+
+    it("given the ports of the entry points, when the Gateway is rendered, then the listeners are on them", () => {
+        const [, rendered] = documentsOf(renderGateway({ ...gateway, certificateIssuer: "letsencrypt", httpPort: 8000, httpsPort: 8443 }))
+
+        expect(rendered.spec.listeners.map((listener: { port: number }) => listener.port)).toEqual([8000, 8443])
     })
 
     it("given an issuer, when the Gateway is rendered, then plain HTTP is redirected to HTTPS", () => {

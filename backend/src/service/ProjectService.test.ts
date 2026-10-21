@@ -210,6 +210,12 @@ describe("update", () => {
         expect(written).toEqual({ exposure: { domain: "example.com" } })
     })
 
+    it("Given the ports of the listeners, when the project is updated, then they are written with the exposure", async () => {
+        await update({ exposure: { domain: "example.com", httpPort: 8000, httpsPort: 8443 } })
+
+        expect(written).toEqual({ exposure: { domain: "example.com", httpPort: 8000, httpsPort: 8443 } })
+    })
+
     it("Given a null exposure, when the project is updated, then the exposure is unset", async () => {
         await update({ exposure: null })
 
@@ -220,7 +226,9 @@ describe("update", () => {
         ["no domain", {}],
         ["a domain of one label", { domain: "localhost" }],
         ["an issuer that is not a string", { domain: "example.com", certificateIssuer: 42 }],
-        ["an issuer that is not a resource name", { domain: "example.com", certificateIssuer: "Lets_Encrypt" }]
+        ["an issuer that is not a resource name", { domain: "example.com", certificateIssuer: "Lets_Encrypt" }],
+        ["an HTTP port out of range", { domain: "example.com", httpPort: 0 }],
+        ["an HTTPS port that is not an integer", { domain: "example.com", httpsPort: "443" }]
     ])("Given an exposure with %s, when the project is updated, then it is refused with a 400 and nothing is written", async (_case, exposure) => {
         await expect(update({ exposure })).rejects.toMatchObject({ code: "PROJECT_EXPOSURE_INVALID", statusCode: 400 })
         expect(written).toBeUndefined()

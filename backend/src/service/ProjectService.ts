@@ -20,7 +20,7 @@ import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { ConfigMap, Secret } from "../models/VariableMapModel"
-import { CERTIFICATE_ISSUER, DOMAIN_NAME } from "../types/Exposure"
+import { CERTIFICATE_ISSUER, DOMAIN_NAME, isListenerPort } from "../types/Exposure"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
@@ -50,7 +50,7 @@ export interface ProjectUpdateInput {
     /** Turning it on commits every config map and secret to the repository: refused when that push fails */
     gitOps?: GitOpsSettingsInput
     /** Replaced as a whole, `null` removes it: the next deploy of each environment takes its Gateway away */
-    exposure?: { domain: string; certificateIssuer?: string | null } | null
+    exposure?: { domain: string; certificateIssuer?: string | null; httpPort?: number | null; httpsPort?: number | null } | null
     /** Replaced as a whole, `null` goes back to the official template-pipelines */
     pipelines?: PipelineTemplatesInput | null
 }
@@ -67,18 +67,29 @@ export interface PipelineTemplatesInput {
 const GIT_REF = /^(?!-)(?!.*\.\.)(?!.*\/$)(?!.*\.lock$)[A-Za-z0-9._/-]{1,255}$/
 
 /** The exposure to store, trimmed and in lowercase: refused with a 400 rather than by the model with a 500 */
-const exposureOf = (input: unknown): { domain: string; certificateIssuer?: string } => {
-    const { domain, certificateIssuer } = (input ?? {}) as { domain?: unknown; certificateIssuer?: unknown }
+const exposureOf = (input: unknown): { domain: string; certificateIssuer?: string; httpPort?: number; httpsPort?: number } => {
+    const { domain, certificateIssuer, httpPort, httpsPort } = (input ?? {}) as { domain?: unknown; certificateIssuer?: unknown; httpPort?: unknown; httpsPort?: unknown }
     const normalized = typeof domain === "string" ? domain.trim().toLowerCase() : ""
     const issuer = typeof certificateIssuer === "string" ? certificateIssuer.trim() : ""
-    if (!DOMAIN_NAME.test(normalized) || (certificateIssuer != null && typeof certificateIssuer !== "string") || (issuer && !CERTIFICATE_ISSUER.test(issuer))) {
+    if (
+        !DOMAIN_NAME.test(normalized) ||
+        (certificateIssuer != null && typeof certificateIssuer !== "string") ||
+        (issuer && !CERTIFICATE_ISSUER.test(issuer)) ||
+        (httpPort != null && !isListenerPort(httpPort)) ||
+        (httpsPort != null && !isListenerPort(httpsPort))
+    ) {
         throw createBusinessException({
             code: "PROJECT_EXPOSURE_INVALID",
-            message: "The exposure needs a lowercase domain of at least two labels, e.g. example.com, and, if any, the name of a ClusterIssuer",
+            message: "The exposure needs a lowercase domain of at least two labels, e.g. example.com, if any the name of a ClusterIssuer and, if any, ports between 1 and 65535",
             statusCode: 400
         })
     }
-    return { domain: normalized, ...(issuer ? { certificateIssuer: issuer } : {}) }
+    return {
+        domain: normalized,
+        ...(issuer ? { certificateIssuer: issuer } : {}),
+        ...(httpPort != null ? { httpPort: httpPort as number } : {}),
+        ...(httpsPort != null ? { httpsPort: httpsPort as number } : {})
+    }
 }
 
 interface ContextEntry {

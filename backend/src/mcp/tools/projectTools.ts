@@ -64,7 +64,16 @@ export const projectTools = [
                         .regex(CERTIFICATE_ISSUER, "the name of a Kubernetes resource")
                         .nullable()
                         .optional()
-                        .describe("cert-manager ClusterIssuer the TLS certificate of each environment is asked of; without one, HTTP only")
+                        .describe("cert-manager ClusterIssuer the TLS certificate of each environment is asked of; without one, HTTP only"),
+                    httpPort: z.number().int().min(1).max(65535).nullable().optional().describe("Port of the HTTP listener: the one the Traefik web entry point listens on inside the pod. Default 80"),
+                    httpsPort: z
+                        .number()
+                        .int()
+                        .min(1)
+                        .max(65535)
+                        .nullable()
+                        .optional()
+                        .describe("Port of the HTTPS listener: the one the Traefik websecure entry point listens on inside the pod. Default 443")
                 })
                 .nullable()
                 .optional()

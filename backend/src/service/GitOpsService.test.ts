@@ -425,7 +425,7 @@ describe("GitOpsService.deploy", () => {
             const gateway = commit.mock.calls[0][1].find(file => file.path === "production/gateway.yaml")!
             const documents = documentsOf(gateway.content!)
             expect(documents.map(document => document.kind)).toEqual(["Gateway"])
-            expect(documents[0].spec.listeners).toEqual([expect.objectContaining({ name: "http", hostname: "example.com", port: 8000 })])
+            expect(documents[0].spec.listeners).toEqual([expect.objectContaining({ name: "http", hostname: "example.com", port: 80 })])
         })
 
         it("given no domain, when production is deployed, then no Gateway is committed and the one it had is pruned", async () => {

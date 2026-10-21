@@ -16,16 +16,23 @@ const KNOWN_ISSUERS = ["letsencrypt", "letsencrypt-staging"]
 // La select non accetta un valore vuoto: queste due non possono essere nomi Kubernetes, quindi non si confondono con una ClusterIssuer
 const NO_ISSUER = "__none__"
 const CUSTOM_ISSUER = "__custom__"
+/** Le porte standard; un Traefik installato con il chart Helm senza toccarlo ascolta su 8000 e 8443 */
+const DEFAULT_HTTP_PORT = 80
+const DEFAULT_HTTPS_PORT = 443
 
 export interface ProjectExposureFormValues {
     domain: string
     certificateIssuer: string
+    httpPort: number
+    httpsPort: number
 }
 
 interface ExposureFields {
     domain: string
     issuerChoice: string
     customIssuer: string
+    httpPort: string
+    httpsPort: string
 }
 
 interface ProjectExposureSectionProps {
@@ -34,11 +41,14 @@ interface ProjectExposureSectionProps {
     isUpdating: boolean
 }
 
-const toFields = (domain: string, issuer: string): ExposureFields => {
-    if (!issuer) return { domain, issuerChoice: NO_ISSUER, customIssuer: "" }
-    if (KNOWN_ISSUERS.includes(issuer)) return { domain, issuerChoice: issuer, customIssuer: "" }
-    return { domain, issuerChoice: CUSTOM_ISSUER, customIssuer: issuer }
+const toFields = (domain: string, issuer: string, httpPort: number, httpsPort: number): ExposureFields => {
+    const fields = { domain, customIssuer: "", httpPort: String(httpPort), httpsPort: String(httpsPort) }
+    if (!issuer) return { ...fields, issuerChoice: NO_ISSUER }
+    if (KNOWN_ISSUERS.includes(issuer)) return { ...fields, issuerChoice: issuer }
+    return { ...fields, issuerChoice: CUSTOM_ISSUER, customIssuer: issuer }
 }
+
+const isPort = (value: string) => /^\d{1,5}$/.test(value.trim()) && Number(value) >= 1 && Number(value) <= 65535
 
 /** La ClusterIssuer scelta, vuota per nessuna */
 const issuerOf = (issuerChoice: string, customIssuer: string): string => {
@@ -53,15 +63,18 @@ export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ 
 
     const domain = exposure?.domain ?? ""
     const certificateIssuer = exposure?.certificateIssuer ?? ""
-    const form = useForm<ExposureFields>({ defaultValues: toFields(domain, certificateIssuer) })
+    const httpPort = exposure?.httpPort ?? DEFAULT_HTTP_PORT
+    const httpsPort = exposure?.httpsPort ?? DEFAULT_HTTPS_PORT
+    const form = useForm<ExposureFields>({ defaultValues: toFields(domain, certificateIssuer, httpPort, httpsPort) })
     const issuerChoice = form.watch("issuerChoice")
 
     // Cambiare progetto lascia questa pagina montata, quindi il form deve seguire il nuovo progetto.
     useEffect(() => {
-        form.reset(toFields(domain, certificateIssuer))
-    }, [domain, certificateIssuer, form])
+        form.reset(toFields(domain, certificateIssuer, httpPort, httpsPort))
+    }, [domain, certificateIssuer, httpPort, httpsPort, form])
 
-    const onSubmit = ({ domain, issuerChoice, customIssuer }: ExposureFields) => onUpdate({ domain, certificateIssuer: issuerOf(issuerChoice, customIssuer) })
+    const onSubmit = ({ domain, issuerChoice, customIssuer, httpPort, httpsPort }: ExposureFields) =>
+        onUpdate({ domain, certificateIssuer: issuerOf(issuerChoice, customIssuer), httpPort: Number(httpPort), httpsPort: Number(httpsPort) })
 
     return (
         <Card className="pt-4">
@@ -107,6 +120,31 @@ export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ 
                                 }}
                             />
                         )}
+
+                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                            <TextField<ExposureFields>
+                                name="httpPort"
+                                type="number"
+                                label={t("settings.exposure.http_port")}
+                                placeholder={String(DEFAULT_HTTP_PORT)}
+                                description={t("settings.exposure.http_port_hint")}
+                                dataTestId="project-exposure-http-port"
+                                containerClassName="flex-[1_1_200px]"
+                                rules={{ validate: value => isPort(value) || t("settings.exposure.port_invalid") }}
+                            />
+                            {issuerChoice !== NO_ISSUER && (
+                                <TextField<ExposureFields>
+                                    name="httpsPort"
+                                    type="number"
+                                    label={t("settings.exposure.https_port")}
+                                    placeholder={String(DEFAULT_HTTPS_PORT)}
+                                    description={t("settings.exposure.https_port_hint")}
+                                    dataTestId="project-exposure-https-port"
+                                    containerClassName="flex-[1_1_200px]"
+                                    rules={{ validate: value => isPort(value) || t("settings.exposure.port_invalid") }}
+                                />
+                            )}
+                        </div>
 
                         <div className="flex justify-end">
                             <Button type="submit" loading={isUpdating} loadingLabel={t("common.loading")} dataTestId="project-exposure-save">

@@ -4,8 +4,9 @@ With GitOps on, each environment of a project is exposed on a host of its own an
 path of that host, through the Kubernetes Gateway API as Traefik implements it. No API gateway sits between
 Traefik and the applications.
 
-- **Project** (Settings → Exposure): the `domain`, e.g. `example.com`, and optionally the cert-manager
-  `ClusterIssuer` the TLS certificates are asked of. Without an issuer the environments answer in plain HTTP.
+- **Project** (Settings → Exposure): the `domain`, e.g. `example.com`, optionally the cert-manager
+  `ClusterIssuer` the TLS certificates are asked of, and the ports of the HTTP and HTTPS listeners, `80` and
+  `443` by default. Without an issuer the environments answer in plain HTTP.
 - **Environment**: the `subdomain`, e.g. `dev`. The host is `dev.example.com`. Left empty, a production
   environment takes the domain itself and any other its slug in lowercase, so `UAT` lands on
   `uat.example.com`. Two environments of the project cannot share a host: the deploy is refused.
@@ -35,9 +36,22 @@ commits nothing, the Gateway included: it serves that snapshot again, GitOps is 
        enabled: true
    ```
 
-   The listeners use ports `8000` and `8443`: the ports the `web` and `websecure` entry points of the Traefik
-   Helm chart listen on inside the pod, not the ones the Service exposes. A Traefik with other entry point
-   ports needs the ports changed in `backend/src/service/gitops/gatewayManifests.ts`.
+   Traefik attaches a listener to the entry point that listens on the same port inside the pod, not on the
+   one its Service exposes. The listeners default to `80` and `443`, so the entry points have to listen there:
+
+   ```yaml
+   ports:
+     web:
+       port: 80
+     websecure:
+       port: 443
+   securityContext:
+     capabilities:
+       add: [NET_BIND_SERVICE]
+   ```
+
+   A Traefik Helm chart left at its defaults listens on `8000` and `8443` instead: write those in the
+   project settings rather than changing Traefik.
 3. With TLS, cert-manager and the `ClusterIssuer` set on the project. An issuer solving HTTP-01 through an
    Ingress class (`http01.ingress.class: traefik`) keeps working as long as the Ingress provider of Traefik
    stays on: the challenge route, host and token path, is longer than the redirect to HTTPS. An issuer solving

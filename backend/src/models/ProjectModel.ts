@@ -91,6 +91,9 @@ export interface IProjectExposure {
     domain: string
     /** The cert-manager ClusterIssuer the certificate of each environment is asked of; without one, HTTP only */
     certificateIssuer?: string
+    /** The ports of the HTTP and HTTPS listeners, those of the Traefik entry points: 80 and 443 when unset */
+    httpPort?: number
+    httpsPort?: number
 }
 
 /** The credentials of Argo CD the console keeps: encrypted at rest, never sent to a client */
@@ -164,7 +167,9 @@ const projectSchema = new Schema<IProject>(
             type: new Schema<IProjectExposure>(
                 {
                     domain: { type: String, required: true, trim: true, lowercase: true, match: DOMAIN_NAME },
-                    certificateIssuer: { type: String, trim: true, match: CERTIFICATE_ISSUER }
+                    certificateIssuer: { type: String, trim: true, match: CERTIFICATE_ISSUER },
+                    httpPort: { type: Number, min: 1, max: 65535 },
+                    httpsPort: { type: Number, min: 1, max: 65535 }
                 },
                 { _id: false }
             ),

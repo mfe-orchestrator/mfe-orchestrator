@@ -225,7 +225,12 @@
             "certificate_issuer_none": "None (HTTP only)",
             "certificate_issuer_custom": "Other…",
             "certificate_issuer_custom_name": "ClusterIssuer name",
-            "certificate_issuer_invalid": "Lowercase letters, digits, dots and dashes, starting and ending with a letter or a digit"
+            "certificate_issuer_invalid": "Lowercase letters, digits, dots and dashes, starting and ending with a letter or a digit",
+            "http_port": "HTTP port",
+            "http_port_hint": "The port the web entry point of Traefik listens on inside the pod. 80 by default; a Traefik Helm chart left at its defaults uses 8000.",
+            "https_port": "HTTPS port",
+            "https_port_hint": "The port the websecure entry point of Traefik listens on inside the pod. 443 by default; a Traefik Helm chart left at its defaults uses 8443.",
+            "port_invalid": "A port between 1 and 65535"
         },
         "gitOps": {
             "title": "GitOps for environments, config maps and secrets",

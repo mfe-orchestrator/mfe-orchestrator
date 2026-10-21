@@ -34,6 +34,9 @@ export interface ProjectExposure {
     domain: string
     /** La ClusterIssuer di cert-manager a cui chiedere il certificato di ogni ambiente; senza, solo HTTP */
     certificateIssuer?: string
+    /** Le porte dei listener HTTP e HTTPS, quelle degli entry point di Traefik: 80 e 443 se assenti */
+    httpPort?: number
+    httpsPort?: number
 }
 
 export interface Project {
@@ -80,7 +83,7 @@ export interface ProjectUpdateDTO {
     context?: string | null
     isActive?: boolean
     /** `null` toglie l'esposizione: al prossimo deploy ogni ambiente perde il suo Gateway */
-    exposure?: { domain: string; certificateIssuer?: string | null } | null
+    exposure?: { domain: string; certificateIssuer?: string | null; httpPort?: number | null; httpsPort?: number | null } | null
     /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga */
     gitOps?: {
         enabled: boolean

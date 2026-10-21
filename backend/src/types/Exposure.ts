@@ -11,6 +11,9 @@ export const DOMAIN_NAME = new RegExp(`^(?=.{1,253}$)${DNS_LABEL}(\\.${DNS_LABEL
 /** One or more labels put in front of the domain, e.g. `dev` or `dev.eu`; empty: the domain itself */
 export const SUBDOMAIN = new RegExp(`^(${DNS_LABEL}(\\.${DNS_LABEL})*)?$`)
 
+/** A port a listener of the Gateway may take */
+export const isListenerPort = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 65535
+
 /** The name of a cert-manager ClusterIssuer, as Kubernetes takes it */
 export const CERTIFICATE_ISSUER = /^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/
 

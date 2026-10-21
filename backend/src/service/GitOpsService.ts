@@ -115,7 +115,7 @@ export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `$
 export const gatewayFilePath = (environment: Pick<IEnvironment, "slug">) => `${environmentSlug(environment)}/${GATEWAY_FILE}`
 
 /** A project as its Gateways are named and exposed */
-type ExposedProject = { _id: unknown; slug: string; exposure?: { domain: string; certificateIssuer?: string } }
+type ExposedProject = { _id: unknown; slug: string; exposure?: { domain: string; certificateIssuer?: string; httpPort?: number; httpsPort?: number } }
 
 /**
  * What an environment is exposed under: the subdomain set on it, else nothing for a production one, which
@@ -155,7 +155,9 @@ export const environmentGateway = (
         name: gatewayName(String(project._id), project.slug),
         namespace: environmentNamespace(environment),
         host,
-        certificateIssuer: project.exposure.certificateIssuer || undefined
+        certificateIssuer: project.exposure.certificateIssuer || undefined,
+        httpPort: project.exposure.httpPort ?? undefined,
+        httpsPort: project.exposure.httpsPort ?? undefined
     }
 }
 
