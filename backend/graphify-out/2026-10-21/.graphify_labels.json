@@ -116,10 +116,12 @@
   "114": "AccessProbe",
   "115": "SqlDatabaseClient.ts",
   "116": "projectWizardStateMachine.ts",
+  "117": "configurationTools.test.ts",
   "118": ".computeAlignmentIssues",
   "119": "OAuthAuthorizationService",
+  "120": "DomainDeploymentService",
+  "121": "runPipeline",
   "122": "RepositoryRenameService.ts",
-  "123": "ProjectService",
   "124": "projectContentTools.test.ts",
   "125": "NpmRegistryClient.ts"
 }
