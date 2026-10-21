@@ -315,9 +315,18 @@ export class VariableMapService extends BaseAuthorizedService {
         })
     }
 
-    /** New keys must not collide with those of the other maps attached to any service using this one */
+    /** What attaches this map: its backend services and its FRONTEND microfrontends, each a container of its own */
+    private async attachedTo(map: IVariableMap): Promise<Array<Pick<IService, "name" | "configMapIds" | "secretIds">>> {
+        const filter = { projectId: map.projectId, [this.serviceField]: map._id }
+        const projection = { name: 1, configMapIds: 1, secretIds: 1 }
+        const [services, microfrontends] = await Promise.all([Service.find(filter, projection), Microfrontend.find(filter, projection)])
+        // A FRONTEND carries the same container fields as a service: the projection reads only those
+        return [...services, ...microfrontends] as unknown as Array<Pick<IService, "name" | "configMapIds" | "secretIds">>
+    }
+
+    /** New keys must not collide with those of the other maps attached to any service or FRONTEND using this one */
     private async ensureNoClashInAttachingServices(map: IVariableMap, entries: VariableMapEntryDTO[]) {
-        const services = await Service.find({ projectId: map.projectId, [this.serviceField]: map._id }, { name: 1, configMapIds: 1, secretIds: 1 })
+        const services = await this.attachedTo(map)
         if (services.length === 0) return
 
         // One read per kind for all of them; this map is read with the new entries, not the stored ones
@@ -344,7 +353,7 @@ export class VariableMapService extends BaseAuthorizedService {
         await this.ensureWholeProject(projectId)
         return new GitOpsService(this.user).saveVariableMap(projectId, this.kind, async () => {
             const map = await this.getById(id)
-            const services = await Service.find({ projectId: map.projectId, [this.serviceField]: map._id }, { name: 1 })
+            const services = await this.attachedTo(map)
             if (services.length > 0) {
                 throw createBusinessException({
                     code: "VARIABLE_MAP_IN_USE",
