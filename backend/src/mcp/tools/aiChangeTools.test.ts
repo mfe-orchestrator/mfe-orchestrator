@@ -50,6 +50,7 @@ vi.mock("../../service/aiChange/AiChangeJobService", () => ({
 
 const PROJECT = "aaaaaaaaaaaaaaaaaaaaaaaa"
 const MICROFRONTEND = "bbbbbbbbbbbbbbbbbbbbbbbb"
+const SERVICE = "eeeeeeeeeeeeeeeeeeeeeeee"
 const CHANGE = "cccccccccccccccccccccccc"
 const JOB = "dddddddddddddddddddddddd"
 
@@ -143,6 +144,20 @@ describe("AI change tools", () => {
             expect(tool("ai_change_start").inputSchema.safeParse({ microfrontendId: MICROFRONTEND, prompt: "  " }).success).toBe(false)
         })
 
+        it("given a service, when started, then the change works on the repository of the service", async () => {
+            createChange.mockResolvedValue({ ...changeDocument("PENDING"), microfrontendId: undefined, serviceId: SERVICE })
+
+            await run("ai_change_start", { serviceId: SERVICE, prompt: "Add a health check" })
+
+            expect(createChange).toHaveBeenCalledWith({ kind: "service", id: SERVICE }, expect.objectContaining({ prompt: "Add a health check" }))
+        })
+
+        it("given both a microfrontend and a service, or neither, when the input is validated, then it is refused", () => {
+            const schema = tool("ai_change_start").inputSchema
+            expect(schema.safeParse({ microfrontendId: MICROFRONTEND, serviceId: SERVICE, prompt: "Add a footer" }).success).toBe(false)
+            expect(schema.safeParse({ prompt: "Add a footer" }).success).toBe(false)
+        })
+
         it("given a viewer, when started, then the service's refusal surfaces", async () => {
             createChange.mockRejectedValue(forbidden())
 
@@ -156,6 +171,15 @@ describe("AI change tools", () => {
 
             expect(await run("ai_changes_list", { microfrontendId: MICROFRONTEND })).toEqual([expect.objectContaining({ id: CHANGE, status: "PROPOSED" })])
             expect(listChanges).toHaveBeenCalledWith({ kind: "microfrontend", id: MICROFRONTEND })
+        })
+
+        it("given a service, when listed, then the changes of the service are", async () => {
+            listChanges.mockResolvedValue([])
+
+            await run("ai_changes_list", { serviceId: SERVICE })
+
+            expect(listChanges).toHaveBeenCalledWith({ kind: "service", id: SERVICE })
+            expect(tool("ai_changes_list").inputSchema.safeParse({}).success).toBe(false)
         })
 
         it("given changes read without their progress, when listed, then the view has no progress rather than an empty one", async () => {

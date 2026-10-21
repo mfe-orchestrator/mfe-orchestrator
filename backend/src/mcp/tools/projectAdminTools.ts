@@ -8,9 +8,11 @@ import OAuthGrantService from "../../service/OAuthGrantService"
 import ProjectService from "../../service/ProjectService"
 import UserProjectService from "../../service/UserProjectService"
 import { getOAuthConfig, MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
+import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
 
 const userId = objectId("Id of the user, from project_members_list")
+const domainIds = z.array(objectId("Id of a functional domain of the project, from domains_list")).max(100)
+const role = z.enum(RoleInProject).describe("OWNER manages the project and its members, MEMBER changes it, VIEWER only reads")
 
 /**
  * A project membership as the model sees it. The document carries the invitation token, which is
@@ -20,6 +22,8 @@ const toMembershipView = (membership: IUserProject | undefined) =>
     membership && {
         userId: String(membership.userId),
         role: membership.role,
+        domainIds: membership.domainScoped ? (membership.domainIds ?? []).map(String) : [],
+        domainScoped: Boolean(membership.domainScoped),
         invitationPending: Boolean(membership.invitationToken),
         invitationExpiresAt: membership.inviationTokenExpiresAt
     }
@@ -32,8 +36,8 @@ const ensureMcpEnabled = () => {
 }
 
 /**
- * Console-only tools for what sits around the project rather than in it: deleting it, its members,
- * its API keys and the MCP clients connected to it.
+ * Console-only tools for what sits around the project rather than in it: deleting it, its GitOps
+ * repository, its members, its API keys and the MCP clients connected to it.
  */
 export const projectAdminTools = [
     defineTool({
@@ -51,9 +55,32 @@ export const projectAdminTools = [
         }
     }),
     defineTool({
+        name: "project_gitops_set",
+        title: "Set GitOps repository",
+        description:
+            "Switches GitOps on or off for the project. When on, every config map and secret of the project is committed to a repository as Kubernetes manifests, every time one is saved, starting with all of them at once. Secret values are committed in plaintext: say so to the user. Only an owner of the project (or an administrator of its organization) can do it. Switched off, nothing more is committed and the repository is remembered. The current setting is in project_get (gitOps).",
+        scope: MCP_SCOPE_WRITE,
+        consoleOnly: true,
+        // Pushes every config map and secret of the project, values in plaintext, to a repository: confirmed by the user
+        requiresConfirmation: true,
+        annotations: WRITE_EXTERNAL,
+        inputSchema: z
+            .object({
+                enabled: z.boolean(),
+                codeRepositoryId: objectId("Id of the code repository connection, from code_repositories_list").optional(),
+                repositoryId: z.string().trim().min(1).max(255).optional().describe('The repositoryId of the repository to commit to, from code_repository_importable with target "service"')
+            })
+            .refine(args => !args.enabled || (args.codeRepositoryId && args.repositoryId), { message: "Pass codeRepositoryId and repositoryId to switch GitOps on" }),
+        run: async (args, { principal, projectId }) => {
+            const project = await new ProjectService(principal).update(projectId, { gitOps: args })
+            return { gitOps: project?.gitOps }
+        }
+    }),
+    defineTool({
         name: "project_members_list",
         title: "List project members",
-        description: "The members of the project with their role (OWNER, MEMBER, VIEWER) and whether their invitation is still pending. The `_id` of each is the userId the other member tools take.",
+        description:
+            "The members of the project with their role (OWNER, MEMBER, VIEWER), the functional domains they are confined to (domainScoped, with domainIds: not scoped means the whole project; scoped with no ids, every domain of the scope was deleted and they reach none) and whether their invitation is still pending. The `_id` of each is the userId the other member tools take.",
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY,
@@ -64,7 +91,7 @@ export const projectAdminTools = [
         name: "project_member_invite",
         title: "Invite to project",
         description:
-            "Invites someone to the project by email with a role. They get an email to accept (when email delivery is configured; otherwise they join at once). Inviting someone already invited sends a fresh invitation.",
+            "Invites someone to the project by email with a role, to the whole project or only to some of its functional domains. They get an email to accept (when email delivery is configured; otherwise they join at once). Inviting someone already invited sends a fresh invitation, with the role and domains passed now.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Hands out access to the project: the assistant asks the user first.
@@ -72,9 +99,10 @@ export const projectAdminTools = [
         annotations: WRITE,
         inputSchema: z.object({
             email: z.email().describe("Email address of the person to invite"),
-            role: z.enum(RoleInProject).describe("OWNER manages the project and its members, MEMBER changes it, VIEWER only reads")
+            role,
+            domainIds: domainIds.optional().describe("The domains they reach, nothing else of the project; left out or empty, the whole project. Not for an OWNER, who manages the whole project")
         }),
-        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).addUserToProjectByEmail(projectId, args.email, args.role))
+        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).addUserToProjectByEmail(projectId, args.email, args.role, args.domainIds))
     }),
     defineTool({
         name: "project_member_resend_invitation",
@@ -92,16 +120,19 @@ export const projectAdminTools = [
         name: "project_member_role_set",
         title: "Change project role",
         description:
-            "Changes the role of a member of the project, or of a pending invitation. Only an owner of the project (or an administrator of its organization) can do it, and the last owner cannot be demoted.",
+            "Changes the role of a member of the project, or of a pending invitation, and the functional domains they are confined to. Only an owner of the project (or an administrator of its organization) can do it, and the last owner cannot be demoted.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Lowering a role takes access away, and raising one hands the project over: confirmed by the user.
         annotations: DESTRUCTIVE,
         inputSchema: z.object({
             userId,
-            role: z.enum(RoleInProject).describe("OWNER manages the project and its members, MEMBER changes it, VIEWER only reads")
+            role,
+            domainIds: domainIds
+                .optional()
+                .describe("Replaces the domains they reach, an empty list opening the whole project; left out, they stay. Promoting to OWNER a member confined to domains needs an empty list")
         }),
-        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).updateUserRole(projectId, args.userId, args.role))
+        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).updateUserRole(projectId, args.userId, args.role, args.domainIds))
     }),
     defineTool({
         name: "project_member_remove",

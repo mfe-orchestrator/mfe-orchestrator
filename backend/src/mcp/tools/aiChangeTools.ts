@@ -10,6 +10,14 @@ import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
 
 const microfrontendId = objectId("Id of the microfrontend, from microfrontends_list")
+const serviceId = objectId("Id of the backend service, from services_list")
+
+/** The repository a change works on: the one of a microfrontend or the one of a service, never both. */
+const componentFields = { microfrontendId: microfrontendId.optional(), serviceId: serviceId.optional() }
+const oneComponent = (args: { microfrontendId?: string; serviceId?: string }) => Boolean(args.microfrontendId) !== Boolean(args.serviceId)
+const ONE_COMPONENT = { message: "Pass microfrontendId or serviceId, exactly one" }
+const componentOf = (args: { microfrontendId?: string; serviceId?: string }) =>
+    args.serviceId ? { kind: "service" as const, id: args.serviceId } : { kind: "microfrontend" as const, id: args.microfrontendId! }
 const changeId = objectId("Id of the AI change, from ai_change_start or ai_changes_list")
 const jobId = objectId("Id of the AI job, from ai_job_start, ai_job_follow_up or the jobId of an AI change")
 const prompt = z.string().trim().min(1).max(8_000).describe("What to change, written as a request to a developer")
@@ -108,7 +116,7 @@ const toJobView = (job: AiJobView) => ({
 })
 
 /**
- * Console-only tools for the AI code changes of a microfrontend: an agent proposes a change on its
+ * Console-only tools for the AI code changes of a microfrontend or a service: an agent proposes a change on its
  * repository and pushes it on a feature branch, the user applies it onto the base branch, opens a
  * pull request from it or discards it. Starting one runs a paid agent
  * for minutes, which is why MCP clients do not get these.
@@ -129,35 +137,33 @@ export const aiChangeTools = [
         name: "ai_change_start",
         title: "Start AI code change",
         description:
-            "Starts an AI agent that proposes a code change on the repository of a microfrontend. It only proposes: the proposal is pushed on a feature branch of its own (branch), never on the base, until ai_change_apply. It runs in the background for minutes; follow it with ai_change_get. It runs as an AI job on this repository alone: its jobId works with ai_job_get and ai_job_follow_up. At most 3 jobs run at once in a project.",
+            "Starts an AI agent that proposes a code change on the repository of a microfrontend or of a backend service: pass exactly one of microfrontendId and serviceId. It only proposes: the proposal is pushed on a feature branch of its own (branch), never on the base, until ai_change_apply. It runs in the background for minutes; follow it with ai_change_get. It runs as an AI job on this repository alone: its jobId works with ai_job_get and ai_job_follow_up. At most 3 jobs run at once in a project.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Clones the repository from its provider and, once done, pushes the proposal on a feature branch: never on the base
         annotations: WRITE_EXTERNAL,
-        inputSchema: z.object({
-            microfrontendId,
-            prompt,
-            baseBranch: z.string().trim().min(1).max(255).optional().describe("Branch to start from, the repository's default branch when omitted"),
-            effort,
-            aiModelId
-        }),
+        inputSchema: z
+            .object({
+                ...componentFields,
+                prompt,
+                baseBranch: z.string().trim().min(1).max(255).optional().describe("Branch to start from, the repository's default branch when omitted"),
+                effort,
+                aiModelId
+            })
+            .refine(oneComponent, ONE_COMPONENT),
         run: async (args, { principal }) =>
-            toChangeView(
-                await service(principal).create(
-                    { kind: "microfrontend", id: args.microfrontendId },
-                    { prompt: args.prompt, baseBranch: args.baseBranch, effort: args.effort, aiModelId: args.aiModelId }
-                )
-            )
+            toChangeView(await service(principal).create(componentOf(args), { prompt: args.prompt, baseBranch: args.baseBranch, effort: args.effort, aiModelId: args.aiModelId }))
     }),
     defineTool({
         name: "ai_changes_list",
         title: "List AI code changes",
-        description: "The latest AI code changes of a microfrontend (up to 20), newest first, with their status and the files they touch.",
+        description:
+            "The latest AI code changes of a microfrontend or of a backend service (up to 20), newest first, with their status and the files they touch. Pass exactly one of microfrontendId and serviceId.",
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY,
-        inputSchema: z.object({ microfrontendId }),
-        run: async (args, { principal }) => (await service(principal).list({ kind: "microfrontend", id: args.microfrontendId })).map(toChangeView)
+        inputSchema: z.object(componentFields).refine(oneComponent, ONE_COMPONENT),
+        run: async (args, { principal }) => (await service(principal).list(componentOf(args))).map(toChangeView)
     }),
     defineTool({
         name: "ai_change_get",
