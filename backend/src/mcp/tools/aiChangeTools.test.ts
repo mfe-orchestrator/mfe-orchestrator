@@ -15,6 +15,8 @@ const followUpJob = vi.fn()
 const getJob = vi.fn()
 const applyJob = vi.fn()
 const availableForProject = vi.fn()
+const listJobs = vi.fn()
+const planDomain = vi.fn()
 
 const { constructed } = vi.hoisted(() => ({ constructed: [] as unknown[][] }))
 
@@ -39,12 +41,19 @@ vi.mock("../../service/AiModelService", () => ({
     }
 }))
 
+vi.mock("../../service/aiChange/DomainPlanService", () => ({
+    default: class {
+        plan = (...args: unknown[]) => planDomain(...args)
+    }
+}))
+
 vi.mock("../../service/aiChange/AiChangeJobService", () => ({
     default: class {
         create = (...args: unknown[]) => createJob(...args)
         followUp = (...args: unknown[]) => followUpJob(...args)
         get = (...args: unknown[]) => getJob(...args)
         apply = (...args: unknown[]) => applyJob(...args)
+        list = (...args: unknown[]) => listJobs(...args)
     }
 }))
 
@@ -112,7 +121,7 @@ const forbidden = () => createBusinessException({ code: "AI_CHANGE_FORBIDDEN", m
 
 describe("AI change tools", () => {
     beforeEach(() => {
-        for (const mock of [createChange, listChanges, getChange, applyChange, openPullRequest, discardChange, createJob, followUpJob, getJob, applyJob, availableForProject]) {
+        for (const mock of [createChange, listChanges, getChange, applyChange, openPullRequest, discardChange, createJob, followUpJob, getJob, applyJob, availableForProject, listJobs, planDomain]) {
             mock.mockReset()
         }
         constructed.length = 0
@@ -258,6 +267,21 @@ describe("AI change tools", () => {
     })
 
     describe("ai_job_start", () => {
+        it("given services and base branches, when started, then the job is a selection of them starting from those branches", async () => {
+            createJob.mockResolvedValue(jobView("PENDING"))
+
+            await run("ai_job_start", { prompt: "Rename the price API", microfrontendIds: [MICROFRONTEND], serviceIds: [SERVICE], baseBranches: { [SERVICE]: "develop" } })
+
+            expect(createJob).toHaveBeenCalledWith(
+                PROJECT,
+                expect.objectContaining({ scope: "selection", microfrontendIds: [MICROFRONTEND], serviceIds: [SERVICE], baseBranches: { [SERVICE]: "develop" } })
+            )
+        })
+
+        it("given a domain with services, when the input is validated, then it is refused", () => {
+            expect(tool("ai_job_start").inputSchema.safeParse({ prompt: "Rename", domainId: PROJECT, serviceIds: [SERVICE] }).success).toBe(false)
+        })
+
         it("given no microfrontend, when started, then the job is global on the tool's project and the view carries its id, usage and repositories", async () => {
             createJob.mockResolvedValue(jobView("PENDING"))
 
@@ -395,6 +419,30 @@ describe("AI change tools", () => {
 
             expect(applyJob).toHaveBeenCalledWith(JOB)
             expect(result).toMatchObject({ jobId: JOB, repositories: [{ status: "APPLIED", pullRequestUrl: "https://github.com/acme/cart/pull/7" }] })
+        })
+    })
+
+    describe("ai_jobs_list", () => {
+        it("given active, when listed, then the caller's active jobs of the project come back without progress", async () => {
+            const { events: _events, ...withoutEvents } = jobView("RUNNING")
+            listJobs.mockResolvedValue([withoutEvents])
+
+            const [job] = (await run("ai_jobs_list", { active: true })) as Record<string, unknown>[]
+
+            expect(listJobs).toHaveBeenCalledWith(PROJECT, true)
+            expect(job).toMatchObject({ jobId: JOB, status: "RUNNING" })
+            expect(job).not.toHaveProperty("recentEvents")
+        })
+    })
+
+    describe("ai_domain_plan", () => {
+        it("given a domain and a request, when planned, then the plan comes back and nothing is written", async () => {
+            const plan = { microfrontends: [{ name: "Orders", slug: "orders", template: "vite-react", repositoryName: "orders-fe" }], services: [] }
+            planDomain.mockResolvedValue(plan)
+
+            expect(await run("ai_domain_plan", { domainId: MICROFRONTEND, prompt: "Track orders" })).toEqual(plan)
+            expect(planDomain).toHaveBeenCalledWith(PROJECT, { domainId: MICROFRONTEND, prompt: "Track orders" })
+            expect(tool("ai_domain_plan").annotations).toMatchObject({ destructiveHint: false })
         })
     })
 })

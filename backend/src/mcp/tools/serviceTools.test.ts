@@ -10,6 +10,8 @@ const getService = vi.fn()
 const createService = vi.fn()
 const updateService = vi.fn()
 const deleteService = vi.fn()
+const serviceVersions = vi.fn()
+const buildService = vi.fn()
 const getDomain = vi.fn()
 const findCodeRepository = vi.fn()
 const getContext = vi.fn()
@@ -33,7 +35,9 @@ vi.mock("../../service/ServiceService", () => ({
         getById: (...args: unknown[]) => getService(...args),
         create: (...args: unknown[]) => createService(...args),
         update: (...args: unknown[]) => updateService(...args),
-        delete: (...args: unknown[]) => deleteService(...args)
+        delete: (...args: unknown[]) => deleteService(...args),
+        getVersionsById: (...args: unknown[]) => serviceVersions(...args),
+        build: (...args: unknown[]) => buildService(...args)
     })
 }))
 vi.mock("../../service/DomainService", () => ({ default: serviceClass({ getById: (...args: unknown[]) => getDomain(...args) }) }))
@@ -65,7 +69,7 @@ const ordersApi = { _id: SERVICE, name: "Orders API", slug: "orders-api", domain
 
 describe("service tools", () => {
     beforeEach(() => {
-        for (const mock of [listServices, getService, createService, updateService, deleteService, getDomain, findCodeRepository]) {
+        for (const mock of [listServices, getService, createService, updateService, deleteService, serviceVersions, buildService, getDomain, findCodeRepository]) {
             mock.mockReset()
         }
         principals.length = 0
@@ -73,7 +77,7 @@ describe("service tools", () => {
 
     it("given their definitions, when read, then reads need mfe:read, writes mfe:write and only the delete is destructive", () => {
         const reads = serviceTools.filter(definition => definition.scope === MCP_SCOPE_READ).map(definition => definition.name)
-        expect(reads.sort()).toEqual(["service_get", "services_list"])
+        expect(reads.sort()).toEqual(["service_get", "service_versions", "services_list"])
         for (const definition of serviceTools) {
             expect(definition.consoleOnly, definition.name).toBeFalsy()
         }
@@ -249,6 +253,48 @@ describe("service tools", () => {
             deleteService.mockRejectedValue(new UserCannotAccessThisProjectError())
 
             await expect(run("service_delete", { serviceId: SERVICE })).rejects.toBeInstanceOf(UserCannotAccessThisProjectError)
+        })
+    })
+
+    describe("service_versions", () => {
+        it("given a service, when its versions are listed, then the service's list is returned", async () => {
+            serviceVersions.mockResolvedValue([{ version: "1.2.0" }])
+
+            expect(await run("service_versions", { serviceId: SERVICE })).toEqual([{ version: "1.2.0" }])
+            expect(serviceVersions).toHaveBeenCalledWith(SERVICE)
+        })
+    })
+
+    describe("service_trigger_build", () => {
+        it("given a version and a branch, when triggered, then the service tags the branch and it reaches outside", async () => {
+            buildService.mockResolvedValue(undefined)
+            getService.mockResolvedValue({ ...ordersApi, codeRepository: { enabled: true } })
+
+            expect(await run("service_trigger_build", { serviceId: SERVICE, version: "1.3.0", branch: "develop" })).toEqual({ triggered: true })
+            expect(buildService).toHaveBeenCalledWith(SERVICE, "1.3.0", "develop")
+            expect(tool("service_trigger_build").annotations).toMatchObject({ openWorldHint: true, destructiveHint: false })
+        })
+
+        it("given a service without a linked repository, when triggered, then it is refused rather than answered as started", async () => {
+            getService.mockResolvedValue(ordersApi)
+
+            await expect(run("service_trigger_build", { serviceId: SERVICE, version: "1.3.0" })).rejects.toMatchObject({ code: "SERVICE_REPOSITORY_MISSING" })
+            expect(buildService).not.toHaveBeenCalled()
+        })
+
+        it("given a version that cannot be a tag, when the input is validated, then it is refused", () => {
+            expect(tool("service_trigger_build").inputSchema.safeParse({ serviceId: SERVICE, version: "1.3 beta" }).success).toBe(false)
+        })
+    })
+
+    describe("config maps and secrets", () => {
+        it("given map ids, when a service is updated, then they reach the service", async () => {
+            getService.mockResolvedValue(ordersApi)
+            updateService.mockResolvedValue(ordersApi)
+
+            await run("service_update", { serviceId: SERVICE, configMapIds: [DOMAIN], secretIds: [FOREIGN_DOMAIN] })
+
+            expect(updateService).toHaveBeenCalledWith(SERVICE, expect.objectContaining({ configMapIds: [DOMAIN], secretIds: [FOREIGN_DOMAIN] }))
         })
     })
 })

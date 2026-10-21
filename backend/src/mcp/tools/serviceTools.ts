@@ -1,12 +1,13 @@
 import { z } from "zod"
+import { createBusinessException } from "../../errors/BusinessException"
 import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import ProjectService from "../../service/ProjectService"
 import ServiceService from "../../service/ServiceService"
 import ServiceDTO from "../../types/ServiceDTO"
-import { SERVICE_SLUG } from "../../types/ServiceStack"
+import { SERVICE_SLUG, SERVICE_VERSION } from "../../types/ServiceStack"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE, defineTool, McpToolContext, objectId, READ_ONLY, WRITE } from "../toolDefinition"
+import { DESTRUCTIVE, defineTool, McpToolContext, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
 import { domainFilter, filterByDomain, memberDomainId } from "./domainTools"
 import { containerFields, ensureReferencesBelongToProject, createSchema as microfrontendCreateSchema } from "./microfrontendTools"
 
@@ -64,6 +65,38 @@ export const serviceTools = [
             const service = await getExisting(args.serviceId, context)
             const aiContext = await new ProjectService(context.principal).getContext(context.projectId, { serviceId: args.serviceId })
             return { ...service.toObject(), aiContext }
+        }
+    }),
+    defineTool({
+        name: "service_versions",
+        title: "List service versions",
+        description: "The versions of a backend service its CI has registered (an image tag each) and can be deployed.",
+        scope: MCP_SCOPE_READ,
+        annotations: READ_ONLY,
+        inputSchema: z.object({ serviceId }),
+        run: (args, { principal }) => new ServiceService(principal).getVersionsById(args.serviceId)
+    }),
+    defineTool({
+        name: "service_trigger_build",
+        title: "Trigger service build",
+        description: "Tags the given branch of the service's repository with the version, which starts its CI pipeline: it builds the image and registers the version.",
+        scope: MCP_SCOPE_WRITE,
+        annotations: WRITE_EXTERNAL,
+        inputSchema: z.object({
+            serviceId,
+            version: z.string().regex(SERVICE_VERSION, "letters, digits, dots, dashes and underscores, at most 128").describe("Version to tag, e.g. 1.4.0: it becomes the image tag"),
+            branch: z.string().min(1).max(255).optional().describe("Branch to tag, main when omitted")
+        }),
+        run: async (args, context) => {
+            // Without a linked repository the service tags nothing: say so rather than answer it started
+            if (!(await getExisting(args.serviceId, context)).codeRepository?.enabled) {
+                throw createBusinessException({
+                    code: "SERVICE_REPOSITORY_MISSING",
+                    message: "The service has no linked code repository to tag: link one with service_update or create one with service_scaffold"
+                })
+            }
+            await new ServiceService(context.principal).build(args.serviceId, args.version, args.branch)
+            return { triggered: true }
         }
     }),
     defineTool({

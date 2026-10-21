@@ -60,7 +60,17 @@ export const containerFields = {
         )
         .max(200)
         .optional()
-        .describe("Variables the image reads from its environment: names only, never values. Replaced as a whole")
+        .describe("Variables the image reads from its environment: names only, never values. Replaced as a whole"),
+    configMapIds: z
+        .array(objectId("Id of a config map of the project, from config_maps_list"))
+        .max(50)
+        .optional()
+        .describe("Config maps whose keys reach the container as environment variables: a service, or a microfrontend of kind FRONTEND. Replaced as a whole"),
+    secretIds: z
+        .array(objectId("Id of a secret of the project, from secrets_list"))
+        .max(50)
+        .optional()
+        .describe("Secrets whose keys reach the container as environment variables: a service, or a microfrontend of kind FRONTEND. Replaced as a whole")
 }
 
 /**

@@ -4,6 +4,7 @@ import { IAiChangeEvent, IAiChangeRequest } from "../../models/AiChangeRequestMo
 import AiModelService from "../../service/AiModelService"
 import AiChangeJobService, { AiJobView } from "../../service/aiChange/AiChangeJobService"
 import AiChangeService from "../../service/aiChange/AiChangeService"
+import DomainPlanService from "../../service/aiChange/DomainPlanService"
 import { AuthorizedPrincipal } from "../../service/BaseAuthorizedService"
 import { LLM_EFFORTS } from "../../service/llm"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
@@ -110,7 +111,8 @@ const toJobView = (job: AiJobView) => ({
         pullRequestUrl: repository.pullRequestUrl,
         pullRequestError: repository.pullRequestError
     })),
-    recentEvents: recentEvents(job.events ?? []),
+    // A listed job is read without its progress: the view has none rather than an empty one
+    ...(job.events ? { recentEvents: recentEvents(job.events) } : {}),
     createdAt: job.createdAt,
     updatedAt: job.updatedAt
 })
@@ -216,7 +218,7 @@ export const aiChangeTools = [
         name: "ai_job_start",
         title: "Start AI job",
         description:
-            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. With domainId it works on the microfrontends and services of that functional domain, frontend and backend together, and is told what the domain is for. Without domainId nor microfrontendIds it works on every microfrontend and service of the project with a repository (at most 10). Each repository gets its own proposal, pushed on a feature branch of its own; nothing reaches a base branch until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
+            "Starts one AI agent that proposes a coherent code change across several repositories at once, e.g. an API changed in one and its callers updated in the others. With domainId it works on the microfrontends and services of that functional domain, frontend and backend together, and is told what the domain is for. With microfrontendIds and/or serviceIds it works on those. With none of them it works on every microfrontend and service of the project with a repository (at most 10). baseBranches picks the branch each repository starts from. Each repository gets its own proposal, pushed on a feature branch of its own; nothing reaches a base branch until ai_job_apply. It runs in the background for minutes; follow it with ai_job_get. At most 3 jobs run at once in a project.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Clones the repositories from their provider: nothing is written there yet
@@ -225,27 +227,54 @@ export const aiChangeTools = [
             .object({
                 prompt,
                 domainId: objectId("Id of a functional domain, from domains_list: the job works on its microfrontends and services").optional(),
-                microfrontendIds: z
-                    .array(objectId("Id of a microfrontend, from microfrontends_list"))
-                    .min(1)
-                    .max(10)
+                microfrontendIds: z.array(objectId("Id of a microfrontend, from microfrontends_list")).min(1).max(10).optional().describe("The microfrontends to change, without domainId"),
+                serviceIds: z.array(objectId("Id of a backend service, from services_list")).min(1).max(10).optional().describe("The backend services to change, without domainId"),
+                baseBranches: z
+                    .record(z.string().regex(/^[a-fA-F0-9]{24}$/), z.string().trim().min(1).max(255))
+                    .refine(branches => Object.keys(branches).length <= 100, { message: "At most 100 base branches" })
                     .optional()
-                    .describe("The microfrontends to change, without domainId; all the microfrontends and services with a repository when both are omitted"),
+                    .describe("The branch each repository starts from, by microfrontend or service id; its default branch when left out"),
                 effort,
                 aiModelId
             })
-            .refine(args => !(args.domainId && args.microfrontendIds), { message: "Pass domainId or microfrontendIds, not both" }),
+            .refine(args => !(args.domainId && (args.microfrontendIds || args.serviceIds)), { message: "Pass domainId or microfrontendIds/serviceIds, not both" }),
         run: async (args, { principal, projectId }) =>
             toJobView(
-                await jobService(principal).create(
-                    projectId,
-                    args.domainId
-                        ? { prompt: args.prompt, scope: "domain", domainId: args.domainId, effort: args.effort, aiModelId: args.aiModelId }
-                        : args.microfrontendIds
-                          ? { prompt: args.prompt, scope: "selection", microfrontendIds: args.microfrontendIds, effort: args.effort, aiModelId: args.aiModelId }
-                          : { prompt: args.prompt, scope: "global", effort: args.effort, aiModelId: args.aiModelId }
-                )
+                await jobService(principal).create(projectId, {
+                    prompt: args.prompt,
+                    effort: args.effort,
+                    aiModelId: args.aiModelId,
+                    baseBranches: args.baseBranches,
+                    ...(args.domainId
+                        ? { scope: "domain", domainId: args.domainId }
+                        : args.microfrontendIds || args.serviceIds
+                          ? { scope: "selection", microfrontendIds: args.microfrontendIds, serviceIds: args.serviceIds }
+                          : { scope: "global" })
+                })
             )
+    }),
+    defineTool({
+        name: "ai_domain_plan",
+        title: "Plan a new domain",
+        description:
+            "Asks the AI which microfrontends and services a functional domain that has none yet needs for a request: for each a name, a slug, a repository name, the marketplace template to scaffold it from and why. It only proposes and answers in seconds: create them with microfrontend_scaffold and service_scaffold, then start an ai_job_start on the domain to implement the request.",
+        scope: MCP_SCOPE_WRITE,
+        consoleOnly: true,
+        // Nothing is written, but it is a paid model call: under mfe:write like every AI tool
+        annotations: WRITE_EXTERNAL,
+        inputSchema: z.object({ domainId: objectId("Id of the functional domain to plan, from domains_list"), prompt, aiModelId }),
+        run: (args, { principal, projectId }) => new DomainPlanService(principal, fastify.config).plan(projectId, args)
+    }),
+    defineTool({
+        name: "ai_jobs_list",
+        title: "List AI jobs",
+        description:
+            "The latest AI jobs you started in the project, newest first, without their progress lines (ai_job_get has them). With active, only those still running or with proposals not yet applied nor discarded.",
+        scope: MCP_SCOPE_READ,
+        consoleOnly: true,
+        annotations: READ_ONLY,
+        inputSchema: z.object({ active: z.boolean().optional() }),
+        run: async (args, { principal, projectId }) => (await jobService(principal).list(projectId, args.active)).map(toJobView)
     }),
     defineTool({
         name: "ai_job_follow_up",

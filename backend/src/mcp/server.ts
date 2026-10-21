@@ -26,13 +26,14 @@ import { projectTools } from "./tools/projectTools"
 import { repositoryTools } from "./tools/repositoryTools"
 import { scaffoldTools } from "./tools/scaffoldTools"
 import { serviceTools } from "./tools/serviceTools"
+import { variableMapTools } from "./tools/variableMapTools"
 
 /**
  * Every tool the MCP server can expose, and the ones only the console assistant offers.
  *
  * MCP clients get parity with the console, minus what v1 leaves out on purpose: API keys (creating
  * or showing one hands a long-lived credential to the client), creating or editing storages,
- * databases and repository connections (their input is a secret), and everything else above the project
+ * databases, repository connections and secrets (their input is a secret), and everything else above the project
  * (deleting projects, managing organizations, members, invitations, the user profile), bundle
  * upload, the canvas layout, bulk deletes and AI code changes (each one runs a paid agent).
  * Code changes made by the client's own agent are offered instead: `repository_checkout_get` says
@@ -45,7 +46,7 @@ import { serviceTools } from "./tools/serviceTools"
  * acting for the signed-in user inside the console, offers them. They cover most of the list above
  * (project deletion, members and invitations, organizations, API keys, MCP clients, bulk actions,
  * the canvas layout and AI code changes). What stays in the console pages for the
- * assistant too: storages, databases, repository connections, the user profile and bundle upload (their input
+ * assistant too: storages, databases, repository connections, secret values, the user profile and bundle upload (their input
  * is a secret or a file).
  */
 export const MCP_TOOLS: McpToolDefinition[] = [
@@ -61,6 +62,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     ...localChangeTools,
     ...scaffoldTools,
     ...configurationTools,
+    ...variableMapTools,
     ...projectAdminTools,
     ...organizationAdminTools,
     ...projectContentTools,

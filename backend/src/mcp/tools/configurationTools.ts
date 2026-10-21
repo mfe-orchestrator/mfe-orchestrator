@@ -5,8 +5,10 @@ import FederationIntegrationService, { IntegrationScope } from "../../service/Fe
 import GlobalVariablesService from "../../service/GlobalVariablesService"
 import MicrofrontendDependencyService from "../../service/MicrofrontendDependencyService"
 import { StorageService } from "../../service/StorageService"
+import { DatabaseDTO } from "../../types/DatabaseDTO"
+import { StorageDTO } from "../../types/StorageDTO"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE, DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, READ_ONLY_EXTERNAL, WRITE } from "../toolDefinition"
+import { DESTRUCTIVE, DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, READ_ONLY_EXTERNAL, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
 
 const storageId = objectId("Id of the storage")
 const databaseId = objectId("Id of the database")
@@ -140,6 +142,22 @@ export const configurationTools = [
         run: async (args, { principal }) => (await new StorageService(principal).getById(args.storageId)).toFrontendObject()
     }),
     defineTool({
+        name: "storage_test",
+        title: "Test storage connection",
+        description:
+            "Checks that a storage of the project can be reached with its stored credentials and that they may read and write the project's folder. Says what failed otherwise. Nothing is changed.",
+        scope: MCP_SCOPE_WRITE,
+        // Connects to the provider with the stored credentials, as an update would: refused to viewers, and
+        // under mfe:write like every tool that does. It changes nothing
+        annotations: WRITE_EXTERNAL,
+        inputSchema: z.object({ storageId }),
+        run: async (args, { principal }) => {
+            const service = new StorageService(principal)
+            // The masked credentials stand for the stored ones, as when the console tests a saved storage
+            return service.testConnection((await service.getById(args.storageId)).toFrontendObject() as unknown as StorageDTO, { storageId: args.storageId })
+        }
+    }),
+    defineTool({
         name: "storage_set_default",
         title: "Set default storage",
         description: "Makes a storage the project's default one.",
@@ -177,6 +195,21 @@ export const configurationTools = [
         annotations: READ_ONLY,
         inputSchema: z.object({ databaseId }),
         run: async (args, { principal }) => (await new DatabaseService(principal).getById(args.databaseId)).toFrontendObject()
+    }),
+    defineTool({
+        name: "database_test",
+        title: "Test database connection",
+        description: "Checks that a database connected to the project answers with its stored credentials. Says what failed otherwise. Nothing is changed.",
+        scope: MCP_SCOPE_WRITE,
+        // Connects to the database with the stored credentials, as an update would: refused to viewers, and
+        // under mfe:write like every tool that does. It changes nothing
+        annotations: WRITE_EXTERNAL,
+        inputSchema: z.object({ databaseId }),
+        run: async (args, { principal }) => {
+            const service = new DatabaseService(principal)
+            // The masked credentials stand for the stored ones, as when the console tests a saved database
+            return service.testConnection((await service.getById(args.databaseId)).toFrontendObject() as unknown as DatabaseDTO, { databaseId: args.databaseId })
+        }
     }),
     defineTool({
         name: "database_delete",
