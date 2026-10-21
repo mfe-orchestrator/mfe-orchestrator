@@ -1,9 +1,6 @@
 import { ObjectId, Types } from "mongoose"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
-import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
@@ -311,78 +308,5 @@ describe("access to a project and to an organization", () => {
 
             expect(administeredIds).toEqual([String(owned), String(administered)])
         })
-    })
-})
-
-describe("ensureRepositoryInDomainScope", () => {
-    /** Exposes the check, with the domain scope given rather than read from a membership. */
-    class RepositoryProbe extends BaseAuthorizedService {
-        constructor(private readonly scope: string[] | undefined) {
-            super(aUser())
-        }
-        protected getDomainScope() {
-            return Promise.resolve(this.scope)
-        }
-        check(...args: Parameters<BaseAuthorizedService["ensureRepositoryInDomainScope"]>) {
-            return this.ensureRepositoryInDomainScope(...args)
-        }
-    }
-
-    const projectId = newId()
-    const ownDomain = newId()
-    const connectionId = newId()
-    const service = { kind: "service" as const, _id: newId(), projectId }
-    const link = { enabled: true, codeRepositoryId: connectionId, repositoryId: "42", name: "orders", gitlab: { path: "shop/orders" } } as never
-
-    let microfrontendsOutside: ReturnType<typeof vi.spyOn>
-    let servicesOutside: ReturnType<typeof vi.spyOn>
-    let connection: ReturnType<typeof vi.spyOn>
-
-    beforeEach(() => {
-        microfrontendsOutside = vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
-        servicesOutside = vi.spyOn(Service, "exists").mockResolvedValue(null as never)
-        connection = vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
-    })
-
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
-
-    it("given a member of the whole project, when the repository is checked, then nothing is looked up", async () => {
-        await new RepositoryProbe(undefined).check(service, link)
-
-        expect(connection).not.toHaveBeenCalled()
-        expect(microfrontendsOutside).not.toHaveBeenCalled()
-        expect(servicesOutside).not.toHaveBeenCalled()
-    })
-
-    it("given a microfrontend of another domain or of none on the same repository, when a scoped member's write is checked, then it is refused", async () => {
-        microfrontendsOutside.mockResolvedValue({ _id: newId() } as never)
-
-        await expect(new RepositoryProbe([String(ownDomain)]).check(service, link)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
-        // The owner is found by its id among the services only; $nin also takes the documents of no domain
-        const sameRepository = [{ "codeRepository.repositoryId": "42" }, { "codeRepository.name": "orders" }]
-        const outside = { domainId: { $nin: [String(ownDomain)] } }
-        expect(microfrontendsOutside).toHaveBeenCalledWith({ projectId, "codeRepository.codeRepositoryId": connectionId, $or: sameRepository, ...outside })
-        expect(servicesOutside).toHaveBeenCalledWith({ projectId, "codeRepository.codeRepositoryId": connectionId, $or: [{ _id: service._id }, ...sameRepository], ...outside })
-    })
-
-    it("given a repository used only by components of the member's domains, when the write is checked, then it goes through", async () => {
-        await expect(new RepositoryProbe([String(ownDomain)]).check(service, link)).resolves.toBeUndefined()
-    })
-
-    it("given a GitLab connection, when the write is checked, then the repository is told by its path, not by a name another group may share", async () => {
-        connection.mockResolvedValue({ provider: CodeRepositoryProvider.GITLAB } as never)
-
-        await new RepositoryProbe([String(ownDomain)]).check(service, link)
-
-        expect(connection).toHaveBeenCalledWith(connectionId, { provider: 1 })
-        expect(microfrontendsOutside.mock.calls[0][0]).toMatchObject({ $or: [{ "codeRepository.repositoryId": "42" }, { "codeRepository.gitlab.path": "shop/orders" }] })
-    })
-
-    it("given the provider already known, when the write is checked, then the connection is not read again", async () => {
-        await new RepositoryProbe([String(ownDomain)]).check(service, link, CodeRepositoryProvider.AZURE_DEV_OPS)
-
-        expect(connection).not.toHaveBeenCalled()
     })
 })

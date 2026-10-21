@@ -8,7 +8,7 @@ vi.mock("..", () => ({
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import Deployment from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
-import { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
+import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendKind } from "../models/MicrofrontendModel"
 import { IProject } from "../models/ProjectModel"
 import ServeService from "./ServeService"
 
@@ -36,11 +36,7 @@ const shell = {
     kind: MicrofrontendKind.FRONTEND,
     host: { type: HostedOn.MFE_ORCHESTRATOR_HUB },
     // Ignored: the orchestrator does not serve a FRONTEND, so it has no version of ours to roll out
-    canary: { enabled: true, percentage: 100, type: CanaryType.RANDOM, deploymentType: CanaryDeploymentType.BASED_ON_URL, url: "https://canary.acme.com" },
-    urls: [
-        { environmentId: new Types.ObjectId(), url: "https://shell.prod.acme.com" },
-        { environmentId: environment._id, url: "https://shell.dev.acme.com" }
-    ]
+    canary: { enabled: true, percentage: 100, type: CanaryType.RANDOM, deploymentType: CanaryDeploymentType.BASED_ON_URL, url: "https://canary.acme.com" }
 }
 
 const deployment = { _id: new Types.ObjectId(), environmentId: environment._id, microfrontends: [cart, shell], variables: [] }
@@ -61,21 +57,13 @@ describe("ServeService, FRONTEND", () => {
         )
     })
 
-    it("given a FRONTEND, when its configuration is served, then its URL is the one of that environment and its canary is ignored", async () => {
+    /** It is a host asking for its own configuration: nothing of ours serves it, so there is no URL to hand out */
+    it("given a FRONTEND, when its configuration is served, then it comes with an empty URL and its canary is ignored", async () => {
         vi.spyOn(Deployment, "findOne").mockResolvedValue(deployment as never)
         vi.spyOn(Environment, "findById").mockResolvedValue(environment as never)
 
         const served = await new ServeService().getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(String(environment._id), "shell")
 
-        expect(served).toMatchObject({ slug: "shell", url: "https://shell.dev.acme.com", version: "2.0.0" })
-    })
-
-    /** It is a host asking for its own configuration: no address of its own must not make that fail */
-    it("given a FRONTEND with no URL in the environment, when its configuration is served, then it comes with an empty URL", async () => {
-        const withoutUrl: Partial<IMicrofrontend> = { ...shell, urls: [] } as never
-        vi.spyOn(Deployment, "findOne").mockResolvedValue({ ...deployment, microfrontends: [withoutUrl] } as never)
-        vi.spyOn(Environment, "findById").mockResolvedValue(environment as never)
-
-        expect(await new ServeService().getMicrofrontendConfigurationByEnvironmentIdAndMfeSlug(String(environment._id), "shell")).toMatchObject({ slug: "shell", url: "" })
+        expect(served).toMatchObject({ slug: "shell", url: "", version: "2.0.0" })
     })
 })

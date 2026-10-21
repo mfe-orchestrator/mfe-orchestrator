@@ -17,7 +17,7 @@ import { IMarket } from "../models/MarketModel"
 import { ICodeRepositoryMicrofrontend } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
-import { createSystemDeployKey } from "./ApiKeyService"
+import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeManagementService from "./CodeManagementService"
 import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
@@ -89,13 +89,10 @@ const pipelineSourceUnavailable = (repository: string, reason: string, ref?: str
 /** What `%domain%` becomes in a scaffolded repository: the console its CI talks back to */
 export const placeholderDomain = () => process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev"
 
-/**
- * The placeholders of a pipeline copied from the pipeline templates, the same on every provider. Both slugs
- * are the slug of what is scaffolded, so one pipeline can serve microfrontends and services alike.
- */
-const pipelinePlaceholders = (slug: string): Record<string, string> => ({ "%microfrontendSlug%": slug, "%serviceSlug%": slug, "%domain%": placeholderDomain() })
+/** The placeholders of a pipeline copied from the pipeline templates, the same on every provider */
+const pipelinePlaceholders = (slug: string): Record<string, string> => ({ "%microfrontendSlug%": slug, "%domain%": placeholderDomain() })
 
-/** The repository part of a microfrontend or service DTO, filled in once the repository exists */
+/** The repository part of a microfrontend DTO, filled in once the repository exists */
 export type CodeRepositoryTarget = MicrofrontendDTO["codeRepository"]
 
 /**
@@ -121,25 +118,14 @@ export const replaceFederationName = (content: string, name: string): string =>
 
 export interface ScaffoldOptions {
     /**
-     * Replaced in every text file of the scaffolded tree before the initial commit. Microfrontends
-     * leave it out: their placeholders live only in the pipeline overlay, replaced on its own.
-     */
-    placeholders?: Record<string, string>
-    /**
      * Slug of the microfrontend being scaffolded: the federation name in its webpack config becomes
      * `federationName(slug)`, the name a host configured by the console looks the remote up by.
      */
     microfrontendSlug?: string
-    /**
-     * False for a repository no pipeline of the console builds, as the GitOps one: on GitHub it gets no
-     * deploy secret, so no deploy key is issued for it.
-     */
-    deploySecret?: boolean
 }
 
 /**
- * Creates code repositories from marketplace templates and tags their releases, for whatever is
- * built from one: microfrontends and backend services go through exactly the same steps.
+ * Creates the code repositories of microfrontends from marketplace templates and tags their releases.
  */
 export class TemplateScaffoldService extends BaseAuthorizedService {
     /**
@@ -236,7 +222,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             target.cloneUrlHttps = createdRepository.clone_url
             target.cloneUrlSsh = createdRepository.ssh_url
             // Now will inject api key
-            if (options?.deploySecret !== false) await this.gitHubInjectApiKey(codeRepository, slug, target.name)
+            await this.gitHubInjectApiKey(codeRepository, slug, target.name)
             // Now will inject the template
             if (template) {
                 await this.injectTemplateGithub(slug, codeRepository.accessToken, createdRepository.clone_url, "github", template, options, pipelines)
@@ -244,10 +230,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         }
     }
 
-    /**
-     * Stores a deploy API key as a secret of the GitHub repository, so its pipeline can call back. Reached
-     * through createRepository only, whose callers checked the access to the component and its domain.
-     */
+    /** Stores a deploy API key as a secret of the GitHub repository, so its pipeline can call back */
     async gitHubInjectApiKey(codeRepository: ICodeRepository, slug: string, repositoryName?: string) {
         if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
         if (codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return
@@ -265,9 +248,7 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
             return
         }
 
-        // A system action, not one of the user: a domain-scoped member creating the repository of a component of
-        // theirs must not leave it at the provider without its deploy secret (see createSystemDeployKey)
-        const apiKey = await createSystemDeployKey(codeRepository.projectId.toString(), {
+        const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
             name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + slug,
             role: ApiKeyRole.MANAGER,
             expiresAt: deployKeyExpiry()
@@ -322,10 +303,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         await this.flattenTemplate(tempDir)
 
         await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
-
-        if (options?.placeholders) {
-            await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
-        }
 
         if (options?.microfrontendSlug) {
             await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
@@ -417,10 +394,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         await this.flattenTemplate(tempDir)
 
         await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
-
-        if (options?.placeholders) {
-            await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
-        }
 
         if (options?.microfrontendSlug) {
             await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
@@ -530,10 +503,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         await this.flattenTemplate(tempDir)
 
         await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
-
-        if (options?.placeholders) {
-            await this.replacePlaceholdersInDirectory(tempDir, options.placeholders)
-        }
 
         if (options?.microfrontendSlug) {
             await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
@@ -813,10 +782,6 @@ export class TemplateScaffoldService extends BaseAuthorizedService {
         if (!codeRepository || String(codeRepository.projectId) !== String(projectId)) {
             throw new EntityNotFoundError(String(link.codeRepositoryId))
         }
-        // The tag is named after the version alone, and it starts the pipeline of the whole repository: on one
-        // shared with a component of another domain it releases that one too. The caller has checked the
-        // component being built, so only the other links to the repository are looked at.
-        await this.ensureRepositoryInDomainScope({ projectId: codeRepository.projectId }, link, codeRepository.provider)
 
         const repositoryId = link.repositoryId
         const branchName = ref || "main"

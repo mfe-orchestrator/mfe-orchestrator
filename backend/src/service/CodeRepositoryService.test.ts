@@ -26,10 +26,10 @@ vi.mock("../client/AzureDevOpsClient", () => ({
 
 import CodeRepository, { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import { IUser } from "../models/UserModel"
-import BaseAuthorizedService, { domainScopeForbidden } from "./BaseAuthorizedService"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryService from "./CodeRepositoryService"
 
-type Guards = { ensureAccessToProject: () => Promise<void>; ensureWholeProject: () => Promise<void> }
+type Guards = { ensureAccessToProject: () => Promise<void> }
 const guards = BaseAuthorizedService.prototype as unknown as Guards
 
 const STORED_TOKEN = "glpat-stored"
@@ -49,7 +49,6 @@ beforeEach(() => {
     stored = gitlabConnection()
     vi.spyOn(CodeRepository, "findOne").mockImplementation((() => Promise.resolve(stored)) as never)
     vi.spyOn(guards, "ensureAccessToProject").mockResolvedValue()
-    vi.spyOn(guards, "ensureWholeProject").mockResolvedValue()
 })
 
 afterEach(() => {
@@ -73,15 +72,6 @@ describe("connection test with the stored token", () => {
 
         await expect(service().testConnectionGitlab("https://gitlab.acme.dev", "", connectionId)).rejects.toMatchObject(storedTokenRequired)
         expect(gitlabClients).toEqual([])
-    })
-
-    it("Given a member who does not manage the connections, when a test takes the stored token, then it is refused and the token goes nowhere", async () => {
-        vi.mocked(guards.ensureWholeProject).mockRejectedValue(domainScopeForbidden())
-
-        await expect(service().testConnectionGitlab("https://gitlab.acme.dev", "", connectionId)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN" })
-        await expect(service().testConnectionAzure("acme", "", connectionId)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN" })
-        expect(gitlabClients).toEqual([])
-        expect(azureGetProjects).not.toHaveBeenCalled()
     })
 
     it("Given a token typed in, when a test names any host, then that token is used and no connection is read", async () => {

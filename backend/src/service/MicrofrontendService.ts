@@ -14,31 +14,111 @@ import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltFrontend, { IBuiltFrontend } from "../models/BuiltFrontendModel"
 import CodeRepository from "../models/CodeRepositoryModel"
-import { CONTAINER_DEFAULTS } from "../models/ContainerFields"
-import FrontendDeployment from "../models/FrontendDeploymentModel"
 import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
-import { isServiceTemplateType } from "../types/ServiceStack"
 import { toObjectId } from "../utils/mongooseUtils"
-import BaseAuthorizedService, { domainScopeForbidden, ensureOnlyNewRepositoryLinked, ensureRepositoryLinkUnchanged, isInDomainScope } from "./BaseAuthorizedService"
-import { resolveDomainId } from "./DomainService"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 import MarketService from "./MarketService"
-import { ensurePlainFields, imageRepositoryOf, isNewerVersion, parseRegistration, withNormalizedReferences } from "./ServiceService"
 import TemplateScaffoldService from "./TemplateScaffoldService"
-import { ensureAttachableMaps } from "./VariableMapService"
 import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
 
 /** What a microfrontend is served by when neither the caller nor a template says otherwise. */
-export const DEFAULT_ENTRY_POINT = "assets/remoteEntry.js"
+const DEFAULT_ENTRY_POINT = "assets/remoteEntry.js"
 
 /** A host given without an entry point gets the template's, when there is one: one given is kept */
-export const withEntryPoint = (host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend => (entryPoint && !host.entryPoint ? { ...host, entryPoint } : host)
+const withEntryPoint = (host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend => (entryPoint && !host.entryPoint ? { ...host, entryPoint } : host)
 
 const isDuplicateKeyError = (error: unknown): boolean => (error as { code?: number })?.code === 11000
+
+const isNonEmptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0
+
+/**
+ * Refuses update operators and dotted paths: `{"$set": {"projectId": ...}}` or `{"codeRepository.codeRepositoryId": ...}`
+ * would reach Mongo past every check here, moving the microfrontend or lending it a connection of another project.
+ */
+const ensurePlainFields = (fields: object) => {
+    const key = Object.keys(fields).find(candidate => candidate.startsWith("$") || candidate.includes("."))
+    if (key) {
+        throw createBusinessException({ code: "MICROFRONTEND_INVALID", message: `"${key}" is not a field: update operators and dotted paths are refused` })
+    }
+}
+
+/** What the CI pipeline of a FRONTEND sends once it pushed the image of a tagged version */
+interface VersionRegistration {
+    image: string
+    digest?: string
+    commitSha?: string
+}
+
+/**
+ * The body the CI posts once it pushed an image. It arrives with an API key only, from a pipeline
+ * nobody watches: a malformed one is refused with a 400 rather than stored half filled.
+ */
+const parseRegistration = (body: unknown): VersionRegistration => {
+    const registration = (body ?? {}) as Record<string, unknown>
+    if (!isNonEmptyString(registration.image)) {
+        throw createBusinessException({ code: "MICROFRONTEND_VERSION_IMAGE_REQUIRED", message: "The image reference is required, e.g. ghcr.io/acme/shell:1.2.0" })
+    }
+    for (const field of ["digest", "commitSha"] as const) {
+        if (registration[field] !== undefined && typeof registration[field] !== "string") {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_INVALID", message: `${field} must be a string` })
+        }
+    }
+    return {
+        image: registration.image.trim(),
+        digest: (registration.digest as string | undefined)?.trim() || undefined,
+        commitSha: (registration.commitSha as string | undefined)?.trim() || undefined
+    }
+}
+
+/**
+ * The repository part of an image reference, without tag nor digest:
+ * `host:5000/acme/shell:1.2.0@sha256:…` → `host:5000/acme/shell`. A colon before the last slash
+ * is a registry port, not a tag.
+ */
+const imageRepositoryOf = (image: string): string => {
+    const withoutDigest = image.split("@")[0]
+    const tagAt = withoutDigest.lastIndexOf(":")
+    return tagAt > withoutDigest.lastIndexOf("/") ? withoutDigest.slice(0, tagAt) : withoutDigest
+}
+
+const SEMVER = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
+
+/** Semver precedence of two pre-release tags (`alpha.1` < `alpha.2` < `beta`). */
+const comparePrerelease = (a: string, b: string): number => {
+    const left = a.split(".")
+    const right = b.split(".")
+    for (let index = 0; index < Math.min(left.length, right.length); index++) {
+        const [x, y] = [left[index], right[index]]
+        const [xNumeric, yNumeric] = [/^\d+$/.test(x), /^\d+$/.test(y)]
+        if (xNumeric && yNumeric && Number(x) !== Number(y)) return Number(x) - Number(y)
+        if (xNumeric !== yNumeric) return xNumeric ? -1 : 1
+        if (x !== y) return x < y ? -1 : 1
+    }
+    return left.length - right.length
+}
+
+/**
+ * Whether `candidate` should become the version of a FRONTEND: always when it has none yet, otherwise
+ * only when both are semver and `candidate` is newer. Tags that are not semver (`latest`, a commit sha)
+ * cannot be ordered: they are registered as versions but never move the FRONTEND.
+ */
+const isNewerVersion = (candidate: string, current?: string): boolean => {
+    if (!current?.trim()) return true
+    const next = SEMVER.exec(candidate)
+    const previous = SEMVER.exec(current)
+    if (!next || !previous) return false
+    for (let part = 1; part <= 3; part++) {
+        const difference = Number(next[part]) - Number(previous[part])
+        if (difference !== 0) return difference > 0
+    }
+    // A release ranks above its pre-releases.
+    if (!next[4] || !previous[4]) return !next[4] && Boolean(previous[4])
+    return comparePrerelease(next[4], previous[4]) > 0
+}
 
 const ensureValidKind = (kind: unknown) => {
     if (kind !== undefined && !Object.values(MicrofrontendKind).includes(kind as MicrofrontendKind)) {
@@ -65,17 +145,6 @@ const ensureFrontendHasNoParents = (kind: MicrofrontendKind | undefined, parentI
 /** Matches a document with no parents: what a write making it a FRONTEND requires of what is stored at that moment */
 const WITHOUT_PARENTS = { $or: [{ parentIds: { $exists: false } }, { parentIds: { $size: 0 } }] }
 
-/** The service defaults a FRONTEND gets for what neither the caller nor what is stored says */
-const withFrontendDefaults = <T extends Pick<MicrofrontendDTO, "kind" | "port" | "livenessPath" | "readinessPath">>(fields: T, existing?: IMicrofrontend): T => {
-    if ((fields.kind ?? existing?.kind) !== MicrofrontendKind.FRONTEND) return fields
-    return {
-        ...fields,
-        port: fields.port ?? existing?.port ?? CONTAINER_DEFAULTS.port,
-        livenessPath: fields.livenessPath ?? existing?.livenessPath ?? CONTAINER_DEFAULTS.livenessPath,
-        readinessPath: fields.readinessPath ?? existing?.readinessPath ?? CONTAINER_DEFAULTS.readinessPath
-    }
-}
-
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
@@ -90,29 +159,20 @@ export class MicrofrontendService extends BaseAuthorizedService {
     async getByProjectId(projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend[]> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        return await Microfrontend.find({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) })
+        return await Microfrontend.find({ projectId: projectIdObj })
     }
 
     async create(dto: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
-        ensurePlainFields(dto, "MICROFRONTEND_INVALID")
+        ensurePlainFields(dto)
         ensureValidKind(dto.kind)
         ensureFrontendHasNoParents(dto.kind, dto.parentIds, dto.slug)
-        const microfrontend = withFrontendDefaults(await withNormalizedReferences(dto, projectIdObj))
+        const microfrontend = { ...dto }
 
-        // Both before the repository is created: a refused domain or a taken slug would leave an orphan repository behind
-        if (microfrontend.domainId !== undefined) {
-            microfrontend.domainId = await resolveDomainId(microfrontend.domainId, projectIdObj)
-        }
-        // A domain-scoped member creates only inside their domains: one in no domain would be out of their reach at once
-        await this.ensureInDomainScope(projectIdObj, microfrontend.domainId)
-        const scope = await this.getDomainScope(projectIdObj)
-        await this.ensureReferencesInScope(projectIdObj, scope, microfrontend)
-        await ensureAttachableMaps(scope, projectIdObj, microfrontend)
-        ensureOnlyNewRepositoryLinked(scope, microfrontend.codeRepository)
-        // A FRONTEND starts without one, like a service: its first registered version sets it
+        // Both before the repository is created: a missing version or a taken slug would leave an orphan repository behind.
+        // A FRONTEND starts without a version: its first registered image sets it
         if (dto.kind !== MicrofrontendKind.FRONTEND && (typeof dto.version !== "string" || !dto.version.trim())) {
             throw createBusinessException({ code: "MICROFRONTEND_VERSION_REQUIRED", message: "A MICROFRONTEND needs a version" })
         }
@@ -126,7 +186,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
-            // A connection of another project would lend this one its access token, as for a service
+            // A connection of another project would lend this one its access token
             if (!codeRepository || String(codeRepository.projectId) !== String(projectIdObj)) {
                 throw new EntityNotFoundError(String(microfrontend.codeRepository.codeRepositoryId))
             }
@@ -134,15 +194,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
             if (microfrontend?.codeRepository?.createData) {
                 await this.ensureNotViewer(projectIdObj, { code: "REPOSITORY_CREATE_FORBIDDEN", message: "A viewer cannot create a code repository" })
                 const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
-
-                // Checked before anything is created at the provider: a service template scaffolds a
-                // Docker image, which nothing can load as a microfrontend
-                if (template && isServiceTemplateType(template.type)) {
-                    throw createBusinessException({
-                        code: "SERVICE_TEMPLATE_NOT_ALLOWED",
-                        message: `"${template.slug}" is a backend service template: create a service from it, not a microfrontend`
-                    })
-                }
 
                 await new TemplateScaffoldService(this.user).createRepository(codeRepository, microfrontend.codeRepository, microfrontend.slug, template, { microfrontendSlug: microfrontend.slug })
 
@@ -170,31 +221,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     /**
-     * A domain-scoped member references only the microfrontends and services they can see, as setRelation
-     * and linkService require: a parent or a service of another domain given in the body would tie theirs to
-     * something out of their reach. The references already stored stay, whoever added them.
-     */
-    private async ensureReferencesInScope(projectId: Schema.Types.ObjectId, scope: string[] | undefined, fields: { parentIds?: unknown; serviceIds?: unknown }, existing?: IMicrofrontend) {
-        if (!scope) return
-        const added = (given: unknown, stored: unknown[] = []) => {
-            if (given === undefined || given === null) return []
-            const kept = new Set(stored.map(String))
-            return [...new Set((Array.isArray(given) ? given : [given]).map(String))].filter(id => !kept.has(id))
-        }
-        const parentIds = added(fields.parentIds, existing?.parentIds)
-        const serviceIds = added(fields.serviceIds, existing?.serviceIds)
-        const ofProject = (ids: string[]) => ({ _id: { $in: ids.map(id => toObjectId(id)) }, projectId })
-        const referenced = [
-            ...(parentIds.length > 0 ? await Microfrontend.find(ofProject(parentIds), { domainId: 1 }) : []),
-            ...(serviceIds.length > 0 ? await Service.find(ofProject(serviceIds), { domainId: 1 }) : [])
-        ]
-        // One not found is of another project or deleted: as much out of their reach
-        if (referenced.length !== parentIds.length + serviceIds.length || referenced.some(component => !isInDomainScope(scope, component.domainId))) {
-            throw domainScopeForbidden()
-        }
-    }
-
-    /**
      * The hosting the console preselects for a new microfrontend: the project's default storage,
      * or the MFE Orchestrator hub when it has none, with the template's entry point when it was
      * created from one. Applied when a caller (the assistant, an MCP client) creates one without
@@ -218,29 +244,20 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await this.ensureAccessToMicrofrontend(microfrontend)
 
         // Never moved to another project, nor given another identity, through an update: the slug is
-        // in the upload URL the CI of the repository calls, as for a service
+        // in the upload URL the CI of the repository calls
         const { _id: _mongoId, projectId: _projectId, slug: _slug, ...fields } = updates as Partial<MicrofrontendDTO> & { _id?: unknown; projectId?: unknown }
-        ensurePlainFields(fields, "MICROFRONTEND_INVALID")
+        ensurePlainFields(fields)
         ensureValidKind(fields.kind)
         const kind = fields.kind ?? microfrontend.kind
         // Both sides of the rule can change here: parents given to a FRONTEND, or a microfrontend with parents made one
         ensureFrontendHasNoParents(kind, fields.parentIds ?? microfrontend.parentIds, microfrontend.slug)
-        const allowed: Partial<MicrofrontendDTO> & Record<string, unknown> = withFrontendDefaults(await withNormalizedReferences(fields, microfrontend.projectId, microfrontend), microfrontend)
+        const allowed: Partial<MicrofrontendDTO> & Record<string, unknown> = { ...fields }
         // The orchestrator draws no canary for a FRONTEND: one left enabled would only mislead the console
         if (kind === MicrofrontendKind.FRONTEND && allowed.canary) {
             allowed.canary = { ...allowed.canary, enabled: false }
         } else if (kind === MicrofrontendKind.FRONTEND && microfrontend.kind !== MicrofrontendKind.FRONTEND && microfrontend.canary) {
             allowed["canary.enabled"] = false
         }
-        if (allowed.domainId !== undefined) {
-            allowed.domainId = await resolveDomainId(allowed.domainId, microfrontend.projectId)
-            // Moved only between the domains of a domain-scoped member, never out of their reach
-            await this.ensureInDomainScope(microfrontend.projectId, allowed.domainId)
-        }
-        const scope = await this.getDomainScope(microfrontend.projectId)
-        await this.ensureReferencesInScope(microfrontend.projectId, scope, allowed, microfrontend)
-        await ensureAttachableMaps(scope, microfrontend.projectId, allowed, microfrontend)
-        if (ensureRepositoryLinkUnchanged(scope, allowed.codeRepository, microfrontend.codeRepository)) delete allowed.codeRepository
         // Checked once the link is enabled, as in create: a disabled link lends no token, and refusing it
         // would block every edit of a microfrontend whose connection was deleted since
         if (allowed.codeRepository?.enabled) {
@@ -269,7 +286,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendIdObj.toString())
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
-        await FrontendDeployment.deleteMany({ microfrontendId: microfrontend._id })
         const deleted = await Microfrontend.findByIdAndDelete(microfrontendIdObj)
         await forgetMicrofrontends([microfrontend])
         return deleted
@@ -286,7 +302,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
             microfrontends.push(microfrontend)
         }
 
-        await FrontendDeployment.deleteMany({ microfrontendId: { $in: microfrontends.map(microfrontend => microfrontend._id) } })
         const result = await Microfrontend.deleteMany({ _id: { $in: ids.map(toObjectId) } })
         await forgetMicrofrontends(microfrontends)
         return result.deletedCount
@@ -468,8 +483,8 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     /**
-     * Called by the CI of a FRONTEND with the deploy API key once the image of `version` is pushed, as
-     * for a service: registering the same version again replaces what was stored for it, the FRONTEND
+     * Called by the CI of a FRONTEND with the deploy API key once the image of `version` is pushed:
+     * registering the same version again replaces what was stored for it, the FRONTEND
      * moves to `version` only when it is newer and learns its image repository from the first
      * registration. A MICROFRONTEND uploads its bundle instead. MANAGER keys only.
      */
@@ -479,7 +494,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         const registration = parseRegistration(body)
         if (typeof version !== "string" || !version.trim()) {
-            throw createBusinessException({ code: "SERVICE_VERSION_INVALID", message: "The version is required" })
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_INVALID", message: "The version is required" })
         }
 
         const project = await Project.findById(projectId)
@@ -523,7 +538,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
             built = await upsert()
         }
 
-        // Compare and set on the version that was read, as for a service: two pipelines finishing
+        // Compare and set on the version that was read: two pipelines finishing
         // together cannot move the FRONTEND back to the older of the two
         let current: IMicrofrontend | null = microfrontend
         for (let attempt = 0; current && attempt < 3; attempt++) {
@@ -579,35 +594,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await remote.save()
     }
 
-    /** Links a backend service the microfrontend calls: both must belong to the same project. */
-    async linkService(microfrontendId: string, serviceId: string): Promise<IMicrofrontend> {
-        const microfrontend = await this.getById(microfrontendId)
-        if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendId)
-        }
-        const service = await Service.findById(toObjectId(serviceId))
-        if (!service || service.projectId.toString() !== microfrontend.projectId.toString()) {
-            throw new EntityNotFoundError(serviceId)
-        }
-        // A domain-scoped member links only services they can see
-        await this.ensureInDomainScope(service.projectId, service.domainId)
-
-        if (!microfrontend.serviceIds?.some(id => id.toString() === service._id.toString())) {
-            microfrontend.serviceIds = [...(microfrontend.serviceIds ?? []), service._id]
-        }
-        return await microfrontend.save()
-    }
-
-    /** No check on the service: a link to a service deleted since must still be removable. */
-    async unlinkService(microfrontendId: string, serviceId: string): Promise<IMicrofrontend> {
-        const microfrontend = await this.getById(microfrontendId)
-        if (!microfrontend) {
-            throw new EntityNotFoundError(microfrontendId)
-        }
-        microfrontend.serviceIds = (microfrontend.serviceIds ?? []).filter(id => id.toString() !== serviceId)
-        return await microfrontend.save()
-    }
-
     async setPosition(id: string, x: number, y: number): Promise<IMicrofrontend> {
         const microfrontend = await this.getById(id)
         if (!microfrontend) {
@@ -639,7 +625,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
     }
 
     ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
-        return this.ensureAccessToDomainMember(microfrontend)
+        return this.ensureAccessToProject(microfrontend.projectId)
     }
 }
 

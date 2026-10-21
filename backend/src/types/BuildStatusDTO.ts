@@ -34,8 +34,8 @@ export interface BuildRunDTO {
 }
 
 /**
- * Why a microfrontend or a service carries no run at all: the console shows this instead
- * of an empty list, so "never built" is never confused with "we could not ask".
+ * Why a microfrontend carries no run at all: the console shows this instead of an
+ * empty list, so "never built" is never confused with "we could not ask".
  */
 export enum BuildUnavailableReason {
     NO_REPOSITORY = "NO_REPOSITORY",
@@ -43,31 +43,20 @@ export enum BuildUnavailableReason {
     PROVIDER_ERROR = "PROVIDER_ERROR"
 }
 
-/** What a microfrontend and a service share on the build screen: only the id they are known by differs. */
-export interface ComponentBuildStatusDTO {
+export interface MicrofrontendBuildStatusDTO {
+    microfrontendId: string
     name: string
     slug: string
     provider?: CodeRepositoryProvider
     repositoryName?: string
-    /** Version the component itself currently points at. */
+    /** Version the microfrontend itself currently points at. */
     selectedVersion?: string
-    /** Most recent version the CI registered: the bundle of a microfrontend, the image of a service. */
+    /** Most recent version whose bundle actually reached the platform. */
     latestBuiltVersion?: string
-    /**
-     * Version served by each environment: for a microfrontend the one of that environment's
-     * active deployment, for a service the latest deploy its pipeline reported there.
-     */
+    /** Version served by each environment, taken from that environment's active deployment. */
     versionByEnvironmentId: Record<string, string>
     builds: BuildRunDTO[]
     unavailableReason?: BuildUnavailableReason
-}
-
-export interface MicrofrontendBuildStatusDTO extends ComponentBuildStatusDTO {
-    microfrontendId: string
-}
-
-export interface ServiceBuildStatusDTO extends ComponentBuildStatusDTO {
-    serviceId: string
 }
 
 export interface BuildStatusEnvironmentDTO {
@@ -94,8 +83,5 @@ export interface ProjectBuildStatusDTO {
     /** When this snapshot was read from the providers, not when it was sent. */
     fetchedAt: string
     environments: BuildStatusEnvironmentDTO[]
-    /** Frontend builds. */
     microfrontends: MicrofrontendBuildStatusDTO[]
-    /** Backend builds. */
-    services: ServiceBuildStatusDTO[]
 }

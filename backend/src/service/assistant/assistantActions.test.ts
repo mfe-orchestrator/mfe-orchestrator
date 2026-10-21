@@ -88,7 +88,7 @@ describe("assistantToolDefinitions", () => {
     it("Given a tool input with a field description, when converted, then the model sees the description", () => {
         const logs = assistantToolDefinitions.find(definition => definition.name === "get_failed_build_logs")!
 
-        expect(logs.inputSchema).toMatchObject({ properties: { runId: { type: "string", description: expect.stringContaining("CI run") } }, required: ["runId"] })
+        expect(logs.inputSchema).toMatchObject({ properties: { runId: { type: "string", description: expect.stringContaining("CI run") } }, required: ["microfrontendId", "runId"] })
     })
 })
 
@@ -108,19 +108,6 @@ describe("confirmation policy", () => {
             expect(toolKind(tool), tool.name).toBe("destructive")
         }
         expect(toolKind(ASSISTANT_TOOLS.find(tool => tool.name === "environment_create")!)).toBe("write")
-    })
-
-    it("Given the domain and service tools, when classified, then the deletes wait for the user, the other writes run directly and the reads are reads", () => {
-        const kindOf = (name: string) => toolKind(ASSISTANT_TOOLS.find(tool => tool.name === name)!)
-
-        expect(kindOf("domain_delete")).toBe("destructive")
-        expect(kindOf("service_delete")).toBe("destructive")
-        for (const name of ["domain_create", "domain_update", "service_create", "service_update"]) {
-            expect(kindOf(name), name).toBe("write")
-        }
-        for (const name of ["domains_list", "domain_get", "services_list", "service_get"]) {
-            expect(kindOf(name), name).toBe("read")
-        }
     })
 })
 

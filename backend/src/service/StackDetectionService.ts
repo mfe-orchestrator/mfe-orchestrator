@@ -109,9 +109,6 @@ export class StackDetectionService extends BaseAuthorizedService {
      * what it found, leaving alone the ones whose stack came from a template or from the user.
      */
     async detectForProject(projectId: string | Schema.Types.ObjectId): Promise<MicrofrontendStackDetectionDTO[]> {
-        // Stores what it finds on every microfrontend of the project: those reaching the whole project
-        // only. The access to the project itself is checked when the repositories are resolved.
-        await this.ensureWholeProject(projectId)
         const targets = await this.repositoryFiles.resolveTargets(projectId)
 
         return mapWithConcurrency(targets, REPOSITORY_CONCURRENCY, async target => {

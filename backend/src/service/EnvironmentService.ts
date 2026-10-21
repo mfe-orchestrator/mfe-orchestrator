@@ -4,7 +4,6 @@ import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
-import ServiceDeployment from "../models/ServiceDeploymentModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
@@ -29,20 +28,17 @@ class EnvironmentService extends BaseAuthorizedService {
     async create(environmentData: EnvironmentDTO, projectId: string): Promise<IEnvironment> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        // Every domain is deployed to the environments: only those reaching the whole project change them
-        await this.ensureWholeProject(projectIdObj)
         const environment = new Environment(environmentData)
         environment.projectId = projectIdObj
         if (environment.order === undefined || environment.order === null) {
             environment.order = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
         }
-        return environment.save()
+        return await environment.save()
     }
 
     async createBulk(body: EnvironmentDTO[], projectId: string) {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
-        await this.ensureWholeProject(projectIdObj)
         const environments = body.map(env => new Environment(env))
         let maxOrder = (await this.getMaxOrderByProjectId(projectIdObj)) + 1
         environments.forEach(env => {
@@ -52,18 +48,18 @@ class EnvironmentService extends BaseAuthorizedService {
                 maxOrder++
             }
         })
-        return Environment.insertMany(environments)
+        return await Environment.insertMany(environments)
     }
 
     async update(environmentId: string | ObjectId, updateData: EnvironmentDTO) {
         await this.ensureAccessToEnvironment(environmentId)
-        await this.ensureWholeProjectOfEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
         const updatedEnvironment = await Environment.findOneAndUpdate({ _id: environmentIdObj }, updateData, { new: true })
 
         if (!updatedEnvironment) {
             throw new EnvironmentNotFoundError(environmentIdObj.toString())
         }
+
         return updatedEnvironment
     }
 
@@ -75,7 +71,6 @@ class EnvironmentService extends BaseAuthorizedService {
      */
     async updateOrder(projectId: string, ids: (string | ObjectId)[]): Promise<IEnvironment[]> {
         await this.ensureAccessToProject(projectId)
-        await this.ensureWholeProject(projectId)
         const projectIdObj = toObjectId(projectId)
 
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -122,18 +117,15 @@ class EnvironmentService extends BaseAuthorizedService {
         await DeploymentToCanaryUsers.deleteMany({ deploymentId: { $in: deploymentIds } }, { session })
         await Deployment.deleteMany({ environmentId: { $in: environmentIds } }, { session })
         await GlobalVariable.deleteMany({ environmentId: { $in: environmentIds } }, { session })
-        // The versions the deploy pipelines reported as running there
-        await ServiceDeployment.deleteMany({ environmentId: { $in: environmentIds } }, { session })
 
         return Environment.deleteMany({ _id: { $in: environmentIds } }, { session })
     }
 
     async deleteSingle(environmentId: string | ObjectId) {
         await this.ensureAccessToEnvironment(environmentId)
-        await this.ensureWholeProjectOfEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
 
-        await runInTransaction(async session => {
+        return runInTransaction(async session => {
             const environment = await Environment.findById(environmentIdObj).session(session ?? null)
             if (!environment) {
                 throw new EnvironmentNotFoundError(environmentIdObj.toString())
@@ -152,7 +144,6 @@ class EnvironmentService extends BaseAuthorizedService {
         const idsObj = await Promise.all(
             ids.map(async id => {
                 await this.ensureAccessToEnvironment(id)
-                await this.ensureWholeProjectOfEnvironment(id)
                 return toObjectId(id)
             })
         )

@@ -8,14 +8,12 @@ import AiChangeJobService from "../aiChange/AiChangeJobService"
 import AiChangeService from "../aiChange/AiChangeService"
 import CodeRepositoryService from "../CodeRepositoryService"
 import DeploymentService from "../DeploymentService"
-import DomainService from "../DomainService"
 import EnvironmentService from "../EnvironmentService"
 import GlobalVariablesService from "../GlobalVariablesService"
 import MicrofrontendService from "../MicrofrontendService"
 import OAuthGrantService from "../OAuthGrantService"
 import OrganizationService from "../OrganizationService"
 import ProjectService from "../ProjectService"
-import ServiceService from "../ServiceService"
 import { StorageService } from "../StorageService"
 import UserOrganizationService from "../UserOrganizationService"
 import UserProjectService from "../UserProjectService"
@@ -177,10 +175,6 @@ class DetailResolver {
                     const grant = (await new OAuthGrantService(this.principal).listForProject(this.projectId)).find(candidate => candidate.id === id)
                     return grant && `${grant.clientName} (${grant.userEmail})`
                 })
-            case "serviceId":
-                return each("service", async id => (await new ServiceService(this.principal).getById(id))?.name)
-            case "domainId":
-                return each("domain", async id => (await new DomainService(this.principal).getById(id))?.name)
             case "storageId":
                 return each("storage", async id => (await new StorageService(this.principal).getByProjectId(this.projectId)).find(storage => String(storage._id) === id)?.name)
             case "codeRepositoryId":
@@ -199,10 +193,9 @@ class DetailResolver {
         const change = await new AiChangeService(this.principal, fastify.config).get(id).catch(() => undefined)
         if (!change) return [{ label: "ai_change", value: id }]
         const files = (change.files ?? []).map(file => `${file.action} ${file.path}`)
-        const microfrontend = change.microfrontendId ? await this.microfrontendLabel(String(change.microfrontendId)).catch(() => undefined) : undefined
-        const service = change.serviceId ? await new ServiceService(this.principal).getById(String(change.serviceId)).catch(() => undefined) : undefined
+        const microfrontend = await this.microfrontendLabel(String(change.microfrontendId)).catch(() => undefined)
         return [
-            change.serviceId ? { label: "service", value: service?.name ?? String(change.serviceId) } : { label: "microfrontend", value: microfrontend ?? String(change.microfrontendId) },
+            { label: "microfrontend", value: microfrontend ?? String(change.microfrontendId) },
             { label: "prompt", value: clip(change.prompt ?? "") },
             ...(files.length ? [{ label: "files", value: lines(files) }] : [])
         ]
@@ -224,16 +217,11 @@ class DetailResolver {
         for (const environmentId of environmentIds) {
             details.push({ label: "environment", value: (await this.environmentName(environmentId).catch(() => undefined)) ?? environmentId })
             try {
-                const deploymentService = new DeploymentService(this.principal)
-                const deployments = await deploymentService.getByEnvironmentId(environmentId)
+                const deployments = await new DeploymentService(this.principal).getByEnvironmentId(environmentId)
                 const current = deployments.find(deployment => deployment.active) ?? deployments[0]
-                // A domain-scoped member's deploy keeps the variables served now: the live ones would show a change it does not ship
-                const servedVariables = current && (await deploymentService.shipsServedVariables(environmentId))
                 const next: Served = {
                     microfrontends: await this.microfrontends(),
-                    variables: servedVariables
-                        ? servedOf(current).variables
-                        : (await new GlobalVariablesService(this.principal).getAll(environmentId)).map(variable => ({ key: variable.key, value: variable.value }))
+                    variables: (await new GlobalVariablesService(this.principal).getAll(environmentId)).map(variable => ({ key: variable.key, value: variable.value }))
                 }
                 details.push(...this.comparison(current, next))
             } catch {
@@ -246,15 +234,11 @@ class DetailResolver {
     /** A rollback: which deployment comes back, and what that changes compared to the one served now. */
     private async rollback(deploymentId: string): Promise<ConfirmationDetail[]> {
         const service = new DeploymentService(this.principal)
-        const found = await service.getById(deploymentId)
-        if (!found) return [{ label: "deployment", value: deploymentId }]
-        const environment = await new EnvironmentService(this.principal).getById(found.environmentId)
-        if (!environment) return [{ label: "deployment", value: deploymentId }]
-        const deployments = await service.getByEnvironmentId(found.environmentId)
-        // The target as the principal may read it: getById answers the whole snapshot, the microfrontends of
-        // every domain included, while the list keeps a domain-scoped member's own only
-        const target = deployments.find(deployment => String(deployment._id) === String(found._id))
+        const target = await service.getById(deploymentId)
         if (!target) return [{ label: "deployment", value: deploymentId }]
+        const environment = await new EnvironmentService(this.principal).getById(target.environmentId)
+        if (!environment) return [{ label: "deployment", value: deploymentId }]
+        const deployments = await service.getByEnvironmentId(target.environmentId)
         const current = deployments.find(deployment => deployment.active) ?? deployments[0]
         return [
             { label: "environment", value: environment.name },

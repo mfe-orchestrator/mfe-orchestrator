@@ -10,7 +10,7 @@ import ProjectService, { ProjectContextDTO } from "../ProjectService"
 import { toErrorMessage } from "../RepositoryFileService"
 import { FileChangeAction, GitAuthor, ORCHESTRATOR_COMMITTER } from "./GitWorkingCopy"
 import RepositoryWorkspaceService, { cloneUrlFor } from "./RepositoryWorkspaceService"
-import { findComponent, RepositoryComponent, RepositoryComponentRef } from "./repositoryComponent"
+import { findComponent, RepositoryComponent } from "./repositoryComponent"
 
 /** Submit waits for a busy working copy only this long, as apply does. */
 const LOCK_WAIT_MS = 30_000
@@ -34,7 +34,6 @@ export interface LocalChangeInput {
 }
 
 export interface RepositoryCheckout {
-    kind: RepositoryComponent["kind"]
     name: string
     slug: string
     cloneUrl: string
@@ -62,21 +61,19 @@ const invalidFile = (message: string) => createBusinessException({ code: "LOCAL_
  * new branch with a pull request: as for an AI change, the default branch is never written to.
  */
 export class LocalChangeService extends BaseAuthorizedService {
-    private async getComponent(ref: RepositoryComponentRef): Promise<RepositoryComponent> {
-        const component = await findComponent(ref)
-        if (!component) throw new EntityNotFoundError(ref.id)
-        await this.ensureAccessToDomainMember(component)
-        return component
+    private async getMicrofrontend(microfrontendId: string): Promise<RepositoryComponent> {
+        const microfrontend = await findComponent(microfrontendId)
+        if (!microfrontend) throw new EntityNotFoundError(microfrontendId)
+        await this.ensureAccessToProject(microfrontend.projectId)
+        return microfrontend
     }
 
     /** What a developer needs to clone the repository and work on it: the URL carries no credentials. */
-    async checkout(ref: RepositoryComponentRef): Promise<RepositoryCheckout> {
-        const component = await this.getComponent(ref)
+    async checkout(microfrontendId: string): Promise<RepositoryCheckout> {
+        const component = await this.getMicrofrontend(microfrontendId)
         const workspace = await new RepositoryWorkspaceService(this.user).open(component)
-        const focus = component.kind === "service" ? { serviceId: ref.id } : { microfrontendId: ref.id }
-        const aiContext = await new ProjectService(this.user).getContext(component.projectId.toString(), focus)
+        const aiContext = await new ProjectService(this.user).getContext(component.projectId.toString(), { microfrontendId })
         return {
-            kind: component.kind,
             name: component.name,
             slug: component.slug,
             cloneUrl: cloneUrlFor(workspace.target),
@@ -129,10 +126,9 @@ export class LocalChangeService extends BaseAuthorizedService {
      * does not hold `baseCommit` (it is fetched shallow) the check cannot be made and the change is
      * refused until the developer pulls.
      */
-    async submit(ref: RepositoryComponentRef, input: LocalChangeInput): Promise<LocalChangeResult> {
-        const component = await this.getComponent(ref)
+    async submit(microfrontendId: string, input: LocalChangeInput): Promise<LocalChangeResult> {
+        const component = await this.getMicrofrontend(microfrontendId)
         await new AiChangeService(this.user, fastify.config).ensureCanChangeProject(component.projectId)
-        await this.ensureRepositoryInDomainScope(component, component.codeRepository)
         const files = this.validFiles(input.files)
         const author = this.author()
         const workspaceService = new RepositoryWorkspaceService(this.user)
@@ -190,7 +186,7 @@ export class LocalChangeService extends BaseAuthorizedService {
                 } catch (error) {
                     // The branch is pushed: the change is not lost, the developer opens the pull request by hand.
                     pullRequestError = toErrorMessage(error)
-                    fastify.log.warn({ error: loggable(error), component: String(component._id) }, "Could not open the pull request")
+                    fastify.log.warn({ error: loggable(error), microfrontendId }, "Could not open the pull request")
                 }
                 return { branch, commit, baseBranch, baseCommit: head, pullRequestUrl, pullRequestError }
             },

@@ -1,7 +1,5 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import { ServicePaths } from "../types/ServiceStack"
-import { exposurePath, IServiceEnvVariable, IServiceUrl, optionalPath, serviceEnvVariableSchema, serviceUrlSchema } from "./ContainerFields"
 import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
 export enum MicrofrontendType {
@@ -13,8 +11,8 @@ export enum MicrofrontendType {
  * How it is built and served, independent from HOST/REMOTE: a host can itself be a remote of other hosts.
  *
  * A MICROFRONTEND is a static bundle the CI uploads and the orchestrator serves. A FRONTEND is an app
- * built into an image and served by its own container, exactly like a backend service: the orchestrator
- * neither stores its files nor deploys it, the CI registers its versions and the CD reports its deploys.
+ * built into an image and served by its own container: the orchestrator neither stores its files nor
+ * deploys it, its pipeline pushes the image and registers the version.
  * A FRONTEND is the top of a tree: it loads remotes, nothing loads it, so it never has parents.
  */
 export enum MicrofrontendKind {
@@ -65,31 +63,14 @@ export interface IPosition {
     width?: number
     height?: number
 }
-/**
- * The container fields of a FRONTEND, named as on a service. All optional with no default, so a
- * MICROFRONTEND document carries none of them; MicrofrontendService fills the service defaults in
- * when a FRONTEND is created.
- */
-export interface IFrontendContainer extends Partial<ServicePaths> {
+export interface IMicrofrontend extends Document<ObjectId> {
+    type: MicrofrontendType
+    kind: MicrofrontendKind
+    /** FRONTEND only: where its pipeline pushes the image */
     image?: {
         /** Without tag, e.g. ghcr.io/acme/shell */
         repository?: string
     }
-    port?: number
-    /** The path it is exposed at on the host of every environment, as for a service */
-    exposurePath?: string | null
-    /** One per environment it is exposed in: what the serve API hands out as its URL there */
-    urls?: IServiceUrl[]
-    env?: IServiceEnvVariable[]
-    /** Config maps of the project the container receives as environment variables, as for a service */
-    configMapIds?: Schema.Types.ObjectId[]
-    /** Secrets of the project the container receives as environment variables, as for a service */
-    secretIds?: Schema.Types.ObjectId[]
-}
-
-export interface IMicrofrontend extends Document<ObjectId>, IFrontendContainer {
-    type: MicrofrontendType
-    kind: MicrofrontendKind
     template: string
     stack?: IMicrofrontendStack
     slug: string
@@ -99,8 +80,6 @@ export interface IMicrofrontend extends Document<ObjectId>, IFrontendContainer {
     continuousDeployment?: boolean
     path?: string
     projectId: Schema.Types.ObjectId
-    /** The functional domain it belongs to, if any */
-    domainId?: Schema.Types.ObjectId | null
     canary?: ICanaryMicrofrontend
     host: IHostMicrofrontend
     codeRepository?: ICodeRepositoryMicrofrontend
@@ -111,8 +90,6 @@ export interface IMicrofrontend extends Document<ObjectId>, IFrontendContainer {
     updatedAt: Date
 
     parentIds?: ObjectId[]
-    /** Backend services this microfrontend calls, linked by hand from the console */
-    serviceIds?: ObjectId[]
     position?: IPosition
 }
 
@@ -198,8 +175,7 @@ const microfrontendCanaryTypeSchema = new Schema<ICanaryMicrofrontend>({
     }
 })
 
-/** Shared with the backend services, which link their repository exactly the same way */
-export const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofrontend>({
+const microfrontendCodeRepositorySchema = new Schema<ICodeRepositoryMicrofrontend>({
     enabled: {
         type: Boolean,
         default: false
@@ -311,7 +287,7 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         },
         version: {
             type: String,
-            // A FRONTEND gets its first one from the first version its CI registers, as a service
+            // A FRONTEND gets its first one from the first version its CI registers
             required: function (this: IMicrofrontend) {
                 return this.kind !== MicrofrontendKind.FRONTEND
             }
@@ -345,11 +321,6 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             ref: "Project",
             required: true
         },
-        domainId: {
-            type: Schema.Types.ObjectId,
-            ref: "Domain",
-            required: false
-        },
         host: {
             type: microfrontendHostTypeSchema,
             required: true
@@ -363,11 +334,6 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             ref: "Microfrontend",
             required: false
         },
-        serviceIds: {
-            type: [Schema.Types.ObjectId],
-            ref: "Service",
-            required: false
-        },
         path: {
             type: String,
             required: false
@@ -376,38 +342,12 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             type: microfrontendPositionSchema,
             required: false
         },
-        // The arrays default to undefined, not to [], so that a MICROFRONTEND document stays without them
         image: {
             repository: {
                 type: String,
                 required: false,
                 trim: true
             }
-        },
-        port: {
-            type: Number,
-            required: false
-        },
-        livenessPath: optionalPath,
-        readinessPath: optionalPath,
-        docsPath: optionalPath,
-        openApiPath: optionalPath,
-        exposurePath,
-        urls: {
-            type: [serviceUrlSchema],
-            default: undefined
-        },
-        env: {
-            type: [serviceEnvVariableSchema],
-            default: undefined
-        },
-        configMapIds: {
-            type: [{ type: Schema.Types.ObjectId, ref: "ConfigMap" }],
-            default: undefined
-        },
-        secretIds: {
-            type: [{ type: Schema.Types.ObjectId, ref: "Secret" }],
-            default: undefined
         }
     },
     {

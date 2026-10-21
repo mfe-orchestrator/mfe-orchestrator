@@ -7,12 +7,9 @@ vi.mock("..", () => ({
 
 import { ApiKeyRole } from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
-import Environment from "../models/EnvironmentModel"
-import FrontendDeployment from "../models/FrontendDeploymentModel"
 import Microfrontend, { HostedOn, MicrofrontendKind } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
-import FrontendDeploymentService from "./FrontendDeploymentService"
 import MicrofrontendService from "./MicrofrontendService"
 
 const projectId = new Types.ObjectId()
@@ -55,20 +52,17 @@ describe("MicrofrontendService.create, kind", () => {
         expect(write).not.toHaveBeenCalled()
     })
 
-    it("given a FRONTEND without parents, when it is created, then it gets the service defaults it was not given", async () => {
-        const write = await create({ kind: MicrofrontendKind.FRONTEND, parentIds: [], readinessPath: "/ready" })
+    it("given a FRONTEND without parents, when it is created, then it is written with its image repository", async () => {
+        const write = await create({ kind: MicrofrontendKind.FRONTEND, parentIds: [], image: { repository: "ghcr.io/acme/shell" } })
 
-        expect(write.mock.calls[0][0]).toMatchObject({ kind: MicrofrontendKind.FRONTEND, port: 8080, livenessPath: "/health/live", readinessPath: "/ready" })
+        expect(write.mock.calls[0][0]).toMatchObject({ kind: MicrofrontendKind.FRONTEND, image: { repository: "ghcr.io/acme/shell" } })
     })
 
-    it("given a MICROFRONTEND with parents, when it is created, then it is written without container fields", async () => {
+    it("given a MICROFRONTEND with parents, when it is created, then it is written with them", async () => {
         const parentId = String(new Types.ObjectId())
         const write = await create({ parentIds: [parentId] })
 
-        const written = write.mock.calls[0][0] as Record<string, unknown>
-        expect(written.parentIds).toEqual([parentId])
-        expect(written).not.toHaveProperty("port")
-        expect(written).not.toHaveProperty("livenessPath")
+        expect((write.mock.calls[0][0] as Record<string, unknown>).parentIds).toEqual([parentId])
     })
 
     it("given a FRONTEND without a version, when it is created, then it is written without one", async () => {
@@ -88,7 +82,9 @@ describe("MicrofrontendService.create, kind", () => {
         const service = new MicrofrontendService()
         vi.spyOn(service as unknown as { ensureAccessToProject: () => Promise<void> }, "ensureAccessToProject").mockResolvedValue()
 
-        await expect(service.create({ name: "Cart", slug: "cart", version: "1.0.0", $set: { secretIds: [] } } as unknown as MicrofrontendDTO, String(projectId))).rejects.toMatchObject({
+        await expect(
+            service.create({ name: "Cart", slug: "cart", version: "1.0.0", $set: { projectId: String(new Types.ObjectId()) } } as unknown as MicrofrontendDTO, String(projectId))
+        ).rejects.toMatchObject({
             code: "MICROFRONTEND_INVALID",
             message: expect.not.stringContaining("service")
         })
@@ -132,13 +128,13 @@ describe("MicrofrontendService.update, kind", () => {
         expect(write).not.toHaveBeenCalled()
     })
 
-    it("given a microfrontend with parents, when it is made a FRONTEND and its parents are removed together, then it is written with the defaults and validated", async () => {
+    it("given a microfrontend with parents, when it is made a FRONTEND and its parents are removed together, then it is written and validated", async () => {
         const write = vi.spyOn(Microfrontend, "findByIdAndUpdate").mockImplementation((async (_id: unknown, update: unknown) => update) as never)
         const microfrontend = existing({ parentIds: [new Types.ObjectId()] })
 
         await serviceFor(microfrontend).update(String(microfrontend._id), { kind: MicrofrontendKind.FRONTEND, parentIds: [] } as unknown as MicrofrontendDTO)
 
-        expect(write.mock.calls[0][1]).toMatchObject({ kind: MicrofrontendKind.FRONTEND, parentIds: [], port: 8080, livenessPath: "/health/live", readinessPath: "/health/ready" })
+        expect(write.mock.calls[0][1]).toMatchObject({ kind: MicrofrontendKind.FRONTEND, parentIds: [] })
         expect(write.mock.calls[0][2]).toMatchObject({ new: true, runValidators: true })
     })
 
@@ -292,7 +288,7 @@ describe("MicrofrontendService.registerVersionWithPermissionCheck", () => {
     })
 
     it("given no image, when a version is registered, then it is refused", async () => {
-        expect(await codeOf(register({}, ApiKeyRole.MANAGER))).toBe("SERVICE_VERSION_IMAGE_REQUIRED")
+        expect(await codeOf(register({}, ApiKeyRole.MANAGER))).toBe("MICROFRONTEND_VERSION_IMAGE_REQUIRED")
     })
 
     it("given a FRONTEND and a newer version, when it is registered, then it is upserted, becomes the version and teaches the image repository", async () => {
@@ -322,40 +318,5 @@ describe("MicrofrontendService.registerVersionWithPermissionCheck", () => {
 
         expect(upsert).toHaveBeenCalled()
         expect(updateOne).not.toHaveBeenCalled()
-    })
-})
-
-describe("FrontendDeploymentService.registerWithPermissionCheck", () => {
-    const environment = { _id: new Types.ObjectId(), slug: "PROD" }
-
-    beforeEach(() => {
-        vi.spyOn(Environment, "find").mockResolvedValue([environment] as never)
-    })
-
-    it("given a MICROFRONTEND, when a deploy is reported, then it is refused and nothing is stored", async () => {
-        vi.spyOn(Microfrontend, "findOne").mockResolvedValue({ _id: new Types.ObjectId(), slug: "cart", kind: MicrofrontendKind.MICROFRONTEND } as never)
-        const write = vi.spyOn(FrontendDeployment, "create")
-
-        const code = await codeOf(new FrontendDeploymentService().registerWithPermissionCheck("cart", "prod", String(projectId), { version: "1.0.0" }, ApiKeyRole.MANAGER))
-
-        expect(code).toBe("MICROFRONTEND_DEPLOYMENT_REGISTRATION_NOT_ALLOWED")
-        expect(write).not.toHaveBeenCalled()
-    })
-
-    it("given a FRONTEND, when a deploy is reported, then it is stored against the environment matched without regard to case", async () => {
-        const microfrontendId = new Types.ObjectId()
-        vi.spyOn(Microfrontend, "findOne").mockResolvedValue({ _id: microfrontendId, slug: "shell", kind: MicrofrontendKind.FRONTEND } as never)
-        const write = vi.spyOn(FrontendDeployment, "create").mockImplementation((async (doc: unknown) => doc) as never)
-
-        await new FrontendDeploymentService().registerWithPermissionCheck("shell", "prod", String(projectId), { version: "1.2.0", image: "ghcr.io/acme/shell:1.2.0" }, ApiKeyRole.MANAGER)
-
-        expect(write).toHaveBeenCalledWith({ microfrontendId, environmentId: environment._id, version: "1.2.0", image: "ghcr.io/acme/shell:1.2.0" })
-    })
-
-    it("given a VIEWER key, when a deploy is reported, then it is forbidden", async () => {
-        await expect(new FrontendDeploymentService().registerWithPermissionCheck("shell", "prod", String(projectId), { version: "1.2.0" }, ApiKeyRole.VIEWER)).rejects.toMatchObject({
-            statusCode: 403,
-            code: "MICROFRONTEND_DEPLOYMENT_FORBIDDEN"
-        })
     })
 })

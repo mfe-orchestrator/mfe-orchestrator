@@ -4,7 +4,7 @@ import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import AiChangeRequest, { AiChangeStatus, IAiChangeRequest } from "../../models/AiChangeRequestModel"
 import { LlmEffort } from "../llm"
 import RepositoryWorkspaceService from "../workspace/RepositoryWorkspaceService"
-import { componentIdOf, componentOf, findComponent, findComponents, ownerFields, RepositoryComponent, RepositoryComponentRef } from "../workspace/repositoryComponent"
+import { findComponent, findComponents, RepositoryComponent } from "../workspace/repositoryComponent"
 import AiChangeJobService from "./AiChangeJobService"
 import { AiChangeBaseService, ensureNotBeingRefined, loggable, staleOutcome } from "./aiChangeShared"
 
@@ -20,7 +20,7 @@ export interface AiChangeCreateInput {
 }
 
 /**
- * Code changes to a microfrontend or a backend service proposed by an AI agent.
+ * Code changes to a microfrontend proposed by an AI agent.
  *
  * The agent works on the local working copy of the repository and never pushes. Once it is done, its
  * changes are stored here as a proposal and pushed on a feature branch of their own, never on the
@@ -28,32 +28,25 @@ export interface AiChangeCreateInput {
  * {@link openPullRequest} asks for a review of the feature branch instead.
  */
 export class AiChangeService extends AiChangeBaseService {
-    private async getComponent(ref: RepositoryComponentRef): Promise<RepositoryComponent> {
-        const component = await findComponent(ref)
-        if (!component) throw new EntityNotFoundError(ref.id)
-        await this.ensureAccessToDomainMember(component)
-        return component
+    private async getMicrofrontend(microfrontendId: string): Promise<RepositoryComponent> {
+        const microfrontend = await findComponent(microfrontendId)
+        if (!microfrontend) throw new EntityNotFoundError(microfrontendId)
+        await this.ensureAccessToProject(microfrontend.projectId)
+        return microfrontend
     }
 
     private async getRequest(id: string): Promise<IAiChangeRequest> {
         const request = await AiChangeRequest.findById(id)
         if (!request) throw new EntityNotFoundError(id)
         await this.ensureAccessToProject(request.projectId)
-        // A domain-scoped member reaches the changes of the microfrontends and services they see only;
-        // one whose component is gone belongs to no domain any more
-        if (await this.getDomainScope(request.projectId)) {
-            const component = await findComponent(componentOf(request))
-            await this.ensureInDomainScope(request.projectId, component?.domainId)
-        }
         return request
     }
 
-    /** A job on the repository of this microfrontend or service alone: the request is the job's only proposal. */
-    async create(ref: RepositoryComponentRef, input: AiChangeCreateInput): Promise<IAiChangeRequest> {
-        const component = await this.getComponent(ref)
+    /** A job on this microfrontend's repository alone: the request is the job's only proposal. */
+    async create(microfrontendId: string, input: AiChangeCreateInput): Promise<IAiChangeRequest> {
+        const component = await this.getMicrofrontend(microfrontendId)
         await this.ensureCanChangeProject(component.projectId)
         const aiModel = await this.aiModels().resolveForProject(component.projectId, input.aiModelId)
-        await this.ensureRepositoryInDomainScope(component, component.codeRepository)
         const workspace = await new RepositoryWorkspaceService(this.user).open(component)
 
         const { requests } = await new AiChangeJobService(this.user, this.config).start(
@@ -81,12 +74,12 @@ export class AiChangeService extends AiChangeBaseService {
     }
 
     /**
-     * The latest conversations on a microfrontend or a service, each with every request of it on this repository,
+     * The latest conversations on a microfrontend, each with every request of it on this repository,
      * newest first, without file contents. Whole conversations: a queue cut in the middle of one would show it twice.
      */
-    async list(ref: RepositoryComponentRef): Promise<Omit<IAiChangeRequest, "events">[]> {
-        const component = await this.getComponent(ref)
-        const owner = ownerFields(component)
+    async list(microfrontendId: string): Promise<Omit<IAiChangeRequest, "events">[]> {
+        const component = await this.getMicrofrontend(microfrontendId)
+        const owner = { microfrontendId: component._id }
         const conversations = await AiChangeRequest.aggregate<{ _id: IAiChangeRequest["conversationId"] }>([
             { $match: owner },
             { $group: { _id: "$conversationId", latestAt: { $max: "$createdAt" } } },
@@ -123,17 +116,19 @@ export class AiChangeService extends AiChangeBaseService {
     async openPullRequest(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)
         await this.ensureCanChangeProject(request.projectId)
-        await this.ensureRepositoriesInDomainScope(request.projectId, [componentOf(request)])
         if (request.status !== AiChangeStatus.PROPOSED) throw createBusinessException({ code: "AI_CHANGE_NOT_PROPOSED", message: "This change is not waiting for approval", statusCode: 409 })
         if (request.pullRequestUrl) return request
         const files = this.filesToCommit(request)
         await ensureNotBeingRefined(request)
 
         // Each description names the other repositories of the job, with their pull requests once opened.
-        const siblings = request.jobId ? await AiChangeRequest.find({ jobId: request.jobId, _id: { $ne: request._id } }, { microfrontendId: 1, serviceId: 1, pullRequestUrl: 1 }) : []
-        const components = await findComponents(siblings.map(componentOf), { name: 1 })
+        const siblings = request.jobId ? await AiChangeRequest.find({ jobId: request.jobId, _id: { $ne: request._id } }, { microfrontendId: 1, pullRequestUrl: 1 }) : []
+        const components = await findComponents(
+            siblings.map(sibling => String(sibling.microfrontendId)),
+            { name: 1 }
+        )
         const related = siblings.map(sibling =>
-            [components.find(component => String(component._id) === componentIdOf(sibling))?.name ?? componentIdOf(sibling), sibling.pullRequestUrl].filter(Boolean).join(": ")
+            [components.find(component => String(component._id) === String(sibling.microfrontendId))?.name ?? String(sibling.microfrontendId), sibling.pullRequestUrl].filter(Boolean).join(": ")
         )
         return this.openPullRequestFor(request, files, related)
     }
@@ -145,7 +140,6 @@ export class AiChangeService extends AiChangeBaseService {
     async apply(id: string): Promise<IAiChangeRequest> {
         const request = await this.getRequest(id)
         await this.ensureCanChangeProject(request.projectId)
-        await this.ensureRepositoriesInDomainScope(request.projectId, [componentOf(request)])
         const files = this.filesToCommit(request)
         await ensureNotBeingRefined(request)
 

@@ -1,22 +1,9 @@
 import { z } from "zod"
-import { createBusinessException } from "../../errors/BusinessException"
 import LocalChangeService, { MAX_SUBMITTED_FILES } from "../../service/workspace/LocalChangeService"
-import { RepositoryComponentRef } from "../../service/workspace/repositoryComponent"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { defineTool, objectId, READ_ONLY_EXTERNAL, WRITE_EXTERNAL } from "../toolDefinition"
 
-/** One of the two: a refinement would stop the server from adding `projectId` to the schema. */
-const target = {
-    microfrontendId: objectId("Id of the microfrontend, from microfrontends_list. Pass this or serviceId").optional(),
-    serviceId: objectId("Id of the backend service, from services_list. Pass this or microfrontendId").optional()
-}
-
-const refOf = (args: { microfrontendId?: string; serviceId?: string }): RepositoryComponentRef => {
-    if (Boolean(args.microfrontendId) === Boolean(args.serviceId)) {
-        throw createBusinessException({ code: "LOCAL_CHANGE_TARGET", message: "Pass either microfrontendId or serviceId", statusCode: 400 })
-    }
-    return args.serviceId ? { kind: "service", id: args.serviceId } : { kind: "microfrontend", id: args.microfrontendId! }
-}
+const target = { microfrontendId: objectId("Id of the microfrontend, from microfrontends_list") }
 
 /**
  * Code changes made by the client's own agent, on the developer's machine: the server tells where
@@ -28,17 +15,17 @@ export const localChangeTools = [
         name: "repository_checkout_get",
         title: "Get repository checkout",
         description:
-            "Where to clone the repository of a microfrontend or a backend service (HTTPS URL without credentials: clone it with your own git access), its default branch, and aiContext: what the team wrote for AI agents about it, its domain and the project. Follow aiContext while editing. When done, send the change with code_change_submit, or push it yourself if you have write access.",
+            "Where to clone the repository of a microfrontend (HTTPS URL without credentials: clone it with your own git access), its default branch, and aiContext: what the team wrote for AI agents about it and the project. Follow aiContext while editing. When done, send the change with code_change_submit, or push it yourself if you have write access.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY_EXTERNAL,
         inputSchema: z.object(target),
-        run: async (args, { principal }) => new LocalChangeService(principal).checkout(refOf(args))
+        run: async ({ microfrontendId }, { principal }) => new LocalChangeService(principal).checkout(microfrontendId)
     }),
     defineTool({
         name: "code_change_submit",
         title: "Submit code change",
         description:
-            "Pushes files edited in a local clone to a new branch of the repository of a microfrontend or a backend service and opens a pull request against baseBranch; the base branch itself is never written. " +
+            "Pushes files edited in a local clone to a new branch of the repository of a microfrontend and opens a pull request against baseBranch; the base branch itself is never written. " +
             "Send the full new content of every created or updated file (text only) and the deleted paths. baseCommit is the commit your clone started from (`git rev-parse HEAD` before your edits, or `git merge-base HEAD origin/<baseBranch>`): " +
             "if baseBranch moved since, the change is refused when one of your files changed there too, or when that commit cannot be checked; pull and submit again. " +
             "CI workflows, lockfiles and registry configuration cannot be changed this way. Returns the branch, the commit and the pull request URL.",
@@ -66,6 +53,6 @@ export const localChangeTools = [
                 .min(1)
                 .max(MAX_SUBMITTED_FILES)
         }),
-        run: async ({ microfrontendId, serviceId, ...input }, { principal }) => new LocalChangeService(principal).submit(refOf({ microfrontendId, serviceId }), input)
+        run: async ({ microfrontendId, ...input }, { principal }) => new LocalChangeService(principal).submit(microfrontendId, input)
     })
 ]

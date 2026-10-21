@@ -1,14 +1,13 @@
 import { randomBytes } from "crypto"
-import { ClientSession, isValidObjectId, ObjectId, Schema } from "mongoose"
+import { ClientSession, ObjectId, Schema } from "mongoose"
 import { fastify } from ".."
 import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
-import Domain from "../models/DomainModel"
 import Organization from "../models/OrganizationModel"
 import Project, { IProject } from "../models/ProjectModel"
 import User, { IUser, IUserDocument, UserStatus } from "../models/UserModel"
-import UserOrganization, { ORGANIZATION_ADMIN_ROLES } from "../models/UserOrganizationModel"
+import { ORGANIZATION_ADMIN_ROLES } from "../models/UserOrganizationModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserService, { recordLogin } from "../service/UserService"
 import { toObjectId } from "../utils/mongooseUtils"
@@ -18,21 +17,6 @@ import UserOrganizationService from "./UserOrganizationService"
 
 /** Code of the refusal to remove or demote the last owner of a project. */
 export const PROJECT_LAST_OWNER = "PROJECT_LAST_OWNER"
-/** Code of the refusal of a membership scoped to a domain that is not one of the project. */
-export const INVALID_DOMAIN = "INVALID_DOMAIN"
-/** Code of the refusal of an owner confined to some domains: an owner manages the whole project. */
-export const DOMAIN_SCOPE_NOT_FOR_OWNER = "DOMAIN_SCOPE_NOT_FOR_OWNER"
-
-/** What a membership reaches: the whole project, or only the domains listed. */
-interface DomainScope {
-    domainScoped: boolean
-    domainIds: Schema.Types.ObjectId[]
-}
-
-const WHOLE_PROJECT: DomainScope = { domainScoped: false, domainIds: [] }
-
-/** The domain scope as the answers carry it: the ids, empty for a member of the whole project. */
-const domainIdsOf = (membership: { domainScoped?: boolean; domainIds?: unknown[] }): string[] => (membership.domainScoped ? (membership.domainIds ?? []).map(String) : [])
 
 const INVITATION_TTL_DAYS = 5
 const INVITATION_TTL_MS = INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000
@@ -41,13 +25,6 @@ const INVITATION_TTL_MS = INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000
 interface IUserInProject extends Partial<IUser> {
     joinedAt: Date
     role: RoleInProject
-    /** The domains the member is confined to; empty when they reach the whole project. */
-    domainIds: string[]
-    /**
-     * Whether the member is confined to domains at all. Only differs from a non-empty `domainIds` once
-     * every domain of the scope was deleted: the member then reaches none, not the whole project.
-     */
-    domainScoped: boolean
     invitationPending: boolean
     invitationExpiresAt?: Date
 }
@@ -87,11 +64,9 @@ class UserProjectService extends BaseAuthorizedService {
     userOrganizationService = new UserOrganizationService()
 
     /** Owners (and organization administrators) only: an invitation hands out access with a role. */
-    async addUserToProjectByEmail(projectId: string | Schema.Types.ObjectId, email: string, role: RoleInProject, domainIds?: unknown): Promise<IUserProject | undefined> {
+    async addUserToProjectByEmail(projectId: string | Schema.Types.ObjectId, email: string, role: RoleInProject): Promise<IUserProject | undefined> {
         const projectIdObj = toObjectId(projectId)
         const project = await this.ensureCanManageMembers(projectIdObj)
-        // Before the user is looked up or created: a refused scope must leave nothing behind
-        const scope = await this.resolveScope(projectIdObj, role, domainIds ?? [])
 
         const canSendEmail = this.emailSenderService.canSendEmails()
 
@@ -126,13 +101,13 @@ class UserProjectService extends BaseAuthorizedService {
                     message: "This user is already a member of the project"
                 })
             }
-            // Pending invite already exists: refresh it (acts as a re-invite), with the scope asked now
-            return this.regenerateInvitation(existing, user, project, role, canSendEmail, scope)
+            // Pending invite already exists: refresh it (acts as a re-invite)
+            return this.regenerateInvitation(existing, user, project, role, canSendEmail)
         }
 
         // Without email delivery the invite cannot be confirmed, so join immediately
         if (!canSendEmail) {
-            const userProject = new UserProject({ userId: user._id, projectId: projectIdObj, role, ...scope })
+            const userProject = new UserProject({ userId: user._id, projectId: projectIdObj, role })
             return userProject.save()
         }
 
@@ -140,7 +115,6 @@ class UserProjectService extends BaseAuthorizedService {
             userId: user._id,
             projectId: projectIdObj,
             role,
-            ...scope,
             invitationToken: randomBytes(32).toString("hex"),
             inviationTokenExpiresAt: new Date(Date.now() + INVITATION_TTL_MS)
         })
@@ -150,13 +124,8 @@ class UserProjectService extends BaseAuthorizedService {
         return out
     }
 
-    /** `scope` replaces the stored one when given; a resend of the same invitation leaves it out. */
-    private async regenerateInvitation(userProject: IUserProject, user: IUser, project: IProject, role: RoleInProject, canSendEmail: boolean, scope?: DomainScope): Promise<IUserProject> {
+    private async regenerateInvitation(userProject: IUserProject, user: IUser, project: IProject, role: RoleInProject, canSendEmail: boolean): Promise<IUserProject> {
         userProject.role = role
-        if (scope) {
-            userProject.domainScoped = scope.domainScoped
-            userProject.domainIds = scope.domainIds
-        }
         if (canSendEmail) {
             userProject.invitationToken = randomBytes(32).toString("hex")
             userProject.inviationTokenExpiresAt = new Date(Date.now() + INVITATION_TTL_MS)
@@ -405,12 +374,11 @@ class UserProjectService extends BaseAuthorizedService {
     }
 
     /**
-     * Changes the role of a member (or of a pending invitation), and their domain scope when `domainIds`
-     * is given: a list replaces it, an empty one opens the whole project. Left out, the scope stays.
+     * Changes the role of a member (or of a pending invitation).
      *
      * The last owner cannot be demoted: a project with no owner could no longer have its members managed.
      */
-    async updateUserRole(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId, role: RoleInProject, domainIds?: unknown): Promise<IUserProject> {
+    async updateUserRole(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId, role: RoleInProject): Promise<IUserProject> {
         const projectIdObj = toObjectId(projectId)
         const userIdObj = toObjectId(userId)
         await this.ensureCanManageMembers(projectIdObj)
@@ -423,25 +391,11 @@ class UserProjectService extends BaseAuthorizedService {
             throw new EntityNotFoundError("User is not a member of this project")
         }
 
-        // The stored scope counts as asked when none is given: promoting a domain member to owner without
-        // opening the whole project to them is refused, not silently widened. Also when every domain of the
-        // scope was deleted: only an explicit empty list widens it
-        if (domainIds === undefined && membership.domainScoped && role === RoleInProject.OWNER) {
-            throw createBusinessException({ code: DOMAIN_SCOPE_NOT_FOR_OWNER, message: "An owner manages the whole project: open it to the member to make them one", statusCode: 400 })
-        }
-        const scope = await this.resolveScope(projectIdObj, role, domainIds ?? domainIdsOf(membership))
-        if (domainIds === undefined && membership.domainScoped && role !== RoleInProject.OWNER) {
-            // Kept as it is, a scope left over nothing by deleted domains included
-            scope.domainScoped = true
-        }
-
         if (membership.role === RoleInProject.OWNER && role !== RoleInProject.OWNER && !membership.invitationToken) {
             await this.ensureAnotherOwnerExists(projectIdObj, userIdObj, "Cannot demote the last owner of the project. Please assign another owner first.")
         }
 
         membership.role = role
-        membership.domainScoped = scope.domainScoped
-        membership.domainIds = scope.domainIds
         return membership.save()
     }
 
@@ -483,8 +437,7 @@ class UserProjectService extends BaseAuthorizedService {
      * Who is in the project, and with which role, is decided by its owners: a MEMBER or a VIEWER could
      * otherwise make themselves an OWNER or throw the owners out. Organization administrators reach
      * every project of their organization and act there as owners, as the assistant and the MCP
-     * consent page treat them. An owner confined to some domains cannot exist (see resolveScope), but
-     * the check does not rely on it: managing members is a decision over the whole project.
+     * consent page treat them.
      */
     private async ensureCanManageMembers(projectId: Schema.Types.ObjectId): Promise<IProject> {
         await this.ensureAccessToProject(projectId)
@@ -495,7 +448,7 @@ class UserProjectService extends BaseAuthorizedService {
 
         const user = this.getUser()
         const membership = user && (await UserProject.findOne({ userId: toObjectId(user._id), projectId, invitationToken: null }))
-        if (membership?.role === RoleInProject.OWNER && !membership.domainScoped) {
+        if (membership?.role === RoleInProject.OWNER) {
             return project
         }
         const organizationRole = await this.findRoleInOrganization(project.organizationId)
@@ -507,30 +460,6 @@ class UserProjectService extends BaseAuthorizedService {
             message: "Only an owner of the project can change its members",
             statusCode: 403
         })
-    }
-
-    /**
-     * The domain scope a membership is given, checked: a list of ids of domains of the project, none of
-     * them for an owner. An empty list is the whole project.
-     */
-    private async resolveScope(projectId: Schema.Types.ObjectId, role: RoleInProject, domainIds: unknown): Promise<DomainScope> {
-        if (!Array.isArray(domainIds) || !domainIds.every(id => typeof id === "string" && isValidObjectId(id))) {
-            throw createBusinessException({ code: INVALID_DOMAIN, message: "domainIds must be a list of domain identifiers", statusCode: 400 })
-        }
-        const unique = [...new Set(domainIds as string[])]
-        if (unique.length === 0) {
-            return { ...WHOLE_PROJECT }
-        }
-        if (role === RoleInProject.OWNER) {
-            throw createBusinessException({ code: DOMAIN_SCOPE_NOT_FOR_OWNER, message: "An owner manages the whole project and cannot be confined to some domains", statusCode: 400 })
-        }
-        const found = await Domain.find({ _id: { $in: unique.map(id => toObjectId(id)) }, projectId }, { _id: 1 })
-        const known = new Set(found.map(domain => String(domain._id)))
-        const unknown = unique.find(id => !known.has(id))
-        if (unknown) {
-            throw createBusinessException({ code: INVALID_DOMAIN, message: `There is no domain ${unknown} in this project`, statusCode: 400 })
-        }
-        return { domainScoped: true, domainIds: unique.map(id => toObjectId(id)) }
     }
 
     /** Pending invitations do not count: until accepted, an invited owner owns nothing. */
@@ -562,23 +491,12 @@ class UserProjectService extends BaseAuthorizedService {
             .populate<{ user: IUser }>("userId", "email name surname status")
             .lean<PopulatedUserProject[]>()
 
-        // An owner of the project, or an administrator of the organization, reaches the whole project whatever
-        // their membership says, as every check and the project list treat them
-        const administrators = new Set(
-            (await UserOrganization.find({ organizationId: project.organizationId, role: { $in: ORGANIZATION_ADMIN_ROLES }, invitationToken: null }, { userId: 1 }).lean()).map(membership =>
-                String(membership.userId)
-            )
-        )
-
         // Format the response. The raw invitation token is never exposed to clients.
         return userProjects.map<IUserInProject>(up => {
             const populatedUser = up.userId as unknown as IUser
-            const scope = up.role === RoleInProject.OWNER || administrators.has(String(populatedUser?._id)) ? WHOLE_PROJECT : up
             return {
                 ...populatedUser,
                 role: up.role,
-                domainIds: domainIdsOf(scope),
-                domainScoped: Boolean(scope.domainScoped),
                 joinedAt: up.createdAt,
                 invitationPending: Boolean(up.invitationToken),
                 invitationExpiresAt: up.inviationTokenExpiresAt

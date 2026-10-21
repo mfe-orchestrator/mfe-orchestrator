@@ -235,12 +235,6 @@ export default fastifyPlugin(
                     type: "boolean",
                     default: true
                 },
-                // Lets a project hand its GitOps repositories to an Argo CD served over plain http: for a local cluster only,
-                // as the token of Argo CD and the repository credentials would cross the network in the clear.
-                ARGOCD_ALLOW_INSECURE_HTTP: {
-                    type: "boolean",
-                    default: false
-                },
                 // MCP requests per minute for each grant or API key, on top of RATE_LIMIT_MAX per IP.
                 MCP_RATE_LIMIT_MAX: {
                     type: "number",

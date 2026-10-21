@@ -28,7 +28,7 @@ import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import MicrofrontendService from "./MicrofrontendService"
 
-type WithGates = { ensureAccessToProject: () => Promise<void>; isOrganizationAdmin: () => Promise<boolean>; getDomainScope: () => Promise<string[] | undefined> }
+type WithGates = { ensureAccessToProject: () => Promise<void>; isOrganizationAdmin: () => Promise<boolean> }
 
 const projectId = new Types.ObjectId()
 const connectionId = new Types.ObjectId()
@@ -58,7 +58,6 @@ describe("MicrofrontendService.create with a new repository", () => {
         const gates = service as unknown as WithGates
         vi.spyOn(gates, "ensureAccessToProject").mockResolvedValue()
         vi.spyOn(gates, "isOrganizationAdmin").mockResolvedValue(false)
-        vi.spyOn(gates, "getDomainScope").mockResolvedValue(undefined)
         return service.create(
             {
                 name: "Checkout",

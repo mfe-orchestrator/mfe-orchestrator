@@ -10,7 +10,6 @@ import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, READ_ONLY_EXTER
  * returned goes through `toFrontendObject`, which masks the stored token.
  */
 const codeRepositoryId = objectId("Id of the code repository connection")
-const importTarget = z.enum(["microfrontend", "service"]).optional().describe("What each repository is imported as: microfrontend when omitted")
 
 export const repositoryTools = [
     defineTool({
@@ -52,7 +51,7 @@ export const repositoryTools = [
     defineTool({
         name: "code_repository_check_name",
         title: "Check repository name",
-        description: "Whether a repository name is still free at the provider. New repositories end in -fe (frontend) or -be (backend service).",
+        description: "Whether a repository name is still free at the provider. New repositories end in -fe.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY_EXTERNAL,
         inputSchema: z.object({ codeRepositoryId, name: z.string().min(1).max(255), groupPath: z.string().optional(), groupId: z.number().int().optional() }),
@@ -100,25 +99,23 @@ export const repositoryTools = [
     defineTool({
         name: "code_repository_importable",
         title: "List importable repositories",
-        description: "The repositories of a connection, flagging the ones already linked to a microfrontend or a service of the project: those are never imported again.",
+        description: "The repositories of a connection that are not microfrontends of the project yet.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY_EXTERNAL,
-        inputSchema: z.object({ codeRepositoryId, groupId: z.number().int().optional().describe("GitLab only: group to list"), target: importTarget }),
-        run: (args, { principal }) => new CodeRepositoryImportService(principal).getImportableRepositories(args.codeRepositoryId, args.groupId, args.target)
+        inputSchema: z.object({ codeRepositoryId, groupId: z.number().int().optional().describe("GitLab only: group to list") }),
+        run: (args, { principal }) => new CodeRepositoryImportService(principal).getImportableRepositories(args.codeRepositoryId, args.groupId)
     }),
     defineTool({
         name: "code_repository_import",
         title: "Import repositories",
-        description: "Creates one microfrontend, or one service with the service target, per repository of the connection. With no repositoryIds, every repository not imported yet is taken.",
+        description: "Creates one microfrontend per repository of the connection. With no repositoryIds, every repository not imported yet is taken.",
         scope: MCP_SCOPE_WRITE,
         annotations: WRITE_EXTERNAL,
         inputSchema: z.object({
             codeRepositoryId,
             repositoryIds: z.array(z.string().min(1)).optional(),
             groupId: z.number().int().optional(),
-            version: z.string().min(1).max(100).optional().describe("Initial version of the created microfrontends; ignored for services, whose version the CI registers"),
-            target: importTarget,
-            domainId: objectId("Functional domain of the project every created microfrontend or service is put in").optional()
+            version: z.string().min(1).max(100).optional().describe("Initial version of the created microfrontends")
         }),
         run: ({ codeRepositoryId: id, ...body }, { principal }) => new CodeRepositoryImportService(principal).importRepositories(id, body)
     })

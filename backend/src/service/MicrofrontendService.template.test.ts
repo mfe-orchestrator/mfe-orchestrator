@@ -19,7 +19,6 @@ vi.mock("./TemplateScaffoldService", () => ({
     }
 }))
 
-import { BusinessException } from "../errors/BusinessException"
 import CodeRepository from "../models/CodeRepositoryModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Storage from "../models/StorageModel"
@@ -55,11 +54,6 @@ describe("MicrofrontendService.create from a template", () => {
         )
         return write
     }
-
-    it("given a backend service template, when a microfrontend is created from it, then it is refused before any repository is created", async () => {
-        await expect(create({ slug: "service-node-fastify", type: "service", compiler: "docker", framework: "Node.js" })).rejects.toBeInstanceOf(BusinessException)
-        expect(createRepository).not.toHaveBeenCalled()
-    })
 
     it("given a microfrontend template, when a microfrontend is created from it, then the repository is scaffolded with its slug and without tree-wide placeholders", async () => {
         const write = await create({ slug: "vite-remote-react", type: "remote", compiler: "vite", framework: "React" })

@@ -19,7 +19,7 @@ vi.mock("./CodeManagementService", () => ({
             private dir: string
         ) {}
         async cloneRepository() {
-            await fs.outputFile(join(this.dir, ".git", "config"), "url = %serviceSlug% %microfrontendSlug%")
+            await fs.outputFile(join(this.dir, ".git", "config"), "url = %microfrontendSlug%")
         }
         async pushRepository() {
             // Nothing leaves the machine in a test
@@ -76,16 +76,11 @@ import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../mode
 import { IMarket } from "../models/MarketModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
-import BaseAuthorizedService from "./BaseAuthorizedService"
 import MarketService from "./MarketService"
 import MicrofrontendService from "./MicrofrontendService"
-import ServiceService from "./ServiceService"
 import TemplateScaffoldService, { PipelineTemplates, placeholderDomain, replaceFederationName } from "./TemplateScaffoldService"
 import RepositoryWorkspaceService from "./workspace/RepositoryWorkspaceService"
-
-const servicePlaceholders = { "%serviceSlug%": "orders-api", "%domain%": "https://console.example.com" }
 
 let workDir: string
 
@@ -124,60 +119,15 @@ afterEach(async () => {
     await fs.remove(workDir)
 })
 
-describe("TemplateScaffoldService, service templates", () => {
-    const serviceTemplate = { slug: "service-node-fastify", type: "service", compiler: "docker", framework: "Node.js", zipUrl: "https://example.com/t.zip" } as IMarket
-
-    const serviceFiles = {
-        "package.json": '{ "name": "%serviceSlug%" }',
-        "src/app.ts": 'const name = "%serviceSlug%"\nconst console = "%domain%"',
-        ".github/workflows/release.yml": "curl %domain%/services/by-slug/%serviceSlug%/versions/$TAG",
-        ".gitlab-ci.yml": "url: %domain%/services/by-slug/%serviceSlug%",
-        "azure-pipelines.yml": "url: %domain%/services/by-slug/%serviceSlug%",
-        "assets/logo.bin": Buffer.from([0x25, 0x00, 0x01, 0x02])
-    }
-
-    const expectReplacedEverywhere = () => {
-        expect(committed["package.json"]).toBe('{ "name": "orders-api" }')
-        expect(committed["src/app.ts"]).toBe('const name = "orders-api"\nconst console = "https://console.example.com"')
-        expect(committed[".github/workflows/release.yml"]).toBe("curl https://console.example.com/services/by-slug/orders-api/versions/$TAG")
-        expect(committed[".gitlab-ci.yml"]).toBe("url: https://console.example.com/services/by-slug/orders-api")
-        expect(committed["azure-pipelines.yml"]).toBe("url: https://console.example.com/services/by-slug/orders-api")
-        expect(committed[".git/config"]).toBe("url = %serviceSlug% %microfrontendSlug%")
-    }
-
-    it("given GitHub, when a service template is scaffolded, then every text file has its placeholders replaced before the initial commit", async () => {
-        const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
-
-        await service.injectTemplateGithub("orders-api", "token", "https://github.com/acme/orders-api.git", "github", serviceTemplate, { placeholders: servicePlaceholders })
-
-        expectReplacedEverywhere()
-    })
-
-    it("given GitLab, when a service template is scaffolded, then every text file has its placeholders replaced before the initial commit", async () => {
-        const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
-        const codeRepository = { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository
-
-        await service.injectTemplateGitlab("orders-api", "token", "https://gitlab.com", "orders-api", "acme", codeRepository, "gitlab", serviceTemplate, { placeholders: servicePlaceholders })
-
-        expectReplacedEverywhere()
-    })
-
-    it("given Azure DevOps, when a service template is scaffolded, then every text file has its placeholders replaced before the initial commit", async () => {
-        const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
-        const codeRepository = { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository
-
-        await service.injectTemplateAzureDevOps("orders-api", "token", "orders-api", codeRepository, "azure_dev_ops", serviceTemplate, { placeholders: servicePlaceholders })
-
-        expectReplacedEverywhere()
-    })
-
+describe("TemplateScaffoldService.replacePlaceholdersInDirectory", () => {
     it("given a binary file, when the placeholders are replaced, then it is left byte for byte", async () => {
-        const template = await templateZip(serviceFiles)
+        const binary = Buffer.from([0x25, 0x00, 0x01, 0x02])
+        const template = await templateZip({ "assets/logo.bin": binary })
         const service = scaffoldWith(template, await pipelinesZip({}))
 
-        await service.replacePlaceholdersInDirectory(join(template, "template-main"), servicePlaceholders)
+        await service.replacePlaceholdersInDirectory(join(template, "template-main"), { "%microfrontendSlug%": "cart" })
 
-        expect(await fs.readFile(join(template, "template-main", "assets", "logo.bin"))).toEqual(serviceFiles["assets/logo.bin"])
+        expect(await fs.readFile(join(template, "template-main", "assets", "logo.bin"))).toEqual(binary)
     })
 })
 
@@ -365,9 +315,9 @@ describe("TemplateScaffoldService, pipeline templates", () => {
     const providersConnection = {
         gitlab: { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository
     }
-    const serviceTemplate = { slug: "service-node-fastify", type: "service", compiler: "docker", framework: "Node.js", zipUrl: "https://example.com/t.zip" } as IMarket
-    const serviceFiles = {
-        "package.json": '{ "name": "%serviceSlug%" }',
+    const remoteTemplate = { slug: "vite-remote-react", type: "remote", compiler: "vite", framework: "React", zipUrl: "https://example.com/t.zip" } as IMarket
+    const remoteFiles = {
+        "package.json": '{ "name": "cart" }',
         ".github/workflows/release.yml": "own: release",
         ".github/dependabot.yml": "version: 2",
         ".gitlab-ci.yml": "own: gitlab",
@@ -380,8 +330,7 @@ describe("TemplateScaffoldService, pipeline templates", () => {
             source: "workflows/build.yml",
             committed: ".github/workflows/build.yml",
             own: ".github/workflows/release.yml",
-            scaffold: (service: TemplateScaffoldService) =>
-                service.injectTemplateGithub("orders-api", "token", "https://github.com/acme/orders-api.git", "github", serviceTemplate, { placeholders: servicePlaceholders })
+            scaffold: (service: TemplateScaffoldService) => service.injectTemplateGithub("cart", "token", "https://github.com/acme/cart.git", "github", remoteTemplate)
         },
         {
             folder: "gitlab",
@@ -390,15 +339,14 @@ describe("TemplateScaffoldService, pipeline templates", () => {
             own: ".gitlab-ci.yml",
             scaffold: (service: TemplateScaffoldService) =>
                 service.injectTemplateGitlab(
-                    "orders-api",
+                    "cart",
                     "token",
                     "https://gitlab.com",
-                    "orders-api",
+                    "cart",
                     "acme",
                     { provider: CodeRepositoryProvider.GITLAB, gitlabData: { url: "https://gitlab.com", groupPath: "acme" } } as unknown as ICodeRepository,
                     "gitlab",
-                    serviceTemplate,
-                    { placeholders: servicePlaceholders }
+                    remoteTemplate
                 )
         },
         {
@@ -408,34 +356,32 @@ describe("TemplateScaffoldService, pipeline templates", () => {
             own: "azure-pipelines.yml",
             scaffold: (service: TemplateScaffoldService) =>
                 service.injectTemplateAzureDevOps(
-                    "orders-api",
+                    "cart",
                     "token",
-                    "orders-api",
+                    "cart",
                     { provider: CodeRepositoryProvider.AZURE_DEV_OPS, azureData: { organization: "acme", projectId: "p" } } as unknown as ICodeRepository,
                     "azure_dev_ops",
-                    serviceTemplate,
-                    { placeholders: servicePlaceholders }
+                    remoteTemplate
                 )
         }
     ]
 
     it.each(providers)("given a folder for the template and a generic one on $folder, when it is scaffolded, then the one of the template wins", async provider => {
         const service = scaffoldWith(
-            await templateZip(serviceFiles),
+            await templateZip(remoteFiles),
             await pipelinesZip({
-                [`service/docker/service-node-fastify/${provider.folder}/${provider.source}`]: "from: template %serviceSlug% %domain%",
-                [`service/docker/${provider.folder}/${provider.source}`]: "from: generic"
+                [`remote/vite/vite-remote-react/${provider.folder}/${provider.source}`]: "from: template %microfrontendSlug% %domain%",
+                [`remote/vite/${provider.folder}/${provider.source}`]: "from: generic"
             })
         )
 
         await provider.scaffold(service)
 
-        // The placeholders of a pipeline go first: its %domain% is the console's, before the service's own
-        expect(committed[provider.committed]).toBe(`from: template orders-api ${placeholderDomain()}`)
+        expect(committed[provider.committed]).toBe(`from: template cart ${placeholderDomain()}`)
     })
 
     it.each(providers)("given only a generic folder on $folder, when it is scaffolded, then it is copied", async provider => {
-        const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({ [`service/docker/${provider.folder}/${provider.source}`]: "from: generic" }))
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({ [`remote/vite/${provider.folder}/${provider.source}`]: "from: generic" }))
 
         await provider.scaffold(service)
 
@@ -443,16 +389,16 @@ describe("TemplateScaffoldService, pipeline templates", () => {
     })
 
     it.each(providers)("given no folder for the template on $folder, when it is scaffolded, then it keeps its own pipeline", async provider => {
-        const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({ "remote/vite/github/workflows/build.yml": "from: another type" }))
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({ "host/vite/github/workflows/build.yml": "from: another type" }))
 
         await provider.scaffold(service)
 
-        expect(committed[provider.own]).toBe(serviceFiles[provider.own as keyof typeof serviceFiles])
+        expect(committed[provider.own]).toBe(remoteFiles[provider.own as keyof typeof remoteFiles])
     })
 
     /** Two release workflows named differently would both run on every tag */
     it("given a GitHub pipeline, when it is copied, then the workflows of the template go and the rest of its .github stays", async () => {
-        const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({ "service/docker/github/workflows/build.yml": "from: generic" }))
+        const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({ "remote/vite/github/workflows/build.yml": "from: generic" }))
 
         await providers[0].scaffold(service)
 
@@ -463,9 +409,9 @@ describe("TemplateScaffoldService, pipeline templates", () => {
 
     /** Wiping the workflows of the template for nothing would leave the repository with no CI */
     it("given a GitHub folder of the template with no workflow, when it is scaffolded, then it does not count and the generic one is copied", async () => {
-        const pipelines = await pipelinesZip({ "service/docker/service-node-fastify/github/dependabot.yml": "version: 3", "service/docker/github/workflows/build.yml": "from: generic" })
-        await fs.ensureDir(join(pipelines, "template-pipelines-main", "service/docker/service-node-fastify/github/workflows"))
-        const service = scaffoldWith(await templateZip(serviceFiles), pipelines)
+        const pipelines = await pipelinesZip({ "remote/vite/vite-remote-react/github/dependabot.yml": "version: 3", "remote/vite/github/workflows/build.yml": "from: generic" })
+        await fs.ensureDir(join(pipelines, "template-pipelines-main", "remote/vite/vite-remote-react/github/workflows"))
+        const service = scaffoldWith(await templateZip(remoteFiles), pipelines)
 
         await providers[0].scaffold(service)
 
@@ -474,9 +420,9 @@ describe("TemplateScaffoldService, pipeline templates", () => {
     })
 
     it("given a GitHub folder with no file under workflows, when it is scaffolded, then the template keeps its workflows", async () => {
-        const pipelines = await pipelinesZip({ "service/docker/github/dependabot.yml": "version: 3" })
-        await fs.ensureDir(join(pipelines, "template-pipelines-main", "service/docker/github/workflows"))
-        const service = scaffoldWith(await templateZip(serviceFiles), pipelines)
+        const pipelines = await pipelinesZip({ "remote/vite/github/dependabot.yml": "version: 3" })
+        await fs.ensureDir(join(pipelines, "template-pipelines-main", "remote/vite/github/workflows"))
+        const service = scaffoldWith(await templateZip(remoteFiles), pipelines)
 
         await providers[0].scaffold(service)
 
@@ -484,18 +430,9 @@ describe("TemplateScaffoldService, pipeline templates", () => {
         expect(committed[".github/dependabot.yml"]).toBe("version: 2")
     })
 
-    it("given a microfrontend pipeline that names %serviceSlug%, when it is scaffolded, then both slugs become the slug", async () => {
-        const service = scaffoldWith(await templateZip({ "src/index.ts": "x" }), await pipelinesZip({ "remote/vite/gitlab/.gitlab-ci.yml": "%microfrontendSlug% %serviceSlug%" }))
-        const remote = { slug: "vite-remote-react", type: "remote", compiler: "vite", zipUrl: "https://example.com/t.zip" } as IMarket
-
-        await service.injectTemplateGitlab("cart", "token", "https://gitlab.com", "cart", "acme", providersConnection.gitlab, "gitlab", remote)
-
-        expect(committed[".gitlab-ci.yml"]).toBe("cart cart")
-    })
-
     it("given an official download that fails, when the pipeline is copied, then it is refused as a source that cannot be read", async () => {
         const service = new TemplateScaffoldService()
-        const template = await templateZip(serviceFiles)
+        const template = await templateZip(remoteFiles)
         vi.spyOn(service, "downloadZip").mockImplementation(async prefix => {
             if (prefix === "template") return template
             throw new Error("Request failed with status code 503")
@@ -505,8 +442,8 @@ describe("TemplateScaffoldService, pipeline templates", () => {
     })
 
     it("given a scaffold, when the repository is pushed, then the template and the official pipelines downloaded for it are deleted", async () => {
-        const template = await templateZip(serviceFiles)
-        const pipelines = await pipelinesZip({ "service/docker/gitlab/.gitlab-ci.yml": "from: generic" })
+        const template = await templateZip(remoteFiles)
+        const pipelines = await pipelinesZip({ "remote/vite/gitlab/.gitlab-ci.yml": "from: generic" })
         const service = scaffoldWith(template, pipelines)
 
         await providers[1].scaffold(service)
@@ -538,29 +475,29 @@ describe("TemplateScaffoldService, pipeline templates", () => {
         })
 
         it("given a pipeline file that is a symlink, when it is copied, then nothing of the server is and the template keeps its own", async () => {
-            source = await sourceWith({}, { "service/docker/gitlab/.gitlab-ci.yml": join(outside, "token") })
-            const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
+            source = await sourceWith({}, { "remote/vite/gitlab/.gitlab-ci.yml": join(outside, "token") })
+            const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
 
-            await service.injectTemplateGitlab("orders-api", "token", "https://gitlab.com", "orders-api", "acme", providersConnection.gitlab, "gitlab", serviceTemplate, undefined, source)
+            await service.injectTemplateGitlab("cart", "token", "https://gitlab.com", "cart", "acme", providersConnection.gitlab, "gitlab", remoteTemplate, undefined, source)
 
             expect(committed[".gitlab-ci.yml"]).toBe("own: gitlab")
         })
 
         it("given a template folder that is a symlink out of the source, when it is copied, then the generic folder is used instead", async () => {
-            source = await sourceWith({ "service/docker/github/workflows/build.yml": "from: generic" }, { "service/docker/service-node-fastify": outside })
-            const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
+            source = await sourceWith({ "remote/vite/github/workflows/build.yml": "from: generic" }, { "remote/vite/vite-remote-react": outside })
+            const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
 
-            await service.injectTemplateGithub("orders-api", "token", "https://github.com/acme/orders-api.git", "github", serviceTemplate, undefined, source)
+            await service.injectTemplateGithub("cart", "token", "https://github.com/acme/cart.git", "github", remoteTemplate, undefined, source)
 
             expect(committed[".github/workflows/build.yml"]).toBe("from: generic")
             expect(Object.values(committed)).not.toContain("server secret")
         })
 
         it("given a symlink among the GitHub workflows, when they are copied, then it is left out", async () => {
-            source = await sourceWith({ "service/docker/github/workflows/build.yml": "from: generic" }, { "service/docker/github/workflows/leak.yml": join(outside, "token") })
-            const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
+            source = await sourceWith({ "remote/vite/github/workflows/build.yml": "from: generic" }, { "remote/vite/github/workflows/leak.yml": join(outside, "token") })
+            const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
 
-            await service.injectTemplateGithub("orders-api", "token", "https://github.com/acme/orders-api.git", "github", serviceTemplate, undefined, source)
+            await service.injectTemplateGithub("cart", "token", "https://github.com/acme/cart.git", "github", remoteTemplate, undefined, source)
 
             expect(committed[".github/workflows/build.yml"]).toBe("from: generic")
             expect(committed[".github/workflows/leak.yml"]).toBeUndefined()
@@ -568,12 +505,12 @@ describe("TemplateScaffoldService, pipeline templates", () => {
 
         it("given a template type that climbs out of the source, when it is scaffolded, then nothing is looked up", async () => {
             // `<root>/../gitlab/.gitlab-ci.yml` is what type ".." and compiler "." would reach
-            const parent = await sourceWith({ "gitlab/.gitlab-ci.yml": "server secret", "root/service/docker/gitlab/.gitlab-ci.yml": "from: generic" }, {})
+            const parent = await sourceWith({ "gitlab/.gitlab-ci.yml": "server secret", "root/remote/vite/gitlab/.gitlab-ci.yml": "from: generic" }, {})
             source = { ...parent, root: join(parent.root, "root") }
-            const service = scaffoldWith(await templateZip(serviceFiles), await pipelinesZip({}))
-            const climbing = { ...serviceTemplate, type: "..", compiler: "." } as IMarket
+            const service = scaffoldWith(await templateZip(remoteFiles), await pipelinesZip({}))
+            const climbing = { ...remoteTemplate, type: "..", compiler: "." } as IMarket
 
-            await service.injectTemplateGitlab("orders-api", "token", "https://gitlab.com", "orders-api", "acme", providersConnection.gitlab, "gitlab", climbing, undefined, source)
+            await service.injectTemplateGitlab("cart", "token", "https://gitlab.com", "cart", "acme", providersConnection.gitlab, "gitlab", climbing, undefined, source)
 
             expect(committed[".gitlab-ci.yml"]).toBe("own: gitlab")
         })
@@ -584,21 +521,21 @@ describe("TemplateScaffoldService, pipeline templates", () => {
         const connectionId = new Types.ObjectId()
         const connection = { _id: connectionId, projectId, provider: CodeRepositoryProvider.GITHUB, accessToken: "token", githubData: { userName: "acme" } }
         const link = { enabled: true, codeRepositoryId: connectionId, repositoryId: "7", name: "acme-pipelines", repositoryData: {}, cloneUrlHttps: "https://github.com/acme/acme-pipelines.git" }
-        const target = () => ({ enabled: true, codeRepositoryId: String(connectionId), repositoryId: "", createData: { name: "orders-api" } })
+        const target = () => ({ enabled: true, codeRepositoryId: String(connectionId), repositoryId: "", createData: { name: "cart" } })
 
         let createAtGithub: ReturnType<typeof vi.spyOn>
         let findConnection: ReturnType<typeof vi.spyOn>
         let downloads: string[]
 
         const scaffold = async (official: Record<string, string> = {}) => {
-            const template = await templateZip(serviceFiles)
+            const template = await templateZip(remoteFiles)
             const pipelines = await pipelinesZip(official)
             downloads = []
             vi.spyOn(TemplateScaffoldService.prototype, "downloadZip").mockImplementation(async prefix => {
                 downloads.push(prefix)
                 return prefix === "template" ? template : pipelines
             })
-            return new TemplateScaffoldService().createRepository(connection as unknown as ICodeRepository, target() as never, "orders-api", serviceTemplate, { placeholders: servicePlaceholders })
+            return new TemplateScaffoldService().createRepository(connection as unknown as ICodeRepository, target() as never, "cart", remoteTemplate)
         }
 
         let providerSize: ReturnType<typeof vi.spyOn>
@@ -609,19 +546,19 @@ describe("TemplateScaffoldService, pipeline templates", () => {
             findConnection = vi.spyOn(CodeRepository, "findOne").mockResolvedValue(connection as never)
             createAtGithub = vi.spyOn(GithubClient.prototype, "createRepository").mockResolvedValue({
                 id: 1,
-                name: "orders-api",
-                clone_url: "https://github.com/acme/orders-api.git",
-                ssh_url: "git@github.com:acme/orders-api.git"
+                name: "cart",
+                clone_url: "https://github.com/acme/cart.git",
+                ssh_url: "git@github.com:acme/cart.git"
             } as never)
             vi.spyOn(GithubClient.prototype, "checkRepositorySecretExists").mockResolvedValue(true)
         })
 
-        it("given a repository of the project, when a service is scaffolded, then its pipeline is copied in place of the official one, read at the ref through the connection", async () => {
-            remotePipelines = { "service/docker/github/workflows/build.yml": "from: project %serviceSlug%" }
+        it("given a repository of the project, when a microfrontend is scaffolded, then its pipeline is copied in place of the official one, read at the ref through the connection", async () => {
+            remotePipelines = { "remote/vite/github/workflows/build.yml": "from: project %microfrontendSlug%" }
 
-            await scaffold({ "service/docker/github/workflows/build.yml": "from: official" })
+            await scaffold({ "remote/vite/github/workflows/build.yml": "from: official" })
 
-            expect(committed[".github/workflows/build.yml"]).toBe("from: project orders-api")
+            expect(committed[".github/workflows/build.yml"]).toBe("from: project cart")
             expect(downloads).toEqual(["template"])
             expect(findConnection).toHaveBeenCalledWith({ _id: connectionId, projectId, isActive: true })
             const clone = vi.mocked(git.clone).mock.calls.at(-1)![0]
@@ -632,9 +569,9 @@ describe("TemplateScaffoldService, pipeline templates", () => {
         })
 
         it("given a repository of the project without the folder of the template, when it is scaffolded, then the template keeps its own pipeline rather than the official one", async () => {
-            remotePipelines = { "remote/vite/github/workflows/build.yml": "from: project" }
+            remotePipelines = { "host/vite/github/workflows/build.yml": "from: project" }
 
-            await scaffold({ "service/docker/github/workflows/build.yml": "from: official" })
+            await scaffold({ "remote/vite/github/workflows/build.yml": "from: official" })
 
             expect(committed[".github/workflows/release.yml"]).toBe("own: release")
             expect(committed[".github/workflows/build.yml"]).toBeUndefined()
@@ -648,15 +585,15 @@ describe("TemplateScaffoldService, pipeline templates", () => {
         })
 
         it("given a repository of the project holding symlinks, when it is fetched, then every one of them is gone before anything is copied", async () => {
-            remotePipelines = { "service/docker/github/workflows/build.yml": "from: project" }
-            remoteSymlinks = { "service/docker/gitlab/.gitlab-ci.yml": "/etc/hosts", "service/docker/other": "/etc" }
+            remotePipelines = { "remote/vite/github/workflows/build.yml": "from: project" }
+            remoteSymlinks = { "remote/vite/gitlab/.gitlab-ci.yml": "/etc/hosts", "remote/vite/other": "/etc" }
 
             const fetched = await new TemplateScaffoldService().fetchPipelineTemplates(connection as unknown as ICodeRepository)
 
             try {
-                expect(await fs.pathExists(join(fetched.root, "service/docker/github/workflows/build.yml"))).toBe(true)
-                await expect(fs.lstat(join(fetched.root, "service/docker/gitlab/.gitlab-ci.yml"))).rejects.toMatchObject({ code: "ENOENT" })
-                await expect(fs.lstat(join(fetched.root, "service/docker/other"))).rejects.toMatchObject({ code: "ENOENT" })
+                expect(await fs.pathExists(join(fetched.root, "remote/vite/github/workflows/build.yml"))).toBe(true)
+                await expect(fs.lstat(join(fetched.root, "remote/vite/gitlab/.gitlab-ci.yml"))).rejects.toMatchObject({ code: "ENOENT" })
+                await expect(fs.lstat(join(fetched.root, "remote/vite/other"))).rejects.toMatchObject({ code: "ENOENT" })
             } finally {
                 await fs.remove(fetched.dir)
             }
@@ -950,42 +887,6 @@ describe("TemplateScaffoldService.createTag", () => {
         await new MicrofrontendService().build(String(new Types.ObjectId()), "1.2.0")
 
         expect(createTag).toHaveBeenCalledTimes(1)
-    })
-
-    describe("by a member assigned to some domains", () => {
-        const ownDomain = new Types.ObjectId()
-
-        /** Builds a microfrontend of their domain, whose repository is also linked to a service of another domain when `shared`. */
-        const build = (shared: boolean) => {
-            connectionOf(projectId)
-            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
-            vi.spyOn(Microfrontend, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId, slug: "cart", domainId: ownDomain, codeRepository: link } as never)
-            vi.spyOn(MicrofrontendService.prototype as unknown as { ensureAccessToMicrofrontend: () => Promise<void> }, "ensureAccessToMicrofrontend").mockResolvedValue(undefined)
-            vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
-            vi.spyOn(Service, "exists").mockResolvedValue((shared ? { _id: new Types.ObjectId() } : null) as never)
-            return new MicrofrontendService({ _id: new Types.ObjectId() } as never).build(String(new Types.ObjectId()), "1.2.0")
-        }
-
-        it("given a repository shared with a component of another domain, when it is built, then no tag is created: it would release that one too", async () => {
-            await expect(build(true)).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
-            expect(getBranchCommitSha).not.toHaveBeenCalled()
-            expect(createTag).not.toHaveBeenCalled()
-        })
-
-        it("given a repository used by components of their domains only, when it is built, then the tag is created", async () => {
-            await build(false)
-
-            expect(createTag).toHaveBeenCalledTimes(1)
-        })
-    })
-
-    it("given a service linked to a connection of another project, when it is built, then it is refused before the provider is called", async () => {
-        connectionOf(otherProjectId)
-        vi.spyOn(Service, "findById").mockResolvedValue({ _id: new Types.ObjectId(), projectId, slug: "orders-api", codeRepository: link } as never)
-        vi.spyOn(ServiceService.prototype as unknown as { ensureAccessToService: () => Promise<void> }, "ensureAccessToService").mockResolvedValue(undefined)
-
-        await expect(new ServiceService().build(String(new Types.ObjectId()), "1.2.0")).rejects.toBeInstanceOf(EntityNotFoundError)
-        expect(createTag).not.toHaveBeenCalled()
     })
 })
 

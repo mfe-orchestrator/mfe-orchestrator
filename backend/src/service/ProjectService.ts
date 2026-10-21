@@ -6,28 +6,20 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
-import BuiltService from "../models/BuiltServiceModel"
 import CodeRepository from "../models/CodeRepositoryModel"
-import Database from "../models/DatabaseModel"
 import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
-import Domain from "../models/DomainModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project, { IProject, IProjectPipelines } from "../models/ProjectModel"
-import ServiceDeployment from "../models/ServiceDeploymentModel"
-import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
-import { ConfigMap, Secret } from "../models/VariableMapModel"
-import { CERTIFICATE_ISSUER, DOMAIN_NAME, isListenerPort } from "../types/Exposure"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
-import BaseAuthorizedService, { domainScopeForbidden, isInDomainScope } from "./BaseAuthorizedService"
+import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryImportService from "./CodeRepositoryImportService"
 import CodeRepositoryService from "./CodeRepositoryService"
-import GitOpsService, { GitOpsSettingsInput } from "./GitOpsService"
 import UserProjectService from "./UserProjectService"
 import { prepareProjectCleanup } from "./workspace/workspaceCleanup"
 
@@ -47,10 +39,6 @@ export interface ProjectUpdateInput {
     /** `null` removes it, like the description. */
     context?: string | null
     isActive?: boolean
-    /** Turning it on commits every config map and secret to the repository: refused when that push fails */
-    gitOps?: GitOpsSettingsInput
-    /** Replaced as a whole, `null` removes it: the next deploy of each environment takes its Gateway away */
-    exposure?: { domain: string; certificateIssuer?: string | null; httpPort?: number | null; httpsPort?: number | null } | null
     /** Replaced as a whole, `null` goes back to the official template-pipelines */
     pipelines?: PipelineTemplatesInput | null
 }
@@ -66,32 +54,6 @@ export interface PipelineTemplatesInput {
 /** What git takes as a branch or a tag name, without the forms it refuses: `..`, a leading dash, a trailing slash or `.lock` */
 const GIT_REF = /^(?!-)(?!.*\.\.)(?!.*\/$)(?!.*\.lock$)[A-Za-z0-9._/-]{1,255}$/
 
-/** The exposure to store, trimmed and in lowercase: refused with a 400 rather than by the model with a 500 */
-const exposureOf = (input: unknown): { domain: string; certificateIssuer?: string; httpPort?: number; httpsPort?: number } => {
-    const { domain, certificateIssuer, httpPort, httpsPort } = (input ?? {}) as { domain?: unknown; certificateIssuer?: unknown; httpPort?: unknown; httpsPort?: unknown }
-    const normalized = typeof domain === "string" ? domain.trim().toLowerCase() : ""
-    const issuer = typeof certificateIssuer === "string" ? certificateIssuer.trim() : ""
-    if (
-        !DOMAIN_NAME.test(normalized) ||
-        (certificateIssuer != null && typeof certificateIssuer !== "string") ||
-        (issuer && !CERTIFICATE_ISSUER.test(issuer)) ||
-        (httpPort != null && !isListenerPort(httpPort)) ||
-        (httpsPort != null && !isListenerPort(httpsPort))
-    ) {
-        throw createBusinessException({
-            code: "PROJECT_EXPOSURE_INVALID",
-            message: "The exposure needs a lowercase domain of at least two labels, e.g. example.com, if any the name of a ClusterIssuer and, if any, ports between 1 and 65535",
-            statusCode: 400
-        })
-    }
-    return {
-        domain: normalized,
-        ...(issuer ? { certificateIssuer: issuer } : {}),
-        ...(httpPort != null ? { httpPort: httpPort as number } : {}),
-        ...(httpsPort != null ? { httpsPort: httpsPort as number } : {})
-    }
-}
-
 interface ContextEntry {
     id: string
     slug: string
@@ -99,27 +61,14 @@ interface ContextEntry {
     context: string
 }
 
-/** What the team wrote for AI agents in one project: the shared context and the one of each domain, microfrontend and service that has it. */
+/** What the team wrote for AI agents in one project: the shared context and the one of each microfrontend that has it. */
 export interface ProjectContextDTO {
     project: { id: string; name: string; context?: string }
-    domains: ContextEntry[]
     microfrontends: ContextEntry[]
-    services: ContextEntry[]
 }
 
-/**
- * The piece of work a context is read for. A microfrontend or a service reads its own context and
- * the one of its domain; a domain reads its own and the one of each of its microfrontends and services.
- * The project context always comes along.
- */
-export type ContextFocus = { microfrontendId: string } | { serviceId: string } | { domainId: string }
-
-/** Which domains, microfrontends and services a focus reads the context of: a list left out is read for none. */
-interface ContextFilters {
-    domains?: Record<string, unknown>
-    microfrontends?: Record<string, unknown>
-    services?: Record<string, unknown>
-}
+/** The piece of work a context is read for: a microfrontend reads its own context. The project context always comes along. */
+type ContextFocus = { microfrontendId: string }
 
 const toContextEntry = (item: { _id: unknown; slug: string; name: string; context?: string }): ContextEntry => ({
     id: String(item._id),
@@ -127,12 +76,6 @@ const toContextEntry = (item: { _id: unknown; slug: string; name: string; contex
     name: item.name,
     context: item.context as string
 })
-
-/**
- * A project as the switcher lists it, with the domains the user is confined to there: none for a member
- * of the whole project. `domainScoped` tells a scope left over nothing by deleted domains from the whole project.
- */
-export type ProjectOfUser = IProject & { domainIds: string[]; domainScoped: boolean }
 
 export interface ProjectSummaryDTO {
     project: IProject
@@ -142,7 +85,6 @@ export interface ProjectSummaryDTO {
         microfrontends: number
         apiKeys: number
         storages: number
-        databases: number
         codeRepositories: number
     }
 }
@@ -157,11 +99,11 @@ export class ProjectService extends BaseAuthorizedService {
      * administering the organization that owns it. The second is what keeps a project reachable when
      * its members leave, and it is why this cannot be a single lookup from UserProject any more.
      */
-    async findMine(userId: ObjectId, organizationId?: string | Schema.Types.ObjectId): Promise<ProjectOfUser[]> {
+    async findMine(userId: ObjectId, organizationId?: string | Schema.Types.ObjectId): Promise<IProject[]> {
         try {
             // A pending invitation is not a membership yet: it must be accepted first, otherwise the
             // project would show up in the switcher as if it were already the user's.
-            const memberships = await UserProject.find({ userId: toObjectId(userId), invitationToken: null }, { projectId: 1, role: 1, domainScoped: 1, domainIds: 1 }).lean()
+            const memberships = await UserProject.find({ userId: toObjectId(userId), invitationToken: null }, { projectId: 1 }).lean()
             const administeredOrganizations = await this.getAdministeredOrganizationIds()
 
             const reachable: Record<string, unknown>[] = [{ _id: { $in: memberships.map(membership => membership.projectId) } }]
@@ -174,20 +116,7 @@ export class ProjectService extends BaseAuthorizedService {
                 filter.organizationId = toObjectId(organizationId)
             }
 
-            // The scope comes with the membership read above; owning the project or administering the
-            // organization overrides it, as it does on every check
-            const administered = new Set(administeredOrganizations.map(String))
-            const scopes = new Map(
-                memberships
-                    .filter(membership => membership.domainScoped && membership.role !== RoleInProject.OWNER)
-                    .map(membership => [String(membership.projectId), (membership.domainIds ?? []).map(String)])
-            )
-            const projects = await Project.find(filter).sort({ name: 1 })
-            return projects.map(project => {
-                const scope = administered.has(String(project.organizationId)) ? undefined : scopes.get(String(project._id))
-                const fields = typeof project.toJSON === "function" ? project.toJSON() : project
-                return { ...fields, domainIds: scope ?? [], domainScoped: Boolean(scope) } as unknown as ProjectOfUser
-            })
+            return await Project.find(filter).sort({ name: 1 })
         } catch (error) {
             if (error instanceof BusinessException) throw error
 
@@ -232,10 +161,9 @@ export class ProjectService extends BaseAuthorizedService {
             count: {
                 environments: await Environment.countDocuments({ projectId: projectIdObj }),
                 users: await UserProject.countDocuments({ projectId: projectIdObj }),
-                microfrontends: await Microfrontend.countDocuments({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) }),
+                microfrontends: await Microfrontend.countDocuments({ projectId: projectIdObj }),
                 apiKeys: await ApiKey.countDocuments({ projectId: projectIdObj }),
                 storages: await Storage.countDocuments({ projectId: projectIdObj }),
-                databases: await Database.countDocuments({ projectId: projectIdObj }),
                 codeRepositories: await CodeRepository.countDocuments({ projectId: projectIdObj })
             }
         }
@@ -248,53 +176,16 @@ export class ProjectService extends BaseAuthorizedService {
         if (!project) {
             throw new ProjectNotFoundError(projectId)
         }
-        const filters = await this.contextFilters(projectIdObj, focus)
-        const withContext = { projectId: projectIdObj, context: { $nin: [null, ""] } }
-        const fields = { slug: 1, name: 1, context: 1 }
-        const [domains, microfrontends, services] = await Promise.all([
-            filters.domains ? Domain.find({ ...filters.domains, ...withContext }, fields).sort({ slug: 1 }) : [],
-            filters.microfrontends ? Microfrontend.find({ ...filters.microfrontends, ...withContext }, fields).sort({ slug: 1 }) : [],
-            filters.services ? Service.find({ ...filters.services, ...withContext }, fields).sort({ slug: 1 }) : []
-        ])
+        const filter = focus ? { _id: toObjectId(focus.microfrontendId) } : {}
+        // A focus outside the project is refused as not found: a context never reaches across projects
+        if (focus && !(await Microfrontend.exists({ ...filter, projectId: projectIdObj }))) {
+            throw new EntityNotFoundError(focus.microfrontendId)
+        }
+        const microfrontends = await Microfrontend.find({ ...filter, projectId: projectIdObj, context: { $nin: [null, ""] } }, { slug: 1, name: 1, context: 1 }).sort({ slug: 1 })
         return {
             project: { id: project._id.toString(), name: project.name, context: project.context || undefined },
-            domains: domains.map(toContextEntry),
-            microfrontends: microfrontends.map(toContextEntry),
-            services: services.map(toContextEntry)
+            microfrontends: microfrontends.map(toContextEntry)
         }
-    }
-
-    /**
-     * A focus outside the project is refused as not found: a context never reaches across projects. A
-     * domain-scoped member reads the contexts of their domains and of what is in them only, and is
-     * refused a focus outside them.
-     */
-    private async contextFilters(projectId: Schema.Types.ObjectId, focus?: ContextFocus): Promise<ContextFilters> {
-        const scope = await this.getDomainScope(projectId)
-        if (!focus) {
-            const members = await this.domainScopeFilter(projectId)
-            return { domains: await this.domainScopeFilter(projectId, "_id"), microfrontends: members, services: members }
-        }
-        const domainOf = (domainId?: unknown) => (domainId ? { _id: domainId } : undefined)
-        const ensureInScope = (domainId: unknown) => {
-            if (!isInDomainScope(scope, domainId)) throw domainScopeForbidden()
-        }
-        if ("domainId" in focus) {
-            const domain = await Domain.findOne({ _id: toObjectId(focus.domainId), projectId }, { _id: 1 })
-            if (!domain) throw new EntityNotFoundError(focus.domainId)
-            ensureInScope(domain._id)
-            return { domains: { _id: domain._id }, microfrontends: { domainId: domain._id }, services: { domainId: domain._id } }
-        }
-        if ("microfrontendId" in focus) {
-            const microfrontend = await Microfrontend.findOne({ _id: toObjectId(focus.microfrontendId), projectId }, { domainId: 1 })
-            if (!microfrontend) throw new EntityNotFoundError(focus.microfrontendId)
-            ensureInScope(microfrontend.domainId)
-            return { domains: domainOf(microfrontend.domainId), microfrontends: { _id: microfrontend._id } }
-        }
-        const service = await Service.findOne({ _id: toObjectId(focus.serviceId), projectId }, { domainId: 1 })
-        if (!service) throw new EntityNotFoundError(focus.serviceId)
-        ensureInScope(service.domainId)
-        return { domains: domainOf(service.domainId), services: { _id: service._id } }
     }
 
     async create(projectData: ProjectCreateInput, creatorUserId: ObjectId): Promise<IProject> {
@@ -360,8 +251,6 @@ export class ProjectService extends BaseAuthorizedService {
 
     async update(projectId: string, projectData: ProjectUpdateInput): Promise<IProject | null> {
         await this.ensureAccessToProject(projectId)
-        // The settings, the shared context and the GitOps repository are the whole project's
-        await this.ensureWholeProject(projectId)
         try {
             if (!Types.ObjectId.isValid(projectId)) {
                 throw createBusinessException({
@@ -383,18 +272,10 @@ export class ProjectService extends BaseAuthorizedService {
             if (projectData.isActive !== undefined) {
                 updateData.isActive = projectData.isActive
             }
-            if (projectData.gitOps !== undefined) {
-                updateData.gitOps = await new GitOpsService(this.user).resolveSettings(projectId, projectData.gitOps)
-            }
             if (projectData.pipelines !== undefined) {
                 const pipelines = await this.resolvePipelines(projectId, projectData.pipelines)
                 if (pipelines) updateData.pipelines = pipelines
                 else updateData.$unset = { ...updateData.$unset, pipelines: 1 }
-            }
-            if (projectData.exposure === null) {
-                updateData.$unset = { ...updateData.$unset, exposure: 1 }
-            } else if (projectData.exposure !== undefined) {
-                updateData.exposure = exposureOf(projectData.exposure)
             }
             for (const field of ["description", "context"] as const) {
                 if (projectData[field] === null) {
@@ -419,7 +300,7 @@ export class ProjectService extends BaseAuthorizedService {
 
             return updated
         } catch (error) {
-            // A not found, or a GitOps refusal, keeps its own status and code
+            // A not found, or a refusal of the pipeline templates, keeps its own status and code
             if (error instanceof CustomError) throw error
 
             throw createBusinessException({
@@ -434,18 +315,15 @@ export class ProjectService extends BaseAuthorizedService {
     }
 
     /**
-     * The pipeline templates to store from what the screen sent, none for the official ones. Owners only, as for
-     * GitOps: every repository scaffolded in the project runs what they pick. The repository must be reachable
+     * The pipeline templates to store from what the screen sent, none for the official ones. Owners only:
+     * every repository scaffolded in the project runs what they pick. The repository must be reachable
      * through one of the connections of the project: one of another project would lend this one its access token.
      */
     private async resolvePipelines(projectId: string, input: PipelineTemplatesInput | null): Promise<IProjectPipelines | undefined> {
         const projectIdObj = toObjectId(projectId)
         const project = await Project.findById(projectIdObj, { organizationId: 1 })
         if (!project) throw new ProjectNotFoundError(projectId)
-        await new GitOpsService(this.user).ensureOwner(projectIdObj, project.organizationId, {
-            code: "PIPELINES_OWNER_REQUIRED",
-            message: "Only an owner of the project can change where its pipeline templates come from"
-        })
+        await this.ensureOwner(projectIdObj, project.organizationId)
         if (input === null) return undefined
 
         if (!Types.ObjectId.isValid(input?.codeRepositoryId) || typeof input.repositoryId !== "string" || !input.repositoryId) {
@@ -468,9 +346,18 @@ export class ProjectService extends BaseAuthorizedService {
         return { codeRepository: importService.buildMicrofrontendCodeRepository(codeRepository, repository), ...(ref ? { ref } : {}) }
     }
 
+    /** An owner of the project or an administrator of its organization: an API key has no person behind it to be one */
+    private async ensureOwner(projectId: Schema.Types.ObjectId, organizationId: Schema.Types.ObjectId) {
+        const user = this.getUser()
+        if (user && !this.user?.apiKeyId) {
+            const membership = await UserProject.findOne({ userId: user._id, projectId, invitationToken: null })
+            if (membership?.role === RoleInProject.OWNER || (await this.isOrganizationAdmin(organizationId))) return
+        }
+        throw createBusinessException({ code: "PIPELINES_OWNER_REQUIRED", message: "Only an owner of the project can change where its pipeline templates come from", statusCode: 403 })
+    }
+
     async delete(projectId: string): Promise<DeleteResult> {
         await this.ensureAccessToProject(projectId)
-        await this.ensureWholeProject(projectId)
         const cleanup = await prepareProjectCleanup(projectId)
         const result = await runInTransaction(session => this.deleteRaw(projectId, session))
         await cleanup()
@@ -483,16 +370,11 @@ export class ProjectService extends BaseAuthorizedService {
         await UserProject.deleteMany({ projectId: projectIdObj }, session)
         await ApiKey.deleteMany({ projectId: projectIdObj }, session)
         await Storage.deleteMany({ projectId: projectIdObj }, session)
-        await Database.deleteMany({ projectId: projectIdObj }, { session })
         await CodeRepository.deleteMany({ projectId: projectIdObj }, session)
 
         const microfrontends = await Microfrontend.find({ projectId: projectIdObj }, {}, { session })
         const mfeIds = microfrontends.map(mfe => mfe._id)
         await BuiltFrontend.deleteMany({ microfrontendId: { $in: mfeIds } }, session)
-
-        const services = await Service.find({ projectId: projectIdObj }, { _id: 1 }, { session })
-        await BuiltService.deleteMany({ serviceId: { $in: services.map(service => service._id) } }, session)
-        await ServiceDeployment.deleteMany({ serviceId: { $in: services.map(service => service._id) } }, { session })
 
         const deployments = await Deployment.find({ projectId: projectIdObj }, {}, { session })
         const deploymentsIds = deployments.map(deployment => deployment._id)
@@ -504,10 +386,6 @@ export class ProjectService extends BaseAuthorizedService {
 
         await Deployment.deleteMany({ projectId: projectIdObj }, session)
         await Microfrontend.deleteMany({ projectId: projectIdObj }, session)
-        await Service.deleteMany({ projectId: projectIdObj }, session)
-        await ConfigMap.deleteMany({ projectId: projectIdObj }, { session })
-        await Secret.deleteMany({ projectId: projectIdObj }, { session })
-        await Domain.deleteMany({ projectId: projectIdObj }, { session })
         await Environment.deleteMany({ projectId: projectIdObj }, session)
 
         return await Project.deleteOne({ _id: projectIdObj }, session)

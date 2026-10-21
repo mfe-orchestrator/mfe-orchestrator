@@ -8,10 +8,9 @@ import OAuthGrantService from "../../service/OAuthGrantService"
 import ProjectService from "../../service/ProjectService"
 import UserProjectService from "../../service/UserProjectService"
 import { getOAuthConfig, MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
+import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 
 const userId = objectId("Id of the user, from project_members_list")
-const domainIds = z.array(objectId("Id of a functional domain of the project, from domains_list")).max(100)
 const role = z.enum(RoleInProject).describe("OWNER manages the project and its members, MEMBER changes it, VIEWER only reads")
 
 /**
@@ -22,8 +21,6 @@ const toMembershipView = (membership: IUserProject | undefined) =>
     membership && {
         userId: String(membership.userId),
         role: membership.role,
-        domainIds: membership.domainScoped ? (membership.domainIds ?? []).map(String) : [],
-        domainScoped: Boolean(membership.domainScoped),
         invitationPending: Boolean(membership.invitationToken),
         invitationExpiresAt: membership.inviationTokenExpiresAt
     }
@@ -36,8 +33,8 @@ const ensureMcpEnabled = () => {
 }
 
 /**
- * Console-only tools for what sits around the project rather than in it: deleting it, its GitOps
- * repository, its pipeline templates, its members, its API keys and the MCP clients connected to it.
+ * Console-only tools for what sits around the project rather than in it: deleting it, its pipeline
+ * templates, its members, its API keys and the MCP clients connected to it.
  */
 export const projectAdminTools = [
     defineTool({
@@ -55,42 +52,10 @@ export const projectAdminTools = [
         }
     }),
     defineTool({
-        name: "project_gitops_set",
-        title: "Set GitOps repository",
-        description:
-            "Switches GitOps on or off for the project. When on, every deploy commits to a repository, as Kubernetes manifests, the Namespace of each deployed environment and every config map and secret of the project as they are in it; saving a map or an environment commits nothing. Secret values are committed base64 encoded, which is not encryption: anyone who can read the repository can decode them, say so to the user. Pass repositoryId to commit to an existing repository, or newRepositoryName to have a private one created through the connection. Only an owner of the project (or an administrator of its organization) can do it. Switched off, nothing more is committed and the repository is remembered. The current setting is in project_get (gitOps).",
-        scope: MCP_SCOPE_WRITE,
-        consoleOnly: true,
-        // Pushes every config map and secret of the project, values only base64 encoded, to a repository: confirmed by the user
-        requiresConfirmation: true,
-        annotations: WRITE_EXTERNAL,
-        inputSchema: z
-            .object({
-                enabled: z.boolean(),
-                codeRepositoryId: objectId("Id of the code repository connection, from code_repositories_list").optional(),
-                repositoryId: z.string().trim().min(1).max(255).optional().describe('The repositoryId of the repository to commit to, from code_repository_importable with target "service"'),
-                newRepositoryName: z
-                    .string()
-                    .trim()
-                    .min(1)
-                    .max(100)
-                    .optional()
-                    .describe("In place of repositoryId: the name of a private repository to create through the connection, e.g. <project slug>-gitops")
-            })
-            .refine(args => !args.enabled || (args.codeRepositoryId && (args.repositoryId || args.newRepositoryName)), {
-                message: "Pass codeRepositoryId and repositoryId, or newRepositoryName, to switch GitOps on"
-            })
-            .refine(args => !(args.repositoryId && args.newRepositoryName), { message: "Pass repositoryId or newRepositoryName, not both" }),
-        run: async (args, { principal, projectId }) => {
-            const project = await new ProjectService(principal).update(projectId, { gitOps: args })
-            return { gitOps: project?.gitOps }
-        }
-    }),
-    defineTool({
         name: "project_pipelines_set",
         title: "Set pipeline templates repository",
         description:
-            "Picks the repository the pipelines of every microfrontend and service scaffolded from a template in the project are copied from, in place of the official mfe-orchestrator/template-pipelines. It has the same layout: <type>/<compiler>/<provider>/ (provider github, gitlab or azure_dev_ops), or <type>/<compiler>/<template slug>/<provider>/ for one template, e.g. service/docker/github/workflows/release.yml; %microfrontendSlug%, %serviceSlug% and %domain% are replaced. A template it has no folder for keeps the pipeline it ships with. Pass repositoryId null to go back to the official ones. Only an owner of the project (or an administrator of its organization) can do it. The current setting is in project_get (pipelines).",
+            "Picks the repository the pipelines of every microfrontend scaffolded from a template in the project are copied from, in place of the official mfe-orchestrator/template-pipelines. It has the same layout: <type>/<compiler>/<provider>/ (provider github, gitlab or azure_dev_ops), or <type>/<compiler>/<template slug>/<provider>/ for one template, e.g. remote/vite/github/workflows/deploy.yml; %microfrontendSlug% and %domain% are replaced. A template it has no folder for keeps the pipeline it ships with. Pass repositoryId null to go back to the official ones. Only an owner of the project (or an administrator of its organization) can do it. The current setting is in project_get (pipelines).",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Every repository scaffolded afterwards runs the pipelines of that repository: confirmed by the user
@@ -99,13 +64,7 @@ export const projectAdminTools = [
         inputSchema: z
             .object({
                 codeRepositoryId: objectId("Id of the code repository connection, from code_repositories_list").optional(),
-                repositoryId: z
-                    .string()
-                    .trim()
-                    .min(1)
-                    .max(255)
-                    .nullable()
-                    .describe('The repositoryId of the repository, from code_repository_importable with target "service"; null for the official templates'),
+                repositoryId: z.string().trim().min(1).max(255).nullable().describe("The repositoryId of the repository, from code_repository_importable; null for the official templates"),
                 ref: z.string().trim().max(255).optional().describe("Branch or tag to read; the default branch of the repository when left out")
             })
             .refine(args => args.repositoryId === null || args.codeRepositoryId, { message: "Pass codeRepositoryId with repositoryId" }),
@@ -118,8 +77,7 @@ export const projectAdminTools = [
     defineTool({
         name: "project_members_list",
         title: "List project members",
-        description:
-            "The members of the project with their role (OWNER, MEMBER, VIEWER), the functional domains they are confined to (domainScoped, with domainIds: not scoped means the whole project; scoped with no ids, every domain of the scope was deleted and they reach none) and whether their invitation is still pending. The `_id` of each is the userId the other member tools take.",
+        description: "The members of the project with their role (OWNER, MEMBER, VIEWER) and whether their invitation is still pending. The `_id` of each is the userId the other member tools take.",
         scope: MCP_SCOPE_READ,
         consoleOnly: true,
         annotations: READ_ONLY,
@@ -130,7 +88,7 @@ export const projectAdminTools = [
         name: "project_member_invite",
         title: "Invite to project",
         description:
-            "Invites someone to the project by email with a role, to the whole project or only to some of its functional domains. They get an email to accept (when email delivery is configured; otherwise they join at once). Inviting someone already invited sends a fresh invitation, with the role and domains passed now.",
+            "Invites someone to the project by email with a role. They get an email to accept (when email delivery is configured; otherwise they join at once). Inviting someone already invited sends a fresh invitation.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Hands out access to the project: the assistant asks the user first.
@@ -138,10 +96,9 @@ export const projectAdminTools = [
         annotations: WRITE,
         inputSchema: z.object({
             email: z.email().describe("Email address of the person to invite"),
-            role,
-            domainIds: domainIds.optional().describe("The domains they reach, nothing else of the project; left out or empty, the whole project. Not for an OWNER, who manages the whole project")
+            role
         }),
-        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).addUserToProjectByEmail(projectId, args.email, args.role, args.domainIds))
+        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).addUserToProjectByEmail(projectId, args.email, args.role))
     }),
     defineTool({
         name: "project_member_resend_invitation",
@@ -159,19 +116,16 @@ export const projectAdminTools = [
         name: "project_member_role_set",
         title: "Change project role",
         description:
-            "Changes the role of a member of the project, or of a pending invitation, and the functional domains they are confined to. Only an owner of the project (or an administrator of its organization) can do it, and the last owner cannot be demoted.",
+            "Changes the role of a member of the project, or of a pending invitation. Only an owner of the project (or an administrator of its organization) can do it, and the last owner cannot be demoted.",
         scope: MCP_SCOPE_WRITE,
         consoleOnly: true,
         // Lowering a role takes access away, and raising one hands the project over: confirmed by the user.
         annotations: DESTRUCTIVE,
         inputSchema: z.object({
             userId,
-            role,
-            domainIds: domainIds
-                .optional()
-                .describe("Replaces the domains they reach, an empty list opening the whole project; left out, they stay. Promoting to OWNER a member confined to domains needs an empty list")
+            role
         }),
-        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).updateUserRole(projectId, args.userId, args.role, args.domainIds))
+        run: async (args, { principal, projectId }) => toMembershipView(await new UserProjectService(principal).updateUserRole(projectId, args.userId, args.role))
     }),
     defineTool({
         name: "project_member_remove",

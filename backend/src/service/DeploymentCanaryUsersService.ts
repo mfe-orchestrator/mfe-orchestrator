@@ -1,5 +1,4 @@
 import { ClientSession, ObjectId, Schema } from "mongoose"
-import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers, { IDeploymentToCanaryUsers } from "../models/DeploymentsToCanaryUsersModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
@@ -52,13 +51,11 @@ class DeploymentCanaryUsersService extends BaseAuthorizedService {
 
     async setCanaryUserWithPermissionCheck(deploymentId: string | ObjectId, userId: string, enabled: boolean) {
         await this.ensureAccessToDeployment(deploymentId)
-        await this.ensureWholeProjectOfDeployment(deploymentId)
         return this.setCanaryUser(deploymentId, userId, enabled)
     }
 
     async setCanaryUserMultipleWithPermissionCheck(deploymentId: string | ObjectId, userIds: string[], enabled: boolean) {
         await this.ensureAccessToDeployment(deploymentId)
-        await this.ensureWholeProjectOfDeployment(deploymentId)
         return this.setCanaryUserMultiple(deploymentId, userIds, enabled)
     }
 
@@ -85,24 +82,12 @@ class DeploymentCanaryUsersService extends BaseAuthorizedService {
         )
     }
 
-    /**
-     * Who is on the canary of a deployment is decided for every microfrontend it serves at once, those of
-     * every domain: not for a member assigned to only some of them.
-     */
-    private async ensureWholeProjectOfDeployment(deploymentId: string | ObjectId) {
-        const deployment = await Deployment.findById(toObjectId(deploymentId), { environmentId: 1 })
-        if (deployment) {
-            await this.ensureWholeProjectOfEnvironment(deployment.environmentId)
-        }
-    }
-
     async deleteCanaryUsers(deploymentId: string | Schema.Types.ObjectId, userIds: string[]) {
         await DeploymentToCanaryUsers.deleteMany({ deploymentId: toObjectId(deploymentId), userId: { $in: userIds } })
     }
 
     async deleteCanaryUsersWithPermissionCheck(deploymentId: string | ObjectId, userIds: string[]) {
         await this.ensureAccessToDeployment(deploymentId)
-        await this.ensureWholeProjectOfDeployment(deploymentId)
         return this.deleteCanaryUsers(deploymentId, userIds)
     }
 }

@@ -111,13 +111,6 @@ export interface GitLabPipeline {
     updated_at: string
 }
 
-/** A deploy token as GitLab answers its creation: the token itself is never shown again */
-export interface GitLabDeployToken {
-    id: number
-    username: string
-    token: string
-}
-
 class GitLabClient {
     private api: AxiosInstance
 
@@ -294,22 +287,6 @@ class GitLabClient {
             commit_message: request.commitMessage,
             actions: request.actions
         })
-    }
-
-    /** A deploy token of the project, for git over HTTPS with the scopes given: it needs the Maintainer role */
-    async createDeployToken(projectId: string | number, request: { name: string; scopes: string[] }): Promise<GitLabDeployToken> {
-        const res = await this.api.post<GitLabDeployToken>(`/projects/${projectId}/deploy_tokens`, request)
-        return res.data
-    }
-
-    /** Revokes a deploy token of the project; one already gone is not an error */
-    async revokeDeployToken(projectId: string | number, tokenId: number): Promise<void> {
-        try {
-            await this.api.delete(`/projects/${projectId}/deploy_tokens/${tokenId}`)
-        } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.status === 404) return
-            throw error
-        }
     }
 
     async branchExists(projectId: string | number, branchName: string): Promise<boolean> {

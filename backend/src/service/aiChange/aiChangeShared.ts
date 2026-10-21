@@ -14,7 +14,7 @@ import { LlmConfiguration } from "../llm"
 import { toErrorMessage } from "../RepositoryFileService"
 import { isPushRefused } from "../workspace/GitWorkingCopy"
 import RepositoryWorkspaceService, { OpenedWorkspace } from "../workspace/RepositoryWorkspaceService"
-import { componentIdOf, componentOf, findComponent, findComponents, RepositoryComponentRef } from "../workspace/repositoryComponent"
+import { findComponent } from "../workspace/repositoryComponent"
 
 /** Proposals nobody approves or discards are removed after this, and so are finished jobs. */
 export const PROPOSAL_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -97,8 +97,7 @@ const keepConversation = async (request: IAiChangeRequest) => {
     if (!job) return
     const jobIds = (await AiChangeJob.find({ rootJobId: job.rootJobId }, { _id: 1 })).map(candidate => candidate._id)
     await AiChangeJob.updateMany({ _id: { $in: jobIds } }, { $unset: { expiresAt: 1 } })
-    const owner = request.serviceId ? { serviceId: request.serviceId } : { microfrontendId: request.microfrontendId }
-    await AiChangeRequest.updateMany({ jobId: { $in: jobIds }, ...owner }, { $unset: { expiresAt: 1 } })
+    await AiChangeRequest.updateMany({ jobId: { $in: jobIds }, microfrontendId: request.microfrontendId }, { $unset: { expiresAt: 1 } })
 }
 
 /** What the AI change services share: who may change a project, and how a claimed proposal becomes a pull request. */
@@ -127,17 +126,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
         if (membership?.role !== RoleInProject.VIEWER) return
         const project = await Project.findById(projectId, { organizationId: 1 })
         if (project && (await this.isOrganizationAdmin(project.organizationId))) return
-        throw createBusinessException({ code: "AI_CHANGE_FORBIDDEN", message: "A viewer cannot change the code of a microfrontend or a service", statusCode: 403 })
-    }
-
-    /**
-     * As {@link ensureRepositoryInDomainScope} for the repositories of the components `refs` names, read
-     * only for a domain-scoped member: what was proposed on a repository shared since with another domain
-     * must not reach it either.
-     */
-    protected async ensureRepositoriesInDomainScope(projectId: IMicrofrontend["projectId"], refs: RepositoryComponentRef[]) {
-        if (!(await this.getDomainScope(projectId))) return
-        for (const component of await findComponents(refs)) await this.ensureRepositoryInDomainScope(component, component.codeRepository)
+        throw createBusinessException({ code: "AI_CHANGE_FORBIDDEN", message: "A viewer cannot change the code of a microfrontend", statusCode: 403 })
     }
 
     /** The files of a proposal that will be committed, refused when none is left or one cannot be. */
@@ -185,10 +174,10 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
      * the user opens a pull request instead.
      */
     protected async applyClaimed(request: IAiChangeRequest, files: IAiChangeFile[]): Promise<IAiChangeRequest> {
-        const component = await findComponent(componentOf(request))
+        const component = await findComponent(String(request.microfrontendId))
         const user = this.getUser()!
         try {
-            if (!component) throw new EntityNotFoundError(componentIdOf(request))
+            if (!component) throw new EntityNotFoundError(String(request.microfrontendId))
             const workspaceService = new RepositoryWorkspaceService(this.user)
             const workspace = await workspaceService.open(component)
             const prompts = await conversationPrompts(request)
@@ -252,8 +241,8 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
      * `related` lists the other repositories of the same job, one per line.
      */
     protected async openPullRequestFor(request: IAiChangeRequest, files: IAiChangeFile[], related: string[] = []): Promise<IAiChangeRequest> {
-        const component = await findComponent(componentOf(request))
-        if (!component) throw new EntityNotFoundError(componentIdOf(request))
+        const component = await findComponent(String(request.microfrontendId))
+        if (!component) throw new EntityNotFoundError(String(request.microfrontendId))
         const user = this.getUser()!
         const workspaceService = new RepositoryWorkspaceService(this.user)
         const workspace = await workspaceService.open(component)
@@ -291,11 +280,10 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
             })
             const opened = await AiChangeRequest.findByIdAndUpdate(request._id, { pullRequestUrl, $unset: { pullRequestError: 1 } }, { new: true })
             // A follow-up started meanwhile pushes the same branch: it carries the pull request on, or applying it would delete the branch under it.
-            const owner = request.serviceId ? { serviceId: request.serviceId } : { microfrontendId: request.microfrontendId }
             await AiChangeRequest.updateMany(
                 {
                     conversationId: request.conversationId,
-                    ...owner,
+                    microfrontendId: request.microfrontendId,
                     branch,
                     status: { $in: [AiChangeStatus.PENDING, AiChangeStatus.RUNNING, AiChangeStatus.PROPOSED] },
                     pullRequestUrl: { $exists: false }
@@ -313,7 +301,7 @@ export abstract class AiChangeBaseService extends BaseAuthorizedService {
     /** Deletes the feature branch of a discarded proposal, unless a pull request is open on it. Best effort: a branch left behind harms nobody. */
     protected async dropBranch(request: IAiChangeRequest): Promise<void> {
         if (!request.branch || !request.commit || request.pullRequestUrl) return
-        const component = await findComponent(componentOf(request))
+        const component = await findComponent(String(request.microfrontendId))
         if (!component) return
         const workspace = await new RepositoryWorkspaceService(this.user).open(component)
         await workspace.workingCopy.deleteRemoteBranch(request.branch)

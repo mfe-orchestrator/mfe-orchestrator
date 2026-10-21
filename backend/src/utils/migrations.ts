@@ -4,16 +4,11 @@ import AiChangeJob from "../models/AiChangeJobModel"
 import AiChangeRequest from "../models/AiChangeRequestModel"
 import AssistantConversation from "../models/AssistantConversationModel"
 import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepositoryModel"
-import Database, { DATABASE_SECRET_PATHS } from "../models/DatabaseModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
-import Project, { PROJECT_SECRET_PATHS } from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import Storage, { STORAGE_SECRET_PATHS } from "../models/StorageModel"
-import { IVariableMapEntry, Secret, variableMapModels } from "../models/VariableMapModel"
-import { VariableMapKind } from "../types/VariableMapDTO"
 import { migrateProjectsToOrganizations } from "./organizationMigration"
-import { decryptSecret, isSecretEncryptionEnabled } from "./secretCrypto"
+import { isSecretEncryptionEnabled } from "./secretCrypto"
 
 /**
  * Values the canary type could hold before the three current strategies replaced them. Both were the
@@ -94,7 +89,7 @@ const NOT_ENCRYPTED = { $exists: true, $not: /^enc:v1:/ }
 const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> => {
     if (!isSecretEncryptionEnabled()) return
 
-    // The models have nothing in common but the re-save, so they are walked through the loosest
+    // The three models have nothing in common but the re-save, so they are walked through the loosest
     // shape that still gives back documents to save.
     type SecretHolder = Model<Record<string, unknown>>
     type SecretFilter = QueryFilter<Record<string, unknown>>
@@ -104,14 +99,10 @@ const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> =>
     const collections: Array<[string, SecretHolder, SecretFilter]> = [
         ["storage", Storage as unknown as SecretHolder, anyPlaintextIn(STORAGE_SECRET_PATHS) as SecretFilter],
         ["code repository", CodeRepository as unknown as SecretHolder, anyPlaintextIn(CODE_REPOSITORY_SECRET_PATHS) as SecretFilter],
-        ["database", Database as unknown as SecretHolder, anyPlaintextIn(DATABASE_SECRET_PATHS) as SecretFilter],
-        ["project", Project as unknown as SecretHolder, anyPlaintextIn(PROJECT_SECRET_PATHS) as SecretFilter],
         // $elemMatch so both halves of the criterion have to be met by the same storage of the
         // snapshot: spelled out as a dotted path, a snapshot holding one already encrypted credential
         // beside a plaintext one would satisfy neither half on the element that still needs rewriting.
-        ["deployment", Deployment as unknown as SecretHolder, { storages: { $elemMatch: anyPlaintextIn(STORAGE_SECRET_PATHS) } } as SecretFilter],
-        // Nested $elemMatch for the same reason, one level deeper: a key of a secret holds a value per environment.
-        ["secret", Secret as unknown as SecretHolder, { entries: { $elemMatch: { values: { $elemMatch: { value: NOT_ENCRYPTED } } } } } as SecretFilter]
+        ["deployment", Deployment as unknown as SecretHolder, { storages: { $elemMatch: anyPlaintextIn(STORAGE_SECRET_PATHS) } } as SecretFilter]
     ]
 
     for (const [label, model, filter] of collections) {
@@ -124,77 +115,6 @@ const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> =>
         if (encrypted > 0) {
             logger.info(`Encrypted the credentials of ${encrypted} ${label} document(s) at rest`)
         }
-    }
-}
-
-/** A service as it was stored while it held its config map and secrets itself */
-interface ServiceWithInlineVariables {
-    _id: ObjectId
-    projectId: ObjectId
-    slug: string
-    configMap?: IVariableMapEntry[] | null
-    secrets?: IVariableMapEntry[] | null
-}
-
-/** What the secrets were bound to while they were encrypted inside the service: they have to be read with it */
-const INLINE_SECRETS_CONTEXT = "Service:secrets.values.value"
-
-const isDuplicateKeyError = (error: unknown): boolean => (error as { code?: number })?.code === 11000
-
-/** The map the migration made out of one list of one service: found again by this, never by its name, which another map may hold */
-const migratedFrom = (service: ServiceWithInlineVariables) => `Moved from the service ${service.slug} (${service._id})`
-
-const extractInlineVariables = async (service: ServiceWithInlineVariables, kind: VariableMapKind, entries: IVariableMapEntry[] | null = []): Promise<ObjectId[]> => {
-    if (!entries?.length) return []
-    const model = variableMapModels[kind]
-    const description = migratedFrom(service)
-    // Left by a run that crashed before updating the service, or by another replica booting at the same time
-    const findMine = () => model.findOne({ projectId: service.projectId, description }, { _id: 1 })
-
-    const existing = await findMine()
-    if (existing) return [existing._id]
-
-    const readable =
-        kind === "secret" ? entries.map(entry => ({ ...entry, values: entry.values.map(value => ({ ...value, value: decryptSecret(value.value, INLINE_SECRETS_CONTEXT) as string })) })) : entries
-    // A slug may end with a dash, a Kubernetes name may not; `orders` and `orders-` would then share one
-    const name = service.slug.replace(/-+$/, "")
-    for (const candidate of [name, `${name}-${String(service._id).slice(-6)}`]) {
-        try {
-            const map = await model.create({ projectId: service.projectId, name: candidate, description, entries: readable })
-            return [map._id]
-        } catch (error) {
-            if (!isDuplicateKeyError(error)) throw error
-            const created = await findMine()
-            if (created) return [created._id]
-        }
-    }
-    throw new Error(`No free name for the ${kind} of the service ${service.slug}`)
-}
-
-/**
- * Moves the config map and the secrets a service used to hold into maps of its project, named after the
- * service and attached to it, so nothing it received is lost now that maps live on their own.
- *
- * Read and written on the raw collection: the service schema no longer knows those fields. The secrets
- * are decrypted with the context they were written under and encrypted again by the save of the new map,
- * under its own. A service that fails (a secret the key cannot read) is logged and left as it is, inline
- * values included, for the next boot: the others, and the migrations after this one, still run.
- */
-export const moveServiceVariablesToMaps = async (logger: FastifyBaseLogger): Promise<void> => {
-    let moved = 0
-    for await (const service of Service.collection.find<ServiceWithInlineVariables>({ $or: [{ configMap: { $exists: true } }, { secrets: { $exists: true } }] })) {
-        try {
-            const configMapIds = await extractInlineVariables(service, "configMap", service.configMap)
-            const secretIds = await extractInlineVariables(service, "secret", service.secrets)
-            await Service.collection.updateOne({ _id: service._id }, { $addToSet: { configMapIds: { $each: configMapIds }, secretIds: { $each: secretIds } }, $unset: { configMap: "", secrets: "" } })
-            moved++
-        } catch (error) {
-            logger.error({ error, serviceId: String(service._id) }, `Could not move the config map and secrets of the service ${service.slug} into maps`)
-        }
-    }
-
-    if (moved > 0) {
-        logger.info(`Moved the config map and secrets of ${moved} service(s) into maps of their project`)
     }
 }
 
@@ -258,8 +178,6 @@ export const runMigrations = async (logger: FastifyBaseLogger): Promise<void> =>
         // project still missing one would be invisible to whoever owns it.
         await migrateProjectsToOrganizations(logger)
         await migrateLegacyCanaryTypes(logger)
-        // Before the encryption: whatever it moves is then covered by it
-        await moveServiceVariablesToMaps(logger)
         await encryptStoredSecrets(logger)
         await removeAssistantConversationExpiry(logger)
         await backfillAiChangeConversations(logger)

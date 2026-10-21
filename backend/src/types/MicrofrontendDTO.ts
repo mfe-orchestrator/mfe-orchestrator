@@ -1,21 +1,19 @@
 import { CanaryDeploymentType, CanaryType, IHostMicrofrontend, MicrofrontendKind, MicrofrontendType } from "../models/MicrofrontendModel"
 import { MicrofrontendStackDTO } from "./MicrofrontendStack"
-import ServiceDTO from "./ServiceDTO"
 
-/** The container fields of a FRONTEND, the same as a service's and checked the same way */
-type FrontendContainerDTO = Pick<ServiceDTO, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "exposurePath" | "urls" | "env" | "configMapIds" | "secretIds">
-
-interface MicrofrontendDTO extends FrontendContainerDTO {
+interface MicrofrontendDTO {
     id: string
     type?: MicrofrontendType
     /** MICROFRONTEND when omitted. A FRONTEND never has parentIds */
     kind?: MicrofrontendKind
+    /** FRONTEND only: where its pipeline pushes the image, without tag */
+    image?: {
+        repository?: string
+    }
     name: string
     slug: string
     url: string
     environment: string
-    /** The functional domain of the project it belongs to; null or blank takes it out of any */
-    domainId?: string | null
     version?: string
     /** Markdown for AI agents about this microfrontend */
     context?: string

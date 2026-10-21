@@ -1,7 +1,6 @@
 import { FastifyInstance, FastifyRequest } from "fastify"
 import AiChangeService, { AiChangeCreateInput } from "../service/aiChange/AiChangeService"
 import { LLM_EFFORTS } from "../service/llm"
-import { RepositoryComponentKind } from "../service/workspace/repositoryComponent"
 import AuthenticationMethod from "../types/AuthenticationMethod"
 
 const createBodySchema = {
@@ -25,8 +24,7 @@ const applyBodySchema = {
 }
 
 /**
- * Code changes proposed by an AI agent on the repository of a microfrontend or of a backend service.
- * A request is then reached by its own id, whatever owns it.
+ * Code changes proposed by an AI agent on the repository of a microfrontend.
  *
  * Creating one starts a background job and answers at once; the console polls the request until
  * the proposal is ready, then applies it onto the base branch, opens a pull request from its
@@ -45,19 +43,13 @@ export default async function aiChangeController(fastify: FastifyInstance) {
         keyGenerator: (request: FastifyRequest) => request.databaseUser?._id?.toString() ?? request.ip
     }
 
-    const owners: [string, RepositoryComponentKind][] = [
-        ["microfrontends", "microfrontend"],
-        ["services", "service"]
-    ]
-    for (const [path, kind] of owners) {
-        fastify.post<{ Params: { id: string }; Body: AiChangeCreateInput }>(
-            `/${path}/:id/ai-changes`,
-            { schema: { body: createBodySchema }, config: { ...config, rateLimit } },
-            async (request, reply) => reply.status(202).send(await service(request).create({ kind, id: request.params.id }, request.body))
-        )
+    fastify.post<{ Params: { id: string }; Body: AiChangeCreateInput }>(
+        "/microfrontends/:id/ai-changes",
+        { schema: { body: createBodySchema }, config: { ...config, rateLimit } },
+        async (request, reply) => reply.status(202).send(await service(request).create(request.params.id, request.body))
+    )
 
-        fastify.get<{ Params: { id: string } }>(`/${path}/:id/ai-changes`, { config }, async (request, reply) => reply.send(await service(request).list({ kind, id: request.params.id })))
-    }
+    fastify.get<{ Params: { id: string } }>("/microfrontends/:id/ai-changes", { config }, async (request, reply) => reply.send(await service(request).list(request.params.id)))
 
     fastify.get<{ Params: { id: string } }>("/ai-changes/:id", { config }, async (request, reply) => reply.send(await service(request).get(request.params.id)))
 

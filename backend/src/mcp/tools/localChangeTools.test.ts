@@ -13,7 +13,6 @@ vi.mock("../../service/workspace/LocalChangeService", () => ({
 }))
 
 const MICROFRONTEND = "bbbbbbbbbbbbbbbbbbbbbbbb"
-const SERVICE = "cccccccccccccccccccccccc"
 const COMMIT = "a".repeat(40)
 
 const tool = (name: string) => localChangeTools.find(candidate => candidate.name === name)!
@@ -22,21 +21,19 @@ const run = (name: string, args: Record<string, unknown>) => tool(name).run(tool
 beforeEach(() => vi.clearAllMocks())
 
 describe("localChangeTools", () => {
-    it("reads the checkout of a microfrontend or a service", async () => {
+    it("reads the checkout of a microfrontend", async () => {
         await run("repository_checkout_get", { microfrontendId: MICROFRONTEND })
-        await run("repository_checkout_get", { serviceId: SERVICE })
-        expect(checkout.mock.calls).toEqual([[{ kind: "microfrontend", id: MICROFRONTEND }], [{ kind: "service", id: SERVICE }]])
+        expect(checkout).toHaveBeenCalledWith(MICROFRONTEND)
     })
 
-    it("wants exactly one target", async () => {
-        await expect(run("repository_checkout_get", {})).rejects.toThrow("either microfrontendId or serviceId")
-        await expect(run("repository_checkout_get", { microfrontendId: MICROFRONTEND, serviceId: SERVICE })).rejects.toThrow("either microfrontendId or serviceId")
+    it("wants the microfrontend", () => {
+        expect(tool("repository_checkout_get").inputSchema.safeParse({}).success).toBe(false)
     })
 
     it("submits the change without the target fields", async () => {
         const files = [{ path: "src/a.ts", action: "update", content: "x" }]
-        await run("code_change_submit", { serviceId: SERVICE, baseCommit: COMMIT, title: "Fix", files })
-        expect(submit).toHaveBeenCalledWith({ kind: "service", id: SERVICE }, { baseCommit: COMMIT, title: "Fix", files })
+        await run("code_change_submit", { microfrontendId: MICROFRONTEND, baseCommit: COMMIT, title: "Fix", files })
+        expect(submit).toHaveBeenCalledWith(MICROFRONTEND, { baseCommit: COMMIT, title: "Fix", files })
     })
 
     it("wants a full commit hash and at least one file", () => {

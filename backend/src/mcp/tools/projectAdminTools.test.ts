@@ -60,7 +60,6 @@ vi.mock("../../utils/oauthConfig", async importOriginal => ({
 
 const PROJECT = "aaaaaaaaaaaaaaaaaaaaaaaa"
 const MEMBER = "bbbbbbbbbbbbbbbbbbbbbbbb"
-const DOMAIN = "ffffffffffffffffffffffff"
 const API_KEY = "cccccccccccccccccccccccc"
 const GRANT = "dddddddddddddddddddddddd"
 const OTHER_GRANT = "eeeeeeeeeeeeeeeeeeeeeeee"
@@ -127,36 +126,6 @@ describe("project admin tools", () => {
         })
     })
 
-    describe("project_gitops_set", () => {
-        it("given a repository, when switched on, then the project is updated with it and the setting comes back", async () => {
-            const gitOps = { enabled: true, codeRepository: { codeRepositoryId: GRANT, repositoryId: "42", name: "config-be" } }
-            updateProject.mockResolvedValue({ _id: PROJECT, gitOps })
-
-            const result = await run("project_gitops_set", { enabled: true, codeRepositoryId: GRANT, repositoryId: "42" })
-
-            expect(updateProject).toHaveBeenCalledWith(PROJECT, { gitOps: { enabled: true, codeRepositoryId: GRANT, repositoryId: "42" } })
-            expect(result).toEqual({ gitOps })
-        })
-
-        it("given its definition, when read, then it is confirmed by the user and reaches outside", () => {
-            expect(tool("project_gitops_set").requiresConfirmation).toBe(true)
-            expect(tool("project_gitops_set").annotations).toMatchObject({ openWorldHint: true, destructiveHint: false })
-        })
-
-        it("given no repository, when switched on, then the input is refused, and switching off needs none", () => {
-            const schema = tool("project_gitops_set").inputSchema
-
-            expect(schema.safeParse({ enabled: true, codeRepositoryId: GRANT }).success).toBe(false)
-            expect(schema.safeParse({ enabled: false }).success).toBe(true)
-        })
-
-        it("given a member who is not an owner, when switched, then the service's refusal surfaces", async () => {
-            updateProject.mockRejectedValue(new UserCannotAccessThisProjectError())
-
-            await expect(run("project_gitops_set", { enabled: false })).rejects.toBeInstanceOf(UserCannotAccessThisProjectError)
-        })
-    })
-
     describe("project_pipelines_set", () => {
         it("given a repository, when set, then the project is updated with it and the setting comes back", async () => {
             const pipelines = { codeRepository: { codeRepositoryId: GRANT, repositoryId: "7", name: "acme-pipelines" }, ref: "v2" }
@@ -209,19 +178,9 @@ describe("project admin tools", () => {
 
             const result = await run("project_member_invite", { email: "new@example.com", role: "MEMBER" })
 
-            expect(addUserToProjectByEmail).toHaveBeenCalledWith(PROJECT, "new@example.com", "MEMBER", undefined)
-            expect(result).toEqual({ userId: MEMBER, role: "MEMBER", domainIds: [], domainScoped: false, invitationPending: true, invitationExpiresAt: expiresAt })
+            expect(addUserToProjectByEmail).toHaveBeenCalledWith(PROJECT, "new@example.com", "MEMBER")
+            expect(result).toEqual({ userId: MEMBER, role: "MEMBER", invitationPending: true, invitationExpiresAt: expiresAt })
             expect(JSON.stringify(result)).not.toContain("secret-token")
-        })
-
-        it("given domains, when invited, then the membership is confined to them and says so", async () => {
-            addUserToProjectByEmail.mockResolvedValue({ userId: MEMBER, role: "MEMBER", domainScoped: true, domainIds: [{ toString: () => DOMAIN }] })
-
-            const result = await run("project_member_invite", { email: "new@example.com", role: "MEMBER", domainIds: [DOMAIN] })
-
-            expect(addUserToProjectByEmail).toHaveBeenCalledWith(PROJECT, "new@example.com", "MEMBER", [DOMAIN])
-            expect(result).toMatchObject({ domainIds: [DOMAIN], domainScoped: true })
-            expect(tool("project_member_invite").inputSchema.safeParse({ email: "new@example.com", role: "MEMBER", domainIds: ["not-an-id"] }).success).toBe(false)
         })
 
         it("given an invalid email or role, when the input is validated, then it is refused", () => {
@@ -251,30 +210,12 @@ describe("project admin tools", () => {
     })
 
     describe("project_member_role_set", () => {
-        it("given no domains, when set, then the service keeps the stored scope and the view still says it is scoped", async () => {
-            updateUserRole.mockResolvedValue({ userId: MEMBER, role: "VIEWER", domainScoped: true, domainIds: [] })
-
-            const result = await run("project_member_role_set", { userId: MEMBER, role: "VIEWER" })
-
-            expect(updateUserRole).toHaveBeenCalledWith(PROJECT, MEMBER, "VIEWER", undefined)
-            expect(result).toMatchObject({ domainIds: [], domainScoped: true })
-        })
-
-        it("given domains, when set, then they replace the scope, an empty list opening the whole project", async () => {
-            updateUserRole.mockResolvedValue({ userId: MEMBER, role: "MEMBER", domainScoped: false, domainIds: [] })
-
-            const result = await run("project_member_role_set", { userId: MEMBER, role: "MEMBER", domainIds: [] })
-
-            expect(updateUserRole).toHaveBeenCalledWith(PROJECT, MEMBER, "MEMBER", [])
-            expect(result).toMatchObject({ domainIds: [], domainScoped: false })
-        })
-
         it("given a member and a role, when set, then the service changes it with the project-bound principal and the token never comes back", async () => {
             updateUserRole.mockResolvedValue({ userId: MEMBER, role: "VIEWER", invitationToken: "secret-token" })
 
             const result = await run("project_member_role_set", { userId: MEMBER, role: "VIEWER" })
 
-            expect(updateUserRole).toHaveBeenCalledWith(PROJECT, MEMBER, "VIEWER", undefined)
+            expect(updateUserRole).toHaveBeenCalledWith(PROJECT, MEMBER, "VIEWER")
             expect(principals[0]).toMatchObject({ restrictedToProjectIds: [PROJECT] })
             expect(result).toMatchObject({ userId: MEMBER, role: "VIEWER", invitationPending: true })
             expect(JSON.stringify(result)).not.toContain("secret-token")

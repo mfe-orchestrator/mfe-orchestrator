@@ -7,14 +7,12 @@ import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
 import Microfrontend, { ICodeRepositoryMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { NormalizedRepository, normalizeRepository } from "../utils/codeRepositoryUtils"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryService from "./CodeRepositoryService"
 import { repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
-import { linksToRepository } from "./repositoryLinks"
 
 /**
  * What GitHub, GitLab and Azure DevOps all accept as a repository name, and as a GitLab path too:
@@ -68,7 +66,6 @@ export class RepositoryRenameService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendId)
         }
         await this.ensureCanChangeRepository(microfrontend.projectId)
-        await this.ensureInDomainScope(microfrontend.projectId, microfrontend.domainId)
 
         const link = microfrontend.codeRepository
         if (!link?.enabled || !link.codeRepositoryId) {
@@ -83,7 +80,6 @@ export class RepositoryRenameService extends BaseAuthorizedService {
         if (link.name === newName) {
             return microfrontend
         }
-        await this.ensureEveryLinkInScope(microfrontend, codeRepository, link)
 
         let renamed: NormalizedRepository | undefined
         try {
@@ -125,14 +121,6 @@ export class RepositoryRenameService extends BaseAuthorizedService {
         const project = await Project.findById(projectId, { organizationId: 1 })
         if (project && (await this.isOrganizationAdmin(project.organizationId))) return
         throw createBusinessException({ code: "REPOSITORY_RENAME_FORBIDDEN", message: "A viewer cannot rename the repository of a microfrontend", statusCode: 403 })
-    }
-
-    /**
-     * The new name is written into every link to the repository: a domain-scoped member renames it only
-     * when every microfrontend and service linked to it is of their domains, none of another or of none.
-     */
-    private async ensureEveryLinkInScope(microfrontend: IMicrofrontend, codeRepository: ICodeRepository, link: ICodeRepositoryMicrofrontend) {
-        await this.ensureRepositoryInDomainScope({ kind: "microfrontend", _id: microfrontend._id, projectId: microfrontend.projectId }, link, codeRepository.provider)
     }
 
     /**
@@ -185,9 +173,8 @@ export class RepositoryRenameService extends BaseAuthorizedService {
     }
 
     /**
-     * Writes the new name into every link of the project to that repository, microfrontends and
-     * services alike: a stale one would keep cloning from the old URL, which Azure DevOps does not
-     * redirect. Field by field, so an edit saved meanwhile on the rest of a document is kept.
+     * Writes the new name into every link of the project to that repository: a stale one would keep
+     * cloning from the old URL, which Azure DevOps does not redirect. Field by field, so an edit saved meanwhile on the rest of a document is kept.
      */
     private async recordRename(microfrontend: IMicrofrontend, codeRepository: ICodeRepository, link: ICodeRepositoryMicrofrontend, renamed: NormalizedRepository) {
         const set: Record<string, unknown> = {
@@ -203,11 +190,18 @@ export class RepositoryRenameService extends BaseAuthorizedService {
         if (renamed.cloneUrlSsh) set["codeRepository.cloneUrlSsh"] = renamed.cloneUrlSsh
         if (renamed.gitlab?.path) set["codeRepository.gitlab.path"] = renamed.gitlab.path
 
-        const links = linksToRepository({ kind: "microfrontend", _id: microfrontend._id, projectId: microfrontend.projectId }, codeRepository.provider, link)
-        await Promise.all([
-            links.microfrontends ? Microfrontend.updateMany(links.microfrontends, { $set: set }) : undefined,
-            links.services ? Service.updateMany(links.services, { $set: set }) : undefined
-        ])
+        // Names are unique per owner on GitHub and per project on Azure DevOps, but a GitLab
+        // connection can reach two groups with a repository of the same name: there the path tells.
+        const sameRepository: Record<string, unknown>[] = []
+        if (link.repositoryId) sameRepository.push({ "codeRepository.repositoryId": link.repositoryId })
+        if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+            if (link.gitlab?.path) sameRepository.push({ "codeRepository.gitlab.path": link.gitlab.path })
+        } else if (link.name) {
+            sameRepository.push({ "codeRepository.name": link.name })
+        }
+        const linksToIt = { projectId: microfrontend.projectId, "codeRepository.codeRepositoryId": link.codeRepositoryId }
+
+        await Microfrontend.updateMany({ ...linksToIt, $or: [{ _id: microfrontend._id }, ...sameRepository] }, { $set: set })
     }
 }
 

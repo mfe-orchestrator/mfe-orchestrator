@@ -83,7 +83,6 @@ declare module "fastify" {
             MCP_DCR_ENABLED: boolean
             MCP_CIMD_ENABLED: boolean
             MCP_API_KEY_ENABLED: boolean
-            ARGOCD_ALLOW_INSECURE_HTTP: boolean
             MCP_RATE_LIMIT_MAX: number
             CIMD_ALLOWED_HOSTS?: string
             TRUST_PROXY?: string

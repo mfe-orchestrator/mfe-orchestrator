@@ -58,7 +58,7 @@ export const mapWithConcurrency = async <T, R>(items: T[], concurrency: number, 
     return results
 }
 
-/** The name a provider knows the repository of a microfrontend or a service by. */
+/** The name a provider knows the repository of a microfrontend by. */
 export const repositoryNameFor = (repository: ICodeRepositoryMicrofrontend | undefined, codeRepository: ICodeRepository): string => {
     if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
         return repository?.name || repository?.repositoryId || ""
@@ -87,9 +87,7 @@ export class RepositoryFileService extends BaseAuthorizedService {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
-        // A domain-scoped member reaches the repositories of their microfrontends only: the dependency
-        // report and the integration plans built on these are theirs too
-        const microfrontends = await Microfrontend.find({ projectId: projectIdObj, ...(await this.domainScopeFilter(projectIdObj)) }).sort({ slug: 1 })
+        const microfrontends = await Microfrontend.find({ projectId: projectIdObj }).sort({ slug: 1 })
         const withRepository = microfrontends.filter(microfrontend => microfrontend.codeRepository?.enabled && microfrontend.codeRepository?.codeRepositoryId)
 
         if (withRepository.length === 0) {

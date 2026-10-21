@@ -15,7 +15,6 @@ import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment from "../models/EnvironmentModel"
 import GlobalVariable from "../models/GlobalVariableModel"
-import ServiceDeployment from "../models/ServiceDeploymentModel"
 import EnvironmentService from "./EnvironmentService"
 
 const newId = () => new Types.ObjectId() as unknown as ObjectId
@@ -40,15 +39,13 @@ describe("EnvironmentService cascade on delete", () => {
         const instance = new EnvironmentService({ _id: newId() } as never)
         // Authorization is BaseAuthorizedService's job and has its own tests; here it would only
         // stand between the test and the cascade. Cast because the method is protected.
-        const gate = instance as unknown as { ensureAccessToEnvironment: () => Promise<boolean>; ensureWholeProjectOfEnvironment: () => Promise<void> }
+        const gate = instance as unknown as { ensureAccessToEnvironment: () => Promise<boolean> }
         vi.spyOn(gate, "ensureAccessToEnvironment").mockResolvedValue(true)
-        vi.spyOn(gate, "ensureWholeProjectOfEnvironment").mockResolvedValue()
         return instance
     }
 
     beforeEach(() => {
         calls = []
-        vi.spyOn(Environment, "find").mockResolvedValue([] as never)
 
         const record = (model: string) => (filter: Record<string, unknown>) => {
             calls.push({ model, filter })
@@ -63,14 +60,13 @@ describe("EnvironmentService cascade on delete", () => {
         vi.spyOn(Deployment, "deleteMany").mockImplementation(record("Deployment") as never)
         vi.spyOn(DeploymentToCanaryUsers, "deleteMany").mockImplementation(record("DeploymentToCanaryUsers") as never)
         vi.spyOn(GlobalVariable, "deleteMany").mockImplementation(record("GlobalVariable") as never)
-        vi.spyOn(ServiceDeployment, "deleteMany").mockImplementation(record("ServiceDeployment") as never)
         vi.spyOn(Environment, "deleteMany").mockImplementation(record("Environment") as never)
     })
 
-    it("given an environment with deployments, variables and reported service deploys, when it is deleted, then they all go with it", async () => {
+    it("given an environment with deployments and variables, when it is deleted, then both go with it", async () => {
         await service().deleteSingle(environmentId)
 
-        expect(calls.map(call => call.model)).toEqual(["DeploymentToCanaryUsers", "Deployment", "GlobalVariable", "ServiceDeployment", "Environment"])
+        expect(calls.map(call => call.model)).toEqual(["DeploymentToCanaryUsers", "Deployment", "GlobalVariable", "Environment"])
     })
 
     it("given an environment is deleted, then the canary enrolments are removed before the deployments that own them", async () => {
@@ -90,7 +86,6 @@ describe("EnvironmentService cascade on delete", () => {
 
         expect(scoped("Deployment")).toEqual({ environmentId: { $in: [environmentId] } })
         expect(scoped("GlobalVariable")).toEqual({ environmentId: { $in: [environmentId] } })
-        expect(scoped("ServiceDeployment")).toEqual({ environmentId: { $in: [environmentId] } })
         expect(scoped("Environment")).toEqual({ _id: { $in: [environmentId] } })
         expect(scoped("DeploymentToCanaryUsers")).toEqual({ deploymentId: { $in: deploymentIds } })
     })
@@ -105,7 +100,7 @@ describe("EnvironmentService cascade on delete", () => {
     it("given several environments, when they are deleted together, then one pass covers all of them", async () => {
         await service().deleteMultiple([environmentId, otherEnvironmentId])
 
-        expect(calls.map(call => call.model)).toEqual(["DeploymentToCanaryUsers", "Deployment", "GlobalVariable", "ServiceDeployment", "Environment"])
+        expect(calls.map(call => call.model)).toEqual(["DeploymentToCanaryUsers", "Deployment", "GlobalVariable", "Environment"])
         expect(calls.find(call => call.model === "Environment")?.filter).toEqual({ _id: { $in: [environmentId, otherEnvironmentId] } })
     })
 

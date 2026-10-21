@@ -9,15 +9,16 @@ import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../../models/CodeRepositoryModel"
 import Organization from "../../models/OrganizationModel"
 import Project from "../../models/ProjectModel"
+import { microfrontendWorkspacePath } from "../../utils/workspacePaths"
 import BaseAuthorizedService from "../BaseAuthorizedService"
 import { RepositoryFileService, repositoryNameFor } from "../RepositoryFileService"
 import { GitCredentials, GitWorkingCopy } from "./GitWorkingCopy"
-import { componentWorkspacePath, RepositoryComponent } from "./repositoryComponent"
+import { RepositoryComponent } from "./repositoryComponent"
 
 /** Written inside `.git`, where it is neither tracked nor wiped by a reset, to tell when a copy was last used. */
 const LAST_USED_MARKER = path.join(".git", "mfe-last-used")
 
-/** The repository of a component, paired with the connection it belongs to. */
+/** The repository of a microfrontend, paired with the connection it belongs to. */
 export interface WorkspaceTarget {
     component: RepositoryComponent
     codeRepository: ICodeRepository
@@ -63,10 +64,10 @@ const onProviderHost = (candidate: string | undefined, codeRepository: ICodeRepo
 }
 
 /**
- * The HTTPS clone URL of the repository of a microfrontend or a service, without credentials.
+ * The HTTPS clone URL of the repository of a microfrontend, without credentials.
  *
  * The URL the provider gave at import time wins, but only on the provider's own host: those fields
- * are editable with the component, and the token goes wherever this URL points. Otherwise the
+ * are editable with the microfrontend, and the token goes wherever this URL points. Otherwise the
  * URL is computed from the connection.
  */
 export const cloneUrlFor = ({ component, codeRepository, repositoryName }: RepositoryLink): string => {
@@ -121,9 +122,9 @@ const exists = async (target: string) =>
         .catch(() => false)
 
 /**
- * The local clones of the repositories behind the microfrontends and the services, under `REPOSITORIES_FOLDER`.
+ * The local clones of the repositories behind the microfrontends, under `REPOSITORIES_FOLDER`.
  *
- * Laid out as `<org>/<project>/<microfrontend>` (`<service>.service` for a service) and reused across requests. It is a cache: every
+ * Laid out as `<org>/<project>/<microfrontend>` and reused across requests. It is a cache: every
  * use starts by resetting the copy to the remote, and deleting the folder only costs a new clone.
  */
 export class RepositoryWorkspaceService extends BaseAuthorizedService {
@@ -131,7 +132,7 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
         return fastify.config.REPOSITORIES_FOLDER
     }
 
-    /** Resolves the repository of a microfrontend or a service and the folder its working copy lives in. Clones nothing yet. */
+    /** Resolves the repository of a microfrontend and the folder its working copy lives in. Clones nothing yet. */
     async open(component: RepositoryComponent): Promise<OpenedWorkspace> {
         await this.ensureAccessToProject(component.projectId)
 
@@ -139,9 +140,9 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
         const codeRepository = link?.enabled && link.codeRepositoryId ? await CodeRepository.findById(link.codeRepositoryId) : null
         const repositoryName = codeRepository ? repositoryNameFor(link, codeRepository) : ""
         if (!codeRepository || !repositoryName) {
-            throw createBusinessException({ code: "WORKSPACE_NO_REPOSITORY", message: `This ${component.kind} has no code repository connected`, statusCode: 422 })
+            throw createBusinessException({ code: "WORKSPACE_NO_REPOSITORY", message: "This microfrontend has no code repository connected", statusCode: 422 })
         }
-        // The component names its connection by id, and that id is editable: without this check a
+        // The microfrontend names its connection by id, and that id is editable: without this check a
         // member could borrow the connection, and the token, of another project.
         if (codeRepository.projectId?.toString() !== component.projectId.toString()) {
             throw createBusinessException({ code: "WORKSPACE_NO_REPOSITORY", message: "The code repository connection does not belong to this project", statusCode: 422 })
@@ -153,13 +154,17 @@ export class RepositoryWorkspaceService extends BaseAuthorizedService {
         return { target, workingCopy, defaultBranch: await new RepositoryFileService(this.user).getDefaultBranch(target) }
     }
 
-    async pathFor(component: Pick<RepositoryComponent, "kind" | "slug" | "projectId">): Promise<string> {
+    async pathFor(component: Pick<RepositoryComponent, "slug" | "projectId">): Promise<string> {
         const project = await Project.findById(component.projectId)
         const organization = project && (await Organization.findById(project.organizationId))
         if (!project || !organization) {
             throw new EntityNotFoundError(component.projectId.toString())
         }
-        return componentWorkspacePath(this.root, { organization: { slug: organization.slug, id: organization._id.toString() }, project: { slug: project.slug, id: project._id.toString() } }, component)
+        return microfrontendWorkspacePath(this.root, {
+            organization: { slug: organization.slug, id: organization._id.toString() },
+            project: { slug: project.slug, id: project._id.toString() },
+            microfrontendSlug: component.slug
+        })
     }
 
     /** Size of the repository as the provider reports it, undefined when it cannot tell. */

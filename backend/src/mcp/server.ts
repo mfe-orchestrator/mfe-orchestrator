@@ -12,9 +12,6 @@ import { MCP_SCOPE_WRITE } from "../utils/oauthConfig"
 import { McpSession, McpSharedProject, McpToolContext, McpToolDefinition, objectId } from "./toolDefinition"
 import { aiChangeTools } from "./tools/aiChangeTools"
 import { configurationTools } from "./tools/configurationTools"
-import { domainDeploymentTools } from "./tools/domainDeploymentTools"
-import { domainLinkTools } from "./tools/domainLinkTools"
-import { domainTools } from "./tools/domainTools"
 import { environmentTools } from "./tools/environmentTools"
 import { localChangeTools } from "./tools/localChangeTools"
 import { microfrontendTools } from "./tools/microfrontendTools"
@@ -25,15 +22,13 @@ import { projectContentTools } from "./tools/projectContentTools"
 import { projectTools } from "./tools/projectTools"
 import { repositoryTools } from "./tools/repositoryTools"
 import { scaffoldTools } from "./tools/scaffoldTools"
-import { serviceTools } from "./tools/serviceTools"
-import { variableMapTools } from "./tools/variableMapTools"
 
 /**
  * Every tool the MCP server can expose, and the ones only the console assistant offers.
  *
  * MCP clients get parity with the console, minus what v1 leaves out on purpose: API keys (creating
- * or showing one hands a long-lived credential to the client), creating or editing storages,
- * databases, repository connections and secrets (their input is a secret), and everything else above the project
+ * or showing one hands a long-lived credential to the client), creating or editing storages and
+ * repository connections (their input is a secret), and everything else above the project
  * (deleting projects, managing organizations, members, invitations, the user profile), bundle
  * upload, the canvas layout, bulk deletes and AI code changes (each one runs a paid agent).
  * Code changes made by the client's own agent are offered instead: `repository_checkout_get` says
@@ -46,23 +41,18 @@ import { variableMapTools } from "./tools/variableMapTools"
  * acting for the signed-in user inside the console, offers them. They cover most of the list above
  * (project deletion, members and invitations, organizations, API keys, MCP clients, bulk actions,
  * the canvas layout and AI code changes). What stays in the console pages for the
- * assistant too: storages, databases, repository connections, secret values, the user profile and bundle upload (their input
+ * assistant too: storages, repository connections, the user profile and bundle upload (their input
  * is a secret or a file).
  */
 export const MCP_TOOLS: McpToolDefinition[] = [
     ...organizationTools,
     ...projectTools,
     ...microfrontendTools,
-    ...serviceTools,
-    ...domainTools,
-    ...domainLinkTools,
-    ...domainDeploymentTools,
     ...environmentTools,
     ...repositoryTools,
     ...localChangeTools,
     ...scaffoldTools,
     ...configurationTools,
-    ...variableMapTools,
     ...projectAdminTools,
     ...organizationAdminTools,
     ...projectContentTools,
@@ -72,9 +62,9 @@ export const MCP_TOOLS: McpToolDefinition[] = [
 const SERVER_INSTRUCTIONS =
     "Tools of the MFE Orchestrator console, bound to the projects shared when this connection was authorized. " +
     "Call projects_list first: when more than one project is shared, every project tool needs its projectId. " +
-    "Before working on a project call context_get: it returns the notes its team wrote for agents. Working on one microfrontend, service or domain, pass its id to context_get, or read aiContext from microfrontend_get, service_get or domain_get: follow those notes. " +
-    "To change the code of a microfrontend or a service: repository_checkout_get, clone and edit locally following aiContext, then code_change_submit opens a pull request. " +
-    "Repository naming: every repository you create or rename ends in -fe for a frontend (microfrontend or host, e.g. checkout-fe) and in -be for a backend service (e.g. orders-be). " +
+    "Before working on a project call context_get: it returns the notes its team wrote for agents. Working on one microfrontend, pass its id to context_get, or read aiContext from microfrontend_get: follow those notes. " +
+    "To change the code of a microfrontend: repository_checkout_get, clone and edit locally following aiContext, then code_change_submit opens a pull request. " +
+    "Repository naming: every repository you create or rename ends in -fe (microfrontend or host, e.g. checkout-fe). " +
     "Ids are 24 character hexadecimal strings returned by the list tools. Tools marked destructive change what users are served " +
     "(deploy, rollback) or delete data: confirm with the user before calling them."
 

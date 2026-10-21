@@ -31,23 +31,19 @@ vi.mock("../workspace/RepositoryWorkspaceService", () => ({
 import AiChangeJob from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
 import AiModel from "../../models/AiModelModel"
-import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
-import Service from "../../models/ServiceModel"
 import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import AiModelService from "../AiModelService"
-import BaseAuthorizedService from "../BaseAuthorizedService"
 import AiChangeJobService from "./AiChangeJobService"
 import AiChangeService from "./AiChangeService"
 
-type WithGates = { ensureAccessToProject: () => Promise<void>; ensureAccessToMicrofrontend: () => Promise<void>; isOrganizationAdmin: () => Promise<boolean> }
+type WithGates = { ensureAccessToProject: () => Promise<void>; isOrganizationAdmin: () => Promise<boolean> }
 
 const user = { _id: new Types.ObjectId(), email: "ada@example.com", name: "Ada" } as unknown as IUser
 const projectId = new Types.ObjectId()
 const microfrontendId = new Types.ObjectId()
-const serviceId = new Types.ObjectId()
 
 const proposal = (overrides: Record<string, unknown> = {}) => ({
     _id: new Types.ObjectId(),
@@ -75,7 +71,6 @@ describe("AiChangeService", () => {
         updates = []
         const gates = AiChangeService.prototype as unknown as WithGates
         vi.spyOn(gates, "ensureAccessToProject").mockResolvedValue(undefined)
-        vi.spyOn(gates, "ensureAccessToMicrofrontend").mockResolvedValue(undefined)
         vi.spyOn(gates, "isOrganizationAdmin").mockImplementation(async () => isAdmin)
         vi.spyOn(AiModelService.prototype as unknown as WithGates, "ensureAccessToProject").mockResolvedValue(undefined)
         vi.spyOn(UserProject, "findOne").mockImplementation((() => Promise.resolve({ role })) as never)
@@ -107,7 +102,7 @@ describe("AiChangeService", () => {
         role = RoleInProject.VIEWER
         const create = vi.spyOn(AiChangeRequest, "create")
 
-        await expect(service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page" })).rejects.toMatchObject({ statusCode: 403 })
+        await expect(service().create(microfrontendId.toString(), { prompt: "Add a 404 page" })).rejects.toMatchObject({ statusCode: 403 })
         expect(create).not.toHaveBeenCalled()
     })
 
@@ -115,11 +110,11 @@ describe("AiChangeService", () => {
         const request = { _id: new Types.ObjectId(), jobId: new Types.ObjectId(), status: AiChangeStatus.PENDING }
         const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [request] } as never)
 
-        const created = await service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page", baseBranch: " develop " })
+        const created = await service().create(microfrontendId.toString(), { prompt: "Add a 404 page", baseBranch: " develop " })
 
         expect(created).toBe(request)
         expect(start).toHaveBeenCalledWith(
-            { projectId, prompt: "Add a 404 page", scope: "selection", repositories: [{ component: expect.objectContaining({ kind: "microfrontend", slug: "catalog" }), baseBranch: "develop" }] },
+            { projectId, prompt: "Add a 404 page", scope: "selection", repositories: [{ component: expect.objectContaining({ slug: "catalog" }), baseBranch: "develop" }] },
             expect.anything()
         )
     })
@@ -127,57 +122,31 @@ describe("AiChangeService", () => {
     it("Given a chosen effort, when a change is requested, then the job it runs as reasons at it", async () => {
         const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [{ _id: new Types.ObjectId() }] } as never)
 
-        await service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page", effort: "low" })
+        await service().create(microfrontendId.toString(), { prompt: "Add a 404 page", effort: "low" })
 
         expect(start).toHaveBeenCalledWith(expect.objectContaining({ effort: "low" }), expect.anything())
     })
 
-    it("Given a service, when a change is requested on it, then the job runs on the service's repository", async () => {
-        vi.spyOn(Service, "findById").mockResolvedValue({
-            _id: serviceId,
-            projectId,
-            slug: "orders-api",
-            name: "Orders API",
-            port: 8080,
-            livenessPath: "/health/live",
-            readinessPath: "/health/ready",
-            env: []
-        } as never)
-        const request = { _id: new Types.ObjectId(), jobId: new Types.ObjectId(), serviceId, status: AiChangeStatus.PENDING }
-        const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [request] } as never)
-
-        const created = await service().create({ kind: "service", id: serviceId.toString() }, { prompt: "Add a /ready endpoint" })
-
-        expect(created).toBe(request)
-        expect(workspaceService.open).toHaveBeenCalledWith(expect.objectContaining({ kind: "service", slug: "orders-api" }))
-        expect(start).toHaveBeenCalledWith(
-            expect.objectContaining({ repositories: [{ component: expect.objectContaining({ kind: "service", _id: serviceId }), baseBranch: "main" }] }),
-            expect.anything()
-        )
-    })
-
-    it("Given a service, when its changes are listed, then its latest conversations come back whole", async () => {
-        vi.spyOn(Service, "findById").mockResolvedValue({ _id: serviceId, projectId, slug: "orders-api", name: "Orders API", env: [] } as never)
+    it("Given a microfrontend, when its changes are listed, then its latest conversations come back whole", async () => {
         const conversationIds = [new Types.ObjectId(), new Types.ObjectId()]
         const aggregate = vi.spyOn(AiChangeRequest, "aggregate").mockResolvedValue(conversationIds.map(_id => ({ _id })) as never)
         const find = vi.spyOn(AiChangeRequest, "find").mockReturnValue({ sort: async () => [] } as never)
 
-        await service().list({ kind: "service", id: serviceId.toString() })
+        await service().list(microfrontendId.toString())
 
-        expect(aggregate.mock.calls[0][0]).toEqual(expect.arrayContaining([{ $match: { serviceId } }, { $limit: 20 }]))
+        expect(aggregate.mock.calls[0][0]).toEqual(expect.arrayContaining([{ $match: { microfrontendId } }, { $limit: 20 }]))
         // Every request of those conversations, not only the newest ones: the queue shows each conversation once.
-        expect(find).toHaveBeenCalledWith({ serviceId, conversationId: { $in: conversationIds } }, expect.anything())
+        expect(find).toHaveBeenCalledWith({ microfrontendId, conversationId: { $in: conversationIds } }, expect.anything())
     })
 
-    it("Given a proposal on a service never pushed on its branch, when it is applied, then it is committed under an ai/ branch named after the service", async () => {
-        vi.spyOn(Service, "findById").mockResolvedValue({ _id: serviceId, projectId, slug: "orders-api", name: "Orders API", env: [] } as never)
-        vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal({ microfrontendId: undefined, serviceId }) as never)
+    it("Given a proposal never pushed on its branch, when it is applied, then it is committed under an ai/ branch named after the microfrontend", async () => {
+        vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal() as never)
         vi.spyOn(AiChangeRequest, "findOneAndUpdate").mockResolvedValue({ status: AiChangeStatus.APPLYING } as never)
 
         await service().apply(new Types.ObjectId().toString())
 
-        expect(workspaceService.open).toHaveBeenCalledWith(expect.objectContaining({ kind: "service" }))
-        expect(workingCopy.commitAndPush.mock.calls[0][0].branch).toMatch(/^ai\/orders-api-\d{8}-\d{6}$/)
+        expect(workspaceService.open).toHaveBeenCalledWith(expect.objectContaining({ slug: "catalog" }))
+        expect(workingCopy.commitAndPush.mock.calls[0][0].branch).toMatch(/^ai\/catalog-\d{8}-\d{6}$/)
     })
 
     it("Given a viewer who administers the organization, when a proposal is discarded, then it is allowed", async () => {
@@ -387,72 +356,5 @@ describe("AiChangeService", () => {
         await service().discard(new Types.ObjectId().toString())
 
         await vi.waitFor(() => expect(workingCopy.deleteRemoteBranch).toHaveBeenCalledWith("ai/catalog-20261020-090000"))
-    })
-
-    describe("by a member assigned to some domains", () => {
-        const ownDomain = new Types.ObjectId()
-        let microfrontendsOutside: ReturnType<typeof vi.spyOn>
-
-        beforeEach(() => {
-            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
-            const catalog = {
-                _id: microfrontendId,
-                projectId,
-                slug: "catalog",
-                name: "Catalog",
-                domainId: ownDomain,
-                codeRepository: { enabled: true, codeRepositoryId: new Types.ObjectId(), name: "shop-web" }
-            }
-            vi.spyOn(Microfrontend, "findById").mockResolvedValue(catalog as never)
-            vi.spyOn(Microfrontend, "find").mockResolvedValue([catalog] as never)
-            vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
-            // The repository is also the code of a microfrontend outside their domains
-            microfrontendsOutside = vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
-            vi.spyOn(Service, "exists").mockResolvedValue(null as never)
-        })
-
-        it("Given a repository shared with another domain, when a change is requested, then it is refused before the workspace is opened", async () => {
-            const start = vi.spyOn(AiChangeJobService.prototype, "start")
-
-            await expect(service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page" })).rejects.toMatchObject({
-                code: "DOMAIN_SCOPE_FORBIDDEN",
-                statusCode: 403
-            })
-            expect(workspaceService.open).not.toHaveBeenCalled()
-            expect(start).not.toHaveBeenCalled()
-        })
-
-        it("Given a repository used only by components of their domains, when a change is requested, then it runs", async () => {
-            microfrontendsOutside.mockResolvedValue(null as never)
-            const start = vi.spyOn(AiChangeJobService.prototype, "start").mockResolvedValue({ job: {}, requests: [{ _id: new Types.ObjectId() }] } as never)
-
-            await service().create({ kind: "microfrontend", id: microfrontendId.toString() }, { prompt: "Add a 404 page" })
-
-            expect(start).toHaveBeenCalledTimes(1)
-        })
-
-        it("Given a repository shared with another domain, when a proposal is applied, then it is refused before it is claimed", async () => {
-            vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(pushedProposal() as never)
-            const claim = vi.spyOn(AiChangeRequest, "findOneAndUpdate")
-
-            await expect(service().apply(new Types.ObjectId().toString())).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN" })
-            expect(claim).not.toHaveBeenCalled()
-            expect(workingCopy.pushCommit).not.toHaveBeenCalled()
-        })
-
-        it("Given a repository shared with another domain, when a pull request is opened, then it is refused", async () => {
-            vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal({ pushError: "timeout" }) as never)
-
-            await expect(service().openPullRequest(new Types.ObjectId().toString())).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN" })
-            expect(workingCopy.commitAndPush).not.toHaveBeenCalled()
-            expect(workspaceService.openPullRequest).not.toHaveBeenCalled()
-        })
-
-        it("Given a repository shared with another domain, when a proposal is discarded, then it is allowed: nothing reaches the base", async () => {
-            vi.spyOn(AiChangeRequest, "findById").mockResolvedValue(proposal() as never)
-            vi.spyOn(AiChangeRequest, "findOneAndUpdate").mockResolvedValue({ status: AiChangeStatus.DISCARDED } as never)
-
-            await expect(service().discard(new Types.ObjectId().toString())).resolves.toMatchObject({ status: AiChangeStatus.DISCARDED })
-        })
     })
 })

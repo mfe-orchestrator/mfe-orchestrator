@@ -44,12 +44,10 @@ export default async function buildController(fastify: FastifyInstance) {
             throw new ProjectHeaderNotFoundError()
         }
 
-        // A service per poll: an instance remembers the domain scope of the user, and the stream
-        // stays open far longer than a membership change takes to apply.
-        const snapshotOf = () => new BuildStatusService(request.databaseUser).getByProjectId(projectId)
+        const service = new BuildStatusService(request.databaseUser)
         // Resolved before hijacking the reply: an access error thrown after the
         // headers are out could no longer be turned into an HTTP status.
-        const firstSnapshot = await snapshotOf()
+        const firstSnapshot = await service.getByProjectId(projectId)
 
         openEventStream(reply)
 
@@ -71,7 +69,7 @@ export default async function buildController(fastify: FastifyInstance) {
             if (closed) break
 
             try {
-                const snapshot = await snapshotOf()
+                const snapshot = await service.getByProjectId(projectId)
                 const current = fingerprint(snapshot)
                 if (current === lastFingerprint) {
                     reply.raw.write(HEARTBEAT)

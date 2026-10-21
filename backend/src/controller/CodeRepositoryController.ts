@@ -4,7 +4,7 @@ import CodeRepositoryImportService from "../service/CodeRepositoryImportService"
 import CodeRepositoryService from "../service/CodeRepositoryService"
 import CreateAzureDevOpsRepositoryDTO from "../types/CreateAzureDevOpsRepositoryDTO"
 import CreateGitlabRepositoryDto from "../types/CreateGitlabRepositoryDTO"
-import ImportRepositoriesDTO, { ImportTarget } from "../types/ImportRepositoriesDTO"
+import ImportRepositoriesDTO from "../types/ImportRepositoriesDTO"
 import UpdateGithubDTO from "../types/UpdateGithubDTO"
 import { getProjectIdFromRequest } from "../utils/requestUtils"
 
@@ -43,10 +43,9 @@ export default async function codeRepositoryController(fastify: FastifyInstance)
         }
         Querystring: {
             groupId?: number
-            target?: ImportTarget
         }
     }>("/repositories/:codeRepositoryId/importable-repositories", async (request, reply) => {
-        const repositories = await new CodeRepositoryImportService(request.databaseUser).getImportableRepositories(request.params.codeRepositoryId, request.query.groupId, request.query.target)
+        const repositories = await new CodeRepositoryImportService(request.databaseUser).getImportableRepositories(request.params.codeRepositoryId, request.query.groupId)
         return reply.send(repositories)
     })
 

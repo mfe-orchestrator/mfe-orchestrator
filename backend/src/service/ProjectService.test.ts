@@ -9,17 +9,13 @@ vi.mock("..", () => ({
 
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import CodeRepository from "../models/CodeRepositoryModel"
-import Domain from "../models/DomainModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject from "../models/UserProjectModel"
 import CodeRepositoryImportService from "./CodeRepositoryImportService"
-import GitOpsService from "./GitOpsService"
 import ProjectService from "./ProjectService"
-import UserProjectService from "./UserProjectService"
 
 /**
  * The id flavour the service signatures speak: mongoose's schema type, not the runtime one the driver
@@ -151,7 +147,6 @@ describe("findMine", () => {
 /** The protected gate the update goes through, surfaced so the spy has something to type against. */
 interface WithAuthorizationGate {
     ensureAccessToProject: () => Promise<void>
-    getDomainScope: () => Promise<string[] | undefined>
 }
 
 describe("update", () => {
@@ -163,7 +158,6 @@ describe("update", () => {
         // The route carries no body schema, so authorization is the only gate before the write: stub
         // it open and watch what comes out the other side.
         vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "ensureAccessToProject").mockResolvedValue(undefined)
-        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "getDomainScope").mockResolvedValue(undefined)
         vi.spyOn(Project, "findByIdAndUpdate").mockImplementation(((_id: unknown, update: Record<string, unknown>) => {
             written = update
             return Promise.resolve({ name: "whatever" })
@@ -204,36 +198,6 @@ describe("update", () => {
         expect(written).toEqual({ $unset: { description: 1 } })
     })
 
-    it("Given an exposure in mixed case with a blank issuer, when the project is updated, then the domain is written trimmed in lowercase without the issuer", async () => {
-        await update({ exposure: { domain: " Example.COM ", certificateIssuer: " " } })
-
-        expect(written).toEqual({ exposure: { domain: "example.com" } })
-    })
-
-    it("Given the ports of the listeners, when the project is updated, then they are written with the exposure", async () => {
-        await update({ exposure: { domain: "example.com", httpPort: 8000, httpsPort: 8443 } })
-
-        expect(written).toEqual({ exposure: { domain: "example.com", httpPort: 8000, httpsPort: 8443 } })
-    })
-
-    it("Given a null exposure, when the project is updated, then the exposure is unset", async () => {
-        await update({ exposure: null })
-
-        expect(written).toEqual({ $unset: { exposure: 1 } })
-    })
-
-    it.each([
-        ["no domain", {}],
-        ["a domain of one label", { domain: "localhost" }],
-        ["an issuer that is not a string", { domain: "example.com", certificateIssuer: 42 }],
-        ["an issuer that is not a resource name", { domain: "example.com", certificateIssuer: "Lets_Encrypt" }],
-        ["an HTTP port out of range", { domain: "example.com", httpPort: 0 }],
-        ["an HTTPS port that is not an integer", { domain: "example.com", httpsPort: "443" }]
-    ])("Given an exposure with %s, when the project is updated, then it is refused with a 400 and nothing is written", async (_case, exposure) => {
-        await expect(update({ exposure })).rejects.toMatchObject({ code: "PROJECT_EXPOSURE_INVALID", statusCode: 400 })
-        expect(written).toBeUndefined()
-    })
-
     it("Given only a description, when the project is updated, then the name is left alone", async () => {
         await update({ description: "the checkout flow" })
 
@@ -263,7 +227,6 @@ describe("update of the pipeline templates", () => {
     beforeEach(() => {
         written = undefined
         vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "ensureAccessToProject").mockResolvedValue(undefined)
-        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "getDomainScope").mockResolvedValue(undefined)
         vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: newId() } as never)
         vi.spyOn(Project, "findByIdAndUpdate").mockImplementation(((_id: unknown, update: Record<string, unknown>) => {
             written = update
@@ -336,9 +299,9 @@ describe("update of the pipeline templates", () => {
         expect(written).toBeUndefined()
     })
 
-    it("Given a member who is not an owner, when the pipeline templates are changed or cleared, then it is refused as for GitOps", async () => {
+    it("Given a member who is not an owner, when the pipeline templates are changed or cleared, then it is refused", async () => {
         vi.mocked(UserProject.findOne).mockResolvedValue({ role: "MEMBER" } as never)
-        vi.spyOn(GitOpsService.prototype as unknown as { isOrganizationAdmin: () => Promise<boolean> }, "isOrganizationAdmin").mockResolvedValue(false)
+        vi.spyOn(ProjectService.prototype as unknown as { isOrganizationAdmin: () => Promise<boolean> }, "isOrganizationAdmin").mockResolvedValue(false)
 
         await expect(update({ codeRepositoryId: String(connectionId), repositoryId: "7" })).rejects.toMatchObject({ code: "PIPELINES_OWNER_REQUIRED", statusCode: 403 })
         await expect(update(null)).rejects.toMatchObject({ code: "PIPELINES_OWNER_REQUIRED", statusCode: 403 })
@@ -348,129 +311,48 @@ describe("update of the pipeline templates", () => {
 
 describe("getContext", () => {
     const projectId = String(newId())
-    const domainId = newId()
     const microfrontendId = newId()
-    const serviceId = newId()
-    let filters: Record<"domain" | "microfrontend" | "service", Record<string, unknown> | undefined>
-
-    /** A find that records its filter and answers with one item carrying a context */
-    const recordFind = (model: unknown, key: keyof typeof filters, item: Record<string, unknown>) =>
-        vi.spyOn(model as { find: (filter: Record<string, unknown>) => unknown }, "find").mockImplementation(((filter: Record<string, unknown>) => {
-            filters[key] = filter
-            return { sort: () => Promise.resolve([item]) }
-        }) as never)
+    let microfrontendFilter: Record<string, unknown> | undefined
 
     beforeEach(() => {
-        filters = { domain: undefined, microfrontend: undefined, service: undefined }
+        microfrontendFilter = undefined
         vi.spyOn(ProjectService.prototype, "findById").mockResolvedValue({ _id: newId(), name: "Portal", context: "shared rules" } as never)
-        // A member of the whole project: the domain scope has tests of its own
-        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "getDomainScope").mockResolvedValue(undefined)
-        recordFind(Domain, "domain", { _id: domainId, slug: "payments", name: "Payments", context: "payments rules" })
-        recordFind(Microfrontend, "microfrontend", { _id: microfrontendId, slug: "catalog", name: "Catalog", context: "catalog rules" })
-        recordFind(Service, "service", { _id: serviceId, slug: "orders", name: "Orders", context: "orders rules" })
+        vi.spyOn(Microfrontend, "find").mockImplementation(((filter: Record<string, unknown>) => {
+            microfrontendFilter = filter
+            return { sort: () => Promise.resolve([{ _id: microfrontendId, slug: "catalog", name: "Catalog", context: "catalog rules" }]) }
+        }) as never)
     })
 
     afterEach(() => {
         vi.restoreAllMocks()
     })
 
-    it("Given no focus, when the context is read, then the project and every domain, microfrontend and service with a context come back", async () => {
+    it("Given a project and a microfrontend with a context, when the context is read, then both come back", async () => {
         const context = await new ProjectService(aUser()).getContext(projectId)
 
         expect(context.project).toMatchObject({ name: "Portal", context: "shared rules" })
-        expect(context.domains).toEqual([expect.objectContaining({ slug: "payments", context: "payments rules" })])
         expect(context.microfrontends).toEqual([expect.objectContaining({ slug: "catalog", context: "catalog rules" })])
-        expect(context.services).toEqual([expect.objectContaining({ slug: "orders", context: "orders rules" })])
-        // The ones without a context are left out by the query
-        for (const filter of Object.values(filters)) {
-            expect(filter).toMatchObject({ context: { $nin: [null, ""] } })
-        }
     })
 
-    it("Given a microfrontend in a domain, when its context is read, then only its own and its domain's come back with the project's", async () => {
-        vi.spyOn(Microfrontend, "findOne").mockResolvedValue({ _id: microfrontendId, domainId } as never)
+    it("Given microfrontends without a context, when the context is read, then they are left out by the query", async () => {
+        await new ProjectService(aUser()).getContext(projectId)
+
+        expect(microfrontendFilter).toMatchObject({ context: { $nin: [null, ""] } })
+    })
+
+    it("Given a microfrontend of the project, when its context is read, then only its own comes back with the project's", async () => {
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: microfrontendId } as never)
 
         const context = await new ProjectService(aUser()).getContext(projectId, { microfrontendId: String(microfrontendId) })
 
         expect(context.project).toMatchObject({ context: "shared rules" })
-        expect(filters.microfrontend).toMatchObject({ _id: microfrontendId })
-        expect(filters.domain).toMatchObject({ _id: domainId })
-        expect(filters.service).toBeUndefined()
-        expect(context.services).toEqual([])
-    })
-
-    it("Given a service in no domain, when its context is read, then no domain is read", async () => {
-        vi.spyOn(Service, "findOne").mockResolvedValue({ _id: serviceId, domainId: null } as never)
-
-        const context = await new ProjectService(aUser()).getContext(projectId, { serviceId: String(serviceId) })
-
-        expect(filters.service).toMatchObject({ _id: serviceId })
-        expect(filters.domain).toBeUndefined()
-        expect(filters.microfrontend).toBeUndefined()
-        expect(context.domains).toEqual([])
-    })
-
-    it("Given a domain, when its context is read, then its own and the ones of its microfrontends and services come back", async () => {
-        vi.spyOn(Domain, "findOne").mockResolvedValue({ _id: domainId } as never)
-
-        await new ProjectService(aUser()).getContext(projectId, { domainId: String(domainId) })
-
-        expect(filters.domain).toMatchObject({ _id: domainId })
-        expect(filters.microfrontend).toMatchObject({ domainId })
-        expect(filters.service).toMatchObject({ domainId })
+        expect(String(microfrontendFilter?._id)).toBe(String(microfrontendId))
     })
 
     it("Given a microfrontend of another project, when its context is read, then it is not found", async () => {
-        vi.spyOn(Microfrontend, "findOne").mockResolvedValue(null as never)
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
 
         await expect(new ProjectService(aUser()).getContext(projectId, { microfrontendId: String(microfrontendId) })).rejects.toBeInstanceOf(EntityNotFoundError)
-    })
-})
-
-/**
- * The slug a project is created with, which is the one thing about it that cannot be corrected
- * afterwards: it is part of the `<slug>-<id>/` path the uploaded bundles live under, so the console
- * shows it read-only and the update route refuses it on purpose.
- */
-describe("createRaw", () => {
-    let saved: { name?: string; slug?: string }
-
-    const create = async (name: string, slug?: string) => {
-        await new ProjectService(aUser()).createRaw({ organizationId: newId().toString(), name, slug }, newId())
-        return saved
-    }
-
-    beforeEach(() => {
-        saved = {}
-        // `new Project(...)` builds a real document without touching a database; intercepting save
-        // is what lets the test read the slug the service decided on.
-        vi.spyOn(Project.prototype, "save").mockImplementation(async function (this: { name?: string; slug?: string; _id: ObjectId }) {
-            saved = { name: this.name, slug: this.slug }
-            return this
-        } as never)
-        vi.spyOn(UserProjectService.prototype, "addUserToProject").mockResolvedValue(undefined as never)
-    })
-
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
-
-    it("given no slug, when a project is created, then it is derived from the name with the shared helper", async () => {
-        // Derived by `slugify`, not by hand: three `replace` calls on literals used to leave
-        // "my-cool storefront app" here, spaces included.
-        expect(await create("My Cool Storefront App")).toMatchObject({ slug: "my-cool-storefront-app" })
-    })
-
-    it("given a name with consecutive separators, when a project is created, then the hyphens collapse", async () => {
-        expect(await create("Acme  Storefront")).toMatchObject({ slug: "acme-storefront" })
-        expect(await create("v1.2.3_rc")).toMatchObject({ slug: "v1-2-3-rc" })
-    })
-
-    it("given a slug of its own, when a project is created, then that one is kept", async () => {
-        expect(await create("Acme Storefront", "legacy-path")).toMatchObject({ slug: "legacy-path" })
-    })
-
-    it("given a blank slug, when a project is created, then it falls back to the name", async () => {
-        expect(await create("Acme Storefront", "   ")).toMatchObject({ slug: "acme-storefront" })
+        expect(microfrontendFilter).toBeUndefined()
     })
 })

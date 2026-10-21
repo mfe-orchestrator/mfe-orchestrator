@@ -4,9 +4,8 @@ import DeploymentCanaryUsersService from "../../service/DeploymentCanaryUsersSer
 import DeploymentService from "../../service/DeploymentService"
 import EnvironmentService from "../../service/EnvironmentService"
 import { EnvironmentDTO } from "../../types/EnvironmentDTO"
-import { SUBDOMAIN } from "../../types/Exposure"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
-import { DESTRUCTIVE, DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
+import { DESTRUCTIVE, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 
 const environmentId = objectId("Id of the environment")
 const deploymentId = objectId("Id of the deployment")
@@ -20,19 +19,7 @@ export const environmentFields = {
     description: z.string().max(2000).optional(),
     color: z.string().min(1).max(50).describe("Colour shown in the console, e.g. #22c55e"),
     isProduction: z.boolean().optional(),
-    domains: z.array(z.string().min(1)).optional().describe("Domains the host application of this environment is served on"),
-    namespace: z
-        .string()
-        .regex(/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)?$/, "a DNS label: up to 63 lowercase letters, digits and dashes")
-        .optional()
-        .describe("Kubernetes namespace GitOps commits the environment to; empty or left out, it is the slug in lowercase"),
-    subdomain: z
-        .string()
-        .regex(SUBDOMAIN, "DNS labels separated by dots, e.g. dev or dev.eu")
-        .optional()
-        .describe(
-            "What the environment is exposed under on the domain of the project, e.g. dev for dev.example.com; empty or left out, the domain itself for a production environment and the slug in lowercase for the others"
-        )
+    domains: z.array(z.string().min(1)).optional().describe("Domains the host application of this environment is served on")
 }
 
 /**
@@ -118,16 +105,11 @@ export const environmentTools = [
     defineTool({
         name: "deploy",
         title: "Deploy",
-        description:
-            "Deploys the current configuration (microfrontends, versions, global variables) to the given environments: what they serve changes immediately. With GitOps on for the project, the Namespace, the config maps and the secrets of each environment are committed to its repository first, secrets base64 encoded (not encrypted); when that commit fails nothing is deployed.",
+        description: "Deploys the current configuration (microfrontends, versions, global variables) to the given environments: what they serve changes immediately.",
         scope: MCP_SCOPE_WRITE,
-        // With GitOps on it pushes to the project's repository
-        annotations: DESTRUCTIVE_EXTERNAL,
-        inputSchema: z.object({
-            environmentIds: z.array(environmentId).min(1),
-            domainId: objectId("Id of a functional domain: only its microfrontends and services are deployed, the others keep what the environments serve now").optional()
-        }),
-        run: async (args, { principal }) => (await new DeploymentService(principal).createMultiple(args.environmentIds, args.domainId)).map(toDeploymentView)
+        annotations: DESTRUCTIVE,
+        inputSchema: z.object({ environmentIds: z.array(environmentId).min(1) }),
+        run: async (args, { principal }) => (await new DeploymentService(principal).createMultiple(args.environmentIds)).map(toDeploymentView)
     }),
     defineTool({
         name: "deployment_rollback",

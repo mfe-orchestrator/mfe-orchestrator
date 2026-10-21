@@ -3,82 +3,17 @@ import { EntityNotFoundError } from "../../errors/EntityNotFoundError"
 import { CanaryDeploymentType, CanaryType, HostedOn, MicrofrontendKind, MicrofrontendType } from "../../models/MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import CodeRepositoryService from "../../service/CodeRepositoryService"
-import DomainService from "../../service/DomainService"
 import MicrofrontendService from "../../service/MicrofrontendService"
 import ProjectService from "../../service/ProjectService"
 import RepositoryRenameService, { isValidRepositoryName } from "../../service/RepositoryRenameService"
 import StackDetectionService from "../../service/StackDetectionService"
 import { StorageService } from "../../service/StorageService"
-import { isExposurePath } from "../../types/Exposure"
 import MicrofrontendDTO from "../../types/MicrofrontendDTO"
 import { MicrofrontendCompiler, MicrofrontendFramework } from "../../types/MicrofrontendStack"
-import { isServiceUrl, SERVICE_HTTP_PATH } from "../../types/ServiceStack"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, defineTool, McpToolContext, NO_INPUT, objectId, READ_ONLY, WRITE, WRITE_EXTERNAL } from "../toolDefinition"
-import { domainFilter, filterByDomain, memberDomainId } from "./domainTools"
 
 const microfrontendId = objectId("Id of the microfrontend")
-
-const httpPath = z.string().regex(SERVICE_HTTP_PATH, 'starts with "/", at most 256 characters, no whitespace')
-
-/**
- * The fields of what runs as a container of its own: a backend service, and a microfrontend of kind
- * FRONTEND. Here rather than in serviceTools, which already imports this module.
- */
-export const containerFields = {
-    image: z
-        .object({ repository: z.string().max(500).optional() })
-        .optional()
-        .describe("Image repository without tag, e.g. ghcr.io/acme/orders-api. Learnt from the first version the CI registers when not set"),
-    port: z.number().int().min(1).max(65535).optional().describe("Port the container listens on, 8080 when omitted"),
-    livenessPath: httpPath.optional().describe("Liveness probe path, /health/live when omitted"),
-    readinessPath: httpPath.optional().describe("Readiness probe path, /health/ready when omitted"),
-    docsPath: httpPath.nullable().optional().describe("Path of the API documentation UI, e.g. /docs; null when there is none"),
-    openApiPath: httpPath.nullable().optional().describe("Path of the OpenAPI spec, e.g. /openapi.json; null when there is none"),
-    exposurePath: z
-        .string()
-        .refine(isExposurePath, 'starts with "/", at most 256 characters of letters, digits, -._~!$&\'()*+,;=:@ or %XX; no query, fragment, // nor . or .. segment')
-        .nullable()
-        .optional()
-        .describe("Path it is exposed at on the host of every environment (the subdomain of the environment on the domain of the project), e.g. /api/orders; null when it is not exposed"),
-    urls: z
-        .array(
-            z.object({
-                environmentId: objectId("Id of an environment of the project, from environments_list"),
-                url: z
-                    .string()
-                    .refine(isServiceUrl, "absolute http(s), at most 2048 characters, without whitespace, credentials, query or fragment")
-                    .describe("Absolute http(s) base URL, e.g. https://orders.dev.acme.com")
-            })
-        )
-        .optional()
-        .describe("Where it is reachable, one base URL per environment it is exposed in; docsPath and openApiPath are relative to it. Replaced as a whole"),
-    env: z
-        .array(
-            z.object({
-                name: z
-                    .string()
-                    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "letters, digits and underscores, not starting with a digit")
-                    .max(255),
-                required: z.boolean().optional(),
-                secret: z.boolean().optional(),
-                description: z.string().max(2000).optional()
-            })
-        )
-        .max(200)
-        .optional()
-        .describe("Variables the image reads from its environment: names only, never values. Replaced as a whole"),
-    configMapIds: z
-        .array(objectId("Id of a config map of the project, from config_maps_list"))
-        .max(50)
-        .optional()
-        .describe("Config maps whose keys reach the container as environment variables: a service, or a microfrontend of kind FRONTEND. Replaced as a whole"),
-    secretIds: z
-        .array(objectId("Id of a secret of the project, from secrets_list"))
-        .max(50)
-        .optional()
-        .describe("Secrets whose keys reach the container as environment variables: a service, or a microfrontend of kind FRONTEND. Replaced as a whole")
-}
 
 /**
  * The fields a microfrontend can be created or edited with.
@@ -94,7 +29,6 @@ const microfrontendFields = {
         .regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and dashes")
         .max(100),
     description: z.string().max(2000).optional(),
-    domainId: memberDomainId,
     context: z.string().max(CONTEXT_MAX_LENGTH).optional().describe("Markdown notes for AI agents about this microfrontend, replaced as a whole"),
     version: z.string().min(1).max(100).optional().describe("Required for a MICROFRONTEND. A FRONTEND may omit it: the first version its CI registers sets it"),
     type: z.enum(MicrofrontendType).optional(),
@@ -102,7 +36,7 @@ const microfrontendFields = {
         .enum(MicrofrontendKind)
         .optional()
         .describe(
-            "MICROFRONTEND (default): a static bundle uploaded to and served by the orchestrator. FRONTEND: an app built into an image and served by its own container, like a backend service; it never has parentIds"
+            "MICROFRONTEND (default): a static bundle uploaded to and served by the orchestrator. FRONTEND: the main frontend, built into a Docker image its pipeline pushes; nothing loads it, so it never has parentIds"
         ),
     path: z.string().max(500).optional(),
     continuousDeployment: z.boolean().optional(),
@@ -137,8 +71,10 @@ const microfrontendFields = {
             url: z.string().url().optional()
         })
         .optional(),
-    // Only meaningful for a FRONTEND
-    ...containerFields
+    image: z
+        .object({ repository: z.string().max(500).optional() })
+        .optional()
+        .describe("FRONTEND only: image repository without tag, e.g. ghcr.io/acme/shell. Learnt from the first version the CI registers when not set")
 }
 
 export const createSchema = z.object(microfrontendFields)
@@ -148,15 +84,11 @@ const updateSchema = z.object({ microfrontendId, ...createSchema.omit({ slug: tr
 /**
  * References in the input are checked through the services before anything is written: the
  * microfrontend service resolves the code repository by id without an access check, so a foreign
- * repository id would otherwise link this project to another project's credentials. Services use
- * it too, for their code repository and domain.
+ * repository id would otherwise link this project to another project's credentials.
  */
 export const ensureReferencesBelongToProject = async (input: Partial<z.infer<typeof createSchema>>, { principal }: McpToolContext) => {
     if (input.codeRepository) {
         await new CodeRepositoryService(principal).findById(input.codeRepository.codeRepositoryId)
-    }
-    if (input.domainId && !(await new DomainService(principal).getById(input.domainId))) {
-        throw new EntityNotFoundError(input.domainId)
     }
     if (input.host?.storageId) {
         await new StorageService(principal).getById(input.host.storageId)
@@ -180,16 +112,16 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontends_list",
         title: "List microfrontends",
-        description: "Every microfrontend of the project, with its version, hosting, canary and repository settings and its domainId. Pass domainId to list one domain only.",
+        description: "Every microfrontend of the project, with its kind, version, hosting, canary and repository settings.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
-        inputSchema: z.object({ domainId: domainFilter }),
-        run: async (args, context) => filterByDomain(await new MicrofrontendService(context.principal).getByProjectId(context.projectId), args.domainId, context)
+        inputSchema: NO_INPUT,
+        run: (_args, { principal, projectId }) => new MicrofrontendService(principal).getByProjectId(projectId)
     }),
     defineTool({
         name: "microfrontend_get",
         title: "Get microfrontend",
-        description: "One microfrontend of the project, with aiContext: what the team wrote for AI agents about it, its domain and the project. Follow it when working on its code.",
+        description: "One microfrontend of the project, with aiContext: what the team wrote for AI agents about it and the project. Follow it when working on its code.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: z.object({ microfrontendId }),
@@ -202,7 +134,7 @@ export const microfrontendTools = [
     defineTool({
         name: "microfrontend_versions",
         title: "List microfrontend versions",
-        description: "The versions of a microfrontend that have been uploaded and can be deployed.",
+        description: "The versions of a microfrontend that have been uploaded and can be deployed; for a FRONTEND, the image versions its CI registered.",
         scope: MCP_SCOPE_READ,
         annotations: READ_ONLY,
         inputSchema: z.object({ microfrontendId }),

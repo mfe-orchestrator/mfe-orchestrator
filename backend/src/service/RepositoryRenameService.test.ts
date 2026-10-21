@@ -46,7 +46,6 @@ import { BusinessException } from "../errors/BusinessException"
 import { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
-import Service from "../models/ServiceModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import { isValidRepositoryName, RepositoryRenameService } from "./RepositoryRenameService"
@@ -76,7 +75,6 @@ const providerError = (status: number, data: unknown) => {
 }
 
 let updateMicrofrontends: ReturnType<typeof vi.fn>
-let updateServices: ReturnType<typeof vi.fn>
 
 /** Renames with the microfrontend given; the writes are answered by the spies above. */
 const rename = (document: ReturnType<typeof microfrontend>, name: unknown) => {
@@ -101,7 +99,6 @@ beforeEach(() => {
     vi.spyOn(base, "getUser").mockReturnValue({ _id: new Types.ObjectId() })
     vi.spyOn(UserProject, "findOne").mockResolvedValue({ role: RoleInProject.MEMBER } as never)
     updateMicrofrontends = vi.spyOn(Microfrontend, "updateMany").mockResolvedValue({} as never) as unknown as ReturnType<typeof vi.fn>
-    updateServices = vi.spyOn(Service, "updateMany").mockResolvedValue({} as never) as unknown as ReturnType<typeof vi.fn>
 })
 
 afterEach(() => {
@@ -148,7 +145,7 @@ describe("RepositoryRenameService.renameMicrofrontendRepository", () => {
         })
     })
 
-    it("given other microfrontends and services linked to the same repository, when renamed, then their links follow too", async () => {
+    it("given other microfrontends linked to the same repository, when renamed, then their links follow too", async () => {
         findCodeRepository.mockResolvedValue(connection(CodeRepositoryProvider.GITHUB, { githubData: { userName: "jane" } }))
         githubRename.mockResolvedValue({ id: 42, name: "checkout-web" })
         const document = microfrontend({ name: "checkout", repositoryId: "42" })
@@ -157,7 +154,6 @@ describe("RepositoryRenameService.renameMicrofrontendRepository", () => {
 
         const sameRepository = [{ "codeRepository.repositoryId": "42" }, { "codeRepository.name": "checkout" }]
         expect(updateMicrofrontends.mock.calls[0][0]).toEqual({ projectId, "codeRepository.codeRepositoryId": codeRepositoryId, $or: [{ _id: document._id }, ...sameRepository] })
-        expect(updateServices.mock.calls[0][0]).toEqual({ projectId, "codeRepository.codeRepositoryId": codeRepositoryId, $or: sameRepository })
     })
 
     it("given a GitLab project, when renamed, then it is checked by its id and its path moves with the name", async () => {
@@ -179,7 +175,7 @@ describe("RepositoryRenameService.renameMicrofrontendRepository", () => {
         expect(gitlabRename).toHaveBeenCalledWith(99, "checkout-web")
         expect(written()).toMatchObject({ "codeRepository.repositoryId": "99", "codeRepository.gitlab.path": "web/checkout-web" })
         // Two groups can hold a repository of the same name: on GitLab the path tells them apart
-        expect(updateServices.mock.calls[0][0].$or).toEqual([{ "codeRepository.repositoryId": "99" }, { "codeRepository.gitlab.path": "web/checkout" }])
+        expect(updateMicrofrontends.mock.calls[0][0].$or.slice(1)).toEqual([{ "codeRepository.repositoryId": "99" }, { "codeRepository.gitlab.path": "web/checkout" }])
     })
 
     it("given a GitLab link with a name only, when renamed, then the project is found by its full path", async () => {
@@ -310,56 +306,5 @@ describe("RepositoryRenameService.renameMicrofrontendRepository", () => {
 
         expect(error).toMatchObject({ code: "REPOSITORY_RENAMED_NOT_RECORDED", statusCode: 500 })
         expect(error.message).toContain('"checkout-web"')
-    })
-
-    describe("by a member assigned to some domains", () => {
-        const ownDomain = new Types.ObjectId()
-        const scopedDocument = () => {
-            const document = microfrontend({ name: "checkout", repositoryId: "42" })
-            document.domainId = ownDomain as never
-            return document
-        }
-        /** As `rename`, by a principal: the domain scope is read from their membership. */
-        const scopedRename = (document: ReturnType<typeof microfrontend>, name: string) => {
-            vi.spyOn(Microfrontend, "findById").mockResolvedValue(document as never)
-            return new RepositoryRenameService({ _id: new Types.ObjectId() } as never).renameMicrofrontendRepository(document._id.toString(), name)
-        }
-
-        beforeEach(() => {
-            vi.spyOn(UserProject, "findOne").mockResolvedValue({ role: RoleInProject.MEMBER, domainScoped: true, domainIds: [ownDomain] } as never)
-            vi.spyOn(Project, "findOne").mockResolvedValue(null as never)
-            findCodeRepository.mockResolvedValue(connection(CodeRepositoryProvider.GITHUB, { githubData: { userName: "jane" } }))
-            githubRename.mockResolvedValue({ id: 42, name: "checkout-web" })
-        })
-
-        it.each([
-            ["a microfrontend", "microfrontend"],
-            ["a service", "service"]
-        ])("given %s of another domain or of none linked to the same repository, when renamed, then it is refused before the provider is reached", async (_case, outside) => {
-            const microfrontendsOutside = vi.spyOn(Microfrontend, "exists").mockResolvedValue((outside === "microfrontend" ? { _id: new Types.ObjectId() } : null) as never)
-            vi.spyOn(Service, "exists").mockResolvedValue((outside === "service" ? { _id: new Types.ObjectId() } : null) as never)
-            const document = scopedDocument()
-
-            await expect(scopedRename(document, "checkout-web")).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
-            expect(githubRename).not.toHaveBeenCalled()
-            expect(updateMicrofrontends).not.toHaveBeenCalled()
-            // The same links the rename writes to, outside the scope: $nin also takes those of no domain
-            expect(microfrontendsOutside).toHaveBeenCalledWith({
-                projectId,
-                "codeRepository.codeRepositoryId": codeRepositoryId,
-                $or: [{ _id: document._id }, { "codeRepository.repositoryId": "42" }, { "codeRepository.name": "checkout" }],
-                domainId: { $nin: [String(ownDomain)] }
-            })
-        })
-
-        it("given every link to the repository in their domains, when renamed, then it goes through", async () => {
-            vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
-            vi.spyOn(Service, "exists").mockResolvedValue(null as never)
-
-            await scopedRename(scopedDocument(), "checkout-web")
-
-            expect(githubRename).toHaveBeenCalledTimes(1)
-            expect(updateMicrofrontends).toHaveBeenCalledTimes(1)
-        })
     })
 })

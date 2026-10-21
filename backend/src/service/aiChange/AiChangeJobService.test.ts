@@ -25,11 +25,8 @@ vi.mock("./aiChangeAgent", async importOriginal => ({ ...(await importOriginal<t
 import AiChangeJob, { AiJobStatus } from "../../models/AiChangeJobModel"
 import AiChangeRequest, { AiChangeStatus } from "../../models/AiChangeRequestModel"
 import AiModel from "../../models/AiModelModel"
-import CodeRepository, { CodeRepositoryProvider } from "../../models/CodeRepositoryModel"
-import Domain from "../../models/DomainModel"
 import Microfrontend from "../../models/MicrofrontendModel"
 import Project from "../../models/ProjectModel"
-import Service from "../../models/ServiceModel"
 import { IUser } from "../../models/UserModel"
 import UserProject, { RoleInProject } from "../../models/UserProjectModel"
 import BaseAuthorizedService from "../BaseAuthorizedService"
@@ -47,22 +44,6 @@ const projectId = new Types.ObjectId().toString()
 const microfrontend = (slug: string, name: string) => ({ _id: new Types.ObjectId(), projectId, slug, name, stack: { framework: "REACT" }, context: `${name} context` })
 const catalog = microfrontend("catalog", "Catalog")
 const cart = microfrontend("cart", "Cart")
-const connectionId = new Types.ObjectId()
-// Shares its slug with the catalog microfrontend: a service and a microfrontend may.
-const catalogApi = {
-    _id: new Types.ObjectId(),
-    projectId,
-    slug: "catalog",
-    name: "Catalog API",
-    stack: { runtime: "NODE", framework: "Express" },
-    port: 3000,
-    livenessPath: "/healthz/live",
-    readinessPath: "/healthz/ready",
-    docsPath: "/docs",
-    env: [{ name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" }],
-    codeRepository: { enabled: true, codeRepositoryId: connectionId, name: "catalog-api" }
-}
-
 interface Update {
     model: string
     filter: Record<string, unknown>
@@ -76,7 +57,6 @@ describe("AiChangeJobService", () => {
     let role: RoleInProject
     let microfrontends: ReturnType<typeof microfrontend>[]
     let withRepository: ReturnType<typeof microfrontend>[]
-    let services: (typeof catalogApi)[]
     let activeJobs: number
     let updates: Update[]
 
@@ -84,7 +64,6 @@ describe("AiChangeJobService", () => {
         role = RoleInProject.MEMBER
         microfrontends = [catalog, cart]
         withRepository = [catalog, cart]
-        services = []
         activeJobs = 0
         updates = []
         const gates = BaseAuthorizedService.prototype as unknown as WithGates
@@ -99,10 +78,6 @@ describe("AiChangeJobService", () => {
         )
         vi.spyOn(Microfrontend, "find").mockImplementation(((filter: { _id: { $in: unknown[] } }) =>
             Promise.resolve(microfrontends.filter(candidate => filter._id.$in.map(String).includes(String(candidate._id))))) as never)
-        // By id for the components of a job, by project for the services a global job covers.
-        vi.spyOn(Service, "find").mockImplementation(((filter: { _id?: { $in: unknown[] } }) =>
-            Promise.resolve(filter._id ? services.filter(candidate => filter._id!.$in.map(String).includes(String(candidate._id))) : services)) as never)
-        vi.spyOn(CodeRepository, "find").mockResolvedValue([{ _id: connectionId, projectId, provider: CodeRepositoryProvider.GITHUB }] as never)
         vi.spyOn(AiChangeJob, "exists").mockResolvedValue(null as never)
         vi.spyOn(AiChangeRequest, "exists").mockResolvedValue(null as never)
         vi.spyOn(AiChangeJob, "countDocuments").mockImplementation((() => Promise.resolve(activeJobs)) as never)
@@ -123,7 +98,6 @@ describe("AiChangeJobService", () => {
         for (const candidate of microfrontends) {
             workspaces.set(String(candidate._id), { target: {}, workingCopy: { dir: `/tmp/repos/${candidate.slug}` }, defaultBranch: "main" })
         }
-        workspaces.set(String(catalogApi._id), { target: {}, workingCopy: { dir: "/tmp/repos/catalog.service" }, defaultBranch: "main" })
     })
 
     afterEach(() => {
@@ -264,123 +238,6 @@ describe("AiChangeJobService", () => {
             expect(AiChangeJob.hydrate({ _id: new Types.ObjectId(), prompt: "Rename the price API" }).effort).toBe("high")
             expect(AiChangeRequest.hydrate({ _id: new Types.ObjectId(), prompt: "Rename the price API" }).effort).toBe("high")
         })
-
-        it("Given a microfrontend and a service selected, when the job is started, then the job lists each under its kind and each gets its request", async () => {
-            services = [catalogApi]
-
-            await service().create(projectId, { prompt: "Expose the price", scope: "selection", microfrontendIds: [String(cart._id)], serviceIds: [String(catalogApi._id)] })
-
-            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ microfrontendIds: [cart._id], serviceIds: [catalogApi._id] }))
-            const requests = (AiChangeRequest.create as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([document]) => document as Record<string, unknown>)
-            expect(requests).toEqual([
-                expect.objectContaining({ microfrontendId: cart._id, jobRepositoryCount: 2 }),
-                expect.objectContaining({ serviceId: catalogApi._id, jobRepositoryCount: 2, baseBranch: "main" })
-            ])
-            expect(requests[1].microfrontendId).toBeUndefined()
-        })
-
-        it("Given a service with a repository, when a global job is started, then it works on the service too", async () => {
-            services = [catalogApi]
-
-            await service().create(projectId, { prompt: "Expose the price", scope: "global" })
-
-            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "global", microfrontendIds: [catalog._id, cart._id], serviceIds: [catalogApi._id] }))
-        })
-
-        describe("on a domain", () => {
-            const checkoutId = new Types.ObjectId()
-            const checkout = { _id: checkoutId, projectId, slug: "checkout", name: "Checkout", description: "From the cart to the payment" }
-
-            beforeEach(() => {
-                vi.spyOn(Domain, "findOne").mockImplementation(((filter: { _id: unknown; projectId: unknown }) =>
-                    Promise.resolve(String(filter._id) === String(checkoutId) && String(filter.projectId) === projectId ? checkout : null)) as never)
-            })
-
-            it("Given a domain with a microfrontend and a service, when its job is started, then it works on its members only and remembers the domain", async () => {
-                withRepository = [{ ...cart, domainId: checkoutId } as never, catalog]
-                services = [{ ...catalogApi, domainId: checkoutId } as never]
-
-                const job = await service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })
-
-                expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "domain", domainId: checkoutId, microfrontendIds: [cart._id], serviceIds: [catalogApi._id] }))
-                expect(job).toMatchObject({ scope: "domain", domainId: String(checkoutId) })
-            })
-
-            it("Given a base branch picked for one member, when its job is started, then that repository starts from it and the others from their default", async () => {
-                withRepository = [{ ...cart, domainId: checkoutId } as never]
-                services = [{ ...catalogApi, domainId: checkoutId } as never]
-
-                await service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId), baseBranches: { [String(catalogApi._id)]: " develop " } })
-
-                const requests = (AiChangeRequest.create as unknown as ReturnType<typeof vi.fn>).mock.calls.map(([document]) => document as Record<string, unknown>)
-                expect(requests).toEqual([expect.objectContaining({ microfrontendId: cart._id, baseBranch: "main" }), expect.objectContaining({ serviceId: catalogApi._id, baseBranch: "develop" })])
-            })
-
-            describe("by a member assigned to it", () => {
-                let servicesOutside: ReturnType<typeof vi.spyOn>
-
-                beforeEach(() => {
-                    vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(checkoutId)])
-                    withRepository = [{ ...cart, domainId: checkoutId } as never]
-                    services = [{ ...catalogApi, domainId: checkoutId } as never]
-                    vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
-                    vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
-                    servicesOutside = vi.spyOn(Service, "exists").mockResolvedValue(null as never)
-                })
-
-                it("Given a member's repository shared with a service of another domain, when its job is started, then it is refused before anything is created", async () => {
-                    servicesOutside.mockResolvedValue({ _id: new Types.ObjectId() } as never)
-
-                    await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })).rejects.toMatchObject({
-                        code: "DOMAIN_SCOPE_FORBIDDEN",
-                        statusCode: 403
-                    })
-                    expect(AiChangeJob.create).not.toHaveBeenCalled()
-                })
-
-                it("Given repositories used by the domain's members only, when its job is started, then it runs", async () => {
-                    await service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })
-
-                    expect(AiChangeJob.create).toHaveBeenCalledTimes(1)
-                })
-            })
-
-            it("Given a domain whose members have no repository, when its job is started, then it is refused naming the domain", async () => {
-                withRepository = [catalog]
-
-                await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })).rejects.toMatchObject({
-                    code: "AI_JOB_NO_REPOSITORIES",
-                    message: expect.stringContaining("Checkout")
-                })
-                expect(AiChangeJob.create).not.toHaveBeenCalled()
-            })
-
-            it("Given a domain of another project, when its job is started, then it is not found", async () => {
-                const elsewhere = new Types.ObjectId().toString()
-
-                await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: elsewhere })).rejects.toMatchObject({
-                    message: expect.stringContaining(elsewhere)
-                })
-                expect(AiChangeJob.create).not.toHaveBeenCalled()
-            })
-
-            it("Given a domain with more than 10 members with a repository, when its job is started, then it is refused", async () => {
-                withRepository = Array.from({ length: 11 }, (_, index) => ({ ...microfrontend(`mfe-${index}`, `Mfe ${index}`), domainId: checkoutId }) as never)
-
-                await expect(service().create(projectId, { prompt: "Show the shipping cost", scope: "domain", domainId: String(checkoutId) })).rejects.toMatchObject({
-                    code: "AI_JOB_TOO_MANY_REPOSITORIES"
-                })
-            })
-        })
-
-        it("Given a selected service of another project, when the job is started, then it is not found", async () => {
-            services = [{ ...catalogApi, projectId: new Types.ObjectId().toString() }]
-
-            await expect(service().create(projectId, { prompt: "Expose the price", scope: "selection", serviceIds: [String(catalogApi._id)] })).rejects.toMatchObject({
-                message: expect.stringContaining(String(catalogApi._id))
-            })
-            expect(AiChangeJob.create).not.toHaveBeenCalled()
-        })
     })
 
     describe("followUp", () => {
@@ -515,28 +372,6 @@ describe("AiChangeJobService", () => {
             const child = await service().followUp(String(parentJobId), { prompt: "Also rename the tests" })
 
             expect(child.effort).toBe("high")
-        })
-
-        it("Given a job of a domain, when it is followed up, then the child stays in the domain", async () => {
-            const domainId = new Types.ObjectId()
-            vi.spyOn(AiChangeJob, "findById").mockImplementation((() =>
-                Promise.resolve({
-                    _id: parentJobId,
-                    rootJobId,
-                    projectId,
-                    userId: user._id,
-                    prompt: "Show the shipping cost",
-                    scope: "domain",
-                    domainId,
-                    microfrontendIds: [catalog._id],
-                    status: parentStatus,
-                    usage: {},
-                    updatedAt: new Date()
-                })) as never)
-
-            await service().followUp(String(parentJobId), { prompt: "Also in the summary" })
-
-            expect(AiChangeJob.create).toHaveBeenCalledWith(expect.objectContaining({ scope: "domain", domainId, parentJobId }))
         })
 
         it("Given a job still running, when it is followed up, then it is refused", async () => {
@@ -784,79 +619,6 @@ describe("AiChangeJobService", () => {
             })
         })
 
-        it("Given a job on a microfrontend and a service of the same slug, when it runs, then the agent sees both under distinct slugs and the service with its container facts", async () => {
-            services = [catalogApi]
-            const serviceRequest = { _id: new Types.ObjectId(), jobId, serviceId: catalogApi._id, baseBranch: "main" }
-            vi.spyOn(AiChangeJob, "findById").mockImplementation(((id: unknown) =>
-                Promise.resolve(
-                    String(id) === String(jobId)
-                        ? {
-                              _id: jobId,
-                              rootJobId: jobId,
-                              projectId,
-                              userId: user._id,
-                              prompt: "Expose the price",
-                              microfrontendIds: [catalog._id],
-                              serviceIds: [catalogApi._id],
-                              status: AiJobStatus.RUNNING
-                          }
-                        : null
-                )) as never)
-            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ ...request, parentId: undefined }, serviceRequest] as never)
-            workspaces.set(String(catalogApi._id), {
-                target: {},
-                workingCopy: {
-                    dir: `${dir}-service`,
-                    changes: vi.fn(async () => [{ path: "src/routes/price.ts", action: "create" }]),
-                    readWorkingFile: vi.fn(async () => "export const price = 1\n"),
-                    discardChanges: vi.fn(async () => undefined)
-                },
-                defaultBranch: "main"
-            })
-            let input: { repositories: { microfrontend?: { slug: string }; service?: Record<string, unknown> }[] } | undefined
-            runAgent.mockImplementationOnce(async (_client: unknown, received: typeof input) => {
-                input = received
-                return { summary: "Exposed the price", stopReason: "finished" }
-            })
-
-            await run()
-
-            expect(input?.repositories.map(repository => repository.microfrontend?.slug ?? repository.service?.slug)).toEqual(["catalog", "catalog-service"])
-            expect(input?.repositories[1].service).toEqual({
-                name: "Catalog API",
-                slug: "catalog-service",
-                runtime: "NODE",
-                framework: "Express",
-                port: 3000,
-                livenessPath: "/healthz/live",
-                readinessPath: "/healthz/ready",
-                docsPath: "/docs",
-                env: [{ name: "DATABASE_URL", required: true, secret: true, description: "Postgres connection string" }],
-                context: undefined
-            })
-            expect(updates).toContainEqual(
-                expect.objectContaining({ filter: { _id: serviceRequest._id, status: AiChangeStatus.RUNNING }, update: expect.objectContaining({ status: AiChangeStatus.PROPOSED }) })
-            )
-        })
-
-        it("Given a job of a domain, when it runs, then the agent is told what the domain is for", async () => {
-            const domainId = new Types.ObjectId()
-            const job = { _id: jobId, rootJobId: jobId, projectId, userId: user._id, prompt: "Show the shipping cost", domainId, microfrontendIds, status: AiJobStatus.RUNNING }
-            vi.spyOn(AiChangeJob, "findById").mockImplementation(((id: unknown) => Promise.resolve(String(id) === String(jobId) ? job : null)) as never)
-            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ ...request, parentId: undefined }] as never)
-            vi.spyOn(Domain, "findById").mockResolvedValue({ _id: domainId, name: "Checkout", description: "From the cart to the payment" } as never)
-            let received: { domain?: unknown } | undefined
-            runAgent.mockImplementationOnce(async (_client: unknown, input: typeof received) => {
-                received = input
-                return { summary: "Shows the shipping cost", stopReason: "finished" }
-            })
-
-            await run()
-
-            expect(Domain.findById).toHaveBeenCalledWith(domainId)
-            expect(received?.domain).toEqual({ name: "Checkout", description: "From the cart to the payment" })
-        })
-
         it("Given a file of the parent changed on the base branch since, when the follow-up runs, then it fails naming the file and the parent stays applicable", async () => {
             vi.mocked(workingCopy.blobOid as ReturnType<typeof vi.fn>).mockResolvedValue("someone-else-blob")
 
@@ -1040,21 +802,6 @@ describe("AiChangeJobService", () => {
             expect(applyClaimed).not.toHaveBeenCalled()
         })
 
-        it("Given a member assigned to a domain and a repository of the job shared with another domain, when the job is applied, then nothing is claimed", async () => {
-            const ownDomain = new Types.ObjectId()
-            const link = { enabled: true, codeRepositoryId: connectionId, name: "shop-web" }
-            microfrontends = [catalog, cart].map(candidate => ({ ...candidate, domainId: ownDomain, codeRepository: link }))
-            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
-            vi.spyOn(CodeRepository, "findById").mockResolvedValue({ provider: CodeRepositoryProvider.GITHUB } as never)
-            vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: new Types.ObjectId() } as never)
-            vi.spyOn(Service, "exists").mockResolvedValue(null as never)
-            const applyClaimed = vi.spyOn(AiChangeJobService.prototype as unknown as WithApplyClaimed, "applyClaimed")
-
-            await expect(service().apply(String(jobId))).rejects.toMatchObject({ code: "DOMAIN_SCOPE_FORBIDDEN", statusCode: 403 })
-            expect(claims()).toEqual([])
-            expect(applyClaimed).not.toHaveBeenCalled()
-        })
-
         it("Given two proposals, when the job is applied, then it answers with both claimed and brings them onto their base afterwards, one after the other", async () => {
             let release: () => void = () => undefined
             const firstDone = new Promise<void>(resolve => {
@@ -1092,7 +839,7 @@ describe("AiChangeJobService", () => {
 
     describe("working", () => {
         it("Given two jobs on the catalog and a change on the cart alone, when the project is asked, then each microfrontend counts its agents", async () => {
-            vi.spyOn(AiChangeJob, "find").mockResolvedValue([{ microfrontendIds: [catalog._id, cart._id], serviceIds: [catalogApi._id] }, { microfrontendIds: [catalog._id] }] as never)
+            vi.spyOn(AiChangeJob, "find").mockResolvedValue([{ microfrontendIds: [catalog._id, cart._id] }, { microfrontendIds: [catalog._id] }] as never)
             vi.spyOn(AiChangeRequest, "find").mockResolvedValue([{ microfrontendId: cart._id }] as never)
 
             const working = await service().working(projectId)
@@ -1100,8 +847,7 @@ describe("AiChangeJobService", () => {
             expect(working).toEqual(
                 expect.arrayContaining([
                     { microfrontendId: String(catalog._id), agents: 2 },
-                    { microfrontendId: String(cart._id), agents: 2 },
-                    { microfrontendId: String(catalogApi._id), agents: 1 }
+                    { microfrontendId: String(cart._id), agents: 2 }
                 ])
             )
             // Only what is running and still alive: a job's own requests are counted through the job.
@@ -1116,118 +862,6 @@ describe("AiChangeJobService", () => {
             vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
 
             expect(await service().working(projectId)).toEqual([])
-        })
-    })
-
-    describe("domainConversations", () => {
-        it("Given a chain with follow-ups and another conversation, when the domain is listed, then each conversation comes with its first and its latest job only, newest first", async () => {
-            const domainId = new Types.ObjectId()
-            const job = (rootJobId: Types.ObjectId | undefined, prompt: string, minutes: number) => {
-                const _id = new Types.ObjectId()
-                return {
-                    _id,
-                    rootJobId: rootJobId ?? _id,
-                    projectId,
-                    userId: user._id,
-                    prompt,
-                    scope: "domain",
-                    domainId,
-                    status: AiJobStatus.DONE,
-                    microfrontendIds: [],
-                    serviceIds: [],
-                    createdAt: new Date(Date.UTC(2026, 9, 19, 10, minutes)),
-                    updatedAt: new Date()
-                }
-            }
-            const shipping = job(undefined, "Show the shipping cost", 0)
-            const middle = job(shipping._id, "Also in the summary", 10)
-            const latest = job(shipping._id, "And in the email", 20)
-            const coupons = job(undefined, "Accept coupons", 5)
-            const chains = [shipping, middle, latest, coupons]
-            const find = vi.spyOn(AiChangeJob, "find").mockImplementation((() => ({ sort: () => ({ limit: () => Promise.resolve([shipping, coupons]) }) })) as never)
-            vi.spyOn(AiChangeJob, "findOne").mockImplementation(((filter: { rootJobId: unknown }) => ({
-                sort: () => Promise.resolve(chains.filter(candidate => String(candidate.rootJobId) === String(filter.rootJobId)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0])
-            })) as never)
-            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
-
-            const conversations = await service().domainConversations(projectId, String(domainId))
-
-            expect(find).toHaveBeenCalledWith(expect.objectContaining({ domainId: String(domainId), $expr: { $eq: ["$_id", "$rootJobId"] } }), expect.anything())
-            expect(conversations.map(view => view.prompt)).toEqual(["And in the email", "Accept coupons", "Show the shipping cost"])
-        })
-    })
-
-    describe("list", () => {
-        it("Given a domain-scoped member whose latest jobs are all out of their scope, when the jobs are listed, then an older one of theirs still fills the list", async () => {
-            const ownDomain = new Types.ObjectId()
-            const otherDomain = new Types.ObjectId()
-            const job = (domainId: Types.ObjectId, prompt: string, minutes: number) => ({
-                _id: new Types.ObjectId(),
-                projectId,
-                userId: user._id,
-                prompt,
-                scope: "domain",
-                domainId,
-                status: AiJobStatus.DONE,
-                microfrontendIds: [],
-                serviceIds: [],
-                createdAt: new Date(Date.UTC(2026, 9, 19, 10, minutes)),
-                updatedAt: new Date()
-            })
-            // A full page of jobs of a domain they have since lost, newer than the one of their own domain
-            const jobs = [...Array.from({ length: 20 }, (_, index) => job(otherDomain, `Elsewhere ${index}`, 59 - index)), job(ownDomain, "Show the shipping cost", 0)]
-            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(ownDomain)])
-            type Cursor = { createdAt: Date; _id: Types.ObjectId }
-            /** The jobs after the cursor a page starts from, as the database would answer. */
-            const after = (filter: { $and?: [unknown, { $or: [unknown, Cursor] }] }) => {
-                const cursor = filter.$and?.[1].$or[1]
-                return cursor
-                    ? jobs.filter(candidate => candidate.createdAt < cursor.createdAt || (candidate.createdAt.getTime() === cursor.createdAt.getTime() && String(candidate._id) < String(cursor._id)))
-                    : jobs
-            }
-            const sorts: unknown[] = []
-            const find = vi.spyOn(AiChangeJob, "find").mockImplementation(((filter: Parameters<typeof after>[0]) => ({
-                sort: (order: unknown) => {
-                    sorts.push(order)
-                    return { limit: (limit: number) => Promise.resolve(after(filter).slice(0, limit)) }
-                }
-            })) as never)
-            vi.spyOn(AiChangeRequest, "find").mockResolvedValue([] as never)
-
-            const listed = await service().list(projectId)
-
-            expect(listed.map(view => view.prompt)).toEqual(["Show the shipping cost"])
-            // The second page starts after the last job of the first, ties of createdAt broken by the id:
-            // no job read twice nor skipped, even with jobs created between the pages
-            const last = jobs[19]
-            expect(find.mock.calls[1][0]).toMatchObject({ $and: [{ projectId }, { $or: [{ createdAt: { $lt: last.createdAt } }, { createdAt: last.createdAt, _id: { $lt: last._id } }] }] })
-            expect(sorts).toEqual([
-                { createdAt: -1, _id: -1 },
-                { createdAt: -1, _id: -1 }
-            ])
-        })
-
-        it("Given a domain-scoped member whose whole long history is out of their scope, when the jobs are listed, then the reading stops after ten pages", async () => {
-            vi.spyOn(BaseAuthorizedService.prototype as unknown as { getDomainScope: () => Promise<string[]> }, "getDomainScope").mockResolvedValue([String(new Types.ObjectId())])
-            const elsewhere = () => ({
-                _id: new Types.ObjectId(),
-                projectId,
-                scope: "domain",
-                domainId: new Types.ObjectId(),
-                status: AiJobStatus.DONE,
-                microfrontendIds: [],
-                serviceIds: [],
-                createdAt: new Date(),
-                updatedAt: new Date()
-            })
-            const find = vi.spyOn(AiChangeJob, "find").mockImplementation((() => ({
-                sort: () => ({ limit: (limit: number) => Promise.resolve(Array.from({ length: limit }, elsewhere)) })
-            })) as never)
-
-            const listed = await service().list(projectId)
-
-            expect(listed).toEqual([])
-            expect(find).toHaveBeenCalledTimes(10)
         })
     })
 })
