@@ -9,6 +9,7 @@ import ProjectService from "../../service/ProjectService"
 import RepositoryRenameService, { isValidRepositoryName } from "../../service/RepositoryRenameService"
 import StackDetectionService from "../../service/StackDetectionService"
 import { StorageService } from "../../service/StorageService"
+import { isExposurePath } from "../../types/Exposure"
 import MicrofrontendDTO from "../../types/MicrofrontendDTO"
 import { MicrofrontendCompiler, MicrofrontendFramework } from "../../types/MicrofrontendStack"
 import { isServiceUrl, SERVICE_HTTP_PATH } from "../../types/ServiceStack"
@@ -34,6 +35,12 @@ export const containerFields = {
     readinessPath: httpPath.optional().describe("Readiness probe path, /health/ready when omitted"),
     docsPath: httpPath.nullable().optional().describe("Path of the API documentation UI, e.g. /docs; null when there is none"),
     openApiPath: httpPath.nullable().optional().describe("Path of the OpenAPI spec, e.g. /openapi.json; null when there is none"),
+    exposurePath: z
+        .string()
+        .refine(isExposurePath, 'starts with "/", at most 256 characters of letters, digits, -._~!$&\'()*+,;=:@ or %XX; no query, fragment, // nor . or .. segment')
+        .nullable()
+        .optional()
+        .describe("Path it is exposed at on the host of every environment (the subdomain of the environment on the domain of the project), e.g. /api/orders; null when it is not exposed"),
     urls: z
         .array(
             z.object({

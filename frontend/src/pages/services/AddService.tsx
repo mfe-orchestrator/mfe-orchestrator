@@ -50,6 +50,7 @@ const prefilledValuesOf = (defaults: ServiceDefaults): PrefilledValues => ({
 interface FormMessages {
     slug: string
     path: string
+    exposurePath: string
     url: string
 }
 
@@ -114,6 +115,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
             createFormSchema({
                 slug: t("services.slug_invalid"),
                 path: t("services.path_invalid"),
+                exposurePath: t("services.exposure_path_invalid"),
                 url: t("services.urls.invalid")
             }),
         [t]
@@ -127,6 +129,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                   port: String(service.port),
                   docsPath: service.docsPath ?? "",
                   openApiPath: service.openApiPath ?? "",
+                  exposurePath: service.exposurePath ?? "",
                   urls: toFormUrls(service.urls, environments),
                   env: service.env ?? [],
                   // Only the maps that still exist: one deleted meanwhile has no checkbox to untick, and would make every save fail
@@ -145,6 +148,7 @@ const AddServiceForm: React.FC<AddServiceFormProps> = ({ repositories, environme
                   readinessPath: "/health/ready",
                   docsPath: "",
                   openApiPath: "",
+                  exposurePath: "",
                   image: { repository: "" },
                   urls: environments.map(() => ""),
                   env: [],

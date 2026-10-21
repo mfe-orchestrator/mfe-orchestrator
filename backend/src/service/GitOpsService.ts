@@ -14,6 +14,7 @@ import Project, { IProjectGitOps } from "../models/ProjectModel"
 import Service from "../models/ServiceModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { variableMapModels } from "../models/VariableMapModel"
+import { exposedHost, SUBDOMAIN, sameExposurePath } from "../types/Exposure"
 import { VariableMapKind } from "../types/VariableMapDTO"
 import { NormalizedRepository } from "../utils/codeRepositoryUtils"
 import { toObjectId } from "../utils/mongooseUtils"
@@ -23,6 +24,7 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryImportService from "./CodeRepositoryImportService"
 import CodeRepositoryService from "./CodeRepositoryService"
 import { applicationValuesPath, CHART_FILES, GitOpsApplication, isDeployable, renderApplicationValues } from "./gitops/applicationManifests"
+import { applicationListener, EnvironmentGateway, GATEWAYS_FOLDER, gatewayName, HTTPS_LISTENER, renderGateway } from "./gitops/gatewayManifests"
 import { RepositoryFileService, repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
 import { isValidRepositoryName } from "./RepositoryRenameService"
 import { CodeRepositoryTarget, TemplateScaffoldService } from "./TemplateScaffoldService"
@@ -106,9 +108,49 @@ export const gitOpsFilePath = (kind: VariableMapKind, environment: Pick<IEnviron
 
 export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `${NAMESPACES_FOLDER}/${environmentSlug(environment)}.yaml`
 
-/** The manifests of one environment in the configuration repository, as a glob: its Namespace, its config maps and its secrets */
+export const gatewayFilePath = (environment: Pick<IEnvironment, "slug">) => `${GATEWAYS_FOLDER}/${environmentSlug(environment)}.yaml`
+
+/** The manifests of one environment in the configuration repository, as a glob: its Namespace, its Gateway, its config maps and its secrets */
 export const environmentManifestsGlob = (environment: Pick<IEnvironment, "slug">) =>
-    `{${[namespaceFilePath(environment), ...Object.values(GITOPS_FOLDER).map(folder => `${folder}/${environmentSlug(environment)}/*.yaml`)].join(",")}}`
+    `{${[namespaceFilePath(environment), gatewayFilePath(environment), ...Object.values(GITOPS_FOLDER).map(folder => `${folder}/${environmentSlug(environment)}/*.yaml`)].join(",")}}`
+
+/** A project as its Gateways are named and exposed */
+type ExposedProject = { _id: unknown; slug: string; exposure?: { domain: string; certificateIssuer?: string } }
+
+/**
+ * The Gateway of an environment, none when the project is exposed on no domain. Its host must be its own
+ * among the environments of the project: two Gateways answering on the same host would split its traffic.
+ */
+export const environmentGateway = (
+    project: ExposedProject,
+    environment: Pick<IEnvironment, "_id" | "slug" | "namespace" | "subdomain">,
+    environments: Pick<IEnvironment, "_id" | "slug" | "subdomain">[]
+): EnvironmentGateway | undefined => {
+    if (!project.exposure?.domain) return undefined
+    const subdomain = environment.subdomain ?? ""
+    if (!SUBDOMAIN.test(subdomain)) {
+        throw createBusinessException({
+            code: "GITOPS_ENVIRONMENT_SUBDOMAIN_INVALID",
+            message: `The subdomain "${subdomain}" of the environment ${environment.slug} is not a subdomain: DNS labels of lowercase letters, digits and dashes, separated by dots`,
+            details: { slug: environment.slug, subdomain }
+        })
+    }
+    const host = exposedHost(project.exposure.domain, subdomain)
+    const sharing = environments.find(other => String(other._id) !== String(environment._id) && exposedHost(project.exposure!.domain, other.subdomain ?? "") === host)
+    if (sharing) {
+        throw createBusinessException({
+            code: "GITOPS_ENVIRONMENT_HOST_TAKEN",
+            message: `The environments ${environment.slug} and ${sharing.slug} are both exposed on ${host}: give each one a subdomain of its own`,
+            details: { slug: environment.slug, name: sharing.slug, url: host }
+        })
+    }
+    return {
+        name: gatewayName(String(project._id), project.slug),
+        namespace: environmentNamespace(environment),
+        host,
+        certificateIssuer: project.exposure.certificateIssuer || undefined
+    }
+}
 
 /**
  * The Kubernetes manifest of a map in one environment. A key with no value there is left out, as the
@@ -153,6 +195,7 @@ const GITOPS_README: Record<GitOpsRepositoryKind, string> = {
 Committed by MFE Orchestrator every time environments of the project are deployed, for each of them:
 
 - \`namespaces/<environment>.yaml\`: the Namespace of the environment, named as set on it or as its slug in lowercase
+- \`gateways/<environment>.yaml\`: when the project has a domain, the Traefik Gateway answering on the host of the environment, its cert-manager Certificate and the redirect to HTTPS
 - \`configMaps/<environment>/<name>.yaml\`: the ConfigMaps, in that namespace
 - \`secrets/<environment>/<name>.yaml\`: the Secrets, in that namespace, values base64 encoded (not encrypted)
 
@@ -162,7 +205,7 @@ Do not edit these manifests here: the next deploy of the environment overwrites 
 
 One branch per environment, named as its slug, committed by MFE Orchestrator every time the environment is deployed:
 
-- \`<application>.yaml\`: the Helm values of each backend service and frontend, with the version deployed
+- \`<application>.yaml\`: the Helm values of each backend service and frontend, with the version deployed and, when it has an exposure path, its HTTPRoute on the Gateway of the environment
 - \`microservice-chart/\`: the Helm chart they are installed with, written once: change it as the cluster needs
 
 Point an Argo CD Application per application and environment at \`microservice-chart\` on the branch of the
@@ -185,24 +228,28 @@ interface GitOpsFile {
  */
 type Commit = (message: string, files: GitOpsFile[], options?: { branch?: string; prune?: (path: string) => boolean }) => Promise<GitOpsFile[]>
 
-/** The environment slug a manifest belongs to: `namespaces/<slug>.yaml`, or `<kind folder>/<slug>/<name>.yaml` */
+/** The environment slug a manifest belongs to: `namespaces/<slug>.yaml`, `gateways/<slug>.yaml`, or `<kind folder>/<slug>/<name>.yaml` */
 const environmentOfPath = (path: string): string => {
     const [folder, second = ""] = path.split("/")
-    return folder === NAMESPACES_FOLDER ? second.replace(/\.yaml$/, "") : second
+    return folder === NAMESPACES_FOLDER || folder === GATEWAYS_FOLDER ? second.replace(/\.yaml$/, "") : second
 }
 
-const CONFIGURATION_FOLDERS = [...Object.values(GITOPS_FOLDER), NAMESPACES_FOLDER].map(folder => `${folder}/`)
+const CONFIGURATION_FOLDERS = [...Object.values(GITOPS_FOLDER), NAMESPACES_FOLDER, GATEWAYS_FOLDER].map(folder => `${folder}/`)
 
 const isConfigurationManifest = (path: string) => path.endsWith(".yaml") && CONFIGURATION_FOLDERS.some(folder => path.startsWith(folder))
 
 /** A map as it is read for a deploy: its id is how services and frontends attach it */
 type DeployedMap = CommittedVariableMap & { _id: unknown }
 
-/** What a deploy of one environment ships: its Namespace, and every config map and secret of the project as they are in it */
-const environmentFiles = (environment: Pick<IEnvironment, "_id" | "slug" | "namespace">, maps: Record<VariableMapKind, DeployedMap[]>): GitOpsFile[] => {
+/**
+ * What a deploy of one environment ships: its Namespace, its Gateway when it has one, and every config map and
+ * secret of the project as they are in it. A Gateway left out is pruned, with the project's domain gone.
+ */
+const environmentFiles = (environment: Pick<IEnvironment, "_id" | "slug" | "namespace">, maps: Record<VariableMapKind, DeployedMap[]>, gateway?: EnvironmentGateway): GitOpsFile[] => {
     const namespace = environmentNamespace(environment)
     return [
         { path: namespaceFilePath(environment), action: "update", content: renderNamespace(environment) },
+        ...(gateway ? [{ path: gatewayFilePath(environment), action: "update" as const, content: renderGateway(gateway) }] : []),
         ...(Object.keys(GITOPS_FOLDER) as VariableMapKind[]).flatMap(kind =>
             maps[kind].map(map => ({ path: gitOpsFilePath(kind, environment, map.name), action: "update" as const, content: renderManifest(kind, map, String(environment._id), namespace) }))
         )
@@ -332,22 +379,25 @@ export class GitOpsService extends BaseAuthorizedService {
     }
 
     private async deployProject<T>(projectId: Schema.Types.ObjectId, environmentIds: Set<string>, deploy: () => Promise<T>): Promise<T> {
-        const project = await Project.findById(projectId, { gitOps: 1 })
+        const project = await Project.findById(projectId, { gitOps: 1, slug: 1, exposure: 1 })
         const gitOps = project?.gitOps
-        if (!gitOps?.enabled || !gitOps.codeRepository) return deploy()
+        if (!project || !gitOps?.enabled || !gitOps.codeRepository) return deploy()
 
         // With GitOps on, a deploy pushes to the provider with the token of the connection
         await this.ensureNotViewer(projectId, { code: "GITOPS_VIEWER_FORBIDDEN", message: "A viewer of the project cannot change what is committed to its GitOps repositories" })
 
-        const environments = await Environment.find({ projectId }, { slug: 1, namespace: 1 })
+        const environments = await Environment.find({ projectId }, { slug: 1, namespace: 1, subdomain: 1 })
         const deployed = environments.filter(environment => environmentIds.has(String(environment._id)))
+        // Refused before anything is pushed: a subdomain the cluster would not take, or a host two environments share
+        const gateways = new Map(deployed.map(environment => [String(environment._id), environmentGateway(project, environment, environments)] as const))
         const maps = {} as Record<VariableMapKind, DeployedMap[]>
         // Read from the model, not through the API: a secret comes back decrypted only here
         for (const kind of Object.keys(GITOPS_FOLDER) as VariableMapKind[]) maps[kind] = await variableMapModels[kind].find({ projectId })
 
         const applicationsLink = gitOps.applicationsCodeRepository
+        if (applicationsLink && [...gateways.values()].some(Boolean)) await this.ensureDistinctExposurePaths(projectId)
         const withApplications = applicationsLink
-            ? () => this.inRepository(projectId, "applications", applicationsLink, commit => this.commitApplications(projectId, deployed, maps, commit, deploy))
+            ? () => this.inRepository(projectId, "applications", applicationsLink, commit => this.commitApplications(projectId, deployed, maps, gateways, commit, deploy))
             : deploy
 
         return this.inRepository(projectId, "configuration", gitOps.codeRepository, async commit => {
@@ -356,7 +406,7 @@ export class GitOpsService extends BaseAuthorizedService {
             const message = `Deploy ${[...deployedSlugs].join(", ")}`
             const undo = await commit(
                 message,
-                deployed.flatMap(environment => environmentFiles(environment, maps)),
+                deployed.flatMap(environment => environmentFiles(environment, maps, gateways.get(String(environment._id)))),
                 { prune: path => isConfigurationManifest(path) && (deployedSlugs.has(environmentOfPath(path)) || !existingSlugs.has(environmentOfPath(path))) }
             )
             return revertingOnFailure(withApplications, async () => {
@@ -368,12 +418,14 @@ export class GitOpsService extends BaseAuthorizedService {
     /**
      * Commits on the branch of each deployed environment the values of the services and frontends that can be
      * installed, and the chart when the branch has none, then runs `deploy`. A domain-scoped member writes the
-     * values of their own applications only; the values of an application that no longer exists go.
+     * values of their own applications only; the values of an application that no longer exists go. In an
+     * environment with a Gateway, an application with an exposure path is routed on it.
      */
     private async commitApplications<T>(
         projectId: Schema.Types.ObjectId,
         deployed: Pick<IEnvironment, "_id" | "slug">[],
         maps: Record<VariableMapKind, DeployedMap[]>,
+        gateways: Map<string, EnvironmentGateway | undefined>,
         commit: Commit,
         deploy: () => Promise<T>
     ): Promise<T> {
@@ -394,18 +446,45 @@ export class GitOpsService extends BaseAuthorizedService {
         }
         return revertingOnFailure(async () => {
             for (const environment of deployed) {
+                const gateway = gateways.get(String(environment._id))
+                const listener = gateway && applicationListener(gateway)
+                const route = gateway && listener ? { name: gateway.name, listener, hsts: listener === HTTPS_LISTENER } : undefined
                 const files: GitOpsFile[] = [
                     ...CHART_FILES.map(file => ({ ...file, action: "update" as const, ifMissing: true })),
                     ...applications.filter(isDeployable).map(application => ({
                         path: applicationValuesPath(application),
                         action: "update" as const,
-                        content: renderApplicationValues(application, environment, mapNames)
+                        content: renderApplicationValues(application, environment, mapNames, route)
                     }))
                 ]
                 pushed.push({ branch: environment.slug, undo: await commit(`Deploy ${environment.slug}`, files, { branch: environment.slug, prune: isOrphanValues }) })
             }
             return deploy()
         }, revert)
+    }
+
+    /**
+     * Two applications on the same path would be two HTTPRoutes with the same match, and the Gateway API hands
+     * the path to the older one without a word. Every application of the project counts, those out of the
+     * reach of a domain-scoped member too: their values are on the branches already.
+     */
+    private async ensureDistinctExposurePaths(projectId: Schema.Types.ObjectId): Promise<void> {
+        const fields = { slug: 1, version: 1, image: 1, exposurePath: 1 }
+        const applications: GitOpsApplication[] = [
+            ...(await Service.find({ projectId, exposurePath: { $ne: null } }, fields)),
+            ...(await Microfrontend.find({ projectId, kind: MicrofrontendKind.FRONTEND, exposurePath: { $ne: null } }, fields))
+        ]
+        const exposed = applications.filter(isDeployable).filter(application => application.exposurePath)
+        for (const [index, application] of exposed.entries()) {
+            const sharing = exposed.slice(index + 1).find(other => sameExposurePath(other.exposurePath!, application.exposurePath!))
+            if (sharing) {
+                throw createBusinessException({
+                    code: "GITOPS_EXPOSURE_PATH_TAKEN",
+                    message: `${application.slug} and ${sharing.slug} are both exposed at ${application.exposurePath}: give each one a path of its own`,
+                    details: { slug: application.slug, name: sharing.slug, url: application.exposurePath }
+                })
+            }
+        }
     }
 
     /** The connection a GitOps repository is linked through: the one Argo CD is pointed at reads it with credentials of its own */

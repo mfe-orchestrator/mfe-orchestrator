@@ -30,7 +30,9 @@ export enum MicrofrontendKind {
 }
 
 /** What a FRONTEND declares about its container: the same fields as a service, with the same meaning. */
-export type FrontendContainer = Partial<Pick<Service, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "urls" | "env" | "configMapIds" | "secretIds">>
+export type FrontendContainer = Partial<
+    Pick<Service, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "exposurePath" | "urls" | "env" | "configMapIds" | "secretIds">
+>
 
 export enum CanaryDeploymentType {
     BASED_ON_VERSION = "BASED_ON_VERSION",

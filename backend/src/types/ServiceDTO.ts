@@ -33,6 +33,8 @@ interface ServiceDTO {
     docsPath?: string | null
     /** The OpenAPI spec; blank or null when the service has none */
     openApiPath?: string | null
+    /** The path on the host of every environment, e.g. /api/orders; blank or null when it is not exposed */
+    exposurePath?: string | null
     /** The base URL per environment, e.g. https://orders.dev.acme.com; a blank one means it is not exposed there */
     urls?: Array<{ environmentId: string; url?: string }>
     env?: ServiceEnvVariableDTO[]

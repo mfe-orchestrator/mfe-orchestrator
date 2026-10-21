@@ -43,6 +43,7 @@ import { FetchDataTemplateCard } from "../templates-library/partials/"
 
 interface FormMessages {
     path: string
+    exposurePath: string
     url: string
     versionRequired: string
     hostUrlRequired: string
@@ -81,6 +82,7 @@ const createFormSchema = (messages: FormMessages) => {
             readinessPath: z.string().optional(),
             docsPath: z.string().optional(),
             openApiPath: z.string().optional(),
+            exposurePath: z.string().optional(),
             image: z.object({ repository: z.string().optional() }).optional(),
             urls: z.array(z.string()).optional(),
             env: z
@@ -171,7 +173,7 @@ const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
     general: ["name", "slug", "description", "domainId", "kind"],
     context: ["context"],
     hosting: ["host"],
-    container: ["port", "livenessPath", "readinessPath", "docsPath", "openApiPath", "image", "urls", "env", "configMapIds", "secretIds"],
+    container: ["port", "livenessPath", "readinessPath", "docsPath", "openApiPath", "exposurePath", "image", "urls", "env", "configMapIds", "secretIds"],
     repository: ["codeRepository"],
     danger: []
 }
@@ -233,6 +235,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         () =>
             createFormSchema({
                 path: t("services.path_invalid"),
+                exposurePath: t("services.exposure_path_invalid"),
                 url: t("services.urls.invalid"),
                 versionRequired: t("microfrontend.validation.version_required"),
                 hostUrlRequired: t("microfrontend.validation.host_url_required"),
@@ -248,6 +251,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         readinessPath: frontend?.readinessPath ?? "/health/ready",
         docsPath: frontend?.docsPath ?? "",
         openApiPath: frontend?.openApiPath ?? "",
+        exposurePath: frontend?.exposurePath ?? "",
         image: { repository: frontend?.image?.repository ?? "" },
         urls: toFormUrls(frontend?.urls, environments),
         env: frontend?.env ?? [],
@@ -322,7 +326,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     })
 
     const onSubmit = async (data: FormValues) => {
-        const { port, livenessPath, readinessPath, docsPath, openApiPath, image, urls, env, configMapIds, secretIds, ...rest } = data
+        const { port, livenessPath, readinessPath, docsPath, openApiPath, exposurePath, image, urls, env, configMapIds, secretIds, ...rest } = data
         const dataToSend = {
             ...rest,
             version: data.version === "custom" ? data.customVersion : data.version,
@@ -336,6 +340,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                       readinessPath: readinessPath?.trim(),
                       docsPath: docsPath?.trim(),
                       openApiPath: openApiPath?.trim(),
+                      exposurePath: exposurePath?.trim(),
                       image,
                       urls: fromFormUrls(urls ?? [], environments),
                       env,

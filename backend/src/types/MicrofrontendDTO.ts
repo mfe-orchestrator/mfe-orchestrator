@@ -3,7 +3,7 @@ import { MicrofrontendStackDTO } from "./MicrofrontendStack"
 import ServiceDTO from "./ServiceDTO"
 
 /** The container fields of a FRONTEND, the same as a service's and checked the same way */
-type FrontendContainerDTO = Pick<ServiceDTO, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "urls" | "env" | "configMapIds" | "secretIds">
+type FrontendContainerDTO = Pick<ServiceDTO, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "exposurePath" | "urls" | "env" | "configMapIds" | "secretIds">
 
 interface MicrofrontendDTO extends FrontendContainerDTO {
     id: string

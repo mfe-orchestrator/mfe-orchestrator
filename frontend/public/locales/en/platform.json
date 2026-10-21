@@ -214,6 +214,16 @@
             "hint": "Markdown is supported. Agents read it with the context_get tool, together with the context of each microfrontend.",
             "tooLong": "The context can be at most {{max}} characters long"
         },
+        "exposure": {
+            "title": "Exposure",
+            "subtitle": "The domain the environments are exposed on, each under its subdomain. On every deploy GitOps commits a Traefik Gateway per environment and an HTTPRoute for each service and frontend with an exposure path. An Argo CD set up before this was saved must be initialized again to apply the Gateways.",
+            "domain": "Domain",
+            "domain_hint": "E.g. example.com. Left empty, the environments are not exposed: the next deploy removes their Gateway.",
+            "domain_invalid": "A lowercase domain of at least two labels, e.g. example.com",
+            "certificate_issuer": "Certificate issuer",
+            "certificate_issuer_hint": "The cert-manager ClusterIssuer the TLS certificate of each environment is asked of. Left empty, HTTP only.",
+            "certificate_issuer_invalid": "Lowercase letters, digits, dots and dashes, starting and ending with a letter or a digit"
+        },
         "gitOps": {
             "title": "GitOps for environments, config maps and secrets",
             "subtitle": "Nothing is committed when you save config maps, secrets or environments: each Deploy commits what it ships. To the configuration repository, on the default branch: namespaces/<environment>.yaml, configMaps/<environment>/<name>.yaml and secrets/<environment>/<name>.yaml. Optionally, to the applications repository: one branch per environment with a Helm values file for every service and frontend that has an image and a version, plus a shared Helm chart in microservice-chart/, written only when missing so you can customize it.",
@@ -245,6 +255,9 @@
                 "viewer_forbidden": "A viewer cannot deploy what is committed to the GitOps repositories",
                 "busy": "Another deploy is being committed to the GitOps repository: try again in a moment",
                 "environment_slug_invalid": "The slug of environment {{slug}} cannot be a Kubernetes namespace: use up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit",
+                "environment_subdomain_invalid": "The subdomain of environment {{slug}} is not valid: DNS labels of lowercase letters, digits and dashes, separated by dots",
+                "environment_host_taken": "The environments {{slug}} and {{name}} are both exposed on {{url}}: give each one a subdomain of its own",
+                "exposure_path_taken": "{{slug}} and {{name}} are both exposed at {{url}}: give each one an exposure path of its own",
                 "invalid_repository_name": "The repository name is not valid: use letters, digits, dots, dashes and underscores",
                 "repository_name_taken": "A repository with this name already exists at the provider, maybe left by a failed attempt: pick it from the list or choose another name"
             }
@@ -310,7 +323,9 @@
             "projectUpdated": "Project updated",
             "projectUpdateFailed": "Failed to update project",
             "contextUpdated": "Project context updated",
-            "contextUpdateFailed": "Could not update the project context"
+            "contextUpdateFailed": "Could not update the project context",
+            "exposureUpdated": "Exposure saved: it applies from the next deploy of each environment",
+            "exposureUpdateFailed": "The exposure could not be saved"
         }
     },
     "theme": {
@@ -1131,7 +1146,11 @@
             "namespace": "Kubernetes namespace",
             "namespace_placeholder": "The slug in lowercase",
             "namespace_description": "Where GitOps commits the environment. Left empty, it is the slug in lowercase.",
-            "namespace_invalid": "Up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit"
+            "namespace_invalid": "Up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit",
+            "subdomain": "Subdomain",
+            "subdomain_placeholder": "dev",
+            "subdomain_description": "Exposed on {{host}}. Left empty, on the domain of the project itself.",
+            "subdomain_invalid": "DNS labels of lowercase letters, digits and dashes, separated by dots"
         }
     },
     "storage": {
@@ -2109,6 +2128,9 @@
         "docs_path_hint": "Optional. The page of the public API documentation, e.g. /docs",
         "openapi_path": "OpenAPI spec path",
         "openapi_path_hint": "Optional. E.g. /openapi.json",
+        "exposure_path": "Exposure path",
+        "exposure_path_hint": "Optional. Where it answers on the host of every environment, e.g. /api/orders: the prefix is stripped before it reaches the container",
+        "exposure_path_invalid": "A path an HTTPRoute takes: starting with /, letters, digits and -._~!$&'()*+,;=:@ or %XX, without query, fragment, // nor . or .. segments",
         "path_invalid": "Must start with \"/\", with at most 256 characters and no spaces",
         "image_repository": "Image repository",
         "image_repository_hint": "Optional. E.g. ghcr.io/acme/orders-api",

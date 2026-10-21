@@ -4,6 +4,7 @@ import DeploymentCanaryUsersService from "../../service/DeploymentCanaryUsersSer
 import DeploymentService from "../../service/DeploymentService"
 import EnvironmentService from "../../service/EnvironmentService"
 import { EnvironmentDTO } from "../../types/EnvironmentDTO"
+import { SUBDOMAIN } from "../../types/Exposure"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { DESTRUCTIVE, DESTRUCTIVE_EXTERNAL, defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 
@@ -24,7 +25,12 @@ export const environmentFields = {
         .string()
         .regex(/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)?$/, "a DNS label: up to 63 lowercase letters, digits and dashes")
         .optional()
-        .describe("Kubernetes namespace GitOps commits the environment to; empty or left out, it is the slug in lowercase")
+        .describe("Kubernetes namespace GitOps commits the environment to; empty or left out, it is the slug in lowercase"),
+    subdomain: z
+        .string()
+        .regex(SUBDOMAIN, "DNS labels separated by dots, e.g. dev or dev.eu")
+        .optional()
+        .describe("What the environment is exposed under on the domain of the project, e.g. dev for dev.example.com; empty or left out, on the domain itself")
 }
 
 /**

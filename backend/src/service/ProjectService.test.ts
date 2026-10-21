@@ -201,6 +201,28 @@ describe("update", () => {
         expect(written).toEqual({ $unset: { description: 1 } })
     })
 
+    it("Given an exposure in mixed case with a blank issuer, when the project is updated, then the domain is written trimmed in lowercase without the issuer", async () => {
+        await update({ exposure: { domain: " Example.COM ", certificateIssuer: " " } })
+
+        expect(written).toEqual({ exposure: { domain: "example.com" } })
+    })
+
+    it("Given a null exposure, when the project is updated, then the exposure is unset", async () => {
+        await update({ exposure: null })
+
+        expect(written).toEqual({ $unset: { exposure: 1 } })
+    })
+
+    it.each([
+        ["no domain", {}],
+        ["a domain of one label", { domain: "localhost" }],
+        ["an issuer that is not a string", { domain: "example.com", certificateIssuer: 42 }],
+        ["an issuer that is not a resource name", { domain: "example.com", certificateIssuer: "Lets_Encrypt" }]
+    ])("Given an exposure with %s, when the project is updated, then it is refused with a 400 and nothing is written", async (_case, exposure) => {
+        await expect(update({ exposure })).rejects.toMatchObject({ code: "PROJECT_EXPOSURE_INVALID", statusCode: 400 })
+        expect(written).toBeUndefined()
+    })
+
     it("Given only a description, when the project is updated, then the name is left alone", async () => {
         await update({ description: "the checkout flow" })
 

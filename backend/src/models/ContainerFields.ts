@@ -1,4 +1,5 @@
 import { Schema } from "mongoose"
+import { isExposurePath } from "../types/Exposure"
 import { isServiceUrl, SERVICE_HTTP_PATH } from "../types/ServiceStack"
 
 /**
@@ -80,4 +81,14 @@ export const optionalPath = {
     required: false,
     set: (value?: string | null) => value?.trim() || null,
     validate: httpPathValidator
+}
+
+/** The path an application is exposed at on the Gateway: optional like the others, with the rules of an HTTPRoute */
+export const exposurePath = {
+    ...optionalPath,
+    validate: {
+        validator: (value?: string | null) => value == null || isExposurePath(value),
+        message: (props: { path: string; value: unknown }) =>
+            `${props.path} "${props.value}" is not a path an HTTPRoute takes: segments of letters, digits and -._~!$&'()*+,;=:@ or %XX, no query, fragment, // nor . or .. segment`
+    }
 }

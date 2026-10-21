@@ -1,7 +1,7 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
 import { ServicePaths } from "../types/ServiceStack"
-import { IServiceEnvVariable, IServiceUrl, optionalPath, serviceEnvVariableSchema, serviceUrlSchema } from "./ContainerFields"
+import { exposurePath, IServiceEnvVariable, IServiceUrl, optionalPath, serviceEnvVariableSchema, serviceUrlSchema } from "./ContainerFields"
 import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
 export enum MicrofrontendType {
@@ -76,6 +76,8 @@ export interface IFrontendContainer extends Partial<ServicePaths> {
         repository?: string
     }
     port?: number
+    /** The path it is exposed at on the host of every environment, as for a service */
+    exposurePath?: string | null
     /** One per environment it is exposed in: what the serve API hands out as its URL there */
     urls?: IServiceUrl[]
     env?: IServiceEnvVariable[]
@@ -390,6 +392,7 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         readinessPath: optionalPath,
         docsPath: optionalPath,
         openApiPath: optionalPath,
+        exposurePath,
         urls: {
             type: [serviceUrlSchema],
             default: undefined

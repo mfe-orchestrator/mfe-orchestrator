@@ -32,6 +32,7 @@ export const ServiceRuntimeFields: React.FC = () => {
                 />
                 <TextField name="docsPath" label={t("services.docs_path")} placeholder="/docs" description={t("services.docs_path_hint")} containerClassName="flex-[1_1_240px]" />
                 <TextField name="openApiPath" label={t("services.openapi_path")} placeholder="/openapi.json" description={t("services.openapi_path_hint")} containerClassName="flex-[1_1_240px]" />
+                <TextField name="exposurePath" label={t("services.exposure_path")} placeholder="/api/orders" description={t("services.exposure_path_hint")} containerClassName="flex-[1_1_240px]" />
                 <TextField
                     name="image.repository"
                     label={t("services.image_repository")}

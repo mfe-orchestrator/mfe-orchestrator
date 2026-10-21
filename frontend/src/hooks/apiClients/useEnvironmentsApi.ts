@@ -13,6 +13,8 @@ export interface EnvironmentDTO {
     domains?: string[]
     /** Namespace Kubernetes in cui GitOps fa il commit dell'ambiente; se vuoto e' lo slug in minuscolo */
     namespace?: string
+    /** Sotto cosa e' esposto sul dominio del progetto, es. `dev`; se vuoto, sul dominio stesso */
+    subdomain?: string
     _id?: string
 }
 
@@ -23,6 +25,7 @@ export interface CreateEnvironmentDTO {
     color?: string
     domains?: string[]
     namespace?: string
+    subdomain?: string
 }
 
 const useEnvironmentsApi = () => {

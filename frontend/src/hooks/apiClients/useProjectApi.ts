@@ -22,6 +22,13 @@ export interface ProjectGitOps {
     applicationsCodeRepository?: ProjectGitOpsRepository
 }
 
+/** Dove sono esposti gli ambienti: ognuno sul suo sottodominio di `domain` */
+export interface ProjectExposure {
+    domain: string
+    /** La ClusterIssuer di cert-manager a cui chiedere il certificato di ogni ambiente; senza, solo HTTP */
+    certificateIssuer?: string
+}
+
 export interface Project {
     /** The organization the project belongs to: a project sits in exactly one. */
     organizationId: string
@@ -31,6 +38,7 @@ export interface Project {
     /** Markdown per gli agenti AI (client MCP, assistente della console) */
     context?: string
     gitOps?: ProjectGitOps
+    exposure?: ProjectExposure
     createdAt?: string
     updatedAt?: string
     _id: string
@@ -63,6 +71,8 @@ export interface ProjectUpdateDTO {
     /** `null` azzera il contesto, come per la descrizione. */
     context?: string | null
     isActive?: boolean
+    /** `null` toglie l'esposizione: al prossimo deploy ogni ambiente perde il suo Gateway */
+    exposure?: { domain: string; certificateIssuer?: string | null } | null
     /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga */
     gitOps?: {
         enabled: boolean

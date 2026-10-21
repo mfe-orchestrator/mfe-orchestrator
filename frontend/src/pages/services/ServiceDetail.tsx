@@ -115,6 +115,9 @@ const ServiceConfigurationSection: React.FC<{ service: Service; environments: En
                     <DescriptionItem label={t("services.openapi_path")}>
                         <ServicePath path={service.openApiPath} />
                     </DescriptionItem>
+                    <DescriptionItem label={t("services.exposure_path")}>
+                        <ServicePath path={service.exposurePath} />
+                    </DescriptionItem>
                     <DescriptionItem label={t("services.image_repository")}>{service.image?.repository ? <span className="font-mono">{service.image.repository}</span> : "—"}</DescriptionItem>
                 </DescriptionList>
                 <ServiceUrls service={service} environments={environments} />

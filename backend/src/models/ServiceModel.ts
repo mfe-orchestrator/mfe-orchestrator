@@ -1,7 +1,7 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendStackSource } from "../types/MicrofrontendStack"
 import { ServicePaths, ServiceRuntime } from "../types/ServiceStack"
-import { CONTAINER_DEFAULTS, IServiceEnvVariable, IServiceUrl, optionalPath, probePath, serviceEnvVariableSchema, serviceUrlSchema } from "./ContainerFields"
+import { CONTAINER_DEFAULTS, exposurePath, IServiceEnvVariable, IServiceUrl, optionalPath, probePath, serviceEnvVariableSchema, serviceUrlSchema } from "./ContainerFields"
 import { ICodeRepositoryMicrofrontend, microfrontendCodeRepositorySchema } from "./MicrofrontendModel"
 import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
@@ -34,6 +34,8 @@ export interface IService extends Document<ObjectId>, ServicePaths {
         repository?: string
     }
     port: number
+    /** The path it is exposed at on the host of every environment, e.g. /api/orders; null when it is not exposed */
+    exposurePath?: string | null
     /** One per environment it is exposed in; an environment left out has no known address */
     urls: IServiceUrl[]
     env: IServiceEnvVariable[]
@@ -133,6 +135,7 @@ const serviceSchema = new Schema<IService>(
         readinessPath: probePath(CONTAINER_DEFAULTS.readinessPath),
         docsPath: optionalPath,
         openApiPath: optionalPath,
+        exposurePath,
         urls: {
             type: [serviceUrlSchema],
             default: []

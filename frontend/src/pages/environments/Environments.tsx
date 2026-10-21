@@ -42,7 +42,11 @@ interface EnvironmentDialogFormData {
     isProduction?: boolean
     domains?: string[]
     namespace?: string
+    subdomain?: string
 }
+
+/** Come per il backend: etichette DNS separate da punti, oppure niente per il dominio stesso */
+const SUBDOMAIN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*)?$/
 
 interface EnvironmentDialogProps {
     isOpen: boolean
@@ -61,6 +65,9 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
     // Il namespace serve solo a GitOps: senza, l'ambiente non finisce in nessun cluster
     const isGitOpsEnabled = Boolean(useProjectStore(state => state.project?.gitOps?.enabled))
     const slug = form.watch("slug")
+    // Il sottodominio vale solo sul dominio del progetto: senza, l'ambiente non e' esposto da GitOps
+    const domain = useProjectStore(state => state.project?.exposure?.domain)
+    const subdomain = form.watch("subdomain")?.trim().toLowerCase()
 
     const onSubmit = async (data: EnvironmentDialogFormData) => {
         if (isEdit) {
@@ -129,6 +136,17 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                                         message: t("environment.form.namespace_invalid")
                                     }
                                 }}
+                            />
+                        )}
+                        {isGitOpsEnabled && domain && (
+                            <TextField
+                                name="subdomain"
+                                dataTestId="environment-subdomain"
+                                label={t("environment.form.subdomain")}
+                                placeholder={t("environment.form.subdomain_placeholder")}
+                                description={t("environment.form.subdomain_description", { host: subdomain ? `${subdomain}.${domain}` : domain })}
+                                // Il backend toglie gli spazi e porta in minuscolo: qui si controlla quello che salverà
+                                rules={{ validate: value => SUBDOMAIN.test((value ?? "").trim().toLowerCase()) || t("environment.form.subdomain_invalid") }}
                             />
                         )}
                         <TextareaField name="description" label={t("environment.form.description")} placeholder={t("environment.form.description_placeholder")} />

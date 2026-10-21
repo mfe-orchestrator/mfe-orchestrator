@@ -8,6 +8,9 @@ import useProjectStore from "@/store/useProjectStore"
 /** Same rule as the backend (SERVICE_HTTP_PATH): a probe or docs path is absolute, at most 256 characters, without whitespace */
 export const SERVICE_HTTP_PATH = /^\/\S{0,255}$/
 
+/** Same rule as the backend: what an HTTPRoute takes as a path, no query, fragment, // nor . or .. segment */
+const EXPOSURE_PATH = /^(?!.*%2[fF])(\/|(\/(?!\.{1,2}(\/|$))([-A-Za-z0-9._~!$&'()*+,;=:@]|%[0-9a-fA-F]{2})+)+\/?)$/
+
 /** Same rule as the backend (isServiceUrl): absolute http(s), no whitespace, credentials, query nor fragment */
 export const isServiceUrl = (value: string): boolean => {
     if (value.length > 2048 || /\s/.test(value)) return false
@@ -23,7 +26,7 @@ export const isServiceUrl = (value: string): boolean => {
  * The form fields of what a container declares, with the rules of the backend: shared by a service and by a
  * frontend served by its own container, which declares the same.
  */
-export const createServiceRuntimeShape = (messages: { path: string; url: string }) => ({
+export const createServiceRuntimeShape = (messages: { path: string; url: string; exposurePath: string }) => ({
     port: z.string().regex(/^\d{1,5}$/),
     livenessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
     readinessPath: z.string().trim().regex(SERVICE_HTTP_PATH, messages.path),
@@ -36,6 +39,11 @@ export const createServiceRuntimeShape = (messages: { path: string; url: string 
         .string()
         .trim()
         .refine(value => value === "" || SERVICE_HTTP_PATH.test(value), messages.path),
+    // Blank: not exposed on the host of the environments
+    exposurePath: z
+        .string()
+        .trim()
+        .refine(value => value === "" || (value.length <= 256 && EXPOSURE_PATH.test(value)), messages.exposurePath),
     image: z.object({ repository: z.string().optional() }).optional(),
     // One per environment, in their order; blank: not exposed there
     urls: z.array(

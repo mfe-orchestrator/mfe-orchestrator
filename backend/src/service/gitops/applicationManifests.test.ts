@@ -68,6 +68,19 @@ describe("renderApplicationValues", () => {
         expect(parse(render({ urls: [{ environmentId: new Types.ObjectId(), url: "https://other.example.com" }] })).ingress).toBeUndefined()
     })
 
+    it("given an exposure path and a Gateway, when its values are rendered, then the route is on the Gateway with the path", () => {
+        const values = parse(renderApplicationValues({ ...application, exposurePath: "/api/orders" }, environment, mapNames, { name: "mfe-shop-1a2b3c", listener: "https", hsts: true }))
+
+        expect(values.route).toEqual({ gateway: "mfe-shop-1a2b3c", listener: "https", path: "/api/orders", hsts: true })
+    })
+
+    it.each([
+        ["no exposure path", {}, { name: "mfe-shop-1a2b3c", listener: "https", hsts: true }],
+        ["no Gateway in the environment", { exposurePath: "/api/orders" }, undefined]
+    ])("given %s, when its values are rendered, then there is no route", (_case, overrides, gateway) => {
+        expect(parse(renderApplicationValues({ ...application, ...overrides }, environment, mapNames, gateway)).route).toBeUndefined()
+    })
+
     it("given a port and a liveness path, when its values are rendered, then the container port and the liveness probe follow them", () => {
         const values = parse(render())
 
@@ -80,5 +93,6 @@ describe("CHART_FILES", () => {
     it("given the chart, when its files are listed, then they all sit in the chart folder and include Chart.yaml", () => {
         expect(CHART_FILES.every(file => file.path.startsWith(`${APPLICATIONS_CHART_FOLDER}/`))).toBe(true)
         expect(CHART_FILES.map(file => file.path)).toContain(`${APPLICATIONS_CHART_FOLDER}/Chart.yaml`)
+        expect(CHART_FILES.map(file => file.path)).toContain(`${APPLICATIONS_CHART_FOLDER}/templates/httproute.yaml`)
     })
 })

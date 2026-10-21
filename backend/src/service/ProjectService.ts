@@ -20,6 +20,7 @@ import Service from "../models/ServiceModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { ConfigMap, Secret } from "../models/VariableMapModel"
+import { CERTIFICATE_ISSUER, DOMAIN_NAME } from "../types/Exposure"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
 import { slugify } from "../utils/slugUtils"
@@ -46,6 +47,23 @@ export interface ProjectUpdateInput {
     isActive?: boolean
     /** Turning it on commits every config map and secret to the repository: refused when that push fails */
     gitOps?: GitOpsSettingsInput
+    /** Replaced as a whole, `null` removes it: the next deploy of each environment takes its Gateway away */
+    exposure?: { domain: string; certificateIssuer?: string | null } | null
+}
+
+/** The exposure to store, trimmed and in lowercase: refused with a 400 rather than by the model with a 500 */
+const exposureOf = (input: unknown): { domain: string; certificateIssuer?: string } => {
+    const { domain, certificateIssuer } = (input ?? {}) as { domain?: unknown; certificateIssuer?: unknown }
+    const normalized = typeof domain === "string" ? domain.trim().toLowerCase() : ""
+    const issuer = typeof certificateIssuer === "string" ? certificateIssuer.trim() : ""
+    if (!DOMAIN_NAME.test(normalized) || (certificateIssuer != null && typeof certificateIssuer !== "string") || (issuer && !CERTIFICATE_ISSUER.test(issuer))) {
+        throw createBusinessException({
+            code: "PROJECT_EXPOSURE_INVALID",
+            message: "The exposure needs a lowercase domain of at least two labels, e.g. example.com, and, if any, the name of a ClusterIssuer",
+            statusCode: 400
+        })
+    }
+    return { domain: normalized, ...(issuer ? { certificateIssuer: issuer } : {}) }
 }
 
 interface ContextEntry {
@@ -341,6 +359,11 @@ export class ProjectService extends BaseAuthorizedService {
             }
             if (projectData.gitOps !== undefined) {
                 updateData.gitOps = await new GitOpsService(this.user).resolveSettings(projectId, projectData.gitOps)
+            }
+            if (projectData.exposure === null) {
+                updateData.$unset = { ...updateData.$unset, exposure: 1 }
+            } else if (projectData.exposure !== undefined) {
+                updateData.exposure = exposureOf(projectData.exposure)
             }
             for (const field of ["description", "context"] as const) {
                 if (projectData[field] === null) {

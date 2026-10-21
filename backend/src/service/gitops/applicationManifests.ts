@@ -19,6 +19,8 @@ export interface GitOpsApplication {
     version?: string
     image?: { repository?: string }
     port?: number
+    /** The path it is exposed at on the host of every environment */
+    exposurePath?: string | null
     livenessPath?: string
     readinessPath?: string
     urls?: Array<{ environmentId: unknown; url: string }>
@@ -52,17 +54,28 @@ const ingressOf = (application: GitOpsApplication, environmentId: string) => {
     }
 }
 
+/** The Gateway of the environment the HTTPRoute of an application attaches to, and the listener it attaches to */
+export interface ApplicationGateway {
+    name: string
+    listener: string
+    /** HTTPS: every answer tells the browser to stay on it */
+    hsts: boolean
+}
+
 /**
  * The values of one application in one environment. The config maps and the secrets go by name: the
- * configuration repository holds them, as manifests in the namespace of the environment.
+ * configuration repository holds them, as manifests in the namespace of the environment. With a Gateway in
+ * the environment, an application with an exposure path gets a route on it.
  */
 export const renderApplicationValues = (
     application: GitOpsApplication & { version: string; image: { repository: string } },
     environment: { _id: unknown; slug: string },
-    mapNames: { configMaps: Map<string, string>; secrets: Map<string, string> }
+    mapNames: { configMaps: Map<string, string>; secrets: Map<string, string> },
+    gateway?: ApplicationGateway
 ): string => {
     const names = (ids: unknown[] | undefined, byId: Map<string, string>) => (ids ?? []).map(id => byId.get(String(id))).filter((name): name is string => Boolean(name))
     const ingress = ingressOf(application, String(environment._id))
+    const route = gateway && application.exposurePath ? { gateway: gateway.name, listener: gateway.listener, path: application.exposurePath, hsts: gateway.hsts } : undefined
     const values = {
         replicas: 1,
         image: { ...splitImage(application.image.repository), tag: application.version },
@@ -73,7 +86,8 @@ export const renderApplicationValues = (
         },
         environmentMaps: names(application.configMapIds, mapNames.configMaps),
         secrets: names(application.secretIds, mapNames.secrets),
-        ...(ingress ? { ingress } : {})
+        ...(ingress ? { ingress } : {}),
+        ...(route ? { route } : {})
     }
     return `${MANAGED_VALUES_MARKER}\n# Written by every deploy of ${environment.slug}: a change made here is overwritten.\n${stringify(values)}`
 }
@@ -118,6 +132,13 @@ expose:
 #   host: orders.example.com
 #   path: /
 #   annotations: {}
+
+# An HTTPRoute on the Gateway of the environment, which owns the host: the prefix is stripped
+# route:
+#   gateway: mfe-shop-1a2b3c
+#   listener: https
+#   path: /api/orders
+#   hsts: true
 `
 
 const DEPLOYMENT_TEMPLATE = `apiVersion: apps/v1
@@ -248,11 +269,55 @@ spec:
 {{- end }}
 `
 
+/**
+ * The application on the Gateway of the environment, under its path. The path is stripped, so that the
+ * container answers at its root whatever it is exposed at; `/` leaves it as it is.
+ */
+const HTTPROUTE_TEMPLATE = `{{- if and .Values.route (gt (int .Values.replicas) 0) }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  parentRefs:
+    - name: {{ .Values.route.gateway }}
+      {{- with .Values.route.listener }}
+      sectionName: {{ . }}
+      {{- end }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ .Values.route.path | quote }}
+      {{- if or (ne .Values.route.path "/") .Values.route.hsts }}
+      filters:
+        {{- if ne .Values.route.path "/" }}
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+        {{- end }}
+        {{- if .Values.route.hsts }}
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Strict-Transport-Security
+                value: "max-age=31536000"
+        {{- end }}
+      {{- end }}
+      backendRefs:
+        - name: {{ .Release.Name }}
+          port: 80
+{{- end }}
+`
+
 /** Written on a branch only when it is not there yet: the chart is the team's to change afterwards */
 export const CHART_FILES: Array<{ path: string; content: string }> = [
     { path: `${APPLICATIONS_CHART_FOLDER}/Chart.yaml`, content: CHART_YAML },
     { path: `${APPLICATIONS_CHART_FOLDER}/values.yaml`, content: CHART_VALUES },
     { path: `${APPLICATIONS_CHART_FOLDER}/templates/deployment.yaml`, content: DEPLOYMENT_TEMPLATE },
     { path: `${APPLICATIONS_CHART_FOLDER}/templates/service.yaml`, content: SERVICE_TEMPLATE },
-    { path: `${APPLICATIONS_CHART_FOLDER}/templates/ingress.yaml`, content: INGRESS_TEMPLATE }
+    { path: `${APPLICATIONS_CHART_FOLDER}/templates/ingress.yaml`, content: INGRESS_TEMPLATE },
+    { path: `${APPLICATIONS_CHART_FOLDER}/templates/httproute.yaml`, content: HTTPROUTE_TEMPLATE }
 ]

@@ -57,6 +57,8 @@ export interface Service {
     readinessPath: string
     /** The UI of the public API documentation; blank or null when the service has none */
     docsPath?: string | null
+    /** Il path su cui e' esposto sull'host di ogni ambiente, es. /api/orders; null se non e' esposto */
+    exposurePath?: string | null
     /** The OpenAPI spec; blank or null when the service has none */
     openApiPath?: string | null
     /** One per environment it is exposed in; an environment left out has no known address */

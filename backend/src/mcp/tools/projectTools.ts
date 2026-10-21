@@ -3,6 +3,7 @@ import { createBusinessException } from "../../errors/BusinessException"
 import { CONTEXT_MAX_LENGTH } from "../../models/ProjectModel"
 import MarketService from "../../service/MarketService"
 import ProjectService, { ContextFocus } from "../../service/ProjectService"
+import { CERTIFICATE_ISSUER, DOMAIN_NAME } from "../../types/Exposure"
 import { MCP_SCOPE_READ, MCP_SCOPE_WRITE } from "../../utils/oauthConfig"
 import { defineTool, NO_INPUT, objectId, READ_ONLY, WRITE } from "../toolDefinition"
 
@@ -47,13 +48,27 @@ export const projectTools = [
     defineTool({
         name: "project_update",
         title: "Update project",
-        description: "Renames the project or changes its description or its context (markdown notes for AI agents, replaced as a whole). Pass description or context null to remove it.",
+        description:
+            "Renames the project or changes its description, its context (markdown notes for AI agents, replaced as a whole) or where it is exposed. Pass description, context or exposure null to remove it.",
         scope: MCP_SCOPE_WRITE,
         annotations: { ...WRITE, idempotentHint: true },
         inputSchema: z.object({
             name: z.string().min(1).max(255).optional(),
             description: z.string().max(2000).nullable().optional(),
-            context: z.string().max(CONTEXT_MAX_LENGTH).nullable().optional()
+            context: z.string().max(CONTEXT_MAX_LENGTH).nullable().optional(),
+            exposure: z
+                .object({
+                    domain: z.string().regex(DOMAIN_NAME, "a lowercase domain of at least two labels, e.g. example.com").describe("Domain each environment is exposed on, under its subdomain"),
+                    certificateIssuer: z
+                        .string()
+                        .regex(CERTIFICATE_ISSUER, "the name of a Kubernetes resource")
+                        .nullable()
+                        .optional()
+                        .describe("cert-manager ClusterIssuer the TLS certificate of each environment is asked of; without one, HTTP only")
+                })
+                .nullable()
+                .optional()
+                .describe("Where GitOps exposes the environments: a Traefik Gateway per environment, an HTTPRoute per application with its exposurePath. Replaced as a whole")
         }),
         run: (args, { principal, projectId }) => new ProjectService(principal).update(projectId, args)
     }),

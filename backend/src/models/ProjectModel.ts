@@ -1,4 +1,5 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import { CERTIFICATE_ISSUER, DOMAIN_NAME } from "../types/Exposure"
 import { encryptedFields } from "../utils/encryptedFieldsPlugin"
 import type { ICodeRepositoryMicrofrontend } from "./MicrofrontendModel"
 
@@ -69,6 +70,16 @@ export interface IProjectArgoCd {
     initializingAt?: Date
 }
 
+/**
+ * Where the environments of the project are exposed, each on its subdomain of `domain`: GitOps commits a
+ * Gateway for each of them, and an HTTPRoute for each application with the path it is exposed at.
+ */
+export interface IProjectExposure {
+    domain: string
+    /** The cert-manager ClusterIssuer the certificate of each environment is asked of; without one, HTTP only */
+    certificateIssuer?: string
+}
+
 /** The credentials of Argo CD the console keeps: encrypted at rest, never sent to a client */
 export const PROJECT_SECRET_PATHS = ["argoCd.token", "argoCd.repositories.configuration.password", "argoCd.repositories.applications.password"]
 
@@ -84,6 +95,7 @@ export interface IProject extends Document<ObjectId> {
     gitOps?: IProjectGitOps
     /** Apart from gitOps: saving the GitOps settings replaces that object whole */
     argoCd?: IProjectArgoCd
+    exposure?: IProjectExposure
     /**
      * The AIs of the organization the project may use, by id (`system` for the one of the environment).
      * Unset: all of them, the ones added later included. Empty: AI is off for the project.
@@ -134,6 +146,16 @@ const projectSchema = new Schema<IProject>(
         },
         // Written by ArgoCdService only
         argoCd: { type: Schema.Types.Mixed },
+        exposure: {
+            type: new Schema<IProjectExposure>(
+                {
+                    domain: { type: String, required: true, trim: true, lowercase: true, match: DOMAIN_NAME },
+                    certificateIssuer: { type: String, trim: true, match: CERTIFICATE_ISSUER }
+                },
+                { _id: false }
+            ),
+            required: false
+        },
         // No default: an empty array would turn AI off, where unset means every AI of the organization
         aiModelIds: { type: [String], default: undefined }
     },

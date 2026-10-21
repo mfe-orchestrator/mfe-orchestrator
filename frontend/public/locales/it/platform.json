@@ -215,6 +215,16 @@
             "hint": "Supporta Markdown. Gli agenti lo leggono con il tool context_get insieme al contesto di ogni microfrontend.",
             "tooLong": "Il contesto può contenere al massimo {{max}} caratteri"
         },
+        "exposure": {
+            "title": "Esposizione",
+            "subtitle": "Il dominio su cui sono esposti gli ambienti, ognuno sotto il suo sottodominio. A ogni deploy GitOps fa il commit di un Gateway Traefik per ambiente e di una HTTPRoute per ogni servizio e frontend con un path di esposizione. Un Argo CD configurato prima di salvarlo va inizializzato di nuovo perché applichi i Gateway.",
+            "domain": "Dominio",
+            "domain_hint": "Es. example.com. Se vuoto, gli ambienti non sono esposti: il prossimo deploy ne toglie il Gateway.",
+            "domain_invalid": "Un dominio in minuscolo di almeno due etichette, es. example.com",
+            "certificate_issuer": "Emittente del certificato",
+            "certificate_issuer_hint": "La ClusterIssuer di cert-manager a cui chiedere il certificato TLS di ogni ambiente. Se vuota, solo HTTP.",
+            "certificate_issuer_invalid": "Lettere minuscole, numeri, punti e trattini, che iniziano e finiscono con una lettera o un numero"
+        },
         "gitOps": {
             "title": "GitOps per ambienti, config map e secret",
             "subtitle": "Salvare config map, secret o ambienti non fa alcun commit: ogni Deploy fa il commit di ciò che rilascia. Sul repository di configurazione, sul branch di default: namespaces/<ambiente>.yaml, configMaps/<ambiente>/<nome>.yaml e secrets/<ambiente>/<nome>.yaml. Facoltativamente, sul repository delle applicazioni: un branch per ambiente con un file di values Helm per ogni servizio e frontend che ha un'immagine e una versione, più un chart Helm condiviso in microservice-chart/, scritto solo se manca così puoi personalizzarlo.",
@@ -246,6 +256,9 @@
                 "viewer_forbidden": "Un viewer non può rilasciare ciò che viene committato sui repository GitOps",
                 "busy": "È in corso il commit di un altro deploy sul repository GitOps: riprova tra un momento",
                 "environment_slug_invalid": "Lo slug dell'ambiente {{slug}} non può essere un namespace Kubernetes: usa fino a 63 lettere minuscole, cifre e trattini, iniziando e finendo con una lettera o una cifra",
+                "environment_subdomain_invalid": "Il sottodominio dell'ambiente {{slug}} non è valido: etichette DNS di lettere minuscole, numeri e trattini, separate da punti",
+                "environment_host_taken": "Gli ambienti {{slug}} e {{name}} sono entrambi esposti su {{url}}: dai a ognuno un sottodominio diverso",
+                "exposure_path_taken": "{{slug}} e {{name}} sono entrambi esposti su {{url}}: dai a ognuno un path di esposizione diverso",
                 "invalid_repository_name": "Il nome del repository non è valido: usa lettere, cifre, punti, trattini e underscore",
                 "repository_name_taken": "Esiste già un repository con questo nome sul provider, forse lasciato da un tentativo fallito: sceglilo dall'elenco o scegli un altro nome"
             }
@@ -311,7 +324,9 @@
             "projectUpdated": "Progetto aggiornato",
             "projectUpdateFailed": "Impossibile aggiornare il progetto",
             "contextUpdated": "Contesto del progetto aggiornato",
-            "contextUpdateFailed": "Impossibile aggiornare il contesto del progetto"
+            "contextUpdateFailed": "Impossibile aggiornare il contesto del progetto",
+            "exposureUpdated": "Esposizione salvata: vale dal prossimo deploy di ogni ambiente",
+            "exposureUpdateFailed": "Non è stato possibile salvare l'esposizione"
         }
     },
     "theme": {
@@ -606,7 +621,11 @@
                 "name_required": "Il nome è obbligatorio",
                 "slug_required": "Lo slug è obbligatorio",
                 "slug_invalid": "Lo slug può contenere solo lettere minuscole, numeri e trattini"
-            }
+            },
+            "subdomain": "Sottodominio",
+            "subdomain_placeholder": "dev",
+            "subdomain_description": "Esposto su {{host}}. Se vuoto, sul dominio stesso del progetto.",
+            "subdomain_invalid": "Etichette DNS di lettere minuscole, numeri e trattini, separate da punti"
         },
         "table": {
             "name": "Nome",
@@ -2128,6 +2147,9 @@
         "docs_path_hint": "Facoltativo. La pagina della documentazione pubblica delle API, es. /docs",
         "openapi_path": "Percorso specifica OpenAPI",
         "openapi_path_hint": "Facoltativo. Es. /openapi.json",
+        "exposure_path": "Path di esposizione",
+        "exposure_path_hint": "Facoltativo. Dove risponde sull'host di ogni ambiente, es. /api/orders: il prefisso viene tolto prima di arrivare al container",
+        "exposure_path_invalid": "Un path che una HTTPRoute accetta: inizia con /, lettere, numeri e -._~!$&'()*+,;=:@ o %XX, senza query, frammento, // né segmenti . o ..",
         "path_invalid": "Deve iniziare con \"/\", avere al massimo 256 caratteri e nessuno spazio",
         "image_repository": "Repository immagine",
         "image_repository_hint": "Facoltativo. Es. ghcr.io/acme/orders-api",

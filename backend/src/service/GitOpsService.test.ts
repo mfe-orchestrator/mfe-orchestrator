@@ -1,6 +1,6 @@
 import { Types } from "mongoose"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { parse } from "yaml"
+import { parse, parseAllDocuments } from "yaml"
 
 vi.mock("..", () => ({ fastify: { log: { error: vi.fn() }, config: { REPOSITORIES_FOLDER: "/repositories" } } }))
 
@@ -375,6 +375,121 @@ describe("GitOpsService.deploy", () => {
         await expect(deployOf(production)(run)).rejects.toMatchObject({ code: "GITOPS_ENVIRONMENT_SLUG_INVALID" })
         expect(commit).not.toHaveBeenCalled()
         expect(run).not.toHaveBeenCalled()
+    })
+
+    describe("with the project exposed on a domain", () => {
+        const exposedOn = (exposure: object | undefined, gitOps: object = { enabled: true, codeRepository: link }) =>
+            vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, slug: "shop", gitOps, exposure } as never)
+        const documentsOf = (content: string) => parseAllDocuments(content).map(document => document.toJSON())
+        const subdomains = (ofDevelopment?: string, ofProduction?: string) =>
+            vi.spyOn(Environment, "find").mockResolvedValue([
+                { _id: development, slug: "development", subdomain: ofDevelopment, projectId },
+                { _id: production, slug: "production", subdomain: ofProduction, projectId }
+            ] as never)
+
+        it("given a domain with an issuer, when production is deployed, then its Gateway answers on its subdomain with a certificate and a redirect to HTTPS", async () => {
+            exposedOn({ domain: "example.com", certificateIssuer: "letsencrypt" })
+            vi.spyOn(Environment, "find").mockResolvedValue([
+                { _id: development, slug: "development", subdomain: "dev", projectId },
+                { _id: production, slug: "production", subdomain: "app", projectId }
+            ] as never)
+
+            await deployOf(production)()
+
+            const [, files] = commit.mock.calls[0]
+            expect(files.map(file => file.path)).toEqual(["namespaces/production.yaml", "gateways/production.yaml", "configMaps/production/logging.yaml", "secrets/production/database.yaml"])
+            const [certificate, gateway, redirect] = documentsOf(files[1].content!)
+            expect(certificate).toMatchObject({
+                kind: "Certificate",
+                metadata: { namespace: "production" },
+                spec: { dnsNames: ["app.example.com"], issuerRef: { name: "letsencrypt", kind: "ClusterIssuer" } }
+            })
+            expect(gateway).toMatchObject({ kind: "Gateway", metadata: { namespace: "production" }, spec: { gatewayClassName: "traefik" } })
+            expect(gateway.spec.listeners.map((listener: { name: string; hostname: string }) => [listener.name, listener.hostname])).toEqual([
+                ["http", "app.example.com"],
+                ["https", "app.example.com"]
+            ])
+            expect(redirect).toMatchObject({ kind: "HTTPRoute", spec: { parentRefs: [{ name: gateway.metadata.name, sectionName: "http" }] } })
+        })
+
+        it("given an environment with no subdomain, when it is deployed, then its Gateway answers on the domain itself", async () => {
+            exposedOn({ domain: "example.com" })
+            subdomains("dev", undefined)
+
+            await deployOf(production)()
+
+            const gateway = commit.mock.calls[0][1].find(file => file.path === "gateways/production.yaml")!
+            const documents = documentsOf(gateway.content!)
+            expect(documents.map(document => document.kind)).toEqual(["Gateway"])
+            expect(documents[0].spec.listeners).toEqual([expect.objectContaining({ name: "http", hostname: "example.com", port: 8000 })])
+        })
+
+        it("given no domain, when production is deployed, then no Gateway is committed and the one it had is pruned", async () => {
+            exposedOn(undefined)
+
+            await deployOf(production)()
+
+            const [, files, options] = commit.mock.calls[0]
+            expect(files.map(file => file.path)).not.toContain("gateways/production.yaml")
+            expect(options!.prune!("gateways/production.yaml")).toBe(true)
+            expect(options!.prune!("gateways/development.yaml")).toBe(false)
+        })
+
+        it("given two environments with no subdomain, when one is deployed, then it is refused before anything is committed", async () => {
+            exposedOn({ domain: "example.com" })
+            subdomains(undefined, undefined)
+            const run = vi.fn()
+
+            await expect(deployOf(production)(run)).rejects.toMatchObject({ code: "GITOPS_ENVIRONMENT_HOST_TAKEN" })
+            expect(commit).not.toHaveBeenCalled()
+            expect(run).not.toHaveBeenCalled()
+        })
+
+        it("given a subdomain that is not made of DNS labels, when it is deployed, then it is refused before anything is committed", async () => {
+            exposedOn({ domain: "example.com" })
+            subdomains("dev", "app_1")
+
+            await expect(deployOf(production)(vi.fn())).rejects.toMatchObject({ code: "GITOPS_ENVIRONMENT_SUBDOMAIN_INVALID" })
+            expect(commit).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            ["an issuer", { domain: "example.com", certificateIssuer: "letsencrypt" }, { listener: "https", hsts: true }],
+            ["no issuer", { domain: "example.com" }, { listener: "http", hsts: false }]
+        ])("given %s and a service with an exposure path, when the applications are committed, then its route is on the Gateway of the environment", async (_case, exposure, expected) => {
+            exposedOn(exposure, { enabled: true, codeRepository: link, applicationsCodeRepository: applicationsLink })
+            subdomains("dev", "app")
+            vi.spyOn(Service, "find").mockResolvedValue([
+                { slug: "orders-api", version: "1.4.0", image: { repository: "ghcr.io/acme/orders-api" }, exposurePath: "/api/orders" },
+                { slug: "billing-api", version: "1.0.0", image: { repository: "ghcr.io/acme/billing-api" } }
+            ] as never)
+
+            await deployOf(production)()
+
+            const files = applicationsCommit.mock.calls[0][1]
+            const gateway = documentsOf(commit.mock.calls[0][1].find(file => file.path === "gateways/production.yaml")!.content!).find(document => document.kind === "Gateway")
+            expect(parse(files.find(file => file.path === "orders-api.yaml")!.content!).route).toEqual({ gateway: gateway.metadata.name, path: "/api/orders", ...expected })
+            expect(parse(files.find(file => file.path === "billing-api.yaml")!.content!).route).toBeUndefined()
+        })
+    })
+
+    describe("with two applications exposed at the same path", () => {
+        it("given a service and a frontend at /api, when an environment is deployed, then it is refused before anything is committed", async () => {
+            vi.spyOn(Project, "findById").mockResolvedValue({
+                _id: projectId,
+                slug: "shop",
+                gitOps: { enabled: true, codeRepository: link, applicationsCodeRepository: applicationsLink },
+                exposure: { domain: "example.com" }
+            } as never)
+            vi.spyOn(Environment, "find").mockResolvedValue([{ _id: production, slug: "production", projectId }] as never)
+            vi.spyOn(Service, "find").mockResolvedValue([{ slug: "orders-api", version: "1.0.0", image: { repository: "ghcr.io/acme/orders-api" }, exposurePath: "/api" }] as never)
+            vi.spyOn(Microfrontend, "find").mockResolvedValue([{ slug: "shell", version: "2.0.0", image: { repository: "ghcr.io/acme/shell" }, exposurePath: "/api/" }] as never)
+            const run = vi.fn()
+
+            await expect(deployOf(production)(run)).rejects.toMatchObject({ code: "GITOPS_EXPOSURE_PATH_TAKEN" })
+            expect(commit).not.toHaveBeenCalled()
+            expect(run).not.toHaveBeenCalled()
+        })
     })
 
     describe("with an applications repository", () => {
