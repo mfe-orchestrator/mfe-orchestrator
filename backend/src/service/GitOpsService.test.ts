@@ -316,6 +316,38 @@ describe("GitOpsService.deploy", () => {
         expect(run).not.toHaveBeenCalled()
     })
 
+    it("given an environment with its own namespace, when it is deployed, then the Namespace and the maps are named after it and the files after the slug", async () => {
+        gitOpsOn()
+        vi.spyOn(Environment, "find").mockResolvedValue([{ _id: production, slug: "production", namespace: "shop-prod", projectId }] as never)
+
+        await deployOf(production)(vi.fn())
+
+        const [, files] = commit.mock.calls[0]
+        expect(files.map(file => file.path)).toEqual(["namespaces/production.yaml", "configMaps/production/logging.yaml", "secrets/production/database.yaml"])
+        expect(parse(files[0].content!)).toMatchObject({ kind: "Namespace", metadata: { name: "shop-prod" } })
+        expect(parse(files[1].content!).metadata.namespace).toBe("shop-prod")
+        expect(parse(files[2].content!).metadata.namespace).toBe("shop-prod")
+    })
+
+    it("given an environment with no namespace, when it is deployed, then the maps go in the namespace named as its slug", async () => {
+        gitOpsOn()
+
+        await deployOf(production)(vi.fn())
+
+        const [, files] = commit.mock.calls[0]
+        expect(parse(files[1].content!).metadata.namespace).toBe("production")
+    })
+
+    it("given an environment namespace that is not a DNS label, when it is deployed, then it is refused before anything is committed", async () => {
+        gitOpsOn()
+        vi.spyOn(Environment, "find").mockResolvedValue([{ _id: production, slug: "production", namespace: "Shop_Prod", projectId }] as never)
+        const run = vi.fn()
+
+        await expect(deployOf(production)(run)).rejects.toMatchObject({ code: "GITOPS_ENVIRONMENT_NAMESPACE_INVALID" })
+        expect(commit).not.toHaveBeenCalled()
+        expect(run).not.toHaveBeenCalled()
+    })
+
     it("given an environment slug that is not a DNS label, when it is deployed, then it is refused before anything is committed", async () => {
         gitOpsOn()
         vi.spyOn(Environment, "find").mockResolvedValue([{ _id: production, slug: "Prod_1", projectId }] as never)

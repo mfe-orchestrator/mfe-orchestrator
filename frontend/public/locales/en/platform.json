@@ -1078,7 +1078,11 @@
             "color": "Color",
             "color_required": "Color is required",
             "domains": "Allowed Domains",
-            "domains_placeholder": "Enter a domain and press Enter or comma to add (e.g., example.com)"
+            "domains_placeholder": "Enter a domain and press Enter or comma to add (e.g., example.com)",
+            "namespace": "Kubernetes namespace",
+            "namespace_placeholder": "Same as the slug",
+            "namespace_description": "Where GitOps commits the environment. Left empty, it is the slug.",
+            "namespace_invalid": "Up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit"
         }
     },
     "storage": {

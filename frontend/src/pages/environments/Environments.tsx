@@ -41,6 +41,7 @@ interface EnvironmentDialogFormData {
     color?: string
     isProduction?: boolean
     domains?: string[]
+    namespace?: string
 }
 
 interface EnvironmentDialogProps {
@@ -57,6 +58,9 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
     const form = useForm<EnvironmentDialogFormData>()
     const environemtnApi = useEnvironmentsApi()
     const notifications = useToastNotificationStore()
+    // Il namespace serve solo a GitOps: senza, l'ambiente non finisce in nessun cluster
+    const isGitOpsEnabled = Boolean(useProjectStore(state => state.project?.gitOps?.enabled))
+    const slug = form.watch("slug")
 
     const onSubmit = async (data: EnvironmentDialogFormData) => {
         if (isEdit) {
@@ -112,6 +116,21 @@ function EnvironmentDialog({ isOpen, onOpenChange, onSubmitSuccess, formData, id
                             disabled={isEdit}
                             required
                         />
+                        {isGitOpsEnabled && (
+                            <TextField
+                                name="namespace"
+                                dataTestId="environment-namespace"
+                                label={t("environment.form.namespace")}
+                                placeholder={slug || t("environment.form.namespace_placeholder")}
+                                description={t("environment.form.namespace_description")}
+                                rules={{
+                                    pattern: {
+                                        value: /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)?$/,
+                                        message: t("environment.form.namespace_invalid")
+                                    }
+                                }}
+                            />
+                        )}
                         <TextareaField name="description" label={t("environment.form.description")} placeholder={t("environment.form.description_placeholder")} />
                         <TextareaChipsField name="domains" label={t("environment.form.domains")} placeholder={t("environment.form.domains_placeholder")} />
                         <div className="flex gap-4 flex-row justify-between">

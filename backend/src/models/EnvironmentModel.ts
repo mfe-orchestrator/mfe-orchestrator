@@ -10,6 +10,8 @@ export interface IEnvironment extends Document<ObjectId> {
     url?: string
     order: number
     domains?: string[]
+    /** The Kubernetes namespace GitOps commits the environment to; its slug when unset */
+    namespace?: string
 }
 
 const environmentSchema = new Schema<IEnvironment>(
@@ -36,6 +38,10 @@ const environmentSchema = new Schema<IEnvironment>(
         domains: {
             type: [String],
             required: false
+        },
+        namespace: {
+            type: String,
+            trim: true
         },
         projectId: {
             type: Schema.Types.ObjectId,

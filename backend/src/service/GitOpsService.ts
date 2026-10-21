@@ -56,7 +56,7 @@ export interface CommittedVariableMap {
 /** The folder of each kind at the root of the repository, then one folder per environment slug */
 export const GITOPS_FOLDER: Record<VariableMapKind, string> = { configMap: "configMaps", secret: "secrets" }
 
-/** The Namespace manifest of every environment, named after its slug */
+/** The Namespace manifest of every environment, in a file named after its slug */
 export const NAMESPACES_FOLDER = "namespaces"
 
 /** Local branch the commit is made on before it is pushed onto the default one */
@@ -85,6 +85,19 @@ const environmentSlug = (environment: Pick<IEnvironment, "slug">): string => {
     return environment.slug
 }
 
+/** The namespace the environment is deployed to: the one set on it, its slug when it has none */
+const environmentNamespace = (environment: Pick<IEnvironment, "slug" | "namespace">): string => {
+    if (!environment.namespace) return environmentSlug(environment)
+    if (!ENVIRONMENT_SLUG.test(environment.namespace)) {
+        throw createBusinessException({
+            code: "GITOPS_ENVIRONMENT_NAMESPACE_INVALID",
+            message: `The namespace "${environment.namespace}" of the environment ${environment.slug} is not a Kubernetes namespace: up to 63 lowercase letters, digits and dashes, starting and ending with a letter or a digit`,
+            details: { slug: environment.slug, namespace: environment.namespace }
+        })
+    }
+    return environment.namespace
+}
+
 export const gitOpsFilePath = (kind: VariableMapKind, environment: Pick<IEnvironment, "slug">, name: string) => `${GITOPS_FOLDER[kind]}/${environmentSlug(environment)}/${name}.yaml`
 
 export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `${NAMESPACES_FOLDER}/${environmentSlug(environment)}.yaml`
@@ -92,22 +105,22 @@ export const namespaceFilePath = (environment: Pick<IEnvironment, "slug">) => `$
 /**
  * The Kubernetes manifest of a map in one environment. A key with no value there is left out, as the
  * container would not get it. Secrets go as `stringData`: the values are in plaintext in the repository,
- * which is what the project asked for by turning GitOps on.
+ * which is what the project asked for by turning GitOps on. With `namespace` the manifest says where it goes.
  */
-export const renderManifest = (kind: VariableMapKind, map: CommittedVariableMap, environmentId: string): string => {
+export const renderManifest = (kind: VariableMapKind, map: CommittedVariableMap, environmentId: string, namespace?: string): string => {
     const data: Record<string, string> = {}
     for (const entry of map.entries) {
         const value = entry.values?.find(candidate => String(candidate.environmentId) === environmentId)?.value
         if (value !== undefined && value !== "") data[entry.key] = value
     }
-    const metadata = { name: map.name, labels: { [MANAGED_BY_LABEL]: MANAGED_BY } }
+    const metadata = { name: map.name, ...(namespace ? { namespace } : {}), labels: { [MANAGED_BY_LABEL]: MANAGED_BY } }
     const manifest = kind === "secret" ? { apiVersion: "v1", kind: "Secret", metadata, type: "Opaque", stringData: data } : { apiVersion: "v1", kind: "ConfigMap", metadata, data }
     return stringify(manifest)
 }
 
 /** The Namespace of an environment, the one its config maps and secrets are meant to be applied in */
-export const renderNamespace = (environment: Pick<IEnvironment, "slug">): string =>
-    stringify({ apiVersion: "v1", kind: "Namespace", metadata: { name: environmentSlug(environment), labels: { [MANAGED_BY_LABEL]: MANAGED_BY } } })
+export const renderNamespace = (environment: Pick<IEnvironment, "slug" | "namespace">): string =>
+    stringify({ apiVersion: "v1", kind: "Namespace", metadata: { name: environmentNamespace(environment), labels: { [MANAGED_BY_LABEL]: MANAGED_BY } } })
 
 /** The first commit of a repository created for GitOps: it gives the repository the default branch the deploys start from */
 const GITOPS_README: Record<GitOpsRepositoryKind, string> = {
@@ -115,9 +128,9 @@ const GITOPS_README: Record<GitOpsRepositoryKind, string> = {
 
 Committed by MFE Orchestrator every time environments of the project are deployed, for each of them:
 
-- \`namespaces/<environment>.yaml\`: the Namespace of the environment
-- \`configMaps/<environment>/<name>.yaml\`: the ConfigMaps
-- \`secrets/<environment>/<name>.yaml\`: the Secrets, values in plaintext
+- \`namespaces/<environment>.yaml\`: the Namespace of the environment, named as set on it or as its slug
+- \`configMaps/<environment>/<name>.yaml\`: the ConfigMaps, in that namespace
+- \`secrets/<environment>/<name>.yaml\`: the Secrets, in that namespace, values in plaintext
 
 Do not edit these manifests here: the next deploy of the environment overwrites them.
 `,
@@ -129,7 +142,7 @@ One branch per environment, named as its slug, committed by MFE Orchestrator eve
 - \`microservice-chart/\`: the Helm chart they are installed with, written once: change it as the cluster needs
 
 Point an Argo CD Application per application and environment at \`microservice-chart\` on the branch of the
-environment, with \`../<application>.yaml\` as values file. Do not edit the values files: the next deploy overwrites them.
+environment, with \`../<application>.yaml\` as values file and the namespace of the environment as destination. Do not edit the values files: the next deploy overwrites them.
 `
 }
 
@@ -162,12 +175,15 @@ const isConfigurationManifest = (path: string) => path.endsWith(".yaml") && CONF
 type DeployedMap = CommittedVariableMap & { _id: unknown }
 
 /** What a deploy of one environment ships: its Namespace, and every config map and secret of the project as they are in it */
-const environmentFiles = (environment: Pick<IEnvironment, "_id" | "slug">, maps: Record<VariableMapKind, DeployedMap[]>): GitOpsFile[] => [
-    { path: namespaceFilePath(environment), action: "update", content: renderNamespace(environment) },
-    ...(Object.keys(GITOPS_FOLDER) as VariableMapKind[]).flatMap(kind =>
-        maps[kind].map(map => ({ path: gitOpsFilePath(kind, environment, map.name), action: "update" as const, content: renderManifest(kind, map, String(environment._id)) }))
-    )
-]
+const environmentFiles = (environment: Pick<IEnvironment, "_id" | "slug" | "namespace">, maps: Record<VariableMapKind, DeployedMap[]>): GitOpsFile[] => {
+    const namespace = environmentNamespace(environment)
+    return [
+        { path: namespaceFilePath(environment), action: "update", content: renderNamespace(environment) },
+        ...(Object.keys(GITOPS_FOLDER) as VariableMapKind[]).flatMap(kind =>
+            maps[kind].map(map => ({ path: gitOpsFilePath(kind, environment, map.name), action: "update" as const, content: renderManifest(kind, map, String(environment._id), namespace) }))
+        )
+    ]
+}
 
 /** Runs `next`; when it fails, `revert` puts back what was pushed for it, and the failure goes on as it was */
 const revertingOnFailure = async <T>(next: () => Promise<T>, revert: () => Promise<void>): Promise<T> => {
@@ -299,7 +315,7 @@ export class GitOpsService extends BaseAuthorizedService {
         // With GitOps on, a deploy pushes to the provider with the token of the connection
         await this.ensureNotViewer(projectId, { code: "GITOPS_VIEWER_FORBIDDEN", message: "A viewer of the project cannot change what is committed to its GitOps repositories" })
 
-        const environments = await Environment.find({ projectId }, { slug: 1 })
+        const environments = await Environment.find({ projectId }, { slug: 1, namespace: 1 })
         const deployed = environments.filter(environment => environmentIds.has(String(environment._id)))
         const maps = {} as Record<VariableMapKind, DeployedMap[]>
         // Read from the model, not through the API: a secret comes back decrypted only here

@@ -19,7 +19,12 @@ export const environmentFields = {
     description: z.string().max(2000).optional(),
     color: z.string().min(1).max(50).describe("Colour shown in the console, e.g. #22c55e"),
     isProduction: z.boolean().optional(),
-    domains: z.array(z.string().min(1)).optional().describe("Domains the host application of this environment is served on")
+    domains: z.array(z.string().min(1)).optional().describe("Domains the host application of this environment is served on"),
+    namespace: z
+        .string()
+        .regex(/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)?$/, "a DNS label: up to 63 lowercase letters, digits and dashes")
+        .optional()
+        .describe("Kubernetes namespace GitOps commits the environment to; empty or left out, it is the slug")
 }
 
 /**
