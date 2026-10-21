@@ -7,7 +7,6 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useMarketApi from "../../hooks/apiClients/useMarketApi"
-import { isServiceTemplate } from "../services/partials/serviceTemplates"
 import { BlankTemplateCard, TemplateCard } from "./partials"
 
 export const TemplatesLibrary: React.FC = () => {
@@ -17,8 +16,8 @@ export const TemplatesLibrary: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedFramework, setSelectedFramework] = useState<string>("all")
     const [selectedCompiler, setSelectedCompiler] = useState<string>("all")
+    const [hostType, setHostType] = useState<string>("all") // 'all', 'remote', 'host'
     const [getParams] = useSearchParams()
-    const [hostType, setHostType] = useState<string>(getParams.get("type") === "service" ? "service" : "all") // 'all', 'remote', 'host', 'service'
 
     const marketsQuery = useQuery({
         queryKey: ["markets"],
@@ -38,10 +37,7 @@ export const TemplatesLibrary: React.FC = () => {
     }, [marketsQuery.data])
 
     const handleCardClick = (slug: string) => {
-        // Service templates create a backend service, not a microfrontend.
-        if (marketsQuery.data?.some(market => market.slug === slug && isServiceTemplate(market))) {
-            navigate(`/service/new?template=${slug}`)
-        } else if (getParams.get("parentId")) {
+        if (getParams.get("parentId")) {
             navigate(`/microfrontend/new?template=${slug}&parentId=${getParams.get("parentId")}`)
         } else {
             navigate(`/microfrontend/new?template=${slug}`)
@@ -56,16 +52,13 @@ export const TemplatesLibrary: React.FC = () => {
         if (!marketsQuery.data) return []
 
         return marketsQuery.data.filter(market => {
-            // A microfrontend parent can only take microfrontend children.
-            if (getParams.get("parentId") && isServiceTemplate(market)) return false
             const matchesSearch = market.name.toLowerCase().includes(searchTerm.toLowerCase())
             const matchesFramework = selectedFramework === "all" || market.framework === selectedFramework
             const matchesCompiler = selectedCompiler === "all" || market.compiler === selectedCompiler
-            const matchesHostType =
-                hostType === "all" || (hostType === "remote" && market.type === "remote") || (hostType === "host" && market.type === "host") || (hostType === "service" && isServiceTemplate(market))
+            const matchesHostType = hostType === "all" || (hostType === "remote" && market.type === "remote") || (hostType === "host" && market.type === "host")
             return matchesSearch && matchesFramework && matchesCompiler && matchesHostType
         })
-    }, [marketsQuery.data, searchTerm, selectedFramework, selectedCompiler, hostType, getParams])
+    }, [marketsQuery.data, searchTerm, selectedFramework, selectedCompiler, hostType])
 
     const groupedByFramework = useMemo(() => {
         const grouped = filteredMarkets.reduce(
@@ -130,7 +123,6 @@ export const TemplatesLibrary: React.FC = () => {
                                         <SelectItem value="all">{t("market.filters.allTypes")}</SelectItem>
                                         <SelectItem value="remote">{t("market.filters.remote")}</SelectItem>
                                         <SelectItem value="host">{t("market.filters.host")}</SelectItem>
-                                        <SelectItem value="service">{t("market.filters.service")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -14,9 +14,9 @@ import useAiModelsApi, {
     LLM_PROVIDERS,
     LlmProvider,
     ORGANIZATION_AI_MODELS_QUERY_KEY,
-    PROJECT_AI_ACCESS_QUERY_KEY
+    PROJECT_AI_ACCESS_QUERY_KEY,
+    SECRET_PLACEHOLDER
 } from "@/hooks/apiClients/useAiModelsApi"
-import { SECRET_PLACEHOLDER } from "@/hooks/apiClients/useDatabaseApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { LLM_EFFORTS, LlmEffort } from "@/types/ConfigResponseDTO"
 

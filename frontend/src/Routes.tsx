@@ -14,18 +14,9 @@ import SelectProjectWrapper from "./theme/SelectProjectWrapper"
 
 // Lazy load all page components
 const AssistantPage = lazy(() => import("./pages/assistant/AssistantPage"))
-const Domains = lazy(() => import("./pages/domains/Domains"))
-const DomainDetail = lazy(() => import("./pages/domains/DomainDetail"))
-const DomainAiWorkspace = lazy(() => import("./pages/domains/DomainAiWorkspace"))
-const DomainDeploymentsMatrix = lazy(() => import("./pages/domains/DomainDeploymentsMatrix"))
 const Microfrontends = lazy(() => import("./pages/microfrontends/Microfrontends"))
 const AddMicrofrontend = lazy(() => import("./pages/microfrontends/AddMicrofrontend"))
 const MicrofrontendAiWorkspace = lazy(() => import("./pages/microfrontends/MicrofrontendAiWorkspace"))
-const Services = lazy(() => import("./pages/services/Services"))
-const AddService = lazy(() => import("./pages/services/AddService"))
-const ServiceDetail = lazy(() => import("./pages/services/ServiceDetail"))
-const VariableMaps = lazy(() => import("./pages/variable-maps/VariableMaps"))
-const VariableMapForm = lazy(() => import("./pages/variable-maps/VariableMapForm"))
 const Dependencies = lazy(() => import("./pages/dependencies/Dependencies"))
 const Builds = lazy(() => import("./pages/builds/Builds"))
 const Deployments = lazy(() => import("./pages/deployments/Deployments"))
@@ -36,8 +27,6 @@ const ProjectUsers = lazy(() => import("./pages/project-users/ProjectUsers"))
 const OrganizationSettings = lazy(() => import("./pages/organization/OrganizationSettings"))
 const Storages = lazy(() => import("./pages/storages/Storages"))
 const AddStorage = lazy(() => import("./pages/storages/AddStorage"))
-const Databases = lazy(() => import("./pages/databases/Databases"))
-const AddDatabase = lazy(() => import("./pages/databases/AddDatabase"))
 const McpClients = lazy(() => import("./pages/mcp-clients/McpClients"))
 const OAuthConsent = lazy(() => import("./pages/oauth/OAuthConsent"))
 const OAuthError = lazy(() => import("./pages/oauth/OAuthError"))
@@ -123,25 +112,10 @@ const PrivateProjectRoutes: React.FC = () => {
         <MainLayout>
             <RRDRoutes>
                 <Route path="/assistant" element={<RouteWithSuspense element={<AssistantPage />} />} />
-                <Route path="/domains" element={<RouteWithSuspense element={<Domains />} />} />
-                <Route path="/domains/deployments" element={<RouteWithSuspense element={<DomainDeploymentsMatrix />} />} />
-                <Route path="/domain/:id" element={<RouteWithSuspense element={<DomainAiWorkspace />} />} />
-                <Route path="/domain/:id/ai" element={<RouteWithSuspense element={<DomainAiWorkspace />} />} />
-                <Route path="/domain/:id/structure" element={<RouteWithSuspense element={<DomainDetail />} />} />
                 <Route path="/microfrontends" element={<RouteWithSuspense element={<Microfrontends />} />} />
                 <Route path="/microfrontend/new" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
                 <Route path="/microfrontend/:id" element={<RouteWithSuspense element={<MicrofrontendAiWorkspace />} />} />
                 <Route path="/microfrontend/:id/settings" element={<RouteWithSuspense element={<AddMicrofrontend />} />} />
-                <Route path="/services" element={<RouteWithSuspense element={<Services />} />} />
-                <Route path="/service/new" element={<RouteWithSuspense element={<AddService />} />} />
-                <Route path="/service/:id" element={<RouteWithSuspense element={<ServiceDetail view="ai" />} />} />
-                <Route path="/service/:id/ai" element={<RouteWithSuspense element={<ServiceDetail view="ai" />} />} />
-                <Route path="/service/:id/overview" element={<RouteWithSuspense element={<ServiceDetail />} />} />
-                <Route path="/service/:id/settings" element={<RouteWithSuspense element={<AddService />} />} />
-                <Route path="/config-maps" element={<RouteWithSuspense element={<VariableMaps kind="configMap" />} />} />
-                <Route path="/config-map/:id" element={<RouteWithSuspense element={<VariableMapForm kind="configMap" />} />} />
-                <Route path="/secrets" element={<RouteWithSuspense element={<VariableMaps kind="secret" />} />} />
-                <Route path="/secret/:id" element={<RouteWithSuspense element={<VariableMapForm kind="secret" />} />} />
                 <Route path="/dependencies" element={<RouteWithSuspense element={<Dependencies />} />} />
                 <Route path="/builds" element={<RouteWithSuspense element={<Builds />} />} />
                 <Route path="/deployments">
@@ -156,9 +130,6 @@ const PrivateProjectRoutes: React.FC = () => {
                 <Route path="/storages" element={<RouteWithSuspense element={<Storages />} />} />
                 <Route path="/storages/new" element={<RouteWithSuspense element={<AddStorage />} />} />
                 <Route path="/storages/:id" element={<RouteWithSuspense element={<AddStorage />} />} />
-                <Route path="/databases" element={<RouteWithSuspense element={<Databases />} />} />
-                <Route path="/databases/new" element={<RouteWithSuspense element={<AddDatabase />} />} />
-                <Route path="/databases/:id" element={<RouteWithSuspense element={<AddDatabase />} />} />
                 <Route path="/api-keys" element={<RouteWithSuspense element={<ApiKeys />} />} />
                 <Route path="/mcp-clients" element={<RouteWithSuspense element={<McpClients />} />} />
                 <Route path="/settings" element={<RouteWithSuspense element={<Settings />} />} />

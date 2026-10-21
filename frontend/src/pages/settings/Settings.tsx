@@ -1,22 +1,20 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Bot, Database, FolderCog, GitBranch, HardDrive, Key, Rocket, Server, Settings2, Users } from "lucide-react"
+import { Bot, FolderCog, GitBranch, HardDrive, Key, Rocket, Server, Settings2, Users } from "lucide-react"
 import React from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router-dom"
 // Components
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
-import useGitOpsErrorMessage from "@/hooks/apiClients/useGitOpsErrorMessage"
 // Hooks & Stores
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
+import { errorCodeOf } from "@/hooks/useApiClient"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import { ArgoCdSection, DangerZone, GitOpsSection, PipelineTemplatesSection, ProjectContextSection, ProjectExposureSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
-import type { GitOpsFormValues } from "./partials/GitOpsSection"
+import { DangerZone, PipelineTemplatesSection, ProjectContextSection, ProjectInfoSection, ProjectStatsSection } from "./partials"
 import type { PipelineTemplatesFormValues } from "./partials/PipelineTemplatesSection"
 import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
-import type { ProjectExposureFormValues } from "./partials/ProjectExposureSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
 
 const TABS = ["general", "access", "resources", "delivery"] as const
@@ -24,9 +22,17 @@ type Tab = (typeof TABS)[number]
 
 const TAB_ICONS: Record<Tab, React.ComponentType> = { general: Settings2, access: Users, resources: FolderCog, delivery: Rocket }
 
+/** I rifiuti del salvataggio dei template di pipeline, per codice */
+const PIPELINES_ERROR_KEYS: Record<string, string> = {
+    PIPELINES_OWNER_REQUIRED: "settings.pipelines.errors.owner_required",
+    PIPELINES_REPOSITORY_REQUIRED: "settings.pipelines.errors.repository_required",
+    PIPELINES_REPOSITORY_INVALID: "settings.pipelines.errors.repository_invalid",
+    PIPELINES_REF_INVALID: "settings.pipelines.errors.ref_invalid"
+}
+
 /**
- * Le impostazioni del progetto, un tema per scheda: i dati e il contesto AI, chi vi accede, le sue risorse, come arriva
- * nei cluster. La scheda sta nell'URL (`?tab=delivery`) cosi' un link puo' puntare dritto a una di esse.
+ * Le impostazioni del progetto, un tema per scheda: i dati e il contesto AI, chi vi accede, le sue risorse, le pipeline
+ * dei repository creati da un template. La scheda sta nell'URL (`?tab=delivery`) cosi' un link puo' puntare dritto a una di esse.
  */
 export const Settings: React.FC = () => {
     const notifications = useToastNotificationStore()
@@ -35,7 +41,6 @@ export const Settings: React.FC = () => {
     const projectApi = useProjectApi()
     const navigate = useNavigate()
     const queryClient = useQueryClient()
-    const gitOpsErrorMessage = useGitOpsErrorMessage()
     const [searchParams, setSearchParams] = useSearchParams()
 
     const requestedTab = searchParams.get("tab")
@@ -86,37 +91,13 @@ export const Settings: React.FC = () => {
         }
     })
 
-    const updateExposureMutation = useMutation({
-        mutationFn: (values: ProjectExposureFormValues) =>
-            projectApi.updateProject(project._id, {
-                // Un dominio svuotato vuol dire "non esposto", che l'API esprime con un null esplicito
-                exposure: values.domain.trim()
-                    ? { domain: values.domain.trim().toLowerCase(), certificateIssuer: values.certificateIssuer.trim() || null, httpPort: values.httpPort, httpsPort: values.httpsPort }
-                    : null
-            }),
-        onSuccess: updated => {
-            // Il dialog degli ambienti legge il dominio dallo store per mostrare l'host
-            setProject({ ...project, exposure: updated.exposure })
-            queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
-            notifications.showSuccessNotification({ message: t("settings.notifications.exposureUpdated") })
-        },
-        onError: () => {
-            notifications.showErrorNotification({ message: t("settings.notifications.exposureUpdateFailed") })
-        }
-    })
-
-    const updateGitOpsMutation = useMutation({
-        mutationFn: (values: GitOpsFormValues) => projectApi.updateProject(project._id, { gitOps: values }, gitOpsErrorMessage),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
-            // Un repository appena creato deve comparire nell'elenco
-            queryClient.invalidateQueries({ queryKey: ["importable-repositories"] })
-            notifications.showSuccessNotification({ message: t("settings.gitOps.saved") })
-        }
-    })
+    const pipelinesErrorMessage = (error: Error) => {
+        const key = PIPELINES_ERROR_KEYS[errorCodeOf(error) ?? ""]
+        return key ? t(key) : undefined
+    }
 
     const updatePipelinesMutation = useMutation({
-        mutationFn: (values: PipelineTemplatesFormValues) => projectApi.updateProject(project._id, { pipelines: values }, gitOpsErrorMessage),
+        mutationFn: (values: PipelineTemplatesFormValues) => projectApi.updateProject(project._id, { pipelines: values }, pipelinesErrorMessage),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["project-summary", project._id] })
             notifications.showSuccessNotification({ message: t("settings.pipelines.saved") })
@@ -197,36 +178,12 @@ export const Settings: React.FC = () => {
                                     title: t("settings.stats.storages"),
                                     value: projectQuery.data?.count?.storages,
                                     href: "/storages"
-                                },
-                                {
-                                    icon: <Database />,
-                                    title: t("settings.stats.databases"),
-                                    value: projectQuery.data?.count?.databases,
-                                    href: "/databases"
                                 }
                             ]}
                         />
                     </TabsContent>
 
-                    {/* Nell'ordine in cui si configurano: Exposure e Argo CD lavorano su cio' che GitOps committa */}
                     <TabsContent value="delivery" className="mt-6 flex flex-col gap-6">
-                        {projectData && (
-                            <GitOpsSection
-                                projectId={projectData._id}
-                                projectSlug={projectData.slug}
-                                gitOps={projectData.gitOps}
-                                onUpdate={values => updateGitOpsMutation.mutate(values)}
-                                isUpdating={updateGitOpsMutation.isPending}
-                            />
-                        )}
-
-                        {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && (
-                            <ProjectExposureSection exposure={projectData.exposure} onUpdate={values => updateExposureMutation.mutate(values)} isUpdating={updateExposureMutation.isPending} />
-                        )}
-
-                        {/* Argo CD deploya cio che il GitOps salvato committa: senza repository di configurazione non c'e' niente da consegnargli */}
-                        {projectData?.gitOps?.enabled && projectData.gitOps.codeRepository && <ArgoCdSection projectId={projectData._id} />}
-
                         {projectData && (
                             <PipelineTemplatesSection
                                 projectId={projectData._id}

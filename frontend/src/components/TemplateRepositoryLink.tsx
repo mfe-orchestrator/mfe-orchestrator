@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import useMarketApi from "@/hooks/apiClients/useMarketApi"
 
 /**
- * Link to the repository of the template a microfrontend or a service was created from.
+ * Link to the repository of the template a microfrontend was created from.
  * Renders nothing while loading, when it was not created from a template or when the template has no repository.
  */
 export const TemplateRepositoryLink: React.FC<{ slug?: string }> = ({ slug }) => {

@@ -1,6 +1,5 @@
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@mfe-orchestrator/design-system"
 import { useQueries } from "@tanstack/react-query"
-import { LayoutDashboard, Server } from "lucide-react"
 import { useId } from "react"
 import { useTranslation } from "react-i18next"
 import RepositoryLink from "@/components/RepositoryLink"
@@ -9,25 +8,20 @@ import type { Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
 
 type CodeRepository = NonNullable<Microfrontend["codeRepository"]>
 
-/** A repository the agent works on: the one of a microfrontend or of a service. */
+/** A repository the agent works on: the one of a microfrontend. */
 export interface AiWorkspaceRepository {
-    /** The microfrontend's or the service's. */
+    /** The microfrontend's. */
     id: string
-    kind: "microfrontend" | "service"
     name: string
     codeRepository: CodeRepository
 }
 
-/** The branch each repository starts from, by microfrontend or service id: one left out starts from its default branch. */
+/** The branch each repository starts from, by microfrontend id: one left out starts from its default branch. */
 export type BaseBranches = Record<string, string>
 
-/** The repository of a microfrontend or a service, as a list: empty when it has none connected. */
-export const workspaceRepositoriesOf = (kind: AiWorkspaceRepository["kind"], component: { _id?: string; name: string; codeRepository?: Microfrontend["codeRepository"] }): AiWorkspaceRepository[] =>
-    component._id && component.codeRepository?.enabled ? [{ id: component._id, kind, name: component.name, codeRepository: component.codeRepository }] : []
-
-/** The branches picked, trimmed, of the given repositories only. */
-export const pickedBaseBranches = (repositories: AiWorkspaceRepository[], baseBranches: BaseBranches): BaseBranches =>
-    Object.fromEntries(repositories.flatMap(({ id }) => (baseBranches[id]?.trim() ? [[id, baseBranches[id].trim()]] : [])))
+/** The repository of a microfrontend, as a list: empty when it has none connected. */
+export const workspaceRepositoriesOf = (microfrontend: Pick<Microfrontend, "_id" | "name" | "codeRepository">): AiWorkspaceRepository[] =>
+    microfrontend._id && microfrontend.codeRepository?.enabled ? [{ id: microfrontend._id, name: microfrontend.name, codeRepository: microfrontend.codeRepository }] : []
 
 // What the branches endpoint expects: the project path on GitLab, the repository name elsewhere.
 const branchesPath = (repository: CodeRepository) => (repository.gitlab ? repository.repositoryId : repository.name || repository.repositoryId)
@@ -146,34 +140,27 @@ export const RepositoryBranches: React.FC<RepositoryBranchesProps> = ({ reposito
                 )}
             </div>
             <ul className="flex flex-col gap-2">
-                {repositories.map((repository, index) => {
-                    const Icon = repository.kind === "service" ? Server : LayoutDashboard
-                    return (
-                        <li key={repository.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-divider px-3 py-2 text-sm">
-                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                <span className="flex min-w-0 items-center gap-2 font-medium">
-                                    <Icon className="size-4 shrink-0 text-foreground-secondary" aria-hidden="true" />
-                                    <span className="truncate">{repository.name}</span>
-                                    <span className="sr-only"> ({t(`microfrontend.aiChange.kind.${repository.kind}`)})</span>
-                                </span>
-                                <span className="min-w-0 text-xs text-foreground-secondary">
-                                    <RepositoryLink repository={repository.codeRepository} />
-                                </span>
+                {repositories.map((repository, index) => (
+                    <li key={repository.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-divider px-3 py-2 text-sm">
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <span className="truncate font-medium">{repository.name}</span>
+                            <span className="min-w-0 text-xs text-foreground-secondary">
+                                <RepositoryLink repository={repository.codeRepository} />
                             </span>
-                            <span className="flex items-center gap-2">
-                                <span className="text-xs text-foreground-secondary">{t("microfrontend.aiChange.starts_from")}</span>
-                                <BranchSelect
-                                    repository={repository}
-                                    branches={branchQueries[index]?.data}
-                                    failed={Boolean(branchQueries[index]?.isError && !branchQueries[index]?.data)}
-                                    value={value[repository.id] ?? ""}
-                                    onChange={branch => onChange({ ...value, [repository.id]: branch })}
-                                    disabled={disabled}
-                                />
-                            </span>
-                        </li>
-                    )
-                })}
+                        </span>
+                        <span className="flex items-center gap-2">
+                            <span className="text-xs text-foreground-secondary">{t("microfrontend.aiChange.starts_from")}</span>
+                            <BranchSelect
+                                repository={repository}
+                                branches={branchQueries[index]?.data}
+                                failed={Boolean(branchQueries[index]?.isError && !branchQueries[index]?.data)}
+                                value={value[repository.id] ?? ""}
+                                onChange={branch => onChange({ ...value, [repository.id]: branch })}
+                                disabled={disabled}
+                            />
+                        </span>
+                    </li>
+                ))}
             </ul>
             <p className="text-xs text-foreground-secondary">{t("microfrontend.aiChange.base_branch_hint")}</p>
         </section>

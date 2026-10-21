@@ -1,5 +1,3 @@
 export * from "./AddUserButton"
-export * from "./DomainAccessFields"
 export * from "./EditAccessDialog"
-export * from "./MemberDomainScope"
 export * from "./UserPicture"

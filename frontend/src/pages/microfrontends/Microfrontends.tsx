@@ -1,6 +1,6 @@
 import { SearchInput, Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useQuery } from "@tanstack/react-query"
-import { CirclePlus, DownloadCloud, LayoutGrid, Server, StretchHorizontal, Workflow } from "lucide-react"
+import { CirclePlus, DownloadCloud, LayoutGrid, StretchHorizontal, Workflow } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -10,15 +10,13 @@ import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
 import useMicrofrontendsApi from "@/hooks/apiClients/useMicrofrontendsApi"
 import useProjectStore from "@/store/useProjectStore"
-import { ALL_DOMAINS, DomainFilter, matchesDomain } from "../domains/partials/DomainFilter"
 import { ImportRepositoriesDialog, MicrofrontendsEmptyState } from "./partials/components"
-import { MicrofrontendFlow, MicrofrontendsBackendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
+import { MicrofrontendFlow, MicrofrontendsGrid, MicrofrontendsTable } from "./partials/views"
 
 const VIEWS = [
     { value: "flow", icon: Workflow, labelKey: "microfrontend.dashboard.viewFlow" },
     { value: "grid", icon: LayoutGrid, labelKey: "microfrontend.dashboard.viewGrid" },
-    { value: "table", icon: StretchHorizontal, labelKey: "microfrontend.dashboard.viewTable" },
-    { value: "backend", icon: Server, labelKey: "microfrontend.dashboard.viewBackend" }
+    { value: "table", icon: StretchHorizontal, labelKey: "microfrontend.dashboard.viewTable" }
 ] as const
 
 type View = (typeof VIEWS)[number]["value"]
@@ -34,13 +32,11 @@ const Microfrontends = () => {
     const microfrontendsApi = useMicrofrontendsApi()
 
     const [searchTerm, setSearchTerm] = useState("")
-    const [domainFilter, setDomainFilter] = useState(ALL_DOMAINS)
     const [view, setView] = useState<View>("flow")
     const [importDialogOpen, setImportDialogOpen] = useState(false)
 
     const onResetFilters = () => {
         setSearchTerm("")
-        setDomainFilter(ALL_DOMAINS)
     }
 
     const microfrontendListQuery = useQuery({
@@ -66,21 +62,20 @@ const Microfrontends = () => {
             return null
         }
 
-        if (!searchTerm && domainFilter === ALL_DOMAINS) return data
+        if (!searchTerm) return data
 
         const filteredData = data.filter(mfe => {
             const nameMatch = searchTerm ? mfe.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
-            return nameMatch && matchesDomain(mfe.domainId, domainFilter)
+            return nameMatch
         })
 
         return filteredData
-    }, [microfrontendListQuery?.data, searchTerm, domainFilter])
+    }, [microfrontendListQuery?.data, searchTerm])
 
     const totalCount = microfrontendListQuery.data?.length ?? 0
     const filteredCount = microfrontendsList?.length ?? 0
     // The toolbar is only useful once the project actually has something to search through or switch views on.
     const hasMicrofrontends = totalCount > 0
-    const isFiltered = Boolean(searchTerm) || domainFilter !== ALL_DOMAINS
 
     const onAddNewMicrofrontend = async (parentId?: string) => {
         const repositories = await codeRepositoriesApi.getRepositoriesByProjectId(projectStore.project?._id!)
@@ -111,19 +106,16 @@ const Microfrontends = () => {
                 left={
                     hasMicrofrontends ? (
                         <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <SearchInput
-                                    className="max-w-sm"
-                                    placeholder={t("microfrontend.dashboard.searchPlaceholder")}
-                                    value={searchTerm}
-                                    onValueChange={setSearchTerm}
-                                    onClear={() => setSearchTerm("")}
-                                    clearLabel={t("microfrontend.dashboard.clearSearch")}
-                                />
-                                <DomainFilter value={domainFilter} onValueChange={setDomainFilter} />
-                            </div>
+                            <SearchInput
+                                className="max-w-sm"
+                                placeholder={t("microfrontend.dashboard.searchPlaceholder")}
+                                value={searchTerm}
+                                onValueChange={setSearchTerm}
+                                onClear={onResetFilters}
+                                clearLabel={t("microfrontend.dashboard.clearSearch")}
+                            />
                             <p className="text-sm text-foreground-secondary" aria-live="polite">
-                                {isFiltered ? t("microfrontend.dashboard.filteredCount", { count: filteredCount, total: totalCount }) : t("microfrontend.dashboard.totalCount", { count: totalCount })}
+                                {searchTerm ? t("microfrontend.dashboard.filteredCount", { count: filteredCount, total: totalCount }) : t("microfrontend.dashboard.totalCount", { count: totalCount })}
                             </p>
                         </div>
                     ) : null
@@ -170,14 +162,7 @@ const Microfrontends = () => {
                             onImportRepositories={canImportRepositories ? () => setImportDialogOpen(true) : undefined}
                         />
                     ) : filteredCount === 0 ? (
-                        <MicrofrontendsEmptyState
-                            variant="no-results"
-                            searchTerm={searchTerm}
-                            onResetFilters={onResetFilters}
-                            noResultsDescription={
-                                domainFilter === ALL_DOMAINS ? undefined : searchTerm ? t("domains.filter.no_results_search_description", { searchTerm }) : t("domains.filter.no_results_description")
-                            }
-                        />
+                        <MicrofrontendsEmptyState variant="no-results" searchTerm={searchTerm} onResetFilters={onResetFilters} />
                     ) : (
                         <>
                             <TabsContent value="flow" className="mt-0">
@@ -188,9 +173,6 @@ const Microfrontends = () => {
                             </TabsContent>
                             <TabsContent value="table" className="mt-0">
                                 <MicrofrontendsTable microfrontends={microfrontendsList} />
-                            </TabsContent>
-                            <TabsContent value="backend" className="mt-0">
-                                <MicrofrontendsBackendFlow microfrontends={microfrontendsList} />
                             </TabsContent>
                         </>
                     )}

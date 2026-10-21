@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle, Spinner, Textarea } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { TFunction } from "i18next"
-import { AlertTriangle, ArrowUp, ExternalLink, GitBranch, Server } from "lucide-react"
+import { AlertTriangle, ArrowUp, ExternalLink, GitBranch } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
@@ -32,8 +32,6 @@ const JOB_ERROR_CODES = new Set([
     "AI_JOB_NOT_DONE",
     "AI_JOB_NO_REPOSITORIES",
     "AI_JOB_TOO_MANY_REPOSITORIES",
-    "AI_DOMAIN_PLAN_HAS_MEMBERS",
-    "AI_DOMAIN_PLAN_FAILED",
     "AI_MODEL_NOT_AVAILABLE",
     "AI_PROVIDER_ERROR"
 ])
@@ -71,23 +69,13 @@ const RepositoryCard: React.FC<{ repository: AiJobRepository }> = ({ repository 
         <li className="flex flex-col gap-1 rounded-md border border-divider px-3 py-2 text-sm">
             <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate font-medium text-foreground">{repository.microfrontendName}</span>
-                {repository.kind === "service" && (
-                    <Badge variant="outline">
-                        <Server className="size-3" aria-hidden="true" />
-                        {t("assistant.jobs.service_badge")}
-                    </Badge>
-                )}
                 <StatusBadge status={repository.status} />
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-secondary">
                 <span>{t("assistant.jobs.files", { count: repository.files.length })}</span>
-                {/* The review happens on the microfrontend (or service) page: diff, file selection, apply and discard. */}
+                {/* The review happens on the microfrontend page: diff, file selection, apply and discard. */}
                 <Link
-                    to={
-                        repository.kind === "service"
-                            ? `/service/${repository.microfrontendId}?change=${repository.requestId}`
-                            : `/microfrontend/${repository.microfrontendId}?change=${repository.requestId}`
-                    }
+                    to={`/microfrontend/${repository.microfrontendId}?change=${repository.requestId}`}
                     aria-label={t("assistant.jobs.diff_label", { name: repository.microfrontendName })}
                     className="font-medium text-primary underline-offset-4 hover:underline"
                 >
@@ -125,7 +113,6 @@ const JobEntry: React.FC<{ job: AiJob }> = ({ job }) => {
             <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={job.status === "FAILED" ? "destructive" : job.status === "DONE" ? "accent" : "outline"}>{t(`assistant.jobs.status.${job.status}`)}</Badge>
                 {job.scope === "global" && <Badge variant="outline">{t("assistant.jobs.scope_global")}</Badge>}
-                {job.scope === "domain" && <Badge variant="outline">{t("assistant.jobs.scope_domain")}</Badge>}
             </div>
             {active ? (
                 <ProgressLog events={job.events ?? []} live />
@@ -166,7 +153,7 @@ interface ApplyAllButtonProps {
 }
 
 /** Pushes every proposal of the job, one pull request per repository: it publishes code, so it asks first. */
-export const ApplyAllButton: React.FC<ApplyAllButtonProps> = ({ job, requestIds, onApplying }) => {
+const ApplyAllButton: React.FC<ApplyAllButtonProps> = ({ job, requestIds, onApplying }) => {
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [confirming, setConfirming] = useState(false)

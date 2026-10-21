@@ -1,5 +1,4 @@
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react"
-import { LayoutDashboard } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/atoms"
 import { CanaryType, type Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
@@ -16,8 +15,6 @@ import { CANARY_DEPLOYMENT_TYPE_LABEL_KEYS, CANARY_TYPE_LABEL_KEYS } from "../la
  */
 export interface MicrofrontendNodeData extends Record<string, unknown> {
     microfrontend: Microfrontend
-    /** Drawn beside backend services (the domain diagram): a primary stripe and icon tell it apart from them. */
-    showKind?: boolean
 }
 
 export type MicrofrontendFlowNodeType = Node<MicrofrontendNodeData, "microfrontend">
@@ -33,7 +30,7 @@ const HANDLE_CLASS =
 
 export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType>> = ({ data }) => {
     const { t } = useTranslation("platform")
-    const { microfrontend, showKind } = data
+    const { microfrontend } = data
     const canary = microfrontend.canary?.enabled ? microfrontend.canary : undefined
     const agents = useWorkingAgents(microfrontend._id)
 
@@ -57,7 +54,6 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
         <div
             className={cn(
                 "w-60 overflow-hidden rounded-lg border-2 border-border bg-card text-left shadow-sm transition-colors group-[.is-highlighted]:border-primary",
-                showKind && "border-l-4 border-l-primary",
                 agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none"
             )}
         >
@@ -65,7 +61,6 @@ export const MicrofrontendFlowNode: React.FC<NodeProps<MicrofrontendFlowNodeType
             {microfrontend.kind !== MicrofrontendKind.FRONTEND && <Handle type="target" position={Position.Top} className={HANDLE_CLASS} />}
 
             <div className="flex items-start gap-2 px-3 pt-2.5">
-                {showKind && <LayoutDashboard className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />}
                 <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-card-foreground" title={microfrontend.name}>
                         {microfrontend.name}

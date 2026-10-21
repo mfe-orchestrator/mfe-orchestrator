@@ -1,18 +1,4 @@
-import {
-    Database,
-    FileText,
-    Hammer as HammerIcon,
-    HardDrive,
-    KeyRound,
-    Layers,
-    LayoutDashboard,
-    Link as LinkIcon,
-    Package as PackageIcon,
-    Rocket as RocketIcon,
-    Server,
-    SlidersHorizontal,
-    Sparkles
-} from "lucide-react"
+import { FileText, Hammer as HammerIcon, HardDrive, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Sparkles } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
@@ -45,24 +31,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const mainNavSections: SidebarNavSection[] = [
         ...(assistantEnabled ? [{ items: [{ name: t("assistant.page_title"), path: ASSISTANT_PAGE_PATH, icon: <Sparkles /> }] }] : []),
         {
-            title: t("navigation.sections.domains"),
-            items: [{ name: t("domains.sidebar_title"), path: "/domains", icon: <Layers /> }]
-        },
-        {
             title: t("navigation.sections.microfrontends"),
             items: [
                 { name: "Microfrontends", path: "/microfrontends", icon: <LayoutDashboard /> },
                 { name: t("dependencies.sidebar_title"), path: "/dependencies", icon: <PackageIcon /> },
                 { name: t("integration.sidebar_title"), path: "/integration", icon: <LinkIcon /> },
                 { name: t("environmentVariables.title"), path: "/environment-variables", icon: <FileText /> }
-            ]
-        },
-        {
-            title: t("navigation.sections.services"),
-            items: [
-                { name: t("services.title"), path: "/services", icon: <Server /> },
-                { name: t("variableMaps.configMap.list_title"), path: "/config-maps", icon: <SlidersHorizontal /> },
-                { name: t("variableMaps.secret.list_title"), path: "/secrets", icon: <KeyRound /> }
             ]
         },
         {
@@ -74,10 +48,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         },
         {
             title: t("navigation.sections.cloud"),
-            items: [
-                { name: t("database.databases"), path: "/databases", icon: <Database /> },
-                { name: t("storage.storages"), path: "/storages", icon: <HardDrive /> }
-            ]
+            items: [{ name: t("storage.storages"), path: "/storages", icon: <HardDrive /> }]
         }
     ]
 

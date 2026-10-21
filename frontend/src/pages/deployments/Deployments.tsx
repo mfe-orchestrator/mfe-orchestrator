@@ -19,7 +19,6 @@ export const Deployments: React.FC = () => {
 
     const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0
 
-    // With GitOps on the deploy commits to the repositories first, and takes a while
     const deployMutation = useMutation({
         mutationFn: (environmentId: string) => deploymentsApi.createDeployment([environmentId]),
         onSuccess: (_deployment, environmentId) => queryClient.invalidateQueries({ queryKey: ["deployments", environmentId] })

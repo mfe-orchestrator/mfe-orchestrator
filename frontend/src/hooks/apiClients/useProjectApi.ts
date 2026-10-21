@@ -1,7 +1,5 @@
-import { useTranslation } from "react-i18next"
 import useApiClient from "../useApiClient"
 import { EnvironmentDTO } from "./useEnvironmentsApi"
-import { domainScopeErrorMessage } from "./useProjectUserApi"
 
 export enum RoleInProject {
     OWNER = "OWNER",
@@ -9,34 +7,17 @@ export enum RoleInProject {
     VIEWER = "VIEWER"
 }
 
-export interface ProjectGitOpsRepository {
+export interface ProjectPipelinesRepository {
     codeRepositoryId: string
     repositoryId: string
     name: string
 }
 
-/** Ogni deploy fa il commit di namespace, config map e secret (repository di configurazione) e, se presente, dei values Helm delle applicazioni (repository delle applicazioni) */
-export interface ProjectGitOps {
-    enabled: boolean
-    codeRepository?: ProjectGitOpsRepository
-    applicationsCodeRepository?: ProjectGitOpsRepository
-}
-
 /** Il repository da cui si copiano le pipeline dei repository creati da un template, al posto dei template-pipelines ufficiali */
 export interface ProjectPipelines {
-    codeRepository: ProjectGitOpsRepository
+    codeRepository: ProjectPipelinesRepository
     /** Branch o tag letto; assente = il branch di default del repository */
     ref?: string
-}
-
-/** Dove sono esposti gli ambienti: ognuno sul suo sottodominio di `domain` */
-export interface ProjectExposure {
-    domain: string
-    /** La ClusterIssuer di cert-manager a cui chiedere il certificato di ogni ambiente; senza, solo HTTP */
-    certificateIssuer?: string
-    /** Le porte dei listener HTTP e HTTPS, quelle degli entry point di Traefik: 80 e 443 se assenti */
-    httpPort?: number
-    httpsPort?: number
 }
 
 export interface Project {
@@ -47,8 +28,6 @@ export interface Project {
     description?: string
     /** Markdown per gli agenti AI (client MCP, assistente della console) */
     context?: string
-    gitOps?: ProjectGitOps
-    exposure?: ProjectExposure
     pipelines?: ProjectPipelines
     createdAt?: string
     updatedAt?: string
@@ -64,7 +43,6 @@ export interface ProjectSummaryDTO {
         codeRepositories: number
         apiKeys: number
         storages: number
-        databases: number
     }
 }
 
@@ -82,32 +60,17 @@ export interface ProjectUpdateDTO {
     /** `null` azzera il contesto, come per la descrizione. */
     context?: string | null
     isActive?: boolean
-    /** `null` toglie l'esposizione: al prossimo deploy ogni ambiente perde il suo Gateway */
-    exposure?: { domain: string; certificateIssuer?: string | null; httpPort?: number | null; httpsPort?: number | null } | null
-    /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga */
-    gitOps?: {
-        enabled: boolean
-        codeRepositoryId?: string
-        repositoryId?: string
-        /** Al posto di repositoryId: il backend crea un repository PRIVATO con questo nome tramite la connessione */
-        newRepositoryName?: string
-        /** Secondo repository opzionale per le applicazioni: null o assente = nessuno */
-        applications?: { codeRepositoryId: string; repositoryId?: string; newRepositoryName?: string } | null
-    }
-    /** `null` torna ai template-pipelines ufficiali; ref vuoto o null = il branch di default */
+    /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga. `null` torna ai template-pipelines ufficiali; ref vuoto o null = il branch di default */
     pipelines?: { codeRepositoryId: string; repositoryId: string; ref?: string | null } | null
 }
 
 interface AddUserToProjectDTO {
     email: string
     role: RoleInProject
-    /** Omitted or empty means the whole project */
-    domainIds?: string[]
 }
 
 const useProjectApi = () => {
     const apiClient = useApiClient()
-    const { t } = useTranslation()
 
     /**
      * The projects the user can open. Narrowed to one organization when given, which is what every
@@ -174,8 +137,7 @@ const useProjectApi = () => {
         await apiClient.doRequest({
             url: `/api/projects/${dto.projectId}/users`,
             method: "POST",
-            data: dto,
-            customErrorMessage: error => domainScopeErrorMessage(t, error)
+            data: dto
         })
     }
 

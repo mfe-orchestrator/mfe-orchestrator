@@ -13,54 +13,37 @@ import TextField from "@/components/input/TextField.rhf"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi, { ICodeRepository } from "@/hooks/apiClients/useCodeRepositoriesApi"
-import useDomainsApi from "@/hooks/apiClients/useDomainsApi"
-import type { EnvironmentDTO } from "@/hooks/apiClients/useEnvironmentsApi"
 import useMarketApi from "@/hooks/apiClients/useMarketApi"
 import useMicrofrontendsApi, { CanaryDeploymentType, CanaryType, Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
 import useStorageApi, { Storage } from "@/hooks/apiClients/useStorageApi"
-import { useVariableMapErrorMessage, VariableMap } from "@/hooks/apiClients/useVariableMapsApi"
 import {
     CodeRepositorySection,
     DangerZoneRemoveMicrofrontend,
+    FrontendVersionsTable,
     HostingSection,
     isAiEditAvailable,
     MicrofrontendHeader,
     MicrofrontendKindField,
     ReleaseSection
 } from "@/pages/microfrontends/partials/components"
-import ServiceEnvFields from "@/pages/services/partials/ServiceEnvFields"
-import ServiceRuntimeFields from "@/pages/services/partials/ServiceRuntimeFields"
-import ServiceUrlsFields from "@/pages/services/partials/ServiceUrlsFields"
-import ServiceVariableMapsFields from "@/pages/services/partials/ServiceVariableMapsFields"
-import ServiceVersionsTable from "@/pages/services/partials/ServiceVersionsTable"
-import { createServiceRuntimeShape, fromFormUrls, toFormUrls, useProjectEnvironmentsQuery } from "@/pages/services/partials/serviceVariables"
-import { useVariableMapsQuery } from "@/pages/variable-maps/partials/variableMaps"
 import useProjectStore from "@/store/useProjectStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
-import DomainSelectField from "../domains/partials/DomainSelectField"
 import { CONTEXT_MAX_LENGTH } from "../settings/partials/ProjectContextSection"
 import { FetchDataTemplateCard } from "../templates-library/partials/"
 
 interface FormMessages {
-    path: string
-    exposurePath: string
-    url: string
     versionRequired: string
     hostUrlRequired: string
     canaryPercentage: string
 }
 
-const createFormSchema = (messages: FormMessages) => {
-    // What a FRONTEND declares about its container, with the same rules as a service
-    const containerSchema = z.object(createServiceRuntimeShape(messages))
-
-    return z
+const createFormSchema = (messages: FormMessages) =>
+    z
         .object({
             // General Information
             slug: z.string().min(3).max(50),
             name: z.string().min(3).max(100),
             description: z.string().optional(),
-            domainId: z.string().nullable().optional(),
             kind: z.enum(MicrofrontendKind),
             context: z.string().max(CONTEXT_MAX_LENGTH).optional(),
             // Required below for a MICROFRONTEND only: a FRONTEND's is set by its pipeline on the first registration
@@ -76,27 +59,8 @@ const createFormSchema = (messages: FormMessages) => {
                 entryPoint: z.string().optional()
             }),
 
-            // Container of a FRONTEND: held for a MICROFRONTEND too, so switching kind keeps what was typed, and checked below only for a FRONTEND
-            port: z.string().optional(),
-            livenessPath: z.string().optional(),
-            readinessPath: z.string().optional(),
-            docsPath: z.string().optional(),
-            openApiPath: z.string().optional(),
-            exposurePath: z.string().optional(),
+            // The Docker image of a FRONTEND: held for a MICROFRONTEND too, so switching kind keeps what was typed
             image: z.object({ repository: z.string().optional() }).optional(),
-            urls: z.array(z.string()).optional(),
-            env: z
-                .array(
-                    z.object({
-                        name: z.string(),
-                        required: z.boolean().default(false),
-                        secret: z.boolean().default(false),
-                        description: z.string().optional()
-                    })
-                )
-                .optional(),
-            configMapIds: z.array(z.string()).optional(),
-            secretIds: z.array(z.string()).optional(),
 
             // Code Repository Settings
             codeRepository: z
@@ -135,14 +99,8 @@ const createFormSchema = (messages: FormMessages) => {
                 .optional()
         })
         .superRefine((data, ctx) => {
-            if (data.kind === MicrofrontendKind.FRONTEND) {
-                // Its container, with the same rules as a service: every issue lands on the field it is about
-                const container = containerSchema.safeParse(data)
-                for (const issue of container.error?.issues ?? []) {
-                    ctx.addIssue({ code: "custom", message: issue.message, path: issue.path })
-                }
-                return
-            }
+            // A FRONTEND is served by its own container: its version comes from its pipeline, and it has no hosting nor canary
+            if (data.kind === MicrofrontendKind.FRONTEND) return
             if (!data.version) {
                 ctx.addIssue({ code: "custom", message: messages.versionRequired, path: ["version"] })
             }
@@ -154,7 +112,6 @@ const createFormSchema = (messages: FormMessages) => {
                 ctx.addIssue({ code: "custom", message: messages.canaryPercentage, path: ["canary.percentage"] })
             }
         })
-}
 
 type FormSchema = ReturnType<typeof createFormSchema>
 
@@ -163,17 +120,16 @@ type FormInput = z.input<FormSchema>
 type FormValues = z.output<FormSchema>
 
 /** Tabs that own validated fields, in the order they are shown: the first one with an error is the one we jump to. */
-const FORM_TABS = ["general", "context", "hosting", "container", "repository"] as const
+const FORM_TABS = ["general", "context", "hosting", "repository"] as const
 
 type FormTab = (typeof FORM_TABS)[number] | "danger"
 
 const isFormTab = (value: string | null): value is FormTab => Boolean(value && ([...FORM_TABS, "danger"] as string[]).includes(value))
 
 const TAB_FIELDS: Record<FormTab, (keyof FormValues)[]> = {
-    general: ["name", "slug", "description", "domainId", "kind"],
+    general: ["name", "slug", "description", "kind", "image"],
     context: ["context"],
     hosting: ["host"],
-    container: ["port", "livenessPath", "readinessPath", "docsPath", "openApiPath", "exposurePath", "image", "urls", "env", "configMapIds", "secretIds"],
     repository: ["codeRepository"],
     danger: []
 }
@@ -189,26 +145,19 @@ interface AddNewMicrofrontendFormProps {
     repositories: ICodeRepository[]
     frontend?: Microfrontend
     versions?: string[]
-    environments: EnvironmentDTO[]
-    configMaps: VariableMap[]
-    secrets: VariableMap[]
 }
 
-const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versions, repositories, frontend, storages, environments, configMaps, secrets }) => {
+const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versions, repositories, frontend, storages }) => {
     const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const [searchParams] = useSearchParams()
     const isEdit = Boolean(id)
     const microfrontendsApi = useMicrofrontendsApi()
-    const { errorMessage: domainErrorMessage } = useDomainsApi()
-    const variableMapErrorMessage = useVariableMapErrorMessage()
-    const errorMessage = (error: Error) => microfrontendsApi.errorMessage(error) ?? variableMapErrorMessage(error) ?? domainErrorMessage(error)
+    const errorMessage = microfrontendsApi.errorMessage
     const navigate = useNavigate()
     const template = searchParams.get("template")
     // Created under a parent: a FRONTEND cannot have one, so it is a MICROFRONTEND
     const parentId = isEdit ? null : searchParams.get("parentId")
-    // Opened from a domain page: the microfrontend is created in it, and the page is where we go back
-    const initialDomainId = searchParams.get("domainId")
     // `?tab=` opens a tab straight away.
     const linkedTab = searchParams.get("tab")
     const [activeTab, setActiveTab] = useState<FormTab>(isFormTab(linkedTab) ? linkedTab : "general")
@@ -234,9 +183,6 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     const formSchema = useMemo(
         () =>
             createFormSchema({
-                path: t("services.path_invalid"),
-                exposurePath: t("services.exposure_path_invalid"),
-                url: t("services.urls.invalid"),
                 versionRequired: t("microfrontend.validation.version_required"),
                 hostUrlRequired: t("microfrontend.validation.host_url_required"),
                 canaryPercentage: t("microfrontend.validation.canary_percentage")
@@ -244,37 +190,20 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         [t]
     )
 
-    // The service defaults until it declares its own: a MICROFRONTEND holds them only in case it is switched to FRONTEND
-    const containerDefaults = {
-        port: String(frontend?.port ?? 8080),
-        livenessPath: frontend?.livenessPath ?? "/health/live",
-        readinessPath: frontend?.readinessPath ?? "/health/ready",
-        docsPath: frontend?.docsPath ?? "",
-        openApiPath: frontend?.openApiPath ?? "",
-        exposurePath: frontend?.exposurePath ?? "",
-        image: { repository: frontend?.image?.repository ?? "" },
-        urls: toFormUrls(frontend?.urls, environments),
-        env: frontend?.env ?? [],
-        // Only the maps that still exist: one deleted meanwhile has no checkbox to untick, and would make every save fail
-        configMapIds: (frontend?.configMapIds ?? []).filter(id => configMaps.some(map => map._id === id)),
-        secretIds: (frontend?.secretIds ?? []).filter(id => secrets.some(map => map._id === id))
-    }
-
     const form = useForm<FormInput, unknown, FormValues>({
         resolver: zodResolver(formSchema),
         // A FRONTEND may be saved without a host: the hosting tab it would be validated in is hidden for it
         defaultValues: frontend
-            ? { ...frontend, kind: frontend.kind ?? MicrofrontendKind.MICROFRONTEND, host: frontend.host ?? getStandardHost(), ...containerDefaults }
+            ? { ...frontend, kind: frontend.kind ?? MicrofrontendKind.MICROFRONTEND, host: frontend.host ?? getStandardHost(), image: { repository: frontend.image?.repository ?? "" } }
             : {
                   slug: "",
                   name: "",
                   description: "",
-                  domainId: initialDomainId ?? "",
                   context: "",
                   kind: MicrofrontendKind.MICROFRONTEND,
                   version: "1.0.0",
                   host: getStandardHost(),
-                  ...containerDefaults,
+                  image: { repository: "" },
                   ...(repositories && repositories.length > 0
                       ? {
                             codeRepository: {
@@ -326,29 +255,12 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
     })
 
     const onSubmit = async (data: FormValues) => {
-        const { port, livenessPath, readinessPath, docsPath, openApiPath, exposurePath, image, urls, env, configMapIds, secretIds, ...rest } = data
+        const { image, ...rest } = data
         const dataToSend = {
             ...rest,
             version: data.version === "custom" ? data.customVersion : data.version,
-            // Blank: the microfrontend is in no domain
-            domainId: data.domainId || null,
-            // Only a FRONTEND declares a container, and MFE Orchestrator runs no canary for it
-            ...(data.kind === MicrofrontendKind.FRONTEND
-                ? {
-                      port: Number(port),
-                      livenessPath: livenessPath?.trim(),
-                      readinessPath: readinessPath?.trim(),
-                      docsPath: docsPath?.trim(),
-                      openApiPath: openApiPath?.trim(),
-                      exposurePath: exposurePath?.trim(),
-                      image,
-                      urls: fromFormUrls(urls ?? [], environments),
-                      env,
-                      configMapIds,
-                      secretIds,
-                      canary: data.canary && { ...data.canary, enabled: false }
-                  }
-                : {})
+            // Only a FRONTEND has an image, and MFE Orchestrator runs no canary for it
+            ...(data.kind === MicrofrontendKind.FRONTEND ? { image: { repository: image?.repository?.trim() }, canary: data.canary && { ...data.canary, enabled: false } } : {})
         } as Microfrontend & { customVersion?: string }
 
         delete dataToSend.customVersion
@@ -381,7 +293,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
             })
         }
 
-        navigate(!isEdit && initialDomainId ? `/domain/${initialDomainId}/structure` : `/microfrontends`)
+        navigate(`/microfrontends`)
     }
 
     const hasRepositories = Boolean(repositories && repositories.length > 0)
@@ -397,7 +309,6 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
         if (tab === "repository") return hasRepositories
         if (tab === "danger") return isEdit
         if (tab === "hosting") return !isFrontend
-        if (tab === "container") return isFrontend
         return true
     }
     const shownTab = isTabShown(activeTab) ? activeTab : "general"
@@ -423,7 +334,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
 
                 <ReleaseSection isEdit={isEdit} versions={versions} savedVersion={frontend?.version} />
 
-                {isEdit && frontend?.kind === MicrofrontendKind.FRONTEND && <ServiceVersionsTable versions={buildsQuery.data ?? []} />}
+                {isEdit && frontend?.kind === MicrofrontendKind.FRONTEND && <FrontendVersionsTable versions={buildsQuery.data ?? []} />}
 
                 <Tabs value={shownTab} onValueChange={value => setActiveTab(value as FormTab)} tabsListPosition="fullWidth">
                     <TabsList>
@@ -435,12 +346,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                             {t("microfrontend.tabs.context")}
                             {tabHasErrors("context") && <ErrorDot />}
                         </TabsTrigger>
-                        {isFrontend ? (
-                            <TabsTrigger value="container" className="flex-1">
-                                {t("microfrontend.kind.container_tab")}
-                                {tabHasErrors("container") && <ErrorDot />}
-                            </TabsTrigger>
-                        ) : (
+                        {!isFrontend && (
                             <TabsTrigger value="hosting" className="flex-1">
                                 {t("microfrontend.tabs.hosting")}
                                 {tabHasErrors("hosting") && <ErrorDot />}
@@ -500,7 +406,14 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                                     />
                                 </div>
                                 <TextareaField name="description" label={t("microfrontend.description")} placeholder={t("microfrontend.description_placeholder")} />
-                                <DomainSelectField containerClassName="w-full" />
+                                {isFrontend && (
+                                    <TextField
+                                        name="image.repository"
+                                        label={t("microfrontend.kind.image_repository")}
+                                        placeholder="ghcr.io/acme/shell"
+                                        description={t("microfrontend.kind.image_repository_hint")}
+                                    />
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -525,16 +438,7 @@ const AddNewMicrofrontendForm: React.FC<AddNewMicrofrontendFormProps> = ({ versi
                         </Card>
                     </TabsContent>
 
-                    {isFrontend ? (
-                        <TabsContent value="container" forceMount>
-                            <div className="flex flex-col gap-6">
-                                <ServiceRuntimeFields />
-                                <ServiceUrlsFields environments={environments} />
-                                <ServiceEnvFields />
-                                <ServiceVariableMapsFields configMaps={configMaps} secrets={secrets} />
-                            </div>
-                        </TabsContent>
-                    ) : (
+                    {!isFrontend && (
                         <TabsContent value="hosting" forceMount>
                             <HostingSection storages={storages} />
                         </TabsContent>
@@ -612,22 +516,9 @@ const AddNewMicrofrontendPage: React.FC<AddNewMicrofrontendPageProps> = () => {
         enabled: isEdit
     })
 
-    // Before the form mounts: a FRONTEND's default values hold one base URL per environment
-    const environmentsQuery = useProjectEnvironmentsQuery()
-    const configMapsQuery = useVariableMapsQuery("configMap")
-    const secretsQuery = useVariableMapsQuery("secret")
-
     return (
-        <ApiStatusHandler queries={[storagesQuery, repositoriesQuery, versionsQuery, frontendQuery, environmentsQuery, configMapsQuery, secretsQuery]} interceptEmpty={false}>
-            <AddNewMicrofrontendForm
-                storages={storagesQuery.data}
-                repositories={repositoriesQuery.data}
-                frontend={frontendQuery.data}
-                versions={versionsQuery.data}
-                environments={environmentsQuery.data ?? []}
-                configMaps={configMapsQuery.data ?? []}
-                secrets={secretsQuery.data ?? []}
-            />
+        <ApiStatusHandler queries={[storagesQuery, repositoriesQuery, versionsQuery, frontendQuery]} interceptEmpty={false}>
+            <AddNewMicrofrontendForm storages={storagesQuery.data} repositories={repositoriesQuery.data} frontend={frontendQuery.data} versions={versionsQuery.data} />
         </ApiStatusHandler>
     )
 }

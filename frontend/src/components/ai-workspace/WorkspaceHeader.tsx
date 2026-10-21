@@ -31,7 +31,7 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
         isActive ? "bg-background text-foreground shadow-sm" : "text-foreground-secondary hover:text-foreground"
     )
 
-/** The frame of every screen of a microfrontend, a service or a domain, so switching between them, and between them and Edit with AI, keeps the same layout. */
+/** The frame of every screen of a microfrontend, so switching between them, Edit with AI included, keeps the same layout. */
 export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ back, title, pageTitle, meta, navLabel, tabs, actions }) => (
     <header className="flex flex-col gap-4">
         <PageHead title={`${title} · ${pageTitle}`} />

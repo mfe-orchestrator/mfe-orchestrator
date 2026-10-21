@@ -1,10 +1,10 @@
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@mfe-orchestrator/design-system"
-import { ChevronDown, ChevronRight, LayoutDashboard, Server } from "lucide-react"
+import { ChevronDown, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { BuildUnavailableReason, ComponentBuildStatus, ProjectBuildStatus } from "@/hooks/apiClients/useBuildsApi"
+import { BuildUnavailableReason, MicrofrontendBuildStatus, ProjectBuildStatus } from "@/hooks/apiClients/useBuildsApi"
 import { cn } from "@/utils/styleUtils"
-import BuildRunList, { BuildComponentKind } from "./BuildRunList"
+import BuildRunList from "./BuildRunList"
 import BuildStatusBadge from "./BuildStatusBadge"
 import ProviderRunLink from "./ProviderRunLink"
 
@@ -12,48 +12,23 @@ interface BuildStatusTableProps {
     data: ProjectBuildStatus
 }
 
-/** One row of the table: a microfrontend (frontend build) or a service (backend build). */
-interface BuildStatusRow extends ComponentBuildStatus {
-    kind: BuildComponentKind
-    id: string
-}
-
-/** Microfrontends and services share one id space only once the kind is part of the key. */
-const rowKey = (row: BuildStatusRow) => `${row.kind}-${row.id}`
-
 /** Renders a version, or a dash when that environment serves none. */
 const VersionCell: React.FC<{ version?: string }> = ({ version }) => (version ? <span className="font-mono text-sm">{version}</span> : <span className="text-foreground-secondary">—</span>)
 
-const KindBadge: React.FC<{ kind: BuildComponentKind }> = ({ kind }) => {
-    const { t } = useTranslation()
-    const Icon = kind === BuildComponentKind.BACKEND ? Server : LayoutDashboard
-    return (
-        <Badge variant="outline">
-            <Icon className="size-3.5 shrink-0" />
-            <span>{t(`builds.kind.${kind}`)}</span>
-        </Badge>
-    )
-}
-
 const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
     const { t } = useTranslation()
-    const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+    const [expandedIds, setExpandedIds] = useState<string[]>([])
 
-    const toggleExpanded = (key: string) => {
-        setExpandedKeys(current => (current.includes(key) ? current.filter(expandedKey => expandedKey !== key) : [...current, key]))
+    const toggleExpanded = (microfrontendId: string) => {
+        setExpandedIds(current => (current.includes(microfrontendId) ? current.filter(id => id !== microfrontendId) : [...current, microfrontendId]))
     }
 
     const environments = data.environments || []
-    // Frontends first, then backends: each list already comes sorted by name.
-    const rows: BuildStatusRow[] = [
-        ...(data.microfrontends || []).map(({ microfrontendId, ...row }) => ({ ...row, kind: BuildComponentKind.FRONTEND, id: microfrontendId })),
-        ...(data.services || []).map(({ serviceId, ...row }) => ({ ...row, kind: BuildComponentKind.BACKEND, id: serviceId }))
-    ]
-    // Header cells before the environment block: expander, name, type, last build,
+    // Header cells before the environment block: expander, microfrontend, last build,
     // tag of that build, last built version.
-    const leadingColumns = 6
+    const leadingColumns = 5
 
-    const renderLastBuild = (row: BuildStatusRow) => {
+    const renderLastBuild = (row: MicrofrontendBuildStatus) => {
         if (row.unavailableReason) {
             return <span className="text-sm text-foreground-secondary">{t(`builds.unavailable.${row.unavailableReason}`)}</span>
         }
@@ -75,7 +50,6 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                 <TableRow>
                     <TableHead className="w-10" />
                     <TableHead>{t("builds.table.name")}</TableHead>
-                    <TableHead>{t("builds.table.kind")}</TableHead>
                     <TableHead>{t("builds.table.last_build")}</TableHead>
                     <TableHead>{t("builds.table.build_ref")}</TableHead>
                     <TableHead>{t("builds.table.last_built_version")}</TableHead>
@@ -90,17 +64,16 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {rows.map(row => {
-                    const key = rowKey(row)
-                    const isExpanded = expandedKeys.includes(key)
+                {data.microfrontends.map(row => {
+                    const isExpanded = expandedIds.includes(row.microfrontendId)
                     const lastBuild = row.builds[0]
 
                     return [
-                        <TableRow key={key}>
+                        <TableRow key={row.microfrontendId}>
                             <TableCell>
                                 <button
                                     type="button"
-                                    onClick={() => toggleExpanded(key)}
+                                    onClick={() => toggleExpanded(row.microfrontendId)}
                                     aria-expanded={isExpanded}
                                     aria-label={t(isExpanded ? "builds.table.collapse_history" : "builds.table.expand_history", { name: row.name })}
                                     className="p-1"
@@ -114,9 +87,6 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                                     <span className="text-xs text-foreground-secondary font-mono">{row.slug}</span>
                                 </div>
                             </TableCell>
-                            <TableCell>
-                                <KindBadge kind={row.kind} />
-                            </TableCell>
                             <TableCell>{renderLastBuild(row)}</TableCell>
                             <TableCell>{lastBuild?.ref ? <span className="font-mono text-sm">{lastBuild.ref}</span> : <span className="text-foreground-secondary">—</span>}</TableCell>
                             <TableCell>
@@ -129,7 +99,7 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                             ))}
                         </TableRow>,
                         isExpanded && (
-                            <TableRow key={`${key}-history`} className={cn("bg-primary/5")}>
+                            <TableRow key={`${row.microfrontendId}-history`} className={cn("bg-primary/5")}>
                                 <TableCell colSpan={leadingColumns + environments.length}>
                                     <div className="flex flex-col gap-3 py-2">
                                         {row.repositoryName && (
@@ -141,7 +111,7 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                                         {row.unavailableReason === BuildUnavailableReason.PROVIDER_ERROR ? (
                                             <p className="text-sm">{t("builds.unavailable.PROVIDER_ERROR")}</p>
                                         ) : (
-                                            <BuildRunList runs={row.builds} kind={row.kind} componentId={row.id} componentName={row.name} provider={row.provider} />
+                                            <BuildRunList runs={row.builds} microfrontendId={row.microfrontendId} microfrontendName={row.name} provider={row.provider} />
                                         )}
                                     </div>
                                 </TableCell>

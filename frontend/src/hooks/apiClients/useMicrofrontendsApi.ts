@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 import useApiClient, { errorCodeOf, IClientRequestMetadataExtended } from "../useApiClient"
-import type { BuiltService, Service } from "./useServicesApi"
 
 export enum HostedOn {
     MFE_ORCHESTRATOR_HUB = "MFE_ORCHESTRATOR_HUB",
@@ -21,18 +20,13 @@ export enum CanaryType {
 
 /**
  * How it is served. A MICROFRONTEND is a static bundle served by MFE Orchestrator; a FRONTEND is an app
- * built into a Docker image and served by its own container, like a backend service. Chosen by hand
- * only: neither the template nor the host/remote role sets it.
+ * built into a Docker image and served by its own container. Chosen by hand only: neither the template
+ * nor the host/remote role sets it.
  */
 export enum MicrofrontendKind {
     MICROFRONTEND = "MICROFRONTEND",
     FRONTEND = "FRONTEND"
 }
-
-/** What a FRONTEND declares about its container: the same fields as a service, with the same meaning. */
-export type FrontendContainer = Partial<
-    Pick<Service, "image" | "port" | "livenessPath" | "readinessPath" | "docsPath" | "openApiPath" | "exposurePath" | "urls" | "env" | "configMapIds" | "secretIds">
->
 
 export enum CanaryDeploymentType {
     BASED_ON_VERSION = "BASED_ON_VERSION",
@@ -56,7 +50,7 @@ export interface RelationDTO {
     host: string
 }
 
-export interface Microfrontend extends FrontendContainer {
+export interface Microfrontend {
     _id?: string
     slug: string
     name: string
@@ -64,12 +58,14 @@ export interface Microfrontend extends FrontendContainer {
     version?: string
     /** Missing on the ones saved before it existed: those are a MICROFRONTEND */
     kind?: MicrofrontendKind
+    /** A FRONTEND's Docker image: the repository its pipeline pushes to */
+    image?: {
+        repository?: string
+    }
     /** Market slug of the template the microfrontend was created from */
     template?: string
     continuousDeployment?: boolean
     projectId?: string
-    /** The functional domain it belongs to; null or missing when it is in none */
-    domainId?: string | null
     canary?: {
         enabled: boolean
         percentage: number
@@ -116,8 +112,6 @@ export interface Microfrontend extends FrontendContainer {
     createdAt?: Date
     updatedAt?: Date
     parentIds?: string[]
-    /** Backend services this microfrontend calls, linked by hand */
-    serviceIds?: string[]
     position?: {
         x: number
         y: number
@@ -126,9 +120,17 @@ export interface Microfrontend extends FrontendContainer {
     }
 }
 
-/** A registered version. A FRONTEND's carries the image its pipeline published, like a service's. */
-export interface BuiltFrontend extends Omit<BuiltService, "serviceId" | "image">, Partial<Pick<BuiltService, "image">> {
+/** A registered version. A FRONTEND's carries the image its pipeline published. */
+export interface BuiltFrontend {
+    _id?: string
     microfrontendId: string
+    version: string
+    /** Full image reference, e.g. ghcr.io/acme/shell:1.2.0 */
+    image?: string
+    digest?: string
+    commitSha?: string
+    createdAt?: Date
+    updatedAt?: Date
 }
 
 /** The codes the backend raises about the kind of a microfrontend, by translation key */
@@ -136,16 +138,6 @@ const MICROFRONTEND_ERROR_KEYS: Record<string, string> = {
     FRONTEND_CANNOT_HAVE_PARENTS: "microfrontend.errors.frontend_cannot_have_parents",
     FRONTEND_UPLOAD_NOT_ALLOWED: "microfrontend.errors.frontend_upload_not_allowed",
     MICROFRONTEND_VERSION_REGISTRATION_NOT_ALLOWED: "microfrontend.errors.version_registration_not_allowed"
-}
-
-/** A new repository, scaffolded from a template, for a microfrontend or a service that has none. */
-export interface CreateMemberRepositoryDTO {
-    codeRepositoryId: string
-    repositoryName: string
-    /** The member's own template, then the default of its kind, when left out. */
-    template?: string
-    private?: boolean
-    gitlab?: { groupId?: number }
 }
 
 const useMicrofrontendsApi = () => {
@@ -221,16 +213,6 @@ const useMicrofrontendsApi = () => {
         return response.data
     }
 
-    const createRepository = async (id: string, data: CreateMemberRepositoryDTO, metadata?: IClientRequestMetadataExtended): Promise<Microfrontend> => {
-        const response = await apiClient.doRequest<Microfrontend, CreateMemberRepositoryDTO>({
-            url: `/api/microfrontends/${id}/repository`,
-            method: "POST",
-            data,
-            ...metadata
-        })
-        return response.data
-    }
-
     const getVersions = async (id: string): Promise<string[]> => {
         const response = await apiClient.doRequest<string[]>({
             url: `/api/microfrontends/${id}/versions`
@@ -285,22 +267,6 @@ const useMicrofrontendsApi = () => {
         return response.data
     }
 
-    const linkService = async (microfrontendId: string, serviceId: string) => {
-        const response = await apiClient.doRequest({
-            url: `/api/microfrontends/${microfrontendId}/services/${serviceId}`,
-            method: "PUT"
-        })
-        return response.data
-    }
-
-    const unlinkService = async (microfrontendId: string, serviceId: string) => {
-        const response = await apiClient.doRequest({
-            url: `/api/microfrontends/${microfrontendId}/services/${serviceId}`,
-            method: "DELETE"
-        })
-        return response.data
-    }
-
     return {
         errorMessage,
         getByProjectId,
@@ -310,15 +276,12 @@ const useMicrofrontendsApi = () => {
         getSingle,
         build,
         renameRepository,
-        createRepository,
         getVersions,
         getBuilds,
         setPosition,
         setDimensions,
         setRelation,
-        removeRelation,
-        linkService,
-        unlinkService
+        removeRelation
     }
 }
 

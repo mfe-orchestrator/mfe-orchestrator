@@ -9,6 +9,9 @@ export const LLM_PROVIDERS = ["anthropic", "azure-foundry", "gemini", "azure-ope
 
 export type LlmProvider = (typeof LLM_PROVIDERS)[number]
 
+/** What the API sends in place of a stored secret: sending it back keeps the stored one. The same string as SECRET_PLACEHOLDER in backend/src/utils/secretCrypto.ts: change both or neither. */
+export const SECRET_PLACEHOLDER = "••••••••••••"
+
 /** The id of the AI the backend builds from its environment variables: every organization sees it, nobody edits it. */
 export const SYSTEM_AI_MODEL_ID = "system"
 

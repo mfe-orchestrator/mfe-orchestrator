@@ -1,20 +1,4 @@
-import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-    Label,
-    Spinner,
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-    Textarea
-} from "@mfe-orchestrator/design-system"
+import { Alert, AlertDescription, AlertTitle, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Spinner, Textarea } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AxiosError } from "axios"
 import { format } from "date-fns"
@@ -29,28 +13,25 @@ import {
     GitBranch,
     GitMerge,
     GitPullRequest,
-    LayoutDashboard,
     LoaderCircle,
     Plus,
     RotateCcw,
-    Server,
     Sparkles,
     Trash2
 } from "lucide-react"
-import { Fragment, useEffect, useId, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import AiModelSelect from "@/components/assistant/AiModelSelect"
 import AnswerUsage from "@/components/assistant/AnswerUsage"
-import { ApplyAllButton, jobErrorMessage, sumUsage } from "@/components/assistant/AssistantJobThread"
+import { jobErrorMessage, sumUsage } from "@/components/assistant/AssistantJobThread"
 import AssistantMessageText from "@/components/assistant/AssistantMessageText"
 import EffortSelect from "@/components/assistant/EffortSelect"
 import { useEffort, useFollowUpAiModel, useFollowUpEffort } from "@/components/assistant/useEffort"
 import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import type { IBadgeProps } from "@/components/atoms"
 import { Badge, Button } from "@/components/atoms"
-import RepositoryLink from "@/components/RepositoryLink"
-import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus, AiChangeTarget } from "@/hooks/apiClients/useAiChangesApi"
+import useAiChangesApi, { AI_CHANGE_ACTIVE_STATUSES, AiChangeFile, AiChangeRequest, AiChangeStatus } from "@/hooks/apiClients/useAiChangesApi"
 import useAiJobsApi, { AiJob, AiJobRepository, isAiJobActive } from "@/hooks/apiClients/useAiJobsApi"
 import { effortsOf } from "@/hooks/apiClients/useAiModelsApi"
 import { errorCodeOf } from "@/hooks/useApiClient"
@@ -59,15 +40,10 @@ import useToastNotificationStore from "@/store/useToastNotificationStore"
 import { cn } from "@/utils/styleUtils"
 import { AiChangeDiff } from "./AiChangeDiff"
 import { ProgressLog, StatusBadge } from "./AiChangeProgress"
-import { AiWorkspaceRepository, BaseBranches, pickedBaseBranches, RepositoryBranches } from "./RepositoryBranches"
+import { AiWorkspaceRepository, BaseBranches, RepositoryBranches } from "./RepositoryBranches"
 
 const PROMPT_MAX_LENGTH = 8000
 const POLL_INTERVAL_MS = 2000
-
-/** Whose code the agent works on: the repository of a microfrontend or of a service, or every repository of a domain at once. */
-export type AiWorkspaceTarget = AiChangeTarget | { kind: "domain"; id: string }
-
-const isRepositoryTarget = (target: AiWorkspaceTarget): target is AiChangeTarget => target.kind !== "domain"
 
 /** Error codes of the create endpoint that have a message of their own. */
 const CREATE_ERROR_CODES = new Set(["ASSISTANT_DISABLED", "AI_CHANGE_FORBIDDEN", "WORKSPACE_NO_REPOSITORY", "AI_MODEL_NOT_AVAILABLE"])
@@ -90,9 +66,6 @@ const firstLine = (text: string) =>
         ?.trim() ?? ""
 
 const conflictsOf = (error: Error): string[] => (error as AxiosError<{ error?: { details?: { conflicts?: string[] } } }>)?.response?.data?.error?.details?.conflicts ?? []
-
-/** The page of the microfrontend or service a repository belongs to, open on the request. */
-const repositoryPath = (repository: AiJobRepository) => `/${repository.kind === "service" ? "service" : "microfrontend"}/${repository.microfrontendId}?change=${repository.requestId}`
 
 /** Set on the requests of a job over several repositories: the request is one part of a wider change. */
 const JobBadge: React.FC<{ request: AiChangeRequest }> = ({ request }) => {
@@ -407,7 +380,7 @@ const RequestView: React.FC<RequestViewProps> = ({ request, onRetry, onUpdated, 
 
                 {(request.status === "FAILED" || request.status === "DISCARDED") && (
                     <div className="flex justify-end">
-                        <Button type="button" variant="secondary" onClick={() => onRetry(request.prompt, { [request.microfrontendId ?? request.serviceId ?? ""]: request.baseBranch })}>
+                        <Button type="button" variant="secondary" onClick={() => onRetry(request.prompt, { [request.microfrontendId]: request.baseBranch })}>
                             <RotateCcw aria-hidden="true" />
                             {t("microfrontend.aiChange.try_again")}
                         </Button>
@@ -468,8 +441,6 @@ const turnStatus = ({ job, repositories }: Turn): AiChangeStatus => {
 interface RepositoryResultProps {
     job: AiJob
     repository: AiJobRepository
-    /** Over several repositories, each result says whose it is. */
-    labelled: boolean
     /** Refined by a later message: its files went on into the next proposal. */
     superseded: boolean
     /** The diff and its actions, while its proposal is open for review. */
@@ -477,10 +448,10 @@ interface RepositoryResultProps {
 }
 
 /** What the agent did with a message on one repository. */
-const RepositoryResult: React.FC<RepositoryResultProps> = ({ job, repository, labelled, superseded, proposal }) => {
+const RepositoryResult: React.FC<RepositoryResultProps> = ({ job, repository, superseded, proposal }) => {
     const { t } = useTranslation()
 
-    const result = (
+    return (
         <>
             {isActive(repository.status) && (
                 <output className="flex items-center gap-2 text-sm">
@@ -508,96 +479,20 @@ const RepositoryResult: React.FC<RepositoryResultProps> = ({ job, repository, la
             )}
         </>
     )
-
-    if (!labelled) return result
-
-    const Icon = repository.kind === "service" ? Server : LayoutDashboard
-    return (
-        <section aria-label={repository.microfrontendName} className="flex flex-col gap-3 rounded-md border border-divider p-3">
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-                <Icon className="size-4 shrink-0 text-foreground-secondary" aria-hidden="true" />
-                <Link to={repositoryPath(repository)} className="min-w-0 flex-1 truncate font-medium underline-offset-4 hover:underline">
-                    {repository.microfrontendName}
-                    <span className="sr-only"> ({t(`microfrontend.aiChange.kind.${repository.kind}`)})</span>
-                </Link>
-                <StatusBadge status={repository.status} />
-            </div>
-            {/* Where the agent works: the repository on its provider, the branch it started from and the one it pushes on. */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-secondary">
-                {repository.repository && <RepositoryLink repository={{ enabled: true, ...repository.repository }} />}
-                <span className="flex min-w-0 items-center gap-1">
-                    <code className="font-mono">{repository.baseBranch}</code>
-                    {repository.branch && (
-                        <>
-                            <span aria-hidden="true">→</span>
-                            <span className="sr-only">{t("microfrontend.aiChange.feature_branch")}</span>
-                            <code className="break-all font-mono">{repository.branch}</code>
-                        </>
-                    )}
-                </span>
-            </div>
-            {result}
-        </section>
-    )
 }
-
-/** The tab of one repository, over several: whose it is, how many files it changes, and whether it still moves, failed or went out. */
-const RepositoryTab: React.FC<{ repository: AiJobRepository }> = ({ repository }) => {
-    const { t } = useTranslation()
-    const Icon = repository.kind === "service" ? Server : LayoutDashboard
-    const count = repository.files.length
-    return (
-        <TabsTrigger value={repository.requestId} className="min-w-0 max-w-[16rem]" title={repository.microfrontendName} dataTestId="ai-change-repository-tab">
-            <Icon className="shrink-0" aria-hidden="true" />
-            <span className="truncate">{repository.microfrontendName}</span>
-            {count > 0 && (
-                <span aria-hidden="true" className="shrink-0 rounded-full bg-muted px-1.5 tabular-nums text-foreground">
-                    {count}
-                </span>
-            )}
-            {isActive(repository.status) && <LoaderCircle className="shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-            {repository.status === "FAILED" && <AlertTriangle className="shrink-0 text-destructive" aria-hidden="true" />}
-            {repository.status === "APPLIED" && <CheckCircle2 className="shrink-0 text-green-600 dark:text-green-400" aria-hidden="true" />}
-            <span className="sr-only">
-                {count > 0 && `, ${t("microfrontend.aiChange.files_count", { count })}`}, {t(`microfrontend.aiChange.status.${repository.status}`)}
-            </span>
-        </TabsTrigger>
-    )
-}
-
-/** The tab a message opens on: the first repository with a proposal to review, else the first. */
-const firstTab = (repositories: AiJobRepository[]) => (repositories.find(repository => repository.status === "PROPOSED" && repository.files.length > 0) ?? repositories[0]).requestId
 
 interface TurnViewProps {
     turn: Turn
-    /** Over several repositories, each result says whose it is. */
-    labelled: boolean
     /** The repositories whose result a later message refined. */
     superseded: Set<string>
     /** The diff and its actions of a repository, on the message whose proposals are open for review. */
     proposalOf?: (repository: AiJobRepository) => React.ReactNode
-    /** After the results: actions on all of them at once. */
-    actions?: React.ReactNode
 }
 
-const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposalOf, actions }) => {
+const TurnView: React.FC<TurnViewProps> = ({ turn, superseded, proposalOf }) => {
     const { t } = useTranslation()
     const { job, repositories } = turn
     const active = isTurnActive(turn)
-    // Over several repositories, one tab each: the files of one repository are never mixed with those of another.
-    const tabbed = labelled && repositories.length > 1
-    // Follows the repository to review until the user picks one: the proposals land after the tabs are on screen.
-    const [selectedTab, setSelectedTab] = useState<string>()
-
-    const resultOf = (repository: AiJobRepository) => (
-        <RepositoryResult
-            job={job}
-            repository={repository}
-            labelled={labelled}
-            superseded={superseded.has(repository.requestId)}
-            proposal={repository.status === "PROPOSED" ? proposalOf?.(repository) : undefined}
-        />
-    )
 
     return (
         <div className="flex flex-col gap-3">
@@ -614,25 +509,15 @@ const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposa
 
             {job.summary && !active && <AssistantMessageText text={job.summary} className="text-sm" />}
 
-            {tabbed ? (
-                <Tabs value={selectedTab ?? firstTab(repositories)} onValueChange={setSelectedTab} layoutSize="sm">
-                    <TabsList aria-label={t("microfrontend.aiChange.repositories_tabs_label")} className="max-w-full">
-                        {repositories.map(repository => (
-                            <RepositoryTab key={repository.requestId} repository={repository} />
-                        ))}
-                    </TabsList>
-                    {repositories.map(repository => (
-                        // Kept mounted: switching tab keeps the diffs the user unfolded.
-                        <TabsContent key={repository.requestId} value={repository.requestId} forceMount className="mt-3">
-                            {resultOf(repository)}
-                        </TabsContent>
-                    ))}
-                </Tabs>
-            ) : (
-                repositories.map(repository => <Fragment key={repository.requestId}>{resultOf(repository)}</Fragment>)
-            )}
-
-            {actions}
+            {repositories.map(repository => (
+                <RepositoryResult
+                    key={repository.requestId}
+                    job={job}
+                    repository={repository}
+                    superseded={superseded.has(repository.requestId)}
+                    proposal={repository.status === "PROPOSED" ? proposalOf?.(repository) : undefined}
+                />
+            ))}
 
             {active ? (
                 <ProgressLog events={job.events ?? []} live />
@@ -659,15 +544,9 @@ const TurnView: React.FC<TurnViewProps> = ({ turn, labelled, superseded, proposa
     )
 }
 
-/** On a repository a follow-up goes on with that repository only: the others of a job over several go on from their own page, or from the assistant. A domain goes on with all of them. */
-const followUpScope = (target: AiWorkspaceTarget) => {
-    if (target.kind === "service") return { serviceIds: [target.id] }
-    if (target.kind === "microfrontend") return { microfrontendIds: [target.id] }
-    return {}
-}
-
 interface FollowUpFormProps {
-    target: AiWorkspaceTarget
+    /** A follow-up goes on with this microfrontend only: the others of a job over several go on from their own page, or from the assistant. */
+    microfrontendId: string
     /** The message whose proposal a follow-up refines: none while the agent works or once nothing is left to refine. */
     open?: Turn
     /** The latest message: while nothing is open, its effort is shown, the one the running follow-up was sent with. */
@@ -679,7 +558,7 @@ interface FollowUpFormProps {
 }
 
 /** Goes on with the conversation: a follow-up starts from the open proposal and replaces it once it proposes. */
-const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, latest, placeholder, onSent, onFailed }) => {
+const FollowUpForm: React.FC<FollowUpFormProps> = ({ microfrontendId, open, latest, placeholder, onSent, onFailed }) => {
     const { t } = useTranslation()
     const aiJobsApi = useAiJobsApi()
     const [draft, setDraft] = useState("")
@@ -690,7 +569,7 @@ const FollowUpForm: React.FC<FollowUpFormProps> = ({ target, open, latest, place
 
     const followUpMutation = useMutation({
         mutationFn: ({ jobId, prompt }: { jobId: string; prompt: string }) =>
-            aiJobsApi.followUp(jobId, { prompt, effort, aiModelId: aiModel?.id, ...followUpScope(target) }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
+            aiJobsApi.followUp(jobId, { prompt, effort, aiModelId: aiModel?.id, microfrontendIds: [microfrontendId] }, { customErrorMessage: error => jobErrorMessage(t, error, "follow_up") }),
         onSuccess: child => {
             setDraft("")
             onSent(child)
@@ -758,9 +637,9 @@ interface ConversationThreadProps {
     jobId: string
     /** The first job of the chain. */
     conversationId: string
-    target: AiWorkspaceTarget
-    /** Where the agent started from, on a repository. */
-    baseBranch?: string
+    microfrontendId: string
+    /** Where the agent started from. */
+    baseBranch: string
     /** Next to the status: a request of a job over several repositories says so. */
     badge?: React.ReactNode
     onRetry: (prompt: string, baseBranches?: BaseBranches) => void
@@ -771,16 +650,14 @@ interface ConversationThreadProps {
 }
 
 /**
- * A conversation with the agent: every message with what it did on the repositories of the workspace (the one of a
- * microfrontend or service, all those of a domain), the latest proposals to review, and the input to refine them
- * further before applying them.
+ * A conversation with the agent: every message with what it did on the repository of the microfrontend, the latest
+ * proposal to review, and the input to refine it further before applying it.
  */
-const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversationId, target, baseBranch, badge, onRetry, onQueueChanged, fallback }) => {
+const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversationId, microfrontendId, baseBranch, badge, onRetry, onQueueChanged, fallback }) => {
     const { t } = useTranslation()
     const themeStore = useThemeStore()
     const aiJobsApi = useAiJobsApi()
     const queryClient = useQueryClient()
-    const notifications = useToastNotificationStore()
     // By conversation: any of its requests opens the same thread, from the same cache.
     const chainQueryKey = ["ai-change-thread", conversationId]
 
@@ -792,24 +669,20 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
         refetchOnWindowFocus: true
     })
 
-    const labelled = target.kind === "domain"
-    // A conversation started on a domain may go on with other repositories only: on a repository, keep the messages that worked on it.
+    // A conversation started from the assistant may go on with other microfrontends only: keep the messages that worked on this one.
     const turns: Turn[] = (chainQuery.data ?? []).flatMap(job => {
-        if (target.kind === "domain") return [{ job, repositories: job.repositories }]
-        const repositories = job.repositories.filter(candidate => candidate.microfrontendId === target.id)
+        const repositories = job.repositories.filter(candidate => candidate.microfrontendId === microfrontendId)
         return repositories.length > 0 ? [{ job, repositories }] : []
     })
     const first = turns[0]
     const latest = turns[turns.length - 1]
     const busy = turns.some(isTurnActive)
-    // Nothing is reviewed or refined while the agent works; a push holds back only its own repository, not the other proposals of a domain.
+    // Nothing is reviewed or refined while the agent works.
     const agentWorking = turns.some(turn => isAiJobActive(turn.job.status))
     // A failed follow-up leaves the proposal before it open: the latest one still proposed is refined.
     const open = agentWorking ? undefined : [...turns].reverse().find(turn => turn.job.status === "DONE" && turn.repositories.some(repository => repository.status === "PROPOSED"))
     // Where the conversation stands: what the agent does, else the open proposal, else what is pushed or was applied (a later failed follow-up does not undo it).
     const current = agentWorking ? latest : (open ?? turns.find(turn => turn.repositories.some(repository => repository.status === "APPLYING" || repository.status === "APPLIED")) ?? latest)
-    // An apply of all the proposals of a job: its outcome is told once, when polling sees the last of its repositories settle.
-    const pendingApply = useRef<{ jobId: string; requestIds: string[] } | undefined>(undefined)
 
     // The queue only shows statuses; the assistant panel follows the same jobs from a cache of its own.
     const changed = () => {
@@ -827,21 +700,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
             changed()
         }
     }, [busy])
-
-    // biome-ignore lint/correctness/useExhaustiveDependencies: new data is what may end the apply; the toast store and t are stable enough for this.
-    useEffect(() => {
-        const pending = pendingApply.current
-        if (!pending || !chainQuery.data) return
-        const repositories = chainQuery.data.find(job => job._id === pending.jobId)?.repositories.filter(repository => pending.requestIds.includes(repository.requestId)) ?? []
-        if (repositories.some(repository => repository.status === "APPLYING")) return
-        pendingApply.current = undefined
-        // A repository that could not be applied goes back to its proposal, with the error on it.
-        const failed = repositories.filter(repository => repository.status !== "APPLIED").length
-        if (failed === 0) notifications.showSuccessNotification({ message: t("assistant.jobs.apply_all_success") })
-        else notifications.showWarningNotification({ message: t("assistant.jobs.apply_all_failed", { count: failed, total: pending.requestIds.length }) })
-        // The pages of the microfrontends and services show the same requests.
-        queryClient.invalidateQueries({ queryKey: ["ai-change"] })
-    }, [chainQuery.data])
 
     const onSent = (child: AiJob) => {
         // Shown at once, then followed by polling: the new message is active.
@@ -861,16 +719,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
         changed()
     }
 
-    // Pushed in the background: polling follows each repository onto its base branch, or back to its proposal with the error.
-    const onApplying = async (applied: AiJob, requestIds: string[]) => {
-        notifications.showInfoNotification({ message: t("assistant.jobs.apply_all_started") })
-        // A poll that left before the apply would bring back the proposals as they were, and end the wait too early.
-        await queryClient.cancelQueries({ queryKey: chainQueryKey })
-        pendingApply.current = { jobId: applied._id, requestIds }
-        queryClient.setQueryData<AiJob[]>(chainQueryKey, chain => chain?.map(job => (job._id === applied._id ? { ...applied, events: applied.events ?? job.events } : job)))
-        changed()
-    }
-
     if (chainQuery.isPending) {
         return (
             <div className="flex justify-center py-6">
@@ -885,9 +733,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
     const followUpState = open ? "placeholder" : busy ? "running" : status === "FAILED" ? "failed" : "closed"
     const closed = !busy && !open && (status === "FAILED" || status === "DISCARDED")
     const date = format(new Date(first.job.createdAt), "PPp", { locale: themeStore.getLocale() })
-    const repositoryCount = new Set(turns.flatMap(turn => turn.repositories.map(repository => repository.microfrontendId))).size
-    // Several proposals open at once: they can go out together, one pull request per repository.
-    const applicable = open?.repositories.filter(repository => repository.status === "PROPOSED" && repository.files.length > 0) ?? []
 
     return (
         <Card>
@@ -897,11 +742,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
                         <CardTitle className="mb-0 line-clamp-3 break-words text-base leading-snug" title={firstLine(first.job.prompt)}>
                             {firstLine(first.job.prompt)}
                         </CardTitle>
-                        <CardDescription>
-                            {baseBranch !== undefined
-                                ? t("microfrontend.aiChange.request_meta", { date, branch: baseBranch })
-                                : t("microfrontend.aiChange.request_meta_repositories", { date, count: repositoryCount })}
-                        </CardDescription>
+                        <CardDescription>{t("microfrontend.aiChange.request_meta", { date, branch: baseBranch })}</CardDescription>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         {badge}
@@ -926,21 +767,11 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
                             <li key={turn.job._id}>
                                 <TurnView
                                     turn={turn}
-                                    labelled={labelled}
                                     superseded={superseded}
-                                    // Every proposal still open, not only those of the latest message: a follow-up on a domain may go on with some repositories only.
                                     proposalOf={
                                         !agentWorking && turn.job.status === "DONE"
                                             ? repository => <RepositoryProposal requestId={repository.requestId} onUpdated={onProposalUpdated} onConflict={onConflict} />
                                             : undefined
-                                    }
-                                    actions={
-                                        turn === open &&
-                                        applicable.length > 1 && (
-                                            <div className="flex justify-end">
-                                                <ApplyAllButton job={turn.job} requestIds={applicable.map(repository => repository.requestId)} onApplying={onApplying} />
-                                            </div>
-                                        )
                                     }
                                 />
                             </li>
@@ -978,7 +809,14 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
                     </div>
                 )}
 
-                <FollowUpForm target={target} open={open} latest={latest} placeholder={t(`microfrontend.aiChange.follow_up_${followUpState}`)} onSent={onSent} onFailed={() => chainQuery.refetch()} />
+                <FollowUpForm
+                    microfrontendId={microfrontendId}
+                    open={open}
+                    latest={latest}
+                    placeholder={t(`microfrontend.aiChange.follow_up_${followUpState}`)}
+                    onSent={onSent}
+                    onFailed={() => chainQuery.refetch()}
+                />
             </CardContent>
         </Card>
     )
@@ -986,13 +824,13 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({ jobId, conversa
 
 interface RequestSelectionProps {
     requestId: string
-    target: AiChangeTarget
+    microfrontendId: string
     onRetry: (prompt: string, baseBranches?: BaseBranches) => void
     onQueueChanged: () => void
 }
 
-/** A request opened on a repository: the conversation of its job, or the request alone when it was made before jobs. */
-const RequestSelection: React.FC<RequestSelectionProps> = ({ requestId, target, onRetry, onQueueChanged }) => {
+/** A request opened on the microfrontend: the conversation of its job, or the request alone when it was made before jobs. */
+const RequestSelection: React.FC<RequestSelectionProps> = ({ requestId, microfrontendId, onRetry, onQueueChanged }) => {
     const { t } = useTranslation()
     const aiChangesApi = useAiChangesApi()
     const queryClient = useQueryClient()
@@ -1051,7 +889,7 @@ const RequestSelection: React.FC<RequestSelectionProps> = ({ requestId, target, 
             key={request.conversationId}
             jobId={request.jobId}
             conversationId={request.conversationId}
-            target={target}
+            microfrontendId={microfrontendId}
             baseBranch={request.baseBranch}
             badge={<JobBadge request={request} />}
             onRetry={onRetry}
@@ -1083,11 +921,11 @@ const GROUP_ICON: Record<QueueGroup, React.FC<{ className?: string }>> = {
     failed: AlertTriangle
 }
 
-/** One conversation in the queue, whatever the workspace lists them from. */
+/** One conversation in the queue. */
 interface QueueEntry {
     /** What `?change=` holds to open it. */
     id: string
-    /** Every value of `?change=` that opens it: on a repository, any request of the conversation does. */
+    /** Every value of `?change=` that opens it: any request of the conversation does. */
     ids: string[]
     /** The first request: what the conversation is about. */
     prompt: string
@@ -1096,12 +934,11 @@ interface QueueEntry {
     status: AiChangeStatus
     turns?: number
     files?: number
-    repositories?: number
     /** Next to the status. */
     badge?: React.ReactNode
 }
 
-/** A repository lists its requests, newest first; a conversation is one entry, opened on where it stands: the request the agent works on, else the proposal to review, else the newest. */
+/** The microfrontend lists its requests, newest first; a conversation is one entry, opened on where it stands: the request the agent works on, else the proposal to review, else the newest. */
 const requestEntries = (requests: AiChangeRequest[]): QueueEntry[] => {
     const chains = new Map<string, AiChangeRequest[]>()
     for (const request of requests) chains.set(request.conversationId, [...(chains.get(request.conversationId) ?? []), request])
@@ -1116,29 +953,6 @@ const requestEntries = (requests: AiChangeRequest[]): QueueEntry[] => {
             turns: chain.length,
             files: current.files.length,
             badge: <JobBadge request={current} />
-        }
-    })
-}
-
-/** A domain lists its jobs: the backend sends the first and the latest of each chain, newest first, so the first met of a chain is its latest, the last met its first. */
-const jobEntries = (jobs: AiJob[]): QueueEntry[] => {
-    const chains = new Map<string, { first: AiJob; latest: AiJob }>()
-    for (const job of jobs) {
-        const known = chains.get(job.rootJobId)
-        if (known) known.first = job
-        else chains.set(job.rootJobId, { first: job, latest: job })
-    }
-    return [...chains.entries()].map(([rootJobId, { first, latest }]) => {
-        const status = turnStatus({ job: latest, repositories: latest.repositories })
-        // A failed follow-up leaves the proposals before it open: the conversation still waits for a review.
-        const reviewable = status === "FAILED" && turnStatus({ job: first, repositories: first.repositories }) === "PROPOSED"
-        return {
-            id: rootJobId,
-            ids: [rootJobId],
-            prompt: first.prompt,
-            at: latest.updatedAt,
-            status: reviewable ? "PROPOSED" : status,
-            repositories: latest.repositories.length
         }
     })
 }
@@ -1167,7 +981,6 @@ const QueueItem: React.FC<{ entry: QueueEntry; selected: boolean; onSelect: () =
                     <time dateTime={entry.at}>{format(new Date(entry.at), "PPp", { locale: themeStore.getLocale() })}</time>
                     {entry.turns !== undefined && entry.turns > 1 && <span>· {t("microfrontend.aiChange.turns_count", { count: entry.turns })}</span>}
                     {Boolean(entry.files) && <span>· {t("microfrontend.aiChange.files_count", { count: entry.files })}</span>}
-                    {Boolean(entry.repositories) && <span>· {t("microfrontend.aiChange.repositories_count", { count: entry.repositories })}</span>}
                 </span>
                 <span className="flex flex-wrap items-center gap-1.5">
                     <StatusBadge status={entry.status} />
@@ -1240,27 +1053,8 @@ const QueueSection: React.FC<QueueSectionProps> = ({ group, entries, selectedId,
     )
 }
 
-/** What a page adds to the composer of its workspace: a domain lists the repositories the agent will see, and may need them created first. */
-export interface AiWorkspaceComposerExtension {
-    /** Above the prompt. */
-    context?: React.ReactNode
-    /** Generate is refused while set: the request cannot run as it stands. */
-    blocked?: boolean
-    /** The page works on the request before it is sent. */
-    pending?: boolean
-    /** In place of the keyboard shortcut while `pending`. */
-    pendingLabel?: string
-    /**
-     * Called with the prompt before the request is created; returning true takes the request over. The page calls
-     * `started` with the job it starts in the end, and the workspace opens it.
-     */
-    intercept?: (prompt: string, started: (job: AiJob) => void) => boolean
-}
-
 interface ComposerProps {
     name: string
-    /** Picks the wording where it differs (`_service` and `_domain` keys). */
-    kind: AiWorkspaceTarget["kind"]
     prompt: string
     repositories: AiWorkspaceRepository[]
     baseBranches: BaseBranches
@@ -1272,16 +1066,13 @@ interface ComposerProps {
     promptRef: React.RefObject<HTMLTextAreaElement | null>
     /** Set when "New change" or "Try again" asked for the composer before it was on screen. */
     focusOnMount: React.RefObject<boolean>
-    extension?: AiWorkspaceComposerExtension
 }
 
-const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, repositories, baseBranches, onPromptChange, onBaseBranchesChange, onSubmit, pending, error, promptRef, focusOnMount, extension }) => {
+const Composer: React.FC<ComposerProps> = ({ name, prompt, repositories, baseBranches, onPromptChange, onBaseBranchesChange, onSubmit, pending, error, promptRef, focusOnMount }) => {
     const { t } = useTranslation()
     const [effort, setEffort] = useEffort("code")
     const { selected: aiModel, setSelected: setAiModel } = useProjectAiModels()
     const promptId = useId()
-    const context = kind === "microfrontend" ? undefined : kind
-    const busy = pending || Boolean(extension?.pending)
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: only the mount decides
     useEffect(() => {
@@ -1304,10 +1095,9 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, repositories, b
                         <Sparkles className="size-5 shrink-0 text-primary" aria-hidden="true" />
                         {t("microfrontend.aiChange.composer_title", { name })}
                     </CardTitle>
-                    <CardDescription>{t("microfrontend.aiChange.description", { context })}</CardDescription>
+                    <CardDescription>{t("microfrontend.aiChange.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 pt-3">
-                    {extension?.context}
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor={promptId} className="sr-only">
                             {t("microfrontend.aiChange.prompt_label")}
@@ -1321,8 +1111,8 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, repositories, b
                             required
                             aria-invalid={Boolean(error)}
                             aria-describedby={`${promptId}-hint`}
-                            placeholder={t("microfrontend.aiChange.prompt_placeholder", { context: kind === "domain" ? kind : undefined })}
-                            disabled={busy}
+                            placeholder={t("microfrontend.aiChange.prompt_placeholder")}
+                            disabled={pending}
                             onChange={event => onPromptChange(event.target.value)}
                             onKeyDown={event => {
                                 if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -1337,16 +1127,16 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, repositories, b
                             <span className="text-muted-foreground">{t("microfrontend.aiChange.prompt_counter", { count: prompt.length, max: PROMPT_MAX_LENGTH })}</span>
                         </div>
                     </div>
-                    <RepositoryBranches repositories={repositories} value={baseBranches} onChange={onBaseBranchesChange} disabled={busy} />
+                    <RepositoryBranches repositories={repositories} value={baseBranches} onChange={onBaseBranchesChange} disabled={pending} />
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-xs text-muted-foreground" aria-live="polite">
-                            {extension?.pending && extension.pendingLabel ? extension.pendingLabel : t("microfrontend.aiChange.composer_shortcut")}
+                            {t("microfrontend.aiChange.composer_shortcut")}
                         </span>
                         <div className="flex items-center gap-2">
-                            <AiModelSelect value={aiModel?.id} onChange={setAiModel} disabled={busy} dataTestId="ai-change-ai-model" />
-                            <EffortSelect value={effort} onChange={setEffort} disabled={busy} dataTestId="ai-change-effort" />
-                            <Button type="submit" disabled={busy || extension?.blocked} dataTestId="ai-change-generate">
-                                {busy ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
+                            <AiModelSelect value={aiModel?.id} onChange={setAiModel} disabled={pending} dataTestId="ai-change-ai-model" />
+                            <EffortSelect value={effort} onChange={setEffort} disabled={pending} dataTestId="ai-change-effort" />
+                            <Button type="submit" disabled={pending} dataTestId="ai-change-generate">
+                                {pending ? <Spinner size={16} centerScreen={false} /> : <Sparkles aria-hidden="true" />}
                                 {t("microfrontend.aiChange.generate")}
                             </Button>
                         </div>
@@ -1358,23 +1148,19 @@ const Composer: React.FC<ComposerProps> = ({ name, kind, prompt, repositories, b
 }
 
 interface AiWorkspaceProps {
-    target: AiWorkspaceTarget
+    microfrontendId: string
     name: string
-    /** The repositories the agent works on, shown in the composer with the branch each starts from. */
+    /** The repository the agent works on, shown in the composer with the branch it starts from. */
     repositories: AiWorkspaceRepository[]
-    composer?: AiWorkspaceComposerExtension
 }
 
 /**
- * "Edit with AI", the same workspace on a microfrontend, a service and a domain: the queue of the conversations with
- * the agent on one side (waiting for review, in progress, discarded, done) and the selected one, or a new request, on
- * the other. A microfrontend or a service works on its own repository, a domain on all of its repositories at once.
- * The selection lives in `?change=`, so the assistant can link a job straight to its diff.
+ * "Edit with AI" on a microfrontend: the queue of the conversations with the agent on one side (waiting for review, in
+ * progress, discarded, done) and the selected one, or a new request, on the other. The selection lives in `?change=`, so the assistant can link a job straight to its diff.
  */
-export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, repositories, composer }) => {
+export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ microfrontendId, name, repositories }) => {
     const { t } = useTranslation()
     const aiChangesApi = useAiChangesApi()
-    const aiJobsApi = useAiJobsApi()
     const queryClient = useQueryClient()
     const [prompt, setPrompt] = useState("")
     const [baseBranches, setBaseBranches] = useState<BaseBranches>({})
@@ -1386,25 +1172,15 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
     const promptRef = useRef<HTMLTextAreaElement>(null)
     const focusComposer = useRef(false)
     const linkedId = searchParams.get("change") ?? undefined
-    const repository = isRepositoryTarget(target) ? target : undefined
 
-    // A repository lists its requests, a domain its jobs: either way, conversations with the agent.
     // Jobs started from the assistant land here too: keep the queue moving while any agent works.
-    const requestsQuery = useQuery({
-        queryKey: ["ai-changes", target.id],
-        queryFn: () => aiChangesApi.getByTarget(repository!),
-        enabled: Boolean(repository),
+    const queueQuery = useQuery({
+        queryKey: ["ai-changes", microfrontendId],
+        queryFn: () => aiChangesApi.getByMicrofrontendId(microfrontendId),
         refetchInterval: query => (query.state.data?.some(request => isActive(request.status)) ? POLL_INTERVAL_MS * 2 : false)
     })
-    const jobsQuery = useQuery({
-        queryKey: ["ai-jobs", "domain", target.id],
-        queryFn: () => aiJobsApi.list({ domainId: target.id }),
-        enabled: !repository,
-        refetchInterval: query => (query.state.data?.some(isJobBusy) ? POLL_INTERVAL_MS * 2 : false)
-    })
-    const queueQuery = repository ? requestsQuery : jobsQuery
-    const entries = repository ? requestEntries(requestsQuery.data ?? []) : jobEntries(jobsQuery.data ?? [])
-    const invalidateQueue = () => queryClient.invalidateQueries({ queryKey: repository ? ["ai-changes", target.id] : ["ai-jobs", "domain", target.id] })
+    const entries = requestEntries(queueQuery.data ?? [])
+    const invalidateQueue = () => queryClient.invalidateQueries({ queryKey: ["ai-changes", microfrontendId] })
 
     const select = (id: string) =>
         setSearchParams(
@@ -1434,22 +1210,13 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
 
     const createMutation = useMutation({
         mutationFn: async (): Promise<string> => {
-            if (!repository) {
-                const job = await aiJobsApi.create(
-                    { prompt: prompt.trim(), scope: "domain", domainId: target.id, baseBranches: pickedBaseBranches(repositories, baseBranches), effort, aiModelId },
-                    { customErrorMessage: error => jobErrorMessage(t, error, "create") }
-                )
-                return job.rootJobId
-            }
             const created = await aiChangesApi.create(
-                repository,
-                { prompt: prompt.trim(), baseBranch: baseBranches[repository.id]?.trim() || undefined, effort, aiModelId },
+                microfrontendId,
+                { prompt: prompt.trim(), baseBranch: baseBranches[microfrontendId]?.trim() || undefined, effort, aiModelId },
                 {
                     customErrorMessage: error => {
                         const code = errorCodeOf(error)
-                        return code && CREATE_ERROR_CODES.has(code)
-                            ? t(`microfrontend.aiChange.errors.${code}`, { context: repository.kind === "service" ? "service" : undefined })
-                            : t("microfrontend.aiChange.errors.create")
+                        return code && CREATE_ERROR_CODES.has(code) ? t(`microfrontend.aiChange.errors.${code}`) : t("microfrontend.aiChange.errors.create")
                     }
                 }
             )
@@ -1459,12 +1226,6 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
         onSuccess: reset
     })
 
-    /** A job the page started itself (a domain that needed its repositories created first): open it like one created here. */
-    const started = (job: AiJob) => {
-        reset()
-        select(repository ? (job.repositories.find(candidate => candidate.microfrontendId === repository.id)?.requestId ?? NEW_CHANGE) : job.rootJobId)
-    }
-
     const promptError = submitted && prompt.trim().length === 0 ? t("microfrontend.aiChange.prompt_required") : undefined
 
     const generate = () => {
@@ -1473,7 +1234,6 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
             promptRef.current?.focus()
             return
         }
-        if (composer?.blocked || composer?.intercept?.(prompt.trim(), started)) return
         // Navigation goes in the call options: they are skipped once the page is left, the hook-level callback is not.
         createMutation.mutate(undefined, { onSuccess: select })
     }
@@ -1509,7 +1269,6 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
                 {(linkedId === NEW_CHANGE || (!linkedId && queueQuery.data?.length === 0)) && (
                     <Composer
                         name={name}
-                        kind={target.kind}
                         prompt={prompt}
                         repositories={repositories}
                         baseBranches={baseBranches}
@@ -1520,27 +1279,9 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
                         error={promptError}
                         promptRef={promptRef}
                         focusOnMount={focusComposer}
-                        extension={composer}
                     />
                 )}
-                {selectedId &&
-                    (repository ? (
-                        <RequestSelection requestId={selectedId} target={repository} onRetry={retry} onQueueChanged={invalidateQueue} />
-                    ) : (
-                        <ConversationThread
-                            key={selectedId}
-                            jobId={selectedId}
-                            conversationId={selectedId}
-                            target={target}
-                            onRetry={retry}
-                            onQueueChanged={invalidateQueue}
-                            fallback={
-                                <Alert variant="destructive">
-                                    <AlertDescription>{t("microfrontend.aiChange.errors.load")}</AlertDescription>
-                                </Alert>
-                            }
-                        />
-                    ))}
+                {selectedId && <RequestSelection requestId={selectedId} microfrontendId={microfrontendId} onRetry={retry} onQueueChanged={invalidateQueue} />}
             </div>
         </div>
     )

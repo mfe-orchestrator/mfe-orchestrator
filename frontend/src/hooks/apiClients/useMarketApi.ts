@@ -1,14 +1,5 @@
 import useApiClient from "../useApiClient"
 
-/** What a service created from a service template starts with */
-export interface ServiceDefaults {
-    port: number
-    livenessPath: string
-    readinessPath: string
-    docsPath?: string
-    openApiPath?: string
-}
-
 export interface Market {
     _id: string
     name: string
@@ -26,8 +17,6 @@ export interface Market {
     compiler?: string
     /** File of the build output a microfrontend created from the template is served by */
     entryPoint?: string
-    /** Service templates only */
-    serviceDefaults?: ServiceDefaults
     createdAt: Date
     updatedAt: Date
 }

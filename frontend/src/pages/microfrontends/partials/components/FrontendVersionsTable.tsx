@@ -3,14 +3,13 @@ import { Copy } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Badge, Button } from "@/components/atoms"
 import type { BuiltFrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import type { BuiltService } from "@/hooks/apiClients/useServicesApi"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 /** "sha256:0123456789ab…" is enough to tell two builds apart. */
 const shortDigest = (digest?: string) => (digest ? digest.replace(/^sha256:/, "").slice(0, 12) : undefined)
 
-/** The versions of a service, or of a frontend served by its own container: both are images published by a pipeline. */
-export const ServiceVersionsTable: React.FC<{ versions: (BuiltService | BuiltFrontend)[] }> = ({ versions }) => {
+/** The versions of a FRONTEND: the images its pipeline published. */
+export const FrontendVersionsTable: React.FC<{ versions: BuiltFrontend[] }> = ({ versions }) => {
     const { t } = useTranslation()
     const notifications = useToastNotificationStore()
     // Only when a pipeline sent one: an empty column on every row says nothing
@@ -19,28 +18,28 @@ export const ServiceVersionsTable: React.FC<{ versions: (BuiltService | BuiltFro
     const copyImage = async (image: string) => {
         try {
             await navigator.clipboard.writeText(image)
-            notifications.showSuccessNotification({ message: t("services.versions.copied") })
+            notifications.showSuccessNotification({ message: t("microfrontend.kind.versions.copied") })
         } catch {
-            notifications.showErrorNotification({ message: t("services.versions.copy_failed") })
+            notifications.showErrorNotification({ message: t("microfrontend.kind.versions.copy_failed") })
         }
     }
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="mb-0">{t("services.versions.title")}</CardTitle>
-                <CardDescription>{t("services.versions.description")}</CardDescription>
+                <CardTitle className="mb-0">{t("microfrontend.kind.versions.title")}</CardTitle>
+                <CardDescription>{t("microfrontend.kind.versions.description")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-3">
                 <div className="overflow-hidden rounded-lg border-2 border-border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/60 hover:bg-muted/60">
-                                <TableHead>{t("services.versions.version")}</TableHead>
-                                <TableHead>{t("services.versions.image")}</TableHead>
-                                <TableHead>{t("services.versions.digest")}</TableHead>
-                                {showCommit && <TableHead>{t("services.versions.commit")}</TableHead>}
-                                <TableHead>{t("services.versions.date")}</TableHead>
+                                <TableHead>{t("microfrontend.kind.versions.version")}</TableHead>
+                                <TableHead>{t("microfrontend.kind.versions.image")}</TableHead>
+                                <TableHead>{t("microfrontend.kind.versions.digest")}</TableHead>
+                                {showCommit && <TableHead>{t("microfrontend.kind.versions.commit")}</TableHead>}
+                                <TableHead>{t("microfrontend.kind.versions.date")}</TableHead>
                                 <TableHead className="text-right">{t("common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -69,8 +68,8 @@ export const ServiceVersionsTable: React.FC<{ versions: (BuiltService | BuiltFro
                                                 size="sm"
                                                 disabled={!built.image}
                                                 onClick={() => built.image && copyImage(built.image)}
-                                                aria-label={t("services.versions.copy_image")}
-                                                title={t("services.versions.copy_image")}
+                                                aria-label={t("microfrontend.kind.versions.copy_image")}
+                                                title={t("microfrontend.kind.versions.copy_image")}
                                             >
                                                 <Copy />
                                                 {t("common.copy")}
@@ -79,7 +78,7 @@ export const ServiceVersionsTable: React.FC<{ versions: (BuiltService | BuiltFro
                                     </TableRow>
                                 ))
                             ) : (
-                                <EmptyStateRow colSpan={5}>{t("services.versions.empty")}</EmptyStateRow>
+                                <EmptyStateRow colSpan={5}>{t("microfrontend.kind.versions.empty")}</EmptyStateRow>
                             )}
                         </TableBody>
                     </Table>
@@ -89,4 +88,4 @@ export const ServiceVersionsTable: React.FC<{ versions: (BuiltService | BuiltFro
     )
 }
 
-export default ServiceVersionsTable
+export default FrontendVersionsTable

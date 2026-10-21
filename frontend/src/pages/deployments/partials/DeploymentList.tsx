@@ -5,50 +5,12 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
-import useDeploymentsApi, { DeployedVariableMap, DeploymentDTO } from "../../../hooks/apiClients/useDeploymentsApi"
+import useDeploymentsApi, { DeploymentDTO } from "../../../hooks/apiClients/useDeploymentsApi"
 import DeploymentMicrofrontendCard from "./DeploymentMicrofrontendCard"
-import DeploymentServiceCard from "./DeploymentServiceCard"
-
-/** The config maps or the secrets of a deployment, each with the keys it set in the environment */
-const DeployedMaps: React.FC<{ title: string; maps: DeployedVariableMap[]; secret?: boolean }> = ({ title, maps, secret }) => {
-    const { t } = useTranslation()
-
-    return (
-        <div className="mt-4">
-            <h4 className="font-semibold text-primary mb-1">{title}</h4>
-            {maps.map(map => (
-                <div key={map._id} className="mt-2">
-                    <p className="text-sm font-medium">{map.name}</p>
-                    {map.entries.length > 0 ? (
-                        <DescriptionList orientation="inline">
-                            {map.entries.map(entry => (
-                                <DescriptionItem key={entry.key} label={entry.key}>
-                                    {secret ? (
-                                        <span title={t("deployments.secret_value_hidden")}>
-                                            <span aria-hidden="true">••••••</span>
-                                            <span className="sr-only">{t("deployments.secret_value_hidden")}</span>
-                                        </span>
-                                    ) : (
-                                        entry.value
-                                    )}
-                                </DescriptionItem>
-                            ))}
-                        </DescriptionList>
-                    ) : (
-                        <p className="text-sm text-foreground-secondary">{t("deployments.map_no_keys")}</p>
-                    )}
-                </div>
-            ))}
-        </div>
-    )
-}
 
 /** What a deployment shipped: the same summary for the active one and for the history */
 const DeploymentSummary: React.FC<{ deployment: DeploymentDTO }> = ({ deployment }) => {
     const { t } = useTranslation()
-    const services = deployment.services ?? []
-    const configMaps = deployment.configMaps ?? []
-    const secrets = deployment.secrets ?? []
 
     return (
         <>
@@ -58,16 +20,6 @@ const DeploymentSummary: React.FC<{ deployment: DeploymentDTO }> = ({ deployment
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
                         {deployment.microfrontends.map(microfrontend => (
                             <DeploymentMicrofrontendCard key={microfrontend._id} microfrontend={microfrontend} />
-                        ))}
-                    </div>
-                </div>
-            )}
-            {services.length > 0 && (
-                <div className={deployment.microfrontends.length > 0 ? "mt-4" : undefined}>
-                    <h4 className="font-semibold text-primary mb-2">{t("deployments.services_title")}</h4>
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                        {services.map(service => (
-                            <DeploymentServiceCard key={service._id} service={service} />
                         ))}
                     </div>
                 </div>
@@ -84,8 +36,6 @@ const DeploymentSummary: React.FC<{ deployment: DeploymentDTO }> = ({ deployment
                     </DescriptionList>
                 </div>
             )}
-            {configMaps.length > 0 && <DeployedMaps title={t("deployments.config_maps_title")} maps={configMaps} />}
-            {secrets.length > 0 && <DeployedMaps title={t("deployments.secrets_title")} maps={secrets} secret />}
         </>
     )
 }

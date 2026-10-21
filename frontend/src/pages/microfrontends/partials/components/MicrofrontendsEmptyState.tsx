@@ -11,11 +11,9 @@ interface MicrofrontendsEmptyStateProps {
     /** Only provided when the project has at least one code repository connection to import from. */
     onImportRepositories?: () => void
     onResetFilters?: () => void
-    /** Replaces the default no-results text, e.g. when a filter other than the search emptied the list */
-    noResultsDescription?: string
 }
 
-export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> = ({ variant, searchTerm, onAddNewMicrofrontend, onImportRepositories, onResetFilters, noResultsDescription }) => {
+export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> = ({ variant, searchTerm, onAddNewMicrofrontend, onImportRepositories, onResetFilters }) => {
     const { t } = useTranslation()
 
     const isNoResults = variant === "no-results"
@@ -27,11 +25,11 @@ export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> =
             tone="primary"
             icon={isNoResults ? <SearchX /> : <PackageOpen />}
             title={isNoResults ? t("microfrontend.dashboard.noResultsTitle") : t("microfrontend.no_microfrontends_found")}
-            description={isNoResults ? (noResultsDescription ?? t("microfrontend.dashboard.noResultsDescription", { searchTerm })) : t("microfrontend.no_microfrontends_found_description")}
+            description={isNoResults ? t("microfrontend.dashboard.noResultsDescription", { searchTerm }) : t("microfrontend.no_microfrontends_found_description")}
             actions={
                 isNoResults ? (
                     <Button variant="secondary" onClick={onResetFilters}>
-                        {t("domains.filter.reset")}
+                        {t("microfrontend.dashboard.clearSearch")}
                     </Button>
                 ) : (
                     <>

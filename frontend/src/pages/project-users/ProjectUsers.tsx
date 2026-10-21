@@ -27,7 +27,6 @@ import { Badge, Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import { DeleteConfirmationDialog } from "@/components/ui/DeleteConfirmationDialog"
-import useDomainsApi, { Domain } from "@/hooks/apiClients/useDomainsApi"
 import { canAdministerOrganization } from "@/hooks/apiClients/useOrganizationApi"
 import { RoleInProject } from "@/hooks/apiClients/useProjectApi"
 import useProjectUserApi, { ProjectUser } from "@/hooks/apiClients/useProjectUserApi"
@@ -36,10 +35,7 @@ import useProjectStore from "@/store/useProjectStore"
 import useThemeStore from "@/store/useThemeStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 import useUserStore from "@/store/useUserStore"
-import { AddUserButton, EditAccessDialog, MemberDomainScope, UserPicture } from "./partials"
-
-/** One array for "not loaded yet": a new one on every render would reset the open edit dialog */
-const NO_DOMAINS: Domain[] = []
+import { AddUserButton, EditAccessDialog, UserPicture } from "./partials"
 
 const getUserInitials = (user?: { name?: string; surname?: string; email: string }) => {
     if (!user) return ""
@@ -58,10 +54,9 @@ const UserCard: React.FC<{
     handleDeleteUser: (userId: string, userName: string) => void
     deleteUserDisabled: boolean
     isOwner: boolean
-    domains: Domain[]
     /** Undefined for whoever may not change the access: the button is not shown */
     onEditAccess?: (user: ProjectUser) => void
-}> = ({ user, handleDeleteUser, deleteUserDisabled, isOwner, domains, onEditAccess }) => {
+}> = ({ user, handleDeleteUser, deleteUserDisabled, isOwner, onEditAccess }) => {
     const { t } = useTranslation()
 
     return (
@@ -76,7 +71,6 @@ const UserCard: React.FC<{
                         <CardTitle className="text-lg font-medium mb-0">{getUserFullName(user) || <div></div>}</CardTitle>
                         <address className="text-sm text-foreground-secondary not-italic">{user.email}</address>
                     </div>
-                    <MemberDomainScope user={user} domains={domains} />
                     {onEditAccess && (
                         <Button variant="secondary" className="w-full" onClick={() => onEditAccess(user)}>
                             <ShieldCheck />
@@ -109,15 +103,7 @@ const ProjectUsers: React.FC = () => {
         mode?: "remove" | "revoke"
     }>({ isOpen: false })
 
-    const domainsApi = useDomainsApi()
     const [editingUser, setEditingUser] = useState<ProjectUser>()
-
-    const domainsQuery = useQuery({
-        queryKey: ["domains", project?._id],
-        queryFn: domainsApi.getAll,
-        enabled: !!project?._id
-    })
-    const domains = domainsQuery.data ?? NO_DOMAINS
 
     const userQuery = useQuery({
         queryKey: ["projectUsers", project?._id],
@@ -212,7 +198,6 @@ const ProjectUsers: React.FC = () => {
                                                 <TableRow>
                                                     <TableHead>{t("project_users.user")}</TableHead>
                                                     <TableHead>{t("project_users.role")}</TableHead>
-                                                    <TableHead>{t("project_users.access.label")}</TableHead>
                                                     <TableHead className="w-[100px]">{t("common.actions")}</TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -231,9 +216,6 @@ const ProjectUsers: React.FC = () => {
                                                         </TableCell>
                                                         <TableCell>
                                                             <Badge>{user.role}</Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <MemberDomainScope user={user} domains={domains} />
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             {canEditAccess && (
@@ -261,7 +243,6 @@ const ProjectUsers: React.FC = () => {
                                                 handleDeleteUser={handleDeleteUser}
                                                 deleteUserDisabled={isRemovalDisabled(user)}
                                                 isOwner={user.role === RoleInProject.OWNER && ownerCount === 1}
-                                                domains={domains}
                                                 onEditAccess={canEditAccess ? setEditingUser : undefined}
                                             />
                                         ))}
@@ -280,7 +261,6 @@ const ProjectUsers: React.FC = () => {
                                         <TableRow>
                                             <TableHead>{t("project_users.email")}</TableHead>
                                             <TableHead>{t("project_users.role")}</TableHead>
-                                            <TableHead>{t("project_users.access.label")}</TableHead>
                                             <TableHead>{t("project_users.invite_expires")}</TableHead>
                                             <TableHead className="w-[180px] text-right">{t("common.actions")}</TableHead>
                                         </TableRow>
@@ -299,9 +279,6 @@ const ProjectUsers: React.FC = () => {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge variant="accent">{user.role}</Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <MemberDomainScope user={user} domains={domains} />
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground">{formatExpiry(user.invitationExpiresAt)}</TableCell>
                                                 <TableCell>
@@ -344,8 +321,6 @@ const ProjectUsers: React.FC = () => {
 
             <EditAccessDialog
                 user={editingUser}
-                domains={domains}
-                domainsReady={domainsQuery.isSuccess}
                 isLastOwner={!!editingUser && !editingUser.invitationPending && editingUser.role === RoleInProject.OWNER && ownerCount === 1}
                 onOpenChange={open => !open && setEditingUser(undefined)}
             />
