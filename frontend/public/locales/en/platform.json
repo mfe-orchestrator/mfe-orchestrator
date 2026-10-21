@@ -913,13 +913,15 @@
                 "review": "Awaiting approval",
                 "active": "In progress",
                 "discarded": "Discarded",
-                "history": "Applied and failed"
+                "applied": "Applied",
+                "failed": "Failed"
             },
             "group_empty": {
                 "review": "No proposals awaiting approval.",
                 "active": "No agent at work.",
                 "discarded": "No discarded proposals.",
-                "history": "No finished requests yet."
+                "applied": "No applied requests yet.",
+                "failed": "No failed requests."
             },
             "composer_title": "What do you want to change in {{name}}?",
             "composer_shortcut": "⌘/Ctrl + Enter to generate the proposal",

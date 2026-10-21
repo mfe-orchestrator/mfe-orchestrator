@@ -1010,13 +1010,15 @@
                 "review": "Da approvare",
                 "active": "In corso",
                 "discarded": "Scartate",
-                "history": "Applicate e non riuscite"
+                "applied": "Applicate",
+                "failed": "Non riuscite"
             },
             "group_empty": {
                 "review": "Nessuna proposta in attesa di approvazione.",
                 "active": "Nessun agente al lavoro.",
                 "discarded": "Nessuna proposta scartata.",
-                "history": "Ancora nessuna richiesta conclusa."
+                "applied": "Ancora nessuna richiesta applicata.",
+                "failed": "Nessuna richiesta non riuscita."
             },
             "composer_title": "Cosa vuoi cambiare in {{name}}?",
             "composer_shortcut": "⌘/Ctrl + Invio per generare la proposta",

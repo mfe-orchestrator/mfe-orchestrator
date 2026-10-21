@@ -20,7 +20,6 @@ import { AxiosError } from "axios"
 import { format } from "date-fns"
 import {
     AlertTriangle,
-    Archive,
     ArrowUp,
     CheckCircle2,
     ChevronDown,
@@ -1066,20 +1065,22 @@ const RequestSelection: React.FC<RequestSelectionProps> = ({ requestId, target, 
 const NEW_CHANGE = "new"
 
 /** The queue groups conversations by what they wait for: the user's review, the agent, or nothing at all. */
-type QueueGroup = "review" | "active" | "discarded" | "history"
+type QueueGroup = "review" | "active" | "discarded" | "applied" | "failed"
 
 const groupOf = (status: AiChangeStatus): QueueGroup => {
     if (status === "PROPOSED") return "review"
     if (isActive(status)) return "active"
     if (status === "DISCARDED") return "discarded"
-    return "history"
+    if (status === "APPLIED") return "applied"
+    return "failed"
 }
 
 const GROUP_ICON: Record<QueueGroup, React.FC<{ className?: string }>> = {
     review: ClipboardCheck,
     active: LoaderCircle,
     discarded: Trash2,
-    history: Archive
+    applied: CheckCircle2,
+    failed: AlertTriangle
 }
 
 /** One conversation in the queue, whatever the workspace lists them from. */
@@ -1189,11 +1190,11 @@ const QueueSection: React.FC<QueueSectionProps> = ({ group, entries, selectedId,
     const headingId = useId()
     const Icon = GROUP_ICON[group]
     const containsSelected = entries.some(entry => entry.ids.includes(selectedId))
-    const [historyOpen, setHistoryOpen] = useState(containsSelected)
+    const [open, setOpen] = useState(containsSelected)
 
     // A conversation of the group opened from elsewhere (a deep link): unfold it. Never fold it back on the user.
     useEffect(() => {
-        if (containsSelected) setHistoryOpen(true)
+        if (containsSelected) setOpen(true)
     }, [containsSelected])
     const heading = (
         <span className="flex items-center justify-between gap-2">
@@ -1222,9 +1223,9 @@ const QueueSection: React.FC<QueueSectionProps> = ({ group, entries, selectedId,
         )
 
     // Applied and failed requests are done with: keep them out of the way unless one of them is open.
-    if (group === "history") {
+    if (group === "applied" || group === "failed") {
         return (
-            <details open={historyOpen} onToggle={event => setHistoryOpen(event.currentTarget.open)}>
+            <details open={open} onToggle={event => setOpen(event.currentTarget.open)}>
                 <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{heading}</summary>
                 <div className="mt-2">{list}</div>
             </details>
@@ -1489,7 +1490,7 @@ export const AiWorkspace: React.FC<AiWorkspaceProps> = ({ target, name, reposito
         startNew()
     }
 
-    const groups: QueueGroup[] = ["review", "active", "discarded", "history"]
+    const groups: QueueGroup[] = ["review", "active", "discarded", "applied", "failed"]
 
     return (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
