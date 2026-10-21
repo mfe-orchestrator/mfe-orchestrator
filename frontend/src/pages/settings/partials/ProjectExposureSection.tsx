@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@mfe-orchestrator/design-system"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, SelectField } from "@mfe-orchestrator/design-system"
 import { useEffect } from "react"
 import { FormProvider, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -11,9 +11,21 @@ const DOMAIN_NAME = /^(?=.{1,253}$)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]
 /** Il nome di una ClusterIssuer di cert-manager, come lo accetta Kubernetes */
 const CERTIFICATE_ISSUER = /^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/
 
+/** Le ClusterIssuer che si trovano di solito; un'altra si scrive a mano */
+const KNOWN_ISSUERS = ["letsencrypt", "letsencrypt-staging"]
+// La select non accetta un valore vuoto: queste due non possono essere nomi Kubernetes, quindi non si confondono con una ClusterIssuer
+const NO_ISSUER = "__none__"
+const CUSTOM_ISSUER = "__custom__"
+
 export interface ProjectExposureFormValues {
     domain: string
     certificateIssuer: string
+}
+
+interface ExposureFields {
+    domain: string
+    issuerChoice: string
+    customIssuer: string
 }
 
 interface ProjectExposureSectionProps {
@@ -22,18 +34,34 @@ interface ProjectExposureSectionProps {
     isUpdating: boolean
 }
 
+const toFields = (domain: string, issuer: string): ExposureFields => {
+    if (!issuer) return { domain, issuerChoice: NO_ISSUER, customIssuer: "" }
+    if (KNOWN_ISSUERS.includes(issuer)) return { domain, issuerChoice: issuer, customIssuer: "" }
+    return { domain, issuerChoice: CUSTOM_ISSUER, customIssuer: issuer }
+}
+
+/** La ClusterIssuer scelta, vuota per nessuna */
+const issuerOf = (issuerChoice: string, customIssuer: string): string => {
+    if (issuerChoice === NO_ISSUER) return ""
+    if (issuerChoice === CUSTOM_ISSUER) return customIssuer
+    return issuerChoice
+}
+
 /** Il dominio su cui ogni ambiente è esposto, sotto il suo sottodominio: al deploy GitOps ne fa il Gateway */
 export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ exposure, onUpdate, isUpdating }) => {
     const { t } = useTranslation()
 
     const domain = exposure?.domain ?? ""
     const certificateIssuer = exposure?.certificateIssuer ?? ""
-    const form = useForm<ProjectExposureFormValues>({ defaultValues: { domain, certificateIssuer } })
+    const form = useForm<ExposureFields>({ defaultValues: toFields(domain, certificateIssuer) })
+    const issuerChoice = form.watch("issuerChoice")
 
     // Cambiare progetto lascia questa pagina montata, quindi il form deve seguire il nuovo progetto.
     useEffect(() => {
-        form.reset({ domain, certificateIssuer })
+        form.reset(toFields(domain, certificateIssuer))
     }, [domain, certificateIssuer, form])
+
+    const onSubmit = ({ domain, issuerChoice, customIssuer }: ExposureFields) => onUpdate({ domain, certificateIssuer: issuerOf(issuerChoice, customIssuer) })
 
     return (
         <Card className="pt-4">
@@ -43,9 +71,9 @@ export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ 
             </CardHeader>
             <CardContent className="pt-4">
                 <FormProvider {...form}>
-                    <form onSubmit={form.handleSubmit(onUpdate)} className="flex flex-col gap-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
                         <div className="flex flex-wrap gap-x-4 gap-y-2">
-                            <TextField<ProjectExposureFormValues>
+                            <TextField<ExposureFields>
                                 name="domain"
                                 label={t("settings.exposure.domain")}
                                 placeholder="example.com"
@@ -55,16 +83,30 @@ export const ProjectExposureSection: React.FC<ProjectExposureSectionProps> = ({ 
                                 // Il backend toglie gli spazi e porta in minuscolo: qui si controlla quello che salverà
                                 rules={{ validate: value => !value.trim() || DOMAIN_NAME.test(value.trim().toLowerCase()) || t("settings.exposure.domain_invalid") }}
                             />
-                            <TextField<ProjectExposureFormValues>
-                                name="certificateIssuer"
+                            <SelectField<ExposureFields>
+                                name="issuerChoice"
                                 label={t("settings.exposure.certificate_issuer")}
-                                placeholder="letsencrypt"
                                 description={t("settings.exposure.certificate_issuer_hint")}
-                                dataTestId="project-exposure-certificate-issuer"
                                 containerClassName="flex-[1_1_200px]"
-                                rules={{ validate: value => !value.trim() || CERTIFICATE_ISSUER.test(value.trim()) || t("settings.exposure.certificate_issuer_invalid") }}
+                                options={[
+                                    { value: NO_ISSUER, label: t("settings.exposure.certificate_issuer_none") },
+                                    ...KNOWN_ISSUERS.map(issuer => ({ value: issuer, label: issuer })),
+                                    { value: CUSTOM_ISSUER, label: t("settings.exposure.certificate_issuer_custom") }
+                                ]}
                             />
                         </div>
+
+                        {issuerChoice === CUSTOM_ISSUER && (
+                            <TextField<ExposureFields>
+                                name="customIssuer"
+                                label={t("settings.exposure.certificate_issuer_custom_name")}
+                                placeholder="my-cluster-issuer"
+                                dataTestId="project-exposure-certificate-issuer"
+                                rules={{
+                                    validate: value => CERTIFICATE_ISSUER.test(value.trim()) || t("settings.exposure.certificate_issuer_invalid")
+                                }}
+                            />
+                        )}
 
                         <div className="flex justify-end">
                             <Button type="submit" loading={isUpdating} loadingLabel={t("common.loading")} dataTestId="project-exposure-save">

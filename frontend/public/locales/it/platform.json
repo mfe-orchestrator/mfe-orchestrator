@@ -222,7 +222,10 @@
             "domain_hint": "Es. example.com. Se vuoto, gli ambienti non sono esposti: il prossimo deploy ne toglie il Gateway.",
             "domain_invalid": "Un dominio in minuscolo di almeno due etichette, es. example.com",
             "certificate_issuer": "Emittente del certificato",
-            "certificate_issuer_hint": "La ClusterIssuer di cert-manager a cui chiedere il certificato TLS di ogni ambiente. Se vuota, solo HTTP.",
+            "certificate_issuer_hint": "La ClusterIssuer di cert-manager a cui chiedere il certificato TLS di ogni ambiente. Nessuno: solo HTTP.",
+            "certificate_issuer_none": "Nessuno (solo HTTP)",
+            "certificate_issuer_custom": "Altra…",
+            "certificate_issuer_custom_name": "Nome della ClusterIssuer",
             "certificate_issuer_invalid": "Lettere minuscole, numeri, punti e trattini, che iniziano e finiscono con una lettera o un numero"
         },
         "gitOps": {

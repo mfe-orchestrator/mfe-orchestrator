@@ -221,7 +221,10 @@
             "domain_hint": "E.g. example.com. Left empty, the environments are not exposed: the next deploy removes their Gateway.",
             "domain_invalid": "A lowercase domain of at least two labels, e.g. example.com",
             "certificate_issuer": "Certificate issuer",
-            "certificate_issuer_hint": "The cert-manager ClusterIssuer the TLS certificate of each environment is asked of. Left empty, HTTP only.",
+            "certificate_issuer_hint": "The cert-manager ClusterIssuer the TLS certificate of each environment is asked of. None: HTTP only.",
+            "certificate_issuer_none": "None (HTTP only)",
+            "certificate_issuer_custom": "Other…",
+            "certificate_issuer_custom_name": "ClusterIssuer name",
             "certificate_issuer_invalid": "Lowercase letters, digits, dots and dashes, starting and ending with a letter or a digit"
         },
         "gitOps": {
