@@ -385,9 +385,15 @@
         "environment_select": "Environment",
         "select_environment": "Select an environment",
         "deploy_button": "Deploy",
+        "deploying": "Deploying…",
         "active_deployments": "Active deployment",
         "history": "History",
         "microfrontends_title": "Microfrontends",
+        "services_title": "Backends",
+        "config_maps_title": "Config maps",
+        "secrets_title": "Secrets",
+        "map_no_keys": "No key set in this environment",
+        "secret_value_hidden": "Secret values are not kept in the deployment",
         "env_variables_title": "Environment variables",
         "no_deployments": "No deployments found",
         "no_deployments_description": "Deployments will appear here once created",
@@ -396,9 +402,14 @@
             "canary_traffic": "Canary {{percentage}}%",
             "canary_target_missing": "Not configured"
         },
+        "service_card": {
+            "version": "Version",
+            "no_version": "No version registered by the CI"
+        },
         "actions": {
             "view_canary_users": "View canary users",
-            "redeploy": "Redeploy"
+            "redeploy": "Redeploy",
+            "redeploying": "Redeploying…"
         },
         "canary_users": {
             "title": "Canary Users",

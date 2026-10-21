@@ -3,10 +3,32 @@ import useGitOpsErrorMessage from "./useGitOpsErrorMessage"
 import { GlobalVariable } from "./useGlobalVariablesApi"
 import { Microfrontend } from "./useMicrofrontendsApi"
 
+/** A backend service as the deploy recorded it, at the version it shipped */
+export interface DeployedService {
+    _id: string
+    slug: string
+    name: string
+    domainId?: string | null
+    version?: string
+    image?: { repository?: string }
+}
+
+/** A config map or a secret as the deploy recorded it in its environment: a secret's keys come without values */
+export interface DeployedVariableMap {
+    _id: string
+    name: string
+    entries: Array<{ key: string; value?: string }>
+}
+
 export interface DeploymentDTO {
     _id: string
     environmentId: string
     microfrontends: Microfrontend[]
+    /** Absent from the deployments made before the services were recorded */
+    services?: DeployedService[]
+    /** Absent from the deployments made before the config maps and secrets were recorded */
+    configMaps?: DeployedVariableMap[]
+    secrets?: DeployedVariableMap[]
     variables: GlobalVariable[]
     storages: Storage[]
     deploymentId: string

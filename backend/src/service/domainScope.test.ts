@@ -506,19 +506,28 @@ describe("deployment of a domain-scoped member", () => {
     const own = { _id: newId(), slug: "cart", version: "2.0.0" }
     const othersServed = { _id: newId(), slug: "catalog", version: "1.0.0" }
     const ownServed = { _id: own._id, slug: "cart", version: "1.0.0" }
+    const ownService = { _id: newId(), slug: "cart-be", version: "3.0.0", domainId: OWN_DOMAIN }
     let saved: Record<string, unknown> | undefined
     let readMicrofrontends: Record<string, unknown> | undefined
+    let readServices: Record<string, unknown> | undefined
 
     beforeEach(() => {
         grantProjectAccess()
         saved = undefined
         readMicrofrontends = undefined
+        readServices = undefined
         vi.spyOn(Environment, "findById").mockImplementation((() => queryResult({ _id: environmentId, projectId: PROJECT_ID })) as never)
         vi.spyOn(Microfrontend, "find").mockImplementation(((filter: Record<string, unknown>) => {
             readMicrofrontends = filter
             return queryResult([own])
         }) as never)
+        vi.spyOn(Service, "find").mockImplementation(((filter: Record<string, unknown>) => {
+            readServices = filter
+            return queryResult([ownService])
+        }) as never)
         vi.spyOn(GlobalVariable, "find").mockImplementation((() => queryResult([{ key: "API_URL", value: "unreleased" }])) as never)
+        vi.spyOn(ConfigMap, "find").mockImplementation((() => queryResult([])) as never)
+        vi.spyOn(Secret, "find").mockImplementation((() => queryResult([])) as never)
         vi.spyOn(Storage, "find").mockImplementation((() => queryResult([{ toObject: () => ({ name: "unreleased-bucket" }) }])) as never)
         vi.spyOn(Deployment, "find").mockImplementation((() => queryResult([])) as never)
         vi.spyOn(Deployment, "updateMany").mockResolvedValue({} as never)
@@ -586,7 +595,45 @@ describe("deployment of a domain-scoped member", () => {
 
         expect(readMicrofrontends).toEqual({ projectId: PROJECT_ID })
         expect(served()).toEqual(["cart@2.0.0"])
+        expect(saved?.services).toEqual([ownService])
         expect(saved?.variables).toEqual([{ key: "API_URL", value: "unreleased" }])
+    })
+
+    it("Given config maps and secrets of the project, when a scoped member deploys, then the snapshot records the config maps with their values in the environment and the secrets by key only", async () => {
+        const elsewhere = newId()
+        const valueIn = (value: string) => ({ environmentId: environmentId, value })
+        const valueElsewhere = { environmentId: elsewhere, value: "other" }
+        const configMapId = newId()
+        const secretId = newId()
+        vi.spyOn(ConfigMap, "find").mockImplementation((() =>
+            queryResult([
+                {
+                    _id: configMapId,
+                    name: "cart",
+                    entries: [
+                        { key: "LOG_LEVEL", values: [valueIn("debug"), valueElsewhere] },
+                        { key: "UNSET_HERE", values: [valueElsewhere] },
+                        { key: "EMPTY", values: [valueIn("")] }
+                    ]
+                }
+            ])) as never)
+        vi.spyOn(Secret, "find").mockImplementation((() => queryResult([{ _id: secretId, name: "cart-db", entries: [{ key: "PASSWORD", values: [valueIn("s3cret")] }] }])) as never)
+        serving(null)
+
+        await new DeploymentService(memberOf([OWN_DOMAIN])).createRaw(String(environmentId))
+
+        expect(saved?.configMaps).toEqual([{ _id: configMapId, name: "cart", entries: [{ key: "LOG_LEVEL", value: "debug" }] }])
+        expect(saved?.secrets).toEqual([{ _id: secretId, name: "cart-db", entries: [{ key: "PASSWORD" }] }])
+    })
+
+    it("Given backends of several domains served, when a scoped member deploys, then only their backends move and the others' stay as served", async () => {
+        const othersService = { _id: newId(), slug: "catalog-be", version: "1.0.0", domainId: OTHER_DOMAIN }
+        serving({ microfrontends: [], services: [{ ...ownService, version: "2.0.0" }, othersService], variables: [], storages: [] })
+
+        await new DeploymentService(memberOf([OWN_DOMAIN])).createRaw(String(environmentId))
+
+        expect(readServices).toEqual({ projectId: PROJECT_ID, domainId: { $in: [String(OWN_DOMAIN)] } })
+        expect(((saved?.services ?? []) as { slug: string; version: string }[]).map(service => `${service.slug}@${service.version}`)).toEqual(["cart-be@3.0.0", "catalog-be@1.0.0"])
     })
 })
 

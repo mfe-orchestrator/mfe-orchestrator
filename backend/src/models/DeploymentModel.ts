@@ -2,12 +2,31 @@ import { Document, model, ObjectId, Schema } from "mongoose"
 import { encryptedFields } from "../utils/encryptedFieldsPlugin"
 import { IGlobalVariable } from "./GlobalVariableModel"
 import { IMicrofrontend } from "./MicrofrontendModel"
+import { IService } from "./ServiceModel"
 import { IStorage, STORAGE_SECRET_PATHS } from "./StorageModel"
+
+/**
+ * A config map or a secret as the deploy recorded it in its environment: the keys set there, with their
+ * values for a config map only. A secret's values are not copied here: nothing reads them back.
+ */
+export interface IDeployedVariableMap {
+    _id: ObjectId
+    name: string
+    entries: Array<{ key: string; value?: string }>
+}
+
+/** A backend service as the deploy recorded it: only what tells which one and at which version, never its env */
+export type IDeployedService = Pick<IService, "_id" | "slug" | "name" | "domainId" | "version" | "image">
 
 export interface IDeployment extends Document<ObjectId> {
     environmentId: ObjectId
     variables?: IGlobalVariable[]
     microfrontends?: IMicrofrontend[]
+    /** Absent from the deployments made before the services were recorded */
+    services?: IDeployedService[]
+    /** Absent from the deployments made before the config maps and secrets were recorded, as for the services */
+    configMaps?: IDeployedVariableMap[]
+    secrets?: IDeployedVariableMap[]
     storages?: IStorage[]
     deploymentId: string
     active: boolean
@@ -31,6 +50,18 @@ const deploymentSchema = new Schema<IDeployment>(
             required: false
         },
         microfrontends: {
+            type: Array,
+            required: false
+        },
+        services: {
+            type: Array,
+            required: false
+        },
+        configMaps: {
+            type: Array,
+            required: false
+        },
+        secrets: {
             type: Array,
             required: false
         },
