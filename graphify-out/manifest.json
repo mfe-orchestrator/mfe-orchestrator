@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792648474.9366472,
-    "ast_hash": "3deb41a9824f522b1f3e883c8678f0ff",
+    "mtime": 1792648542.2396367,
+    "ast_hash": "d3a2a668d12cd9aad0e9fca44c49a7c2",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792648474.9413555,
-    "ast_hash": "67324d57dc57bf05a3854d0d6be0a0c3",
+    "mtime": 1792648542.240116,
+    "ast_hash": "e1a8a379c33273368f7eeee0f4ad6b01",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/Settings.tsx": {
-    "mtime": 1792619200.3888845,
-    "ast_hash": "8fd61dd065d40da84751a38edf28393d",
+    "mtime": 1792648542.2196085,
+    "ast_hash": "274772e1adf7420da1a4845393dfb15d",
     "semantic_hash": ""
   },
   "frontend/src/pages/settings/partials/DangerZone.tsx": {
