@@ -7,13 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Security
+---
 
-- **The API No Longer Returns The Activation And Reset Tokens**: `toFrontendObject()` stripped the password and the salt but left `activateEmailToken` and `resetPasswordToken` in the object, so `POST /api/users/registration` — a public route — answered with the activation token it had just minted, and every other route that serialises a user did the same with the reset token whenever one was pending: login, profile, the organization and project invitation responses. Both are bearer credentials, and holding one activates the account or changes its password without ever reading the mailbox, which is the whole of what the email verification proves. Anybody could therefore register somebody else's address and activate it from the response body. The two tokens and their expiry dates are now deleted alongside the credentials, in the single method every user response goes through
+## [5.0.0] - 2026-10-22
+
+### Added
+
+- **Remote MCP Server With OAuth 2.1 Login**: The orchestrator answers as a remote MCP server, turned on with `MCP_ENABLED` and fronted by an OAuth 2.1 login, so an MCP client signs in as the user instead of holding a static key. One connection shares one or more projects, picked on the consent page grouped by organization; every project tool then takes a `projectId` and each project keeps the user's role on it, so a viewer stays read-only. `project_create` opens a new project from the connection, `context_get` returns what the team wrote for agents, and connected clients are listed and revoked on the MCP clients page
+
+- **Code Changes From A Client's Own Agent**: `repository_checkout_get` tells an MCP client where to clone a microfrontend's repository, its default branch and its AI context; the client's agent edits locally with its own git access and model. `code_change_submit` pushes the edited files to a new branch and opens a pull request against the base branch, which is never written directly
+
+- **Maestro, The In-Console Assistant**: An assistant built into the console answers about the project and acts on it, and every change it wants to make appears as a confirmation card that runs only once accepted. Conversations are saved on the server, listed beside the chat and survive reloads, with secrets masked; each answer shows the tokens it used
+
+- **AI Agent Page And Jobs Across Microfrontends**: A full-page AI agent, first in the sidebar, runs AI jobs that span several microfrontends at once and takes follow-ups on them. Its queue keeps applied and failed requests in groups of their own, and the microfrontends page shows which ones an agent is working on
+
+- **AI Providers**: The AI features run on Claude through the Anthropic API, Azure AI Foundry or AWS Bedrock, on Azure OpenAI — GPT-5.6 and later through the Responses API — or on Gemini. Users pick the reasoning effort of a request, capped by `AI_MAX_EFFORT`, and see Claude's reasoning alongside the answer
+
+- **Organization AI Models**: An organization defines its own AIs — provider, model and credentials — on its settings page and assigns them to its projects, so each team works with the models its organization chose
+
+- **AI Context For Agents**: A project and each of its microfrontends carry notes written for AI agents. The assistant, Edit with AI and MCP clients receive them with every task; the project's notes have their own AI context tab in the settings
+
+- **Edit With AI On Microfrontends**: A microfrontend opens on an Edit with AI workspace where an agent proposes a change, editing snippets rather than rewriting whole files, and the proposal is refined by chatting with it. It is pushed on a feature branch, then applied whole onto a base branch chosen from a picker or opened as a pull request. Rate-limited turns are retried without losing what the agent already wrote, and summaries and messages render as Markdown
+
+- **single-spa And micro-lc Integrations**: Both join Module Federation as integration models, and the integration page generates the configuration for each. A microfrontend is served by its template's entry point, webpack remotes load through the SDK's `loadWebpackRemote`, and a microfrontend links the repository of the template it was created from
+
+- **The FRONTEND Kind**: A microfrontend can be a FRONTEND, the main frontend of the project, served by its own container. It keeps only its kind, its image repository and the image versions its pipeline registers with `POST /api/microfrontends/by-slug/:slug/versions/:version` and a `MANAGER` API key. It has no parents, and a bundle upload to it is refused with `FRONTEND_UPLOAD_NOT_ALLOWED`
+
+- **Pipeline Templates From A Repository Of The Project**: A project can point at a repository of its own, through one of its connections and at a branch or tag, holding pipelines in the `template-pipelines` layout. Repositories scaffolded from a template then get those pipelines instead of the official ones; a template without a folder there keeps its own. Set from the Delivery tab of the settings or with `project_pipelines_set`
+
+- **Renaming A Code Repository**: The repository of a microfrontend can be renamed from the console, through `POST /api/microfrontends/:id/repository/rename`, or with the `microfrontend_repository_rename` MCP tool
+
+- **Provider Run Links On Builds**: Each run on the builds page links to the same run on GitHub Actions, GitLab or Azure DevOps
+
+- **Storage Connection Test**: The storage form tests the connection before saving, for a new storage (`POST /api/storages/test`) and for an existing one with its stored credentials (`POST /api/storages/:storageId/test`)
+
+### Changed
+
+- **BREAKING — Revoked And Expired API Keys Are Refused**: API key authentication read neither the status nor the expiry of a key, so revoking one did nothing and only deleting it stopped it. Both are now checked, and the refusal names the reason. Deploy keys the console created before this release were given fifteen days instead of a year (see Fixed), so any of them older than that now stops working: recreate the deploy key of the affected pipelines
+
+- **One Flat Sidebar, With Microfrontends Named Design**: The sidebar drops its section titles and the Storages entry, and the Microfrontends entry is now called Design. Project-wide pages such as the settings live in the top project menu, and the storages are reached from the settings
+
+- **Project Settings In Tabs**: The settings page splits into General (project details, access, resources and danger zone), AI context and Delivery (pipeline templates). The tab is kept in the URL, so a link opens the right one
+
+- **Organization Settings Page**: `/organization` is the organization's settings page, with General, Members and AI models tabs; `/organization-users` now opens it on the members tab
+
+- **Dependencies Updated To Latest Majors**: Sentry 11, Vitest 5, nodemailer 10, `@google-cloud/storage` 8, `@hookform/resolvers` 6 and dotenv 18 among others. Sentry 11 collects everything by default, so the backend turns off database query data and stack frame variables, which were never sent before and can carry secrets. The frontend typecheck now actually checks the app, in CI and in the pre-commit hook
+
+- **Backend Test Coverage In CI**: The backend unit tests measure coverage and publish it in the run summary
+
+- **Deployable Infrastructure Pinned To 5.0.0**: The Compose file and the Helm chart `appVersion` now name `5.0.0`, and the chart version was bumped to `0.3.0`
 
 ### Fixed
 
 - **The Password Reset No Longer Claims Success Without SMTP**: `requestPasswordReset()` was the only one of the three email flows that did not ask `canSendEmails()` first. It minted the token, saved it, and only then tried to reach a host that is not configured: the send failed after a credential valid for a full hour had already been written onto the account, where nobody could receive it. Registration and invitations have something to degrade into when SMTP is missing — an account that is simply active — this one has not, so it now refuses before writing anything, with the `EMAIL_NOT_CONFIGURED` business exception the invitation flows already raise. The screen was hiding the failure: it awaited `mutate()`, which returns `void` and swallows the rejection, so "check your email" and the redirect ran whatever the backend answered — for this error and for every other one. It uses `mutateAsync()` now. Business exceptions travel as `{ success: false, error: { code, message } }` while the API client only ever read `responseData.message`, so the toast would have shown the bare axios string: the page keys off the code through the new `errorCodeOf()` helper and translates it
+
+- **A Deploy Key Lasts A Year**: The deploy keys the platform creates for its own pipelines were given `3600 * 1000 * 365` milliseconds — fifteen days — while the console said a year. A single `deployKeyExpiry()` now sets the lifetime everywhere
+
+- **Deleting An Environment Removes Its Contents**: Deleting an environment left its deployments, its global variables and the canary enrolments of those deployments in the database. They are now removed in the same transaction, single and bulk delete alike
+
+- **Project Slugs**: The first-startup form replaced only the first space, dot or underscore of the name, so "My Cool Storefront App" became a permanently malformed slug. Every project slug now goes through `slugify`, like organization slugs: consecutive separators collapse and anything outside `a-z0-9` becomes a hyphen. Existing slugs are untouched
+
+- **Pipeline Placeholders On GitLab And Azure DevOps**: The `.gitlab-ci.yml` and `azure-pipelines.yml` copied from the templates kept the literal `%microfrontendSlug%` and `%domain%`, so a tagged pipeline published to a slug and a console that do not exist. They are now replaced as on GitHub
+
+- **Azure DevOps Tokens Without The Variable Groups Scope**: Such a token passed the connection test and then failed on save with a bare 401. The test now reads the variable groups too, and the missing scope is named in a translated message
+
+- **Microfrontend Canvas**: Deleting an edge sent host and remote swapped, so the relation was never removed, and resizing a node called a route the backend does not serve, so every resize failed with a 404
+
+- **Microsoft Sign-Out And Role Validation**: Signing out of a Microsoft account called an MSAL method gone since v3, so the Microsoft session was never ended; it now redirects through `logoutRedirect`. The "role required" message of the role pickers never showed under zod 4
+
+- **A Microfrontend Created Without Hosting**: The assistant and MCP clients could omit the hosting, which the model requires, so every save failed. It now falls back to the project's default storage, or the MFE Orchestrator hub when there is none
+
+- **Console Layout**: The console uses the full screen width, and the sidebar scrolls when its entries do not fit (`@mfe-orchestrator/design-system@1.5.1`)
+
+### Security
+
+- **The API No Longer Returns The Activation And Reset Tokens**: `toFrontendObject()` stripped the password and the salt but left `activateEmailToken` and `resetPasswordToken` in the object, so `POST /api/users/registration` — a public route — answered with the activation token it had just minted, and every other route that serialises a user did the same with the reset token whenever one was pending: login, profile, the organization and project invitation responses. Both are bearer credentials, and holding one activates the account or changes its password without ever reading the mailbox, which is the whole of what the email verification proves. Anybody could therefore register somebody else's address and activate it from the response body. The two tokens and their expiry dates are now deleted alongside the credentials, in the single method every user response goes through
+
+- **Owners Required To Manage Members**: Changing a project member's role and removing a member had no authorization, so any signed-in user could promote themselves to `OWNER` or remove members of any project. Both, along with inviting and re-inviting, now require a project `OWNER` or an organization `OWNER`/`ADMIN`, and the last owner can be neither removed nor demoted. In organizations, inviting, rewriting or removing an `OWNER` takes an organization owner
+
+- **First-Startup Registration Closed Once A User Exists**: The first-startup route stays public, since an empty installation has nobody to authenticate as, but it now answers `409 INSTALLATION_ALREADY_SET_UP` as soon as one user exists. Before, it stayed open forever and created a new user with an organization and a project of their own on a populated installation
+
+- **Stored GitLab Token Never Sent To A Caller-Chosen Host**: Testing a GitLab connection without retyping the token sent the stored one to whatever URL the request named, so any project member could collect it. The stored token now goes only to those who manage connections, only for a connection of the provider tested, and for GitLab only to the URL it was saved for; another URL requires the token typed again
 
 ---
 
