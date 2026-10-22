@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@mfe-orchestrator/design-system"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Bot, FolderCog, GitBranch, HardDrive, Key, Rocket, Server, Settings2, Users } from "lucide-react"
+import { Bot, GitBranch, HardDrive, Key, Rocket, Server, Settings2, Sparkles, Users } from "lucide-react"
 import React from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -17,10 +17,10 @@ import type { PipelineTemplatesFormValues } from "./partials/PipelineTemplatesSe
 import type { ProjectContextFormValues } from "./partials/ProjectContextSection"
 import type { ProjectInfoFormValues } from "./partials/ProjectInfoSection"
 
-const TABS = ["general", "access", "resources", "delivery"] as const
+const TABS = ["general", "ai", "delivery"] as const
 type Tab = (typeof TABS)[number]
 
-const TAB_ICONS: Record<Tab, React.ComponentType> = { general: Settings2, access: Users, resources: FolderCog, delivery: Rocket }
+const TAB_ICONS: Record<Tab, React.ComponentType> = { general: Settings2, ai: Sparkles, delivery: Rocket }
 
 /** I rifiuti del salvataggio dei template di pipeline, per codice */
 const PIPELINES_ERROR_KEYS: Record<string, string> = {
@@ -31,8 +31,8 @@ const PIPELINES_ERROR_KEYS: Record<string, string> = {
 }
 
 /**
- * Le impostazioni del progetto, un tema per scheda: i dati e il contesto AI, chi vi accede, le sue risorse, le pipeline
- * dei repository creati da un template. La scheda sta nell'URL (`?tab=delivery`) cosi' un link puo' puntare dritto a una di esse.
+ * Le impostazioni del progetto, un tema per scheda: i dati del progetto con chi vi accede e le sue risorse, il contesto AI,
+ * le pipeline dei repository creati da un template. La scheda sta nell'URL (`?tab=delivery`) cosi' un link puo' puntare dritto a una di esse.
  */
 export const Settings: React.FC = () => {
     const notifications = useToastNotificationStore()
@@ -125,12 +125,6 @@ export const Settings: React.FC = () => {
                     <TabsContent value="general" className="mt-6 flex flex-col gap-6">
                         {projectData && <ProjectInfoSection {...projectData} onUpdate={values => updateProjectMutation.mutate(values)} isUpdating={updateProjectMutation.isPending} />}
 
-                        {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
-
-                        <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
-                    </TabsContent>
-
-                    <TabsContent value="access" className="mt-6">
                         <ProjectStatsSection
                             title={t("settings.stats.accessTitle")}
                             stats={[
@@ -155,9 +149,7 @@ export const Settings: React.FC = () => {
                                 }
                             ]}
                         />
-                    </TabsContent>
 
-                    <TabsContent value="resources" className="mt-6">
                         <ProjectStatsSection
                             title={t("settings.stats.resourcesTitle")}
                             stats={[
@@ -181,6 +173,12 @@ export const Settings: React.FC = () => {
                                 }
                             ]}
                         />
+
+                        <DangerZone projectName={projectData?.name} projectId={projectData?._id} onDeleteSuccess={handleDeleteProjectSuccess} />
+                    </TabsContent>
+
+                    <TabsContent value="ai" className="mt-6 flex flex-col gap-6">
+                        {projectData && <ProjectContextSection context={projectData.context} onUpdate={values => updateContextMutation.mutate(values)} isUpdating={updateContextMutation.isPending} />}
                     </TabsContent>
 
                     <TabsContent value="delivery" className="mt-6 flex flex-col gap-6">

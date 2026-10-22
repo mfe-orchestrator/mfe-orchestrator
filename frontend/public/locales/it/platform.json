@@ -186,8 +186,7 @@
         "tabs": {
             "label": "Sezioni delle impostazioni",
             "general": "Generale",
-            "access": "Accessi",
-            "resources": "Risorse",
+            "ai": "Contesto AI",
             "delivery": "Rilascio"
         },
         "howItWorks": "Come funziona",

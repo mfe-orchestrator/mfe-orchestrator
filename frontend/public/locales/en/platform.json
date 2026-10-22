@@ -186,8 +186,7 @@
         "tabs": {
             "label": "Settings sections",
             "general": "General",
-            "access": "Access",
-            "resources": "Resources",
+            "ai": "AI context",
             "delivery": "Delivery"
         },
         "howItWorks": "How it works",
