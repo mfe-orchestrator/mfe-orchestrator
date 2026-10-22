@@ -1,16 +1,16 @@
 # Graph Report - mfe-orchestrator-mfe-only  (2026-10-22)
 
 ## Corpus Check
-- 651 files · ~726,803 words
+- 651 files · ~726,757 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5549 nodes · 13134 edges · 277 communities (237 shown, 40 thin omitted)
+- 5549 nodes · 13134 edges · 278 communities (238 shown, 40 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 89 edges (avg confidence: 0.7)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8d5c1d93`
+- Built from commit: `e218dd7a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -258,6 +258,7 @@
 - [[_COMMUNITY_NpmRegistryClient.ts|NpmRegistryClient.ts]]
 - [[_COMMUNITY_AzureStorageClient|AzureStorageClient]]
 - [[_COMMUNITY_repositoryLock.ts|repositoryLock.ts]]
+- [[_COMMUNITY_AuthenticationLayout.tsx|AuthenticationLayout.tsx]]
 - [[_COMMUNITY_ConfigResponseDTO.ts|ConfigResponseDTO.ts]]
 - [[_COMMUNITY_curl|curl]]
 - [[_COMMUNITY_useOAuthApi.ts|useOAuthApi.ts]]
@@ -307,9 +308,9 @@
 
 ## Import Cycles
 - 3-file cycle: `frontend/src/pages/integration/partials/index.ts -> frontend/src/pages/integration/partials/views/index.ts -> frontend/src/pages/integration/partials/views/FrontendIntegration.tsx -> frontend/src/pages/integration/partials/index.ts`
+- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithAuth0Button.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithGoogleButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
-- 3-file cycle: `frontend/src/authentication/components/LoginPage.tsx -> frontend/src/authentication/components/SocialLoginRow.tsx -> frontend/src/authentication/components/LoginWithMicrosoftButton.tsx -> frontend/src/authentication/components/LoginPage.tsx`
 - 3-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
 - 3-file cycle: `frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts`
 - 4-file cycle: `frontend/src/hooks/apiClients/useEnvironmentsApi.ts -> frontend/src/hooks/useApiClient.tsx -> frontend/src/store/useProjectStore.ts -> frontend/src/hooks/apiClients/useProjectApi.ts -> frontend/src/hooks/apiClients/useEnvironmentsApi.ts`
@@ -317,7 +318,7 @@
 ## Hyperedges (group relationships)
 - **CI/CD Pipeline (build, dockerize, deploy, e2e)** — _github_workflows_monorepo_build_build_and_test, _github_workflows_docker_build_docker_build, _github_workflows_deploy_deploy_to_server, _github_workflows_e2e_tests_e2e_tests [EXTRACTED 1.00]
 
-## Communities (277 total, 40 thin omitted)
+## Communities (278 total, 40 thin omitted)
 
 ### Community 0 - "Deployment Service & Models"
 Cohesion: 0.05
@@ -344,8 +345,8 @@ Cohesion: 0.38
 Nodes (8): clip(), clipInput(), compactCall(), compactMessage(), compactTranscript(), emptied(), sizeOf(), TRANSCRIPT_LIMITS
 
 ### Community 6 - "Biome Configuration"
-Cohesion: 0.15
-Nodes (20): AssistantJobTabs(), AssistantJobTabsProps, jobTabLabel(), AssistantPanel(), AssistantPanelProps, GENERIC_SUGGESTIONS, NO_TABS, SUGGESTIONS_BY_PAGE (+12 more)
+Cohesion: 0.11
+Nodes (31): ProgressLog(), STATUS_VARIANT, StatusBadge(), AssistantJobTabs(), AssistantJobTabsProps, jobTabLabel(), ApplyAllButtonProps, AssistantJobThread() (+23 more)
 
 ### Community 7 - "Azure Storage & Microfrontend Model"
 Cohesion: 0.07
@@ -405,7 +406,7 @@ Nodes (52): AuthTokenDataDTO, Organization, organizationSchema, IUserDocument, U
 
 ### Community 21 - "Sidebar & Theme Toggle"
 Cohesion: 0.04
-Nodes (85): workspaceRepositoriesOf(), navLinkClassName(), WorkspaceHeaderProps, WorkspaceTab, EntityPickerLabels, EntityPickerList(), EntityPickerListProps, PickableEntity (+77 more)
+Nodes (91): workspaceRepositoriesOf(), navLinkClassName(), WorkspaceHeaderProps, WorkspaceTab, CodeRepository, RepositoryLink(), repositoryWebUrl(), CanaryDeploymentType (+83 more)
 
 ### Community 22 - "ApiKeyService.ts"
 Cohesion: 0.41
@@ -440,8 +441,8 @@ Cohesion: 0.11
 Nodes (26): acceptOrganizationInvitationIfPending(), canSendEmail(), CreatedOrganization, CreatedProject, createOrganizationViaApi(), ensureOrganizationViaApi(), expectLoginPage(), getAvatarViaApi() (+18 more)
 
 ### Community 30 - "Code Repositories API"
-Cohesion: 0.05
-Nodes (53): App(), queryClient, Auth0AuthWrapper(), Auth0AuthWrapperProps, AuthenticationLayout(), AuthenticationLayoutProps, sizeClasses, FormValues (+45 more)
+Cohesion: 0.07
+Nodes (37): App(), queryClient, Auth0AuthWrapper(), Auth0AuthWrapperProps, FormValues, LoginComponentProps, LoginPage(), LoginWithAuth0Button() (+29 more)
 
 ### Community 31 - "Code Repository Service"
 Cohesion: 0.11
@@ -496,8 +497,8 @@ Cohesion: 0.20
 Nodes (8): AiModelService, defaultOf(), maskedConfig(), notAvailable(), restrictTo(), toAvailable(), toDetail(), toSummary()
 
 ### Community 44 - "FrontendIntegration.tsx"
-Cohesion: 0.07
-Nodes (42): TextFieldProps, aiModelLabel(), isAiModelDetail(), useAiModelsApi(), BuiltFrontend, ProjectUser, UpdateProjectUserDTO, useProjectUserApi() (+34 more)
+Cohesion: 0.09
+Nodes (36): aiModelLabel(), isAiModelDetail(), useAiModelsApi(), BuiltFrontend, ProjectUser, UpdateProjectUserDTO, useProjectUserApi(), errorCodeOf() (+28 more)
 
 ### Community 45 - "Canary Users Domain"
 Cohesion: 0.11
@@ -540,12 +541,12 @@ Cohesion: 0.11
 Nodes (17): CI/CD, Configuration, Debug tests, Documentation, E2E Tests with Playwright, Generate tests with Codegen, Installation, Prerequisites (+9 more)
 
 ### Community 55 - "UserModel.ts"
-Cohesion: 0.05
-Nodes (55): GitHub Code Repository Provider, GitHub Logo (Octocat Mark), AiWorkspaceRepository, BaseBranches, branchesPath(), BranchSelectProps, CodeRepository, RepositoryBranches() (+47 more)
+Cohesion: 0.06
+Nodes (47): GitHub Code Repository Provider, GitHub Logo (Octocat Mark), AiWorkspaceRepository, BaseBranches, branchesPath(), BranchSelectProps, CodeRepository, RepositoryBranches() (+39 more)
 
 ### Community 56 - "useUserApi.ts"
 Cohesion: 0.07
-Nodes (45): ApiStatusHandler(), SinglePageHeaderProps, DeleteConfirmationDialog(), DeleteConfirmationDialogProps, useApiKeysApi(), useBuildsApi(), useBuildStatusStream(), CanaryUser (+37 more)
+Nodes (46): ApiStatusHandler(), SinglePageHeaderProps, SinglePageLayout(), DeleteConfirmationDialog(), DeleteConfirmationDialogProps, useApiKeysApi(), useBuildsApi(), useBuildStatusStream() (+38 more)
 
 ### Community 58 - "Backend TSConfig"
 Cohesion: 0.06
@@ -816,8 +817,8 @@ Cohesion: 0.17
 Nodes (11): compilerOptions, allowJs, noImplicitAny, noUnusedLocals, noUnusedParameters, paths, skipLibCheck, strictNullChecks (+3 more)
 
 ### Community 165 - "CreateApiKeyForm.tsx"
-Cohesion: 0.12
-Nodes (19): AssistantConfirmationCard(), AssistantConfirmationCardProps, readableValue(), AssistantHistory(), AssistantHistoryProps, toPanelMessages(), AnswerBubbleProps, AssistantToolCallRow() (+11 more)
+Cohesion: 0.09
+Nodes (27): AssistantConfirmationCard(), AssistantConfirmationCardProps, readableValue(), AssistantHistory(), AssistantHistoryProps, toPanelMessages(), AnswerBubbleProps, AssistantPanel() (+19 more)
 
 ### Community 166 - "project"
 Cohesion: 0.11
@@ -936,8 +937,8 @@ Cohesion: 0.22
 Nodes (9): devDependencies, tsx, @types/fs-extra, @types/jsonwebtoken, @types/node, @types/pug, vitest, @vitest/coverage-v8 (+1 more)
 
 ### Community 197 - "FederationConfigService"
-Cohesion: 0.10
-Nodes (24): ProgressLog(), STATUS_VARIANT, StatusBadge(), AnswerUsageProps, EffortSelect(), EffortSelectProps, AiChangeEvent, AiChangeRequest (+16 more)
+Cohesion: 0.16
+Nodes (13): AnswerUsageProps, EffortSelect(), EffortSelectProps, AiChangeRequest, CreateAiChangeDTO, AiModelDTO, AssistantUsage, AuthProvidersConfig (+5 more)
 
 ### Community 198 - "ProjectUsers.tsx"
 Cohesion: 0.25
@@ -1000,8 +1001,8 @@ Cohesion: 0.33
 Nodes (6): tabs, access, delivery, general, label, resources
 
 ### Community 214 - "connectionTest.ts"
-Cohesion: 0.04
-Nodes (70): Button, TextareaFieldProps, PageHead(), PageHeadProps, ProjectPickerListProps, ProjectDraft, AddUserToProjectDTO, Project (+62 more)
+Cohesion: 0.03
+Nodes (74): Button, EntityPickerLabels, EntityPickerList(), EntityPickerListProps, PickableEntity, TextareaFieldProps, PageHead(), PageHeadProps (+66 more)
 
 ### Community 215 - "DomainDeploymentsSection.tsx"
 Cohesion: 0.33
@@ -1124,12 +1125,16 @@ Cohesion: 0.15
 Nodes (8): deploymentController(), DeploymentToCanaryUsers, DeploymentCanaryUsersService, A_DEPLOYMENT_ID, A_SESSION, anExistingRow(), tick(), DeploymentCanaryUsersDTO
 
 ### Community 251 - "McpController.test.ts"
-Cohesion: 0.09
-Nodes (38): Composer(), FollowUpForm(), AiModelSelect(), AiModelSelectProps, AskAssistantButton(), AskAssistantButtonProps, ApplyAllButton(), ApplyAllButtonProps (+30 more)
+Cohesion: 0.11
+Nodes (30): Composer(), FollowUpForm(), AiModelSelect(), AiModelSelectProps, AskAssistantButton(), AskAssistantButtonProps, ApplyAllButton(), FollowUpForm() (+22 more)
 
 ### Community 253 - "AzureStorageClient"
 Cohesion: 0.18
 Nodes (15): ClaudeClient, aboveCap(), AI_MODEL_CONFIG_KEYS, aiProviderError(), AZURE_OPENAI_HOST_SUFFIXES, clients, effortsFor(), isRateLimitError() (+7 more)
+
+### Community 255 - "AuthenticationLayout.tsx"
+Cohesion: 0.13
+Nodes (19): AuthenticationLayout(), AuthenticationLayoutProps, sizeClasses, MainLogo(), MainLogoProps, sizeClasses, OAuthClientWarning, OAuthDecisionResponse (+11 more)
 
 ### Community 258 - "ConfigResponseDTO.ts"
 Cohesion: 0.25
@@ -1227,7 +1232,7 @@ Nodes (3): columns, status, user
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useUserApi()` connect `Environment List & Drag-Drop` to `setup`, `Code Repositories UI`, `FrontendIntegration.tsx`, `useUserApi.ts`, `Code Repositories API`?**
+- **Why does `useUserApi()` connect `Environment List & Drag-Drop` to `setup`, `Code Repositories UI`, `FrontendIntegration.tsx`, `useUserApi.ts`, `Code Repositories API`, `AuthenticationLayout.tsx`?**
   _High betweenness centrality (0.160) - this node is a cross-community bridge._
 - **Why does `toObjectId()` connect `Telemetry Service & Config` to `start-backend.sh`, `Azure Storage & Microfrontend Model`, `[4.0.0] - 2026-08-27`, `setup`, `requestUtils.ts`, `projectContext`, `Microfrontend Pages & API`, `package.json`, `entrypoint.sh`, `Dialogs & Color Picker`, `Tables & Layout Components`, `DeploymentController.ts`, `Editing a microfrontend with AI`, `Code Repository Service`, `Frontend App TSConfig`, `E2E TSConfig`, `server.ts`, `BuildController.ts`, `project_invitation`, `Backend TSConfig`, `Code Repository Model`, `Project Wizard Service`, `Frontend Base TSConfig`, `MicrofrontendService.ts`, `microfrontend`, `error`, `Biome Style Rules`, `IMarket`, `Start Script`, `TemplateScaffoldService.test.ts`?**
   _High betweenness centrality (0.148) - this node is a cross-community bridge._

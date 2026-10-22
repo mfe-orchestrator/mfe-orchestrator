@@ -660,13 +660,13 @@
     "semantic_hash": ""
   },
   "frontend/public/locales/en/platform.json": {
-    "mtime": 1792619663.3563275,
-    "ast_hash": "cdd61cb3bc1b2e7a3e9f616c71c2dc62",
+    "mtime": 1792648474.9366472,
+    "ast_hash": "3deb41a9824f522b1f3e883c8678f0ff",
     "semantic_hash": ""
   },
   "frontend/public/locales/it/platform.json": {
-    "mtime": 1792619663.3577597,
-    "ast_hash": "55170cda1b8a8c6e7e24b7298327a779",
+    "mtime": 1792648474.9413555,
+    "ast_hash": "67324d57dc57bf05a3854d0d6be0a0c3",
     "semantic_hash": ""
   },
   "frontend/public/manifest.json": {
@@ -1450,8 +1450,8 @@
     "semantic_hash": ""
   },
   "frontend/src/theme/layout/MainLayout.tsx": {
-    "mtime": 1792619225.654379,
-    "ast_hash": "aa7d6a818cf64edf1ee28ff91ec97963",
+    "mtime": 1792648489.1413229,
+    "ast_hash": "d76107ea4e015fe2ee6274ba67dfa933",
     "semantic_hash": ""
   },
   "frontend/src/types/ApiResponseDTO.ts": {
