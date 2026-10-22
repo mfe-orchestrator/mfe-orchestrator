@@ -1,4 +1,4 @@
-import { FileText, Hammer as HammerIcon, HardDrive, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Sparkles } from "lucide-react"
+import { FileText, Hammer as HammerIcon, LayoutDashboard, Link as LinkIcon, Package as PackageIcon, Rocket as RocketIcon, Sparkles } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
@@ -24,31 +24,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         setIsSidebarCollapsed(!isSidebarCollapsed)
     }
 
-    // Solo voci di progetto: il livello organizzazione vive nell'header, dal suo menu, e le pagine
-    // che valgono per tutto il progetto (impostazioni) nel menu in alto. Le variabili d'ambiente
-    // valgono solo per i microfrontend, quindi stanno nella loro sezione. L'agente apre la console
-    // ed e' la prima voce, senza titolo di sezione.
+    // Solo voci di progetto, in un'unica lista senza titoli: il livello organizzazione vive nell'header,
+    // dal suo menu, e le pagine che valgono per tutto il progetto nel menu in alto (impostazioni, da cui
+    // si raggiungono anche gli storage).
+    // L'agente apre la console ed e' la prima voce.
     const mainNavSections: SidebarNavSection[] = [
-        ...(assistantEnabled ? [{ items: [{ name: t("assistant.page_title"), path: ASSISTANT_PAGE_PATH, icon: <Sparkles /> }] }] : []),
         {
-            title: t("navigation.sections.microfrontends"),
             items: [
-                { name: "Microfrontends", path: "/microfrontends", icon: <LayoutDashboard /> },
+                ...(assistantEnabled ? [{ name: t("assistant.page_title"), path: ASSISTANT_PAGE_PATH, icon: <Sparkles /> }] : []),
+                { name: t("navigation.design"), path: "/microfrontends", icon: <LayoutDashboard /> },
                 { name: t("dependencies.sidebar_title"), path: "/dependencies", icon: <PackageIcon /> },
                 { name: t("integration.sidebar_title"), path: "/integration", icon: <LinkIcon /> },
-                { name: t("environmentVariables.title"), path: "/environment-variables", icon: <FileText /> }
-            ]
-        },
-        {
-            title: t("navigation.sections.devops"),
-            items: [
+                { name: t("environmentVariables.title"), path: "/environment-variables", icon: <FileText /> },
                 { name: t("builds.title"), path: "/builds", icon: <HammerIcon /> },
                 { name: t("deployments.title"), path: "/deployments", icon: <RocketIcon /> }
             ]
-        },
-        {
-            title: t("navigation.sections.cloud"),
-            items: [{ name: t("storage.storages"), path: "/storages", icon: <HardDrive /> }]
         }
     ]
 

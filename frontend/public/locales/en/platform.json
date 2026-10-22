@@ -1932,11 +1932,7 @@
         "page_title": "AI agent"
     },
     "navigation": {
-        "sections": {
-            "devops": "DevOps",
-            "microfrontends": "Microfrontends",
-            "cloud": "Cloud"
-        },
+        "design": "Design",
         "top_menu": "Project menu"
     },
     "ai_models": {

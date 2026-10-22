@@ -1951,11 +1951,7 @@
         "page_title": "Agente AI"
     },
     "navigation": {
-        "sections": {
-            "devops": "DevOps",
-            "microfrontends": "Microfrontend",
-            "cloud": "Cloud"
-        },
+        "design": "Design",
         "top_menu": "Menu del progetto"
     },
     "ai_models": {
