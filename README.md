@@ -5,10 +5,12 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/lory1990/mfe-orchestrator)](https://hub.docker.com/r/lory1990/mfe-orchestrator)
 [![Documentation](https://img.shields.io/badge/docs-mfe--orchestrator.dev-8b5cf6)](https://mfe-orchestrator.dev/documentation/)
 
-**The open-source control plane for micro frontends.** It stores every build you
-publish, decides which version each environment serves, and hands your host
-application the runtime configuration it needs — so releasing one micro
-frontend never means rebuilding the shell.
+**The open-source orchestrator for micro frontends, with AI built in.** It stores
+every build you publish, decides which version each environment serves, and
+hands your host application the runtime configuration it needs — so releasing
+one micro frontend never means rebuilding the shell. An AI agent, an in-console
+assistant and a remote MCP server work on the same projects, with your team's
+context and your own models.
 
 ![The MFE Orchestrator console assigning micro frontend versions to environments](docs/assets/promo-video.gif)
 
@@ -28,6 +30,13 @@ docker run -d --name mfe-orchestrator --restart unless-stopped \
 
 Open http://localhost:8080 and create the first user.
 
+**Self-hosted — Docker Compose.** The `docker-compose.yaml` of this repository runs
+the orchestrator (pinned to `5.0.0`) next to MongoDB and Redis:
+
+```bash
+docker compose up -d
+```
+
 Either way, the
 [**10-minute quick start**](https://mfe-orchestrator.dev/documentation/docs/quick-start)
 takes you from an empty project to a deployed micro frontend — and back with a
@@ -43,9 +52,13 @@ one-click rollback.
 - **One build, every environment** — allowed domains resolve the environment
   per request, and per-environment variables reach the browser at boot, so the
   same artifact serves DEV, UAT and PROD.
-- **Module Federation, configured for you** — the console generates the Vite or
-  Webpack configuration your host needs, with entry URLs pointing at what is
+- **Module Federation, single-spa and micro-lc** — pick the integration model
+  of the project and the console generates the configuration your host needs
+  (Vite or webpack for Module Federation), with entry URLs pointing at what is
   actually deployed.
+- **Host, remote and frontend** — a microfrontend is a HOST, a REMOTE or the
+  FRONTEND of the project: the main frontend, served by its own container, that
+  only registers the image versions its pipeline builds.
 - **Your storage, your rules** — artifacts live on the hub, in your own AWS S3,
   Azure Blob or Google Cloud Storage bucket, on your CDN, or entirely
   on-premise when they cannot leave your network.
@@ -63,9 +76,36 @@ one-click rollback.
   by hand.
 - **Cross-repository dependency analysis** — scan your micro frontend
   repositories and align peer dependencies across them.
+- **Pipeline templates of your own** — point a project at a repository holding
+  your pipelines, and every repository scaffolded from a template gets them
+  instead of the official ones.
 - **Import your repositories** — connect your GitHub organization, GitLab group
   or Azure DevOps project and create one micro frontend per repository in a
-  single pass, instead of declaring them one by one.
+  single pass, instead of declaring them one by one; rename a code repository
+  from the console, test a storage connection before saving it, and jump from a
+  build to the same run on GitHub Actions, GitLab or Azure DevOps.
+
+### AI built in
+
+- **AI agent** — a full page, first in the sidebar, that runs AI jobs across
+  several microfrontends at once and takes follow-ups on them.
+- **Maestro, the in-console assistant** — answers about the project and acts on
+  it; every change it wants to make is a confirmation card that runs only once
+  you accept. Conversations are saved and every answer shows the tokens it used.
+- **Edit with AI** — open a microfrontend, let an agent propose a change, refine
+  it by chatting, then push it on a feature branch, apply it onto a base branch
+  or open a pull request.
+- **Remote MCP server with OAuth 2.1** — Claude, Cursor, VS Code and other MCP
+  clients sign in as you (`MCP_ENABLED`), on the projects you pick, with your
+  role. Their own agent edits the code locally and `code_change_submit` opens a
+  pull request; connected clients are listed and revoked in the console.
+- **Your models** — Claude through the Anthropic API, Azure AI Foundry or AWS
+  Bedrock, GPT-5.6 and later on Azure OpenAI, or Gemini. An organization defines
+  its AI models and assigns them to projects; users choose the reasoning effort,
+  capped by `AI_MAX_EFFORT`.
+- **AI context** — notes written for agents, on the project and on each
+  microfrontend, reach the assistant, Edit with AI and MCP clients with every
+  task.
 
 ![The microfrontends of a project, with the version, the host and the canary split each one is serving](docs/assets/microfrontends-dashboard.png)
 
@@ -83,7 +123,7 @@ flowchart LR
         REG[(version registry)] --> DEP[deployment snapshots per environment]
     end
     DEP -- "runtime configuration" --> HOST[Host application]
-    HOST -- "loads assigned versions via Module Federation" --> USERS((Users))
+    HOST -- "loads assigned versions" --> USERS((Users))
 ```
 
 Releasing is assigning a version to an environment and pressing **Deploy**.
@@ -98,7 +138,14 @@ The full documentation lives at
 - **[Quick start](https://mfe-orchestrator.dev/documentation/docs/quick-start)** - zero to rollback in 10 minutes
 - **[Core concepts](https://mfe-orchestrator.dev/documentation/docs/core-concepts)** - projects, environments, deployments and how they relate
 - **[Self-hosting](https://mfe-orchestrator.dev/documentation/docs/self-hosting/docker-compose)** - Docker, Docker Compose, Terraform
-- **[Host integration](https://mfe-orchestrator.dev/documentation/docs/integration/overview)** - Wiring module federation and the global variables script into a host application
+- **[Host integration](https://mfe-orchestrator.dev/documentation/docs/integration/overview)** - Wiring Module Federation, single-spa or micro-lc and the global variables script into a host application
+  ([Vite](https://mfe-orchestrator.dev/documentation/docs/integration/module-federation-vite), [webpack](https://mfe-orchestrator.dev/documentation/docs/integration/module-federation-webpack), [runtime configuration](https://mfe-orchestrator.dev/documentation/docs/integration/runtime-configuration), [client SDK](https://mfe-orchestrator.dev/documentation/docs/integration/client-sdk), [serve API](https://mfe-orchestrator.dev/documentation/docs/integration/serve-api))
+- **[AI overview](https://mfe-orchestrator.dev/documentation/docs/ai/overview)** - What the AI features do and how they fit together
+- **[The assistant](https://mfe-orchestrator.dev/documentation/docs/ai/assistant)** - Maestro, confirmation cards and saved conversations
+- **[AI models](https://mfe-orchestrator.dev/documentation/docs/ai/ai-models)** - Organization AI models and the providers they use
+- **[AI context](https://mfe-orchestrator.dev/documentation/docs/ai/ai-context)** - Notes for agents, on the project and on each microfrontend
+- **[Reasoning effort](https://mfe-orchestrator.dev/documentation/docs/ai/reasoning-effort)** - Choosing the effort of a request, and the `AI_MAX_EFFORT` cap
+- **[MCP server](https://mfe-orchestrator.dev/documentation/docs/ai/mcp-server)** - Connecting AI clients through OAuth 2.1
 - **[Canary releases](https://mfe-orchestrator.dev/documentation/docs/microfrontends/canary-releases)** - The three strategies, enrolled users and how a version is pinned
 - **[Build status](https://mfe-orchestrator.dev/documentation/docs/deployments/build-status)** - How pipeline runs are read from each provider and streamed to the console
 - **[Repository import](https://mfe-orchestrator.dev/documentation/docs/repositories/import-microfrontends)** - Creating one microfrontend per repository from a code repository connection
@@ -111,14 +158,22 @@ Project reference:
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
 - **[Remote MCP server](docs/MCP.md)** - Letting AI clients (Claude, Cursor, VS Code) use the console through OAuth, on the projects the user picks
+- **[AI providers](docs/AI-PROVIDERS.md)** - Configuring the system AI and the providers an organization can use
+- **[AI code changes](docs/AI-CODE-CHANGES.md)** - How Edit with AI and MCP code changes reach a branch or a pull request
 
 ## Run with Docker
 
-Simply run the `docker-compose.yaml`
+The `docker-compose.yaml` runs the orchestrator image `lory1990/mfe-orchestrator:5.0.0`
+next to MongoDB and Redis:
 
 ```bash
 docker compose up -d
 ```
+
+Open http://localhost:8080 and create the first user. To enable the remote MCP
+server or the AI features, uncomment the matching variables in the file, or add
+them to the `environment` of the `mfe-orchestrator` service (see the
+[table below](#environment-variables-)).
 
 ## Run everything in a single container 📦
 
@@ -247,7 +302,25 @@ falling back to it.
 | `REGISTRATION_ALLOWED`                 | `true`                                                                                            | If `true`, allows new user registration.                        |
 | `ALLOW_EMBEDDED_LOGIN`                 | `true`                                                                                            | If `true`, enables the login system within the application.     |
 | `MICROFRONTEND_HOST_FOLDER`            | `/upload-microfrontends`                                                                          | Folder containing the host microfrontends.                      |
-| `AI_PROVIDER`                          | _(empty)_ (`anthropic` when `ANTHROPIC_API_KEY` is set)                                           | Model behind the assistant and AI code changes: `anthropic`, `azure-foundry`, `gemini`, `azure-openai`. See [docs/AI-PROVIDERS.md](docs/AI-PROVIDERS.md). |
+| `AI_PROVIDER`                          | _(empty)_ (`anthropic` when `ANTHROPIC_API_KEY` is set)                                           | The system AI, offered to every organization next to its own: `anthropic`, `azure-foundry`, `aws-bedrock`, `gemini`, `azure-openai`. With no provider and no `ANTHROPIC_API_KEY` there is no system AI. See [docs/AI-PROVIDERS.md](docs/AI-PROVIDERS.md). |
+| `AI_MAX_EFFORT`                        | _(empty: every level the model takes)_                                                            | Highest reasoning effort users may choose with the system AI: `low`, `medium`, `high`, `xhigh`, `max`. |
+| `ASSISTANT_RATE_LIMIT_MAX`             | `20`                                                                                              | Assistant questions per IP per minute. Each one is a paid model call. |
+| `ANTHROPIC_API_KEY`                    | _(empty)_                                                                                         | API key for `anthropic`.                                        |
+| `ANTHROPIC_MODEL`                      | `claude-opus-5-5`                                                                                 | Claude model for `anthropic`.                                   |
+| `AZURE_FOUNDRY_RESOURCE`               | _(empty)_                                                                                         | Resource name for `azure-foundry` (`https://<resource>.services.ai.azure.com`). |
+| `AZURE_FOUNDRY_API_KEY`                | _(empty)_                                                                                         | API key for `azure-foundry`.                                    |
+| `AZURE_FOUNDRY_MODEL`                  | `claude-opus-5-5`                                                                                 | Name of the Claude deployment for `azure-foundry`.              |
+| `AWS_BEDROCK_REGION`                   | _(empty)_                                                                                         | AWS region for `aws-bedrock`.                                   |
+| `AWS_BEDROCK_ACCESS_KEY_ID`            | _(empty)_                                                                                         | Access key allowed to invoke the model, for `aws-bedrock`.      |
+| `AWS_BEDROCK_SECRET_ACCESS_KEY`        | _(empty)_                                                                                         | Secret of that access key.                                      |
+| `AWS_BEDROCK_MODEL`                    | _(empty)_                                                                                         | Model id or inference profile for `aws-bedrock` (required with it). |
+| `GEMINI_API_KEY`                       | _(empty)_                                                                                         | API key for `gemini`.                                           |
+| `GEMINI_MODEL`                         | _(empty)_                                                                                         | Gemini model, required with `gemini`: none is assumed.          |
+| `AZURE_OPENAI_ENDPOINT`                | _(empty)_                                                                                         | `https://<resource>.openai.azure.com/` for `azure-openai`.      |
+| `AZURE_OPENAI_API_KEY`                 | _(empty)_                                                                                         | API key for `azure-openai`.                                     |
+| `AZURE_OPENAI_DEPLOYMENT`              | _(empty)_                                                                                         | Deployment of the GPT model, which is also the model name.      |
+| `AZURE_OPENAI_REASONING`               | `false`                                                                                           | `true` for reasoning deployments (o-series, GPT-5 and later): the effort is sent as `reasoning.effort`. |
+| `AZURE_OPENAI_ENDPOINT_SUFFIXES`       | _(empty)_                                                                                         | Comma separated host suffixes an organization's Azure OpenAI endpoint may use besides the public cloud's, e.g. `.openai.azure.us,.openai.azure.cn`. |
 | `REPOSITORIES_FOLDER`                  | `/repositories` (`/data/repositories` in the all-in-one image)                                    | Where repositories are cloned to be edited with AI. A cache.    |
 | `REPOSITORIES_MAX_SIZE_MB`             | `500`                                                                                             | Repositories bigger than this on disk are refused.              |
 | `REPOSITORIES_EVICT_AFTER_DAYS`        | `14`                                                                                              | Clones not used for this many days are deleted.                 |
