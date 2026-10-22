@@ -10,7 +10,9 @@ const FRAMEWORK_LABELS: Record<string, string> = {
 const COMPILER_LABELS: Record<string, string> = {
     VITE: "Vite",
     WEBPACK: "Webpack",
-    WEBCOMPONENT: "Web Component"
+    WEBCOMPONENT: "Web Component",
+    SINGLE_SPA: "single-spa",
+    MICRO_LC: "micro-lc"
 }
 
 const SOURCE_KEYS: Record<string, string> = {

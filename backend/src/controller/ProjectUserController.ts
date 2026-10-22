@@ -1,15 +1,10 @@
 import { FastifyInstance } from "fastify"
 import { Types } from "mongoose"
-import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { BusinessException } from "../errors/BusinessException"
 import ProjectHeaderNotFoundError from "../errors/ProjectHeaderNotFoundError"
-import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
-import Project from "../models/ProjectModel"
-import User, { UserStatus } from "../models/UserModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
-import UserOrganizationService from "../service/UserOrganizationService"
-import UserProjectService from "../service/UserProjectService"
+import UserProjectService, { PROJECT_LAST_OWNER } from "../service/UserProjectService"
 import AuthenticationMethod from "../types/AuthenticationMethod"
-import { toObjectId } from "../utils/mongooseUtils"
 
 interface PopulatedProject {
     _id: Types.ObjectId
@@ -94,34 +89,7 @@ export default async function projectUserController(fastify: FastifyInstance) {
         Body: UpdateUserRoleDTO
     }>("/projects/:projectId/users/:userId", async (request, reply) => {
         const { projectId, userId } = request.params
-        const { role } = request.body
-
-        // Verify project exists
-        const project = await Project.findById(projectId)
-        if (!project) {
-            throw new ProjectNotFoundError(projectId)
-        }
-
-        // Verify user exists
-        const user = await User.findById(new Types.ObjectId(userId))
-        if (!user) {
-            throw new EntityNotFoundError(`User with ID ${userId} not found`)
-        }
-
-        // Find and update the user's role in the project
-        const userProject = await UserProject.findOneAndUpdate(
-            {
-                userId: toObjectId(userId),
-                projectId: toObjectId(projectId)
-            },
-            { role },
-            { new: true }
-        )
-
-        if (!userProject) {
-            throw new EntityNotFoundError("User is not a member of this project")
-        }
-
+        const userProject = await new UserProjectService(request.databaseUser).updateUserRole(projectId, userId, request.body.role)
         return reply.send({
             message: "User role updated successfully",
             userProject
@@ -131,56 +99,15 @@ export default async function projectUserController(fastify: FastifyInstance) {
     // Remove user from project
     fastify.delete<{ Params: { projectId: string; userId: string } }>("/projects/:projectId/users/:userId", async (request, reply) => {
         const { projectId, userId } = request.params
-
-        // Verify project exists
-        const project = await Project.findById(projectId)
-        if (!project) {
-            throw new ProjectNotFoundError(projectId)
+        try {
+            await new UserProjectService(request.databaseUser).removeUserFromProject(projectId, userId)
+        } catch (error) {
+            // The console shows `message` of this answer as it is: the last-owner refusal keeps that shape.
+            if (error instanceof BusinessException && error.code === PROJECT_LAST_OWNER) {
+                return reply.status(400).send({ message: error.message })
+            }
+            throw error
         }
-
-        // Verify user exists
-        const user = await User.findById(toObjectId(userId))
-        if (!user) {
-            throw new EntityNotFoundError(`User with ID ${userId} not found`)
-        }
-
-        // Prevent removing the last owner
-        const ownerCount = await UserProject.countDocuments({
-            projectId: toObjectId(projectId),
-            role: RoleInProject.OWNER
-        })
-
-        const userToRemove = await UserProject.findOne({
-            userId: toObjectId(userId),
-            projectId: toObjectId(projectId),
-            role: RoleInProject.OWNER
-        })
-
-        if (userToRemove && ownerCount <= 1) {
-            return reply.status(400).send({
-                message: "Cannot remove the last owner of the project. Please assign another owner first."
-            })
-        }
-
-        // Remove user from project
-        const result = await UserProject.findOneAndDelete({
-            userId: toObjectId(userId),
-            projectId: toObjectId(projectId)
-        })
-
-        if (!result) {
-            throw new EntityNotFoundError("User is not a member of this project")
-        }
-
-        // Clean up users that were only created to be invited and never accepted. The organization
-        // membership was created by this very invitation, so it goes first: the account is dropped
-        // only once nothing at all points at it any more.
-        if (user.status === UserStatus.INVITED) {
-            const userOrganizationService = new UserOrganizationService(request.databaseUser)
-            await userOrganizationService.pruneImplicitMembership(userId, project.organizationId)
-            await userOrganizationService.deleteUserIfOnlyEverInvited(toObjectId(userId))
-        }
-
         return reply.status(204).send()
     })
 

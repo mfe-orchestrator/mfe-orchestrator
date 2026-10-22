@@ -8,6 +8,21 @@
  * Qui restano solo gli scostamenti specifici dell'applicazione.
  */
 
+/* Il bordo di un microfrontend su cui sta lavorando un agente: un alone che respira. */
+@theme {
+    --animate-agent-glow: agent-glow 2s ease-in-out infinite;
+
+    @keyframes agent-glow {
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+        }
+        50% {
+            box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3);
+        }
+    }
+}
+
 /* Tailwind v4 non ha piu le opzioni center/padding di container: le riproduciamo. */
 @utility container {
     margin-inline: auto;

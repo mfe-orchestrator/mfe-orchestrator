@@ -1,0 +1,68 @@
+name: 🚀 Build and deploy
+
+on:
+  push:
+    tags:
+      - '*'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: 'Version to release'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    
+    - name: 🔄 Setup pnpm
+      uses: pnpm/action-setup@v6
+    
+    - name: ⚙️ Setup Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: '24'
+        cache: 'pnpm'
+        cache-dependency-path: '**/pnpm-lock.yaml'
+    
+    - name: 💾 Cache pnpm store
+      uses: actions/cache@v6
+      id: pnpm-cache
+      with:
+        path: |
+          ~/.pnpm-store
+          ~/.local/share/pnpm/store
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    
+    - name: 📦 Cache dependencies
+      uses: actions/cache@v6
+      id: cache-deps
+      with:
+        path: |
+          node_modules
+          host/node_modules
+          remote/node_modules
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-deps-
+    
+    - name: 🔧 Install Dependencies
+      run: pnpm install
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+        
+    - name: 🏗️ Build
+      run: pnpm build
+                
+    - name: 🚀 Publish to MFE Orchestrator
+      uses: mfe-orchestrator-hub/github-action@0.0.29
+      with:
+        apikey: ${{ secrets.MICROFRONTEND_ORCHESTRATOR_API_KEY }}
+        microfrontend-slug: %microfrontendSlug%
+        domain: ${{ vars.MICROFRONTEND_ORCHESTRATOR_DOMAIN || '%domain%' }}
+        file-path: './dist'
+        version: ${{ inputs.version || github.ref_name }}

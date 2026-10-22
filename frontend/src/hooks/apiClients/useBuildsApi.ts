@@ -1,6 +1,7 @@
 import useProjectStore from "@/store/useProjectStore"
 import useApiClient from "../useApiClient"
 import useEventStream, { EventStreamState } from "../useEventStream"
+import { CodeRepositoryProvider } from "./useCodeRepositoriesApi"
 
 export enum BuildStatus {
     QUEUED = "QUEUED",
@@ -34,7 +35,7 @@ export interface MicrofrontendBuildStatus {
     microfrontendId: string
     name: string
     slug: string
-    provider?: string
+    provider?: CodeRepositoryProvider
     repositoryName?: string
     selectedVersion?: string
     latestBuiltVersion?: string

@@ -1,8 +1,12 @@
 import { ClientSession, ObjectId, Schema } from "mongoose"
 import { EnvironmentNotFoundError } from "../errors/EnvironmentNotFoundError"
+import Deployment from "../models/DeploymentModel"
+import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
+import GlobalVariable from "../models/GlobalVariableModel"
 import { EnvironmentDTO } from "../types/EnvironmentDTO"
 import { toObjectId } from "../utils/mongooseUtils"
+import { runInTransaction } from "../utils/runInTransaction"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 class EnvironmentService extends BaseAuthorizedService {
@@ -98,13 +102,37 @@ class EnvironmentService extends BaseAuthorizedService {
         return this.getByProjectId(projectId)
     }
 
+    /**
+     * Removes everything that belongs to the given environments, then the environments.
+     *
+     * An environment owns its deployments and its global variables, and each deployment owns the
+     * canary enrolments recorded against it, so the enrolments have to go first: once the
+     * deployments are gone there is nothing left to find them by. Nothing else in the schema
+     * points at an environment.
+     */
+    private async deleteWithContents(environmentIds: ObjectId[], session?: ClientSession) {
+        const deployments = await Deployment.find({ environmentId: { $in: environmentIds } }, null, { session })
+        const deploymentIds = deployments.map(deployment => deployment._id)
+
+        await DeploymentToCanaryUsers.deleteMany({ deploymentId: { $in: deploymentIds } }, { session })
+        await Deployment.deleteMany({ environmentId: { $in: environmentIds } }, { session })
+        await GlobalVariable.deleteMany({ environmentId: { $in: environmentIds } }, { session })
+
+        return Environment.deleteMany({ _id: { $in: environmentIds } }, { session })
+    }
+
     async deleteSingle(environmentId: string | ObjectId) {
         await this.ensureAccessToEnvironment(environmentId)
         const environmentIdObj = toObjectId(environmentId)
-        const deletedEnvironment = await Environment.findOneAndDelete({ _id: environmentIdObj })
-        if (!deletedEnvironment) {
-            throw new EnvironmentNotFoundError(environmentIdObj.toString())
-        }
+
+        return runInTransaction(async session => {
+            const environment = await Environment.findById(environmentIdObj).session(session ?? null)
+            if (!environment) {
+                throw new EnvironmentNotFoundError(environmentIdObj.toString())
+            }
+
+            await this.deleteWithContents([environmentIdObj], session)
+        })
     }
 
     // Delete multiple environments
@@ -120,7 +148,7 @@ class EnvironmentService extends BaseAuthorizedService {
             })
         )
 
-        return await Environment.deleteMany({ _id: { $in: idsObj } })
+        return runInTransaction(session => this.deleteWithContents(idsObj, session))
     }
 }
 

@@ -55,6 +55,8 @@ const deploymentSchema = new Schema<IDeployment>(
 
 // Aggiungo un indice composto per garantire l'unicità della coppia environmentId e deploymentId
 deploymentSchema.index({ environmentId: 1, deploymentId: 1 }, { unique: true })
+// The deployment an environment serves: the active one, or the most recent when none is flagged
+deploymentSchema.index({ environmentId: 1, active: -1, deployedAt: -1 })
 
 /**
  * A deployment freezes a copy of the storages of the project, credentials included, and the serve API

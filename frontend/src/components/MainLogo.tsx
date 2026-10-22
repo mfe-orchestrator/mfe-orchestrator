@@ -1,14 +1,10 @@
 import React from "react"
+import { useTranslation } from "react-i18next"
 import { twMerge } from "tailwind-merge"
 
 interface MainLogoProps {
     /**
-     * The text to display inside the logo
-     * @default 'MF'
-     */
-    text?: string
-    /**
-     * Additional CSS classes to apply to the logo container
+     * Additional CSS classes to apply to the logo
      */
     className?: string
     /**
@@ -19,22 +15,18 @@ interface MainLogoProps {
 }
 
 const sizeClasses = {
-    sm: "h-8 w-8 text-base",
-    md: "h-12 w-12 text-xl",
-    lg: "h-16 w-16 text-2xl"
+    sm: "h-8 w-8",
+    md: "h-12 w-12",
+    lg: "h-16 w-16"
 }
 
 /**
- * MainLogo component that displays a simple logo with the given text
+ * MainLogo component that displays the official MFE Orchestrator logo
  */
-export const MainLogo: React.FC<MainLogoProps> = ({ text = "MF", className = "", size = "md" }) => {
-    const baseClasses = "rounded-md bg-orchestrator-accent flex items-center justify-center text-white font-bold"
+export const MainLogo: React.FC<MainLogoProps> = ({ className = "", size = "md" }) => {
+    const { t } = useTranslation()
 
-    return (
-        <div className={twMerge(baseClasses, sizeClasses[size], className)} data-testid="main-logo">
-            {text}
-        </div>
-    )
+    return <img src="/img/logo.png" alt={t("app.name")} className={twMerge(sizeClasses[size], className)} data-testid="main-logo" />
 }
 
 export default MainLogo

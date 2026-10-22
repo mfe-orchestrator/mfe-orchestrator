@@ -43,7 +43,7 @@
             "federation_tab": "Module Federation",
             "runtime_integration_description": "I microfrontend web component sono semplici script che registrano un custom element, quindi non c'è nessuna configurazione di module federation da scrivere: l'host chiede l'url risolto all'SDK e monta l'elemento. Vedi MicrofrontendLoader nei template web component.",
             "integrate_dialog_title": "Configura module federation",
-            "integrate_dialog_description": "Per ogni microfrontend che consuma altri, scriviamo la configurazione del bundler che dichiara i suoi remote e aggiungiamo i pacchetti che servono. Controlla cosa cambia, poi scegli cosa committare: la scrittura finisce sul branch predefinito di ogni repository.",
+            "integrate_dialog_description": "Per ogni microfrontend che consuma altri, scriviamo la configurazione del bundler che dichiara i suoi remote (per un root config single-spa, il src/applications.ts che li registra; per una shell micro-lc, il src/microlc-config.ts che li monta) e aggiungiamo i pacchetti che servono. Controlla cosa cambia, poi scegli cosa committare: la scrittura finisce sul branch predefinito di ogni repository.",
             "integrate_confirm": "Committa nei repository selezionati",
             "integrate_nothing_to_do": "Niente da integrare: i repository sono già configurati, oppure nessuno dei tuoi microfrontend ne consuma ancora un altro.",
             "integrate_success": "Module federation configurato in {{count}} repository",
@@ -114,12 +114,15 @@
         "recover_password": "Recupera Password",
         "recover_password_description": "Inserisci la tua email per recuperare la password",
         "recover_password_success": "Se esiste un account con questa email, riceverai un link per reimpostare la password",
+        "recover_password_email_not_configured": "Questa installazione non ha un server email configurato: il reset della password non è disponibile. Contatta un amministratore.",
+        "recover_password_error": "Non è stato possibile inviare il link per reimpostare la password. Riprova.",
         "recover_password_button": "Recupera Password",
         "no_account": "Non hai un account?",
         "already_have_account": "Hai già un account?",
         "create_account": "Crea Account",
         "or_continue_with": "Oppure continua con",
-        "recover": "Recuperala"
+        "recover": "Recuperala",
+        "microsoft_login_failed": "Accesso con Microsoft non riuscito. Riprova."
     },
     "project": {
         "name": "Nome",
@@ -180,26 +183,69 @@
     "settings": {
         "title": "Impostazioni",
         "subtitle": "Gestisci le impostazioni del tuo progetto",
+        "tabs": {
+            "label": "Sezioni delle impostazioni",
+            "general": "Generale",
+            "ai": "Contesto AI",
+            "delivery": "Rilascio"
+        },
+        "howItWorks": "Come funziona",
         "account": "Account",
         "stats": {
-            "title": "Configurazione",
+            "accessTitle": "Persone e accessi",
+            "resourcesTitle": "Risorse del progetto",
             "viewAll": "Visualizza Tutto",
             "teamMembers": "Membri",
             "environments": "Ambienti",
             "apiKeys": "API Keys",
             "storages": "Storages",
-            "codeRepositories": "Repository Codice"
+            "codeRepositories": "Repository Codice",
+            "mcpClients": "Assistenti AI",
+            "manage": "Gestisci"
         },
         "projectInfo": {
             "title": "Informazioni Progetto",
             "name": "Nome",
-            "nameRequired": "Il nome del progetto \u00e8 obbligatorio",
+            "nameRequired": "Il nome del progetto è obbligatorio",
             "nameMinLength": "Il nome deve contenere almeno 2 caratteri",
             "description": "Descrizione",
             "slug": "Slug",
             "id": "ID",
-            "slugHint": "Slug e ID non sono modificabili: lo slug fa parte del percorso in cui sono archiviati i bundle gi\u00e0 caricati.",
+            "slugHint": "Slug e ID non sono modificabili: lo slug fa parte del percorso in cui sono archiviati i bundle già caricati.",
             "copy": "Copia"
+        },
+        "projectContext": {
+            "title": "Contesto AI del progetto",
+            "subtitle": "Note per gli agenti AI (client MCP e assistente della console) valide per tutto il progetto: dominio, convenzioni, regole condivise dai microfrontend.",
+            "label": "Contesto",
+            "placeholder": "## Dominio\nPortale clienti per ...\n\n## Convenzioni\n- TypeScript strict\n- ...",
+            "hint": "Supporta Markdown. Gli agenti lo leggono con il tool context_get insieme al contesto di ogni microfrontend.",
+            "tooLong": "Il contesto può contenere al massimo {{max}} caratteri"
+        },
+        "pipelines": {
+            "title": "Template di pipeline",
+            "subtitle": "La pipeline che riceve un nuovo microfrontend quando viene creato il suo repository. Di default arriva dal repository ufficiale mfe-orchestrator/template-pipelines.",
+            "details": "Collega al progetto un tuo repository con la stessa struttura per usare invece le tue pipeline. I repository già creati restano come sono.",
+            "enabled": "Usa i template di pipeline di un repository del progetto",
+            "repository": "Repository dei template di pipeline",
+            "connection": "Connessione",
+            "connectionPlaceholder": "Scegli una connessione",
+            "repositoryLabel": "Repository",
+            "repositoryPlaceholder": "Scegli un repository",
+            "noConnections": "Il progetto non ha ancora connessioni a repository di codice: aggiungine una in Repository di codice.",
+            "ref": "Branch o tag",
+            "refPlaceholder": "main",
+            "refHint": "Se vuoto, il branch di default del repository.",
+            "refInvalid": "Non è un nome di branch o di tag: lettere, cifre, punti, trattini, underscore e slash, senza \"..\", trattino iniziale, slash finale o .lock finale.",
+            "layout": "Struttura: <tipo>/<compilatore>/<provider>/, dove provider è github, gitlab o azure_dev_ops, ad esempio remote/vite/github/workflows/release.yml. Una cartella <tipo>/<compilatore>/<slugTemplate>/<provider>/ vince solo per quel template. Su GitHub la cartella diventa .github/ e sostituisce i workflow del template; su GitLab e Azure DevOps .gitlab-ci.yml e azure-pipelines.yml sostituiscono quelli nella root. Un template per cui il repository non ha una cartella tiene la pipeline che ha già: i template ufficiali non vengono usati al suo posto.",
+            "placeholders": "Sostituiti alla creazione del repository: %microfrontendSlug% con lo slug, %domain% con l'URL di questa console.",
+            "saved": "Template di pipeline salvati",
+            "errors": {
+                "owner_required": "Solo un owner del progetto può cambiare da dove arrivano i suoi template di pipeline",
+                "repository_required": "Scegli la connessione e il repository dei template di pipeline",
+                "repository_invalid": "La connessione non raggiunge questo repository, o non è del progetto: scegline un altro",
+                "ref_invalid": "Il branch o il tag non ha un nome valido"
+            }
         },
         "dangerZone": {
             "title": "Zona Pericolosa",
@@ -222,7 +268,9 @@
         "notifications": {
             "projectDeleted": "Progetto eliminato",
             "projectUpdated": "Progetto aggiornato",
-            "projectUpdateFailed": "Impossibile aggiornare il progetto"
+            "projectUpdateFailed": "Impossibile aggiornare il progetto",
+            "contextUpdated": "Contesto del progetto aggiornato",
+            "contextUpdateFailed": "Impossibile aggiornare il contesto del progetto"
         }
     },
     "theme": {
@@ -237,6 +285,7 @@
         "environment_select": "Ambiente",
         "select_environment": "Seleziona un ambiente",
         "deploy_button": "Deploy",
+        "deploying": "Deploy in corso…",
         "active_deployments": "Deployment attivo",
         "history": "Storico",
         "microfrontends_title": "Microfrontend",
@@ -250,7 +299,8 @@
         },
         "actions": {
             "view_canary_users": "Visualizza utenti canary",
-            "redeploy": "Redeploy"
+            "redeploy": "Redeploy",
+            "redeploying": "Redeploy in corso…"
         },
         "canary_users": {
             "title": "Utenti Canary",
@@ -286,7 +336,7 @@
     },
     "builds": {
         "title": "Build",
-        "subtitle": "Stato delle build dei microfrontend e versione servita da ogni ambiente",
+        "subtitle": "Stato delle build dei microfrontend, con il link a ogni run sulla sua piattaforma CI, e versione servita da ogni ambiente",
         "refresh": "Aggiorna",
         "live": {
             "connected": "Aggiornamento in tempo reale attivo",
@@ -298,7 +348,7 @@
             "description": "Crea un microfrontend per vedere qui lo stato delle sue build."
         },
         "table": {
-            "microfrontend": "Microfrontend",
+            "name": "Nome",
             "last_build": "Ultima build",
             "build_ref": "Tag / branch",
             "last_built_version": "Ultima versione buildata",
@@ -306,6 +356,7 @@
             "no_runs": "Nessuna build",
             "triggered_by": "avviata da {{user}}",
             "open_run": "Apri sul provider",
+            "open_run_on": "Apri su {{provider}}",
             "repository": "Repository: {{name}}",
             "selected_version": "versione selezionata: {{version}}",
             "expand_history": "Mostra lo storico build di {{name}}",
@@ -369,7 +420,14 @@
         "resend_invite": "Rinvia",
         "revoke_invite": "Revoca invito",
         "confirm_revoke_title": "Revoca invito",
-        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
+        "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?",
+        "edit_access": {
+            "action": "Modifica accesso",
+            "title": "Modifica accesso",
+            "description": "Cambia il ruolo e l'accesso di {{name}}.",
+            "success": "Accesso aggiornato",
+            "last_owner": "Il progetto deve avere almeno un admin: promuovi prima un altro membro."
+        }
     },
     "project_invitation": {
         "title": "Invito al progetto",
@@ -581,6 +639,43 @@
         "max_length_other": "Massimo {{count}} caratteri"
     },
     "microfrontend": {
+        "kind": {
+            "label": "Tipo",
+            "microfrontend": "Microfrontend",
+            "microfrontend_description": "Servito da MFE Orchestrator",
+            "frontend": "Frontend",
+            "frontend_description": "Servito dal suo container Docker",
+            "badge_microfrontend": "Microfrontend",
+            "badge_frontend": "Docker",
+            "no_parents_hint": "Un frontend servito da Docker non può avere parent",
+            "version_from_pipeline": "È impostata dalla pipeline ogni volta che registra la versione di un'immagine: qui non si può cambiare.",
+            "template_pipeline_hint": "La pipeline di questo template carica un bundle su MFE Orchestrator, che un frontend servito dal suo container Docker non accetta. Modificala perché costruisca l'immagine Docker e ne registri la versione.",
+            "image_repository": "Repository immagine",
+            "image_repository_hint": "Facoltativo. Dove la pipeline pubblica l'immagine Docker, es. ghcr.io/acme/shell",
+            "versions": {
+                "title": "Versioni",
+                "description": "Le immagini pubblicate dalla pipeline a ogni tag",
+                "version": "Versione",
+                "image": "Immagine",
+                "digest": "Digest",
+                "commit": "Commit",
+                "date": "Data",
+                "copy_image": "Copia il riferimento dell'immagine",
+                "copied": "Riferimento dell'immagine copiato",
+                "copy_failed": "Impossibile copiare negli appunti",
+                "empty": "Nessuna versione pubblicata. Crea una versione per avviare la pipeline."
+            }
+        },
+        "errors": {
+            "frontend_cannot_have_parents": "Un frontend servito dal suo container Docker non può avere parent",
+            "frontend_upload_not_allowed": "Un frontend servito dal suo container Docker non accetta upload di bundle: la sua pipeline registra l'immagine di ogni versione",
+            "version_registration_not_allowed": "Solo un frontend servito dal suo container Docker registra versioni di immagine: un microfrontend carica il suo bundle"
+        },
+        "validation": {
+            "version_required": "La versione è obbligatoria",
+            "host_url_required": "L'URL è obbligatorio per l'hosting personalizzato",
+            "canary_percentage": "La percentuale canary deve essere tra 1 e 100 quando il canary è attivo"
+        },
         "host": "Host",
         "hostTypes": {
             "customUrl": "URL Personalizzato",
@@ -601,7 +696,6 @@
             "clearSearch": "Cancella la ricerca",
             "noResultsTitle": "Nessun risultato",
             "noResultsDescription": "Nessun microfrontend corrisponde a «{{searchTerm}}». Prova con un altro termine di ricerca.",
-            "resetFilters": "Azzera la ricerca",
             "totalCount_one": "{{count}} microfrontend",
             "totalCount_other": "{{count}} microfrontend",
             "filteredCount_one": "{{count}} di {{total}} microfrontend",
@@ -646,7 +740,9 @@
             "storage": "Storage",
             "version": "Versione {{version}}",
             "users": "{{count}} utente{{count, plural, =1 {} other {i}}}",
-            "build": "Build"
+            "build": "Build",
+            "workingAgents_one": "Un agente al lavoro",
+            "workingAgents_other": "{{count}} agenti al lavoro"
         },
         "no_microfrontends_found": "Nessun microfrontend trovato",
         "no_microfrontends_found_description": "Nessun microfrontend è stato ancora registrato. Una volta aggiunti, verranno visualizzati qui. Puoi crearne uno nuovo per iniziare.",
@@ -704,7 +800,8 @@
             "general": "Generale",
             "hosting": "Hosting",
             "repository": "Repository",
-            "danger_zone": "Zona Pericolosa"
+            "danger_zone": "Zona Pericolosa",
+            "context": "Contesto AI"
         },
         "canary_release": "Distribuzione canary",
         "canary_settings": "Impostazioni Canary",
@@ -775,7 +872,199 @@
             }
         },
         "canary_enrolled_users": "Utenti selezionati",
-        "canary_none": "Non c'è canary"
+        "canary_none": "Non c'è canary",
+        "context": {
+            "title": "Contesto AI del microfrontend",
+            "subtitle": "Note per gli agenti AI su questo microfrontend; quello che vale per tutti va nel contesto del progetto, nelle Impostazioni.",
+            "label": "Contesto",
+            "placeholder": "## Responsabilità\nGestisce ...\n\n## Note\n- ...",
+            "hint": "Supporta Markdown, massimo 20.000 caratteri."
+        },
+        "aiChange": {
+            "title": "Modifica con AI",
+            "description": "Descrivi la modifica che vuoi. L'agente legge il repository insieme al contesto AI del progetto e di questo microfrontend, poi propone le modifiche. Non viene pubblicato nulla finché non approvi: all'approvazione le modifiche vengono committate su un nuovo branch e viene aperta una pull request.",
+            "prompt_label": "Cosa vuoi cambiare?",
+            "prompt_placeholder": "es. Aggiungi una pagina 404 con un link per tornare alla home",
+            "prompt_required": "Descrivi la modifica che vuoi",
+            "prompt_counter": "{{count}} / {{max}}",
+            "base_branch_placeholder": "Lascia vuoto per usare il branch predefinito del repository",
+            "base_branch_of": "Branch di partenza di {{name}}",
+            "base_branch_default": "{{branch}} (predefinito)",
+            "base_branch_all": "Branch di partenza di tutti i repository",
+            "base_branch_mixed": "Diverso per repository",
+            "base_branch_each_default": "Branch predefinito di ogni repository",
+            "base_branch_everywhere": "{{branch}} su tutti i repository",
+            "base_branch_hint": "L'agente parte da questi branch e pubblica la proposta su un nuovo feature branch di ogni repository: il branch di partenza non viene toccato finché non applichi.",
+            "starts_from": "da",
+            "repositories_title_one": "Repository",
+            "repositories_title_other": "Repository ({{count}})",
+            "generate": "Genera proposta",
+            "status": {
+                "PENDING": "In coda",
+                "RUNNING": "In lavorazione",
+                "PROPOSED": "Proposta pronta",
+                "APPLYING": "In applicazione",
+                "APPLIED": "Applicata",
+                "DISCARDED": "Scartata",
+                "FAILED": "Non riuscita"
+            },
+            "status_description": {
+                "PENDING": "La richiesta è in coda e partirà a breve.",
+                "RUNNING": "L'agente sta lavorando sul repository.",
+                "APPLYING": "Pubblicazione delle modifiche sul branch di partenza in corso."
+            },
+            "events": {
+                "queued": "Richiesta in coda",
+                "waiting-for-repository": "In attesa che il repository sia libero",
+                "rate-limited": "Il modello ha raggiunto il limite di richieste: riprovo tra poco",
+                "preparing": "Preparazione del repository",
+                "working": "L'agente è al lavoro",
+                "proposed": "Proposta pronta",
+                "no-changes": "L'agente ha finito senza modificare alcun file",
+                "applied": "Modifiche applicate",
+                "superseded": "Sostituita da una proposta più recente",
+                "applying-previous": "Riparto dalla proposta precedente",
+                "applying": "Applicazione delle modifiche",
+                "apply-failed": "Non è stato possibile applicare le modifiche",
+                "pushing": "Pubblicazione della proposta sul suo branch"
+            },
+            "progress_log": "Avanzamento dell'agente",
+            "progress_empty": "Ancora nessuna attività.",
+            "show_progress_log": "Mostra il registro di avanzamento dell'agente",
+            "show_prompt": "Mostra la richiesta completa",
+            "request_meta": "{{date}} · branch di partenza {{branch}}",
+            "summary": "Riepilogo",
+            "proposal_warning": "Controlla questa proposta prima di applicarla",
+            "failed_title": "La richiesta non è andata a buon fine",
+            "try_again": "Riprova",
+            "applied_title": "Modifiche applicate",
+            "open_pull_request": "Apri una pull request",
+            "pull_request": "Pull request",
+            "opens_new_tab": "(si apre in una nuova scheda)",
+            "pull_request_error_title": "Non è stato possibile aprire la pull request",
+            "discarded_description": "Questa proposta è stata scartata: non è stato pubblicato nulla.",
+            "no_changes_title": "Niente da modificare",
+            "no_changes_description": "L'agente non ha modificato alcun file.",
+            "files_title": "Modifiche proposte",
+            "files_count_one": "{{count}} file",
+            "files_count_other": "{{count}} file",
+            "action": {
+                "create": "Nuovo",
+                "update": "Modificato",
+                "delete": "Eliminato"
+            },
+            "show_diff": "Mostra le modifiche a {{path}}",
+            "hide_diff": "Nascondi le modifiche a {{path}}",
+            "apply": "Applica su {{branch}}",
+            "discard": "Scarta",
+            "applied_success": "Modifiche applicate su {{branch}}",
+            "discarded_success": "Proposta scartata",
+            "usage_label": "Token usati",
+            "usage_hint": "Token usati finora dall'agente, sommando tutti i passaggi del modello. I token letti dalla cache costano molto meno.",
+            "usage_shared_one": "Il costo dell'intero job, condiviso tra il suo {{count}} repository",
+            "usage_shared_other": "Il costo dell'intero job, condiviso tra i suoi {{count}} repository",
+            "job_badge_one": "Job · {{count}} repo",
+            "job_badge_other": "Job · {{count}} repo",
+            "open_request": "Apri la richiesta: {{prompt}}",
+            "diff": {
+                "caption": "Modifiche a {{path}}",
+                "old_line_number": "Riga originale",
+                "new_line_number": "Riga nuova",
+                "content": "Contenuto",
+                "added_line": "Aggiunta",
+                "removed_line": "Rimossa",
+                "unchanged_line": "Invariata",
+                "hidden_lines_one": "{{count}} riga invariata nascosta",
+                "hidden_lines_other": "{{count}} righe invariate nascoste",
+                "too_big": "Questo file è troppo grande per mostrarne le modifiche.",
+                "no_differences": "Nessuna differenza nel contenuto."
+            },
+            "errors": {
+                "generic": "Qualcosa è andato storto.",
+                "create": "Non è stato possibile avviare la richiesta.",
+                "apply": "Non è stato possibile applicare le modifiche.",
+                "load": "Non è stato possibile caricare la richiesta.",
+                "history": "Non è stato possibile caricare le richieste precedenti.",
+                "ASSISTANT_DISABLED": "La modifica con AI non è attiva in questo progetto: non ha IA disponibili.",
+                "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare questo microfrontend con l'AI.",
+                "WORKSPACE_NO_REPOSITORY": "Questo microfrontend non ha un repository di codice collegato.",
+                "AI_CHANGE_CONFLICT": "Questi file sono cambiati sul branch di partenza dopo la proposta: {{files}}. Richiedi di nuovo la modifica.",
+                "AI_CHANGE_NOT_PROPOSED": "Questa richiesta non è più in attesa di approvazione.",
+                "pull_request": "Non è stato possibile aprire la pull request.",
+                "AI_CHANGE_PUSH_REFUSED": "{{branch}} ha rifiutato il push: se il branch è protetto, apri invece una pull request.",
+                "AI_MODEL_NOT_AVAILABLE": "L'IA scelta non è più disponibile per il progetto: scegline un'altra."
+            },
+            "new_change": "Nuova modifica",
+            "queue_label": "Richieste di modifica con AI",
+            "groups": {
+                "review": "Da approvare",
+                "active": "In corso",
+                "discarded": "Scartate",
+                "applied": "Applicate",
+                "failed": "Non riuscite"
+            },
+            "group_empty": {
+                "review": "Nessuna proposta in attesa di approvazione.",
+                "active": "Nessun agente al lavoro.",
+                "discarded": "Nessuna proposta scartata.",
+                "applied": "Ancora nessuna richiesta applicata.",
+                "failed": "Nessuna richiesta non riuscita."
+            },
+            "composer_title": "Cosa vuoi cambiare in {{name}}?",
+            "composer_shortcut": "⌘/Ctrl + Invio per generare la proposta",
+            "conversation_label": "Conversazione con l'agente",
+            "turns_count_one": "{{count}} messaggio",
+            "turns_count_other": "{{count}} messaggi",
+            "superseded": "Rifinita dal messaggio successivo: le sue modifiche fanno parte della proposta più recente.",
+            "follow_up_label": "Scrivi all'agente: chiedi una modifica o fai una domanda sulla proposta",
+            "follow_up_placeholder": "Chiedi una modifica o fai una domanda all'agente… (Invio per inviare, Maiusc+Invio per andare a capo)",
+            "follow_up_running": "Attendi che l'agente finisca per chiedere altro…",
+            "follow_up_failed": "La richiesta non è andata a buon fine: riprova o avvia una nuova modifica.",
+            "follow_up_closed": "Questa conversazione è chiusa: avvia una nuova modifica per proseguire.",
+            "follow_up_send": "Invia",
+            "usage_conversation_one": "Token usati dalla conversazione ({{count}} messaggio)",
+            "usage_conversation_other": "Token usati dalla conversazione ({{count}} messaggi)",
+            "apply_description": "Tutti i file proposti vanno insieme: dipendono l'uno dall'altro, quindi nessuno può essere escluso. Applica li pubblica direttamente su {{branch}}, senza revisione, e la sua CI parte subito: controlla prima il diff, oppure apri una pull request per farlo rivedere nel repository.",
+            "applied_onto": "Pubblicate su",
+            "pushed_on": "Pubblicata sul branch",
+            "push_error_title": "Non è stato possibile pubblicare la proposta sul suo branch: applicandola o aprendo la sua pull request si riprova",
+            "view_pull_request": "Vedi la pull request",
+            "pull_request_opened": "Pull request aperta"
+        },
+        "workspace": {
+            "back": "Tutti i microfrontend",
+            "nav_label": "Sezioni del microfrontend",
+            "nav_ai": "Modifica con AI",
+            "nav_settings": "Info e impostazioni",
+            "version": "v{{version}}"
+        },
+        "rename_repository": {
+            "action": "Rinomina repository",
+            "title": "Rinomina repository",
+            "name_label": "Nuovo nome del repository",
+            "name_placeholder": "Inserisci il nuovo nome del repository",
+            "new_url": "nuovo url",
+            "warning_remote": "I cloni locali devono aggiornare l'URL del remote:",
+            "warning_redirect": "GitHub e GitLab reindirizzano il vecchio URL al nuovo, Azure DevOps no: lì il vecchio URL smette di funzionare.",
+            "confirm": "Rinomina",
+            "renaming": "Rinomina in corso...",
+            "success": "Repository rinominato in {{name}}",
+            "validation": {
+                "required": "Il nome del repository è obbligatorio",
+                "invalid": "Usa lettere, numeri, punti, trattini o underscore (max 100 caratteri), iniziando con una lettera o un numero e senza terminare con un punto",
+                "git_suffix": "Il nome non può terminare con .git o .atom",
+                "unchanged": "Inserisci un nome diverso da quello attuale"
+            },
+            "errors": {
+                "invalid_name": "Il nome del repository non è valido",
+                "name_taken": "Esiste già un repository con questo nome",
+                "not_linked": "Questo microfrontend non ha un repository collegato",
+                "rename_failed": "Il provider ha rifiutato la rinomina: {{reason}}",
+                "generic": "Impossibile rinominare il repository",
+                "link_inconsistent": "Il collegamento salvato non corrisponde al repository mostrato: seleziona di nuovo il repository e salva"
+            },
+            "save_first": "Salva le modifiche prima di rinominare il repository"
+        }
     },
     "color_picker": {
         "select_color": "Seleziona un colore"
@@ -855,7 +1144,18 @@
         "securityNotice": "Avviso di Sicurezza:",
         "securityNoticeDescription": "Tutte le credenziali sono memorizzate in modo sicuro. Vengono utilizzate solo per accedere alle tue risorse di storage e non vengono mai condivise con terze parti.",
         "path": "Percorso",
-        "serviceAccountJsonKey": "Chiave JSON Account di Servizio"
+        "serviceAccountJsonKey": "Chiave JSON Account di Servizio",
+        "errors": {
+            "write_forbidden": "Chi ha accesso in sola lettura non può aggiungere, modificare, provare o eliminare storage.",
+            "secret_required": "Riscrivi la credenziale: quella salvata vale solo per il provider e l'account con cui è stata salvata."
+        },
+        "connectionTestSuccess": "Un file di prova è stato caricato e riletto: l'hosting dei microfrontend può usare questo storage."
+    },
+    "connectionTest": {
+        "test": "Prova connessione",
+        "testing": "Prova in corso…",
+        "success": "Connessione riuscita",
+        "failure": "Connessione non riuscita"
     },
     "codeRepositories": {
         "title": "Repository di Codice",
@@ -949,7 +1249,8 @@
             "name": "Nome",
             "namePlaceholder": "Inserisci nome connessione",
             "error": {
-                "failedToAdd": "Impossibile aggiungere il repository Azure DevOps"
+                "failedToAdd": "Impossibile aggiungere il repository Azure DevOps",
+                "variableGroupsScope": "Il token accede ai progetti ma non ai loro variable groups: crea un PAT con lo scope Variable Groups (lettura, creazione e gestione)"
             }
         },
         "gitlab": {
@@ -1057,6 +1358,8 @@
     "market": {
         "title": "Libreria di template",
         "description": "Scegli dalla nostra collezione di template per microfrontend",
+        "templateRepository": "Template: {{name}}",
+        "templateRepositoryTitle": "Apri la repository del template {{name}}",
         "noTemplates": {
             "title": "Nessun template disponibile",
             "description": "Non ci sono ancora template per microfrontend nel market."
@@ -1158,6 +1461,29 @@
             "start_deploying": "Inizia a deployare i tuoi microfrontend",
             "go_to_dashboard": "Vai alla dashboard",
             "add_microfrontend": "Aggiungi microfrontend"
+        },
+        "ai_draft": {
+            "title": "Descrivi il progetto e lascia fare all'assistente",
+            "description": "Scrivi a parole cosa vuoi costruire: l'assistente propone nome, descrizione e ambienti. Potrai rivedere tutto prima di confermare ogni passaggio.",
+            "placeholder": "Es. Un portale clienti fatto di tre microfrontend React, con ambienti di sviluppo, collaudo e produzione, bundle su AWS S3 e codice su GitHub.",
+            "submit": "Genera una proposta",
+            "loading": "Sto preparando la proposta…",
+            "error": "Non sono riuscito a generare una proposta. Puoi compilare i campi a mano.",
+            "applied_title": "Proposta applicata",
+            "applied_environments": "Ambienti proposti per il passaggio successivo: {{environments}}.",
+            "suggested_storage": "Storage consigliato: {{storage}}.",
+            "suggested_repository": "Repository consigliato: {{repository}}.",
+            "storage": {
+                "AWS_S3": "AWS S3",
+                "GOOGLE_CLOUD_STORAGE": "Google Cloud Storage",
+                "AZURE_BLOB_STORAGE": "Azure Blob Storage"
+            },
+            "repository": {
+                "GITHUB": "GitHub",
+                "GITLAB": "GitLab",
+                "AZURE_DEV_OPS": "Azure DevOps"
+            },
+            "provider_error": "Il provider IA ha risposto con un errore: riprova tra poco, o compila i campi a mano."
         }
     },
     "dependencies": {
@@ -1234,6 +1560,13 @@
         "created": "Organizzazione creata",
         "menu_title": "Organizzazione",
         "settings": "Impostazioni organizzazione",
+        "settings_subtitle": "Dati, membri e intelligenze artificiali di {{organization}}",
+        "tabs": {
+            "label": "Sezioni delle impostazioni",
+            "general": "Generale",
+            "members": "Membri",
+            "ai": "IA"
+        },
         "switch": "Cambia organizzazione",
         "switch_or_create": "Cambia o crea organizzazione",
         "switch_desc": "Seleziona l'organizzazione in cui lavorare o creane una nuova.",
@@ -1272,7 +1605,6 @@
         "pending_count_one": "Sei stato invitato a un'organizzazione"
     },
     "organization_users": {
-        "title": "Membri dell'organizzazione",
         "subtitle": "Gestisci chi appartiene a {{organization}} e con quale ruolo",
         "user_count": "{{count}} membri",
         "user_count_one": "Un membro",
@@ -1312,5 +1644,423 @@
         "confirm_remove": "Sei sicuro di voler rimuovere {{name}} dall'organizzazione? Perderà l'accesso a tutti i progetti al suo interno.",
         "confirm_revoke_title": "Revoca invito",
         "confirm_revoke": "Sei sicuro di voler revocare l'invito per {{name}}?"
+    },
+    "oauth": {
+        "consent": {
+            "title": "Collega {{client}}",
+            "description": "Un assistente AI chiede di accedere a uno dei tuoi progetti.",
+            "redirectHost": "Dopo la tua scelta verrai reindirizzato a",
+            "warnings": {
+                "unverified": "Applicazione non verificata",
+                "localhost": "Applicazione locale",
+                "custom_scheme": "Schema di link personalizzato",
+                "redirect_host_mismatch": "Indirizzo di reindirizzamento diverso dall'editore"
+            },
+            "noProjects": "Non hai progetti disponibili da condividere.",
+            "allowChanges": "Consenti modifiche",
+            "allowChangesDescription": "Senza questa opzione l'assistente può solo leggere il progetto. Con questa opzione può anche modificarlo, fare deploy e creare nuovi progetti nelle organizzazioni dei progetti che condividi, se le amministri: i progetti che crea vengono condivisi con lui.",
+            "signedInAs": "Accesso effettuato come {{email}}",
+            "signOut": "Esci",
+            "approve": "Approva",
+            "deny": "Nega",
+            "approveFailed": "Non è stato possibile approvare la richiesta. Riprova.",
+            "denyFailed": "Non è stato possibile negare la richiesta. Riprova.",
+            "publishedBy": "Pubblicata da {{host}}",
+            "redirectHostMismatchDetail": "Questa applicazione è pubblicata da {{clientHost}} ma ti reindirizzerà a {{redirectHost}}. Approva solo se riconosci e ti fidi di entrambi.",
+            "selectProjects": "Scegli i progetti da condividere",
+            "searchProjects": "Cerca progetti",
+            "noResults": "Nessun progetto corrisponde alla ricerca",
+            "selectAll": "Seleziona tutti",
+            "selectAllIn": "Seleziona tutti i progetti di {{organization}}",
+            "viewerReadOnly_one": "{{count}} progetto selezionato resta in sola lettura a causa del tuo ruolo.",
+            "viewerReadOnly_other": "{{count}} progetti selezionati restano in sola lettura a causa del tuo ruolo."
+        },
+        "error": {
+            "title": "Connessione non riuscita",
+            "codes": {
+                "invalid_client": {
+                    "title": "Applicazione sconosciuta",
+                    "description": "L'applicazione che ha avviato la richiesta non è riconosciuta."
+                },
+                "invalid_redirect_uri": {
+                    "title": "Indirizzo di reindirizzamento non valido",
+                    "description": "L'applicazione ha chiesto di essere reindirizzata a un indirizzo non consentito."
+                },
+                "invalid_request": {
+                    "title": "Richiesta non valida",
+                    "description": "La richiesta non è valida, è scaduta o appartiene a un altro account. Riavvia la connessione dal tuo assistente."
+                },
+                "server_error": {
+                    "title": "Qualcosa è andato storto",
+                    "description": "Si è verificato un errore imprevisto. Riprova."
+                }
+            }
+        }
+    },
+    "mcpClients": {
+        "title": "Assistenti AI",
+        "description": "Gestisci gli assistenti AI collegati a questo progetto",
+        "disabled_title": "Gli assistenti AI non sono abilitati",
+        "disabled_description": "Il server MCP è disattivato in questa installazione. Contatta un amministratore per abilitarlo.",
+        "connect_title": "Collega un assistente AI",
+        "connect_description": "Aggiungi questo URL come server MCP remoto nel tuo assistente AI, poi accedi e approva l'accesso.",
+        "copy_url": "Copia l'URL del server MCP",
+        "no_clients": "Nessun assistente collegato",
+        "no_clients_desc": "Gli assistenti che approvi compariranno qui.",
+        "client": "Assistente",
+        "user": "Utente",
+        "access": "Accesso",
+        "access_read": "Sola lettura",
+        "access_write": "Lettura e scrittura",
+        "connected": "Collegato il",
+        "last_used": "Ultimo utilizzo",
+        "never": "Mai",
+        "revoke_aria": "Revoca l'accesso di {{name}}",
+        "revoke_title": "Revoca accesso",
+        "confirm_revoke": "Revocare l'accesso di \"{{name}}\"? Smetterà di funzionare immediatamente.",
+        "revoked": "Accesso revocato",
+        "connect_login_hint": "Claude.ai, ChatGPT e Gemini si collegano con il solo URL: ti chiederanno di accedere e approvare l'accesso.",
+        "apiKey": {
+            "title": "Alternativa: collegati con una API key",
+            "description": "Per i client che non supportano il login, autenticati con una API key del progetto.",
+            "createLink": "Crea una API key",
+            "roleNote": "Il ruolo della chiave decide se l'assistente è in sola lettura o può fare modifiche.",
+            "claudeCode": "Claude Code",
+            "geminiCli": "Gemini CLI (~/.gemini/settings.json)",
+            "cursor": "Cursor (mcp.json)",
+            "copySnippet": "Copia lo snippet"
+        },
+        "projects": "Progetti"
+    },
+    "assistant": {
+        "title": "Maestro",
+        "open": "Apri Maestro",
+        "close": "Chiudi Maestro",
+        "shortcut": "Maestro (⌘J / Ctrl+J)",
+        "new_conversation": "Nuova conversazione",
+        "history": {
+            "open": "Conversazioni recenti",
+            "title": "Conversazioni recenti",
+            "empty": "Non ci sono ancora conversazioni salvate su questo progetto.",
+            "error": "Impossibile caricare le conversazioni.",
+            "current": "Aperta ora",
+            "delete": "Elimina conversazione",
+            "delete_title": "Eliminare la conversazione?",
+            "delete_description": "\"{{title}}\" verrà eliminata e non potrai più riaprirla.",
+            "deleting": "Eliminazione…"
+        },
+        "placeholder": "Chiedi qualcosa sul progetto…",
+        "placeholder_awaiting_confirmation": "Conferma o annulla l'azione qui sopra per continuare…",
+        "send": "Invia",
+        "stop": "Interrompi",
+        "disclaimer": "Le risposte sono generate da un'intelligenza artificiale e possono contenere errori. Maestro può modificare il progetto: le azioni che eliminano o rimuovono qualcosa vengono eseguite solo dopo la tua conferma.",
+        "empty_title": "Come posso aiutarti?",
+        "empty_description": "Posso consultare e modificare microfrontend, build, deploy, ambienti e variabili di questo progetto e cercare nella documentazione.",
+        "thinking": "Sto pensando…",
+        "tool": {
+            "input": "Input",
+            "result": "Risultato",
+            "copy": "Copia",
+            "copied": "Copiato"
+        },
+        "tool_kind": {
+            "write": "Modifica",
+            "confirm": "Da confermare",
+            "destructive": "Distruttiva"
+        },
+        "tool_status": {
+            "running": "In esecuzione…",
+            "ok": "Completata",
+            "error": "Non riuscita",
+            "awaiting_confirmation": "In attesa della tua conferma",
+            "declined": "Annullata da te",
+            "interrupted": "Interrotta prima dell'esito"
+        },
+        "confirmation": {
+            "title": "Conferma questa azione",
+            "confirm": "Conferma",
+            "cancel": "Annulla",
+            "expires_at": "Puoi rispondere fino alle {{time}}.",
+            "status": {
+                "approved": "Confermata.",
+                "declined": "Annullata.",
+                "expired": "Questa conferma è scaduta o ha già ricevuto una risposta."
+            },
+            "raw_input": "Input inviato da Maestro",
+            "details": {
+                "project": "Progetto",
+                "organization": "Organizzazione",
+                "environment": "Ambiente",
+                "environments": "Ambienti",
+                "microfrontend": "Microfrontend",
+                "microfrontends": "Microfrontend",
+                "host": "Host",
+                "remote": "Remote",
+                "user": "Utente",
+                "deployment": "Deployment",
+                "api_key": "Chiave API",
+                "mcp_client": "Client MCP",
+                "storage": "Storage",
+                "code_repository": "Repository di codice",
+                "ai_change": "Modifica AI",
+                "prompt": "Richiesta",
+                "files": "File",
+                "changes": "Cosa cambia",
+                "served": "Cosa verrà servito",
+                "no_changes": "Uguale al deployment attivo",
+                "email": "Email",
+                "role": "Ruolo",
+                "name": "Nome",
+                "expiresAt": "Scadenza",
+                "enabled": "Attivo",
+                "userIds": "Id utenti",
+                "key": "Chiave",
+                "scope": "Ambito",
+                "excludePaths": "File esclusi",
+                "description": "Descrizione",
+                "jobId": "Job AI"
+            }
+        },
+        "errors": {
+            "generic": "Non sono riuscito a rispondere. Riprova tra poco.",
+            "rate_limited": "Troppe domande in poco tempo. Attendi un minuto e riprova.",
+            "disabled": "Maestro non è attivo in questo progetto: non ha IA disponibili.",
+            "refusal": "Non posso rispondere a questa richiesta.",
+            "incomplete": "La risposta è incompleta: prova a fare una domanda più specifica.",
+            "stopped": "Risposta interrotta.",
+            "confirmation_expired": "La conferma è scaduta o ha già ricevuto una risposta, quindi non è stato fatto nulla. Chiedi di nuovo se vuoi ancora procedere.",
+            "ai_model_not_available": "L'IA scelta non è più disponibile per il progetto: scegline un'altra e chiedi di nuovo."
+        },
+        "suggestions": {
+            "overview": "Riassumimi lo stato del progetto",
+            "canary": "Come funziona il rilascio canary?",
+            "storage": "Come collego un bucket S3?",
+            "builds": "Ci sono build fallite? Perché?",
+            "deployments": "Cosa è cambiato nell'ultimo deploy?",
+            "dependencies": "Ci sono conflitti tra le dipendenze condivise?",
+            "variables": "Mancano variabili in qualche ambiente?"
+        },
+        "actions": {
+            "explain_build": "Spiega l'errore",
+            "analyze_deployments": "Analizza l'ultimo deploy",
+            "explain_dependencies": "Analizza i conflitti",
+            "check_variables": "Controlla le variabili"
+        },
+        "questions": {
+            "explain_build": "Perché è fallita la build {{runId}} (ref {{ref}}) del microfrontend {{name}} (id {{microfrontendId}})? Leggi i log dei job falliti, spiegami la causa e proponi una correzione.",
+            "analyze_deployments": "Confronta l'ultimo deploy dell'ambiente {{environment}} (id {{environmentId}}) con quello precedente: quali versioni e variabili sono cambiate, e c'è qualcosa da controllare?",
+            "explain_dependencies": "Analizza le dipendenze condivise e i peer dependency non allineati tra i microfrontend: quali conflitti sono rischiosi e da quale conviene partire?",
+            "check_variables": "Confronta le variabili d'ambiente tra gli ambienti del progetto: ce ne sono definite in un ambiente e mancanti in un altro, in particolare in produzione?"
+        },
+        "usage": {
+            "input": "{{formatted}} token in ingresso",
+            "input_cached": "{{formatted}} token in ingresso ({{cached}} dalla cache)",
+            "output": "{{formatted}} in uscita",
+            "hint": "Token usati per questa risposta, sommando tutti i passaggi del modello. I token letti dalla cache costano molto meno."
+        },
+        "effort": {
+            "label": "Livello di ragionamento",
+            "hint": "Più ragionamento significa analisi più approfondite, risposte più lente e più token.",
+            "used": "Effort: {{level}}",
+            "levels": {
+                "low": "Basso",
+                "medium": "Medio",
+                "high": "Alto",
+                "xhigh": "Molto alto",
+                "max": "Massimo"
+            }
+        },
+        "reasoning": "Ragionamento",
+        "jobs": {
+            "tabs_label": "Conversazioni",
+            "project_tab": "Progetto",
+            "tab_label_one": "Job · {{count}} repo",
+            "tab_label_other": "Job · {{count}} repo",
+            "running": "(in corso)",
+            "close_tab": "Chiudi {{label}}",
+            "new_job": "Nuovo job AI",
+            "status": {
+                "PENDING": "In coda",
+                "RUNNING": "In corso",
+                "DONE": "Completato",
+                "FAILED": "Non riuscito"
+            },
+            "scope_global": "Tutti i microfrontend",
+            "repositories": "Repository",
+            "files_one": "{{count}} file modificato",
+            "files_other": "{{count}} file modificati",
+            "diff": "Diff",
+            "diff_label": "Apri il diff di {{name}}",
+            "failed_title": "Il job non è andato a buon fine",
+            "usage_latest": "Questo job",
+            "usage_total_one": "Intera conversazione ({{count}} job)",
+            "usage_total_other": "Intera conversazione ({{count}} job)",
+            "usage_job": "Costo",
+            "usage_hint": "Token usati dall'agente, sommando tutti i passaggi del modello. Un solo agente lavora su tutti i repository del job, quindi il costo è del job. I token letti dalla cache costano molto meno.",
+            "apply_all_one": "Applica la proposta",
+            "apply_all_other": "Applica tutto ({{count}})",
+            "apply_all_title": "Applicare tutte le proposte?",
+            "apply_all_description_one": "La proposta viene pubblicata direttamente sul branch di partenza del suo repository, con tutti i file proposti e senza revisione. La sua CI parte subito, con i segreti del repository: controlla prima il diff.",
+            "apply_all_description_other": "Ciascuna delle {{count}} proposte viene pubblicata direttamente sul branch di partenza del suo repository, con tutti i file proposti e senza revisione. La loro CI parte subito, con i segreti dei repository: controlla prima i diff.",
+            "apply_all_confirm": "Applica sui branch di partenza",
+            "apply_all_applying": "Applicazione in corso…",
+            "apply_all_success": "Proposte applicate sui branch di partenza",
+            "follow_up_placeholder": "Chiedi una modifica o fai una domanda all'agente…",
+            "follow_up_running": "Attendi che l'agente finisca per chiedere altro…",
+            "follow_up_failed": "Questo job non è andato a buon fine: avviane uno nuovo per riprovare.",
+            "follow_up_send": "Invia",
+            "toast_done": "{{label}}: il job è completato",
+            "toast_failed": "{{label}}: il job non è andato a buon fine",
+            "new": {
+                "title": "Nuovo job AI",
+                "description": "Un solo agente lavora insieme sui microfrontend scelti, così una modifica può attraversarli, per esempio un componente condiviso e i microfrontend che lo usano. Propone le modifiche da rivedere: non viene pubblicato nulla finché non le applichi.",
+                "all": "Tutti i microfrontend",
+                "all_hint": "Tutti i microfrontend con un repository collegato, al massimo {{max}}.",
+                "selection_hint": "{{selected}} selezionati, al massimo {{max}}.",
+                "selection_required": "Seleziona almeno un microfrontend",
+                "no_repositories": "Nessun microfrontend di questo progetto ha un repository di codice collegato.",
+                "prompt_label": "Cosa vuoi cambiare?",
+                "prompt_placeholder": "es. Rinomina l'API getUser dello shell e aggiorna i microfrontend che la chiamano",
+                "prompt_required": "Descrivi la modifica che vuoi",
+                "start": "Avvia job",
+                "repositories_label": "Microfrontend"
+            },
+            "errors": {
+                "load": "Impossibile caricare il job.",
+                "create": "Impossibile avviare il job.",
+                "follow_up": "Impossibile inviare la richiesta.",
+                "apply": "Impossibile applicare le proposte.",
+                "ASSISTANT_DISABLED": "La modifica con AI non è attiva in questo progetto: non ha IA disponibili.",
+                "AI_CHANGE_FORBIDDEN": "Non hai i permessi per modificare i microfrontend con AI.",
+                "AI_CHANGE_TOO_MANY": "Ci sono troppi job in corso in questo progetto: attendi che uno finisca.",
+                "AI_JOB_NOT_DONE": "Il job non è ancora finito.",
+                "AI_JOB_NO_REPOSITORIES": "Nessuno di questi microfrontend ha un repository di codice collegato.",
+                "AI_JOB_TOO_MANY_REPOSITORIES": "Un job può lavorare al massimo su 10 repository: seleziona i microfrontend da includere.",
+                "AI_JOB_FOLLOW_UP_RUNNING": "Un follow-up di questo job è ancora in corso: attendi che finisca.",
+                "AI_CHANGE_NOT_PROPOSED": "Queste proposte non sono più in attesa di approvazione.",
+                "plan": "L'AI non è riuscita a proporre i componenti.",
+                "AI_MODEL_NOT_AVAILABLE": "L'IA scelta non è più disponibile per il progetto: scegline un'altra.",
+                "AI_PROVIDER_ERROR": "Il provider IA ha risposto con un errore: riprova tra poco."
+            },
+            "apply_all_started": "Applicazione delle proposte sui branch di partenza in corso",
+            "apply_all_failed_one": "{{count}} proposta su {{total}} non è stata applicata: guarda l'errore sul suo repository",
+            "apply_all_failed_other": "{{count}} proposte su {{total}} non sono state applicate: guarda gli errori sui loro repository",
+            "follow_up_no_proposal": "Non ci sono proposte da rifinire: avvia un nuovo job per altre modifiche."
+        },
+        "page_title": "Agente AI"
+    },
+    "navigation": {
+        "design": "Design",
+        "top_menu": "Menu del progetto"
+    },
+    "ai_models": {
+        "title": "Intelligenze artificiali",
+        "subtitle": "Le IA che i progetti dell'organizzazione usano per l'assistente e per ogni funzione IA. Ogni progetto le può usare tutte, salvo restrizioni qui sotto.",
+        "add": "Aggiungi IA",
+        "edit": "Modifica {{name}}",
+        "delete": "Elimina {{name}}",
+        "empty": "L'organizzazione non ha ancora IA: chiedi a un owner o a un amministratore di aggiungerne una.",
+        "empty_admin": "L'organizzazione non ha ancora IA: aggiungine una per attivare l'assistente e le funzioni IA nei suoi progetti.",
+        "system_name": "IA di sistema",
+        "system_hint": "Configurata nell'ambiente dell'installazione: qui non si può modificare.",
+        "created": "IA aggiunta",
+        "updated": "IA aggiornata",
+        "deleted": "IA eliminata",
+        "confirm_delete_title": "Elimina IA",
+        "confirm_delete": "Eliminare {{name}}? Viene tolta anche da tutti i progetti che la usano: un progetto che resta senza IA ha le funzioni IA disattivate.",
+        "columns": {
+            "name": "Nome",
+            "provider": "Provider",
+            "model": "Modello"
+        },
+        "badges": {
+            "default": "Default",
+            "system": "Sistema"
+        },
+        "providers": {
+            "anthropic": "Claude (Anthropic)",
+            "azure-foundry": "Claude (Azure AI Foundry)",
+            "gemini": "Gemini (Google)",
+            "azure-openai": "GPT (Azure OpenAI)",
+            "aws-bedrock": "Claude (AWS Bedrock)"
+        },
+        "select": {
+            "label": "IA",
+            "hint": "L'IA a cui va la richiesta."
+        },
+        "form": {
+            "add_title": "Aggiungi IA",
+            "edit_title": "Modifica IA",
+            "description": "Le credenziali sono salvate cifrate e non vengono più mostrate: lascia un valore nascosto così com'è per mantenerlo.",
+            "name": "Nome",
+            "name_placeholder": "es. Claude per i team",
+            "provider": "Provider",
+            "model": "Modello",
+            "deployment": "Deployment",
+            "model_default_hint": "Lascia vuoto per usare {{model}}.",
+            "reasoning": "Modello di ragionamento",
+            "reasoning_hint": "Attivo quando il deployment è un modello di ragionamento (es. serie o, GPT-5): accetta allora un livello di ragionamento.",
+            "max_effort": "Ragionamento massimo",
+            "max_effort_hint": "Il livello di ragionamento più alto che gli utenti possono scegliere con questa IA.",
+            "max_effort_none": "Nessun limite",
+            "default": "IA di default",
+            "default_hint": "Preselezionata in ogni progetto che la può usare. Una sola IA dell'organizzazione è quella di default.",
+            "fields": {
+                "apiKey": "API key",
+                "resource": "Risorsa",
+                "endpoint": "Endpoint",
+                "region": "Regione",
+                "accessKeyId": "Access key ID",
+                "secretAccessKey": "Secret access key"
+            },
+            "placeholders": {
+                "apiKey": "L'API key del provider",
+                "resource": "es. my-foundry-resource",
+                "endpoint": "es. https://my-resource.openai.azure.com",
+                "region": "es. eu-west-1",
+                "accessKeyId": "es. AKIA...",
+                "secretAccessKey": "Il segreto della access key",
+                "deployment": "es. gpt-5",
+                "model_gemini": "es. gemini-2.5-pro",
+                "model_aws-bedrock": "Id del modello o inference profile, es. eu.anthropic.claude-opus-...",
+                "model_anthropic": "claude-opus-5-5",
+                "model_azure-foundry": "claude-opus-5-5"
+            },
+            "secret_retype_hint": "L'IA ora punta altrove: inserisci di nuovo questa chiave, quella salvata vale solo per il provider, la risorsa, l'endpoint e l'access key con cui è stata salvata."
+        },
+        "access": {
+            "title": "Accesso dei progetti",
+            "subtitle": "Quali IA può usare ogni progetto. Di default un progetto le usa tutte, comprese quelle aggiunte in seguito.",
+            "project": "Progetto",
+            "models": "IA",
+            "all_default": "Tutte (default)",
+            "disabled": "IA disattivata",
+            "edit": "Modifica le IA di {{project}}",
+            "no_projects": "L'organizzazione non ha ancora progetti.",
+            "dialog_title": "IA di {{project}}",
+            "dialog_description": "Scegli le IA che il progetto può usare per l'assistente e le funzioni IA.",
+            "mode_label": "Accesso",
+            "all": "Tutte le IA dell'organizzazione (default)",
+            "all_hint": "Comprese quelle aggiunte in seguito.",
+            "selected": "Solo le IA selezionate",
+            "selected_hint": "Un'IA aggiunta in seguito non è inclusa.",
+            "models_label": "IA che il progetto può usare",
+            "none_warning": "Nessuna IA selezionata: l'assistente e le funzioni IA sono disattivati in questo progetto.",
+            "saved": "IA di {{project}} aggiornate"
+        },
+        "errors": {
+            "load": "Impossibile caricare le IA dell'organizzazione.",
+            "load_access": "Impossibile caricare le IA dei progetti.",
+            "name_taken": "Un'altra IA dell'organizzazione ha già questo nome.",
+            "invalid": "Mancano alcune impostazioni obbligatorie per il provider dell'IA.",
+            "not_available": "Questa IA non è più disponibile per il progetto: scegline un'altra.",
+            "system_readonly": "L'IA di sistema viene dalla configurazione dell'installazione e qui non si può modificare.",
+            "secret_required": "Inserisci di nuovo {{field}}: quella salvata resta valida solo finché provider, risorsa, endpoint e access key non cambiano.",
+            "endpoint_invalid": "L'endpoint non è valido: deve essere un endpoint Azure HTTPS, come https://my-resource.openai.azure.com/.",
+            "region_invalid": "La regione non è valida: usa il nome di una regione AWS, come eu-west-1.",
+            "resource_invalid": "La risorsa non è valida: usa il nome della risorsa Azure AI Foundry, come my-foundry, non un URL.",
+            "missing_fields": "Mancano alcune impostazioni obbligatorie: {{fields}}.",
+            "default_conflict": "Un'altra IA è appena stata impostata come default: ricarica la pagina e riprova."
+        }
     }
 }

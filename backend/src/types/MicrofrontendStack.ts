@@ -18,7 +18,20 @@ export enum MicrofrontendCompiler {
      * Not a bundler: web component microfrontends are plain scripts registering a custom element,
      * so they are integrated at runtime by the host instead of through module federation.
      */
-    WEBCOMPONENT = "WEBCOMPONENT"
+    WEBCOMPONENT = "WEBCOMPONENT",
+    /**
+     * Not a bundler either, an integration model: a single-spa root config registers applications
+     * that are native ES modules exporting lifecycles, imports them at runtime from `remoteUrl()`
+     * and shares React through an import map. The templates build with Vite, but no module
+     * federation is involved.
+     */
+    SINGLE_SPA = "SINGLE_SPA",
+    /**
+     * An integration model too: a micro-lc shell mounts parcels, UMD scripts exporting lifecycles,
+     * from a configuration built at runtime with `remoteUrl()`, and shares React through
+     * `window.React`, `window.ReactDOM` and `window.ReactJSXRuntime`. Built with Vite, never federated.
+     */
+    MICRO_LC = "MICRO_LC"
 }
 
 export enum MicrofrontendStackSource {
@@ -43,12 +56,14 @@ const FRAMEWORK_BY_NAME: Record<string, MicrofrontendFramework> = {
     angular: MicrofrontendFramework.ANGULAR
 }
 
+/** Keyed by the normalised spelling: lowercase, without dashes, underscores or spaces */
 const COMPILER_BY_NAME: Record<string, MicrofrontendCompiler> = {
     vite: MicrofrontendCompiler.VITE,
     webpack: MicrofrontendCompiler.WEBPACK,
     webcomponent: MicrofrontendCompiler.WEBCOMPONENT,
     webcomponents: MicrofrontendCompiler.WEBCOMPONENT,
-    "web-component": MicrofrontendCompiler.WEBCOMPONENT
+    singlespa: MicrofrontendCompiler.SINGLE_SPA,
+    microlc: MicrofrontendCompiler.MICRO_LC
 }
 
 /**
@@ -58,7 +73,19 @@ const COMPILER_BY_NAME: Record<string, MicrofrontendCompiler> = {
  */
 export const parseFramework = (value?: string): MicrofrontendFramework | undefined => (value ? FRAMEWORK_BY_NAME[value.trim().toLowerCase()] : undefined)
 
-export const parseCompiler = (value?: string): MicrofrontendCompiler | undefined => (value ? COMPILER_BY_NAME[value.trim().toLowerCase()] : undefined)
+const compilerKey = (value: string): string =>
+    value
+        .trim()
+        .toLowerCase()
+        .replace(/[-_\s]/g, "")
 
-/** Module federation only applies to real bundlers: web components are wired up at runtime. */
+export const parseCompiler = (value?: string): MicrofrontendCompiler | undefined => (value ? COMPILER_BY_NAME[compilerKey(value)] : undefined)
+
+/** Module federation only applies to real bundlers: web components, single-spa and micro-lc are wired up at runtime. */
 export const supportsModuleFederation = (compiler?: MicrofrontendCompiler): boolean => compiler === MicrofrontendCompiler.VITE || compiler === MicrofrontendCompiler.WEBPACK
+
+/**
+ * Integration models whose host is wired up by a file the console generates (the single-spa
+ * applications, the micro-lc configuration) rather than by a bundler config.
+ */
+export const isIntegrationModel = (compiler?: MicrofrontendCompiler): boolean => compiler === MicrofrontendCompiler.SINGLE_SPA || compiler === MicrofrontendCompiler.MICRO_LC

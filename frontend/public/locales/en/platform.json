@@ -43,7 +43,7 @@
             "federation_tab": "Module Federation",
             "runtime_integration_description": "Web component microfrontends are plain scripts that register a custom element, so there is no module federation config to write: the host asks the SDK for the resolved url and mounts the element. See MicrofrontendLoader in the web component templates.",
             "integrate_dialog_title": "Wire up module federation",
-            "integrate_dialog_description": "For each microfrontend that consumes others, we write the bundler config declaring its remotes and add the packages that config needs. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
+            "integrate_dialog_description": "For each microfrontend that consumes others, we write the bundler config declaring its remotes (for a single-spa root config, the src/applications.ts registering them; for a micro-lc shell, the src/microlc-config.ts mounting them) and add the packages that config needs. Review what changes, then pick what to commit: the write lands on the default branch of each repository.",
             "integrate_confirm": "Commit to the selected repositories",
             "integrate_nothing_to_do": "Nothing to integrate: every repository is already wired up, or none of your microfrontends consumes another one yet.",
             "integrate_success": "Module federation wired up in {{count}} repositories",
@@ -114,12 +114,15 @@
         "recover_password": "Recover Password",
         "recover_password_description": "Enter your email to recover your password",
         "recover_password_success": "If an account exists with this email, you will receive a password reset link",
+        "recover_password_email_not_configured": "This installation has no email server configured: resetting the password is not available. Contact an administrator.",
+        "recover_password_error": "The password reset link could not be sent. Please try again.",
         "recover_password_button": "Recover Password",
         "no_account": "Don't have an account?",
         "already_have_account": "Already have an account?",
         "create_account": "Create Account",
         "or_continue_with": "Or continue with",
-        "recover": "Recover it"
+        "recover": "Recover it",
+        "microsoft_login_failed": "Microsoft sign-in failed. Please try again."
     },
     "project": {
         "name": "Name",
@@ -180,15 +183,25 @@
     "settings": {
         "title": "Settings",
         "subtitle": "Manage your project",
+        "tabs": {
+            "label": "Settings sections",
+            "general": "General",
+            "ai": "AI context",
+            "delivery": "Delivery"
+        },
+        "howItWorks": "How it works",
         "account": "Account",
         "stats": {
-            "title": "Configuration",
+            "accessTitle": "People and access",
+            "resourcesTitle": "Project resources",
             "viewAll": "View All",
             "teamMembers": "Team Members",
             "environments": "Environments",
             "apiKeys": "API Keys",
             "storages": "Storages",
-            "codeRepositories": "Code Repositories"
+            "codeRepositories": "Code Repositories",
+            "mcpClients": "AI assistants",
+            "manage": "Manage"
         },
         "projectInfo": {
             "title": "Project Information",
@@ -199,6 +212,39 @@
             "slug": "Slug",
             "id": "ID",
             "slugHint": "The slug and the ID cannot be changed: the slug is part of the path where already uploaded bundles are stored."
+        },
+        "projectContext": {
+            "title": "Project AI context",
+            "subtitle": "Notes for AI agents (MCP clients and the console assistant) that apply to the whole project: domain, conventions, rules shared by the microfrontends.",
+            "label": "Context",
+            "placeholder": "## Domain\nCustomer portal for ...\n\n## Conventions\n- Strict TypeScript\n- ...",
+            "hint": "Markdown is supported. Agents read it with the context_get tool, together with the context of each microfrontend.",
+            "tooLong": "The context can be at most {{max}} characters long"
+        },
+        "pipelines": {
+            "title": "Pipeline templates",
+            "subtitle": "The pipeline a new microfrontend gets when its repository is created. By default it comes from the official mfe-orchestrator/template-pipelines repository.",
+            "details": "Point the project at a repository of yours with the same layout to use your own pipelines instead. Repositories already created are left as they are.",
+            "enabled": "Use the pipeline templates of a repository of the project",
+            "repository": "Pipeline templates repository",
+            "connection": "Connection",
+            "connectionPlaceholder": "Pick a connection",
+            "repositoryLabel": "Repository",
+            "repositoryPlaceholder": "Pick a repository",
+            "noConnections": "The project has no code repository connection yet: add one in Code Repositories.",
+            "ref": "Branch or tag",
+            "refPlaceholder": "main",
+            "refHint": "Left empty, the default branch of the repository.",
+            "refInvalid": "Not a branch or tag name: letters, digits, dots, dashes, underscores and slashes, without \"..\", a leading dash, a trailing slash or a trailing .lock.",
+            "layout": "Layout: <type>/<compiler>/<provider>/, where provider is github, gitlab or azure_dev_ops, e.g. remote/vite/github/workflows/release.yml. A folder <type>/<compiler>/<templateSlug>/<provider>/ wins for that template only. On GitHub the folder becomes .github/ and replaces the workflows of the template; on GitLab and Azure DevOps .gitlab-ci.yml and azure-pipelines.yml replace the ones at the root. A template the repository has no folder for keeps the pipeline it ships with: the official templates are not used as a fallback.",
+            "placeholders": "Replaced when the repository is created: %microfrontendSlug% with the slug, %domain% with the URL of this console.",
+            "saved": "Pipeline templates saved",
+            "errors": {
+                "owner_required": "Only an owner of the project can change where its pipeline templates come from",
+                "repository_required": "Pick the connection and the repository of the pipeline templates",
+                "repository_invalid": "The connection cannot reach this repository, or is not one of this project: pick another one",
+                "ref_invalid": "The branch or tag is not a valid name"
+            }
         },
         "dangerZone": {
             "title": "Danger Zone",
@@ -221,7 +267,9 @@
         "notifications": {
             "projectDeleted": "Project deleted",
             "projectUpdated": "Project updated",
-            "projectUpdateFailed": "Failed to update project"
+            "projectUpdateFailed": "Failed to update project",
+            "contextUpdated": "Project context updated",
+            "contextUpdateFailed": "Could not update the project context"
         }
     },
     "theme": {
@@ -334,6 +382,7 @@
         "environment_select": "Environment",
         "select_environment": "Select an environment",
         "deploy_button": "Deploy",
+        "deploying": "Deploying…",
         "active_deployments": "Active deployment",
         "history": "History",
         "microfrontends_title": "Microfrontends",
@@ -347,7 +396,8 @@
         },
         "actions": {
             "view_canary_users": "View canary users",
-            "redeploy": "Redeploy"
+            "redeploy": "Redeploy",
+            "redeploying": "Redeploying…"
         },
         "canary_users": {
             "title": "Canary Users",
@@ -383,7 +433,7 @@
     },
     "builds": {
         "title": "Builds",
-        "subtitle": "Build status of your microfrontends and the version each environment serves",
+        "subtitle": "Build status of your microfrontends, with a link to each run on its CI platform, and the version each environment serves",
         "refresh": "Refresh",
         "live": {
             "connected": "Live updates on",
@@ -395,7 +445,7 @@
             "description": "Create a microfrontend to see its build status here."
         },
         "table": {
-            "microfrontend": "Microfrontend",
+            "name": "Name",
             "last_build": "Last build",
             "build_ref": "Tag / branch",
             "last_built_version": "Last built version",
@@ -403,6 +453,7 @@
             "no_runs": "No builds",
             "triggered_by": "started by {{user}}",
             "open_run": "Open on provider",
+            "open_run_on": "Open on {{provider}}",
             "repository": "Repository: {{name}}",
             "selected_version": "selected version: {{version}}",
             "expand_history": "Show build history for {{name}}",
@@ -465,7 +516,14 @@
         "resend_invite": "Resend",
         "revoke_invite": "Revoke invitation",
         "confirm_revoke_title": "Revoke invitation",
-        "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?"
+        "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?",
+        "edit_access": {
+            "action": "Edit access",
+            "title": "Edit access",
+            "description": "Change the role and the access of {{name}}.",
+            "success": "Access updated",
+            "last_owner": "The project needs at least one admin: promote another member first."
+        }
     },
     "project_invitation": {
         "title": "Project invitation",
@@ -484,6 +542,43 @@
         "go_to_login": "Go to login"
     },
     "microfrontend": {
+        "kind": {
+            "label": "Kind",
+            "microfrontend": "Microfrontend",
+            "microfrontend_description": "Served by MFE Orchestrator",
+            "frontend": "Frontend",
+            "frontend_description": "Served by its Docker container",
+            "badge_microfrontend": "Microfrontend",
+            "badge_frontend": "Docker",
+            "no_parents_hint": "A frontend served by Docker cannot have parents",
+            "version_from_pipeline": "Set by the pipeline each time it registers an image version: it cannot be changed here.",
+            "template_pipeline_hint": "The pipeline of this template uploads a bundle to MFE Orchestrator, which a frontend served by its Docker container does not accept. Change it to build the Docker image and register its version.",
+            "image_repository": "Image repository",
+            "image_repository_hint": "Optional. Where the pipeline pushes the Docker image, e.g. ghcr.io/acme/shell",
+            "versions": {
+                "title": "Versions",
+                "description": "The images the pipeline published on each tag",
+                "version": "Version",
+                "image": "Image",
+                "digest": "Digest",
+                "commit": "Commit",
+                "date": "Date",
+                "copy_image": "Copy the image reference",
+                "copied": "Image reference copied",
+                "copy_failed": "Could not copy to clipboard",
+                "empty": "No version published yet. Create a version to start the pipeline."
+            }
+        },
+        "errors": {
+            "frontend_cannot_have_parents": "A frontend served by its Docker container cannot have parents",
+            "frontend_upload_not_allowed": "A frontend served by its Docker container takes no bundle upload: its pipeline registers the image of each version",
+            "version_registration_not_allowed": "Only a frontend served by its Docker container registers image versions: a microfrontend uploads its bundle"
+        },
+        "validation": {
+            "version_required": "The version is required",
+            "host_url_required": "The URL is required for custom hosting",
+            "canary_percentage": "The canary percentage must be between 1 and 100 when the canary is enabled"
+        },
         "host": "Host",
         "hostTypes": {
             "customUrl": "Custom URL",
@@ -504,7 +599,6 @@
             "clearSearch": "Clear search",
             "noResultsTitle": "No results",
             "noResultsDescription": "No microfrontend matches “{{searchTerm}}”. Try a different search term.",
-            "resetFilters": "Clear search",
             "totalCount_one": "{{count}} microfrontend",
             "totalCount_other": "{{count}} microfrontends",
             "filteredCount_one": "{{count}} of {{total}} microfrontends",
@@ -550,7 +644,9 @@
             "storage": "Storage",
             "version": "Version {{version}}",
             "users": "{{count}} user{{count, plural, =1 {} other {s}}}",
-            "build": "Build"
+            "build": "Build",
+            "workingAgents_one": "One agent at work",
+            "workingAgents_other": "{{count}} agents at work"
         },
         "no_microfrontends_found": "No Microfrontends Found",
         "no_microfrontends_found_description": "No microfrontends have been registered yet. Once they're added, they'll appear here. You can create a new one to get started.",
@@ -608,7 +704,8 @@
             "general": "General",
             "hosting": "Hosting",
             "repository": "Repository",
-            "danger_zone": "Danger Zone"
+            "danger_zone": "Danger Zone",
+            "context": "AI context"
         },
         "canary_release": "Canary Release",
         "canary_settings": "Canary Settings",
@@ -678,7 +775,199 @@
         },
         "ofUsers": "of users",
         "canary_enrolled_users": "Enrolled users",
-        "canary_none": "No canary"
+        "canary_none": "No canary",
+        "context": {
+            "title": "Microfrontend AI context",
+            "subtitle": "Notes for AI agents about this microfrontend; what applies to all of them belongs in the project context, in Settings.",
+            "label": "Context",
+            "placeholder": "## Responsibility\nHandles ...\n\n## Notes\n- ...",
+            "hint": "Markdown is supported, at most 20,000 characters."
+        },
+        "aiChange": {
+            "title": "Edit with AI",
+            "description": "Describe the change you want. The agent reads the repository together with the AI context of the project and of this microfrontend, then proposes the edits. Nothing is pushed until you approve: on approval the changes are committed on a new branch and a pull request is opened.",
+            "prompt_label": "What should change?",
+            "prompt_placeholder": "e.g. Add a 404 page with a link back to the home page",
+            "prompt_required": "Describe the change you want",
+            "prompt_counter": "{{count}} / {{max}}",
+            "base_branch_placeholder": "Leave empty to use the repository's default branch",
+            "base_branch_of": "Branch {{name}} starts from",
+            "base_branch_default": "{{branch}} (default)",
+            "base_branch_all": "Branch every repository starts from",
+            "base_branch_mixed": "Different per repository",
+            "base_branch_each_default": "Each repository's default branch",
+            "base_branch_everywhere": "{{branch}} on every repository",
+            "base_branch_hint": "The agent starts from these branches and pushes its proposal on a new feature branch of each repository: the starting branch is not touched until you apply.",
+            "starts_from": "from",
+            "repositories_title_one": "Repository",
+            "repositories_title_other": "Repositories ({{count}})",
+            "generate": "Generate proposal",
+            "status": {
+                "PENDING": "Queued",
+                "RUNNING": "Working",
+                "PROPOSED": "Proposal ready",
+                "APPLYING": "Applying",
+                "APPLIED": "Applied",
+                "DISCARDED": "Discarded",
+                "FAILED": "Failed"
+            },
+            "status_description": {
+                "PENDING": "The request is queued and will start shortly.",
+                "RUNNING": "The agent is working on the repository.",
+                "APPLYING": "Pushing the changes onto the base branch."
+            },
+            "events": {
+                "queued": "Request queued",
+                "waiting-for-repository": "Waiting for the repository to be free",
+                "rate-limited": "The model hit its rate limit: retrying shortly",
+                "preparing": "Preparing the repository",
+                "working": "The agent is working",
+                "proposed": "Proposal ready",
+                "no-changes": "The agent finished without changing any file",
+                "applied": "Changes applied",
+                "superseded": "Replaced by a newer proposal",
+                "applying-previous": "Starting from the previous proposal",
+                "applying": "Applying the changes",
+                "apply-failed": "The changes could not be applied",
+                "pushing": "Pushing the proposal on its branch"
+            },
+            "progress_log": "Agent progress",
+            "progress_empty": "No activity yet.",
+            "show_progress_log": "Show the agent's progress log",
+            "show_prompt": "Show the full request",
+            "request_meta": "{{date}} · base branch {{branch}}",
+            "summary": "Summary",
+            "proposal_warning": "Check this proposal before applying it",
+            "failed_title": "The request failed",
+            "try_again": "Try again",
+            "applied_title": "Changes applied",
+            "open_pull_request": "Open a pull request",
+            "pull_request": "Pull request",
+            "opens_new_tab": "(opens in a new tab)",
+            "pull_request_error_title": "The pull request could not be opened",
+            "discarded_description": "This proposal was discarded: nothing was pushed.",
+            "no_changes_title": "Nothing to change",
+            "no_changes_description": "The agent did not change any file.",
+            "files_title": "Proposed changes",
+            "files_count_one": "{{count}} file",
+            "files_count_other": "{{count}} files",
+            "action": {
+                "create": "New",
+                "update": "Modified",
+                "delete": "Deleted"
+            },
+            "show_diff": "Show the changes to {{path}}",
+            "hide_diff": "Hide the changes to {{path}}",
+            "apply": "Apply to {{branch}}",
+            "discard": "Discard",
+            "applied_success": "Changes applied to {{branch}}",
+            "discarded_success": "Proposal discarded",
+            "usage_label": "Tokens used",
+            "usage_hint": "Tokens used by the agent so far, every model step summed. Tokens read from the cache cost far less.",
+            "usage_shared_one": "The cost of the whole job, shared among its {{count}} repository",
+            "usage_shared_other": "The cost of the whole job, shared among its {{count}} repositories",
+            "job_badge_one": "Job · {{count}} repo",
+            "job_badge_other": "Job · {{count}} repos",
+            "open_request": "Open the request: {{prompt}}",
+            "diff": {
+                "caption": "Changes to {{path}}",
+                "old_line_number": "Original line",
+                "new_line_number": "New line",
+                "content": "Content",
+                "added_line": "Added",
+                "removed_line": "Removed",
+                "unchanged_line": "Unchanged",
+                "hidden_lines_one": "{{count}} unchanged line hidden",
+                "hidden_lines_other": "{{count}} unchanged lines hidden",
+                "too_big": "This file is too big to show the changes.",
+                "no_differences": "No differences in the content."
+            },
+            "errors": {
+                "generic": "Something went wrong.",
+                "create": "Could not start the request.",
+                "apply": "Could not apply the changes.",
+                "load": "Could not load the request.",
+                "history": "Could not load the previous requests.",
+                "ASSISTANT_DISABLED": "AI editing is not enabled in this project: it has no AI available.",
+                "AI_CHANGE_FORBIDDEN": "You do not have permission to edit this microfrontend with AI.",
+                "WORKSPACE_NO_REPOSITORY": "This microfrontend has no linked code repository.",
+                "AI_CHANGE_CONFLICT": "These files changed on the base branch after the proposal: {{files}}. Ask for the change again.",
+                "AI_CHANGE_NOT_PROPOSED": "This request is no longer waiting for approval.",
+                "pull_request": "Could not open the pull request.",
+                "AI_CHANGE_PUSH_REFUSED": "{{branch}} refused the push: if the branch is protected, open a pull request instead.",
+                "AI_MODEL_NOT_AVAILABLE": "The AI you picked is no longer available to the project: pick another one."
+            },
+            "new_change": "New change",
+            "queue_label": "AI change requests",
+            "groups": {
+                "review": "Awaiting approval",
+                "active": "In progress",
+                "discarded": "Discarded",
+                "applied": "Applied",
+                "failed": "Failed"
+            },
+            "group_empty": {
+                "review": "No proposals awaiting approval.",
+                "active": "No agent at work.",
+                "discarded": "No discarded proposals.",
+                "applied": "No applied requests yet.",
+                "failed": "No failed requests."
+            },
+            "composer_title": "What do you want to change in {{name}}?",
+            "composer_shortcut": "⌘/Ctrl + Enter to generate the proposal",
+            "conversation_label": "Conversation with the agent",
+            "turns_count_one": "{{count}} message",
+            "turns_count_other": "{{count}} messages",
+            "superseded": "Refined by the next message: its changes are part of the newer proposal.",
+            "follow_up_label": "Write to the agent: ask for a change or a question about the proposal",
+            "follow_up_placeholder": "Ask the agent for a change, or ask it a question… (Enter to send, Shift+Enter for a new line)",
+            "follow_up_running": "Wait for the agent to finish to ask for more…",
+            "follow_up_failed": "The request failed: try again, or start a new change.",
+            "follow_up_closed": "This conversation is closed: start a new change to go on.",
+            "follow_up_send": "Send",
+            "usage_conversation_one": "Tokens used by the conversation ({{count}} message)",
+            "usage_conversation_other": "Tokens used by the conversation ({{count}} messages)",
+            "apply_description": "All the proposed files go together: they depend on each other, so none can be left out. Apply pushes them straight onto {{branch}}, with no review, and its CI starts right away: review the diff first, or open a pull request to have it reviewed in the repository.",
+            "applied_onto": "Pushed onto",
+            "pushed_on": "Pushed on the branch",
+            "push_error_title": "The proposal could not be pushed on its branch: applying it or opening its pull request tries again",
+            "view_pull_request": "View the pull request",
+            "pull_request_opened": "Pull request opened"
+        },
+        "workspace": {
+            "back": "All microfrontends",
+            "nav_label": "Microfrontend sections",
+            "nav_ai": "Edit with AI",
+            "nav_settings": "Details & settings",
+            "version": "v{{version}}"
+        },
+        "rename_repository": {
+            "action": "Rename repository",
+            "title": "Rename repository",
+            "name_label": "New repository name",
+            "name_placeholder": "Enter the new repository name",
+            "new_url": "new url",
+            "warning_remote": "Local clones must update their remote URL:",
+            "warning_redirect": "GitHub and GitLab redirect the old URL to the new one, Azure DevOps does not: there the old URL stops working.",
+            "confirm": "Rename",
+            "renaming": "Renaming...",
+            "success": "Repository renamed to {{name}}",
+            "validation": {
+                "required": "The repository name is required",
+                "invalid": "Use letters, numbers, dots, hyphens or underscores (max 100 characters), starting with a letter or number and not ending with a dot",
+                "git_suffix": "The name cannot end with .git or .atom",
+                "unchanged": "Enter a name different from the current one"
+            },
+            "errors": {
+                "invalid_name": "The repository name is not valid",
+                "name_taken": "A repository with this name already exists",
+                "not_linked": "This microfrontend has no linked repository",
+                "rename_failed": "The provider refused the rename: {{reason}}",
+                "generic": "Could not rename the repository",
+                "link_inconsistent": "The saved repository link does not match the repository shown: select the repository again and save"
+            },
+            "save_first": "Save the changes before renaming the repository"
+        }
     },
     "environmentVariables": {
         "title": "Environment Variables",
@@ -836,7 +1125,18 @@
         "securityNotice": "Security Notice:",
         "securityNoticeDescription": "All credentials are stored securely. They are only used to access your storage resources and are never shared with third parties.",
         "path": "Path",
-        "serviceAccountJsonKey": "Service Account JSON Key"
+        "serviceAccountJsonKey": "Service Account JSON Key",
+        "errors": {
+            "write_forbidden": "A read-only member cannot add, edit, test or delete storages.",
+            "secret_required": "Type the credential again: the stored one is only valid for the provider and the account it was saved with."
+        },
+        "connectionTestSuccess": "A probe file was uploaded and read back: microfrontend hosting can use this storage."
+    },
+    "connectionTest": {
+        "test": "Test connection",
+        "testing": "Testing…",
+        "success": "Connection succeeded",
+        "failure": "Connection failed"
     },
     "codeRepositories": {
         "title": "Code Repositories",
@@ -930,7 +1230,8 @@
             "name": "Name",
             "namePlaceholder": "Enter connection name",
             "error": {
-                "failedToAdd": "Failed to add Azure DevOps repository"
+                "failedToAdd": "Failed to add Azure DevOps repository",
+                "variableGroupsScope": "The token reaches the projects but not their variable groups: create a PAT with the Variable Groups (Read, create, & manage) scope"
             }
         },
         "gitlab": {
@@ -1038,6 +1339,8 @@
     "market": {
         "title": "Templates library",
         "description": "Choose from our collection of microfrontend templates",
+        "templateRepository": "Template: {{name}}",
+        "templateRepositoryTitle": "Open the repository of the template {{name}}",
         "noTemplates": {
             "title": "No templates available",
             "description": "There are no microfrontend templates in the market yet."
@@ -1139,6 +1442,29 @@
             "start_deploying": "Start deploying your microfrontends",
             "go_to_dashboard": "Go to dashboard",
             "add_microfrontend": "Add microfrontend"
+        },
+        "ai_draft": {
+            "title": "Describe the project and let the assistant draft it",
+            "description": "Describe what you want to build in your own words: the assistant proposes a name, a description and the environments. You review everything before confirming each step.",
+            "placeholder": "E.g. A customer portal made of three React microfrontends, with development, staging and production environments, bundles on AWS S3 and code on GitHub.",
+            "submit": "Generate a proposal",
+            "loading": "Preparing the proposal…",
+            "error": "I could not generate a proposal. You can fill in the fields by hand.",
+            "applied_title": "Proposal applied",
+            "applied_environments": "Environments proposed for the next step: {{environments}}.",
+            "suggested_storage": "Suggested storage: {{storage}}.",
+            "suggested_repository": "Suggested repository: {{repository}}.",
+            "storage": {
+                "AWS_S3": "AWS S3",
+                "GOOGLE_CLOUD_STORAGE": "Google Cloud Storage",
+                "AZURE_BLOB_STORAGE": "Azure Blob Storage"
+            },
+            "repository": {
+                "GITHUB": "GitHub",
+                "GITLAB": "GitLab",
+                "AZURE_DEV_OPS": "Azure DevOps"
+            },
+            "provider_error": "The AI provider answered with an error: try again shortly, or fill in the fields by hand."
         }
     },
     "dependencies": {
@@ -1215,6 +1541,13 @@
         "created": "Organization created",
         "menu_title": "Organization",
         "settings": "Organization settings",
+        "settings_subtitle": "Details, members and AI of {{organization}}",
+        "tabs": {
+            "label": "Settings sections",
+            "general": "General",
+            "members": "Members",
+            "ai": "AI"
+        },
         "switch": "Switch organization",
         "switch_or_create": "Switch or create organization",
         "switch_desc": "Select the organization to work in or create a new one.",
@@ -1253,7 +1586,6 @@
         "pending_count_one": "You've been invited to an organization"
     },
     "organization_users": {
-        "title": "Organization members",
         "subtitle": "Manage who belongs to {{organization}} and with which role",
         "user_count": "{{count}} members",
         "user_count_one": "One member",
@@ -1293,5 +1625,423 @@
         "confirm_remove": "Are you sure you want to remove {{name}} from the organization? They will lose access to every project in it.",
         "confirm_revoke_title": "Revoke invitation",
         "confirm_revoke": "Are you sure you want to revoke the invitation for {{name}}?"
+    },
+    "oauth": {
+        "consent": {
+            "title": "Connect {{client}}",
+            "description": "An AI assistant is asking to access one of your projects.",
+            "redirectHost": "After you decide, you will be sent to",
+            "warnings": {
+                "unverified": "Unverified application",
+                "localhost": "Local application",
+                "custom_scheme": "Custom link scheme",
+                "redirect_host_mismatch": "Redirect address differs from publisher"
+            },
+            "noProjects": "You have no project available to share.",
+            "allowChanges": "Allow changes",
+            "allowChangesDescription": "Without this, the assistant can only read the project. With it, it can also change it, deploy, and create new projects in the organizations of the projects you share, if you administer them: the projects it creates are shared with it.",
+            "signedInAs": "Signed in as {{email}}",
+            "signOut": "Sign out",
+            "approve": "Approve",
+            "deny": "Deny",
+            "approveFailed": "The request could not be approved. Please try again.",
+            "denyFailed": "The request could not be denied. Please try again.",
+            "publishedBy": "Published by {{host}}",
+            "redirectHostMismatchDetail": "This application was published by {{clientHost}} but will send you to {{redirectHost}}. Approve only if you recognize and trust both.",
+            "selectProjects": "Choose the projects to share",
+            "searchProjects": "Search projects",
+            "noResults": "No projects match your search",
+            "selectAll": "Select all",
+            "selectAllIn": "Select all projects in {{organization}}",
+            "viewerReadOnly_one": "{{count}} selected project stays read-only because of your role there.",
+            "viewerReadOnly_other": "{{count}} selected projects stay read-only because of your role there."
+        },
+        "error": {
+            "title": "Connection failed",
+            "codes": {
+                "invalid_client": {
+                    "title": "Unknown application",
+                    "description": "The application that started this request is not recognized."
+                },
+                "invalid_redirect_uri": {
+                    "title": "Invalid redirect address",
+                    "description": "The application asked to be sent to an address that is not allowed."
+                },
+                "invalid_request": {
+                    "title": "Request not valid",
+                    "description": "This request is invalid, expired or belongs to another account. Start the connection again from your assistant."
+                },
+                "server_error": {
+                    "title": "Something went wrong",
+                    "description": "An unexpected error occurred. Please try again."
+                }
+            }
+        }
+    },
+    "mcpClients": {
+        "title": "AI assistants",
+        "description": "Manage the AI assistants connected to this project",
+        "disabled_title": "AI assistants are not enabled",
+        "disabled_description": "The MCP server is turned off on this installation. Contact an administrator to enable it.",
+        "connect_title": "Connect an AI assistant",
+        "connect_description": "Add this URL as a remote MCP server in your AI assistant, then sign in and approve access.",
+        "copy_url": "Copy MCP server URL",
+        "no_clients": "No connected assistants",
+        "no_clients_desc": "Assistants you approve will appear here.",
+        "client": "Assistant",
+        "user": "User",
+        "access": "Access",
+        "access_read": "Read only",
+        "access_write": "Read and write",
+        "connected": "Connected on",
+        "last_used": "Last used",
+        "never": "Never",
+        "revoke_aria": "Revoke access for {{name}}",
+        "revoke_title": "Revoke access",
+        "confirm_revoke": "Revoke access for \"{{name}}\"? It will stop working immediately.",
+        "revoked": "Access revoked",
+        "connect_login_hint": "Claude.ai, ChatGPT and Gemini can connect with just this URL: they will ask you to sign in and approve access.",
+        "apiKey": {
+            "title": "Alternative: connect with an API key",
+            "description": "For clients that do not support login, authenticate with a project API key.",
+            "createLink": "Create an API key",
+            "roleNote": "The role of the key decides whether the assistant is read-only or can make changes.",
+            "claudeCode": "Claude Code",
+            "geminiCli": "Gemini CLI (~/.gemini/settings.json)",
+            "cursor": "Cursor (mcp.json)",
+            "copySnippet": "Copy snippet"
+        },
+        "projects": "Projects"
+    },
+    "assistant": {
+        "title": "Maestro",
+        "open": "Open Maestro",
+        "close": "Close Maestro",
+        "shortcut": "Maestro (⌘J / Ctrl+J)",
+        "new_conversation": "New conversation",
+        "history": {
+            "open": "Recent conversations",
+            "title": "Recent conversations",
+            "empty": "No saved conversations on this project yet.",
+            "error": "Could not load the conversations.",
+            "current": "Open now",
+            "delete": "Delete conversation",
+            "delete_title": "Delete the conversation?",
+            "delete_description": "\"{{title}}\" will be deleted and can no longer be reopened.",
+            "deleting": "Deleting…"
+        },
+        "placeholder": "Ask something about the project…",
+        "placeholder_awaiting_confirmation": "Confirm or cancel the action above to continue…",
+        "send": "Send",
+        "stop": "Stop",
+        "disclaimer": "Answers are generated by AI and may contain mistakes. Maestro can change the project: actions that delete or remove something run only after you confirm them.",
+        "empty_title": "How can I help?",
+        "empty_description": "I can look up and change the microfrontends, builds, deployments, environments and variables of this project, and search the documentation.",
+        "thinking": "Thinking…",
+        "tool": {
+            "input": "Input",
+            "result": "Result",
+            "copy": "Copy",
+            "copied": "Copied"
+        },
+        "tool_kind": {
+            "write": "Change",
+            "confirm": "Needs confirmation",
+            "destructive": "Destructive"
+        },
+        "tool_status": {
+            "running": "Running…",
+            "ok": "Completed",
+            "error": "Failed",
+            "awaiting_confirmation": "Waiting for your confirmation",
+            "declined": "Cancelled by you",
+            "interrupted": "Interrupted before reporting back"
+        },
+        "confirmation": {
+            "title": "Confirm this action",
+            "confirm": "Confirm",
+            "cancel": "Cancel",
+            "expires_at": "You can answer until {{time}}.",
+            "status": {
+                "approved": "Confirmed.",
+                "declined": "Cancelled.",
+                "expired": "This confirmation has expired or was already answered."
+            },
+            "raw_input": "Input sent by Maestro",
+            "details": {
+                "project": "Project",
+                "organization": "Organization",
+                "environment": "Environment",
+                "environments": "Environments",
+                "microfrontend": "Microfrontend",
+                "microfrontends": "Microfrontends",
+                "host": "Host",
+                "remote": "Remote",
+                "user": "User",
+                "deployment": "Deployment",
+                "api_key": "API key",
+                "mcp_client": "MCP client",
+                "storage": "Storage",
+                "code_repository": "Code repository",
+                "ai_change": "AI change",
+                "prompt": "Request",
+                "files": "Files",
+                "changes": "What changes",
+                "served": "What will be served",
+                "no_changes": "Same as the active deployment",
+                "email": "Email",
+                "role": "Role",
+                "name": "Name",
+                "expiresAt": "Expires at",
+                "enabled": "Enabled",
+                "userIds": "User ids",
+                "key": "Key",
+                "scope": "Scope",
+                "excludePaths": "Files left out",
+                "description": "Description",
+                "jobId": "AI job"
+            }
+        },
+        "errors": {
+            "generic": "I could not answer. Please try again shortly.",
+            "rate_limited": "Too many questions in a short time. Wait a minute and try again.",
+            "disabled": "Maestro is not enabled in this project: it has no AI available.",
+            "refusal": "I can't help with this request.",
+            "incomplete": "The answer is incomplete: try a more specific question.",
+            "stopped": "Answer stopped.",
+            "confirmation_expired": "The confirmation expired or was already answered, so nothing was done. Ask again if you still want to proceed.",
+            "ai_model_not_available": "The AI you picked is no longer available to the project: pick another one and ask again."
+        },
+        "suggestions": {
+            "overview": "Give me an overview of the project",
+            "canary": "How do canary releases work?",
+            "storage": "How do I connect an S3 bucket?",
+            "builds": "Are there failed builds? Why?",
+            "deployments": "What changed in the latest deployment?",
+            "dependencies": "Are there conflicts between shared dependencies?",
+            "variables": "Is any environment missing variables?"
+        },
+        "actions": {
+            "explain_build": "Explain the failure",
+            "analyze_deployments": "Analyze the latest deployment",
+            "explain_dependencies": "Analyze the conflicts",
+            "check_variables": "Check the variables"
+        },
+        "questions": {
+            "explain_build": "Why did build {{runId}} (ref {{ref}}) of microfrontend {{name}} (id {{microfrontendId}}) fail? Read the logs of the failed jobs, explain the cause and suggest a fix.",
+            "analyze_deployments": "Compare the latest deployment of environment {{environment}} (id {{environmentId}}) with the previous one: which versions and variables changed, and is there anything to check?",
+            "explain_dependencies": "Analyze the shared dependencies and misaligned peer dependencies across the microfrontends: which conflicts are risky and which should I tackle first?",
+            "check_variables": "Compare the environment variables across the project's environments: are any defined in one environment and missing from another, production in particular?"
+        },
+        "usage": {
+            "input": "{{formatted}} input tokens",
+            "input_cached": "{{formatted}} input tokens ({{cached}} from cache)",
+            "output": "{{formatted}} output",
+            "hint": "Tokens used for this answer, every model step summed. Tokens read from the cache cost far less."
+        },
+        "effort": {
+            "label": "Reasoning effort",
+            "hint": "More effort means deeper reasoning, slower answers and more tokens.",
+            "used": "Effort: {{level}}",
+            "levels": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "xhigh": "Extra high",
+                "max": "Max"
+            }
+        },
+        "reasoning": "Reasoning",
+        "jobs": {
+            "tabs_label": "Conversations",
+            "project_tab": "Project",
+            "tab_label_one": "Job · {{count}} repo",
+            "tab_label_other": "Job · {{count}} repos",
+            "running": "(working)",
+            "close_tab": "Close {{label}}",
+            "new_job": "New AI job",
+            "status": {
+                "PENDING": "Queued",
+                "RUNNING": "Working",
+                "DONE": "Done",
+                "FAILED": "Failed"
+            },
+            "scope_global": "All microfrontends",
+            "repositories": "Repositories",
+            "files_one": "{{count}} file changed",
+            "files_other": "{{count}} files changed",
+            "diff": "Diff",
+            "diff_label": "Open the diff of {{name}}",
+            "failed_title": "The job failed",
+            "usage_latest": "This job",
+            "usage_total_one": "Whole conversation ({{count}} job)",
+            "usage_total_other": "Whole conversation ({{count}} jobs)",
+            "usage_job": "Cost",
+            "usage_hint": "Tokens used by the agent, every model step summed. One agent works on all the repositories of the job, so the cost belongs to the job. Tokens read from the cache cost far less.",
+            "apply_all_one": "Apply the proposal",
+            "apply_all_other": "Apply all ({{count}})",
+            "apply_all_title": "Apply every proposal?",
+            "apply_all_description_one": "The proposal is pushed straight onto the base branch of its repository, with all its proposed files and no review. Its CI starts right away, with the repository secrets: review the diff first.",
+            "apply_all_description_other": "Each of the {{count}} proposals is pushed straight onto the base branch of its repository, with all its proposed files and no review. Their CI starts right away, with the repository secrets: review the diffs first.",
+            "apply_all_confirm": "Apply onto the base branches",
+            "apply_all_applying": "Applying…",
+            "apply_all_success": "Proposals applied onto their base branches",
+            "follow_up_placeholder": "Ask the agent for a change, or ask it a question…",
+            "follow_up_running": "Wait for the agent to finish to ask for more…",
+            "follow_up_failed": "This job failed: start a new job to try again.",
+            "follow_up_send": "Send",
+            "toast_done": "{{label}}: the job is done",
+            "toast_failed": "{{label}}: the job failed",
+            "new": {
+                "title": "New AI job",
+                "description": "One agent works on the chosen microfrontends together, so a change can span them, such as a shared component and the microfrontends that use it. It proposes the edits for review: nothing is pushed until you apply them.",
+                "all": "All microfrontends",
+                "all_hint": "Every microfrontend with a linked repository, at most {{max}}.",
+                "selection_hint": "{{selected}} selected, at most {{max}}.",
+                "selection_required": "Select at least one microfrontend",
+                "no_repositories": "No microfrontend of this project has a linked code repository.",
+                "prompt_label": "What should change?",
+                "prompt_placeholder": "e.g. Rename the getUser API of the shell and update the microfrontends that call it",
+                "prompt_required": "Describe the change you want",
+                "start": "Start job",
+                "repositories_label": "Microfrontends"
+            },
+            "errors": {
+                "load": "Could not load the job.",
+                "create": "Could not start the job.",
+                "follow_up": "Could not send the request.",
+                "apply": "Could not apply the proposals.",
+                "ASSISTANT_DISABLED": "AI editing is not enabled in this project: it has no AI available.",
+                "AI_CHANGE_FORBIDDEN": "You do not have permission to edit microfrontends with AI.",
+                "AI_CHANGE_TOO_MANY": "Too many jobs are running in this project: wait for one to finish.",
+                "AI_JOB_NOT_DONE": "The job has not finished yet.",
+                "AI_JOB_NO_REPOSITORIES": "None of these microfrontends has a linked code repository.",
+                "AI_JOB_TOO_MANY_REPOSITORIES": "A job can work on at most 10 repositories: select the microfrontends to include.",
+                "AI_JOB_FOLLOW_UP_RUNNING": "A follow-up of this job is still running: wait for it to finish.",
+                "AI_CHANGE_NOT_PROPOSED": "These proposals are no longer waiting for approval.",
+                "plan": "The AI could not propose the components.",
+                "AI_MODEL_NOT_AVAILABLE": "The AI you picked is no longer available to the project: pick another one.",
+                "AI_PROVIDER_ERROR": "The AI provider answered with an error: try again shortly."
+            },
+            "apply_all_started": "Applying the proposals onto their base branches",
+            "apply_all_failed_one": "{{count}} of {{total}} proposals could not be applied: see the error on its repository",
+            "apply_all_failed_other": "{{count}} of {{total}} proposals could not be applied: see the errors on their repositories",
+            "follow_up_no_proposal": "No proposal left to refine: start a new job for further changes."
+        },
+        "page_title": "AI agent"
+    },
+    "navigation": {
+        "design": "Design",
+        "top_menu": "Project menu"
+    },
+    "ai_models": {
+        "title": "Artificial intelligences",
+        "subtitle": "The AIs the projects of the organization use for the assistant and every AI feature. Each project can use all of them, unless restricted below.",
+        "add": "Add AI",
+        "edit": "Edit {{name}}",
+        "delete": "Delete {{name}}",
+        "empty": "The organization has no AI yet: ask an owner or an administrator to add one.",
+        "empty_admin": "The organization has no AI yet: add one to turn on the assistant and the AI features in its projects.",
+        "system_name": "System AI",
+        "system_hint": "Configured in the installation's environment: it cannot be edited here.",
+        "created": "AI added",
+        "updated": "AI updated",
+        "deleted": "AI deleted",
+        "confirm_delete_title": "Delete AI",
+        "confirm_delete": "Delete {{name}}? It is also removed from every project that uses it: a project left with no AI has the AI features turned off.",
+        "columns": {
+            "name": "Name",
+            "provider": "Provider",
+            "model": "Model"
+        },
+        "badges": {
+            "default": "Default",
+            "system": "System"
+        },
+        "providers": {
+            "anthropic": "Claude (Anthropic)",
+            "azure-foundry": "Claude (Azure AI Foundry)",
+            "gemini": "Gemini (Google)",
+            "azure-openai": "GPT (Azure OpenAI)",
+            "aws-bedrock": "Claude (AWS Bedrock)"
+        },
+        "select": {
+            "label": "AI",
+            "hint": "The AI the request goes to."
+        },
+        "form": {
+            "add_title": "Add AI",
+            "edit_title": "Edit AI",
+            "description": "The credentials are stored encrypted and never shown again: leave a hidden value as it is to keep it.",
+            "name": "Name",
+            "name_placeholder": "e.g. Claude for the teams",
+            "provider": "Provider",
+            "model": "Model",
+            "deployment": "Deployment",
+            "model_default_hint": "Leave empty to use {{model}}.",
+            "reasoning": "Reasoning model",
+            "reasoning_hint": "On when the deployment is a reasoning model (e.g. o-series, GPT-5): it then accepts an effort level.",
+            "max_effort": "Maximum effort",
+            "max_effort_hint": "The highest reasoning effort users can pick with this AI.",
+            "max_effort_none": "No limit",
+            "default": "Default AI",
+            "default_hint": "Preselected in every project that can use it. Only one AI of the organization is the default.",
+            "fields": {
+                "apiKey": "API key",
+                "resource": "Resource",
+                "endpoint": "Endpoint",
+                "region": "Region",
+                "accessKeyId": "Access key ID",
+                "secretAccessKey": "Secret access key"
+            },
+            "placeholders": {
+                "apiKey": "The provider's API key",
+                "resource": "e.g. my-foundry-resource",
+                "endpoint": "e.g. https://my-resource.openai.azure.com",
+                "region": "e.g. us-east-1",
+                "accessKeyId": "e.g. AKIA...",
+                "secretAccessKey": "The secret of the access key",
+                "deployment": "e.g. gpt-5",
+                "model_gemini": "e.g. gemini-2.5-pro",
+                "model_aws-bedrock": "Model id or inference profile, e.g. us.anthropic.claude-opus-...",
+                "model_anthropic": "claude-opus-5-5",
+                "model_azure-foundry": "claude-opus-5-5"
+            },
+            "secret_retype_hint": "The AI now points elsewhere: type this key again, the stored one is kept only for the provider, resource, endpoint and access key it was saved with."
+        },
+        "access": {
+            "title": "Project access",
+            "subtitle": "Which AIs each project can use. By default a project uses all of them, including those added later.",
+            "project": "Project",
+            "models": "AIs",
+            "all_default": "All (default)",
+            "disabled": "AI turned off",
+            "edit": "Edit the AIs of {{project}}",
+            "no_projects": "The organization has no projects yet.",
+            "dialog_title": "AIs of {{project}}",
+            "dialog_description": "Choose the AIs the project can use for the assistant and the AI features.",
+            "mode_label": "Access",
+            "all": "All the AIs of the organization (default)",
+            "all_hint": "Including those added later.",
+            "selected": "Only the selected AIs",
+            "selected_hint": "An AI added later is not included.",
+            "models_label": "AIs the project can use",
+            "none_warning": "No AI selected: the assistant and the AI features are turned off in this project.",
+            "saved": "AIs of {{project}} updated"
+        },
+        "errors": {
+            "load": "Could not load the AIs of the organization.",
+            "load_access": "Could not load the AIs of the projects.",
+            "name_taken": "Another AI of the organization already has this name.",
+            "invalid": "The AI is missing some required settings for its provider.",
+            "not_available": "This AI is no longer available to the project: pick another one.",
+            "system_readonly": "The system AI comes from the installation's configuration and cannot be changed here.",
+            "secret_required": "Type the {{field}} again: a stored one is kept only while the provider, resource, endpoint and access key stay the same.",
+            "endpoint_invalid": "The endpoint is not valid: it must be an Azure HTTPS endpoint, like https://my-resource.openai.azure.com/.",
+            "region_invalid": "The region is not valid: use an AWS region name, like eu-west-1.",
+            "resource_invalid": "The resource is not valid: use the name of the Azure AI Foundry resource, like my-foundry, not a URL.",
+            "missing_fields": "Some required settings are missing: {{fields}}.",
+            "default_conflict": "Another AI was just made the default: reload the page and try again."
+        }
     }
 }

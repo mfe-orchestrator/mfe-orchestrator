@@ -1,4 +1,19 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
+import type { ICodeRepositoryMicrofrontend } from "./MicrofrontendModel"
+
+/** Upper bound of a context, project or microfrontend: it ends up in the prompt of every agent reading it. */
+export const CONTEXT_MAX_LENGTH = 20_000
+
+/**
+ * Where the pipelines copied into the repositories scaffolded from a template come from, in place of the
+ * official template-pipelines: a repository with the same layout. Unset, the official ones are used.
+ */
+export interface IProjectPipelines {
+    /** Linked like the repository of a microfrontend, through one of the connections of the project */
+    codeRepository: ICodeRepositoryMicrofrontend
+    /** The branch or tag read; the default branch of the repository when left out */
+    ref?: string
+}
 
 export interface IProject extends Document<ObjectId> {
     /** The organization owning the project. A project belongs to exactly one, and never changes hands. */
@@ -6,7 +21,15 @@ export interface IProject extends Document<ObjectId> {
     name: string
     slug: string
     description?: string
+    /** Markdown written by the team for AI agents (MCP clients, the console assistant): conventions, domain, rules. */
+    context?: string
     isActive: boolean
+    pipelines?: IProjectPipelines
+    /**
+     * The AIs of the organization the project may use, by id (`system` for the one of the environment).
+     * Unset: all of them, the ones added later included. Empty: AI is off for the project.
+     */
+    aiModelIds?: string[]
     createdAt: Date
     updatedAt: Date
 }
@@ -35,10 +58,22 @@ const projectSchema = new Schema<IProject>(
             type: String,
             trim: true
         },
+        context: {
+            type: String,
+            trim: true,
+            maxlength: CONTEXT_MAX_LENGTH
+        },
         isActive: {
             type: Boolean,
             default: true
-        }
+        },
+        pipelines: {
+            // Written by ProjectService only, from what the provider answered: never from the request body
+            codeRepository: { type: Schema.Types.Mixed },
+            ref: { type: String, trim: true }
+        },
+        // No default: an empty array would turn AI off, where unset means every AI of the organization
+        aiModelIds: { type: [String], default: undefined }
     },
     {
         timestamps: true

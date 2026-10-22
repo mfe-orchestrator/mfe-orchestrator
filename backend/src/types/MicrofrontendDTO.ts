@@ -1,13 +1,22 @@
-import { CanaryDeploymentType, CanaryType } from "../models/MicrofrontendModel"
+import { CanaryDeploymentType, CanaryType, IHostMicrofrontend, MicrofrontendKind, MicrofrontendType } from "../models/MicrofrontendModel"
 import { MicrofrontendStackDTO } from "./MicrofrontendStack"
 
 interface MicrofrontendDTO {
     id: string
+    type?: MicrofrontendType
+    /** MICROFRONTEND when omitted. A FRONTEND never has parentIds */
+    kind?: MicrofrontendKind
+    /** FRONTEND only: where its pipeline pushes the image, without tag */
+    image?: {
+        repository?: string
+    }
     name: string
     slug: string
     url: string
     environment: string
     version?: string
+    /** Markdown for AI agents about this microfrontend */
+    context?: string
     /** Slug of the marketplace template the repository was scaffolded from */
     template?: string
     stack?: MicrofrontendStackDTO
@@ -15,6 +24,8 @@ interface MicrofrontendDTO {
     createdAt?: Date
     updatedAt?: Date
     parentIds?: string[]
+    /** Omitted on create: the project's default hosting is used */
+    host?: IHostMicrofrontend
     codeRepository: {
         enabled: boolean
         codeRepositoryId: string

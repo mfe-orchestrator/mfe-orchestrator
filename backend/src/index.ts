@@ -3,7 +3,13 @@ import * as Sentry from "@sentry/node"
 import dotenv from "dotenv"
 import Fastify from "fastify"
 import path from "path"
+import wellKnownRoutes from "./mcp/wellKnownRoutes"
 import { AppInstance } from "./types/fastify"
+import { parseTrustProxy, redactOAuthUrl } from "./utils/oauthConfig"
+
+// The instance below is built at import time, before `start` loads the .env file: TRUST_PROXY has to
+// be readable by then.
+dotenv.config()
 
 /**
  * How long a plugin is given to come up.
@@ -16,8 +22,22 @@ import { AppInstance } from "./types/fastify"
 const PLUGIN_TIMEOUT_MS = 60_000
 
 export const fastify: AppInstance = Fastify({
-    logger: true,
-    pluginTimeout: PLUGIN_TIMEOUT_MS
+    logger: {
+        serializers: {
+            // Fastify's default request serializer, with the OAuth consent handle masked out of the URL
+            req: request => ({
+                method: request.method,
+                url: redactOAuthUrl(request.url),
+                host: request.host,
+                remoteAddress: request.ip,
+                remotePort: request.socket?.remotePort
+            })
+        }
+    },
+    pluginTimeout: PLUGIN_TIMEOUT_MS,
+    // Behind nginx every request arrives from 127.0.0.1: without trusting the proxy, `request.ip`
+    // and with it every per-IP rate limit (client registration included) is one shared bucket.
+    trustProxy: parseTrustProxy(process.env.TRUST_PROXY)
 })
 
 export async function build() {
@@ -28,6 +48,9 @@ export async function build() {
     fastify.log.info(`Plugins ${(performance.now() - startPlugins).toFixed(2)} ms`)
 
     const startControllers = performance.now()
+
+    // At the root whatever the controllers' prefix: discovery documents are looked up there
+    await fastify.register(wellKnownRoutes)
 
     // Registra i controller con prefix '/api' solo in development
     const isDevelopment = process.env.NODE_ENV === "development"
@@ -57,13 +80,16 @@ const initSentry = async (fastify: AppInstance) => {
         fastify.log.warn("Sentry DSN not found")
         return
     }
+    // Errors of the routes are captured by the Fastify integration through its diagnostics channel.
     await Sentry.init({
         dsn: process.env.SENTRY_DSN,
-        sendDefaultPii: true,
-        enableLogs: true
+        // Collected by default since Sentry 11 and never sent before: query parameters and local
+        // variables can hold the secrets of a project or a token.
+        dataCollection: {
+            databaseQueryData: false,
+            stackFrameVariables: false
+        }
     })
-
-    await Sentry.setupFastifyErrorHandler(fastify)
 }
 
 const start = async () => {
@@ -89,4 +115,8 @@ const start = async () => {
     })
 }
 
-start()
+// Services import the `fastify` instance from here: under Vitest that import must not start the
+// server, or the plugin autoload runs in the test worker and logs its failure after the file ends.
+if (!process.env.VITEST) {
+    start()
+}

@@ -128,6 +128,10 @@ export class UserOrganizationService extends BaseAuthorizedService {
     async addUserToOrganizationByEmail(organizationId: string | Schema.Types.ObjectId, email: string, role: RoleInOrganization): Promise<IUserOrganization | undefined> {
         const organizationIdObj = toObjectId(organizationId)
         await this.ensureOrganizationAdmin(organizationIdObj)
+        // Inviting an owner hands out ownership: owners only, as for updateRole.
+        if (role === RoleInOrganization.OWNER) {
+            await this.ensureOrganizationOwner(organizationIdObj)
+        }
 
         const organization = await Organization.findById(organizationIdObj)
         if (!organization) {
@@ -150,6 +154,10 @@ export class UserOrganizationService extends BaseAuthorizedService {
 
         const existing = await UserOrganization.findOne({ userId: toObjectId(user._id), organizationId: organizationIdObj })
         if (existing) {
+            // Rewriting a pending owner invitation takes ownership away from it: owners only too.
+            if (existing.invitationToken && existing.role === RoleInOrganization.OWNER && role !== RoleInOrganization.OWNER) {
+                await this.ensureOrganizationOwner(organizationIdObj)
+            }
             if (!existing.invitationToken) {
                 throw createBusinessException({
                     code: "USER_ALREADY_IN_ORGANIZATION",
@@ -279,12 +287,8 @@ export class UserOrganizationService extends BaseAuthorizedService {
         // letting them make themselves an owner would make the distinction meaningless — and take
         // from the owners the one thing that is theirs.
         const touchesOwnership = role === RoleInOrganization.OWNER || membership.role === RoleInOrganization.OWNER
-        if (touchesOwnership && (await this.getRoleInOrganization(organizationIdObj)) !== RoleInOrganization.OWNER) {
-            throw createBusinessException({
-                code: "ORGANIZATION_OWNER_REQUIRED",
-                message: "Only an owner can change who owns the organization",
-                statusCode: 403
-            })
+        if (touchesOwnership) {
+            await this.ensureOrganizationOwner(organizationIdObj)
         }
 
         if (membership.role === RoleInOrganization.OWNER && role !== RoleInOrganization.OWNER) {
@@ -311,6 +315,8 @@ export class UserOrganizationService extends BaseAuthorizedService {
         }
 
         if (membership.role === RoleInOrganization.OWNER) {
+            // Same rule as updateRole: an admin removing an owner would take ownership away by the back door.
+            await this.ensureOrganizationOwner(organizationIdObj)
             await this.ensureAnotherOwnerExists(organizationIdObj, userIdObj, "ORGANIZATION_LAST_OWNER", "Cannot remove the last owner of the organization. Please assign another owner first.")
         }
 
@@ -363,6 +369,17 @@ export class UserOrganizationService extends BaseAuthorizedService {
         const projects = await UserProject.countDocuments({ userId })
         if (organizations === 0 && projects === 0) {
             await User.findByIdAndDelete(userId)
+        }
+    }
+
+    /** Ownership is handed out by owners only: an admin making someone owner would make the distinction meaningless. */
+    private async ensureOrganizationOwner(organizationId: Schema.Types.ObjectId): Promise<void> {
+        if ((await this.getRoleInOrganization(organizationId)) !== RoleInOrganization.OWNER) {
+            throw createBusinessException({
+                code: "ORGANIZATION_OWNER_REQUIRED",
+                message: "Only an owner can change who owns the organization",
+                statusCode: 403
+            })
         }
     }
 

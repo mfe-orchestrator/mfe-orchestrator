@@ -1,0 +1,96 @@
+# Editing a microfrontend with AI
+
+From **Edit with AI**, the screen a microfrontend opens on, a user describes a change ("add a 404 page"). An
+AI agent works on a local clone of the microfrontend's repository and proposes the change as a diff.
+Under the prompt, the console shows the repository it works on, linked to its page on the provider, and the
+branch it starts from: the repository's default branch unless another one is picked from its branches.
+Once the agent is done, the console commits the proposal on a feature branch of its own and pushes it:
+the base branch is never touched until the user acts. Then the user can:
+
+- **Apply** it: the proposal is pushed straight onto the base branch, with no review.
+- **Open a pull request** (a merge request on GitLab) from the feature branch onto the base, to have it
+  reviewed in the repository first. The proposal stays open: it can still be refined, applied or discarded.
+- **Discard** it: its feature branch is deleted, unless a pull request is open on it.
+
+Each request is a conversation. Once the proposal is ready the user can keep chatting with the agent to
+refine it ("also translate the page"). Each message is a follow-up: the agent starts from the files of
+the previous proposal, is told what was asked before, and its new proposal replaces the previous one.
+Only the latest proposal can be applied. Every follow-up force-pushes the same feature branch, so a pull
+request opened on it shows the latest proposal. A failed follow-up leaves the previous proposal open to apply
+or to refine again. Once a proposal is applied or discarded, the conversation is closed and a new change
+starts from the base branch. The commit and the pull request are named after the first message, and the pull
+request description quotes every message of the conversation. Once a proposal is applied, the whole conversation is kept, not removed
+with the proposals.
+
+It is available when an [AI provider](AI-PROVIDERS.md) is configured and the microfrontend has a
+code repository connected (GitHub, GitLab or Azure DevOps).
+
+## How it works
+
+1. The request is stored and a background job starts; the console follows it by polling.
+2. The job takes a lock on the microfrontend's working copy (Redis, or in-process without Redis), so
+   two requests on the same repository queue instead of sharing a checkout.
+3. The working copy is cloned if missing, otherwise fetched and reset to `origin/<base branch>`:
+   every run starts from exactly what the remote has.
+4. The agent explores and edits the files. It receives the [project and microfrontend context](MCP.md#project-context)
+   and the detected stack.
+5. The changed files are committed on the conversation's feature branch,
+   `ai/<microfrontend>-<timestamp>` (author: the user who asked, committer: MFE Orchestrator), on top of
+   the base the agent started from, and force-pushed. A follow-up that only answers a question, without
+   changing a file, pushes nothing. A push that fails does not lose the proposal: the console shows the
+   error, and applying it or opening its pull request pushes it again.
+6. The changed files (original and proposed content) are stored as a proposal, the working copy is
+   reset and the lock released. Proposals nobody acts upon are removed after 7 days; their branch stays.
+7. On **Apply** the copy is reset to the latest base again and every file is checked to still be what
+   the agent saw. A file changed on the base branch in the meantime stops the apply with a conflict,
+   so nothing is silently overwritten. When the base has not moved since the proposal, the base
+   fast-forwards to the very commit of the feature branch, so a pull request opened on it reads merged;
+   otherwise the files are committed again on top of the latest base. The push is never forced: a
+   protected base branch refuses it, and the console suggests opening a pull request instead. The
+   feature branch is then deleted, unless a pull request is open on it.
+8. On **Open a pull request** the provider opens it from the feature branch onto the base. If it refuses
+   (for example a token without that permission), the console shows why and the branch stays pushed.
+
+Clone, fetch, commit and push use [isomorphic-git](https://isomorphic-git.org): no `git` binary is
+needed in the image, and no repository hook is ever run.
+
+## Where the repositories are cloned
+
+```
+$REPOSITORIES_FOLDER/<organization-slug>-<id>/<project-slug>-<id>/<microfrontend-slug>/
+```
+
+| Variable                        | Default                                              | What it does                                         |
+| ------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| `REPOSITORIES_FOLDER`           | `/repositories`, `/data/repositories` in all-in-one | Root of the clones.                                  |
+| `REPOSITORIES_MAX_SIZE_MB`      | `500`                                                | A clone bigger than this is refused and deleted.     |
+| `REPOSITORIES_EVICT_AFTER_DAYS` | `14`                                                 | Clones not used for this long are deleted.           |
+
+The folder is a **cache**: deleting it only costs a new clone. Clones are also removed when their
+microfrontend or project is deleted. On Kubernetes the chart mounts an `emptyDir` there
+(`repositories.sizeLimit`, 10Gi by default); set `repositories.existingClaim` to keep the clones across
+restarts. Each replica can have its own folder: there is no state to share.
+
+Credentials are never written to disk: the clone URL has no token in it and the provider token is
+handed to each network call.
+
+## What the agent can and cannot do
+
+- It can list, search, read, write and delete files **inside the working copy only**. Every path is
+  resolved after following symlinks: `..`, absolute paths, `.git` and symlinks pointing out of the
+  repository are refused.
+- It cannot read files that usually hold credentials (`.env*`, `.npmrc`, `*.pem`, `*.key`, ...).
+- It cannot change CI configuration (`.github/workflows`, `.gitlab-ci.yml`, `azure-pipelines*.yml`) or
+  lockfiles: a pushed branch runs CI with the repository secrets. Since every proposal is pushed on its
+  feature branch as soon as the agent is done, a pipeline that runs on every branch runs on the
+  agent's code before anyone has reviewed it: limit such pipelines, or their secrets, to protected branches.
+- It cannot run anything: no install, build or test. The repository's CI checks the pull request.
+- At most 20 files and 500 KB written per request, 40 model rounds.
+- It never pushes. The console pushes its proposal on a feature branch only, never on the base branch:
+  only the user's **Apply** writes there.
+
+## Who can use it
+
+Any member of the project can see the requests. Viewers can neither ask for a change nor apply or
+discard one; organization administrators can. Requests count against `ASSISTANT_RATE_LIMIT_MAX`,
+per user, like the assistant. The token usage of each request is stored and shown in the console.

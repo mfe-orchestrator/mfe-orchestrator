@@ -156,7 +156,7 @@ export class CodeRepositoryImportService extends BaseAuthorizedService {
         return result
     }
 
-    private async fetchRepositories(codeRepositoryService: CodeRepositoryService, codeRepository: ICodeRepository, groupId?: number): Promise<NormalizedRepository[]> {
+    async fetchRepositories(codeRepositoryService: CodeRepositoryService, codeRepository: ICodeRepository, groupId?: number): Promise<NormalizedRepository[]> {
         const repositories = await codeRepositoryService.getRepositories(codeRepository._id.toString(), undefined, groupId)
 
         if (!repositories) {
@@ -204,7 +204,7 @@ export class CodeRepositoryImportService extends BaseAuthorizedService {
         })
     }
 
-    private buildMicrofrontendCodeRepository(codeRepository: ICodeRepository, repository: NormalizedRepository, groupId?: number): ICodeRepositoryMicrofrontend {
+    buildMicrofrontendCodeRepository(codeRepository: ICodeRepository, repository: NormalizedRepository, groupId?: number): ICodeRepositoryMicrofrontend {
         return {
             enabled: true,
             codeRepositoryId: codeRepository._id,

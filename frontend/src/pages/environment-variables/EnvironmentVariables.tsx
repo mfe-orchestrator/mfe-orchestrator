@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { CirclePlus, Pencil, Trash2 } from "lucide-react"
 import React, { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
+import AskAssistantButton from "@/components/assistant/AskAssistantButton"
 import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
 import SinglePageLayout from "@/components/SinglePageLayout"
@@ -128,10 +129,13 @@ const EnvironmentVariablesPageInner: React.FC = () => {
                 title={t("environmentVariables.title")}
                 right={
                     variables && Object.keys(variables).length !== 0 ? (
-                        <Button onClick={handleAddNew}>
-                            <CirclePlus />
-                            {t("environmentVariables.addVariable")}
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                            <AskAssistantButton label={t("assistant.actions.check_variables")} question={t("assistant.questions.check_variables")} dataTestId="assistant-check-variables" />
+                            <Button onClick={handleAddNew}>
+                                <CirclePlus />
+                                {t("environmentVariables.addVariable")}
+                            </Button>
+                        </div>
                     ) : null
                 }
             >

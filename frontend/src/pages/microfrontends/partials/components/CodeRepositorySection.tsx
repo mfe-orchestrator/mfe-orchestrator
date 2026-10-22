@@ -3,9 +3,12 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { Button } from "@/components/atoms"
 import TextField from "../../../../components/input/TextField.rhf"
 import useCodeRepositoriesApi, { ICodeRepository, Repository } from "../../../../hooks/apiClients/useCodeRepositoriesApi"
+import { Microfrontend } from "../../../../hooks/apiClients/useMicrofrontendsApi"
 import { extractCloneUrls } from "../../../../utils/repositoryCloneUrls"
+import RenameRepositoryDialog from "./RenameRepositoryDialog"
 
 const logoMap: Record<string, string> = {
     GITHUB: "/img/GitHub.svg",
@@ -19,6 +22,9 @@ const logoMap: Record<string, string> = {
 interface CodeRepositorySectionProps {
     repositoriesData: ICodeRepository[]
     isEdit?: boolean
+    microfrontendId?: string
+    /** Repository collegato come salvato sul backend: e' quello che la rinomina modifica */
+    savedRepository?: Microfrontend["codeRepository"]
     forceCreation?: boolean
 }
 
@@ -28,9 +34,9 @@ interface RepositoryNameAvailability {
     error: string | null
 }
 
-export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositoriesData, isEdit = false, forceCreation = false }) => {
+export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ repositoriesData, isEdit = false, microfrontendId, savedRepository, forceCreation = false }) => {
     const { t } = useTranslation()
-    const { watch, setValue } = useFormContext()
+    const { watch, setValue, formState } = useFormContext()
     const codeRepositoriesApi = useCodeRepositoriesApi()
 
     // Watch form values
@@ -48,6 +54,7 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
         error: null
     })
     const [fetchedRepositories, setFetchedRepositories] = useState<Repository[]>([])
+    const [renameOpen, setRenameOpen] = useState(false)
 
     // GitLab groups query
     const gitlabGroupsQuery = useQuery({
@@ -106,6 +113,8 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
         }
 
         const repository = fetchedRepositories.find(repo => repo.name === repositoryName)
+        // L'id del provider va aggiornato insieme al nome, altrimenti si salva il nome nuovo con l'id del vecchio
+        setValue("codeRepository.repositoryId", String(repository?.id ?? repositoryName))
         const cloneUrls = extractCloneUrls(repository)
         setValue("codeRepository.cloneUrlHttps", cloneUrls.https || "")
         setValue("codeRepository.cloneUrlSsh", cloneUrls.ssh || "")
@@ -138,6 +147,23 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                 error: error instanceof Error ? error.message : t("app.error.generic")
             })
         }
+    }
+
+    // La rinomina e' possibile solo su un microfrontend gia' esistente con un repository collegato
+    // (guarda il repository salvato, non il form) e solo senza modifiche pendenti al repository
+    const canRename = isEdit && !!microfrontendId && !forceCreation && !!savedRepository?.enabled && !!savedRepository?.name
+    const repositoryDirty = Object.keys(formState.dirtyFields?.codeRepository ?? {}).length > 0
+
+    // Dopo la rinomina il form riceve nome e clone url nuovi e la lista dei repository viene riletta
+    const onRepositoryRenamed = (microfrontend: Microfrontend) => {
+        const repository = microfrontend.codeRepository
+        const options = { shouldDirty: false }
+        setValue("codeRepository.name", repository?.name, options)
+        setValue("codeRepository.repositoryId", repository?.repositoryId, options)
+        setValue("codeRepository.cloneUrlHttps", repository?.cloneUrlHttps || "", options)
+        setValue("codeRepository.cloneUrlSsh", repository?.cloneUrlSsh || "", options)
+        if (repository?.gitlab?.path) setValue("codeRepository.gitlab.path", repository.gitlab.path, options)
+        if (selectedCodeRepositoryId) fetchRepositoriesMutation.mutate(selectedCodeRepositoryId)
     }
 
     // Don't render if no repositories available
@@ -225,6 +251,15 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                         )}
                     </div>
 
+                    {canRename && (
+                        <div className="flex justify-start">
+                            <Button type="button" variant="secondary" onClick={() => setRenameOpen(true)} disabled={repositoryDirty} dataTestId="rename-repository-open">
+                                {t("microfrontend.rename_repository.action")}
+                            </Button>
+                            {repositoryDirty && <p className="ml-3 self-center text-sm text-muted-foreground">{t("microfrontend.rename_repository.save_first")}</p>}
+                        </div>
+                    )}
+
                     {(selectedRepositoryId === "create_new" || forceCreation) && (
                         <>
                             <div className="flex flex-col gap-2">
@@ -269,6 +304,9 @@ export const CodeRepositorySection: React.FC<CodeRepositorySectionProps> = ({ re
                         </>
                     )}
                 </CardContent>
+            )}
+            {canRename && (
+                <RenameRepositoryDialog open={renameOpen} onOpenChange={setRenameOpen} microfrontendId={microfrontendId!} currentName={savedRepository?.name ?? ""} onRenamed={onRepositoryRenamed} />
             )}
         </Card>
     )

@@ -7,10 +7,14 @@ vi.mock("..", () => ({
     fastify: { log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }, config: {} }
 }))
 
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import CodeRepository from "../models/CodeRepositoryModel"
+import Microfrontend from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { RoleInOrganization } from "../models/UserOrganizationModel"
 import UserProject from "../models/UserProjectModel"
+import CodeRepositoryImportService from "./CodeRepositoryImportService"
 import ProjectService from "./ProjectService"
 
 /**
@@ -198,5 +202,157 @@ describe("update", () => {
         await update({ description: "the checkout flow" })
 
         expect(written).toEqual({ description: "the checkout flow" })
+    })
+
+    it("Given a context, when the project is updated, then the context is written", async () => {
+        await update({ context: "## Conventions\n- strict TypeScript" })
+
+        expect(written).toEqual({ context: "## Conventions\n- strict TypeScript" })
+    })
+
+    it("Given a null description and a null context, when the project is updated, then both are unset", async () => {
+        await update({ description: null, context: null })
+
+        expect(written).toEqual({ $unset: { description: 1, context: 1 } })
+    })
+})
+
+describe("update of the pipeline templates", () => {
+    const projectId = newId()
+    const connectionId = newId()
+    const repository = { repositoryId: "7", name: "acme-pipelines", cloneUrlHttps: "https://github.com/acme/acme-pipelines.git" }
+    let written: Record<string, unknown> | undefined
+    let findConnection: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+        written = undefined
+        vi.spyOn(ProjectService.prototype as unknown as WithAuthorizationGate, "ensureAccessToProject").mockResolvedValue(undefined)
+        vi.spyOn(Project, "findById").mockResolvedValue({ _id: projectId, organizationId: newId() } as never)
+        vi.spyOn(Project, "findByIdAndUpdate").mockImplementation(((_id: unknown, update: Record<string, unknown>) => {
+            written = update
+            return Promise.resolve({ name: "whatever" })
+        }) as never)
+        // An owner of the project
+        vi.spyOn(UserProject, "findOne").mockResolvedValue({ role: "OWNER" } as never)
+        findConnection = vi.spyOn(CodeRepository, "findOne").mockResolvedValue({ _id: connectionId, projectId, name: "GitHub" } as never)
+        vi.spyOn(CodeRepositoryImportService.prototype, "fetchRepositories").mockResolvedValue([repository])
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    const update = (pipelines: unknown) => new ProjectService(aUser()).update(String(projectId), { pipelines } as never)
+
+    it("Given a repository the connection of the project reaches, when the project is updated, then it is linked with its ref", async () => {
+        await update({ codeRepositoryId: String(connectionId), repositoryId: "7", ref: " release/v2 " })
+
+        const filter = findConnection.mock.calls[0][0] as Record<string, unknown>
+        expect({ ...filter, _id: String(filter._id), projectId: String(filter.projectId) }).toEqual({ _id: String(connectionId), projectId: String(projectId), isActive: true })
+        expect(written).toEqual({
+            pipelines: { codeRepository: expect.objectContaining({ enabled: true, codeRepositoryId: connectionId, repositoryId: "7", name: "acme-pipelines" }), ref: "release/v2" }
+        })
+    })
+
+    it("Given no ref, when the project is updated, then none is stored: the default branch is read", async () => {
+        await update({ codeRepositoryId: String(connectionId), repositoryId: "7", ref: "" })
+
+        expect(written).toEqual({ pipelines: expect.not.objectContaining({ ref: expect.anything() }) })
+    })
+
+    it("Given null, when the project is updated, then the official pipeline templates are used again", async () => {
+        await update(null)
+
+        expect(written).toEqual({ $unset: { pipelines: 1 } })
+    })
+
+    /** A connection of another project would lend this one its access token */
+    it("Given a connection of another project, when the project is updated, then it is refused and nothing is written", async () => {
+        findConnection.mockResolvedValue(null as never)
+
+        await expect(update({ codeRepositoryId: String(newId()), repositoryId: "7" })).rejects.toMatchObject({ code: "PIPELINES_REPOSITORY_INVALID" })
+        expect(written).toBeUndefined()
+    })
+
+    it("Given a repository the connection cannot reach, when the project is updated, then it is refused", async () => {
+        await expect(update({ codeRepositoryId: String(connectionId), repositoryId: "999" })).rejects.toMatchObject({ code: "PIPELINES_REPOSITORY_INVALID" })
+        expect(written).toBeUndefined()
+    })
+
+    it.each([
+        ["no connection", { repositoryId: "7" }],
+        ["a connection id that is not one", { codeRepositoryId: "c0ffee", repositoryId: "7" }],
+        ["no repository", { codeRepositoryId: "aaaaaaaaaaaaaaaaaaaaaaaa" }]
+    ])("Given %s, when the project is updated, then it is refused with a 400 and nothing is written", async (_case, pipelines) => {
+        await expect(update(pipelines)).rejects.toMatchObject({ code: "PIPELINES_REPOSITORY_REQUIRED", statusCode: 400 })
+        expect(written).toBeUndefined()
+    })
+
+    it.each([
+        ["with ..", "release/../main"],
+        ["starting with a dash", "-x"],
+        ["with a space", "my branch"],
+        ["ending with .lock", "main.lock"],
+        ["that is not a string", 42]
+    ])("Given a ref %s, when the project is updated, then it is refused with a 400 and nothing is written", async (_case, ref) => {
+        await expect(update({ codeRepositoryId: String(connectionId), repositoryId: "7", ref })).rejects.toMatchObject({ code: "PIPELINES_REF_INVALID", statusCode: 400 })
+        expect(written).toBeUndefined()
+    })
+
+    it("Given a member who is not an owner, when the pipeline templates are changed or cleared, then it is refused", async () => {
+        vi.mocked(UserProject.findOne).mockResolvedValue({ role: "MEMBER" } as never)
+        vi.spyOn(ProjectService.prototype as unknown as { isOrganizationAdmin: () => Promise<boolean> }, "isOrganizationAdmin").mockResolvedValue(false)
+
+        await expect(update({ codeRepositoryId: String(connectionId), repositoryId: "7" })).rejects.toMatchObject({ code: "PIPELINES_OWNER_REQUIRED", statusCode: 403 })
+        await expect(update(null)).rejects.toMatchObject({ code: "PIPELINES_OWNER_REQUIRED", statusCode: 403 })
+        expect(written).toBeUndefined()
+    })
+})
+
+describe("getContext", () => {
+    const projectId = String(newId())
+    const microfrontendId = newId()
+    let microfrontendFilter: Record<string, unknown> | undefined
+
+    beforeEach(() => {
+        microfrontendFilter = undefined
+        vi.spyOn(ProjectService.prototype, "findById").mockResolvedValue({ _id: newId(), name: "Portal", context: "shared rules" } as never)
+        vi.spyOn(Microfrontend, "find").mockImplementation(((filter: Record<string, unknown>) => {
+            microfrontendFilter = filter
+            return { sort: () => Promise.resolve([{ _id: microfrontendId, slug: "catalog", name: "Catalog", context: "catalog rules" }]) }
+        }) as never)
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it("Given a project and a microfrontend with a context, when the context is read, then both come back", async () => {
+        const context = await new ProjectService(aUser()).getContext(projectId)
+
+        expect(context.project).toMatchObject({ name: "Portal", context: "shared rules" })
+        expect(context.microfrontends).toEqual([expect.objectContaining({ slug: "catalog", context: "catalog rules" })])
+    })
+
+    it("Given microfrontends without a context, when the context is read, then they are left out by the query", async () => {
+        await new ProjectService(aUser()).getContext(projectId)
+
+        expect(microfrontendFilter).toMatchObject({ context: { $nin: [null, ""] } })
+    })
+
+    it("Given a microfrontend of the project, when its context is read, then only its own comes back with the project's", async () => {
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue({ _id: microfrontendId } as never)
+
+        const context = await new ProjectService(aUser()).getContext(projectId, { microfrontendId: String(microfrontendId) })
+
+        expect(context.project).toMatchObject({ context: "shared rules" })
+        expect(String(microfrontendFilter?._id)).toBe(String(microfrontendId))
+    })
+
+    it("Given a microfrontend of another project, when its context is read, then it is not found", async () => {
+        vi.spyOn(Microfrontend, "exists").mockResolvedValue(null as never)
+
+        await expect(new ProjectService(aUser()).getContext(projectId, { microfrontendId: String(microfrontendId) })).rejects.toBeInstanceOf(EntityNotFoundError)
+        expect(microfrontendFilter).toBeUndefined()
     })
 })

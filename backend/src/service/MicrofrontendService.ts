@@ -1,38 +1,150 @@
 import { MultipartFile } from "@fastify/multipart"
 import AdmZip from "adm-zip"
-import axios from "axios"
 import fs from "fs-extra"
-import * as git from "isomorphic-git"
-import http from "isomorphic-git/http/node"
 import { ClientSession, ObjectId, Schema, Types } from "mongoose"
-import os, { tmpdir } from "os"
-import path, { join } from "path"
+import os from "os"
+import path from "path"
 import { fastify } from ".."
-import AzureDevOpsClient from "../client/AzureDevOpsClient"
 import AzureStorageClient from "../client/AzureStorageAccount"
-import GithubClient from "../client/GithubClient"
-import GitlabClient from "../client/GitlabClient"
 import GoogleStorageClient from "../client/GoogleStorageAccount"
 import S3BucketClient from "../client/S3Buckets"
+import { createBusinessException } from "../errors/BusinessException"
 import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import { ApiKeyRole } from "../models/ApiKeyModel"
-import BuiltFrontend from "../models/BuiltFrontendModel"
-import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
-import { IMarket } from "../models/MarketModel"
-import Microfrontend, { HostedOn, IMicrofrontend } from "../models/MicrofrontendModel"
+import BuiltFrontend, { IBuiltFrontend } from "../models/BuiltFrontendModel"
+import CodeRepository from "../models/CodeRepositoryModel"
+import Microfrontend, { HostedOn, IHostMicrofrontend, IMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import Storage, { StorageType } from "../models/StorageModel"
 import MicrofrontendDTO from "../types/MicrofrontendDTO"
 import { MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
 import { toObjectId } from "../utils/mongooseUtils"
-import { ApiKeyService } from "./ApiKeyService"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import CodeManagementService from "./CodeManagementService"
-import { deploySecretName } from "./CodeRepositoryService"
 import MarketService from "./MarketService"
+import TemplateScaffoldService from "./TemplateScaffoldService"
+import { forgetMicrofrontends } from "./workspace/workspaceCleanup"
 
-const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
+/** What a microfrontend is served by when neither the caller nor a template says otherwise. */
+const DEFAULT_ENTRY_POINT = "assets/remoteEntry.js"
+
+/** A host given without an entry point gets the template's, when there is one: one given is kept */
+const withEntryPoint = (host: IHostMicrofrontend, entryPoint?: string): IHostMicrofrontend => (entryPoint && !host.entryPoint ? { ...host, entryPoint } : host)
+
+const isDuplicateKeyError = (error: unknown): boolean => (error as { code?: number })?.code === 11000
+
+const isNonEmptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0
+
+/**
+ * Refuses update operators and dotted paths: `{"$set": {"projectId": ...}}` or `{"codeRepository.codeRepositoryId": ...}`
+ * would reach Mongo past every check here, moving the microfrontend or lending it a connection of another project.
+ */
+const ensurePlainFields = (fields: object) => {
+    const key = Object.keys(fields).find(candidate => candidate.startsWith("$") || candidate.includes("."))
+    if (key) {
+        throw createBusinessException({ code: "MICROFRONTEND_INVALID", message: `"${key}" is not a field: update operators and dotted paths are refused` })
+    }
+}
+
+/** What the CI pipeline of a FRONTEND sends once it pushed the image of a tagged version */
+interface VersionRegistration {
+    image: string
+    digest?: string
+    commitSha?: string
+}
+
+/**
+ * The body the CI posts once it pushed an image. It arrives with an API key only, from a pipeline
+ * nobody watches: a malformed one is refused with a 400 rather than stored half filled.
+ */
+const parseRegistration = (body: unknown): VersionRegistration => {
+    const registration = (body ?? {}) as Record<string, unknown>
+    if (!isNonEmptyString(registration.image)) {
+        throw createBusinessException({ code: "MICROFRONTEND_VERSION_IMAGE_REQUIRED", message: "The image reference is required, e.g. ghcr.io/acme/shell:1.2.0" })
+    }
+    for (const field of ["digest", "commitSha"] as const) {
+        if (registration[field] !== undefined && typeof registration[field] !== "string") {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_INVALID", message: `${field} must be a string` })
+        }
+    }
+    return {
+        image: registration.image.trim(),
+        digest: (registration.digest as string | undefined)?.trim() || undefined,
+        commitSha: (registration.commitSha as string | undefined)?.trim() || undefined
+    }
+}
+
+/**
+ * The repository part of an image reference, without tag nor digest:
+ * `host:5000/acme/shell:1.2.0@sha256:…` → `host:5000/acme/shell`. A colon before the last slash
+ * is a registry port, not a tag.
+ */
+const imageRepositoryOf = (image: string): string => {
+    const withoutDigest = image.split("@")[0]
+    const tagAt = withoutDigest.lastIndexOf(":")
+    return tagAt > withoutDigest.lastIndexOf("/") ? withoutDigest.slice(0, tagAt) : withoutDigest
+}
+
+const SEMVER = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
+
+/** Semver precedence of two pre-release tags (`alpha.1` < `alpha.2` < `beta`). */
+const comparePrerelease = (a: string, b: string): number => {
+    const left = a.split(".")
+    const right = b.split(".")
+    for (let index = 0; index < Math.min(left.length, right.length); index++) {
+        const [x, y] = [left[index], right[index]]
+        const [xNumeric, yNumeric] = [/^\d+$/.test(x), /^\d+$/.test(y)]
+        if (xNumeric && yNumeric && Number(x) !== Number(y)) return Number(x) - Number(y)
+        if (xNumeric !== yNumeric) return xNumeric ? -1 : 1
+        if (x !== y) return x < y ? -1 : 1
+    }
+    return left.length - right.length
+}
+
+/**
+ * Whether `candidate` should become the version of a FRONTEND: always when it has none yet, otherwise
+ * only when both are semver and `candidate` is newer. Tags that are not semver (`latest`, a commit sha)
+ * cannot be ordered: they are registered as versions but never move the FRONTEND.
+ */
+const isNewerVersion = (candidate: string, current?: string): boolean => {
+    if (!current?.trim()) return true
+    const next = SEMVER.exec(candidate)
+    const previous = SEMVER.exec(current)
+    if (!next || !previous) return false
+    for (let part = 1; part <= 3; part++) {
+        const difference = Number(next[part]) - Number(previous[part])
+        if (difference !== 0) return difference > 0
+    }
+    // A release ranks above its pre-releases.
+    if (!next[4] || !previous[4]) return !next[4] && Boolean(previous[4])
+    return comparePrerelease(next[4], previous[4]) > 0
+}
+
+const ensureValidKind = (kind: unknown) => {
+    if (kind !== undefined && !Object.values(MicrofrontendKind).includes(kind as MicrofrontendKind)) {
+        throw createBusinessException({ code: "MICROFRONTEND_KIND_INVALID", message: `kind must be one of ${Object.values(MicrofrontendKind).join(", ")}` })
+    }
+}
+
+/**
+ * A FRONTEND is the top of its tree: it is served by its own container, so nothing can load it as a
+ * remote. Checked wherever parentIds is written, so no path leaves a FRONTEND with a parent.
+ */
+const frontendCannotHaveParents = (slug?: string) =>
+    createBusinessException({
+        code: "FRONTEND_CANNOT_HAVE_PARENTS",
+        message: `${slug ? `"${slug}" is a FRONTEND` : "A FRONTEND"}: it is served by its own container and cannot be a remote of another microfrontend`
+    })
+
+const ensureFrontendHasNoParents = (kind: MicrofrontendKind | undefined, parentIds: unknown[] | undefined, slug?: string) => {
+    if (kind === MicrofrontendKind.FRONTEND && parentIds && parentIds.length > 0) {
+        throw frontendCannotHaveParents(slug)
+    }
+}
+
+/** Matches a document with no parents: what a write making it a FRONTEND requires of what is stored at that moment */
+const WITHOUT_PARENTS = { $or: [{ parentIds: { $exists: false } }, { parentIds: { $size: 0 } }] }
+
 export class MicrofrontendService extends BaseAuthorizedService {
     async getById(id: string | ObjectId, session?: ClientSession): Promise<IMicrofrontend | null> {
         const idObj = typeof id === "string" ? new Types.ObjectId(id) : id
@@ -50,83 +162,45 @@ export class MicrofrontendService extends BaseAuthorizedService {
         return await Microfrontend.find({ projectId: projectIdObj })
     }
 
-    async create(microfrontend: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
+    async create(dto: MicrofrontendDTO, projectId: string | Schema.Types.ObjectId): Promise<IMicrofrontend> {
         const projectIdObj = toObjectId(projectId)
         await this.ensureAccessToProject(projectIdObj)
 
+        ensurePlainFields(dto)
+        ensureValidKind(dto.kind)
+        ensureFrontendHasNoParents(dto.kind, dto.parentIds, dto.slug)
+        const microfrontend = { ...dto }
+
+        // Both before the repository is created: a missing version or a taken slug would leave an orphan repository behind.
+        // A FRONTEND starts without a version: its first registered image sets it
+        if (dto.kind !== MicrofrontendKind.FRONTEND && (typeof dto.version !== "string" || !dto.version.trim())) {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_REQUIRED", message: "A MICROFRONTEND needs a version" })
+        }
+        if (await Microfrontend.exists({ slug: microfrontend.slug, projectId: projectIdObj })) {
+            throw createBusinessException({ code: "MICROFRONTEND_SLUG_TAKEN", message: `A microfrontend with slug "${microfrontend.slug}" already exists in this project`, statusCode: 409 })
+        }
+
+        // The file the template's build serves the microfrontend by: index.js for a single-spa
+        // application, parcel.js for a micro-lc parcel, remoteEntry.js for webpack
+        let templateEntryPoint: string | undefined
+
         if (microfrontend.codeRepository && microfrontend.codeRepository.enabled) {
             const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
-            if (!codeRepository) {
-                throw new EntityNotFoundError(microfrontend.codeRepository.repositoryId.toString())
+            // A connection of another project would lend this one its access token
+            if (!codeRepository || String(codeRepository.projectId) !== String(projectIdObj)) {
+                throw new EntityNotFoundError(String(microfrontend.codeRepository.codeRepositoryId))
             }
 
             if (microfrontend?.codeRepository?.createData) {
+                await this.ensureNotViewer(projectIdObj, { code: "REPOSITORY_CREATE_FORBIDDEN", message: "A viewer cannot create a code repository" })
                 const template = microfrontend.codeRepository.createData.template ? await new MarketService().getSingle(microfrontend.codeRepository.createData.template) : null
 
-                if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-                    if (!codeRepository.azureData) {
-                        throw new Error("Azure data is not set")
-                    }
-
-                    const azureDevOpsClient = new AzureDevOpsClient()
-                    const createdRepository = await azureDevOpsClient.createRepository(
-                        codeRepository.accessToken,
-                        codeRepository.azureData.organization,
-                        codeRepository.azureData.projectId,
-                        microfrontend.codeRepository.createData.name
-                    )
-                    microfrontend.codeRepository.repositoryId = createdRepository.id
-                    microfrontend.codeRepository.name = createdRepository.name
-                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.remoteUrl
-                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.sshUrl
-                    if (template) {
-                        await this.injectTemplateAzureDevOps(codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template)
-                        await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
-                    }
-                } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
-                    if (!codeRepository.gitlabData?.url) {
-                        throw new Error("Gitlab url is not set")
-                    }
-                    const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
-                    const path = microfrontend.codeRepository.gitlab?.groupPath || codeRepository.gitlabData?.groupPath || ""
-                    const createdRepository = await gitlabClient.createRepository({
-                        name: microfrontend.codeRepository.createData.name,
-                        namespace_id: microfrontend.codeRepository.gitlab?.groupId,
-                        visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
-                    })
-                    microfrontend.codeRepository.name = createdRepository.name
-                    microfrontend.codeRepository.repositoryId = createdRepository.id + ""
-                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.http_url_to_repo
-                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.ssh_url_to_repo
-                    if (template) {
-                        await this.injectTemplateGitlab(codeRepository.accessToken, codeRepository.gitlabData?.url, createdRepository.name, path, codeRepository, "gitlab", template)
-                    }
-                } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-                    const githubClient = new GithubClient()
-                    const createdRepository = await githubClient.createRepository(
-                        {
-                            name: microfrontend.codeRepository.createData.name,
-                            private: microfrontend.codeRepository.createData.private,
-                            visibility: microfrontend.codeRepository.createData.private ? "private" : "public"
-                        },
-                        codeRepository.accessToken,
-                        codeRepository.githubData?.organizationId
-                    )
-                    microfrontend.codeRepository.repositoryId = createdRepository.id + ""
-                    microfrontend.codeRepository.name = createdRepository.name
-                    microfrontend.codeRepository.cloneUrlHttps = createdRepository.clone_url
-                    microfrontend.codeRepository.cloneUrlSsh = createdRepository.ssh_url
-                    // Now will inject api key
-                    await this.gitHubInjectApiKey(codeRepository, microfrontend)
-                    // Now will inject the template
-                    if (template) {
-                        await this.injectTemplateGithub(microfrontend.slug, codeRepository.accessToken, createdRepository.clone_url, "github", template)
-                    }
-                }
+                await new TemplateScaffoldService(this.user).createRepository(codeRepository, microfrontend.codeRepository, microfrontend.slug, template, { microfrontendSlug: microfrontend.slug })
 
                 // The template knows the stack the repository was just scaffolded with: keep it,
                 // it is what makes the integration instructions specific to this microfrontend
                 if (template) {
+                    templateEntryPoint = template.entryPoint
                     microfrontend.template = template.slug
                     microfrontend.stack = {
                         framework: parseFramework(template.framework),
@@ -141,433 +215,24 @@ export class MicrofrontendService extends BaseAuthorizedService {
 
         return await Microfrontend.create({
             ...microfrontend,
+            host: microfrontend.host ? withEntryPoint(microfrontend.host, templateEntryPoint) : await this.defaultHost(projectIdObj, templateEntryPoint),
             projectId: projectIdObj
         } as unknown as IMicrofrontend)
     }
-    async gitHubInjectApiKey(codeRepository: ICodeRepository, microfrontend: MicrofrontendDTO) {
-        if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
-        if (codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return
-        if (!microfrontend.codeRepository.name) return
 
-        const githubClient = new GithubClient()
-
-        const exists = await githubClient.checkRepositorySecretExists({
-            accessToken: codeRepository.accessToken,
-            repositoryName: microfrontend.codeRepository.name,
-            secretName: deploySecretName
-        })
-
-        if (exists) {
-            return
+    /**
+     * The hosting the console preselects for a new microfrontend: the project's default storage,
+     * or the MFE Orchestrator hub when it has none, with the template's entry point when it was
+     * created from one. Applied when a caller (the assistant, an MCP client) creates one without
+     * saying where it is served from.
+     */
+    private async defaultHost(projectId: ReturnType<typeof toObjectId>, templateEntryPoint?: string): Promise<IHostMicrofrontend> {
+        const entryPoint = templateEntryPoint || DEFAULT_ENTRY_POINT
+        const storage = await Storage.findOne({ projectId, default: true }, { _id: 1 })
+        if (!storage) {
+            return { type: HostedOn.MFE_ORCHESTRATOR_HUB, entryPoint }
         }
-
-        const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
-            name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + microfrontend.slug,
-            role: ApiKeyRole.MANAGER,
-            expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
-        })
-
-        await githubClient.upsertRepositorySecret({
-            accessToken: codeRepository.accessToken,
-            userName: codeRepository.githubData?.userName,
-            repositoryName: microfrontend.codeRepository.name,
-            secretName: deploySecretName,
-            value: apiKey.apiKey
-        })
-    }
-
-    async injectTemplateGitlab(accessToken: string, baseUrl: string, repositoryName: string, repositoryGroup: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
-        const templateUrl = template.zipUrl
-        if (!templateUrl) {
-            throw new Error("Template url is not set")
-        }
-
-        if (!codeRepository.gitlabData) {
-            throw new Error("Gitlab data is not set")
-        }
-
-        // Download + unzip template
-        const tempDir = await this.downloadZip("template", templateUrl)
-
-        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITLAB, accessToken, tempDir)
-
-        const path = repositoryGroup || codeRepository.gitlabData.groupPath
-
-        const baseUrlReal = baseUrl.replaceAll("https://", "").replaceAll("http://", "")
-        const repoUrl = "https://oauth2:" + accessToken + "@" + baseUrlReal + "/" + path + "/" + repositoryName + ".git"
-
-        await codeManagementService.cloneRepository({
-            repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true,
-            onAuth: () => ({ username: "oauth2", password: accessToken })
-        })
-
-        let files = await fs.readdir(tempDir)
-        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
-
-        if (files.length === 1) {
-            const top = join(tempDir, files[0])
-            const stat = await fs.lstat(top)
-            if (stat.isDirectory()) {
-                const items = await fs.readdir(top)
-                for (const item of items) {
-                    try {
-                        await fs.move(join(top, item), join(tempDir, item), {
-                            overwrite: true
-                        })
-                    } catch (err) {
-                        console.error(`Error moving ${item}:`, err)
-                    }
-                }
-                try {
-                    await fs.remove(top)
-                } catch (err) {
-                    console.error(`Error removing top-level folder:`, err)
-                }
-            }
-        }
-
-        // Work on pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, ".gitlab-ci.yml")
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                // Copy all contents from pipeline path to .github directory
-                await fs.copyFile(pipelinePath, join(tempDir, ".gitlab-ci.yml"))
-
-                // TODO Replace placeholders in all copied files
-                //await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
-
-        // Stage + commit
-        try {
-            await git.branch({
-                fs,
-                dir: tempDir,
-                ref: "main",
-                checkout: true,
-                force: true
-            })
-            await git.add({ fs, dir: tempDir, filepath: "." })
-            await git.commit({
-                fs,
-                dir: tempDir,
-                message: "Initial commit",
-                author: {
-                    name: "MFE Orchestrator Bot",
-                    email: "bot@mfe-orchestrator.dev"
-                }
-            })
-
-            // Push creates "main" on remote if missing
-            await git.push({
-                fs,
-                http,
-                dir: tempDir,
-                remote: "origin",
-                ref: "main",
-                remoteRef: "main",
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: "oauth2", password: accessToken }),
-                force: true
-            })
-
-            console.log("✅ Repo is ready and pushed!")
-            return tempDir
-        } catch (e) {
-            console.error("‼️ Error pushing to remote: ", e)
-            const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
-
-            const branches = await git.listBranches({ fs, dir: tempDir })
-            console.log("🔍 Local branches:", branches)
-
-            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
-            console.log("🔍 Remote branches:", remoteBranches)
-        }
-    }
-
-    async injectTemplateAzureDevOps(accessToken: string, repositoryName: string, codeRepository: ICodeRepository, repositoryType: string, template: IMarket) {
-        const templateUrl = template.zipUrl
-        if (!templateUrl) {
-            throw new Error("Template url is not set")
-        }
-        if (!codeRepository.azureData) {
-            throw new Error("Azure data is not set")
-        }
-
-        // Download + unzip template
-        const tempDir = await this.downloadZip("template", templateUrl)
-
-        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.AZURE_DEV_OPS, accessToken, tempDir)
-
-        const repoUrl = "https://root:" + accessToken + "@dev.azure.com/" + codeRepository.azureData.organization + "/" + codeRepository.azureData.projectId + "/_git/" + repositoryName
-
-        await codeManagementService.cloneRepository({
-            repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true
-        })
-
-        let files = await fs.readdir(tempDir)
-        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
-
-        if (files.length === 1) {
-            const top = join(tempDir, files[0])
-            const stat = await fs.lstat(top)
-            if (stat.isDirectory()) {
-                const items = await fs.readdir(top)
-                for (const item of items) {
-                    try {
-                        await fs.move(join(top, item), join(tempDir, item), {
-                            overwrite: true
-                        })
-                    } catch (err) {
-                        console.error(`Error moving ${item}:`, err)
-                    }
-                }
-                try {
-                    await fs.remove(top)
-                } catch (err) {
-                    console.error(`Error removing top-level folder:`, err)
-                }
-            }
-        }
-
-        // Copy pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType, "azure-pipelines.yml")
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                // Copy all contents from pipeline path to .github directory
-                await fs.copyFile(pipelinePath, join(tempDir, "azure-pipelines.yml"))
-
-                // Replace placeholders in all copied files
-                //await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
-                // Da fare!!
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
-
-        // Stage + commit
-        try {
-            await git.branch({
-                fs,
-                dir: tempDir,
-                ref: "main",
-                checkout: true,
-                force: true
-            })
-            await git.add({ fs, dir: tempDir, filepath: "." })
-            await git.commit({
-                fs,
-                dir: tempDir,
-                message: "Initial commit",
-                author: {
-                    name: "MFE Orchestrator Bot",
-                    email: "bot@mfe-orchestrator.dev"
-                }
-            })
-
-            // Push creates "main" on remote if missing
-            await git.push({
-                fs,
-                http,
-                dir: tempDir,
-                remote: "origin",
-                ref: "main",
-                remoteRef: "main",
-                headers: { "User-Agent": "mfe-orchestrator" },
-                onAuth: () => ({ username: accessToken, password: "x-oauth-basic" }),
-                force: true
-            })
-
-            console.log("✅ Repo is ready and pushed!")
-            return tempDir
-        } catch (e) {
-            console.error("‼️ Error pushing to remote: ", e)
-            const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
-
-            const branches = await git.listBranches({ fs, dir: tempDir })
-            console.log("🔍 Local branches:", branches)
-
-            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
-            console.log("🔍 Remote branches:", remoteBranches)
-        }
-    }
-
-    async createPipelineAzureDevOps(repositoryName: string, codeRepository: ICodeRepository) {
-        if (!codeRepository.azureData) {
-            throw new Error("Azure data is not set")
-        }
-
-        const accessToken = codeRepository.accessToken
-        const azureDevOpsClient = new AzureDevOpsClient()
-
-        try {
-            // Get repository details to obtain the repository ID
-            const repository = await azureDevOpsClient.getRepository(accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryName)
-
-            // Create the pipeline
-            const pipeline = await azureDevOpsClient.createPipeline(
-                accessToken,
-                codeRepository.azureData.organization,
-                codeRepository.azureData.projectId,
-                repository.id,
-                `${repositoryName}`,
-                "azure-pipelines.yml",
-                "/"
-            )
-
-            fastify.log.info(`✅ Pipeline created successfully: ${pipeline.name} (ID: ${pipeline.id})`)
-            fastify.log.info(`🔗 Pipeline URL: ${pipeline._links.web.href}`)
-
-            return pipeline
-        } catch (error: unknown) {
-            fastify.log.error(`❌ Failed to create pipeline for repository ${repositoryName}:` + error)
-            throw new Error(`Failed to create Azure DevOps pipeline: ${error}`)
-        }
-    }
-
-    async injectTemplateGithub(mfeSlug: string, githubToken: string, repoUrl: string, repositoryType: string, template: IMarket) {
-        const templateUrl = template.zipUrl
-        if (!templateUrl) {
-            throw new Error("Template url is not set")
-        }
-
-        // Download + unzip template
-        const tempDir = await this.downloadZip("template", templateUrl)
-
-        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITHUB, githubToken, tempDir)
-        await codeManagementService.cloneRepository({
-            repositoryUrl: repoUrl,
-            initializeInCaseOfEmptyRepo: true
-        })
-
-        // Flatten GitHub zip (moves contents up)
-        let files = await fs.readdir(tempDir)
-        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
-
-        if (files.length === 1) {
-            const top = join(tempDir, files[0])
-            const stat = await fs.lstat(top)
-            if (stat.isDirectory()) {
-                const items = await fs.readdir(top)
-                for (const item of items) {
-                    try {
-                        await fs.move(join(top, item), join(tempDir, item), {
-                            overwrite: true
-                        })
-                    } catch (err) {
-                        console.error(`Error moving ${item}:`, err)
-                    }
-                }
-                try {
-                    await fs.remove(top)
-                } catch (err) {
-                    console.error(`Error removing top-level folder:`, err)
-                }
-            }
-        }
-
-        // Copy pipelines
-        if (template.type && template.compiler) {
-            //Download piplines data
-            const tempDirPipelines = await this.downloadZip("template-pipelines", pipelinesUrl)
-
-            const pipelinePath = join(tempDirPipelines, "template-pipelines-main", template.type, template.compiler, repositoryType)
-
-            // Check if the pipeline path exists
-            if (await fs.pathExists(pipelinePath)) {
-                const githubDir = join(tempDir, ".github")
-
-                // Ensure .github directory exists
-                await fs.ensureDir(githubDir)
-
-                // Copy all contents from pipeline path to .github directory
-                await fs.copy(pipelinePath, githubDir, { overwrite: true })
-
-                // Replace placeholders in all copied files
-                await this.replacePlaceholdersInDirectory(githubDir, mfeSlug)
-
-                fastify.log.info(`✅ Pipeline files copied from ${template.type}/${template.compiler}/${repositoryType}`)
-            } else {
-                fastify.log.warn(`⚠️ Pipeline path not found: ${pipelinePath}`)
-            }
-        } else {
-            fastify.log.warn("⚠️ Template type or compiler not specified, skipping pipeline setup")
-        }
-
-        // Stage + commit
-        try {
-            await git.branch({
-                fs,
-                dir: tempDir,
-                ref: "main",
-                checkout: true,
-                force: true
-            })
-            await git.add({ fs, dir: tempDir, filepath: "." })
-            await git.commit({
-                fs,
-                dir: tempDir,
-                message: "Initial commit",
-                author: {
-                    name: "MFE Orchestrator Bot",
-                    email: "bot@mfe-orchestrator.dev"
-                }
-            })
-
-            await codeManagementService.pushRepository({
-                branch: "main"
-            })
-
-            console.log("✅ Repo is ready and pushed!")
-            return tempDir
-        } catch (e) {
-            console.error("‼️ Error pushing to remote: ", e)
-            const remotes = await git.listRemotes({ fs, dir: tempDir })
-            console.log("🔍 Known remotes:", remotes)
-
-            const branches = await git.listBranches({ fs, dir: tempDir })
-            console.log("🔍 Local branches:", branches)
-
-            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
-            console.log("🔍 Remote branches:", remoteBranches)
-        }
-    }
-
-    async downloadZip(prefixDirectory: string, urlToDownload: string): Promise<string> {
-        const temporaryDirectory = join(tmpdir(), `${prefixDirectory}-${Date.now()}`)
-        const responseDownload = await axios.get(urlToDownload, {
-            responseType: "arraybuffer"
-        })
-        if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
-
-        const zip = new AdmZip(Buffer.from(responseDownload.data))
-        zip.extractAllTo(temporaryDirectory, true)
-
-        return temporaryDirectory
+        return { type: HostedOn.CUSTOM_SOURCE, storageId: storage._id as unknown as IHostMicrofrontend["storageId"], entryPoint }
     }
 
     async update(microfrontendId: string | ObjectId, updates: MicrofrontendDTO): Promise<IMicrofrontend | null> {
@@ -578,7 +243,39 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
 
-        const result = await Microfrontend.findByIdAndUpdate(microfrontendIdObj, updates, { new: true })
+        // Never moved to another project, nor given another identity, through an update: the slug is
+        // in the upload URL the CI of the repository calls
+        const { _id: _mongoId, projectId: _projectId, slug: _slug, ...fields } = updates as Partial<MicrofrontendDTO> & { _id?: unknown; projectId?: unknown }
+        ensurePlainFields(fields)
+        ensureValidKind(fields.kind)
+        const kind = fields.kind ?? microfrontend.kind
+        // Both sides of the rule can change here: parents given to a FRONTEND, or a microfrontend with parents made one
+        ensureFrontendHasNoParents(kind, fields.parentIds ?? microfrontend.parentIds, microfrontend.slug)
+        const allowed: Partial<MicrofrontendDTO> & Record<string, unknown> = { ...fields }
+        // The orchestrator draws no canary for a FRONTEND: one left enabled would only mislead the console
+        if (kind === MicrofrontendKind.FRONTEND && allowed.canary) {
+            allowed.canary = { ...allowed.canary, enabled: false }
+        } else if (kind === MicrofrontendKind.FRONTEND && microfrontend.kind !== MicrofrontendKind.FRONTEND && microfrontend.canary) {
+            allowed["canary.enabled"] = false
+        }
+        // Checked once the link is enabled, as in create: a disabled link lends no token, and refusing it
+        // would block every edit of a microfrontend whose connection was deleted since
+        if (allowed.codeRepository?.enabled) {
+            const codeRepository = await CodeRepository.findById(allowed.codeRepository.codeRepositoryId)
+            // A connection of another project would lend this one its access token
+            if (!codeRepository || String(codeRepository.projectId) !== String(microfrontend.projectId)) {
+                throw new EntityNotFoundError(String(allowed.codeRepository.codeRepositoryId))
+            }
+        }
+
+        if (kind !== MicrofrontendKind.FRONTEND || fields.parentIds !== undefined) {
+            return await Microfrontend.findByIdAndUpdate(microfrontendIdObj, allowed, { new: true, runValidators: true })
+        }
+        // Conditional on the parents stored when it is written: a relation set since the check above makes it miss
+        const result = await Microfrontend.findOneAndUpdate({ _id: microfrontend._id, ...WITHOUT_PARENTS }, allowed, { new: true, runValidators: true })
+        if (!result) {
+            throw frontendCannotHaveParents(microfrontend.slug)
+        }
         return result
     }
 
@@ -589,19 +286,24 @@ export class MicrofrontendService extends BaseAuthorizedService {
             throw new EntityNotFoundError(microfrontendIdObj.toString())
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
-        return await Microfrontend.findByIdAndDelete(microfrontendIdObj)
+        const deleted = await Microfrontend.findByIdAndDelete(microfrontendIdObj)
+        await forgetMicrofrontends([microfrontend])
+        return deleted
     }
 
     async bulkDelete(ids: string[]): Promise<number> {
+        const microfrontends: IMicrofrontend[] = []
         for (const id of ids) {
             const microfrontend = await this.getById(id)
             if (!microfrontend) {
                 throw new EntityNotFoundError(id)
             }
             await this.ensureAccessToMicrofrontend(microfrontend)
+            microfrontends.push(microfrontend)
         }
 
         const result = await Microfrontend.deleteMany({ _id: { $in: ids.map(toObjectId) } })
+        await forgetMicrofrontends(microfrontends)
         return result.deletedCount
     }
 
@@ -616,6 +318,13 @@ export class MicrofrontendService extends BaseAuthorizedService {
         })
         if (!microfrontend) {
             throw new EntityNotFoundError(microfrontendSlug)
+        }
+        // Its container serves its files: the CI registers the image instead, see registerVersionWithPermissionCheck
+        if (microfrontend.kind === MicrofrontendKind.FRONTEND) {
+            throw createBusinessException({
+                code: "FRONTEND_UPLOAD_NOT_ALLOWED",
+                message: `"${microfrontendSlug}" is a FRONTEND: it is served by its own container, register the version of its image instead of uploading a bundle`
+            })
         }
 
         // Validate that the file is a ZIP
@@ -743,40 +452,6 @@ export class MicrofrontendService extends BaseAuthorizedService {
         await processDirectory(localDir)
     }
 
-    private async replacePlaceholdersInDirectory(directory: string, mfeSlug: string): Promise<void> {
-        const processFile = async (filePath: string) => {
-            try {
-                const content = await fs.readFile(filePath, "utf8")
-                const updatedContent = content.replace(/%microfrontendSlug%/g, mfeSlug).replace(/%domain%/g, process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev")
-
-                if (content !== updatedContent) {
-                    await fs.writeFile(filePath, updatedContent, "utf8")
-                    fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
-                }
-            } catch (error) {
-                // Skip binary files or files that can't be read as text
-                fastify.log.debug(`Skipping file ${filePath}: ${error}`)
-            }
-        }
-
-        const processDirectory = async (dir: string) => {
-            const items = await fs.readdir(dir)
-
-            for (const item of items) {
-                const fullPath = path.join(dir, item)
-                const stats = await fs.lstat(fullPath)
-
-                if (stats.isDirectory()) {
-                    await processDirectory(fullPath)
-                } else if (stats.isFile()) {
-                    await processFile(fullPath)
-                }
-            }
-        }
-
-        await processDirectory(directory)
-    }
-
     async build(microfrontendId: string, version: string, ref?: string): Promise<void> {
         const microfrontend = await this.getById(microfrontendId)
         if (!microfrontend) {
@@ -784,47 +459,7 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
         await this.ensureAccessToMicrofrontend(microfrontend)
 
-        if (!microfrontend.codeRepository?.enabled) return
-
-        const codeRepository = await CodeRepository.findById(microfrontend.codeRepository.codeRepositoryId)
-        if (!codeRepository) {
-            throw new EntityNotFoundError(microfrontend.codeRepository.codeRepositoryId.toString())
-        }
-
-        const repositoryId = microfrontend.codeRepository.repositoryId
-        const branchName = ref || "main"
-
-        if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-            const githubClient = new GithubClient()
-            const commitSha = await githubClient.getBranchCommitSha(
-                codeRepository.accessToken,
-                microfrontend.codeRepository.name,
-                branchName,
-                codeRepository.githubData?.organizationId,
-                codeRepository.githubData?.userName
-            )
-            return await githubClient.createTag(
-                codeRepository.accessToken,
-                microfrontend.codeRepository.name,
-                version,
-                commitSha,
-                codeRepository.githubData?.organizationId,
-                codeRepository.githubData?.userName
-            )
-        } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
-            const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url || "", codeRepository.accessToken)
-
-            const commitSha = await gitlabClient.getBranchCommitSha(repositoryId, branchName)
-            return await gitlabClient.createTag(repositoryId, version, commitSha)
-        } else if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
-            const azureClient = new AzureDevOpsClient()
-            if (!codeRepository.azureData) {
-                throw new Error("Azure DevOps data not found")
-            }
-
-            const commitId = await azureClient.getBranchCommitId(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, branchName)
-            return await azureClient.createTag(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, version, commitId)
-        }
+        await new TemplateScaffoldService(this.user).createTag(microfrontend.codeRepository, microfrontend.projectId, version, ref)
     }
 
     async getVersionsById(id: string) {
@@ -832,7 +467,91 @@ export class MicrofrontendService extends BaseAuthorizedService {
         if (!microfrontend) {
             throw new EntityNotFoundError(id)
         }
-        return BuiltFrontend.find({ microfrontendId: microfrontend._id }).select("version").distinct("version")
+        // A kind switch leaves the versions of the other kind behind: a bundle has no image, a registered image has one
+        return BuiltFrontend.find({ microfrontendId: microfrontend._id, image: { $exists: microfrontend.kind === MicrofrontendKind.FRONTEND } })
+            .select("version")
+            .distinct("version")
+    }
+
+    /** What was built of each version, newest first: for a FRONTEND the image the CI registered with it */
+    async getBuildsById(id: string): Promise<IBuiltFrontend[]> {
+        const microfrontend = await this.getById(id)
+        if (!microfrontend) {
+            throw new EntityNotFoundError(id)
+        }
+        return await BuiltFrontend.find({ microfrontendId: microfrontend._id }).sort({ createdAt: -1 })
+    }
+
+    /**
+     * Called by the CI of a FRONTEND with the deploy API key once the image of `version` is pushed:
+     * registering the same version again replaces what was stored for it, the FRONTEND
+     * moves to `version` only when it is newer and learns its image repository from the first
+     * registration. A MICROFRONTEND uploads its bundle instead. MANAGER keys only.
+     */
+    async registerVersionWithPermissionCheck(microfrontendSlug: string, version: string, projectId: string, body: unknown, apiKeyRole?: ApiKeyRole): Promise<IBuiltFrontend> {
+        if (apiKeyRole !== ApiKeyRole.MANAGER) {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_FORBIDDEN", message: "Registering a version requires an API key with the MANAGER role", statusCode: 403 })
+        }
+        const registration = parseRegistration(body)
+        if (typeof version !== "string" || !version.trim()) {
+            throw createBusinessException({ code: "MICROFRONTEND_VERSION_INVALID", message: "The version is required" })
+        }
+
+        const project = await Project.findById(projectId)
+        if (!project) {
+            throw new ProjectNotFoundError(projectId)
+        }
+        const microfrontend = await Microfrontend.findOne({ slug: microfrontendSlug.trim().toLowerCase(), projectId: toObjectId(projectId) })
+        if (!microfrontend) {
+            throw new EntityNotFoundError(microfrontendSlug)
+        }
+        if (microfrontend.kind !== MicrofrontendKind.FRONTEND) {
+            throw createBusinessException({
+                code: "MICROFRONTEND_VERSION_REGISTRATION_NOT_ALLOWED",
+                message: `"${microfrontend.slug}" is a MICROFRONTEND: its CI uploads the bundle of a version, there is no image to register`
+            })
+        }
+
+        const trimmedVersion = version.trim()
+        const unset: Record<string, ""> = {}
+        if (!registration.digest) unset.digest = ""
+        if (!registration.commitSha) unset.commitSha = ""
+
+        const upsert = () =>
+            BuiltFrontend.findOneAndUpdate(
+                { microfrontendId: microfrontend._id, version: trimmedVersion },
+                {
+                    $set: {
+                        image: registration.image,
+                        ...(registration.digest && { digest: registration.digest }),
+                        ...(registration.commitSha && { commitSha: registration.commitSha })
+                    },
+                    ...(Object.keys(unset).length > 0 && { $unset: unset })
+                },
+                { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+            )
+        let built
+        try {
+            built = await upsert()
+        } catch (error) {
+            if (!isDuplicateKeyError(error)) throw error
+            built = await upsert()
+        }
+
+        // Compare and set on the version that was read: two pipelines finishing
+        // together cannot move the FRONTEND back to the older of the two
+        let current: IMicrofrontend | null = microfrontend
+        for (let attempt = 0; current && attempt < 3; attempt++) {
+            const updates: Record<string, string> = {}
+            if (isNewerVersion(trimmedVersion, current.version)) updates.version = trimmedVersion
+            if (!current.image?.repository?.trim()) updates["image.repository"] = imageRepositoryOf(registration.image)
+            if (Object.keys(updates).length === 0) break
+            const result = await Microfrontend.updateOne({ _id: microfrontend._id, version: current.version ?? null }, { $set: updates })
+            if (result.matchedCount > 0) break
+            current = await Microfrontend.findById(microfrontend._id)
+        }
+
+        return built as IBuiltFrontend
     }
 
     async setRelation(hostId: string, remoteId: string): Promise<IMicrofrontend> {
@@ -846,16 +565,14 @@ export class MicrofrontendService extends BaseAuthorizedService {
         }
 
         await this.ensureAccessToMicrofrontend(host)
+        ensureFrontendHasNoParents(remote.kind, [host._id], remote.slug)
 
-        if (remote.parentIds) {
-            if (!remote.parentIds.includes(host._id)) {
-                remote.parentIds.push(host._id)
-            }
-        } else {
-            remote.parentIds = [host._id]
+        // Conditional on the kind stored when it is written: a switch to FRONTEND since the check above makes it miss
+        const updated = await Microfrontend.findOneAndUpdate({ _id: remote._id, kind: { $ne: MicrofrontendKind.FRONTEND } }, { $addToSet: { parentIds: host._id } }, { new: true })
+        if (!updated) {
+            throw frontendCannotHaveParents(remote.slug)
         }
-
-        return await remote.save()
+        return updated
     }
 
     async deleteRelation(hostId: string, remoteId: string): Promise<IMicrofrontend> {

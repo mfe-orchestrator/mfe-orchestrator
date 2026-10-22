@@ -7,13 +7,13 @@ import BuiltFrontend from "../models/BuiltFrontendModel"
 import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
 import Deployment from "../models/DeploymentModel"
 import Environment from "../models/EnvironmentModel"
-import Microfrontend, { IMicrofrontend } from "../models/MicrofrontendModel"
-import { BuildRunDTO, BuildStatus, BuildUnavailableReason, MicrofrontendBuildStatusDTO, ProjectBuildStatusDTO } from "../types/BuildStatusDTO"
+import Microfrontend, { IMicrofrontend, MicrofrontendKind } from "../models/MicrofrontendModel"
+import { BuildJobLogDTO, BuildRunDTO, BuildStatus, BuildUnavailableReason, MicrofrontendBuildStatusDTO, ProjectBuildStatusDTO } from "../types/BuildStatusDTO"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 
 /** How many runs per microfrontend are read from the provider. */
-const RUNS_PER_MICROFRONTEND = 5
+const RUNS_PER_COMPONENT = 5
 
 /**
  * How long a snapshot is reused before the providers are asked again.
@@ -169,8 +169,9 @@ export const toAzureRun = (build: AzureDevOpsBuild): BuildRunDTO => ({
 
 class BuildStatusService extends BaseAuthorizedService {
     /**
-     * Build status of every microfrontend of a project, read live from the CI
-     * providers and joined with the version each environment currently serves.
+     * Build status of every microfrontend of a project,
+     * read live from the CI providers and joined with the version each environment
+     * currently serves.
      *
      * Repeated calls within {@link SNAPSHOT_TTL_MS} share one round of provider
      * calls. The in-flight promise is what gets cached, so two viewers arriving
@@ -195,23 +196,62 @@ class BuildStatusService extends BaseAuthorizedService {
         return snapshot
     }
 
+    /**
+     * Logs of the failed jobs of one run of a microfrontend, read live from its CI provider.
+     *
+     * Not cached and not part of the snapshot: logs are large and only ever asked for one
+     * run at a time, when somebody wants to know why it failed.
+     */
+    async getFailedRunLogs(projectId: string, microfrontendId: string, runId: string): Promise<BuildJobLogDTO[]> {
+        const component = await Microfrontend.findById(toObjectId(microfrontendId))
+        // A microfrontend of another project is reported as missing: the caller asked about this one.
+        if (!component || component.projectId.toString() !== projectId) {
+            throw new Error("Microfrontend not found in this project")
+        }
+        await this.ensureAccessToProject(component.projectId)
+
+        const codeRepositoryId = component.codeRepository?.enabled ? component.codeRepository.codeRepositoryId : undefined
+        const repository = codeRepositoryId ? await CodeRepository.findById(codeRepositoryId) : null
+        if (!repository) {
+            throw new Error("The microfrontend has no code repository connected")
+        }
+
+        if (repository.provider === CodeRepositoryProvider.GITHUB) {
+            const repositoryName = component.codeRepository?.name
+            if (!repositoryName) return []
+            return new GithubClient().getFailedJobLogs(repository.accessToken, repositoryName, runId, repository.githubData?.organizationId, repository.githubData?.userName)
+        }
+
+        const repositoryId = component.codeRepository?.repositoryId
+        if (!repositoryId) return []
+
+        if (repository.provider === CodeRepositoryProvider.GITLAB) {
+            return new GitlabClient(repository.gitlabData?.url || "", repository.accessToken).getFailedJobLogs(repositoryId, runId)
+        }
+
+        if (repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS && repository.azureData) {
+            return new AzureDevOpsClient().getFailedJobLogs(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, runId)
+        }
+
+        return []
+    }
+
     private async fetchSnapshot(projectId: string): Promise<ProjectBuildStatusDTO> {
         const projectIdObj = toObjectId(projectId)
 
         const [microfrontends, environments] = await Promise.all([Microfrontend.find({ projectId: projectIdObj }).sort({ name: 1 }), Environment.find({ projectId: projectIdObj }).sort({ order: 1 })])
 
-        const versionsByEnvironment = await this.getVersionsByEnvironment(environments.map(environment => environment._id))
-        const repositoriesById = await this.getRepositoriesById(microfrontends)
+        const environmentIds = environments.map(environment => environment._id)
+        const [versionsByEnvironment, repositoriesById] = await Promise.all([this.getVersionsByEnvironment(environmentIds), this.getRepositoriesById(microfrontends)])
+        const environmentIdStrings = environmentIds.map(environmentId => environmentId.toString())
 
-        const rows = await Promise.all(
-            microfrontends.map(microfrontend =>
-                this.toMicrofrontendStatus(
-                    microfrontend,
-                    repositoriesById,
-                    environments.map(environment => environment._id.toString()),
-                    versionsByEnvironment
-                )
-            )
+        const microfrontendRows = await Promise.all(
+            microfrontends.map(async microfrontend => {
+                const lastBuilt = await BuiltFrontend.findOne({ microfrontendId: microfrontend._id }).sort({ createdAt: -1 }).select("version")
+                // A FRONTEND is not deployed by the orchestrator: what a snapshot holds of it is not what runs
+                const versionByEnvironmentId = microfrontend.kind === MicrofrontendKind.FRONTEND ? {} : this.toVersionByEnvironmentId(microfrontend, environmentIdStrings, versionsByEnvironment)
+                return this.toMicrofrontendStatus(microfrontend, lastBuilt?.version, versionByEnvironmentId, repositoriesById)
+            })
         )
 
         return {
@@ -224,7 +264,7 @@ class BuildStatusService extends BaseAuthorizedService {
                 color: environment.color,
                 isProduction: environment.isProduction
             })),
-            microfrontends: rows
+            microfrontends: microfrontendRows
         }
     }
 
@@ -250,12 +290,24 @@ class BuildStatusService extends BaseAuthorizedService {
         return result
     }
 
-    private async getRepositoriesById(microfrontends: IMicrofrontend[]): Promise<Map<string, ICodeRepository>> {
+    private toVersionByEnvironmentId(component: IMicrofrontend, environmentIds: string[], versionsByEnvironment: Map<string, Map<string, string>>): Record<string, string> {
+        const componentId = component._id.toString()
+        const versionByEnvironmentId: Record<string, string> = {}
+        for (const environmentId of environmentIds) {
+            const version = versionsByEnvironment.get(environmentId)?.get(componentId)
+            if (version) {
+                versionByEnvironmentId[environmentId] = version
+            }
+        }
+        return versionByEnvironmentId
+    }
+
+    private async getRepositoriesById(components: IMicrofrontend[]): Promise<Map<string, ICodeRepository>> {
         const ids = [
             ...new Set(
-                microfrontends
-                    .filter(microfrontend => microfrontend.codeRepository?.enabled)
-                    .map(microfrontend => microfrontend.codeRepository?.codeRepositoryId?.toString())
+                components
+                    .filter(component => component.codeRepository?.enabled)
+                    .map(component => component.codeRepository?.codeRepositoryId?.toString())
                     .filter(Boolean) as string[]
             )
         ]
@@ -267,85 +319,58 @@ class BuildStatusService extends BaseAuthorizedService {
     }
 
     private async toMicrofrontendStatus(
-        microfrontend: IMicrofrontend,
-        repositoriesById: Map<string, ICodeRepository>,
-        environmentIds: string[],
-        versionsByEnvironment: Map<string, Map<string, string>>
+        component: IMicrofrontend,
+        latestBuiltVersion: string | undefined,
+        versionByEnvironmentId: Record<string, string>,
+        repositoriesById: Map<string, ICodeRepository>
     ): Promise<MicrofrontendBuildStatusDTO> {
-        const microfrontendId = microfrontend._id.toString()
-
-        const versionByEnvironmentId: Record<string, string> = {}
-        for (const environmentId of environmentIds) {
-            const version = versionsByEnvironment.get(environmentId)?.get(microfrontendId)
-            if (version) {
-                versionByEnvironmentId[environmentId] = version
-            }
-        }
-
-        const lastBuilt = await BuiltFrontend.findOne({ microfrontendId: microfrontend._id }).sort({ createdAt: -1 }).select("version")
-
         const base: MicrofrontendBuildStatusDTO = {
-            microfrontendId,
-            name: microfrontend.name,
-            slug: microfrontend.slug,
-            selectedVersion: microfrontend.version,
-            latestBuiltVersion: lastBuilt?.version,
+            microfrontendId: component._id.toString(),
+            name: component.name,
+            slug: component.slug,
+            selectedVersion: component.version,
+            latestBuiltVersion,
             versionByEnvironmentId,
             builds: []
         }
 
-        if (!microfrontend.codeRepository?.enabled) {
+        if (!component.codeRepository?.enabled) {
             return { ...base, unavailableReason: BuildUnavailableReason.NO_REPOSITORY }
         }
 
-        const repository = repositoriesById.get(microfrontend.codeRepository.codeRepositoryId?.toString())
+        const repository = repositoriesById.get(component.codeRepository.codeRepositoryId?.toString())
         if (!repository) {
             return { ...base, unavailableReason: BuildUnavailableReason.REPOSITORY_NOT_FOUND }
         }
 
+        const repositoryName = component.codeRepository.name || component.codeRepository.repositoryId
         try {
-            return {
-                ...base,
-                provider: repository.provider,
-                repositoryName: microfrontend.codeRepository.name || microfrontend.codeRepository.repositoryId,
-                builds: await this.getRuns(microfrontend, repository)
-            }
+            return { ...base, provider: repository.provider, repositoryName, builds: await this.getRuns(component, repository) }
         } catch (error) {
             // One unreachable provider must not blank the whole screen: the row keeps
             // its versions and says why its runs are missing.
-            fastify.log.warn({ err: error, microfrontendId }, "Unable to read build status from the code repository provider")
-            return {
-                ...base,
-                provider: repository.provider,
-                repositoryName: microfrontend.codeRepository.name || microfrontend.codeRepository.repositoryId,
-                unavailableReason: BuildUnavailableReason.PROVIDER_ERROR
-            }
+            fastify.log.warn({ err: error, componentId: component._id.toString() }, "Unable to read build status from the code repository provider")
+            return { ...base, provider: repository.provider, repositoryName, unavailableReason: BuildUnavailableReason.PROVIDER_ERROR }
         }
     }
 
-    private async getRuns(microfrontend: IMicrofrontend, repository: ICodeRepository): Promise<BuildRunDTO[]> {
-        const repositoryId = microfrontend.codeRepository?.repositoryId
+    private async getRuns(component: IMicrofrontend, repository: ICodeRepository): Promise<BuildRunDTO[]> {
+        const repositoryId = component.codeRepository?.repositoryId
 
         if (repository.provider === CodeRepositoryProvider.GITHUB) {
             // GitHub addresses a repository by name, the other two by id, so which of
             // the two fields has to be present depends on the provider.
-            const repositoryName = microfrontend.codeRepository?.name
+            const repositoryName = component.codeRepository?.name
             if (!repositoryName) return []
 
-            const runs = await new GithubClient().getWorkflowRuns(
-                repository.accessToken,
-                repositoryName,
-                RUNS_PER_MICROFRONTEND,
-                repository.githubData?.organizationId,
-                repository.githubData?.userName
-            )
+            const runs = await new GithubClient().getWorkflowRuns(repository.accessToken, repositoryName, RUNS_PER_COMPONENT, repository.githubData?.organizationId, repository.githubData?.userName)
             return runs.map(toGithubRun)
         }
 
         if (!repositoryId) return []
 
         if (repository.provider === CodeRepositoryProvider.GITLAB) {
-            const pipelines = await new GitlabClient(repository.gitlabData?.url || "", repository.accessToken).getPipelines(repositoryId, RUNS_PER_MICROFRONTEND)
+            const pipelines = await new GitlabClient(repository.gitlabData?.url || "", repository.accessToken).getPipelines(repositoryId, RUNS_PER_COMPONENT)
             return pipelines.map(toGitlabRun)
         }
 
@@ -353,7 +378,7 @@ class BuildStatusService extends BaseAuthorizedService {
             if (!repository.azureData) {
                 throw new Error("Azure DevOps data not found")
             }
-            const builds = await new AzureDevOpsClient().getBuilds(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, repositoryId, RUNS_PER_MICROFRONTEND)
+            const builds = await new AzureDevOpsClient().getBuilds(repository.accessToken, repository.azureData.organization, repository.azureData.projectId, repositoryId, RUNS_PER_COMPONENT)
             return builds.map(toAzureRun)
         }
 

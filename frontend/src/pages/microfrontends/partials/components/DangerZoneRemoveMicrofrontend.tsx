@@ -47,7 +47,9 @@ export const DangerZoneRemoveMicrofrontend: React.FC<IDangerZoneRemoveMicrofront
                 open={opened}
                 onOpenChange={setOpened}
                 expectedText={microfrontend.name}
-                onConfirm={() => deleteMicrofrontendMutation.mutateAsync()}
+                onConfirm={async () => {
+                    await deleteMicrofrontendMutation.mutateAsync()
+                }}
                 isPending={deleteMicrofrontendMutation.isPending}
                 title={t("microfrontend.dangerZone.delete.dialog.title")}
                 warningTitle={t("microfrontend.dangerZone.delete.dialog.warning")}

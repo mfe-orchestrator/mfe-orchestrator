@@ -7,12 +7,28 @@ export enum RoleInProject {
     VIEWER = "VIEWER"
 }
 
+export interface ProjectPipelinesRepository {
+    codeRepositoryId: string
+    repositoryId: string
+    name: string
+}
+
+/** Il repository da cui si copiano le pipeline dei repository creati da un template, al posto dei template-pipelines ufficiali */
+export interface ProjectPipelines {
+    codeRepository: ProjectPipelinesRepository
+    /** Branch o tag letto; assente = il branch di default del repository */
+    ref?: string
+}
+
 export interface Project {
     /** The organization the project belongs to: a project sits in exactly one. */
     organizationId: string
     name: string
     slug: string
     description?: string
+    /** Markdown per gli agenti AI (client MCP, assistente della console) */
+    context?: string
+    pipelines?: ProjectPipelines
     createdAt?: string
     updatedAt?: string
     _id: string
@@ -41,7 +57,11 @@ export interface ProjectUpdateDTO {
     name?: string
     /** `null` azzera la descrizione: e' cosi che l'API esprime "nessuna descrizione". */
     description?: string | null
+    /** `null` azzera il contesto, come per la descrizione. */
+    context?: string | null
     isActive?: boolean
+    /** Il repository si indica con l'id del provider: il backend verifica che la connessione lo raggiunga. `null` torna ai template-pipelines ufficiali; ref vuoto o null = il branch di default */
+    pipelines?: { codeRepositoryId: string; repositoryId: string; ref?: string | null } | null
 }
 
 interface AddUserToProjectDTO {
@@ -96,11 +116,12 @@ const useProjectApi = () => {
         return response.data
     }
 
-    const updateProject = async (id: string, project: ProjectUpdateDTO): Promise<Project> => {
+    const updateProject = async (id: string, project: ProjectUpdateDTO, customErrorMessage?: (error: Error) => string | undefined): Promise<Project> => {
         const response = await apiClient.doRequest<Project>({
             url: `/api/projects/${id}`,
             method: "PUT",
-            data: project
+            data: project,
+            customErrorMessage
         })
         return response.data
     }

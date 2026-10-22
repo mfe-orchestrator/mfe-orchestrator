@@ -29,7 +29,7 @@ export const MicrofrontendsEmptyState: React.FC<MicrofrontendsEmptyStateProps> =
             actions={
                 isNoResults ? (
                     <Button variant="secondary" onClick={onResetFilters}>
-                        {t("microfrontend.dashboard.resetFilters")}
+                        {t("microfrontend.dashboard.clearSearch")}
                     </Button>
                 ) : (
                     <>

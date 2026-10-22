@@ -27,12 +27,21 @@ export interface AuthProvidersConfig {
     google?: GoogleProviderConfig
 }
 
+/** How hard the model reasons before answering, lowest first. */
+export const LLM_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const
+
+export type LlmEffort = (typeof LLM_EFFORTS)[number]
+
 export default interface GlobalConfigDTO {
     frontendUrl: string
     registrationAllowed: boolean
     canSendEmail: boolean
     marketingOptInEnabled: boolean
     providers: AuthProvidersConfig
+    mcp: {
+        enabled: boolean
+        url: string
+    }
     codeRepository?: {
         github?: {
             clientId: string

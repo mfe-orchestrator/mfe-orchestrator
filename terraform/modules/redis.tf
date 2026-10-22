@@ -8,7 +8,7 @@ resource "docker_container" "redis" {
   image    = docker_image.redis.image_id
   command  = ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
   restart  = "unless-stopped"
-    networks_advanced {
+  networks_advanced {
     name = var.network_name
   }
   healthcheck {

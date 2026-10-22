@@ -1,3 +1,5 @@
+export {}
+
 interface GlobalConfiguration {
     SENTRY_DSN?: string
     VERSION?: string

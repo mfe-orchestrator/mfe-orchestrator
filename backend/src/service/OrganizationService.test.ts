@@ -7,6 +7,7 @@ vi.mock("..", () => ({
 }))
 
 import { BusinessException } from "../errors/BusinessException"
+import AiModel from "../models/AiModelModel"
 import Organization from "../models/OrganizationModel"
 import Project from "../models/ProjectModel"
 import { IUser } from "../models/UserModel"
@@ -29,6 +30,7 @@ let createdOrganizations: { name: string; slug: string }[]
 let createdMemberships: { userId: string; role: RoleInOrganization }[]
 let deletedOrganizationIds: string[]
 let deletedMembershipFilters: Record<string, unknown>[]
+let deletedAiModelFilters: Record<string, unknown>[]
 
 const sameId = (left: unknown, right: unknown) => String(left) === String(right)
 
@@ -55,6 +57,7 @@ describe("OrganizationService", () => {
         createdMemberships = []
         deletedOrganizationIds = []
         deletedMembershipFilters = []
+        deletedAiModelFilters = []
 
         vi.spyOn(UserOrganization, "findOne").mockImplementation(((filter: Record<string, unknown>) => {
             const { userId, invitationToken } = filter as Record<string, unknown>
@@ -66,6 +69,11 @@ describe("OrganizationService", () => {
         vi.spyOn(UserOrganization, "deleteMany").mockImplementation(((filter: Record<string, unknown>) => {
             deletedMembershipFilters.push(filter as Record<string, unknown>)
             return Promise.resolve({ deletedCount: memberships.length }) as never
+        }) as never)
+
+        vi.spyOn(AiModel, "deleteMany").mockImplementation(((filter: Record<string, unknown>) => {
+            deletedAiModelFilters.push(filter as Record<string, unknown>)
+            return Promise.resolve({ deletedCount: 1 }) as never
         }) as never)
 
         vi.spyOn(Organization, "deleteOne").mockImplementation(((filter: Record<string, unknown>) => {
@@ -137,15 +145,17 @@ describe("OrganizationService", () => {
             expect(await codeOf(new OrganizationService(owner).delete(ORGANIZATION_ID))).toBe("ORGANIZATION_NOT_EMPTY")
             expect(deletedOrganizationIds).toHaveLength(0)
             expect(deletedMembershipFilters).toHaveLength(0)
+            expect(deletedAiModelFilters).toHaveLength(0)
         })
 
-        it("Given an empty organization, when its owner deletes it, then its memberships go with it", async () => {
+        it("Given an empty organization, when its owner deletes it, then its memberships and its AIs go with it", async () => {
             const owner = aUser()
             memberships.push({ userId: owner._id, role: RoleInOrganization.OWNER })
 
             await new OrganizationService(owner).delete(ORGANIZATION_ID)
 
             expect(deletedMembershipFilters).toEqual([{ organizationId: ORGANIZATION_ID }])
+            expect(deletedAiModelFilters).toEqual([{ organizationId: ORGANIZATION_ID }])
             expect(deletedOrganizationIds).toEqual([String(ORGANIZATION_ID)])
         })
 

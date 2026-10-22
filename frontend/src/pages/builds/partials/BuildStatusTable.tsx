@@ -6,6 +6,7 @@ import { BuildUnavailableReason, MicrofrontendBuildStatus, ProjectBuildStatus } 
 import { cn } from "@/utils/styleUtils"
 import BuildRunList from "./BuildRunList"
 import BuildStatusBadge from "./BuildStatusBadge"
+import ProviderRunLink from "./ProviderRunLink"
 
 interface BuildStatusTableProps {
     data: ProjectBuildStatus
@@ -35,7 +36,12 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
         if (!lastBuild) {
             return <span className="text-sm text-foreground-secondary">{t("builds.table.no_runs")}</span>
         }
-        return <BuildStatusBadge status={lastBuild.status} />
+        return (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <BuildStatusBadge status={lastBuild.status} />
+                {lastBuild.url && <ProviderRunLink url={lastBuild.url} provider={row.provider} />}
+            </div>
+        )
     }
 
     return (
@@ -43,7 +49,7 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
             <TableHeader>
                 <TableRow>
                     <TableHead className="w-10" />
-                    <TableHead>{t("builds.table.microfrontend")}</TableHead>
+                    <TableHead>{t("builds.table.name")}</TableHead>
                     <TableHead>{t("builds.table.last_build")}</TableHead>
                     <TableHead>{t("builds.table.build_ref")}</TableHead>
                     <TableHead>{t("builds.table.last_built_version")}</TableHead>
@@ -105,7 +111,7 @@ const BuildStatusTable: React.FC<BuildStatusTableProps> = ({ data }) => {
                                         {row.unavailableReason === BuildUnavailableReason.PROVIDER_ERROR ? (
                                             <p className="text-sm">{t("builds.unavailable.PROVIDER_ERROR")}</p>
                                         ) : (
-                                            <BuildRunList runs={row.builds} />
+                                            <BuildRunList runs={row.builds} microfrontendId={row.microfrontendId} microfrontendName={row.name} provider={row.provider} />
                                         )}
                                     </div>
                                 </TableCell>

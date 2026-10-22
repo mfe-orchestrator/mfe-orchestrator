@@ -4,6 +4,12 @@ import { MicrofrontendCompiler, MicrofrontendFramework } from "../types/Microfro
 export const CLIENT_SDK_PACKAGE = "@mfe-orchestrator-hub/client"
 
 /**
+ * Where the SDK publishes its webpack remote loader. A webpack config reaches it through this
+ * global because the `promise` expression it declares cannot import a package.
+ */
+export const SDK_GLOBAL = "globalThis.__MFE_ORCHESTRATOR__"
+
+/**
  * A slug turned into an identifier module federation accepts as a remote name: slashes become
  * underscores and dashes go, because the host imports from it ("myremote/Button").
  */
@@ -95,6 +101,55 @@ const REQUIRED_DEV_DEPENDENCIES: Partial<Record<MicrofrontendCompiler, string[]>
     [MicrofrontendCompiler.VITE]: ["@originjs/vite-plugin-federation"]
 }
 
+/**
+ * The shared React contract of a single-spa root config: the applications keep React as bare
+ * imports, and the browser resolves them through an import map the root config generates.
+ */
+const SINGLE_SPA_SHARED_REACT = `
+
+// ---------------------------------------------------------------------------
+// Shared React: the import map
+// The applications keep react, react-dom, react-dom/client and react/jsx-runtime
+// as bare imports. The root config answers them with an import map, injected at
+// the top of <head> before any module script, pointing at ES module re-exports of
+// its own React (the sharedImportMap plugin of template-single-spa-react-host's
+// vite.config.ts builds them as extra entries of the same bundle):
+//
+// <script type="importmap">
+// { "imports": {
+//     "react": "/assets/shared-react-<hash>.js",
+//     "react-dom": "/assets/shared-react-dom-<hash>.js",
+//     "react-dom/client": "/assets/shared-react-dom-client-<hash>.js",
+//     "react/jsx-runtime": "/assets/shared-react-jsx-runtime-<hash>.js"
+// } }
+// </script>
+//
+// One React for the whole page. A package shared here must be external in every
+// application, and a React subpath an application imports must be in the map.
+// ---------------------------------------------------------------------------`
+
+/**
+ * The shared React contract of a micro-lc shell: a sandboxed UMD parcel cannot import modules,
+ * but reads that miss its sandbox fall through to the real window, where the shell publishes React.
+ */
+const MICRO_LC_SHARED_REACT = `
+
+// ---------------------------------------------------------------------------
+// Shared React: the window globals (src/shared-react.ts, imported before micro-lc
+// mounts anything). The parcels build React as externals mapped to these names:
+// renaming one breaks every parcel.
+// ---------------------------------------------------------------------------
+/*
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
+import * as ReactDOMClient from 'react-dom/client'
+import * as ReactJSXRuntime from 'react/jsx-runtime'
+
+window.React = React
+window.ReactDOM = { ...ReactDOM, ...ReactDOMClient }
+window.ReactJSXRuntime = ReactJSXRuntime
+*/`
+
 export interface FederationConfigRequest {
     framework?: MicrofrontendFramework
     compiler?: MicrofrontendCompiler
@@ -118,8 +173,10 @@ export interface IntegrationInstructions {
     config?: string
     /** Snippet for the entry point of the host app */
     bootstrap?: string
-    /** What the reader (or the integration) has to install */
+    /** What the reader (or the integration) has to install as build-time packages */
     dependencies: string[]
+    /** Packages the app itself imports at runtime, beyond the client SDK every host needs */
+    runtimeDependencies?: string[]
     installCommand?: string
     /** Everything above, concatenated, which is what the instructions screen renders */
     code: string
@@ -143,6 +200,14 @@ export class FederationConfigService {
 
         if (compiler === MicrofrontendCompiler.WEBCOMPONENT) {
             return this.webComponentInstructions()
+        }
+
+        if (compiler === MicrofrontendCompiler.SINGLE_SPA) {
+            return this.singleSpaInstructions(request)
+        }
+
+        if (compiler === MicrofrontendCompiler.MICRO_LC) {
+            return this.microlcInstructions(request)
         }
 
         if (!compiler || !framework) {
@@ -174,7 +239,276 @@ export class FederationConfigService {
         return { dependencies: [], code: "", runtimeIntegration: true }
     }
 
-    private remotesBlock(remotes: FederationRemote[], render: (remote: FederationRemote) => string, indent: string): string {
+    /**
+     * single-spa: no module federation. A root config (any microfrontend consuming others, or a
+     * host) gets the file registering its applications, each loaded with `import()` of the url
+     * `remoteUrl()` resolves; an application gets the library build that makes it one ES module
+     * exporting lifecycles, React kept external. Modelled on template-single-spa-react-host and
+     * template-single-spa-react-remote.
+     */
+    private singleSpaInstructions(request: FederationConfigRequest): IntegrationInstructions {
+        if (!this.isHost(request)) {
+            const configPath = request.configPath || "vite.config.ts"
+            const config = this.singleSpaApplicationConfig(configPath)
+            return { configPath, config, dependencies: [], runtimeDependencies: ["single-spa-react"], installCommand: "npm install single-spa-react", code: config }
+        }
+
+        const config = this.singleSpaApplicationsFile(request.remotes)
+        const bootstrap = this.integrationBootstrap(request, "src/main.tsx", [
+            "import { start } from 'single-spa'",
+            "import { registerApplications } from './applications'",
+            "",
+            "registerApplications()",
+            "start()"
+        ])
+        const runtimeDependencies = ["single-spa"]
+
+        return {
+            configPath: "src/applications.ts",
+            config,
+            bootstrap,
+            dependencies: [],
+            runtimeDependencies,
+            installCommand: `npm install ${[...runtimeDependencies, CLIENT_SDK_PACKAGE].join(" ")}`,
+            code: `${config}${bootstrap}${SINGLE_SPA_SHARED_REACT}`
+        }
+    }
+
+    /**
+     * micro-lc: no module federation either. A shell gets the micro-lc configuration built at
+     * runtime, one parcel per remote whose entry script is the url `remoteUrl()` resolves; a parcel
+     * gets the UMD library build qiankun can evaluate, React read from the shell's window globals.
+     * Modelled on template-microlc-react-host and template-microlc-react-remote.
+     */
+    private microlcInstructions(request: FederationConfigRequest): IntegrationInstructions {
+        if (!this.isHost(request)) {
+            const configPath = request.configPath || "vite.config.ts"
+            const config = this.microlcParcelConfig(configPath, federationName(request.microfrontendSlug))
+            return { configPath, config, dependencies: [], code: config }
+        }
+
+        const config = this.microlcConfigFile(request.remotes)
+        const bootstrap = this.integrationBootstrap(request, "src/main.tsx", [
+            "// Publishes the host's React on window for the parcels (see below).",
+            "import './shared-react'",
+            "import { buildMicrolcConfig } from './microlc-config'",
+            "",
+            "const mountPoint = document.getElementById('microlc') as HTMLElement",
+            "const config = await buildMicrolcConfig()",
+            "await customElements.whenDefined('micro-lc')",
+            "// Markup, not document.createElement(): micro-lc's constructor appends children.",
+            "// Setting config in the same task makes micro-lc render it once.",
+            "mountPoint.innerHTML = '<micro-lc></micro-lc>'",
+            ";(mountPoint.firstElementChild as HTMLElementTagNameMap['micro-lc']).config = config"
+        ])
+        const runtimeDependencies = ["@micro-lc/orchestrator"]
+
+        return {
+            configPath: "src/microlc-config.ts",
+            config,
+            bootstrap,
+            dependencies: ["@micro-lc/interfaces"],
+            runtimeDependencies,
+            installCommand: `npm install ${[...runtimeDependencies, CLIENT_SDK_PACKAGE].join(" ")}`,
+            code: `${config}${bootstrap}${MICRO_LC_SHARED_REACT}`
+        }
+    }
+
+    /** Whoever consumes others, or is declared a host, is the one wiring the integration up */
+    private isHost({ remotes, exposeSelf }: FederationConfigRequest): boolean {
+        return remotes.length > 0 || Boolean(exposeSelf)
+    }
+
+    private singleSpaApplicationsFile(remotes: FederationRemote[]): string {
+        const registrations =
+            remotes.length > 0
+                ? remotes.map(remote => this.singleSpaRegistration(remote.slug, "")).join("\n")
+                : `  // No remote is linked to this root config yet. Each one becomes:\n${this.singleSpaRegistration("<slug>", "// ")}`
+
+        return `// src/applications.ts
+import { remoteUrl } from '${CLIENT_SDK_PACKAGE}'
+import { registerApplication } from 'single-spa'
+
+// One registerApplication() per microfrontend this root config mounts. The string
+// passed to remoteUrl() is the slug in the orchestrator: it resolves to the url of
+// the application's entry module, already pinned to the version (stable or canary)
+// the backend picked for this page. Use it verbatim and never write a url here.
+//
+// Each application is a native ES module: its bare imports of react and react-dom
+// resolve through the import map of index.html, to this root config's React.
+// single-spa-react mounts it in <div id="single-spa-application:<name>">; pass
+// customProps: { domElementGetter } to mount it somewhere else.
+export function registerApplications() {
+${registrations}
+}
+`
+    }
+
+    private singleSpaRegistration(slug: string, comment: string): string {
+        return [
+            "registerApplication({",
+            `  name: '${slug}',`,
+            "  app: async () => {",
+            "    // Resolve the url first, then import it: Vite wraps every dynamic import in a",
+            "    // non-async preload callback, so import(await remoteUrl(...)) breaks the build.",
+            `    const url = await remoteUrl('${slug}')`,
+            "    return import(/* @vite-ignore */ url)",
+            "  },",
+            `  activeWhen: '/${slug}'`,
+            "})"
+        ]
+            .map(line => `  ${comment}${line}`)
+            .join("\n")
+    }
+
+    private singleSpaApplicationConfig(configPath: string): string {
+        return `// ${configPath}
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// Provided by the root config's import map: they stay bare imports in the build, so
+// the application renders with the root config's React instead of shipping its own.
+// Keep this list in line with the root config's shared packages.
+const shared = [/^react($|\\/)/, /^react-dom($|\\/)/]
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    target: 'esnext',
+    // A single-spa application is an ES module exporting bootstrap, mount and unmount
+    // (src/spa.tsx, with single-spa-react). The output is dist/index.js, a fixed name:
+    // it is the entry point the orchestrator serves, so keep it as the microfrontend's
+    // entry point. Lazy chunks are imported relatively, from the versioned url.
+    lib: {
+      entry: 'src/spa.tsx',
+      formats: ['es'],
+      fileName: () => 'index.js'
+    },
+    rolldownOptions: {
+      external: shared
+    }
+  }
+})
+`
+    }
+
+    private microlcConfigFile(remotes: FederationRemote[]): string {
+        const applications =
+            remotes.length > 0
+                ? remotes.map(remote => this.microlcApplication(remote.slug, "")).join(",\n")
+                : `      // No remote is linked to this shell yet. Each one becomes:\n${this.microlcApplication("<slug>", "// ")}`
+        const defaultUrl = remotes.length > 0 ? `\n    settings: { defaultUrl: './${remotes[0].slug}/' },` : ""
+
+        return `// src/microlc-config.ts
+import { remoteUrl } from '${CLIENT_SDK_PACKAGE}'
+import type { Config } from '@micro-lc/interfaces/v2'
+
+// The micro-lc configuration, built at runtime instead of a static config.json:
+// a parcel's entry is the url the console resolves for its slug, already pinned
+// to the version (stable or canary) this page must get. Never write a url here.
+// remoteUrl() shares one manifest request for the whole page.
+export async function buildMicrolcConfig(): Promise<Config> {
+  return {
+    version: 2,${defaultUrl}
+    applications: {
+      // One entry per microfrontend. The key is micro-lc's application id, the
+      // string passed to remoteUrl() is the slug of the microfrontend in the console.
+      // The entry is one self-contained UMD script: qiankun fetches it (CORS) and
+      // evaluates it in a sandbox, so no ES modules and no federation.
+${applications}
+    }
+  }
+}
+`
+    }
+
+    private microlcApplication(slug: string, comment: string): string {
+        return [`'${slug}': {`, "  integrationMode: 'parcel',", `  route: './${slug}/',`, `  entry: { scripts: [await remoteUrl('${slug}')] }`, "}"].map(line => `      ${comment}${line}`).join("\n")
+    }
+
+    /** @param globalName The UMD global, which stays inside the parcel's sandbox */
+    private microlcParcelConfig(configPath: string, globalName: string): string {
+        return `// ${configPath}
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// The globals the micro-lc shell publishes its React under: a contract with the
+// shell, so the names must match its window.React / ReactDOM / ReactJSXRuntime.
+const reactGlobals = {
+  react: 'React',
+  'react-dom': 'ReactDOM',
+  'react-dom/client': 'ReactDOM',
+  'react/jsx-runtime': 'ReactJSXRuntime'
+}
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    // qiankun only evaluates classic scripts exporting bootstrap, mount and unmount
+    // (src/parcel.tsx), so the parcel is a UMD library build: one self-contained
+    // file, dist/parcel.js. It is the entry point the orchestrator serves, so keep
+    // it as the microfrontend's entry point. No chunks and no CSS files: siblings
+    // would be requested from the shell's origin.
+    lib: {
+      entry: 'src/parcel.tsx',
+      name: '${globalName}',
+      formats: ['umd'],
+      fileName: () => 'parcel.js'
+    },
+    rolldownOptions: {
+      external: Object.keys(reactGlobals),
+      output: { globals: reactGlobals }
+    }
+  }
+})
+`
+    }
+
+    /**
+     * The entry point of a single-spa root config or a micro-lc shell: configure() first, then
+     * what starts the integration. Same configure() as the module federation hosts, but these
+     * stacks keep no bundler config of ours, so the two values the SDK needs are spelled out here
+     * for the reader to put in the `define` block of their vite.config, or in the CI variables.
+     */
+    private integrationBootstrap({ projectId, backendUrl }: FederationConfigRequest, entryPoint: string, start: string[]): string {
+        const define = [
+            ...(backendUrl ? [`//   'import.meta.env.VITE_MFE_BACKEND_URL': JSON.stringify(${JSON.stringify(backendUrl)}),`] : []),
+            ...(projectId ? [`//   'import.meta.env.VITE_MFE_PROJECT_ID': JSON.stringify(${JSON.stringify(projectId)}),`] : [])
+        ]
+        const defineNote =
+            define.length > 0
+                ? `\n// The backend url and the project id of this microfrontend, for the define block of\n// vite.config.ts (or the VITE_MFE_* variables of the CI):\n// define: {\n${define.join("\n")}\n// }`
+                : ""
+
+        return `
+
+// ---------------------------------------------------------------------------
+// Bootstrap: paste this at the very top of your entry point (${entryPoint}).
+// configure() has to run first, synchronously, before anything asks for a url.${defineNote}
+// ---------------------------------------------------------------------------
+/*
+import { configure } from '${CLIENT_SDK_PACKAGE}'
+
+// Optional: leave it unset and the environment is resolved from the domain this
+// page is served on, so the same build can run on every environment.
+const environment = import.meta.env.VITE_MFE_ENVIRONMENT?.trim()
+
+configure({
+  backendUrl: import.meta.env.VITE_MFE_BACKEND_URL,
+  projectId: import.meta.env.VITE_MFE_PROJECT_ID,
+  // Only a canary targeted on users reads this: userId: () => auth.currentUser?.id,
+  ...(environment ? { environment } : {})
+})
+
+${start.join("\n")}
+*/`
+    }
+
+    /**
+     * @param sdkCall The SDK function the entries hand the slug to, named in the comment
+     * @param note Comment lines a bundler needs on top of the shared ones, already indented
+     */
+    private remotesBlock(remotes: FederationRemote[], render: (remote: FederationRemote) => string, indent: string, sdkCall = "remoteUrl()", note: string[] = []): string {
         if (remotes.length === 0) {
             return ""
         }
@@ -182,9 +516,9 @@ export class FederationConfigService {
         return `
 ${indent}remotes: {
 ${indent}  // One entry per microfrontend this host consumes. The key is the name you import
-${indent}  // from ("${remotes[0].name}/Button"), the string passed to remoteUrl() is the slug in
+${indent}  // from ("${remotes[0].name}/Button"), the string passed to ${sdkCall} is the slug in
 ${indent}  // the orchestrator. Never write a url here: the backend resolves the version.
-${remotes.map(render).join(",\n")}
+${note.map(line => `${indent}  // ${line}\n`).join("")}${remotes.map(render).join(",\n")}
 ${indent}},`
     }
 
@@ -285,8 +619,19 @@ ${this.viteDefineBlock(request, profile)}  build: {
     private webpackConfig(request: FederationConfigRequest, profile: FrameworkProfile): string {
         const { microfrontendSlug, remotes, exposeSelf } = request
         // `promise <expression>` is how ModuleFederationPlugin declares a remote whose url is only
-        // known at runtime: the expression is inlined in the host bundle and awaited before use
-        const remotesBlock = this.remotesBlock(remotes, remote => `        ${remote.name}: \`promise import('${CLIENT_SDK_PACKAGE}').then(m => m.remoteUrl('${remote.slug}'))\``, "      ")
+        // known at runtime. The expression is pasted into the host bundle verbatim, outside of any
+        // module, so it cannot import the SDK (a bare import() reaches the browser unresolved), and it
+        // must resolve to the remote's container, not to its url. The SDK publishes a loader on a
+        // global for exactly this: it resolves the url, injects the remote entry and returns the
+        // container the entry defines under the second argument, which is the remote's own
+        // ModuleFederationPlugin name, generated below from the same federationName() as the key.
+        const remotesBlock = this.remotesBlock(
+            remotes,
+            remote => `        ${remote.name}: "promise ${SDK_GLOBAL}.loadWebpackRemote('${remote.slug}', '${remote.name}')"`,
+            "      ",
+            "loadWebpackRemote()",
+            ["The second one is the name the remote gives its own ModuleFederationPlugin."]
+        )
 
         const sharedBlock = profile.shared.map(dependency => `        '${dependency}': { singleton: true }`).join(",\n")
         const imports = ["const webpack = require('webpack');", ...(profile.webpackImports || []), "const { ModuleFederationPlugin } = webpack.container;"]
@@ -317,7 +662,9 @@ ${(profile.webpackRules || []).map(rule => `      ${rule}`).join(",\n")}
   plugins: [
 ${plugins.map(plugin => `    ${plugin},`).join("\n")}
     new ModuleFederationPlugin({
-      name: '${microfrontendSlug}',
+      // The global the remote entry defines its container under, which is what a host passes
+      // to loadWebpackRemote(): an identifier, so it never holds a dash or a slash.
+      name: '${federationName(microfrontendSlug)}',
       filename: 'remoteEntry.js',${
           exposeSelf
               ? `

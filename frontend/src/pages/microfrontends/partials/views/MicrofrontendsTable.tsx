@@ -1,18 +1,20 @@
 import { EmptyStateRow, Meter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Tooltip, TooltipContent, TooltipTrigger } from "@mfe-orchestrator/design-system"
-import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server } from "lucide-react"
+import { Cloud, Cog, Hammer, Link as LinkIcon, LucideIcon, Server, Sparkles } from "lucide-react"
 import React, { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
-import { CanaryType, HostedOn, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
-import { BuildDialog, CloneRepositoryPopover } from "@/pages/microfrontends/partials/components"
+import { CanaryType, HostedOn, Microfrontend, MicrofrontendKind } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { BuildDialog, CloneRepositoryPopover, isAiEditAvailable, MicrofrontendKindBadge, useWorkingAgents, WorkingAgentsIndicator } from "@/pages/microfrontends/partials/components"
+import { cn } from "@/utils/styleUtils"
 import { HOST_TYPE_LABEL_KEYS } from "../labels"
 
 interface MicrofrontendsTableProps {
     microfrontends: Microfrontend[]
 }
 
-const COLUMN_COUNT = 7
+const COLUMN_COUNT = 8
 
 /** The host is a single value out of three, so it reads as an icon and spells itself out on hover. */
 const HOST_TYPE_ICONS: Record<HostedOn, LucideIcon> = {
@@ -85,25 +87,33 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
 
     const [isBuildDialogOpen, setIsBuildDialogOpen] = useState(false)
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
+    const agents = useWorkingAgents(mfe._id)
+    const aiAvailable = isAiEditAvailable(mfe, useProjectAiModels().enabled)
+    // Served by its own container: MFE Orchestrator neither hosts it nor runs a canary for it
+    const isFrontend = mfe.kind === MicrofrontendKind.FRONTEND
 
     return (
-        <TableRow className="border-divider hover:bg-primary/5">
+        <TableRow className={cn("border-divider hover:bg-primary/5", agents > 0 && "bg-primary/5")}>
             {/* Capped so a long name or slug cannot push the action column out of view. */}
-            <TableCell className="max-w-[16rem] truncate font-medium" title={mfe.name}>
-                {mfe.name}
+            <TableCell className="max-w-[16rem] font-medium">
+                <div className="flex items-center gap-2">
+                    <span className="truncate" title={mfe.name}>
+                        {mfe.name}
+                    </span>
+                    <WorkingAgentsIndicator agents={agents} compact />
+                </div>
             </TableCell>
             <TableCell className="max-w-[14rem] truncate text-foreground-secondary" title={mfe.slug}>
                 {mfe.slug}
             </TableCell>
             <TableCell>
-                <Badge>{mfe.version}</Badge>
+                <MicrofrontendKindBadge microfrontend={mfe} className="whitespace-nowrap" />
             </TableCell>
             <TableCell>
-                <HostCell host={mfe.host} />
+                <Badge>{mfe.version || "—"}</Badge>
             </TableCell>
-            <TableCell>
-                <CanaryCell canary={mfe.canary} />
-            </TableCell>
+            <TableCell>{isFrontend ? <span className="text-foreground-secondary">—</span> : <HostCell host={mfe.host} />}</TableCell>
+            <TableCell>{isFrontend ? <span className="text-foreground-secondary">—</span> : <CanaryCell canary={mfe.canary} />}</TableCell>
             <TableCell className="whitespace-nowrap">
                 <CanaryVersionCell canary={mfe.canary} />
             </TableCell>
@@ -116,9 +126,9 @@ const MicrofrontendRow: React.FC<{ mfe: Microfrontend }> = ({ mfe }) => {
                             {t("microfrontend.card.build")}
                         </Button>
                     )}
-                    <Button variant="secondary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)}>
-                        <Cog />
-                        {t("common.configuration")}
+                    <Button variant={aiAvailable ? "primary" : "secondary"} size="sm" onClick={() => navigate(aiAvailable ? `/microfrontend/${mfe._id}` : `/microfrontend/${mfe._id}/settings`)}>
+                        {aiAvailable ? <Sparkles /> : <Cog />}
+                        {aiAvailable ? t("microfrontend.workspace.nav_ai") : t("common.configuration")}
                     </Button>
                 </div>
                 <BuildDialog open={isBuildDialogOpen} onOpenChange={setIsBuildDialogOpen} microfrontendId={mfe._id} microfrontendName={mfe.name} />
@@ -137,6 +147,7 @@ export const MicrofrontendsTable: React.FC<MicrofrontendsTableProps> = ({ microf
                     <TableRow className="bg-muted/60 hover:bg-muted/60">
                         <TableHead>{t("common.name")}</TableHead>
                         <TableHead>{t("microfrontend.slug")}</TableHead>
+                        <TableHead>{t("microfrontend.kind.label")}</TableHead>
                         <TableHead>{t("microfrontend.version")}</TableHead>
                         <TableHead>{t("microfrontend.host")}</TableHead>
                         <TableHead>{t("microfrontend.canary_release")}</TableHead>

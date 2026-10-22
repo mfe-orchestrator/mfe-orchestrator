@@ -6,7 +6,7 @@ pre-commit:
   commands:
     lint-and-format:
       glob: "{backend,frontend,e2e}/**/*.{js,ts,tsx,json}"
-      run: "pnpm exec biome check --write --staged {staged_files}"
+      run: "pnpm exec biome check --write --staged --no-errors-on-unmatched {staged_files}"
       stage_fixed: true
 
     typecheck-backend:
@@ -18,7 +18,8 @@ pre-commit:
     typecheck-frontend:
       root: "frontend/"
       glob: "**/*.{ts,tsx}"
-      run: "pnpm exec tsc --noEmit"
+      # tsconfig.json only references the app and the node configs: tsc on it checks nothing
+      run: "pnpm run typecheck"
 
 commit-msg:
   commands:

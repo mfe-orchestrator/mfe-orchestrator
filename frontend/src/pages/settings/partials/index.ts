@@ -1,3 +1,6 @@
 export * from "./DangerZone"
+export * from "./PipelineTemplatesSection"
+export * from "./ProjectContextSection"
 export * from "./ProjectInfoSection"
 export * from "./ProjectStatsSection"
+export * from "./SettingsDetails"

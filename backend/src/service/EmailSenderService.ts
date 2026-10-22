@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+import nodemailer, { type Transporter } from "nodemailer"
 import path from "path"
 import pug from "pug"
 import { fastify } from ".."
@@ -9,7 +9,7 @@ import { RoleInOrganization } from "../models/UserOrganizationModel"
 import { RoleInProject } from "../models/UserProjectModel"
 
 class EmailSenderService {
-    private transporter: nodemailer.Transporter
+    private transporter: Transporter
     // biome-ignore lint/suspicious/noExplicitAny: Config object has dynamic properties
     private config: any
     private canSendEmail = false

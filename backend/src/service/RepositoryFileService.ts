@@ -4,7 +4,7 @@ import GithubClient from "../client/GithubClient"
 import GitlabClient from "../client/GitlabClient"
 import { createBusinessException } from "../errors/BusinessException"
 import CodeRepository, { CodeRepositoryProvider, ICodeRepository } from "../models/CodeRepositoryModel"
-import Microfrontend, { IMicrofrontend } from "../models/MicrofrontendModel"
+import Microfrontend, { ICodeRepositoryMicrofrontend, IMicrofrontend } from "../models/MicrofrontendModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import CodeRepositoryService from "./CodeRepositoryService"
@@ -58,6 +58,15 @@ export const mapWithConcurrency = async <T, R>(items: T[], concurrency: number, 
     return results
 }
 
+/** The name a provider knows the repository of a microfrontend by. */
+export const repositoryNameFor = (repository: ICodeRepositoryMicrofrontend | undefined, codeRepository: ICodeRepository): string => {
+    if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
+        return repository?.name || repository?.repositoryId || ""
+    }
+
+    return repository?.repositoryId || repository?.name || ""
+}
+
 export const toErrorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
 /**
@@ -109,7 +118,7 @@ export class RepositoryFileService extends BaseAuthorizedService {
         return [...new Set(branches.map(branch => branch.branch).filter(Boolean))]
     }
 
-    async getDefaultBranch(target: RepositoryTarget): Promise<string> {
+    async getDefaultBranch(target: Pick<RepositoryTarget, "codeRepository" | "repositoryName">): Promise<string> {
         const { codeRepository, repositoryName } = target
 
         switch (codeRepository.provider) {
@@ -272,13 +281,7 @@ export class RepositoryFileService extends BaseAuthorizedService {
     }
 
     private resolveRepositoryName(microfrontend: IMicrofrontend, codeRepository: ICodeRepository): string {
-        const repository = microfrontend.codeRepository
-
-        if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
-            return repository?.name || repository?.repositoryId || ""
-        }
-
-        return repository?.repositoryId || repository?.name || ""
+        return repositoryNameFor(microfrontend.codeRepository, codeRepository)
     }
 
     private unsupportedProvider(codeRepository: ICodeRepository, repositoryName: string) {

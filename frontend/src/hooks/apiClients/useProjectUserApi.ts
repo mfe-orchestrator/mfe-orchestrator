@@ -14,6 +14,10 @@ export interface ProjectUser {
     updatedAt: string
 }
 
+export interface UpdateProjectUserDTO {
+    role: string
+}
+
 const useProjectUserApi = () => {
     const apiClient = useApiClient()
 
@@ -42,8 +46,18 @@ const useProjectUserApi = () => {
         })
     }
 
+    const updateProjectUser = async (projectId: string, userId: string, dto: UpdateProjectUserDTO): Promise<void> => {
+        await apiClient.doRequest({
+            url: `/api/projects/${projectId}/users/${userId}`,
+            method: "PUT",
+            data: dto,
+            authenticated: AuthenticationType.REQUIRED
+        })
+    }
+
     return {
         getProjectUsers,
+        updateProjectUser,
         removeUserFromProject,
         resendInvitation
     }

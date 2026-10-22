@@ -2,13 +2,13 @@ import { Schema } from "mongoose"
 import { fastify } from ".."
 import { CodeRepositoryProvider } from "../models/CodeRepositoryModel"
 import Microfrontend, { IMicrofrontend, MicrofrontendType } from "../models/MicrofrontendModel"
-import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, supportsModuleFederation } from "../types/MicrofrontendStack"
+import { isIntegrationModel, MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, supportsModuleFederation } from "../types/MicrofrontendStack"
 import { getBackendUrl } from "../utils/backendUrl"
 import { globalVariablesScriptUrl, injectGlobalVariablesScript } from "../utils/globalVariablesScript"
 import { toObjectId } from "../utils/mongooseUtils"
 import { isDependencyDeclared, PackageManifest, serializePackageJson } from "../utils/packageJsonUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
-import FederationConfigService, { CLIENT_SDK_PACKAGE, FederationRemote, federationName } from "./FederationConfigService"
+import FederationConfigService, { FederationRemote, federationName } from "./FederationConfigService"
 import RepositoryFileService, { mapWithConcurrency, REPOSITORY_CONCURRENCY, RepositoryTarget, toErrorMessage } from "./RepositoryFileService"
 import StackDetectionService, { DetectedStack } from "./StackDetectionService"
 
@@ -40,6 +40,9 @@ const COMMIT_MESSAGES: Record<IntegrationScope, string> = {
     [IntegrationScope.GLOBAL_VARIABLES]: "chore(mfe): read runtime configuration from the console"
 }
 
+/** single-spa and micro-lc hosts get their remotes registered, not module federation */
+const INTEGRATION_MODEL_COMMIT_MESSAGE = "chore(mfe): load the remotes through the SDK"
+
 export enum FederationIntegrationStatus {
     /** The repository already carries exactly what we would write */
     ALREADY_INTEGRATED = "ALREADY_INTEGRATED",
@@ -51,7 +54,7 @@ export enum FederationIntegrationStatus {
     NO_REMOTES = "NO_REMOTES",
     /** We do not know the framework or the bundler, so we cannot generate anything */
     STACK_UNKNOWN = "STACK_UNKNOWN",
-    /** Web components integrate at runtime, there is no config to write */
+    /** Web components integrate at runtime, there is no file to write */
     RUNTIME_INTEGRATION = "RUNTIME_INTEGRATION",
     /** Global variables only: no document of its own to carry the script tag */
     NO_DOCUMENT = "NO_DOCUMENT",
@@ -181,7 +184,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             }
 
             try {
-                const message = COMMIT_MESSAGES[scope]
+                const message = scope === IntegrationScope.MODULE_FEDERATION && isIntegrationModel(item.stack.compiler) ? INTEGRATION_MODEL_COMMIT_MESSAGE : COMMIT_MESSAGES[scope]
 
                 for (const change of item.changes) {
                     await this.writeChange(target, item.branch, change, message)
@@ -247,7 +250,11 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                 return { ...plan, branch, stack }
             }
 
-            if (!supportsModuleFederation(stack.compiler)) {
+            // single-spa and micro-lc are no module federation either, but their host file is
+            // ours to generate: the applications it registers, the parcels it configures
+            const integrationModel = isIntegrationModel(stack.compiler)
+
+            if (!supportsModuleFederation(stack.compiler) && !integrationModel) {
                 return {
                     ...plan,
                     branch,
@@ -256,7 +263,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
                 }
             }
 
-            if (!stack.framework) {
+            if (!stack.framework && !integrationModel) {
                 return { ...plan, branch, stack, status: FederationIntegrationStatus.STACK_UNKNOWN }
             }
 
@@ -337,7 +344,10 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             })
         }
 
-        const manifestChange = await this.buildManifestChange(target, branch, [...instructions.dependencies, ...this.federationConfig.getRuntimeDependencies()])
+        const manifestChange = await this.buildManifestChange(target, branch, instructions.dependencies, [
+            ...(instructions.runtimeDependencies || []),
+            ...this.federationConfig.getRuntimeDependencies()
+        ])
         if (manifestChange) {
             changes.push(manifestChange)
         }
@@ -424,8 +434,11 @@ export class FederationIntegrationService extends BaseAuthorizedService {
      * package.json with the packages the config needs added, or nothing when they are all declared.
      * Versions are left to the registry through "latest": pinning one here would fight whatever the
      * project already resolves.
+     *
+     * @param devPackages Only needed at build time, such as a bundler plugin
+     * @param runtimePackages Imported by the app itself, such as the client SDK
      */
-    private async buildManifestChange(target: RepositoryTarget, branch: string, packages: string[]): Promise<FederationFileChangeDTO | null> {
+    private async buildManifestChange(target: RepositoryTarget, branch: string, devPackages: string[], runtimePackages: string[]): Promise<FederationFileChangeDTO | null> {
         const file = await this.repositoryFiles.readFile(target, PACKAGE_JSON_PATH, branch)
 
         if (!file) {
@@ -441,7 +454,8 @@ export class FederationIntegrationService extends BaseAuthorizedService {
             return null
         }
 
-        const missing = packages.filter(packageName => !isDependencyDeclared(manifest, packageName))
+        const runtime = new Set(runtimePackages)
+        const missing = [...devPackages, ...runtimePackages].filter(packageName => !isDependencyDeclared(manifest, packageName))
         if (missing.length === 0) {
             return null
         }
@@ -450,8 +464,7 @@ export class FederationIntegrationService extends BaseAuthorizedService {
         const devDependencies = { ...((manifest.devDependencies as Record<string, string>) || {}) }
 
         for (const packageName of missing) {
-            // The client SDK is imported by the app itself, the bundler plugin only at build time
-            if (packageName === CLIENT_SDK_PACKAGE) {
+            if (runtime.has(packageName)) {
                 dependencies[packageName] = "latest"
             } else {
                 devDependencies[packageName] = "latest"

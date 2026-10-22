@@ -15,6 +15,8 @@ export interface Market {
     repo?: string
     type?: string
     compiler?: string
+    /** File of the build output a microfrontend created from the template is served by */
+    entryPoint?: string
     createdAt: Date
     updatedAt: Date
 }
@@ -29,9 +31,10 @@ const useMarketApi = () => {
         return response.data
     }
 
-    const getMarketBySlug = async (slug: string): Promise<Market> => {
+    const getMarketBySlug = async (slug: string, options?: { silent?: boolean }): Promise<Market> => {
         const response = await apiClient.doRequest<Market>({
-            url: `/api/market/${slug}`
+            url: `/api/market/${slug}`,
+            silent: options?.silent
         })
         return response.data
     }

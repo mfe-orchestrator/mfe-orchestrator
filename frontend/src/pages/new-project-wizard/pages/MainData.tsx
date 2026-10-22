@@ -6,6 +6,7 @@ import TextField from "@/components/input/TextField.rhf"
 import useProjectApi from "@/hooks/apiClients/useProjectApi"
 import useOrganizationStore from "@/store/useOrganizationStore"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
+import ProjectDraftAssistant from "./ProjectDraftAssistant"
 import { StepShell, WizardFooter, WizardStepProps } from "./wizardShared"
 
 interface MainDataForm {
@@ -20,7 +21,7 @@ const slugify = (value: string) =>
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "")
 
-const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
+const MainData: React.FC<WizardStepProps> = ({ project, onCreated, draft, onDraft }) => {
     const { t } = useTranslation()
     const projectApi = useProjectApi()
     const notifications = useToastNotificationStore()
@@ -55,6 +56,16 @@ const MainData: React.FC<WizardStepProps> = ({ project, onCreated }) => {
                     description={t("newProjectWizard.main_data.description")}
                     footer={<WizardFooter loading={loading} nextLabel={t("newProjectWizard.main_data.submit")} />}
                 >
+                    {!project && onDraft && (
+                        <ProjectDraftAssistant
+                            draft={draft}
+                            onDraft={newDraft => {
+                                form.setValue("name", newDraft.name, { shouldValidate: true })
+                                form.setValue("description", newDraft.description)
+                                onDraft(newDraft)
+                            }}
+                        />
+                    )}
                     <div className="flex flex-col gap-4">
                         <TextField<MainDataForm>
                             name="name"

@@ -7,6 +7,7 @@ import AuthenticationLayout from "@/authentication/components/AuthenticationLayo
 import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
 import useUserApi from "@/hooks/apiClients/useUserApi"
+import { errorCodeOf } from "@/hooks/useApiClient"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 interface FormValues {
@@ -22,13 +23,28 @@ export const ResetPasswordRequest = () => {
     const form = useForm<FormValues>({})
 
     const resetPasswordMutation = useMutation({
-        mutationFn: resetPasswordRequest
+        mutationFn: (data: FormValues) =>
+            resetPasswordRequest(data, {
+                // An installation without SMTP cannot reset a password at all: the backend says
+                // so by code, and the code is what gets translated - the message it carries is
+                // an English string meant for the log.
+                customErrorMessage: error => (errorCodeOf(error) === "EMAIL_NOT_CONFIGURED" ? t("auth.recover_password_email_not_configured") : t("auth.recover_password_error"))
+            })
     })
 
     const handleRegister = async (values: FormValues) => {
-        await resetPasswordMutation.mutate({
-            email: values.email
-        })
+        try {
+            // mutate() returns void and swallows the rejection, so awaiting it announced the
+            // email as sent even for a request the backend had refused. mutateAsync() is the
+            // one that rejects, which is what keeps the confirmation on the success path.
+            await resetPasswordMutation.mutateAsync({
+                email: values.email
+            })
+        } catch {
+            // The failure is already on screen: the API client raises the toast for it. Here
+            // there is only the confirmation and the redirect to hold back.
+            return
+        }
         notifications.showSuccessNotification({
             message: t("auth.recover_password_success")
         })

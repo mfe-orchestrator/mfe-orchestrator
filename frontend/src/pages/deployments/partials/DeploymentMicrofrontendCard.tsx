@@ -29,7 +29,7 @@ export const DeploymentMicrofrontendCard: React.FC<DeploymentMicrofrontendCardPr
                     </div>
                 </div>
                 <Badge className="shrink-0" title={t("deployments.microfrontend_card.stable_version")}>
-                    {microfrontend.version}
+                    {microfrontend.version || "—"}
                 </Badge>
             </CardHeader>
             {canary && (

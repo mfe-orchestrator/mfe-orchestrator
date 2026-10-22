@@ -5,8 +5,40 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/atoms"
 import { ApiStatusHandler } from "@/components/organisms"
-import useDeploymentsApi from "../../../hooks/apiClients/useDeploymentsApi"
+import useDeploymentsApi, { DeploymentDTO } from "../../../hooks/apiClients/useDeploymentsApi"
 import DeploymentMicrofrontendCard from "./DeploymentMicrofrontendCard"
+
+/** What a deployment shipped: the same summary for the active one and for the history */
+const DeploymentSummary: React.FC<{ deployment: DeploymentDTO }> = ({ deployment }) => {
+    const { t } = useTranslation()
+
+    return (
+        <>
+            {deployment.microfrontends.length > 0 && (
+                <div>
+                    <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+                        {deployment.microfrontends.map(microfrontend => (
+                            <DeploymentMicrofrontendCard key={microfrontend._id} microfrontend={microfrontend} />
+                        ))}
+                    </div>
+                </div>
+            )}
+            {deployment.variables.length > 0 && (
+                <div className="mt-4">
+                    <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
+                    <DescriptionList orientation="inline">
+                        {deployment.variables.map(variable => (
+                            <DescriptionItem key={variable._id} label={variable.key}>
+                                {variable.value}
+                            </DescriptionItem>
+                        ))}
+                    </DescriptionList>
+                </div>
+            )}
+        </>
+    )
+}
 
 interface DeploymentListProps {
     environmentId: string
@@ -55,28 +87,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                     </div>
                                                 </AccordionTrigger>
                                                 <AccordionContent>
-                                                    {deployment.microfrontends.length > 0 && (
-                                                        <div>
-                                                            <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
-                                                            <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                                                                {deployment.microfrontends.map(microfrontend => (
-                                                                    <DeploymentMicrofrontendCard key={microfrontend._id} microfrontend={microfrontend} />
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {deployment.variables.length > 0 && (
-                                                        <div className="mt-4">
-                                                            <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
-                                                            <DescriptionList orientation="inline">
-                                                                {deployment.variables.map(variable => (
-                                                                    <DescriptionItem key={variable._id} label={variable.key}>
-                                                                        {variable.value}
-                                                                    </DescriptionItem>
-                                                                ))}
-                                                            </DescriptionList>
-                                                        </div>
-                                                    )}
+                                                    <DeploymentSummary deployment={deployment} />
                                                     <div className="mt-8">
                                                         <Button variant="secondary" href={`/deployments/${deployment._id}/canary-users`}>
                                                             <UsersRound />
@@ -106,28 +117,7 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent>
-                                                {deployment.microfrontends.length > 0 && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-primary mb-2">{t("deployments.microfrontends_title")}</h4>
-                                                        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                                                            {deployment.microfrontends.map(microfrontend => (
-                                                                <DeploymentMicrofrontendCard key={microfrontend._id} microfrontend={microfrontend} />
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {deployment.variables.length > 0 && (
-                                                    <div className="mt-4">
-                                                        <h4 className="font-semibold text-primary mb-1">{t("deployments.env_variables_title")}</h4>
-                                                        <DescriptionList orientation="inline">
-                                                            {deployment.variables.map(variable => (
-                                                                <DescriptionItem key={variable._id} label={variable.key}>
-                                                                    {variable.value}
-                                                                </DescriptionItem>
-                                                            ))}
-                                                        </DescriptionList>
-                                                    </div>
-                                                )}
+                                                <DeploymentSummary deployment={deployment} />
                                                 <div className="flex gap-2 mt-8">
                                                     <Button variant="secondary" href={`/deployments/${deployment._id}/canary-users`}>
                                                         <UsersRound />
@@ -140,6 +130,8 @@ export const DeploymentList: React.FC<DeploymentListProps> = ({ environmentId })
                                                             onRedeploy(deployment._id)
                                                         }}
                                                         disabled={redeployQuery.isPending || deployment.active}
+                                                        loading={redeployQuery.isPending && redeployQuery.variables === deployment._id}
+                                                        loadingLabel={t("deployments.actions.redeploying")}
                                                     >
                                                         <RefreshCw />
                                                         {t("deployments.actions.redeploy")}

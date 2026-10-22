@@ -1,6 +1,6 @@
 import { ThemeEnum } from "@/store/useThemeStore"
 import { AuthenticationType } from "../../api/apiClient"
-import useApiClient from "../useApiClient"
+import useApiClient, { IClientRequestMetadataExtended } from "../useApiClient"
 
 /** Campi che il backend restituisce da `toFrontendObject()`. */
 export interface User {
@@ -109,8 +109,9 @@ const useUserApi = () => {
         return response.data
     }
 
-    async function resetPasswordRequest(data: ResetPasswordRequestDTO) {
+    async function resetPasswordRequest(data: ResetPasswordRequestDTO, metadata?: IClientRequestMetadataExtended) {
         return doRequest({
+            ...metadata,
             url: "/api/users/forgot-password",
             authenticated: AuthenticationType.NONE,
             method: "POST",

@@ -1,7 +1,9 @@
 import { FastifyMultipartFile } from "@fastify/multipart"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { Authenticate } from "fastify-auth0-verify"
+import { ApiKeyRole } from "../models/ApiKeyModel"
 import UserModel from "../models/UserModel"
+import type { LlmEffort } from "../service/llm/types"
 import { FastifyInstanceWithConfig } from "./index"
 import { TelemetryDecisionDTO } from "./TelemetryDTO"
 
@@ -75,12 +77,45 @@ declare module "fastify" {
             DO_NOT_TRACK?: string
             TELEMETRY_ENDPOINT: string
             TELEMETRY_INTERVAL_HOURS: number
+            MCP_ENABLED: boolean
+            OAUTH_ISSUER_URL?: string
+            MCP_RESOURCE_URL?: string
+            MCP_DCR_ENABLED: boolean
+            MCP_CIMD_ENABLED: boolean
+            MCP_API_KEY_ENABLED: boolean
+            MCP_RATE_LIMIT_MAX: number
+            CIMD_ALLOWED_HOSTS?: string
+            TRUST_PROXY?: string
+            AI_PROVIDER?: string
+            ANTHROPIC_API_KEY?: string
+            ANTHROPIC_MODEL?: string
+            AZURE_FOUNDRY_RESOURCE?: string
+            AZURE_FOUNDRY_API_KEY?: string
+            AZURE_FOUNDRY_MODEL?: string
+            GEMINI_API_KEY?: string
+            GEMINI_MODEL?: string
+            AZURE_OPENAI_ENDPOINT?: string
+            AZURE_OPENAI_API_KEY?: string
+            AZURE_OPENAI_DEPLOYMENT?: string
+            AZURE_OPENAI_REASONING?: boolean
+            AZURE_OPENAI_ENDPOINT_SUFFIXES?: string
+            AWS_BEDROCK_REGION?: string
+            AWS_BEDROCK_ACCESS_KEY_ID?: string
+            AWS_BEDROCK_SECRET_ACCESS_KEY?: string
+            AWS_BEDROCK_MODEL?: string
+            AI_MAX_EFFORT?: LlmEffort
+            REPOSITORIES_FOLDER: string
+            REPOSITORIES_MAX_SIZE_MB: number
+            REPOSITORIES_EVICT_AFTER_DAYS: number
+            ASSISTANT_RATE_LIMIT_MAX: number
         }
         telemetry: TelemetryRuntimeConfiguration
     }
 
     interface FastifyRequest {
         databaseUser: UserModel
+        /** Set on API key routes only: the role of the key the request carried */
+        apiKeyRole?: ApiKeyRole
     }
 
     interface FastifyContextConfig {

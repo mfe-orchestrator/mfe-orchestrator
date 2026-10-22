@@ -158,6 +158,15 @@ userSchema.methods.toFrontendObject = function (): IUser {
     delete obj.password
     delete obj.salt
     delete obj.__v
+    // The activation and reset tokens are bearer credentials: whoever holds one
+    // activates the account or changes its password without ever reading the
+    // mailbox. They reach the user by email and nowhere else - registration is a
+    // public route, so returning the freshly minted token in its response would
+    // hand it to the caller and make the email verification a formality.
+    delete obj.activateEmailToken
+    delete obj.activateEmailExpires
+    delete obj.resetPasswordToken
+    delete obj.resetPasswordExpires
     // The access date is internal: it exists for the operator querying the
     // database, not for the client, so it never leaves the backend.
     delete obj.lastLoginAt

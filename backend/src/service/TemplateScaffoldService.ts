@@ -1,0 +1,810 @@
+import AdmZip from "adm-zip"
+import axios from "axios"
+import fs from "fs-extra"
+import * as git from "isomorphic-git"
+import http from "isomorphic-git/http/node"
+import { tmpdir } from "os"
+import path, { join } from "path"
+import { fastify } from ".."
+import AzureDevOpsClient from "../client/AzureDevOpsClient"
+import GithubClient from "../client/GithubClient"
+import GitlabClient from "../client/GitlabClient"
+import { createBusinessException } from "../errors/BusinessException"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
+import { ApiKeyRole } from "../models/ApiKeyModel"
+import CodeRepository, { CodeRepositoryProvider, CodeRepositoryType, ICodeRepository } from "../models/CodeRepositoryModel"
+import { IMarket } from "../models/MarketModel"
+import { ICodeRepositoryMicrofrontend } from "../models/MicrofrontendModel"
+import Project from "../models/ProjectModel"
+import MicrofrontendDTO from "../types/MicrofrontendDTO"
+import { ApiKeyService } from "./ApiKeyService"
+import BaseAuthorizedService from "./BaseAuthorizedService"
+import CodeManagementService from "./CodeManagementService"
+import { deployKeyExpiry, deploySecretName } from "./CodeRepositoryService"
+import { federationName } from "./FederationConfigService"
+import { repositoryNameFor, toErrorMessage } from "./RepositoryFileService"
+import { isRepositoryNameTakenError } from "./RepositoryRenameService"
+import RepositoryWorkspaceService, { cloneUrlFor, gitCredentialsFor } from "./workspace/RepositoryWorkspaceService"
+
+const pipelinesUrl = "https://github.com/mfe-orchestrator/template-pipelines/archive/refs/heads/main.zip"
+
+/** The folder of each provider in a pipeline templates repository */
+export type PipelineProvider = "github" | "gitlab" | "azure_dev_ops"
+
+/** The pipeline file a provider reads at the root of the repository; GitHub reads the whole `.github` folder instead */
+const ROOT_PIPELINE_FILES: Record<Exclude<PipelineProvider, "github">, string> = { gitlab: ".gitlab-ci.yml", azure_dev_ops: "azure-pipelines.yml" }
+
+/** The pipeline templates of one scaffold, on disk: the project's repository, or the official template-pipelines */
+export interface PipelineTemplates {
+    /** The folder `<type>/<compiler>/...` is looked up in */
+    root: string
+    /** Deleted once the repository is pushed */
+    dir: string
+    /** Where they come from, for the log */
+    source: string
+}
+
+/** One folder name, neither `.` nor `..`: what a template's type, compiler and slug must be to be looked up as folders */
+const isFolderName = (name: string | undefined): name is string => !!name && name !== "." && name !== ".." && !name.includes("\\") && path.basename(name) === name
+
+/** Whether `target` really is inside `root`, symlinks followed; false when it does not exist */
+const isInside = async (root: string, target: string): Promise<boolean> => {
+    try {
+        const [realRoot, real] = await Promise.all([fs.realpath(root), fs.realpath(target)])
+        return real === realRoot || real.startsWith(realRoot + path.sep)
+    } catch {
+        return false
+    }
+}
+
+/** Whether `dir` holds at least one regular file, at any depth; symlinks do not count */
+const hasRegularFile = async (dir: string): Promise<boolean> => {
+    const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => [])
+    for (const entry of entries) {
+        if (entry.isFile() || (entry.isDirectory() && (await hasRegularFile(join(dir, entry.name))))) return true
+    }
+    return false
+}
+
+/**
+ * Deletes every symlink under `dir`. isomorphic-git checks them out as real links, and a pipeline templates
+ * repository could commit one to any file of the server, which the copy would then push to the new repository.
+ */
+const removeSymlinks = async (dir: string): Promise<void> => {
+    for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name)
+        if (entry.isSymbolicLink()) await fs.unlink(full)
+        else if (entry.isDirectory() && entry.name !== ".git") await removeSymlinks(full)
+    }
+}
+
+const pipelineSourceUnavailable = (repository: string, reason: string, ref?: string) =>
+    createBusinessException({
+        code: "PIPELINE_SOURCE_UNAVAILABLE",
+        message: `Nothing was created: the pipeline templates could not be read from ${repository}${ref ? ` at ${ref}` : ""} (${reason}). Fix them, or go back to the official ones, in the settings of the project`,
+        statusCode: 502,
+        details: { repository, reason }
+    })
+
+/** What `%domain%` becomes in a scaffolded repository: the console its CI talks back to */
+export const placeholderDomain = () => process.env.BACKEND_URL || "https://console.mfe-orchestrator.dev"
+
+/** The placeholders of a pipeline copied from the pipeline templates, the same on every provider */
+const pipelinePlaceholders = (slug: string): Record<string, string> => ({ "%microfrontendSlug%": slug, "%domain%": placeholderDomain() })
+
+/** The repository part of a microfrontend DTO, filled in once the repository exists */
+export type CodeRepositoryTarget = MicrofrontendDTO["codeRepository"]
+
+/**
+ * Ends the line of a template's bundler config that holds the module federation name, e.g.
+ * `name: 'exampleremote', // mfe-orchestrator:federation-name`. The template keeps a valid name of
+ * its own, so it builds as it is, and the scaffolder swaps that string for the microfrontend's.
+ */
+export const FEDERATION_NAME_MARKER = "mfe-orchestrator:federation-name"
+
+/** The bundler configs that carry the marker: webpack names its container with it, Vite does not need one */
+const FEDERATION_NAME_FILES = ["webpack.config.ts", "webpack.config.js", "webpack.config.mjs", "webpack.config.cjs"]
+
+/**
+ * Replaces the first string literal of every line carrying {@link FEDERATION_NAME_MARKER} with
+ * `name`, keeping its quotes. A host the console configured loads the remote by that name, so it
+ * has to be the same {@link federationName} the console derives from the slug.
+ */
+export const replaceFederationName = (content: string, name: string): string =>
+    content
+        .split("\n")
+        .map(line => (line.includes(FEDERATION_NAME_MARKER) ? line.replace(/(['"`])[^'"`]*\1/, (_, quote) => `${quote}${name}${quote}`) : line))
+        .join("\n")
+
+export interface ScaffoldOptions {
+    /**
+     * Slug of the microfrontend being scaffolded: the federation name in its webpack config becomes
+     * `federationName(slug)`, the name a host configured by the console looks the remote up by.
+     */
+    microfrontendSlug?: string
+}
+
+/**
+ * Creates the code repositories of microfrontends from marketplace templates and tags their releases.
+ */
+export class TemplateScaffoldService extends BaseAuthorizedService {
+    /**
+     * Creates `target.createData` at the provider of the connection, injects the deploy secret on
+     * GitHub and pushes the template, then writes what the provider answered back into `target`.
+     */
+    async createRepository(codeRepository: ICodeRepository, target: CodeRepositoryTarget, slug: string, template: IMarket | null, options?: ScaffoldOptions): Promise<void> {
+        // Before anything exists at the provider: pipeline templates that cannot be read leave no repository behind
+        const pipelines = target.createData && template?.type && template.compiler ? await this.fetchPipelineTemplates(codeRepository) : undefined
+        try {
+            await this.createAtProvider(codeRepository, target, slug, template, options, pipelines)
+        } catch (error) {
+            // Often one left behind by an attempt that failed after it: the console says so instead of a provider error
+            if (!isRepositoryNameTakenError(error)) throw error
+            const name = target.createData?.name
+            throw createBusinessException({ code: "REPOSITORY_NAME_TAKEN", message: `A repository named "${name}" already exists at the provider`, statusCode: 409 })
+        } finally {
+            if (pipelines) await fs.remove(pipelines.dir).catch(() => undefined)
+        }
+    }
+
+    private async createAtProvider(
+        codeRepository: ICodeRepository,
+        target: CodeRepositoryTarget,
+        slug: string,
+        template: IMarket | null,
+        options?: ScaffoldOptions,
+        pipelines?: PipelineTemplates
+    ): Promise<void> {
+        const createData = target.createData
+        if (!createData) return
+
+        if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+            if (!codeRepository.azureData) {
+                throw new Error("Azure data is not set")
+            }
+
+            const azureDevOpsClient = new AzureDevOpsClient()
+            const createdRepository = await azureDevOpsClient.createRepository(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, createData.name)
+            target.repositoryId = createdRepository.id
+            target.name = createdRepository.name
+            target.cloneUrlHttps = createdRepository.remoteUrl
+            target.cloneUrlSsh = createdRepository.sshUrl
+            if (template) {
+                await this.injectTemplateAzureDevOps(slug, codeRepository.accessToken, createdRepository.name, codeRepository, "azure_dev_ops", template, options, pipelines)
+                await this.createPipelineAzureDevOps(createdRepository.name, codeRepository)
+            }
+        } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+            if (!codeRepository.gitlabData?.url) {
+                throw new Error("Gitlab url is not set")
+            }
+            const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url, codeRepository.accessToken)
+            // In the connection's own group when none is picked: its deploy variable lives there
+            const createdRepository = await gitlabClient.createRepository({
+                name: createData.name,
+                namespace_id: target.gitlab?.groupId ?? codeRepository.gitlabData?.groupId,
+                visibility: createData.private ? "private" : "public"
+            })
+            // The template goes where GitLab put the repository, never to a path rebuilt from the
+            // input: a group path that does not match the group id would force-push onto another repository
+            const fullPath = createdRepository.path_with_namespace
+            const separator = fullPath.lastIndexOf("/")
+            target.name = createdRepository.name
+            target.repositoryId = createdRepository.id + ""
+            target.cloneUrlHttps = createdRepository.http_url_to_repo
+            target.cloneUrlSsh = createdRepository.ssh_url_to_repo
+            if (template) {
+                await this.injectTemplateGitlab(
+                    slug,
+                    codeRepository.accessToken,
+                    codeRepository.gitlabData?.url,
+                    fullPath.slice(separator + 1),
+                    fullPath.slice(0, separator),
+                    codeRepository,
+                    "gitlab",
+                    template,
+                    options,
+                    pipelines
+                )
+            }
+        } else if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
+            const githubClient = new GithubClient()
+            const createdRepository = await githubClient.createRepository(
+                {
+                    name: createData.name,
+                    private: createData.private,
+                    visibility: createData.private ? "private" : "public"
+                },
+                codeRepository.accessToken,
+                codeRepository.githubData?.organizationId
+            )
+            target.repositoryId = createdRepository.id + ""
+            target.name = createdRepository.name
+            target.cloneUrlHttps = createdRepository.clone_url
+            target.cloneUrlSsh = createdRepository.ssh_url
+            // Now will inject api key
+            await this.gitHubInjectApiKey(codeRepository, slug, target.name)
+            // Now will inject the template
+            if (template) {
+                await this.injectTemplateGithub(slug, codeRepository.accessToken, createdRepository.clone_url, "github", template, options, pipelines)
+            }
+        }
+    }
+
+    /** Stores a deploy API key as a secret of the GitHub repository, so its pipeline can call back */
+    async gitHubInjectApiKey(codeRepository: ICodeRepository, slug: string, repositoryName?: string) {
+        if (codeRepository.provider !== CodeRepositoryProvider.GITHUB) return
+        if (codeRepository.githubData?.type === CodeRepositoryType.ORGANIZATION) return
+        if (!repositoryName) return
+
+        const githubClient = new GithubClient()
+
+        const exists = await githubClient.checkRepositorySecretExists({
+            accessToken: codeRepository.accessToken,
+            repositoryName,
+            secretName: deploySecretName
+        })
+
+        if (exists) {
+            return
+        }
+
+        const apiKey = await new ApiKeyService(this.user).create(codeRepository.projectId.toString(), {
+            name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + slug,
+            role: ApiKeyRole.MANAGER,
+            expiresAt: deployKeyExpiry()
+        })
+
+        await githubClient.upsertRepositorySecret({
+            accessToken: codeRepository.accessToken,
+            userName: codeRepository.githubData?.userName,
+            repositoryName,
+            secretName: deploySecretName,
+            value: apiKey.apiKey
+        })
+    }
+
+    async injectTemplateGitlab(
+        slug: string,
+        accessToken: string,
+        baseUrl: string,
+        repositoryName: string,
+        repositoryGroup: string,
+        codeRepository: ICodeRepository,
+        repositoryType: PipelineProvider,
+        template: IMarket,
+        options?: ScaffoldOptions,
+        pipelines?: PipelineTemplates
+    ) {
+        const templateUrl = template.zipUrl
+        if (!templateUrl) {
+            throw new Error("Template url is not set")
+        }
+
+        if (!codeRepository.gitlabData) {
+            throw new Error("Gitlab data is not set")
+        }
+
+        // Download + unzip template
+        const tempDir = await this.downloadZip("template", templateUrl)
+
+        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITLAB, accessToken, tempDir)
+
+        const path = repositoryGroup || codeRepository.gitlabData.groupPath
+
+        const baseUrlReal = baseUrl.replaceAll("https://", "").replaceAll("http://", "")
+        const repoUrl = "https://oauth2:" + accessToken + "@" + baseUrlReal + "/" + path + "/" + repositoryName + ".git"
+
+        await codeManagementService.cloneRepository({
+            repositoryUrl: repoUrl,
+            initializeInCaseOfEmptyRepo: true,
+            onAuth: () => ({ username: "oauth2", password: accessToken })
+        })
+
+        await this.flattenTemplate(tempDir)
+
+        await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
+
+        if (options?.microfrontendSlug) {
+            await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
+        }
+
+        // Stage + commit
+        try {
+            await git.branch({
+                fs,
+                dir: tempDir,
+                ref: "main",
+                checkout: true,
+                force: true
+            })
+            await git.add({ fs, dir: tempDir, filepath: "." })
+            await git.commit({
+                fs,
+                dir: tempDir,
+                message: "Initial commit",
+                author: {
+                    name: "MFE Orchestrator Bot",
+                    email: "bot@mfe-orchestrator.dev"
+                }
+            })
+
+            // Push creates "main" on remote if missing
+            await git.push({
+                fs,
+                http,
+                dir: tempDir,
+                remote: "origin",
+                ref: "main",
+                remoteRef: "main",
+                headers: { "User-Agent": "mfe-orchestrator" },
+                onAuth: () => ({ username: "oauth2", password: accessToken }),
+                force: true
+            })
+
+            console.log("✅ Repo is ready and pushed!")
+        } catch (e) {
+            console.error("‼️ Error pushing to remote: ", e)
+            const remotes = await git.listRemotes({ fs, dir: tempDir })
+            // A remote URL can carry the access token: never written to the log
+            console.log(
+                "🔍 Known remotes:",
+                remotes.map(remote => ({ ...remote, url: remote.url.replace(/\/\/[^/@]*@/, "//***@") }))
+            )
+
+            const branches = await git.listBranches({ fs, dir: tempDir })
+            console.log("🔍 Local branches:", branches)
+
+            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
+            console.log("🔍 Remote branches:", remoteBranches)
+        } finally {
+            await fs.remove(tempDir).catch(() => undefined)
+        }
+    }
+
+    async injectTemplateAzureDevOps(
+        slug: string,
+        accessToken: string,
+        repositoryName: string,
+        codeRepository: ICodeRepository,
+        repositoryType: PipelineProvider,
+        template: IMarket,
+        options?: ScaffoldOptions,
+        pipelines?: PipelineTemplates
+    ) {
+        const templateUrl = template.zipUrl
+        if (!templateUrl) {
+            throw new Error("Template url is not set")
+        }
+        if (!codeRepository.azureData) {
+            throw new Error("Azure data is not set")
+        }
+
+        // Download + unzip template
+        const tempDir = await this.downloadZip("template", templateUrl)
+
+        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.AZURE_DEV_OPS, accessToken, tempDir)
+
+        const repoUrl = "https://root:" + accessToken + "@dev.azure.com/" + codeRepository.azureData.organization + "/" + codeRepository.azureData.projectId + "/_git/" + repositoryName
+
+        await codeManagementService.cloneRepository({
+            repositoryUrl: repoUrl,
+            initializeInCaseOfEmptyRepo: true
+        })
+
+        await this.flattenTemplate(tempDir)
+
+        await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
+
+        if (options?.microfrontendSlug) {
+            await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
+        }
+
+        // Stage + commit
+        try {
+            await git.branch({
+                fs,
+                dir: tempDir,
+                ref: "main",
+                checkout: true,
+                force: true
+            })
+            await git.add({ fs, dir: tempDir, filepath: "." })
+            await git.commit({
+                fs,
+                dir: tempDir,
+                message: "Initial commit",
+                author: {
+                    name: "MFE Orchestrator Bot",
+                    email: "bot@mfe-orchestrator.dev"
+                }
+            })
+
+            // Push creates "main" on remote if missing
+            await git.push({
+                fs,
+                http,
+                dir: tempDir,
+                remote: "origin",
+                ref: "main",
+                remoteRef: "main",
+                headers: { "User-Agent": "mfe-orchestrator" },
+                onAuth: () => ({ username: accessToken, password: "x-oauth-basic" }),
+                force: true
+            })
+
+            console.log("✅ Repo is ready and pushed!")
+        } catch (e) {
+            console.error("‼️ Error pushing to remote: ", e)
+            const remotes = await git.listRemotes({ fs, dir: tempDir })
+            // A remote URL can carry the access token: never written to the log
+            console.log(
+                "🔍 Known remotes:",
+                remotes.map(remote => ({ ...remote, url: remote.url.replace(/\/\/[^/@]*@/, "//***@") }))
+            )
+
+            const branches = await git.listBranches({ fs, dir: tempDir })
+            console.log("🔍 Local branches:", branches)
+
+            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
+            console.log("🔍 Remote branches:", remoteBranches)
+        } finally {
+            await fs.remove(tempDir).catch(() => undefined)
+        }
+    }
+
+    async createPipelineAzureDevOps(repositoryName: string, codeRepository: ICodeRepository) {
+        if (!codeRepository.azureData) {
+            throw new Error("Azure data is not set")
+        }
+
+        const accessToken = codeRepository.accessToken
+        const azureDevOpsClient = new AzureDevOpsClient()
+
+        try {
+            // Get repository details to obtain the repository ID
+            const repository = await azureDevOpsClient.getRepository(accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryName)
+
+            // Create the pipeline
+            const pipeline = await azureDevOpsClient.createPipeline(
+                accessToken,
+                codeRepository.azureData.organization,
+                codeRepository.azureData.projectId,
+                repository.id,
+                `${repositoryName}`,
+                "azure-pipelines.yml",
+                "/"
+            )
+
+            fastify.log.info(`✅ Pipeline created successfully: ${pipeline.name} (ID: ${pipeline.id})`)
+            fastify.log.info(`🔗 Pipeline URL: ${pipeline._links.web.href}`)
+
+            return pipeline
+        } catch (error: unknown) {
+            fastify.log.error(`❌ Failed to create pipeline for repository ${repositoryName}:` + error)
+            throw new Error(`Failed to create Azure DevOps pipeline: ${error}`)
+        }
+    }
+
+    async injectTemplateGithub(slug: string, githubToken: string, repoUrl: string, repositoryType: PipelineProvider, template: IMarket, options?: ScaffoldOptions, pipelines?: PipelineTemplates) {
+        const templateUrl = template.zipUrl
+        if (!templateUrl) {
+            throw new Error("Template url is not set")
+        }
+
+        // Download + unzip template
+        const tempDir = await this.downloadZip("template", templateUrl)
+
+        const codeManagementService = new CodeManagementService(CodeRepositoryProvider.GITHUB, githubToken, tempDir)
+        await codeManagementService.cloneRepository({
+            repositoryUrl: repoUrl,
+            initializeInCaseOfEmptyRepo: true
+        })
+
+        await this.flattenTemplate(tempDir)
+
+        await this.copyPipeline(tempDir, pipelines, template, repositoryType, slug)
+
+        if (options?.microfrontendSlug) {
+            await this.replaceFederationNameInConfigs(tempDir, federationName(options.microfrontendSlug))
+        }
+
+        // Stage + commit
+        try {
+            await git.branch({
+                fs,
+                dir: tempDir,
+                ref: "main",
+                checkout: true,
+                force: true
+            })
+            await git.add({ fs, dir: tempDir, filepath: "." })
+            await git.commit({
+                fs,
+                dir: tempDir,
+                message: "Initial commit",
+                author: {
+                    name: "MFE Orchestrator Bot",
+                    email: "bot@mfe-orchestrator.dev"
+                }
+            })
+
+            await codeManagementService.pushRepository({
+                branch: "main"
+            })
+
+            console.log("✅ Repo is ready and pushed!")
+        } catch (e) {
+            console.error("‼️ Error pushing to remote: ", e)
+            const remotes = await git.listRemotes({ fs, dir: tempDir })
+            // A remote URL can carry the access token: never written to the log
+            console.log(
+                "🔍 Known remotes:",
+                remotes.map(remote => ({ ...remote, url: remote.url.replace(/\/\/[^/@]*@/, "//***@") }))
+            )
+
+            const branches = await git.listBranches({ fs, dir: tempDir })
+            console.log("🔍 Local branches:", branches)
+
+            const remoteBranches = await git.listBranches({ fs, dir: tempDir, remote: "origin" }).catch(() => [])
+            console.log("🔍 Remote branches:", remoteBranches)
+        } finally {
+            await fs.remove(tempDir).catch(() => undefined)
+        }
+    }
+
+    /**
+     * The pipeline templates a repository scaffolded through `codeRepository` gets: the repository its project
+     * picked, cloned at its ref, or the official template-pipelines. A repository of the project that cannot be
+     * read is refused, never replaced by the official one: the project asked for its own pipelines.
+     */
+    async fetchPipelineTemplates(codeRepository: ICodeRepository): Promise<PipelineTemplates> {
+        const project = await Project.findById(codeRepository.projectId, { pipelines: 1 })
+        const link = project?.pipelines?.codeRepository
+        if (!link) return this.officialPipelineTemplates()
+
+        const ref = project.pipelines?.ref || undefined
+        // Through an active connection of the project only: one of another project would lend this one its access token
+        const connection = await CodeRepository.findOne({ _id: link.codeRepositoryId, projectId: codeRepository.projectId, isActive: true })
+        const repositoryName = connection ? repositoryNameFor(link, connection) : link.name
+        if (!connection) throw pipelineSourceUnavailable(repositoryName, "its connection no longer exists", ref)
+        // Checked before the clone, as for a working copy: isomorphic-git holds the whole packfile in memory
+        const maxBytes = fastify.config.REPOSITORIES_MAX_SIZE_MB * 1024 * 1024
+        const reported = await new RepositoryWorkspaceService(this.user).providerSizeBytes({ codeRepository: connection, repositoryName })
+        if (reported !== undefined && reported > maxBytes) {
+            throw pipelineSourceUnavailable(repositoryName, `it is bigger than ${fastify.config.REPOSITORIES_MAX_SIZE_MB} MB`, ref)
+        }
+
+        const dir = await fs.mkdtemp(join(tmpdir(), "template-pipelines-"))
+        try {
+            await git.clone({
+                fs,
+                http,
+                dir,
+                url: cloneUrlFor({ component: { codeRepository: link }, codeRepository: connection, repositoryName }),
+                ref,
+                singleBranch: true,
+                depth: 1,
+                onAuth: () => gitCredentialsFor(connection),
+                headers: { "User-Agent": "mfe-orchestrator" },
+                // Never read from the cloned config: the token would go to whatever host it names
+                corsProxy: ""
+            })
+            await removeSymlinks(dir)
+        } catch (error) {
+            await fs.remove(dir).catch(() => undefined)
+            throw pipelineSourceUnavailable(repositoryName, toErrorMessage(error), ref)
+        }
+        return { root: dir, dir, source: `${repositoryName}${ref ? `@${ref}` : ""}` }
+    }
+
+    /** The official template-pipelines, downloaded, refused like the project's ones when they cannot be */
+    private async officialPipelineTemplates(): Promise<PipelineTemplates> {
+        let dir: string | undefined
+        try {
+            dir = await this.downloadZip("template-pipelines", pipelinesUrl)
+            await removeSymlinks(dir)
+            return { root: join(dir, "template-pipelines-main"), dir, source: "template-pipelines" }
+        } catch (error) {
+            if (dir) await fs.remove(dir).catch(() => undefined)
+            throw pipelineSourceUnavailable("template-pipelines", toErrorMessage(error))
+        }
+    }
+
+    /**
+     * Copies the pipeline of `provider` from `pipelines` into the template in `tempDir`, then replaces the
+     * placeholders of a pipeline in what it copied. The first folder found wins:
+     * `<type>/<compiler>/<template slug>/<provider>`, then `<type>/<compiler>/<provider>`. When the source has
+     * neither, the template keeps the pipeline it ships with; a GitHub folder counts only with a file under
+     * `workflows/`. On GitHub the template's own workflows go first, so that two release workflows named
+     * differently never run side by side; the rest of its `.github` stays. Nothing outside the source is ever
+     * copied, whatever symlink it holds. Left out, `pipelines` are the official ones, downloaded here.
+     */
+    private async copyPipeline(tempDir: string, pipelines: PipelineTemplates | undefined, template: IMarket, provider: PipelineProvider, slug: string): Promise<void> {
+        if (!isFolderName(template.type) || !isFolderName(template.compiler)) {
+            fastify.log.warn("⚠️ Template type or compiler not specified, or not a folder name: skipping pipeline setup")
+            return
+        }
+        const source = pipelines ?? (await this.officialPipelineTemplates())
+        try {
+            const base = join(source.root, template.type, template.compiler)
+            const folders = [...(isFolderName(template.slug) ? [join(base, template.slug, provider)] : []), join(base, provider)]
+            const file = provider === "github" ? undefined : ROOT_PIPELINE_FILES[provider]
+            const isUsable = async (folder: string) => {
+                if (!(await isInside(source.root, folder))) return false
+                if (!file) return hasRegularFile(join(folder, "workflows"))
+                const isFile = (await fs.lstat(join(folder, file)).catch(() => undefined))?.isFile() === true
+                return isFile && (await isInside(source.root, join(folder, file)))
+            }
+
+            let found: string | undefined
+            for (const folder of folders) {
+                if (await isUsable(folder)) {
+                    found = folder
+                    break
+                }
+            }
+            if (!found) {
+                fastify.log.warn(`⚠️ No ${provider} pipeline for ${template.type}/${template.compiler} in ${source.source}: the template keeps its own`)
+                return
+            }
+
+            if (file) {
+                const pipelineFile = join(tempDir, file)
+                await fs.copyFile(join(found, file), pipelineFile)
+                await this.replacePlaceholdersInFile(pipelineFile, pipelinePlaceholders(slug))
+            } else {
+                const githubDir = join(tempDir, ".github")
+                await fs.remove(join(githubDir, "workflows"))
+                await fs.copy(found, githubDir, { overwrite: true, filter: async item => !(await fs.lstat(item)).isSymbolicLink() })
+                await this.replacePlaceholdersInDirectory(githubDir, pipelinePlaceholders(slug))
+            }
+            fastify.log.info(`✅ Pipeline files copied from ${path.relative(source.root, found)} of ${source.source}`)
+        } finally {
+            // Downloaded here, deleted here: the ones of the caller are deleted by the caller
+            if (!pipelines) await fs.remove(source.dir).catch(() => undefined)
+        }
+    }
+
+    async downloadZip(prefixDirectory: string, urlToDownload: string): Promise<string> {
+        const responseDownload = await axios.get(urlToDownload, {
+            responseType: "arraybuffer"
+        })
+        if (responseDownload.status !== 200) throw new Error(`Failed to download pipelines: ${responseDownload.statusText}`)
+
+        const zip = new AdmZip(Buffer.from(responseDownload.data))
+        // Its own folder: two scaffolds at once never share one, nor delete each other's
+        const temporaryDirectory = await fs.mkdtemp(join(tmpdir(), `${prefixDirectory}-`))
+        // Keep the permissions: an executable such as mvnw must stay executable in the commit
+        zip.extractAllTo(temporaryDirectory, true, true)
+
+        return temporaryDirectory
+    }
+
+    /** A provider zip holds a single top-level folder (`<repo>-main/`): its content moves up to the root */
+    private async flattenTemplate(tempDir: string): Promise<void> {
+        let files = await fs.readdir(tempDir)
+        files = files.filter(f => !f.startsWith(".")) // Ignore hidden files
+
+        if (files.length === 1) {
+            const top = join(tempDir, files[0])
+            const stat = await fs.lstat(top)
+            if (stat.isDirectory()) {
+                const items = await fs.readdir(top)
+                for (const item of items) {
+                    try {
+                        await fs.move(join(top, item), join(tempDir, item), {
+                            overwrite: true
+                        })
+                    } catch (err) {
+                        console.error(`Error moving ${item}:`, err)
+                    }
+                }
+                try {
+                    await fs.remove(top)
+                } catch (err) {
+                    console.error(`Error removing top-level folder:`, err)
+                }
+            }
+        }
+    }
+
+    /** Writes `name` on the marked federation name line of each webpack config at the root of the template */
+    async replaceFederationNameInConfigs(directory: string, name: string): Promise<void> {
+        for (const file of FEDERATION_NAME_FILES) {
+            const filePath = join(directory, file)
+            if (!(await fs.pathExists(filePath))) continue
+
+            const content = await fs.readFile(filePath, "utf8")
+            const updatedContent = replaceFederationName(content, name)
+            if (content !== updatedContent) {
+                await fs.writeFile(filePath, updatedContent, "utf8")
+                fastify.log.info(`✅ Federation name set to ${name} in ${file}`)
+            }
+        }
+    }
+
+    /** Replaces each placeholder with its value in `filePath`, unless it is binary (any NUL byte) */
+    async replacePlaceholdersInFile(filePath: string, placeholders: Record<string, string>): Promise<void> {
+        try {
+            const buffer = await fs.readFile(filePath)
+            if (buffer.includes(0)) return
+
+            const content = buffer.toString("utf8")
+            let updatedContent = content
+            for (const [placeholder, value] of Object.entries(placeholders)) {
+                updatedContent = updatedContent.split(placeholder).join(value)
+            }
+
+            if (content !== updatedContent) {
+                await fs.writeFile(filePath, updatedContent, "utf8")
+                fastify.log.info(`✅ Replaced placeholders in ${filePath}`)
+            }
+        } catch (error) {
+            // Skip files that can't be read
+            fastify.log.debug(`Skipping file ${filePath}: ${error}`)
+        }
+    }
+
+    /**
+     * Replaces each placeholder with its value in every text file under `directory`. The `.git`
+     * folder is never entered, and binary files (any NUL byte) are left alone.
+     */
+    async replacePlaceholdersInDirectory(directory: string, placeholders: Record<string, string>): Promise<void> {
+        const processDirectory = async (dir: string) => {
+            const items = await fs.readdir(dir)
+
+            for (const item of items) {
+                const fullPath = path.join(dir, item)
+                const stats = await fs.lstat(fullPath)
+
+                if (stats.isDirectory()) {
+                    if (item !== ".git") {
+                        await processDirectory(fullPath)
+                    }
+                } else if (stats.isFile()) {
+                    await this.replacePlaceholdersInFile(fullPath, placeholders)
+                }
+            }
+        }
+
+        await processDirectory(directory)
+    }
+
+    /**
+     * Tags `ref` (main by default) of the linked repository with `version`: the tag is what starts
+     * the release pipeline. Nothing happens when no repository is linked. The connection must belong
+     * to `projectId`, the project of what is built: one of another project would lend it its token.
+     */
+    async createTag(link: ICodeRepositoryMicrofrontend | undefined, projectId: unknown, version: string, ref?: string): Promise<void> {
+        if (!link?.enabled) return
+
+        const codeRepository = await CodeRepository.findById(link.codeRepositoryId)
+        if (!codeRepository || String(codeRepository.projectId) !== String(projectId)) {
+            throw new EntityNotFoundError(String(link.codeRepositoryId))
+        }
+
+        const repositoryId = link.repositoryId
+        const branchName = ref || "main"
+
+        if (codeRepository.provider === CodeRepositoryProvider.GITHUB) {
+            const githubClient = new GithubClient()
+            const commitSha = await githubClient.getBranchCommitSha(codeRepository.accessToken, link.name, branchName, codeRepository.githubData?.organizationId, codeRepository.githubData?.userName)
+            return await githubClient.createTag(codeRepository.accessToken, link.name, version, commitSha, codeRepository.githubData?.organizationId, codeRepository.githubData?.userName)
+        } else if (codeRepository.provider === CodeRepositoryProvider.GITLAB) {
+            const gitlabClient = new GitlabClient(codeRepository.gitlabData?.url || "", codeRepository.accessToken)
+
+            const commitSha = await gitlabClient.getBranchCommitSha(repositoryId, branchName)
+            return await gitlabClient.createTag(repositoryId, version, commitSha)
+        } else if (codeRepository.provider === CodeRepositoryProvider.AZURE_DEV_OPS) {
+            const azureClient = new AzureDevOpsClient()
+            if (!codeRepository.azureData) {
+                throw new Error("Azure DevOps data not found")
+            }
+
+            const commitId = await azureClient.getBranchCommitId(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, branchName)
+            return await azureClient.createTag(codeRepository.accessToken, codeRepository.azureData.organization, codeRepository.azureData.projectId, repositoryId, version, commitId)
+        }
+    }
+}
+
+export default TemplateScaffoldService

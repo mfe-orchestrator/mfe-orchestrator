@@ -223,6 +223,19 @@ export class UserService {
             throw new UserNotFoundError(email)
         }
 
+        // The reset exists only as a link in an email, so without a mail channel there is
+        // nowhere to deliver it. Registration and invitations have something to degrade
+        // into when SMTP is missing - an account that is simply active - this one has not:
+        // minting the token anyway would leave a valid credential on the account that
+        // nobody can reach, and the send would fail afterwards, once the caller has already
+        // been told the email is on its way. It refuses before writing anything instead.
+        if (!this.emailService.canSendEmails()) {
+            throw createBusinessException({
+                code: "EMAIL_NOT_CONFIGURED",
+                message: "Email delivery is not configured, the password cannot be reset"
+            })
+        }
+
         const resetToken = randomBytes(32).toString("hex")
         user.resetPasswordToken = resetToken
         user.resetPasswordExpires = new Date(Date.now() + 3600000) // 1 hour

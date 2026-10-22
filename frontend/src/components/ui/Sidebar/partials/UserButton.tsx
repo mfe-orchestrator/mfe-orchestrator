@@ -6,12 +6,13 @@ import { LogOut, User, UserCog } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
-import { deleteToken } from "@/authentication/tokenUtils"
+import useLogout from "@/hooks/useLogout"
 import useProfilePicture from "@/hooks/useProfilePicture"
 import useUserStore from "@/store/useUserStore"
 
 export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disabled }) => {
-    const { user, clearUser } = useUserStore()
+    const { user } = useUserStore()
+    const handleLogout = useLogout()
     const { t } = useTranslation()
     const msal = useMsal()
     const auth0 = useAuth0()
@@ -90,48 +91,6 @@ export const UserButton: React.FC<NavItemProps> = ({ isSidebarCollapsed, disable
         // Return null if no picture is available
         return null
     }, [user, auth0.user, uploadedPicture.data])
-
-    const handleLogout = async () => {
-        try {
-            // Clear tokens from localStorage
-            deleteToken()
-
-            // Logout from Auth0 if logged in with Auth0
-            if (auth0.user) {
-                auth0.logout()
-                return
-            }
-
-            const googleData = localStorage.getItem("googleData")
-            if (googleData) {
-                localStorage.removeItem("googleData")
-                try {
-                    const { access_token } = JSON.parse(googleData)
-                    if (access_token) {
-                        // Revoke the Google access token
-                        await fetch("https://oauth2.googleapis.com/revoke?token=" + access_token, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/x-www-form-urlencoded"
-                            }
-                        })
-                    }
-                } catch (error) {
-                    console.error("Error revoking Google token:", error)
-                }
-
-                return
-            }
-            // Logout from Microsoft if logged in with Microsoft
-            if (msal?.instance) {
-                await msal.instance.logout()
-            }
-        } catch (error) {
-            console.error("Error during logout:", error)
-        } finally {
-            clearUser()
-        }
-    }
 
     useEffect(() => {
         getNameAndSurname().then(res => setNameAndSurname(res))

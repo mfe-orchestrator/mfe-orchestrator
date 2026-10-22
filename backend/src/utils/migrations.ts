@@ -1,5 +1,8 @@
 import { FastifyBaseLogger } from "fastify"
-import { Model, QueryFilter } from "mongoose"
+import { Model, ObjectId, QueryFilter } from "mongoose"
+import AiChangeJob from "../models/AiChangeJobModel"
+import AiChangeRequest from "../models/AiChangeRequestModel"
+import AssistantConversation from "../models/AssistantConversationModel"
 import CodeRepository, { CODE_REPOSITORY_SECRET_PATHS } from "../models/CodeRepositoryModel"
 import Deployment, { IDeployment } from "../models/DeploymentModel"
 import Microfrontend, { CanaryType, IMicrofrontend } from "../models/MicrofrontendModel"
@@ -40,6 +43,32 @@ export const migrateLegacyCanaryTypes = async (logger: FastifyBaseLogger): Promi
 
     if (microfrontends.modifiedCount > 0 || deployments.modifiedCount > 0) {
         logger.info(`Migrated legacy canary types on ${microfrontends.modifiedCount} microfrontend(s) and ${deployments.modifiedCount} deployment(s)`)
+    }
+}
+
+/** MongoDB's codes for a collection, or an index, that does not exist. */
+const NAMESPACE_NOT_FOUND = 26
+const INDEX_NOT_FOUND = 27
+
+/**
+ * Removes the expiry the first version of the assistant history had: a TTL index on `expiresAt`,
+ * which made MongoDB delete conversations 90 days after their last answer. Conversations are now only
+ * ever deleted logically, so the index goes and the field with it.
+ *
+ * Mongoose creates the indexes a schema declares but never drops one it no longer declares, hence the
+ * explicit drop. Idempotent: once both are gone, it costs one failed drop and one empty update.
+ */
+export const removeAssistantConversationExpiry = async (logger: FastifyBaseLogger): Promise<void> => {
+    try {
+        await AssistantConversation.collection.dropIndex("expiresAt_1")
+        logger.info("Dropped the expiry index of the assistant conversations")
+    } catch (error) {
+        const code = (error as { code?: unknown } | null)?.code
+        if (code !== NAMESPACE_NOT_FOUND && code !== INDEX_NOT_FOUND) throw error
+    }
+    const { modifiedCount } = await AssistantConversation.collection.updateMany({ expiresAt: { $exists: true } }, { $unset: { expiresAt: "" } })
+    if (modifiedCount > 0) {
+        logger.info(`Removed the expiry date of ${modifiedCount} assistant conversation(s)`)
     }
 }
 
@@ -89,6 +118,54 @@ const encryptStoredSecrets = async (logger: FastifyBaseLogger): Promise<void> =>
     }
 }
 
+/** An AI change request as it was stored before it carried its conversation. */
+interface AiChangeRequestLinks {
+    _id: ObjectId
+    jobId?: ObjectId
+    parentId?: ObjectId
+    conversationId?: ObjectId
+}
+
+/** How far back a request's parents are followed: as far as a job looks for the requests before it. */
+const MAX_CONVERSATION_LENGTH = 50
+
+/**
+ * The conversation of a request written before requests carried one: the first job of its chain of follow-ups.
+ * Once its job is gone (expired with its proposals), the oldest request still reachable through `parentId`
+ * names it: a request without a parent was made by the first job of its chain. A request without a job comes
+ * from before jobs and is a conversation of its own.
+ */
+const conversationOf = async (request: AiChangeRequestLinks): Promise<ObjectId> => {
+    if (!request.jobId) return request._id
+    const job = await AiChangeJob.collection.findOne<{ rootJobId: ObjectId }>({ _id: request.jobId }, { projection: { rootJobId: 1 } })
+    if (job) return job.rootJobId
+    let oldest = request
+    for (let depth = 0; oldest.parentId && depth < MAX_CONVERSATION_LENGTH; depth++) {
+        const parent = await AiChangeRequest.collection.findOne<AiChangeRequestLinks>({ _id: oldest.parentId }, { projection: { jobId: 1, parentId: 1, conversationId: 1 } })
+        if (!parent) break
+        if (parent.conversationId) return parent.conversationId
+        oldest = parent
+    }
+    return oldest.jobId ?? oldest._id
+}
+
+/**
+ * Gives every AI change request written before requests carried their conversation the one it belongs to:
+ * the console groups the requests of a microfrontend by it. Idempotent: only the requests still without
+ * one are read, so once they are all done it costs one empty query.
+ */
+export const backfillAiChangeConversations = async (logger: FastifyBaseLogger): Promise<void> => {
+    let filled = 0
+    for await (const request of AiChangeRequest.collection.find<AiChangeRequestLinks>({ conversationId: { $exists: false } }, { projection: { jobId: 1, parentId: 1 } })) {
+        await AiChangeRequest.collection.updateOne({ _id: request._id }, { $set: { conversationId: await conversationOf(request) } })
+        filled++
+    }
+
+    if (filled > 0) {
+        logger.info(`Linked ${filled} AI change request(s) to their conversation`)
+    }
+}
+
 /**
  * Every data migration the application needs, run once the database connection is up.
  *
@@ -102,6 +179,8 @@ export const runMigrations = async (logger: FastifyBaseLogger): Promise<void> =>
         await migrateProjectsToOrganizations(logger)
         await migrateLegacyCanaryTypes(logger)
         await encryptStoredSecrets(logger)
+        await removeAssistantConversationExpiry(logger)
+        await backfillAiChangeConversations(logger)
     } catch (error) {
         logger.error({ error }, "Error while running data migrations")
     }

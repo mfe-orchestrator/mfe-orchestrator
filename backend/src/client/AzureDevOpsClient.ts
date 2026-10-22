@@ -1,4 +1,9 @@
-import axios from "axios"
+import axios, { AxiosRequestConfig } from "axios"
+import { createBusinessException } from "../errors/BusinessException"
+import { BuildJobLogDTO, MAX_FAILED_JOB_LOG_BYTES, MAX_FAILED_JOBS } from "../types/BuildStatusDTO"
+
+/** Code of the error raised when the token cannot reach the variable groups the deploy key is kept in */
+export const AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED = "AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED"
 
 export interface AzureAccessTokenResponse {
     access_token: string
@@ -288,6 +293,21 @@ class AzureDevOpsClient {
         return response.data
     }
 
+    async renameRepository(token: string, organization: string, project: string, repositoryId: string, newName: string): Promise<RepositoryData> {
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}?api-version=7.1-preview.1`
+        const response = await axios.request<RepositoryData>({
+            method: "PATCH",
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: { name: newName }
+        })
+
+        return response.data
+    }
+
     async getBranches(token: string, organization: string, project: string, repositoryName: string): Promise<AzureDevOpsBranchDTO> {
         const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryName}/refs?filter=heads/&api-version=7.1-preview.1`
         const response = await axios.request<AzureDevOpsBranchDTO>({
@@ -318,6 +338,35 @@ class AzureDevOpsClient {
         })
 
         return response.data?.value || []
+    }
+
+    /**
+     * Plain-text logs of the failed tasks of a build.
+     *
+     * Azure keeps one log per timeline record: the timeline says which records
+     * failed and which log each one wrote.
+     */
+    async getFailedJobLogs(token: string, organization: string, project: string, buildId: string): Promise<BuildJobLogDTO[]> {
+        const headers = { Authorization: `Bearer ${token}` }
+        const baseUrl = `https://dev.azure.com/${organization}/${project}/_apis/build/builds/${encodeURIComponent(buildId)}`
+
+        const timeline = await axios.request<{ records?: { name: string; type: string; result?: string; log?: { id: number } }[] }>({
+            url: `${baseUrl}/timeline?api-version=7.1`,
+            headers
+        })
+        const failedRecords = (timeline.data?.records || []).filter(record => record.type === "Task" && record.result === "failed" && record.log?.id !== undefined).slice(0, MAX_FAILED_JOBS)
+
+        return Promise.all(
+            failedRecords.map(async record => {
+                const log = await axios.request<string>({
+                    url: `${baseUrl}/logs/${record.log?.id}?api-version=7.1`,
+                    headers: { ...headers, Accept: "text/plain" },
+                    responseType: "text",
+                    maxContentLength: MAX_FAILED_JOB_LOG_BYTES
+                })
+                return { name: record.name, log: log.data }
+            })
+        )
     }
 
     async getBranchCommitId(token: string, organization: string, project: string, repositoryName: string, branchName: string): Promise<string> {
@@ -377,9 +426,9 @@ class AzureDevOpsClient {
     /**
      * Get all variable groups for a project
      */
-    private async getVariableGroups(token: string, organization: string, projectId: string): Promise<AzureVariableGroupsResponse> {
+    async getVariableGroups(token: string, organization: string, projectId: string): Promise<AzureVariableGroupsResponse> {
         const url = `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups?api-version=7.1-preview.2`
-        const response = await axios.request<AzureVariableGroupsResponse>({
+        const response = await this.variableGroupsRequest<AzureVariableGroupsResponse>({
             url,
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -390,22 +439,35 @@ class AzureDevOpsClient {
     }
 
     /**
+     * Azure answers 401 (or 403) when the token lacks the Variable Groups scope, even though it
+     * reaches the projects: told apart here, or the user only sees a bare "status code 401".
+     */
+    private async variableGroupsRequest<T>(config: AxiosRequestConfig) {
+        try {
+            return await axios.request<T>(config)
+        } catch (error) {
+            if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+                throw createBusinessException({
+                    code: AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED,
+                    message: "The personal access token cannot manage the project's variable groups: it needs the Variable Groups (Read, create & manage) scope"
+                })
+            }
+            throw error
+        }
+    }
+
+    /**
      * Check if a secret exists in the organization's variable group
      */
     async checkOrganizationSecretExists({ accessToken, organization, projectId, secretName, variableGroupName }: CheckOrganizationSecretExistsParams): Promise<boolean> {
-        try {
-            const variableGroup = await this.getVariableGroups(accessToken, organization, projectId)
-            const existingGroup = variableGroup.value.find(g => g.name === variableGroupName)
+        const variableGroup = await this.getVariableGroups(accessToken, organization, projectId)
+        const existingGroup = variableGroup.value.find(g => g.name === variableGroupName)
 
-            if (existingGroup) {
-                return secretName in existingGroup.variables
-            }
-
-            return false
-        } catch (error) {
-            console.error("Error checking Azure DevOps secret:", error)
-            return false
+        if (existingGroup) {
+            return secretName in existingGroup.variables
         }
+
+        return false
     }
 
     /**
@@ -427,7 +489,7 @@ class AzureDevOpsClient {
 
         if (!variableGroup) {
             // Create new variable group with the secret
-            await axios.request<AzureVariableGroup>({
+            await this.variableGroupsRequest<AzureVariableGroup>({
                 method: "POST",
                 url: `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups?api-version=7.1`,
                 headers: {
@@ -463,7 +525,7 @@ class AzureDevOpsClient {
         }
 
         // Update the existing variable group with the new secret
-        await axios.request({
+        await this.variableGroupsRequest({
             method: "PUT",
             url: `https://dev.azure.com/${organization}/${projectId}/_apis/distributedtask/variablegroups/${variableGroup.id}?api-version=7.1-preview.2`,
             headers: {
@@ -547,6 +609,33 @@ class AzureDevOpsClient {
             }
             throw error
         }
+    }
+
+    /** Opens a pull request and returns its web URL. */
+    async createPullRequest(
+        token: string,
+        organization: string,
+        project: string,
+        repositoryId: string,
+        request: { sourceBranch: string; targetBranch: string; title: string; description: string }
+    ): Promise<string> {
+        const response = await axios.request<{ pullRequestId: number; repository: { name: string; project: { name: string } } }>({
+            method: "POST",
+            url: `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}/pullrequests?api-version=7.1`,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            data: {
+                sourceRefName: `refs/heads/${request.sourceBranch}`,
+                targetRefName: `refs/heads/${request.targetBranch}`,
+                title: request.title,
+                // Azure DevOps caps the description at 4000 characters.
+                description: request.description.slice(0, 4000)
+            }
+        })
+        const { pullRequestId, repository } = response.data
+        return `https://dev.azure.com/${organization}/${encodeURIComponent(repository.project.name)}/_git/${encodeURIComponent(repository.name)}/pullrequest/${pullRequestId}`
     }
 
     /**

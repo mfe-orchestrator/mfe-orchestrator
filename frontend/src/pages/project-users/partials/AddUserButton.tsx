@@ -51,7 +51,7 @@ export const AddUserButton: React.FC<AddUserButtonProps> = ({ onSuccess }) => {
             z.object({
                 email: z.string().email(t("auth.invalid_email")),
                 role: z.enum([RoleInProject.OWNER, RoleInProject.MEMBER, RoleInProject.VIEWER], {
-                    required_error: t("project_users.role_required")
+                    error: t("project_users.role_required")
                 })
             }),
         [t]

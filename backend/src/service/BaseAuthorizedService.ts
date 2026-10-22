@@ -1,4 +1,5 @@
 import { ClientSession, ObjectId, Schema } from "mongoose"
+import { createBusinessException } from "../errors/BusinessException"
 import UserCannotAccessThisDeploymentError from "../errors/UserCannotAccessThisDeploymentError"
 import UserCannotAccessThisEnvironmentError from "../errors/UserCannotAccessThisEnvironmentError"
 import UserCannotAccessThisOrganizationError from "../errors/UserCannotAccessThisOrganizationError"
@@ -9,14 +10,38 @@ import { IMicrofrontend } from "../models/MicrofrontendModel"
 import Project from "../models/ProjectModel"
 import { IUser } from "../models/UserModel"
 import UserOrganization, { ORGANIZATION_ADMIN_ROLES, RoleInOrganization } from "../models/UserOrganizationModel"
-import UserProject from "../models/UserProjectModel"
+import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
 
-export default abstract class BaseAuthorizedService {
-    protected user?: IUser
+/**
+ * Who a service acts for.
+ *
+ * A console session is the user, with everything the user can reach. A MCP access token is bound
+ * to the projects chosen at consent: `restrictedToProjectIds` carries that binding, and every
+ * check below narrows to it, so a token can never be pointed at another project of the same user.
+ */
+export type AuthorizedPrincipal = IUser & {
+    restrictedToProjectIds?: string[]
+    /**
+     * Set when an MCP client authenticated with a project API key rather than as a user. There is
+     * no person behind it, hence no membership to look up: it reaches its own project and nothing
+     * else. `_id` and `email` are synthetic (the key's id, `api-key:<id>`), only ever used in error
+     * messages; no service reachable from the MCP tools writes the acting user anywhere.
+     */
+    apiKeyId?: string
+}
 
-    public constructor(user?: IUser) {
+export default abstract class BaseAuthorizedService {
+    protected user?: AuthorizedPrincipal
+
+    public constructor(user?: AuthorizedPrincipal) {
         this.user = user
+    }
+
+    /** True when the principal is confined to some projects and this one is not among them. */
+    private isOutsideRestriction(projectId: string | Schema.Types.ObjectId | ObjectId): boolean {
+        const restrictedTo = this.user?.restrictedToProjectIds
+        return Boolean(restrictedTo) && !restrictedTo!.includes(String(projectId))
     }
 
     /**
@@ -77,8 +102,11 @@ export default abstract class BaseAuthorizedService {
      * @returns Promise<boolean> True if user has access, false otherwise
      */
     protected async hasAccessToProject(projectId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<boolean> {
-        if (!this.user) {
+        if (!this.user || this.isOutsideRestriction(projectId)) {
             return false
+        }
+        if (this.user.apiKeyId) {
+            return Boolean(this.user.restrictedToProjectIds?.length)
         }
 
         // Check if user is directly associated with the project.
@@ -102,7 +130,10 @@ export default abstract class BaseAuthorizedService {
         if (!project) {
             return false
         }
-        return this.isOrganizationAdmin(project.organizationId, session)
+        // The membership lookup itself, not the guarded one below: a project-bound principal still
+        // reaches its own project through the organization it administers.
+        const role = await this.findRoleInOrganization(project.organizationId, session)
+        return Boolean(role && ORGANIZATION_ADMIN_ROLES.includes(role))
     }
 
     /**
@@ -112,6 +143,19 @@ export default abstract class BaseAuthorizedService {
      * being invited to an organization must not already grant what belonging to it grants.
      */
     protected async getRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
+        // A project-bound principal acts inside its project only: organization level operations
+        // (members, invitations, other projects) are out of its reach whatever the user's role.
+        if (this.user?.restrictedToProjectIds) {
+            return undefined
+        }
+        return this.findRoleInOrganization(organizationId, session)
+    }
+
+    /**
+     * The organization role as stored, ignoring the project binding of the principal. Only for checks
+     * about a project the principal is bound to, where an organization administrator acts as an owner.
+     */
+    protected async findRoleInOrganization(organizationId: string | Schema.Types.ObjectId | ObjectId, session?: ClientSession): Promise<RoleInOrganization | undefined> {
         if (!this.user) {
             return undefined
         }
@@ -164,7 +208,7 @@ export default abstract class BaseAuthorizedService {
      * invitation.
      */
     protected async getAdministeredOrganizationIds(session?: ClientSession): Promise<ObjectId[]> {
-        if (!this.user) {
+        if (!this.user || this.user.restrictedToProjectIds) {
             return []
         }
 
@@ -200,6 +244,23 @@ export default abstract class BaseAuthorizedService {
 
     protected async ensureAccessToMicrofrontend(microfrontend: IMicrofrontend) {
         return this.ensureAccessToProject(microfrontend.projectId)
+    }
+
+    /**
+     * Refuses a VIEWER of the project what writes at its code provider (a new repository, an AI
+     * change): a viewer may look, not write. Organization administrators reach every project and act
+     * there as owners. Called after the access to the project is checked, which already refuses a
+     * call without a principal; a project API key has no membership, its role is checked where it
+     * authenticates (the MCP server refuses write tools to a VIEWER key).
+     */
+    protected async ensureNotViewer(projectId: string | Schema.Types.ObjectId | ObjectId, forbidden: { code: string; message: string }): Promise<void> {
+        const user = this.getUser()
+        if (!user || this.user?.apiKeyId) return
+        const membership = await UserProject.findOne({ userId: user._id, projectId: toObjectId(projectId), invitationToken: null })
+        if (membership?.role !== RoleInProject.VIEWER) return
+        const project = await Project.findById(projectId, { organizationId: 1 })
+        if (project && (await this.isOrganizationAdmin(project.organizationId))) return
+        throw createBusinessException({ ...forbidden, statusCode: 403 })
     }
 
     /**

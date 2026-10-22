@@ -1,12 +1,17 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, DescriptionItem, DescriptionList, Meter } from "@mfe-orchestrator/design-system"
-import { Cog, GitBranch, Hammer, UsersRound } from "lucide-react"
+import { Cog, GitBranch, Hammer, Sparkles, UsersRound } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import useProjectAiModels from "@/components/assistant/useProjectAiModels"
 import { Badge, Button } from "@/components/atoms"
 import { CanaryType, Microfrontend } from "@/hooks/apiClients/useMicrofrontendsApi"
+import { cn } from "@/utils/styleUtils"
 import BuildDialog from "./BuildDialog"
 import CloneRepositoryPopover from "./CloneRepositoryPopover"
+import { isAiEditAvailable } from "./MicrofrontendHeader"
+import MicrofrontendKindBadge from "./MicrofrontendKindBadge"
+import WorkingAgentsIndicator, { useWorkingAgents } from "./WorkingAgentsIndicator"
 
 interface MicrofrontendCardProps {
     mfe: Microfrontend
@@ -24,9 +29,11 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
     // as "nobody sees it".
     const showCanaryShare = Boolean(canary) && canary?.type !== CanaryType.ON_USER
     const hasRepository = Boolean(mfe.codeRepository?.enabled)
+    const agents = useWorkingAgents(mfe._id)
+    const aiAvailable = isAiEditAvailable(mfe, useProjectAiModels().enabled)
 
     return (
-        <Card className="flex h-full flex-col transition-colors duration-200 hover:border-primary">
+        <Card className={cn("flex h-full flex-col transition-colors duration-200 hover:border-primary", agents > 0 && "animate-agent-glow border-primary motion-reduce:animate-none")}>
             <CardHeader className="flex-row items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <CardTitle className="mb-0 truncate" title={mfe.name}>
@@ -35,8 +42,12 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
                     <p className="truncate text-sm text-foreground-secondary" title={mfe.slug}>
                         {mfe.slug}
                     </p>
+                    <WorkingAgentsIndicator agents={agents} className="mt-2 max-w-full" />
                 </div>
-                <Badge className="shrink-0">{mfe.version}</Badge>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <Badge>{mfe.version || "—"}</Badge>
+                    <MicrofrontendKindBadge microfrontend={mfe} />
+                </div>
             </CardHeader>
 
             <CardContent className="flex flex-grow flex-col gap-3 py-3">
@@ -83,9 +94,9 @@ export const MicrofrontendCard: React.FC<MicrofrontendCardProps> = ({ mfe }) => 
             </CardContent>
 
             <CardFooter className="flex-wrap gap-2 border-t border-divider pt-3">
-                <Button variant="primary" size="sm" onClick={() => navigate(`/microfrontend/${mfe._id}`)} className="flex-1">
-                    <Cog />
-                    {t("common.configuration")}
+                <Button variant="primary" size="sm" onClick={() => navigate(aiAvailable ? `/microfrontend/${mfe._id}` : `/microfrontend/${mfe._id}/settings`)} className="flex-1">
+                    {aiAvailable ? <Sparkles /> : <Cog />}
+                    {aiAvailable ? t("microfrontend.workspace.nav_ai") : t("common.configuration")}
                 </Button>
                 {hasRepository && (
                     <Button variant="secondary" size="sm" onClick={() => setIsBuildDialogOpen(true)} className="flex-1">

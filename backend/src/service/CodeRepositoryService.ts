@@ -22,7 +22,27 @@ import BaseAuthorizedService from "./BaseAuthorizedService"
  */
 const retypedSecret = (value?: string): string | undefined => (value && value !== SECRET_PLACEHOLDER ? value : undefined)
 
+/** Whether two GitLab URLs name the same instance: only a trailing slash may tell them apart. */
+const sameGitlabUrl = (stored: string | undefined, requested: string | undefined) => !!stored && stored.replace(/\/+$/, "") === requested?.replace(/\/+$/, "")
+
+const storedTokenElsewhere = () =>
+    new BusinessException({
+        code: "ACCESS_TOKEN_REQUIRED",
+        message: "The stored access token is used only with the URL it was saved for: type it again to use another one",
+        statusCode: 400
+    })
+
 export const deploySecretName = "MICROFRONTEND_ORCHESTRATOR_API_KEY"
+
+/**
+ * How long a deploy key the platform creates for itself stays valid.
+ *
+ * Spelled out unit by unit on purpose: this was `3600 * 1000 * 365` in four places, which
+ * is 365 *hours* — the keys expired after fifteen days while every page said a year.
+ */
+export const deployKeyLifetimeMs = 365 * 24 * 60 * 60 * 1000
+
+export const deployKeyExpiry = () => new Date(Date.now() + deployKeyLifetimeMs)
 export const azureDevOpsVariableGroupName = "MFE_ORCHESTRATOR_SECRETS"
 
 export interface CodeRepositoryCreateInput {
@@ -136,8 +156,12 @@ export class CodeRepositoryService extends BaseAuthorizedService {
      * The token to authenticate a call with: the one just typed in, or the one already stored when the
      * form sent the placeholder back — which is what the edit screens do, since the API never hands
      * them the real token to begin with.
+     *
+     * The stored token is lent only to members of the project of the connection, and only towards what it
+     * was stored for: `storedFor` tells whether the target the request names is that one. Without it, any
+     * member could name a host of theirs and receive the token.
      */
-    private async resolveAccessToken(pat: string | undefined, repositoryId?: string): Promise<string> {
+    private async resolveAccessToken(pat: string | undefined, repositoryId: string | undefined, storedFor: (repository: ICodeRepository) => boolean): Promise<string> {
         const typed = retypedSecret(pat)
         if (typed) return typed
 
@@ -152,6 +176,9 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         const repository = await this.findById(repositoryId)
         if (!repository) {
             throw new EntityNotFoundError(repositoryId)
+        }
+        if (!storedFor(repository)) {
+            throw storedTokenElsewhere()
         }
 
         return repository.accessToken
@@ -194,7 +221,9 @@ export class CodeRepositoryService extends BaseAuthorizedService {
         repository.default = true
         await repository.save()
 
-        await CodeRepository.updateMany({ _id: { $ne: toObjectId(repositoryId) } }, { default: false })
+        // Scoped to the project: unscoped, making one repository the default cleared the flag on
+        // every other project's repositories too, a write reaching outside the caller's project.
+        await CodeRepository.updateMany({ _id: { $ne: toObjectId(repositoryId) }, projectId: repository.projectId }, { default: false })
     }
 
     async injectSecretsToDeployOnGitlabRaw(repository: ICodeRepository, session?: ClientSession) {
@@ -215,7 +244,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             {
                 name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - GitLab - " + repository.name,
                 role: ApiKeyRole.MANAGER,
-                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+                expiresAt: deployKeyExpiry()
             },
             session
         )
@@ -246,7 +275,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             {
                 name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Github - " + repository.name,
                 role: ApiKeyRole.MANAGER,
-                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+                expiresAt: deployKeyExpiry()
             },
             session
         )
@@ -281,7 +310,7 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             {
                 name: "MFE_ORCHESTRATOR_DEPLOY_SECRET - Azure DevOps - " + repository.name,
                 role: ApiKeyRole.MANAGER,
-                expiresAt: new Date(Date.now() + 3600 * 1000 * 365)
+                expiresAt: deployKeyExpiry()
             },
             session
         )
@@ -523,7 +552,17 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async testConnectionAzure(organization: string, pat: string, repositoryId?: string) {
-        return new AzureDevOpsClient().getProjects(await this.resolveAccessToken(pat, repositoryId), organization)
+        const client = new AzureDevOpsClient()
+        // The organization may change on the edit screen: the host stays Azure DevOps, so the token stays with it
+        const token = await this.resolveAccessToken(pat, repositoryId, repository => repository.provider === CodeRepositoryProvider.AZURE_DEV_OPS)
+        const projects = await client.getProjects(token, organization)
+        // Saving the connection writes the deploy key into a variable group: a token without that
+        // scope still lists the projects, so it is tried here rather than failing only on save.
+        // A scope applies to the whole token, so any project of the organization tells.
+        if (projects.value[0]) {
+            await client.getVariableGroups(token, organization, projects.value[0].id)
+        }
+        return projects
     }
 
     async addRepositoryGitlab(body: CreateGitlabRepositoryDto, projectId: string) {
@@ -570,8 +609,14 @@ export class CodeRepositoryService extends BaseAuthorizedService {
             })
         }
 
+        const typed = retypedSecret(body.pat)
+        // Saving pushes the deploy key with the token to the URL: a new one takes the token typed again
+        if (!typed && !sameGitlabUrl(repository.gitlabData?.url, body.url)) {
+            throw storedTokenElsewhere()
+        }
+
         repository.name = body.name
-        repository.accessToken = retypedSecret(body.pat) ?? repository.accessToken
+        repository.accessToken = typed ?? repository.accessToken
         repository.gitlabData = {
             url: body.url,
             groupId: body.groupId,
@@ -585,7 +630,8 @@ export class CodeRepositoryService extends BaseAuthorizedService {
     }
 
     async testConnectionGitlab(url: string, pat: string, repositoryId?: string) {
-        return new GitLabClient(url, await this.resolveAccessToken(pat, repositoryId)).getGroups()
+        const token = await this.resolveAccessToken(pat, repositoryId, repository => repository.provider === CodeRepositoryProvider.GITLAB && sameGitlabUrl(repository.gitlabData?.url, url))
+        return new GitLabClient(url, token).getGroups()
     }
 
     async getAzureRepositories(repositoryId: string, projectId: string): Promise<RepositoryData[]> {

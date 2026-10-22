@@ -1,9 +1,23 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource } from "../types/MicrofrontendStack"
+import { CONTEXT_MAX_LENGTH } from "./ProjectModel"
 
 export enum MicrofrontendType {
     HOST = "HOST",
     REMOTE = "REMOTE"
+}
+
+/**
+ * How it is built and served, independent from HOST/REMOTE: a host can itself be a remote of other hosts.
+ *
+ * A MICROFRONTEND is a static bundle the CI uploads and the orchestrator serves. A FRONTEND is an app
+ * built into an image and served by its own container: the orchestrator neither stores its files nor
+ * deploys it, its pipeline pushes the image and registers the version.
+ * A FRONTEND is the top of a tree: it loads remotes, nothing loads it, so it never has parents.
+ */
+export enum MicrofrontendKind {
+    MICROFRONTEND = "MICROFRONTEND",
+    FRONTEND = "FRONTEND"
 }
 
 /** Framework and bundler of a microfrontend, and where that knowledge came from */
@@ -51,10 +65,17 @@ export interface IPosition {
 }
 export interface IMicrofrontend extends Document<ObjectId> {
     type: MicrofrontendType
+    kind: MicrofrontendKind
+    /** FRONTEND only: where its pipeline pushes the image */
+    image?: {
+        /** Without tag, e.g. ghcr.io/acme/shell */
+        repository?: string
+    }
     template: string
     stack?: IMicrofrontendStack
     slug: string
     name: string
+    /** Unset on a FRONTEND until its CI registers a first version */
     version: string
     continuousDeployment?: boolean
     path?: string
@@ -63,6 +84,8 @@ export interface IMicrofrontend extends Document<ObjectId> {
     host: IHostMicrofrontend
     codeRepository?: ICodeRepositoryMicrofrontend
     description?: string
+    /** Markdown for AI agents about this microfrontend only; the project context covers what they share. */
+    context?: string
     createdAt: Date
     updatedAt: Date
 
@@ -257,14 +280,28 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
             type: String,
             trim: true
         },
+        context: {
+            type: String,
+            trim: true,
+            maxlength: CONTEXT_MAX_LENGTH
+        },
         version: {
             type: String,
-            required: true
+            // A FRONTEND gets its first one from the first version its CI registers
+            required: function (this: IMicrofrontend) {
+                return this.kind !== MicrofrontendKind.FRONTEND
+            }
         },
         type: {
             type: String,
             enum: [MicrofrontendType.HOST, MicrofrontendType.REMOTE],
             default: MicrofrontendType.HOST,
+            required: true
+        },
+        kind: {
+            type: String,
+            enum: Object.values(MicrofrontendKind),
+            default: MicrofrontendKind.MICROFRONTEND,
             required: true
         },
         template: {
@@ -304,6 +341,13 @@ const microfrontendSchema: Schema = new Schema<IMicrofrontend>(
         position: {
             type: microfrontendPositionSchema,
             required: false
+        },
+        image: {
+            repository: {
+                type: String,
+                required: false,
+                trim: true
+            }
         }
     },
     {

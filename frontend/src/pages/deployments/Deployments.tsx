@@ -1,7 +1,8 @@
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Rocket } from "lucide-react"
 import React from "react"
 import { useTranslation } from "react-i18next"
+import AskAssistantButton from "@/components/assistant/AskAssistantButton"
 import { Button } from "@/components/atoms"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useDeploymentsApi from "@/hooks/apiClients/useDeploymentsApi"
@@ -18,12 +19,10 @@ export const Deployments: React.FC = () => {
 
     const isThereAtLeastOneEnvironment = projectStore.environments?.length > 0
 
-    const handleDeploy = async () => {
-        await deploymentsApi.createDeployment([projectStore.environment?._id])
-        await queryClient.invalidateQueries({
-            queryKey: ["deployments", projectStore.environment?._id]
-        })
-    }
+    const deployMutation = useMutation({
+        mutationFn: (environmentId: string) => deploymentsApi.createDeployment([environmentId]),
+        onSuccess: (_deployment, environmentId) => queryClient.invalidateQueries({ queryKey: ["deployments", environmentId] })
+    })
 
     return (
         <SinglePageLayout
@@ -34,10 +33,23 @@ export const Deployments: React.FC = () => {
                     {isThereAtLeastOneEnvironment && (
                         <>
                             <EnvironmentSelector selectedEnvironment={projectStore.environment} environments={projectStore.environments} onEnvironmentChange={projectStore.setEnvironment} />
-                            <Button className="min-w-32" onClick={handleDeploy}>
+                            <Button
+                                className="min-w-32"
+                                onClick={() => deployMutation.mutate(projectStore.environment?._id)}
+                                disabled={!projectStore.environment?._id}
+                                loading={deployMutation.isPending}
+                                loadingLabel={t("deployments.deploying")}
+                            >
                                 <Rocket />
                                 {t("deployments.deploy_button")}
                             </Button>
+                            {projectStore.environment?._id && (
+                                <AskAssistantButton
+                                    label={t("assistant.actions.analyze_deployments")}
+                                    question={t("assistant.questions.analyze_deployments", { environment: projectStore.environment.name, environmentId: projectStore.environment._id })}
+                                    dataTestId="assistant-analyze-deployments"
+                                />
+                            )}
                         </>
                     )}
                 </div>

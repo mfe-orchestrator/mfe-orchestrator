@@ -9,6 +9,7 @@ import { Button } from "@/components/atoms"
 import TextField from "@/components/input/TextField.rhf"
 import SinglePageLayout from "@/components/SinglePageLayout"
 import useCodeRepositoriesApi from "@/hooks/apiClients/useCodeRepositoriesApi"
+import { errorCodeOf } from "@/hooks/useApiClient"
 import useToastNotificationStore from "@/store/useToastNotificationStore"
 
 interface AddAzureFormValues {
@@ -45,8 +46,11 @@ const AddAzureRepositoryPage = () => {
         enabled: !!params.id
     })
 
+    // Raised by the backend when the PAT reaches the projects but not their variable groups
+    const azureErrorMessage = (error: Error) => (errorCodeOf(error) === "AZURE_DEVOPS_VARIABLE_GROUPS_UNAUTHORIZED" ? t("codeRepositories.azure.error.variableGroupsScope") : undefined)
+
     const testConnectionMutation = useMutation({
-        mutationFn: repositoryApi.testConnectionAzure
+        mutationFn: (data: Parameters<typeof repositoryApi.testConnectionAzure>[0]) => repositoryApi.testConnectionAzure(data, { customErrorMessage: azureErrorMessage })
     })
 
     const handleSubmit = async (values: AddAzureFormValues) => {
@@ -55,12 +59,12 @@ const AddAzureRepositoryPage = () => {
             projectName: testConnectionMutation.data?.value.find(project => project.id === values.projectId)?.name
         }
         if (params.id) {
-            await repositoryApi.editRepositoryAzure(params.id, realValues)
+            await repositoryApi.editRepositoryAzure(params.id, realValues, { customErrorMessage: azureErrorMessage })
             notificationStore.showSuccessNotification({
                 message: t("codeRepositories.azure.successEdit")
             })
         } else {
-            await repositoryApi.addRepositoryAzure(realValues)
+            await repositoryApi.addRepositoryAzure(realValues, { customErrorMessage: azureErrorMessage })
             notificationStore.showSuccessNotification({
                 message: t("codeRepositories.azure.successAdd")
             })

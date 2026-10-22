@@ -2,6 +2,8 @@ import fastifyEnv from "@fastify/env"
 import dotenv from "dotenv"
 import { FastifyInstance, FastifyPluginOptions } from "fastify"
 import fastifyPlugin from "fastify-plugin"
+import { LlmConfiguration, resolveLlmProvider } from "../service/llm"
+import { assertMcpConfigurationIsUsable } from "../utils/oauthConfig"
 import { assertSecretEncryptionKeyIsUsable, isSecretEncryptionEnabled } from "../utils/secretCrypto"
 import { TELEMETRY_DEFAULT_ENDPOINT, TELEMETRY_DEFAULT_INTERVAL_HOURS } from "../utils/telemetry"
 
@@ -204,6 +206,144 @@ export default fastifyPlugin(
                 TELEMETRY_INTERVAL_HOURS: {
                     type: "number",
                     default: TELEMETRY_DEFAULT_INTERVAL_HOURS
+                },
+                // Remote MCP server and the OAuth authorization server in front of it. Off until
+                // the operator turns it on: see docs/MCP.md.
+                MCP_ENABLED: {
+                    type: "boolean",
+                    default: false
+                },
+                // Overrides for when the public URLs cannot be derived from BACKEND_URL/FRONTEND_URL.
+                OAUTH_ISSUER_URL: {
+                    type: "string"
+                },
+                MCP_RESOURCE_URL: {
+                    type: "string"
+                },
+                // Dynamic client registration (RFC 7591) and client metadata documents: both on by
+                // default, as every MCP client in circulation relies on one or the other.
+                MCP_DCR_ENABLED: {
+                    type: "boolean",
+                    default: true
+                },
+                MCP_CIMD_ENABLED: {
+                    type: "boolean",
+                    default: true
+                },
+                // Lets clients that cannot do OAuth use a project API key on /mcp instead.
+                MCP_API_KEY_ENABLED: {
+                    type: "boolean",
+                    default: true
+                },
+                // MCP requests per minute for each grant or API key, on top of RATE_LIMIT_MAX per IP.
+                MCP_RATE_LIMIT_MAX: {
+                    type: "number",
+                    default: 120
+                },
+                // Comma separated hosts allowed to publish a client metadata document. Empty: any.
+                CIMD_ALLOWED_HOSTS: {
+                    type: "string"
+                },
+                // Read before this plugin runs (Fastify takes it at construction), listed here so
+                // the schema documents every variable the backend reads.
+                TRUST_PROXY: {
+                    type: "string"
+                },
+                // The system AI, offered to every organization next to the ones it defines: anthropic,
+                // azure-foundry, gemini, azure-openai or aws-bedrock. Unset, an ANTHROPIC_API_KEY alone
+                // turns Claude on; with neither there is no system AI, and a project whose organization
+                // defines none has AI off: its endpoints answer 404 and nothing is sent anywhere.
+                AI_PROVIDER: {
+                    type: "string"
+                },
+                ANTHROPIC_API_KEY: {
+                    type: "string"
+                },
+                // Defaults to claude-opus-5-5.
+                ANTHROPIC_MODEL: {
+                    type: "string"
+                },
+                // Claude on Microsoft Foundry: the resource name (https://<resource>.services.ai.azure.com).
+                AZURE_FOUNDRY_RESOURCE: {
+                    type: "string"
+                },
+                AZURE_FOUNDRY_API_KEY: {
+                    type: "string"
+                },
+                // The deployment name of the Claude model on Foundry. Defaults to claude-opus-5-5.
+                AZURE_FOUNDRY_MODEL: {
+                    type: "string"
+                },
+                GEMINI_API_KEY: {
+                    type: "string"
+                },
+                // Required with gemini: Gemini models are retired often, so none is assumed.
+                GEMINI_MODEL: {
+                    type: "string"
+                },
+                // Azure OpenAI: https://<resource>.openai.azure.com/
+                AZURE_OPENAI_ENDPOINT: {
+                    type: "string"
+                },
+                AZURE_OPENAI_API_KEY: {
+                    type: "string"
+                },
+                // The deployment of the GPT model, which is also the model name.
+                AZURE_OPENAI_DEPLOYMENT: {
+                    type: "string"
+                },
+                // True for reasoning deployments (o-series, GPT-5 and later): the effort is sent as reasoning.effort.
+                AZURE_OPENAI_REASONING: {
+                    type: "boolean",
+                    default: false
+                },
+                // The host suffixes an organization's Azure OpenAI endpoint may name besides the public
+                // cloud's (.openai.azure.com, .cognitiveservices.azure.com, .services.ai.azure.com), comma
+                // separated: the sovereign clouds', e.g. .openai.azure.us,.openai.azure.cn
+                AZURE_OPENAI_ENDPOINT_SUFFIXES: {
+                    type: "string"
+                },
+                // Claude on Amazon Bedrock: the region, an access key allowed to invoke the model, and
+                // the model id or inference profile (e.g. anthropic.claude-opus-5-5), required.
+                AWS_BEDROCK_REGION: {
+                    type: "string"
+                },
+                AWS_BEDROCK_ACCESS_KEY_ID: {
+                    type: "string"
+                },
+                AWS_BEDROCK_SECRET_ACCESS_KEY: {
+                    type: "string"
+                },
+                AWS_BEDROCK_MODEL: {
+                    type: "string"
+                },
+                // The highest reasoning effort users may choose with the system AI: low, medium, high, xhigh
+                // or max. Higher efforts take more tokens per answer; unset, every level the model takes is offered.
+                AI_MAX_EFFORT: {
+                    type: "string",
+                    enum: ["low", "medium", "high", "xhigh", "max"]
+                },
+                // Assistant questions per IP per minute. Each one is a paid model call, so
+                // the ceiling is separate from, and lower than, RATE_LIMIT_MAX.
+                ASSISTANT_RATE_LIMIT_MAX: {
+                    type: "number",
+                    default: 20
+                },
+                // Where the repositories behind the microfrontends are cloned to be edited with AI,
+                // as <org>/<project>/<microfrontend>. A cache: deleting it only costs a new clone.
+                REPOSITORIES_FOLDER: {
+                    type: "string",
+                    default: "/repositories"
+                },
+                // A repository bigger than this on disk is refused, and removed, after the clone.
+                REPOSITORIES_MAX_SIZE_MB: {
+                    type: "number",
+                    default: 500
+                },
+                // Working copies not used for this many days are deleted.
+                REPOSITORIES_EVICT_AFTER_DAYS: {
+                    type: "number",
+                    default: 14
                 }
             }
         }
@@ -233,6 +373,13 @@ export default fastifyPlugin(
         // application that starts and then fails on the first storage it touches, which reads as a
         // broken bucket rather than as a typo in the environment.
         assertSecretEncryptionKeyIsUsable()
+
+        // Same reasoning: a MCP server signing with the public fallback secret must not come up at all.
+        assertMcpConfigurationIsUsable()
+
+        // A provider named without its credentials fails here, not at the first question. Read from
+        // the environment like the checks above: fastify.config is only filled in by fastifyEnv below.
+        resolveLlmProvider(process.env as LlmConfiguration)
 
         if (!isSecretEncryptionEnabled()) {
             fastify.log.warn("SECRETS_ENCRYPTION_KEY is not set: storage credentials and repository tokens are stored unencrypted. See docs/SECRETS.md")

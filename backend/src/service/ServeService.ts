@@ -15,7 +15,7 @@ import Deployment, { IDeployment } from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment, { IEnvironment } from "../models/EnvironmentModel"
 import { IGlobalVariable } from "../models/GlobalVariableModel"
-import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend, MicrofrontendType } from "../models/MicrofrontendModel"
+import Microfrontend, { CanaryDeploymentType, CanaryType, HostedOn, IMicrofrontend, MicrofrontendKind, MicrofrontendType } from "../models/MicrofrontendModel"
 import Project, { IProject } from "../models/ProjectModel"
 import { IStorage, StorageType } from "../models/StorageModel"
 import { MicrofrontendCompiler, MicrofrontendFramework, MicrofrontendStackSource, parseCompiler, parseFramework } from "../types/MicrofrontendStack"
@@ -287,8 +287,11 @@ export default class ServeService {
             throw new EnvironmentNotFoundError(environmentId.toString())
         }
 
+        // A FRONTEND is never a remote, so no host loads it from the manifest
         const microFrontendsAdapted = deployment.microfrontends
-            ? await Promise.all(deployment.microfrontends.map(microfrontend => this.adaptMicrofrontendToServe(microfrontend, environment.slug, deployment._id)))
+            ? await Promise.all(
+                  deployment.microfrontends.filter(microfrontend => !isFrontend(microfrontend)).map(microfrontend => this.adaptMicrofrontendToServe(microfrontend, environment.slug, deployment._id))
+              )
             : undefined
 
         return {
@@ -670,6 +673,11 @@ export default class ServeService {
      * strategy from another.
      */
     private async adaptMicrofrontendToServe(microfrontend: IMicrofrontend, environmentSlug?: string, deploymentId?: string | ObjectId | Schema.Types.ObjectId): Promise<MicrofrontendAdaptedToServe> {
+        // A FRONTEND is a host asking for its own configuration: nothing of ours serves it, so there is no URL to
+        // hand out and no canary to draw
+        if (isFrontend(microfrontend)) {
+            return buildMicrofrontendAdaptedToServe(microfrontend, "")
+        }
         if (!microfrontend.canary?.enabled) {
             return buildMicrofrontendAdaptedToServe(microfrontend, getMicrofrontendUrlStatic(microfrontend, environmentSlug))
         }
@@ -694,7 +702,8 @@ export default class ServeService {
      */
     async getMicrofrontendByDeployment(project: IProject, deployment: IDeployment, microfrontendSlug: string, filePath: string, version?: string): Promise<ServeFileResult> {
         const microfrontend = deployment.microfrontends?.find(mfe => mfe.slug === microfrontendSlug)
-        if (!microfrontend) {
+        // A FRONTEND has no files here: its own container serves them
+        if (!microfrontend || isFrontend(microfrontend)) {
             throw new EntityNotFoundError(microfrontendSlug)
         }
 
@@ -892,6 +901,9 @@ const getMicrofrontendUrlStatic = (microfrontend: IMicrofrontend, environmentSlu
         throw new Error("Microfrontend host type is not defined")
     }
 }
+
+/** Snapshots taken before `kind` existed hold none: those are all MICROFRONTENDs */
+const isFrontend = (microfrontend: Pick<IMicrofrontend, "kind">): boolean => microfrontend.kind === MicrofrontendKind.FRONTEND
 
 const getMicrofrontendUrlCanary = (microfrontend: IMicrofrontend): string => {
     if (!microfrontend.canary?.url) {

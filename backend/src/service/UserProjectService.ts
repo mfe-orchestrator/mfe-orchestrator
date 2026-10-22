@@ -7,12 +7,16 @@ import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import Organization from "../models/OrganizationModel"
 import Project, { IProject } from "../models/ProjectModel"
 import User, { IUser, IUserDocument, UserStatus } from "../models/UserModel"
+import { ORGANIZATION_ADMIN_ROLES } from "../models/UserOrganizationModel"
 import UserProject, { IUserProject, RoleInProject } from "../models/UserProjectModel"
 import UserService, { recordLogin } from "../service/UserService"
 import { toObjectId } from "../utils/mongooseUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
 import EmailSenderService from "./EmailSenderService"
 import UserOrganizationService from "./UserOrganizationService"
+
+/** Code of the refusal to remove or demote the last owner of a project. */
+export const PROJECT_LAST_OWNER = "PROJECT_LAST_OWNER"
 
 const INVITATION_TTL_DAYS = 5
 const INVITATION_TTL_MS = INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000
@@ -59,13 +63,10 @@ class UserProjectService extends BaseAuthorizedService {
     userService = new UserService()
     userOrganizationService = new UserOrganizationService()
 
+    /** Owners (and organization administrators) only: an invitation hands out access with a role. */
     async addUserToProjectByEmail(projectId: string | Schema.Types.ObjectId, email: string, role: RoleInProject): Promise<IUserProject | undefined> {
         const projectIdObj = toObjectId(projectId)
-        await this.ensureAccessToProject(projectIdObj)
-        const project = await Project.findById(projectIdObj)
-        if (!project) {
-            throw new ProjectNotFoundError(projectIdObj.toString())
-        }
+        const project = await this.ensureCanManageMembers(projectIdObj)
 
         const canSendEmail = this.emailSenderService.canSendEmails()
 
@@ -191,12 +192,9 @@ class UserProjectService extends BaseAuthorizedService {
         }
     }
 
+    /** Owners (and organization administrators) only: a fresh invitation link grants access. */
     async resendInvitation(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId): Promise<IUserProject> {
-        await this.ensureAccessToProject(projectId)
-        const project = await Project.findById(projectId)
-        if (!project) {
-            throw new ProjectNotFoundError(projectId.toString())
-        }
+        const project = await this.ensureCanManageMembers(toObjectId(projectId))
         const userProject = await UserProject.findOne({ userId: toObjectId(userId), projectId: toObjectId(projectId) })
         if (!userProject) {
             throw new EntityNotFoundError("User is not a member of this project")
@@ -372,6 +370,108 @@ class UserProjectService extends BaseAuthorizedService {
         return {
             alreadyExists: false,
             userProject: savedUserProject
+        }
+    }
+
+    /**
+     * Changes the role of a member (or of a pending invitation).
+     *
+     * The last owner cannot be demoted: a project with no owner could no longer have its members managed.
+     */
+    async updateUserRole(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId, role: RoleInProject): Promise<IUserProject> {
+        const projectIdObj = toObjectId(projectId)
+        const userIdObj = toObjectId(userId)
+        await this.ensureCanManageMembers(projectIdObj)
+
+        if (!(await User.findById(userIdObj))) {
+            throw new EntityNotFoundError(`User with ID ${userId} not found`)
+        }
+        const membership = await UserProject.findOne({ userId: userIdObj, projectId: projectIdObj })
+        if (!membership) {
+            throw new EntityNotFoundError("User is not a member of this project")
+        }
+
+        if (membership.role === RoleInProject.OWNER && role !== RoleInProject.OWNER && !membership.invitationToken) {
+            await this.ensureAnotherOwnerExists(projectIdObj, userIdObj, "Cannot demote the last owner of the project. Please assign another owner first.")
+        }
+
+        membership.role = role
+        return membership.save()
+    }
+
+    /**
+     * Removes a member from the project, or revokes a pending invitation.
+     *
+     * A user created only to be invited, who never accepted, is cleaned up with the organization
+     * membership the invitation gave them: nothing would point at the account any more.
+     */
+    async removeUserFromProject(projectId: string | Schema.Types.ObjectId, userId: string | Schema.Types.ObjectId): Promise<void> {
+        const projectIdObj = toObjectId(projectId)
+        const userIdObj = toObjectId(userId)
+        const project = await this.ensureCanManageMembers(projectIdObj)
+
+        const user = await User.findById(userIdObj)
+        if (!user) {
+            throw new EntityNotFoundError(`User with ID ${userId} not found`)
+        }
+        const membership = await UserProject.findOne({ userId: userIdObj, projectId: projectIdObj })
+        if (!membership) {
+            throw new EntityNotFoundError("User is not a member of this project")
+        }
+
+        if (membership.role === RoleInProject.OWNER && !membership.invitationToken) {
+            await this.ensureAnotherOwnerExists(projectIdObj, userIdObj, "Cannot remove the last owner of the project. Please assign another owner first.")
+        }
+
+        await UserProject.deleteOne({ _id: membership._id })
+
+        // The organization membership was created by this very invitation, so it goes first: the
+        // account is dropped only once nothing at all points at it any more.
+        if (user.status === UserStatus.INVITED) {
+            await this.userOrganizationService.pruneImplicitMembership(userIdObj, project.organizationId)
+            await this.userOrganizationService.deleteUserIfOnlyEverInvited(userIdObj)
+        }
+    }
+
+    /**
+     * Who is in the project, and with which role, is decided by its owners: a MEMBER or a VIEWER could
+     * otherwise make themselves an OWNER or throw the owners out. Organization administrators reach
+     * every project of their organization and act there as owners, as the assistant and the MCP
+     * consent page treat them.
+     */
+    private async ensureCanManageMembers(projectId: Schema.Types.ObjectId): Promise<IProject> {
+        await this.ensureAccessToProject(projectId)
+        const project = await Project.findById(projectId)
+        if (!project) {
+            throw new ProjectNotFoundError(projectId.toString())
+        }
+
+        const user = this.getUser()
+        const membership = user && (await UserProject.findOne({ userId: toObjectId(user._id), projectId, invitationToken: null }))
+        if (membership?.role === RoleInProject.OWNER) {
+            return project
+        }
+        const organizationRole = await this.findRoleInOrganization(project.organizationId)
+        if (organizationRole && ORGANIZATION_ADMIN_ROLES.includes(organizationRole)) {
+            return project
+        }
+        throw createBusinessException({
+            code: "PROJECT_OWNER_REQUIRED",
+            message: "Only an owner of the project can change its members",
+            statusCode: 403
+        })
+    }
+
+    /** Pending invitations do not count: until accepted, an invited owner owns nothing. */
+    private async ensureAnotherOwnerExists(projectId: Schema.Types.ObjectId, userId: Schema.Types.ObjectId, message: string): Promise<void> {
+        const otherOwners = await UserProject.countDocuments({
+            projectId,
+            role: RoleInProject.OWNER,
+            userId: { $ne: userId },
+            invitationToken: null
+        })
+        if (otherOwners === 0) {
+            throw createBusinessException({ code: PROJECT_LAST_OWNER, message, statusCode: 400 })
         }
     }
 

@@ -110,6 +110,7 @@ Project reference:
 - **[Changelog](CHANGELOG.md)** - Project version history
 - **[Security](SECURITY.md)** - Security policy and procedures
 - **[Anonymous telemetry](docs/TELEMETRY.md)** - What the daily ping contains and how to turn it off
+- **[Remote MCP server](docs/MCP.md)** - Letting AI clients (Claude, Cursor, VS Code) use the console through OAuth, on the projects the user picks
 
 ## Run with Docker
 
@@ -246,6 +247,10 @@ falling back to it.
 | `REGISTRATION_ALLOWED`                 | `true`                                                                                            | If `true`, allows new user registration.                        |
 | `ALLOW_EMBEDDED_LOGIN`                 | `true`                                                                                            | If `true`, enables the login system within the application.     |
 | `MICROFRONTEND_HOST_FOLDER`            | `/upload-microfrontends`                                                                          | Folder containing the host microfrontends.                      |
+| `AI_PROVIDER`                          | _(empty)_ (`anthropic` when `ANTHROPIC_API_KEY` is set)                                           | Model behind the assistant and AI code changes: `anthropic`, `azure-foundry`, `gemini`, `azure-openai`. See [docs/AI-PROVIDERS.md](docs/AI-PROVIDERS.md). |
+| `REPOSITORIES_FOLDER`                  | `/repositories` (`/data/repositories` in the all-in-one image)                                    | Where repositories are cloned to be edited with AI. A cache.    |
+| `REPOSITORIES_MAX_SIZE_MB`             | `500`                                                                                             | Repositories bigger than this on disk are refused.              |
+| `REPOSITORIES_EVICT_AFTER_DAYS`        | `14`                                                                                              | Clones not used for this many days are deleted.                 |
 | `NOSQL_DATABASE_URL`                   | `mongodb://localhost:27017/microfrontend-orchestrator`                                            | MongoDB database connection URL.                                |
 | `NOSQL_DATABASE_NAME`                  | `microfrontend-orchestrator`                                                                      | MongoDB database name.                                          |
 | `NOSQL_DATABASE_USERNAME`              | `root`                                                                                            | MongoDB username.                                               |
@@ -253,7 +258,7 @@ falling back to it.
 | `REDIS_URL`                            | `redis://localhost:6379`                                                                          | Redis server connection URL.                                    |
 | `REDIS_PASSWORD`                       | _(empty)_                                                                                         | Password for Redis access (if set).                             |
 | `NODE_ENV`                             | `prod` _(development/prod/test/local)_                                                            | Node.js environment mode. Any other value stops the boot.       |
-| `EMAIL_SMTP_HOST`                      | `smtp.example.com`                                                                                | SMTP server host for sending emails.                            |
+| `EMAIL_SMTP_HOST`                      | `smtp.example.com`                                                                                | SMTP server host. Unset, the app sends nothing: registration and invitations become immediate, and the password reset is refused outright — it only exists as an emailed link. |
 | `EMAIL_SMTP_PORT`                      | `587`                                                                                             | SMTP server port (e.g., 587 for TLS).                           |
 | `EMAIL_SMTP_SECURE`                    | `false`                                                                                           | If `true`, uses secure connection (SSL/TLS).                    |
 | `EMAIL_SMTP_USER`                      | _(empty)_                                                                                         | Username for SMTP authentication.                               |
@@ -262,7 +267,7 @@ falling back to it.
 | `JWT_SECRET`                           | `your-secret-key`                                                                                 | Secret key for JWT generation and validation.                   |
 | `AUTH0_DOMAIN`                         | _(empty)_                                                                                         | Auth0 tenant domain.                                            |
 | `AUTH0_CLIENT_ID`                      | _(empty)_                                                                                         | Client ID of the Auth0 application.                             |
-| `AUTH0_AUDIENCE`                       | _(empty)_                                                                                         | API Audience configured in Auth0.                               |
+| `AUTH0_AUDIENCE`                       | _(empty)_                                                                                         | API Audience configured in Auth0. Required for Auth0 login: the backend verifies the token's signature, issuer and audience. |
 | `AUTH0_SCOPE`                          | `openid profile email`                                                                            | OAuth scopes (space-separated)                                  |
 | `AZURE_ENTRAID_TENANT_ID`              | _(empty)_                                                                                         | Azure Entra ID tenant ID.                                       |
 | `AZURE_ENTRAID_CLIENT_ID`              | _(empty)_                                                                                         | Client ID of the registered Azure application.                  |
@@ -293,6 +298,15 @@ falling back to it.
 | `GOOGLE_API_AUDIENCE`                  | _(empty)_                                                                                         | Protected API identifier for Google.                            |
 | `NPM_REGISTRY_URL`                     | `https://registry.npmjs.org`                                                                      | Registry queried by the dependency analysis for published versions. |
 | `SENTRY_DSN`                           | _(empty)_                                                                                         | Sentry DSN. Leave empty to disable error reporting.             |
+| `MCP_ENABLED`                          | `false`                                                                                           | Turns on the remote MCP server and its OAuth endpoints. Requires `FRONTEND_URL` and your own `JWT_SECRET` of at least 32 bytes (`openssl rand -hex 32`). See [docs/MCP.md](docs/MCP.md). |
+| `MCP_API_KEY_ENABLED`                  | `true`                                                                                            | Lets MCP clients that cannot do OAuth authenticate with a project API key (`Authorization: Bearer <key>` or `api-key` header). See [docs/MCP.md](docs/MCP.md#fallback-a-project-api-key). |
+| `MCP_RATE_LIMIT_MAX`                   | `120`                                                                                             | MCP requests per minute for each OAuth grant or API key.        |
+| `MCP_DCR_ENABLED`                      | `true`                                                                                            | Lets MCP clients register themselves (RFC 7591).                |
+| `MCP_CIMD_ENABLED`                     | `true`                                                                                            | Accepts MCP clients identified by a metadata document URL.      |
+| `CIMD_ALLOWED_HOSTS`                   | _(any)_                                                                                           | Comma separated hosts allowed to publish client metadata documents. Clients from listed hosts show as verified on the consent page; with no list every CIMD client is marked unverified. |
+| `OAUTH_ISSUER_URL`                     | _(empty, falls back to `BACKEND_URL`)_                                                            | Issuer of the MCP access tokens.                                |
+| `MCP_RESOURCE_URL`                     | _(empty, falls back to the issuer + `/mcp`)_                                                      | Public URL of the MCP endpoint.                                 |
+| `TRUST_PROXY`                          | `127.0.0.1` _(in the Docker images)_                                                              | Proxies trusted for `X-Forwarded-For`: `true` or a comma separated list of addresses/CIDRs (`loopback`, `uniquelocal` work too); a hop count is refused. Behind a Kubernetes ingress add its hop, e.g. `loopback,10.0.0.0/8`, or every client shares one rate limit bucket. |
 
 ## Anonymous telemetry 📡
 

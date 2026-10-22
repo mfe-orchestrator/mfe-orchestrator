@@ -4,6 +4,11 @@ export default interface ConfigResponseDTO {
     canRegister: boolean
     allowEmbeddedLogin: boolean
     marketingOptInEnabled: boolean
+    /** The remote MCP server: whether it is on, and the URL to give to MCP clients. */
+    mcp: {
+        enabled: boolean
+        url: string
+    }
     codeRepository?: {
         github?: {
             clientId: string

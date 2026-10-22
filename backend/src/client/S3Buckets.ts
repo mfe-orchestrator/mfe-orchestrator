@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3"
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Readable } from "stream"
 
@@ -73,6 +73,20 @@ export class S3BucketClient {
             console.error("Error generating pre-signed URL:", error)
             const errorMessage = error instanceof Error ? error.message : String(error)
             throw new Error(`Failed to generate pre-signed URL: ${errorMessage}`)
+        }
+    }
+
+    /**
+     * Deletes a file from the bucket
+     * @param filePath The path to the file to delete
+     */
+    public async deleteFile(filePath: string): Promise<void> {
+        try {
+            await this.s3Client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: filePath }))
+        } catch (error: unknown) {
+            console.error("Error deleting file from S3:", error)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            throw new Error(`Failed to delete file from S3: ${errorMessage}`)
         }
     }
 

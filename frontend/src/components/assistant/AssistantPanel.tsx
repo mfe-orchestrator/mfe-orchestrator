@@ -1,0 +1,349 @@
+import { Tabs, TabsContent, Textarea } from "@mfe-orchestrator/design-system"
+import { ArrowUp, GitBranchPlus, History, RotateCcw, Sparkles, Square, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
+import { useLocation } from "react-router-dom"
+import { Button } from "@/components/atoms"
+import useAssistantChat from "@/hooks/useAssistantChat"
+import useAssistantJobsStore, { AssistantJobTab } from "@/store/useAssistantJobsStore"
+import useAssistantStore, { AssistantMessage } from "@/store/useAssistantStore"
+import useProjectStore from "@/store/useProjectStore"
+import { cn } from "@/utils/styleUtils"
+import AiModelSelect from "./AiModelSelect"
+import AnswerUsage from "./AnswerUsage"
+import AssistantConfirmationCard from "./AssistantConfirmationCard"
+import AssistantHistory from "./AssistantHistory"
+import AssistantJobTabs from "./AssistantJobTabs"
+import AssistantJobThread from "./AssistantJobThread"
+import AssistantMessageText from "./AssistantMessageText"
+import AssistantNewJobDialog from "./AssistantNewJobDialog"
+import AssistantToolCallRow from "./AssistantToolCallRow"
+import EffortSelect from "./EffortSelect"
+import useAssistantJobsWatcher from "./useAssistantJobsWatcher"
+import { useEffort } from "./useEffort"
+import useProjectAiModels from "./useProjectAiModels"
+
+const MAX_QUESTION_CHARS = 4_000
+
+/** The page that shows the assistant full width, as a chat of its own. */
+export const ASSISTANT_PAGE_PATH = "/assistant"
+
+/** Starter questions, page-specific first: they show what the assistant can look up from here. */
+const SUGGESTIONS_BY_PAGE: Record<string, string[]> = {
+    "/builds": ["builds"],
+    "/deployments": ["deployments"],
+    "/dependencies": ["dependencies"],
+    "/environment-variables": ["variables"]
+}
+const GENERIC_SUGGESTIONS = ["overview", "canary", "storage"]
+
+const NO_TABS: AssistantJobTab[] = []
+
+const suggestionsFor = (pathname: string) => {
+    const pageKey = Object.keys(SUGGESTIONS_BY_PAGE).find(prefix => pathname.startsWith(prefix))
+    return [...(pageKey ? SUGGESTIONS_BY_PAGE[pageKey] : []), ...GENERIC_SUGGESTIONS].slice(0, 3)
+}
+
+interface AnswerBubbleProps {
+    message: AssistantMessage
+    isStreaming: boolean
+    onAnswerConfirmation: (approved: boolean) => void
+}
+
+const AnswerBubble: React.FC<AnswerBubbleProps> = ({ message, isStreaming, onAnswerConfirmation }) => {
+    const { t } = useTranslation()
+    const tools = message.tools ?? []
+    const thinking = message.thinking?.trim()
+    const reasoning = Boolean(thinking) && message.status === "streaming" && !message.content
+    // A running tool shows its own spinner, the reasoning streaming in shows that the model is at work.
+    const isThinking = message.status === "streaming" && !tools.some(tool => tool.status === "running") && !reasoning
+
+    return (
+        <div className="flex flex-col gap-2 text-sm text-foreground">
+            {thinking && (
+                // Open while the model reasons, folded once the answer starts: the answer is what the user reads.
+                <details open={reasoning} className="text-xs text-foreground-secondary" data-testid="assistant-reasoning">
+                    <summary className="cursor-pointer select-none">{t("assistant.reasoning")}</summary>
+                    <p className="mt-1 whitespace-pre-wrap break-words border-l-2 border-divider pl-3">{thinking}</p>
+                </details>
+            )}
+            {tools.length > 0 && (
+                <div className="flex flex-col gap-1">
+                    {tools.map((tool, index) => (
+                        // The position too: an id is only unique within what one model returned.
+                        <AssistantToolCallRow key={`${index}-${tool.id}`} tool={tool} />
+                    ))}
+                </div>
+            )}
+            {message.content && <AssistantMessageText text={message.content} />}
+            {isThinking && <p className="text-foreground-secondary animate-pulse">{t("assistant.thinking")}</p>}
+            {message.confirmation && <AssistantConfirmationCard confirmation={message.confirmation} disabled={isStreaming} onAnswer={onAnswerConfirmation} />}
+            {message.errorKey && <p className={message.status === "error" ? "text-destructive" : "text-foreground-secondary"}>{t(`assistant.errors.${message.errorKey}`)}</p>}
+            {message.usage && <AnswerUsage usage={message.usage} effort={message.effort} />}
+        </div>
+    )
+}
+
+interface AssistantPanelProps {
+    /**
+     * `panel`: docked on the right of every project page, opened and closed by the user.
+     * `page`: the content area of the assistant page, with the conversation in a centred column; on
+     * wide screens the page lists the saved conversations next to it.
+     */
+    variant?: "panel" | "page"
+}
+
+/**
+ * The assistant, docked on the right of every project page or shown on a page of its own.
+ *
+ * As a panel, on wide screens it takes a column next to the content, so the page the user is asking
+ * about stays visible; on small screens it covers the page. ⌘J / Ctrl+J toggles it. Next to the
+ * project conversation, each chain of agent jobs has a tab of its own.
+ */
+const AssistantPanel: React.FC<AssistantPanelProps> = ({ variant = "panel" }) => {
+    const { t } = useTranslation()
+    const { enabled, selected: aiModel, setSelected: setAiModel } = useProjectAiModels()
+    const location = useLocation()
+    const { isOpen, messages, close, toggle, reset } = useAssistantStore()
+    const pendingQuestion = useAssistantStore(state => state.pendingQuestion)
+    const projectId = useProjectStore(state => state.project?._id)
+    const [effort, setEffort] = useEffort("assistant")
+    const { send, answerConfirmation, stop, isStreaming } = useAssistantChat(effort, aiModel?.id)
+    const jobTabs = useAssistantJobsStore(state => (projectId && state.tabsByProject[projectId]) || NO_TABS)
+    const storedTab = useAssistantJobsStore(state => (projectId && state.activeTabByProject[projectId]) || "project")
+    const setActiveTab = useAssistantJobsStore(state => state.setActiveTab)
+    // A closed (or never restored) chain falls back to the conversation.
+    const activeTab = jobTabs.some(tab => tab.rootJobId === storedTab) ? storedTab : "project"
+    const [newJobOpen, setNewJobOpen] = useState(false)
+    // The saved conversations, shown in place of the open one. On wide screens the page lists them next to it.
+    const [historyOpen, setHistoryOpen] = useState(false)
+    // The turn waits for the user's answer to the card: a new question would leave it hanging.
+    const awaitingConfirmation = messages.some(message => message.confirmation?.status === "pending")
+    const [draft, setDraft] = useState("")
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLTextAreaElement>(null)
+
+    const isPage = variant === "page"
+
+    useAssistantJobsWatcher(projectId, enabled)
+
+    useEffect(() => {
+        // The page cannot be closed: the shortcut is only for the panel.
+        if (!enabled || isPage) return
+        const onKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
+                event.preventDefault()
+                toggle()
+            }
+        }
+        window.addEventListener("keydown", onKeyDown)
+        return () => window.removeEventListener("keydown", onKeyDown)
+    }, [enabled, isPage, toggle])
+
+    // A conversation is about one project: switching project shows that project's conversation,
+    // and the one left behind is there again on the way back. Mounting the panel (from the page
+    // and back) resumes the conversation; opening the console or a reload starts a new one, the
+    // history reopens the saved ones.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only a project change must switch the conversation.
+    useEffect(() => {
+        if (useAssistantStore.getState().switchProject(projectId)) stop()
+        setHistoryOpen(false)
+    }, [projectId])
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: send is recreated every render; the pending question is what triggers this.
+    useEffect(() => {
+        if (!pendingQuestion || isStreaming || awaitingConfirmation) return
+        const question = useAssistantStore.getState().takePendingQuestion()
+        if (!question) return
+        // Asked from a page: the answer shows in the conversation, wherever the panel was.
+        if (projectId) setActiveTab(projectId, "project")
+        setHistoryOpen(false)
+        send(question)
+    }, [pendingQuestion, isStreaming, awaitingConfirmation])
+
+    useEffect(() => {
+        if (isOpen || isPage) inputRef.current?.focus()
+    }, [isOpen, isPage])
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every change of the conversation, streamed text included, and when it is shown again.
+    useEffect(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
+    }, [messages, activeTab])
+
+    if (!enabled || (!isPage && !isOpen)) return null
+
+    const submit = () => {
+        if (!draft.trim() || isStreaming || awaitingConfirmation) return
+        send(draft)
+        setDraft("")
+    }
+
+    return (
+        <aside
+            aria-label={t("assistant.title")}
+            data-testid="assistant-panel"
+            className={cn(
+                "flex flex-col bg-background",
+                isPage ? "h-full min-h-0" : "fixed inset-0 z-40 md:static md:inset-auto md:z-auto md:h-full md:w-[380px] md:shrink-0 md:border-l md:border-divider"
+            )}
+        >
+            <header className={cn("flex items-center gap-2 px-4 py-3", !isPage && "border-b border-divider")}>
+                <Sparkles className="size-5 text-primary" aria-hidden="true" />
+                <h2 className="flex-1 font-semibold text-foreground">{t("assistant.title")}</h2>
+                {projectId && (
+                    <Button variant="ghost" size="icon" aria-label={t("assistant.jobs.new_job")} title={t("assistant.jobs.new_job")} onClick={() => setNewJobOpen(true)} dataTestId="assistant-new-job">
+                        <GitBranchPlus />
+                    </Button>
+                )}
+                {projectId && activeTab === "project" && (
+                    <Button
+                        variant={historyOpen ? "secondary" : "ghost"}
+                        size="icon"
+                        aria-label={t("assistant.history.open")}
+                        aria-pressed={historyOpen}
+                        title={t("assistant.history.open")}
+                        onClick={() => setHistoryOpen(!historyOpen)}
+                        disabled={isStreaming}
+                        // From lg up the page lists them on the right.
+                        className={cn(isPage && "lg:hidden")}
+                        dataTestId="assistant-history-toggle"
+                    >
+                        <History />
+                    </Button>
+                )}
+                {messages.length > 0 && activeTab === "project" && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("assistant.new_conversation")}
+                        onClick={() => {
+                            reset()
+                            setHistoryOpen(false)
+                        }}
+                        disabled={isStreaming}
+                        dataTestId="assistant-reset"
+                    >
+                        <RotateCcw />
+                    </Button>
+                )}
+                {!isPage && (
+                    <Button variant="ghost" size="icon" aria-label={t("assistant.close")} onClick={close} dataTestId="assistant-close">
+                        <X />
+                    </Button>
+                )}
+            </header>
+
+            <Tabs value={activeTab} onValueChange={value => projectId && setActiveTab(projectId, value)} layoutSize="sm" className="flex min-h-0 flex-1 flex-col">
+                {projectId && jobTabs.length > 0 && <AssistantJobTabs projectId={projectId} tabs={jobTabs} />}
+
+                <TabsContent value="project" className="mt-0 flex min-h-0 flex-1 flex-col rounded-none">
+                    {historyOpen && projectId && (
+                        // From lg up the page lists the conversations on the right: there the open one stays in front,
+                        // also when the list was opened in a narrower window.
+                        <div className={cn("flex min-h-0 flex-1 flex-col", isPage && "lg:hidden")}>
+                            <AssistantHistory projectId={projectId} onOpened={() => setHistoryOpen(false)} />
+                        </div>
+                    )}
+                    {(!historyOpen || !projectId || isPage) && (
+                        <>
+                            <div ref={scrollRef} className={cn("flex flex-1 flex-col overflow-y-auto px-4 py-4", historyOpen && projectId && "max-lg:hidden")}>
+                                {/* On the page the scrollbar stays at the edge, the conversation in a readable column. */}
+                                <div className={cn("flex flex-1 flex-col gap-4", isPage && "mx-auto w-full max-w-3xl")}>
+                                    {messages.length === 0 ? (
+                                        <div className={cn("flex flex-col gap-3", isPage && "flex-1 items-center justify-center text-center")}>
+                                            <p className={cn("font-medium text-foreground", isPage && "text-2xl font-semibold")}>{t("assistant.empty_title")}</p>
+                                            <p className={cn("text-sm text-foreground-secondary", isPage && "max-w-xl")}>{t("assistant.empty_description")}</p>
+                                            <div className={cn("flex flex-col gap-2", isPage && "mt-4 grid w-full sm:grid-cols-3")}>
+                                                {suggestionsFor(location.pathname).map(key => (
+                                                    <button
+                                                        key={key}
+                                                        type="button"
+                                                        onClick={() => send(t(`assistant.suggestions.${key}`))}
+                                                        className="rounded-md border border-divider px-3 py-2 text-left text-sm text-foreground hover:bg-primary/5"
+                                                    >
+                                                        {t(`assistant.suggestions.${key}`)}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        messages.map(message =>
+                                            message.role === "user" ? (
+                                                <div key={message.id} className="self-end max-w-[85%] rounded-lg bg-primary/10 px-3 py-2 text-sm text-foreground">
+                                                    <AssistantMessageText text={message.content} />
+                                                </div>
+                                            ) : (
+                                                <AnswerBubble key={message.id} message={message} isStreaming={isStreaming} onAnswerConfirmation={answerConfirmation} />
+                                            )
+                                        )
+                                    )}
+                                </div>
+                            </div>
+
+                            <form
+                                className={cn(
+                                    "flex flex-col gap-2 px-4 py-3",
+                                    // Sticky: on small screens the page grows with the conversation instead of scrolling inside it.
+                                    isPage ? "sticky bottom-0 mx-auto w-full max-w-3xl bg-background" : "border-t border-divider",
+                                    historyOpen && projectId && "max-lg:hidden"
+                                )}
+                                onSubmit={event => {
+                                    event.preventDefault()
+                                    submit()
+                                }}
+                            >
+                                <div className="flex items-end gap-2">
+                                    <Textarea
+                                        ref={inputRef}
+                                        value={draft}
+                                        maxLength={MAX_QUESTION_CHARS}
+                                        rows={isPage ? 3 : 2}
+                                        className={cn("min-h-[44px] resize-none", isPage && "rounded-xl")}
+                                        disabled={awaitingConfirmation}
+                                        placeholder={t(awaitingConfirmation ? "assistant.placeholder_awaiting_confirmation" : "assistant.placeholder")}
+                                        aria-label={t("assistant.placeholder")}
+                                        dataTestId="assistant-input"
+                                        onChange={event => setDraft(event.target.value)}
+                                        onKeyDown={event => {
+                                            // Enter sends, Shift+Enter goes to a new line, as in any chat.
+                                            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                                                event.preventDefault()
+                                                submit()
+                                            }
+                                        }}
+                                    />
+                                    {isStreaming ? (
+                                        <Button type="button" variant="secondary" size="icon" aria-label={t("assistant.stop")} onClick={stop} dataTestId="assistant-stop">
+                                            <Square />
+                                        </Button>
+                                    ) : (
+                                        <Button type="submit" size="icon" aria-label={t("assistant.send")} disabled={!draft.trim() || awaitingConfirmation} dataTestId="assistant-send">
+                                            <ArrowUp />
+                                        </Button>
+                                    )}
+                                </div>
+                                {/* Below the field, not next to it: in the docked panel the question needs the width. */}
+                                <div className="flex items-start gap-2">
+                                    <p className="min-w-0 flex-1 text-xs text-foreground-secondary">{t("assistant.disclaimer")}</p>
+                                    <AiModelSelect value={aiModel?.id} onChange={setAiModel} dataTestId="assistant-ai-model" />
+                                    <EffortSelect value={effort} onChange={setEffort} dataTestId="assistant-effort" />
+                                </div>
+                            </form>
+                        </>
+                    )}
+                </TabsContent>
+
+                {projectId &&
+                    jobTabs.map(tab => (
+                        <TabsContent key={tab.rootJobId} value={tab.rootJobId} className="mt-0 flex min-h-0 flex-1 flex-col rounded-none">
+                            <AssistantJobThread projectId={projectId} tab={tab} />
+                        </TabsContent>
+                    ))}
+            </Tabs>
+
+            {projectId && <AssistantNewJobDialog projectId={projectId} open={newJobOpen} onOpenChange={setNewJobOpen} />}
+        </aside>
+    )
+}
+
+export default AssistantPanel

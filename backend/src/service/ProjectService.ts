@@ -1,6 +1,8 @@
 import { ClientSession, DeleteResult, ObjectId, Schema, Types } from "mongoose"
 import { fastify } from ".."
 import { BusinessException, createBusinessException } from "../errors/BusinessException"
+import CustomError from "../errors/CustomError"
+import { EntityNotFoundError } from "../errors/EntityNotFoundError"
 import { ProjectNotFoundError } from "../errors/ProjectNotFoundError"
 import ApiKey from "../models/ApiKeyModel"
 import BuiltFrontend from "../models/BuiltFrontendModel"
@@ -9,19 +11,24 @@ import Deployment from "../models/DeploymentModel"
 import DeploymentToCanaryUsers from "../models/DeploymentsToCanaryUsersModel"
 import Environment from "../models/EnvironmentModel"
 import Microfrontend from "../models/MicrofrontendModel"
-import Project, { IProject } from "../models/ProjectModel"
+import Project, { IProject, IProjectPipelines } from "../models/ProjectModel"
 import Storage from "../models/StorageModel"
 import UserProject, { RoleInProject } from "../models/UserProjectModel"
 import { toObjectId } from "../utils/mongooseUtils"
 import { runInTransaction } from "../utils/runInTransaction"
+import { slugify } from "../utils/slugUtils"
 import BaseAuthorizedService from "./BaseAuthorizedService"
+import CodeRepositoryImportService from "./CodeRepositoryImportService"
+import CodeRepositoryService from "./CodeRepositoryService"
 import UserProjectService from "./UserProjectService"
+import { prepareProjectCleanup } from "./workspace/workspaceCleanup"
 
 export interface ProjectCreateInput {
     /** The organization the project is created in. A project always belongs to exactly one. */
     organizationId: string
     name: string
-    slug: string
+    /** Left out, it is derived from the name with the same helper the organization uses. */
+    slug?: string
     description?: string
     isActive?: boolean
 }
@@ -29,8 +36,46 @@ export interface ProjectCreateInput {
 export interface ProjectUpdateInput {
     name?: string
     description?: string | null
+    /** `null` removes it, like the description. */
+    context?: string | null
     isActive?: boolean
+    /** Replaced as a whole, `null` goes back to the official template-pipelines */
+    pipelines?: PipelineTemplatesInput | null
 }
+
+/** The repository of the pipeline templates as the settings screen names it: by the provider id, the backend resolves the rest */
+export interface PipelineTemplatesInput {
+    codeRepositoryId: string
+    repositoryId: string
+    /** A branch or a tag; the default branch of the repository when empty */
+    ref?: string | null
+}
+
+/** What git takes as a branch or a tag name, without the forms it refuses: `..`, a leading dash, a trailing slash or `.lock` */
+const GIT_REF = /^(?!-)(?!.*\.\.)(?!.*\/$)(?!.*\.lock$)[A-Za-z0-9._/-]{1,255}$/
+
+interface ContextEntry {
+    id: string
+    slug: string
+    name: string
+    context: string
+}
+
+/** What the team wrote for AI agents in one project: the shared context and the one of each microfrontend that has it. */
+export interface ProjectContextDTO {
+    project: { id: string; name: string; context?: string }
+    microfrontends: ContextEntry[]
+}
+
+/** The piece of work a context is read for: a microfrontend reads its own context. The project context always comes along. */
+type ContextFocus = { microfrontendId: string }
+
+const toContextEntry = (item: { _id: unknown; slug: string; name: string; context?: string }): ContextEntry => ({
+    id: String(item._id),
+    slug: item.slug,
+    name: item.name,
+    context: item.context as string
+})
 
 export interface ProjectSummaryDTO {
     project: IProject
@@ -124,6 +169,25 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
+    /** The contexts of the whole project, or only the ones a piece of work needs when a focus is given. */
+    async getContext(projectId: string, focus?: ContextFocus): Promise<ProjectContextDTO> {
+        const projectIdObj = toObjectId(projectId)
+        const project = await this.findById(projectIdObj)
+        if (!project) {
+            throw new ProjectNotFoundError(projectId)
+        }
+        const filter = focus ? { _id: toObjectId(focus.microfrontendId) } : {}
+        // A focus outside the project is refused as not found: a context never reaches across projects
+        if (focus && !(await Microfrontend.exists({ ...filter, projectId: projectIdObj }))) {
+            throw new EntityNotFoundError(focus.microfrontendId)
+        }
+        const microfrontends = await Microfrontend.find({ ...filter, projectId: projectIdObj, context: { $nin: [null, ""] } }, { slug: 1, name: 1, context: 1 }).sort({ slug: 1 })
+        return {
+            project: { id: project._id.toString(), name: project.name, context: project.context || undefined },
+            microfrontends: microfrontends.map(toContextEntry)
+        }
+    }
+
     async create(projectData: ProjectCreateInput, creatorUserId: ObjectId): Promise<IProject> {
         // Outside the transaction on purpose: the check reads, and a failing authorization should not
         // be the reason a transaction is opened at all.
@@ -153,7 +217,7 @@ export class ProjectService extends BaseAuthorizedService {
             const project = new Project({
                 organizationId: toObjectId(projectData.organizationId),
                 name: projectData.name,
-                slug: projectData.slug || projectData.name.toLowerCase().replaceAll(" ", "-").replaceAll("_", "-").replaceAll(".", "-"),
+                slug: projectData.slug?.trim() || slugify(projectData.name),
                 description: projectData.description,
                 isActive: projectData.isActive ?? true
             })
@@ -208,10 +272,17 @@ export class ProjectService extends BaseAuthorizedService {
             if (projectData.isActive !== undefined) {
                 updateData.isActive = projectData.isActive
             }
-            if (projectData.description === null) {
-                updateData.$unset = { description: 1 }
-            } else if (projectData.description !== undefined) {
-                updateData.description = projectData.description
+            if (projectData.pipelines !== undefined) {
+                const pipelines = await this.resolvePipelines(projectId, projectData.pipelines)
+                if (pipelines) updateData.pipelines = pipelines
+                else updateData.$unset = { ...updateData.$unset, pipelines: 1 }
+            }
+            for (const field of ["description", "context"] as const) {
+                if (projectData[field] === null) {
+                    updateData.$unset = { ...updateData.$unset, [field]: 1 }
+                } else if (projectData[field] !== undefined) {
+                    updateData[field] = projectData[field]
+                }
             }
 
             const updated = await Project.findByIdAndUpdate(projectId, updateData, {
@@ -229,7 +300,8 @@ export class ProjectService extends BaseAuthorizedService {
 
             return updated
         } catch (error) {
-            if (error instanceof BusinessException) throw error
+            // A not found, or a refusal of the pipeline templates, keeps its own status and code
+            if (error instanceof CustomError) throw error
 
             throw createBusinessException({
                 code: "PROJECT_UPDATE_ERROR",
@@ -242,8 +314,54 @@ export class ProjectService extends BaseAuthorizedService {
         }
     }
 
+    /**
+     * The pipeline templates to store from what the screen sent, none for the official ones. Owners only:
+     * every repository scaffolded in the project runs what they pick. The repository must be reachable
+     * through one of the connections of the project: one of another project would lend this one its access token.
+     */
+    private async resolvePipelines(projectId: string, input: PipelineTemplatesInput | null): Promise<IProjectPipelines | undefined> {
+        const projectIdObj = toObjectId(projectId)
+        const project = await Project.findById(projectIdObj, { organizationId: 1 })
+        if (!project) throw new ProjectNotFoundError(projectId)
+        await this.ensureOwner(projectIdObj, project.organizationId)
+        if (input === null) return undefined
+
+        if (!Types.ObjectId.isValid(input?.codeRepositoryId) || typeof input.repositoryId !== "string" || !input.repositoryId) {
+            throw createBusinessException({ code: "PIPELINES_REPOSITORY_REQUIRED", message: "Pick the connection and the repository of the pipeline templates" })
+        }
+        const ref = typeof input.ref === "string" ? input.ref.trim() : ""
+        if ((input.ref != null && typeof input.ref !== "string") || (ref && !GIT_REF.test(ref))) {
+            throw createBusinessException({ code: "PIPELINES_REF_INVALID", message: "The ref of the pipeline templates must be the name of a branch or a tag" })
+        }
+
+        const codeRepository = await CodeRepository.findOne({ _id: toObjectId(input.codeRepositoryId), projectId: projectIdObj, isActive: true })
+        if (!codeRepository) {
+            throw createBusinessException({ code: "PIPELINES_REPOSITORY_INVALID", message: "The code repository connection is not one of this project" })
+        }
+        const importService = new CodeRepositoryImportService(this.user)
+        const repository = (await importService.fetchRepositories(new CodeRepositoryService(this.user), codeRepository)).find(candidate => candidate.repositoryId === input.repositoryId)
+        if (!repository) {
+            throw createBusinessException({ code: "PIPELINES_REPOSITORY_INVALID", message: `The connection "${codeRepository.name}" cannot reach the repository ${input.repositoryId}` })
+        }
+        return { codeRepository: importService.buildMicrofrontendCodeRepository(codeRepository, repository), ...(ref ? { ref } : {}) }
+    }
+
+    /** An owner of the project or an administrator of its organization: an API key has no person behind it to be one */
+    private async ensureOwner(projectId: Schema.Types.ObjectId, organizationId: Schema.Types.ObjectId) {
+        const user = this.getUser()
+        if (user && !this.user?.apiKeyId) {
+            const membership = await UserProject.findOne({ userId: user._id, projectId, invitationToken: null })
+            if (membership?.role === RoleInProject.OWNER || (await this.isOrganizationAdmin(organizationId))) return
+        }
+        throw createBusinessException({ code: "PIPELINES_OWNER_REQUIRED", message: "Only an owner of the project can change where its pipeline templates come from", statusCode: 403 })
+    }
+
     async delete(projectId: string): Promise<DeleteResult> {
-        return runInTransaction(session => this.deleteRaw(projectId, session))
+        await this.ensureAccessToProject(projectId)
+        const cleanup = await prepareProjectCleanup(projectId)
+        const result = await runInTransaction(session => this.deleteRaw(projectId, session))
+        await cleanup()
+        return result
     }
 
     async deleteRaw(projectId: string, session?: ClientSession): Promise<DeleteResult> {
