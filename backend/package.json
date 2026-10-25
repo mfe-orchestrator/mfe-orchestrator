@@ -23,7 +23,7 @@
     "dependencies": {
         "@anthropic-ai/bedrock-sdk": "^0.35.0",
         "@anthropic-ai/foundry-sdk": "^0.6.0",
-        "@anthropic-ai/sdk": "^0.136.0",
+        "@anthropic-ai/sdk": "^1.1.0",
         "@aws-sdk/client-s3": "^3.1154.0",
         "@aws-sdk/s3-request-presigner": "^3.1154.0",
         "@azure/identity": "^4.14.0",
