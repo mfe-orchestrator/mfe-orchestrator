@@ -14,8 +14,8 @@
     },
     "devDependencies": {
         "@playwright/test": "^1.64.1",
-        "@types/node": "^26.6.5",
-        "dotenv": "^18.0.8",
+        "@types/node": "^26.6.6",
+        "dotenv": "^18.0.9",
         "mailinator-client": "^1.1.2",
         "typescript": "^7.0.2"
     }
